@@ -1,0 +1,28 @@
+diff -ur build_orig/qpOASES-2.0/SRC/make_linux.mk build/qpOASES-2.0/SRC/make_linux.mk
+--- SRC/make_linux.mk	2010-04-16 19:31:22.020044623 -0700
++++ SRC/make_linux.mk	2010-04-16 19:32:14.551887153 -0700
+@@ -42,11 +42,11 @@
+ RM  = rm
+ 
+ OBJEXT = o
+-LIBEXT = a
++LIBEXT = so
+ EXE = 
+ DEF_TARGET = -o $@
+ 
+-CPPFLAGS = -Wall -pedantic -Wshadow -O3 -finline-functions -DLINUX -f
++CPPFLAGS = -Wall -pedantic -Wshadow -O3 -finline-functions -DLINUX -f -fPIC
+ #-g -D__DEBUG__ -D__NO_COPYRIGHT__ -D__SUPPRESSANYOUTPUT__
+
+ QPOASES_LIB         =  -L${SRCDIR} -lqpOASES
+
+diff -ur build_orig/qpOASES-2.0/SRC/Utils.cpp build/qpOASES-2.0/SRC/Utils.cpp
+--- SRC/Utils.cpp	2010-04-16 19:31:22.020044623 -0700
++++ SRC/Utils.cpp	2010-04-16 19:33:37.050638266 -0700
+@@ -34,6 +34,8 @@
+  */
+ 
+ 
++#define __NO_COPYRIGHT__
++
+ #include <math.h>

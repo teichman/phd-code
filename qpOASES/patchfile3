@@ -1,0 +1,46 @@
+diff -rupN src/make_linux.mk src/make_linux.mk
+--- src/make_linux.mk	2011-08-26 05:20:11.000000000 -0700
++++ src/make_linux.mk	2011-11-17 23:41:41.228591504 -0800
+@@ -39,23 +39,23 @@ AR  = ar
+ RM  = rm
+ 
+ OBJEXT = o
+-LIBEXT = a
++LIBEXT = so
+ EXE =
+ DEF_TARGET = -o $@
+ 
+-CPPFLAGS = -Wall -pedantic -Wshadow -O3 -finline-functions -DLINUX
++CPPFLAGS = -Wall -pedantic -Wshadow -O3 -finline-functions -DLINUX -fPIC
+ #-g -D__DEBUG__ -D__NO_COPYRIGHT__ -D__SUPPRESSANYOUTPUT__
+ 
+ QPOASES_LIB         =  -L${SRCDIR} -lqpOASES
+ QPOASES_EXTRAS_LIB  =  -L${SRCDIR} -lqpOASESextras
+ 
+ ## system BLAS or qpOASES replacement BLAS
+-#LIB_BLAS = /usr/lib/libblas.so
+-LIB_BLAS = ${SRCDIR}/BLASReplacement.o
++LIB_BLAS = /usr/lib/libblas.so
++#LIB_BLAS = ${SRCDIR}/BLASReplacement.o
+ 
+ ## system LAPACK or qpOASES replacement LAPACK
+-#LIB_LAPACK = /usr/lib/liblapack.so
+-LIB_LAPACK = ${SRCDIR}/LAPACKReplacement.o
++LIB_LAPACK = /usr/lib/liblapack.so
++#LIB_LAPACK = ${SRCDIR}/LAPACKReplacement.o
+ 
+ 
+ ##
+Binary files src/SQProblem.o and src/SQProblem.o differ
+diff -rupN src/Utils.cpp src/Utils.cpp
+--- src/Utils.cpp	2011-08-12 07:59:38.000000000 -0700
++++ src/Utils.cpp	2011-11-17 23:23:20.888591680 -0800
+@@ -32,6 +32,8 @@
+  */
+ 
+ 
++#define __NO_COPYRIGHT__
++
+ #include <math.h>
+ 
+ #if defined(__WIN32__) || defined(WIN32)

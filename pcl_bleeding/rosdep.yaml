@@ -1,0 +1,5 @@
+libgl1-mesa-dev:
+  ubuntu:
+   11.10: libgl1-mesa-dev libgl1-mesa-swx11-dev |
+     sudo apt-get install libgl1-mesa-dev libgl1-mesa-swx11-dev
+     

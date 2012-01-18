@@ -1,0 +1,346 @@
+#include <dst/realtime_interface.h>
+#include <bag_of_tricks/high_res_timer.h>
+
+#define SHOW_IR (getenv("SHOW_IR"))
+#define NUM_THREADS (getenv("NUM_THREADS") ? atoi(getenv("NUM_THREADS")) : 1)
+
+using namespace std;
+using namespace Eigen;
+
+namespace dst
+{
+  
+  RealTimeInterface::RealTimeInterface(const std::string& device_id) :
+    sp_(NUM_THREADS),
+    img_view_("Image"),
+    seed_radius_(2),
+    device_id_(device_id),
+    grabber_(device_id_,
+	     pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz,
+	     pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz),
+    cloud_viewer_("PointCloud"),
+    segmenting_(false),
+    seed_(cv::Size(160, 120), 127),
+    seed_vis_(cv::Size(160, 120)),
+    needs_redraw_(false),
+    thresh_(0.01)
+  {
+    initializeGrabber();
+    pcds_.reserve(1000);
+    imgs_.reserve(1000);
+
+    img_view_.setDelegate((OpenCVViewDelegate*)this);
+  }
+  
+  void RealTimeInterface::run()
+  {
+    grabber_.start();
+    while(!cloud_viewer_.wasStopped(1)) {
+      if(needs_redraw_) {
+	drawSeedVis();
+      }
+      usleep(1e3);
+    }
+    grabber_.stop();
+  }
+
+  void RealTimeInterface::drawSeedVis()
+  {
+    current_img_.copyTo(seed_vis_);
+    for(int y = 0; y < seed_.rows; ++y) {
+      for(int x = 0; x < seed_.cols; ++x) {
+	switch(seed_(y, x)) {
+	case 127:
+	  seed_vis_(y, x) = current_img_(y, x);
+	  break;
+	case 0:
+	  seed_vis_(y, x) = cv::Vec3b(0, 0, 0);
+	  break;
+	case 255:
+	  seed_vis_(y, x) = cv::Vec3b(255, 255, 255);
+	  break;
+	default:
+	  break;
+	}
+      }
+    }
+
+    img_view_.updateImage(seed_vis_);
+    char key = img_view_.cvWaitKey(8);
+    lock();
+    switch(key) {
+    case ' ':
+      segmenting_ = !segmenting_;
+      if(segmenting_) { 
+	sp_.reset();
+	img_queue_.clear();
+	img_stamp_queue_.clear();
+	pcd_queue_.clear();
+	pcds_.clear();
+	imgs_.clear();
+	segmentations_.clear();
+	pcd_results_.clear();
+      }
+      break;
+    case 'c':
+      seed_ = 127;
+      break;
+    case 'q':
+      exit(0);
+      break;
+    default:
+      break;
+    }
+    unlock();
+    
+    needs_redraw_ = false;
+  }
+  
+  void RealTimeInterface::cloudCallback(const KinectCloud::ConstPtr& cloud)
+  {
+    lock();
+    cloud_viewer_.showCloud(cloud);
+
+    if(segmenting_) { 
+      pcd_queue_.push_back(cloud);
+      processQueues();
+    }
+    unlock();
+  }
+
+  cv::Mat1b RealTimeInterface::irToCV(const boost::shared_ptr<openni_wrapper::IRImage>& ir) const
+  {
+    cv::Mat1b img(ir->getHeight(), ir->getWidth());
+    unsigned short data[img.rows * img.cols];
+    ir->fillRaw(img.cols, img.rows, data);
+    int i = 0;
+    for(int y = 0; y < img.rows; ++y) {
+      for(int x = 0; x < img.cols; ++x, ++i) {
+      	img(y, x) = data[i];
+      }
+    }
+    
+    return img;
+  }
+  
+  cv::Mat3b RealTimeInterface::oniToCV(const boost::shared_ptr<openni_wrapper::Image>& oni) const
+  {
+    ROS_ASSERT(oni->getHeight() == 240);
+    ROS_ASSERT(oni->getWidth() == 320);
+    
+    cv::Mat3b img(oni->getHeight(), oni->getWidth());
+    uchar data[img.rows * img.cols * 3];
+    oni->fillRGB(img.cols, img.rows, data);
+    int i = 0;
+    for(int y = 0; y < img.rows; ++y) {
+      for(int x = 0; x < img.cols; ++x, i+=3) {
+      	img(y, x)[0] = data[i+2];
+    	img(y, x)[1] = data[i+1];
+    	img(y, x)[2] = data[i];
+      }
+    }
+
+    cv::Mat3b small;
+    cv::resize(img, small, cv::Size(160, 120));
+    
+    return small;
+  }
+
+  void  RealTimeInterface::processQueues()
+  {
+    cout << "  Queue sizes: " << pcd_queue_.size() << " " << img_queue_.size() << endl;
+    ROS_ASSERT(img_queue_.size() == img_stamp_queue_.size());
+    if(img_queue_.empty() || pcd_queue_.empty())
+      return;
+
+    double its = img_stamp_queue_.back();
+    double pts = pcd_queue_.back()->header.stamp.toSec();
+    if(fabs(its - pts) < thresh_) {
+      cout << "Backs are equal. Adding pair at " << pts << " with delta " << fabs(its - pts) << endl;
+      imgs_.push_back(img_queue_.back());
+      pcds_.push_back(pcd_queue_.back());
+      pcd_queue_.clear();
+      img_stamp_queue_.clear();
+      img_queue_.clear();
+      segmentLatest();
+    }
+    else if(its < pts) {
+      double delta = fabs(pcd_queue_.front()->header.stamp.toSec() - its);
+      while(!pcd_queue_.empty()) {
+	if(delta < thresh_) {
+	  cout << "PCD more recent. Adding pair at " << pcd_queue_.front()->header.stamp.toSec() << " with delta " << delta << endl;
+	  imgs_.push_back(img_queue_.back());
+	  pcds_.push_back(pcd_queue_.front());
+	  
+	  pcd_queue_.pop_front();
+	  img_queue_.clear();
+	  img_stamp_queue_.clear();
+	  
+	  segmentLatest();
+	  break;
+	}
+	else if(pcd_queue_.front()->header.stamp.toSec() < its)
+	  pcd_queue_.pop_front();
+	else
+	  break;
+      }
+    }
+    else {
+      // image is more recent than pointcloud.
+      // search for img that matches pcd timestamp.
+      while(!img_queue_.empty()) {
+
+	double delta = fabs(pts - img_stamp_queue_.front());
+	if(delta < thresh_) {
+	  cout << "Img more recent. Adding pair at " << pts << " with delta: " << delta << endl;
+	  imgs_.push_back(img_queue_.front());
+	  pcds_.push_back(pcd_queue_.back());
+	  
+	  pcd_queue_.clear();
+	  img_queue_.pop_front();
+	  img_stamp_queue_.pop_front();
+	  
+	  segmentLatest();
+	  break;
+	}
+	else if(img_stamp_queue_.front() < pts) {
+	  img_queue_.pop_front();
+	  img_stamp_queue_.pop_front();
+	}
+	else
+	  break;
+      }
+    }
+  }
+  
+  void RealTimeInterface::segmentLatest()
+  {
+    cout << "Segmenting pair with timestamp " << pcds_.back()->header.stamp.toSec() << endl;
+    cout << "Aligned queue sizes: " << pcds_.size() << " " << imgs_.size() << endl;
+    ROS_ASSERT(pcds_.size() == imgs_.size());
+    ROS_ASSERT(segmentations_.size() == pcd_results_.size());
+
+    segmentations_.push_back(cv::Mat1b(cv::Size(160, 120), 127));
+    pcd_results_.push_back(KinectCloud::Ptr(new KinectCloud()));
+			     			     
+    if(pcds_.size() == 1) {
+      ROS_ASSERT(segmentations_.size() == 1 && pcd_results_.size() == 1);
+      
+      sp_.run(seed_,
+	      imgs_.back(),
+	      pcds_.back(),
+	      cv::Mat3b(),
+	      cv::Mat1b(),
+	      KinectCloud::Ptr(),
+	      segmentations_.back(),
+	      pcd_results_.back());
+
+      seed_ = 127;
+    }
+    else { 
+      sp_.run(seed_,
+	      imgs_.back(),
+	      pcds_.back(),
+	      imgs_[imgs_.size()-2],
+    	      segmentations_[segmentations_.size()-2],
+	      pcds_[pcds_.size()-2],
+    	      segmentations_.back(),
+	      pcd_results_.back());
+
+      seed_ = 127;
+    }
+    
+    // -- Visualize the segmentation.
+    cv::imshow("Segmentation", segmentations_.back());    
+  }
+  
+  void RealTimeInterface::imageCallback(const boost::shared_ptr<openni_wrapper::Image>& oni_img)
+  {
+    lock();
+    current_img_ = oniToCV(oni_img);
+    needs_redraw_ = true;
+
+    if(segmenting_) {
+      img_queue_.push_back(current_img_);
+      img_stamp_queue_.push_back(oni_img->getTimeStamp() / (double)1e6);
+      processQueues();
+    }
+    unlock();
+  }
+
+  void RealTimeInterface::irCallback(const boost::shared_ptr<openni_wrapper::IRImage>& oni_img)
+  {
+    ScopedTimer st("ir image callback");
+    cv::Mat1b img = irToCV(oni_img);
+    cv::namedWindow("IR", CV_WINDOW_NORMAL);
+    cv::imshow("IR", img);
+    cv::waitKey(10);
+  }
+
+  void RealTimeInterface::depthImageCallback(const boost::shared_ptr<openni_wrapper::DepthImage>& oni)
+  {
+    cout << "Depth timestamp: " << oni->getTimeStamp() << endl;
+  }
+  
+  void RealTimeInterface::keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie)
+  {
+    
+    // if(event.getKeyCode())
+    //   cout << "the key \'" << event.getKeyCode() << "\' (" << (int)event.getKeyCode() << ") was";
+    // else
+    //   cout << "the special key \'" << event.getKeySym() << "\' was";
+    // if(event.keyDown())
+    //   cout << " pressed" << endl;
+    // else
+    //   cout << " released" << endl;
+    
+  }
+
+  void RealTimeInterface::initializeGrabber()
+  {
+    cloud_viewer_.registerKeyboardCallback(&RealTimeInterface::keyboardCallback, *this, NULL);
+    
+    if(SHOW_IR) { 
+      boost::function<void (const boost::shared_ptr<openni_wrapper::IRImage>&)> ir_cb;
+      ir_cb = boost::bind(&RealTimeInterface::irCallback, this, _1);
+      grabber_.registerCallback(ir_cb);
+    }
+    else {
+      boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&)> image_cb;
+      image_cb = boost::bind(&RealTimeInterface::imageCallback, this, _1);
+      grabber_.registerCallback(image_cb);
+
+      boost::function<void (const KinectCloud::ConstPtr&)> cloud_cb;
+      cloud_cb = boost::bind(&RealTimeInterface::cloudCallback, this, _1);
+      grabber_.registerCallback(cloud_cb);
+      grabber_.getDevice()->setSynchronization(true);
+      ROS_ASSERT(grabber_.getDevice()->isSynchronized());
+    }
+  }
+
+  void RealTimeInterface::mouseEvent(int event, int x0, int y0, int flags, void* param)
+  {
+    // if(segmenting_)
+    //   return;
+
+    // -- Left click to add to source.
+    if(flags & CV_EVENT_FLAG_LBUTTON) {
+      for(int y = max(0, y0 - seed_radius_); y < seed_.rows && y <= y0 + seed_radius_; ++y)
+	for(int x = max(0, x0 - seed_radius_); x < seed_.cols && x <= x0 + seed_radius_; ++x)
+	  seed_(y, x) = 255;
+
+      needs_redraw_ = true;
+    }
+
+    // -- Right click to add to sink.
+    else if(flags & CV_EVENT_FLAG_RBUTTON) {
+      for(int y = max(0, y0 - seed_radius_); y < seed_.rows && y <= y0 + seed_radius_; ++y)
+	for(int x = max(0, x0 - seed_radius_); x < seed_.cols && x <= x0 + seed_radius_; ++x)
+	  seed_(y, x) = 0;
+
+      needs_redraw_ = true;
+    }
+  }
+
+  
+}
