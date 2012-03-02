@@ -14,6 +14,7 @@ svn:
 	svn co -r3516 http://svn.pointclouds.org/pcl/trunk $@
 	cd svn/common/include/pcl && patch < ../../../../patch
 	cd svn/io/src/ && patch < ../../../openni_grabber.cpp.patch
+	cd svn/common/include/pcl/common/impl && patch < ../../../../../../transformation_from_correspondences.hpp.patch
 
 clean:
 	cd svn/build && make clean
