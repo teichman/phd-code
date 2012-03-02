@@ -3,6 +3,35 @@
 using namespace Eigen;
 using namespace std;
 
+
+SparseLinearFunction::SparseLinearFunction(SMConstPtr A, SVConstPtr b) :
+  A_(A),
+  b_(b)
+{
+}
+
+Eigen::VectorXd SparseLinearFunction::eval(const Eigen::VectorXd& x) const
+{
+  Eigen::VectorXd result = (*A_) * x;
+  for(SparseVector<double>::InnerIterator it(*b_); it; ++it)
+    result(it.index()) += it.value();
+  
+  return result;
+}
+
+SparseQuadraticFunction::SparseQuadraticFunction(SMConstPtr A, SVConstPtr b, double c) : 
+  A_(A),
+  b_(b),
+  c_(c)
+{
+}
+
+double SparseQuadraticFunction::eval(const Eigen::VectorXd& x) const
+{
+  return 0.5 * x.transpose() * (*A_) * x + b_->dot(x) + c_;
+}
+
+
 double sigmoid(double z) {
   long double big = exp(-z);
   if(isinf(1.0 + big))

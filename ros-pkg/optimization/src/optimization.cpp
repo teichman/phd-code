@@ -132,7 +132,7 @@ VectorXd NesterovGradientSolver::solve(const VectorXd& init) {
   while(true) { 
     x_prev = x;
 
-    // -- Temporary: check the condition number.
+    // -- If we're given a hessian, check the condition number.
     if(hessian_) { 
       MatrixXd hess = hessian_->eval(x);
       double nonzeros = 0;
@@ -144,7 +144,7 @@ VectorXd NesterovGradientSolver::solve(const VectorXd& init) {
 	 
       Eigen::JacobiSVD<MatrixXd> svd(hess);
       VectorXd vals = svd.singularValues();
-      //cout << "Singular values: " << endl << vals.transpose() << endl;
+      cout << "Singular values: " << endl << vals.transpose() << endl;
       cout << "Condition number: " << vals.maxCoeff() / vals.minCoeff() << endl;
     }
 
@@ -177,16 +177,13 @@ VectorXd NesterovGradientSolver::solve(const VectorXd& init) {
     assert(!isinf(norm));
 
     if(debug_) {
-      //cout << "Step " << k << ", gradient norm " << norm << ", objective " << objective_x << endl;
       cout << "Nesterov Step " << k << ", gradient norm " << norm
 	   << ", objective " << setprecision(12) << objective_x
 	   << ", (x - x_prev).norm() " << setprecision(6) << (x - x_prev).norm()
 	   << ", " << num_backtracks << " backtracks." << endl;
-      
-	//<< ", x = " << x.transpose() << endl;
-      //      cout << "Step " << k << ", gradient norm " << norm << ", objective " << objective_x << ", (x - x_prev).norm() " << (x - x_prev).norm() << endl;
     }
 
+    // -- Stop if we're done.
     if(norm < tol_) {
       cout << "Breaking due to tolerance." << endl;
       break;
@@ -205,57 +202,6 @@ VectorXd NesterovGradientSolver::solve(const VectorXd& init) {
 
   return best_x;  
 }
-
-
-// VectorXd NesterovGradientSolver::solveTraditionally(const VectorXd& init) {
-//   VectorXd x = init;
-//   VectorXd gradient;
-//   VectorXd x_prev;
-//   double k = 1;
-//   VectorXd best_x;
-  
-//   gradient = gradient_->eval(x);
-//   if(debug_) {
-//     cout << "Step 0, gradient norm " << gradient.norm() << ", objective " << objective_->eval(x) << endl;
-//   }
-
-//   double objective = objective_->eval(x);
-//   double objective_prev;
-//   while(true) { 
-//     x_prev = x;
-//     objective_prev = objective;
-
-//     double stepsize = backtracking(1, x, gradient, objective);
-//     x = x - stepsize * gradient;
-
-//     objective = objective_->eval(x);
-//     assert(objective < objective_prev);
-    
-//     gradient = gradient_->eval(x);
-//     double norm = gradient.norm();
-//     assert(!isnan(norm));
-//     assert(!isinf(norm));
-    
-//     if(debug_) {
-//       //cout << "Step " << k << ", gradient norm " << norm << ", objective " << objective_x << endl;
-//       cout << "Step " << k << ", gradient norm " << norm
-// 	   << ", objective " << setprecision(12) << objective
-// 	   << ", (x - x_prev).norm() " << setprecision(6) << (x - x_prev).norm()
-// 	   << ", x = " << x.transpose() << endl;
-//     }
-
-//     if(norm < tol_ || (max_num_iters_ > 0 && k == max_num_iters_))
-//       break;
-//     ++k;
-//   }
-
-//   if(debug_) {
-//     cout << "Solver complete, gradient norm " << gradient.norm() << " < tolerance " << tol_ << ", objective " << objective_->eval(x) << endl;
-//     cout << "Best x found has gradient norm " << gradient_->eval(best_x).norm() << ", objective " << objective_->eval(best_x) << endl;
-//   }
-//   return best_x;  
-// }
-
 
 
 /****************************************

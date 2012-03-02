@@ -1,6 +1,7 @@
 #ifndef OPTIMIZATION_H
 #define OPTIMIZATION_H
 
+#include <boost/shared_ptr.hpp>
 #include <Eigen/Eigen>
 #include <Eigen/SVD>
 #include <iostream>
@@ -8,9 +9,17 @@
 #include <cfloat>
 #include <sys/time.h>
 
+
+/************************************************************
+ * Function representation
+ ************************************************************/
+
 template <typename Domain, typename Codomain> class Function
 {
  public:
+  typedef boost::shared_ptr<Function> Ptr;
+  typedef boost::shared_ptr<const Function> ConstPtr;
+  
   virtual Codomain eval(const Domain& x) const = 0;
   Codomain operator()(const Domain& x) {return eval(x);}
 };
@@ -18,6 +27,11 @@ template <typename Domain, typename Codomain> class Function
 typedef Function<Eigen::VectorXd, double> ScalarFunction;
 typedef Function<Eigen::VectorXd, Eigen::VectorXd> VectorFunction;
 typedef Function<Eigen::VectorXd, Eigen::MatrixXd> MatrixFunction;
+
+
+/************************************************************
+ * Unconstrained solvers
+ ************************************************************/
 
 class BisectionSolver
 {
@@ -51,8 +65,6 @@ class NesterovGradientSolver {
   double initial_stepsize_;
   bool debug_;
 
-
-
   NesterovGradientSolver(ScalarFunction* objective,
 			 VectorFunction* gradient,
 			 double tol,
@@ -61,13 +73,13 @@ class NesterovGradientSolver {
 			 int max_num_iters = 0,
 			 double initial_stepsize = 1,
 			 bool debug = false);
-  //! Nesterov's method.
   Eigen::VectorXd solve(const Eigen::VectorXd& init);
-  //! Standard gradient descent.
-  //Eigen::VectorXd solveTraditionally(const Eigen::VectorXd& init);
 
  private:
-  double backtracking(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& grad, const Eigen::VectorXd& direction, double objective, int* num_backtracks);
+  double backtracking(double t, const Eigen::VectorXd& x,
+		      const Eigen::VectorXd& grad,
+		      const Eigen::VectorXd& direction,
+		      double objective, int* num_backtracks);
 };
   
 class NewtonSolver {
@@ -93,10 +105,15 @@ class NewtonSolver {
 	       int max_iters = 0);
   
   Eigen::VectorXd solve(Eigen::VectorXd x);
-  std::string progressString(int k, const Eigen::VectorXd& grad, const Eigen::VectorXd& x, double lambda2, double objective, int num_backtracks);
+  std::string progressString(int k, const Eigen::VectorXd& grad,
+			     const Eigen::VectorXd& x, double lambda2,
+			     double objective, int num_backtracks);
   
  private:
-  double backtracking(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& grad, const Eigen::VectorXd& direction, double objective, int* num_backtracks = NULL);
+  double backtracking(double t, const Eigen::VectorXd& x,
+		      const Eigen::VectorXd& grad,
+		      const Eigen::VectorXd& direction,
+		      double objective, int* num_backtracks = NULL);
 };
 
 class GradientSolver
@@ -122,7 +139,10 @@ public:
   Eigen::VectorXd solve(const Eigen::VectorXd& init);
 
 private:
-  double backtracking(double t, const Eigen::VectorXd& x, const Eigen::VectorXd& grad, const Eigen::VectorXd& direction, double objective, int* num_backtracks);
+  double backtracking(double t, const Eigen::VectorXd& x,
+		      const Eigen::VectorXd& grad,
+		      const Eigen::VectorXd& direction,
+		      double objective, int* num_backtracks);
 };
 
 #endif // OPTIMIZATION_H

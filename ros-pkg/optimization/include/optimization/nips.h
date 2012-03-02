@@ -7,47 +7,54 @@
 class NesterovInteriorPointSolver
 {
 public:
-  NesterovInteriorPointSolver(ScalarFunction* objective,
-			      VectorFunction* gradient,
+  Eigen::VectorXd* optimal_solution_;
+  
+  NesterovInteriorPointSolver(ScalarFunction::ConstPtr objective,
+			      VectorFunction::ConstPtr gradient,
+			      double initial_mu,
 			      double tol,
 			      double alpha,
 			      double beta,
 			      int max_num_iters,
 			      double initial_stepsize,
-			      bool debug);
-  void addConstraint(ScalarFunction* constraint,
-		     VectorFunction* gradient);
-  Eigen::VectorXd solve(const Eigen::VectorXd& init);
+			      int restart,
+			      int debug);
+  void addConstraint(ScalarFunction::ConstPtr constraint,
+		     VectorFunction::ConstPtr gradient);
+  Eigen::VectorXd solve(const Eigen::VectorXd& init,
+			long int* num_steps = NULL);
   bool feasible(const Eigen::VectorXd& x);
-  double barrierObjective(const Eigen::VectorXd& x);
-  Eigen::VectorXd barrierGradient(const Eigen::VectorXd& x);
 
 protected:
   //! f_0(x)
-  ScalarFunction* objective_;
+  ScalarFunction::ConstPtr objective_;
   //! grad f_0(x)
-  VectorFunction* gradient_;
+  VectorFunction::ConstPtr gradient_;
   //! f_i(x) \leq 0
-  std::vector<ScalarFunction*> constraints_;
+  std::vector<ScalarFunction::ConstPtr> constraints_;
   //! grad f_i(x)
-  std::vector<VectorFunction*> grad_constraints_;
+  std::vector<VectorFunction::ConstPtr> grad_constraints_;
+  double initial_mu_;
   double tol_;
   double alpha_;
   double beta_;
   int max_num_iters_;
   double initial_stepsize_;
-  bool debug_;
+  int restart_;
+  int debug_;
   double mu_;
 
+  double barrierObjective(const Eigen::VectorXd& x);
+  Eigen::VectorXd barrierGradient(const Eigen::VectorXd& x);
   Eigen::VectorXd solveInner(const Eigen::VectorXd& init,
-			     int* num_steps);
+			     long int* num_steps);
   double backtracking(double t,
 		      const Eigen::VectorXd& x,
 		      const Eigen::VectorXd& grad,
 		      const Eigen::VectorXd& direction,
 		      double objective,
-		      int* num_backtracks);
-
+		      int* num_backtracks,
+		      bool* precision_flag);
 };
 
 #endif // NIPS_H

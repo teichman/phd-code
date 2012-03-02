@@ -10,6 +10,37 @@
 double sigmoid(double z);
 double logsig(double z);
 
+typedef boost::shared_ptr< const Eigen::SparseMatrix<double> > SMConstPtr;
+typedef boost::shared_ptr< const Eigen::SparseVector<double> > SVConstPtr;
+typedef boost::shared_ptr< Eigen::SparseMatrix<double> > SMPtr;
+typedef boost::shared_ptr< Eigen::SparseVector<double> > SVPtr;
+
+//! Ax + b
+class SparseLinearFunction : public VectorFunction
+{
+public:
+  typedef boost::shared_ptr<SparseLinearFunction> Ptr;
+  
+  SMConstPtr A_;
+  SVConstPtr b_;
+  SparseLinearFunction(SMConstPtr A, SVConstPtr b);
+  Eigen::VectorXd eval(const Eigen::VectorXd& x) const;
+};
+
+//! 1/2 x^T A x + b^T x + c
+class SparseQuadraticFunction : public ScalarFunction
+{
+public:
+  typedef boost::shared_ptr<SparseQuadraticFunction> Ptr;
+  
+  SMConstPtr A_;
+  SVConstPtr b_;
+  double c_;
+
+  SparseQuadraticFunction(SMConstPtr A, SVConstPtr b, double c);
+  double eval(const Eigen::VectorXd& x) const;
+};
+
 //! 1/M sum_i exp(A_i^T x + b_i)
 //! Implemented efficiently using sparse Eigen.
 class ObjectiveMELSparse: public ScalarFunction
