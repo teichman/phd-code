@@ -33,9 +33,16 @@ namespace pipeline
 	success = true;
       }
       catch(boost::bad_any_cast& e) {}
+      try {
+	any_cast<bool>(a);
+	out << "bool " << name << " " << any_cast<bool>(a) << endl;
+	success = true;
+      }
+      catch(boost::bad_any_cast& e) {}
 
-      ROS_FATAL_STREAM_COND(!success, "Params object contains data that it does not know how to serialize." << flush);
-      ROS_ASSERT(success);
+      if(!success) { 
+	PL_ABORT("Tried to serialize Param field \"" << name << "\", but Params does not know how to serialize its data type.");
+      }
     }
   }
 
@@ -43,7 +50,7 @@ namespace pipeline
   {
     string buf;
     in >> buf;
-    ROS_ASSERT(buf.compare("Params") == 0);
+    PL_ASSERT(buf.compare("Params") == 0);
     in >> buf;
     size_t num_params = atoi(buf.substr(1, buf.size() - 1).c_str());
     getline(in, buf);
@@ -69,18 +76,22 @@ namespace pipeline
 	in >> val;
 	set<double>(name, val);
       }
+      else if(type.compare("bool") == 0) {
+	bool val;
+	in >> val;
+	set<bool>(name, val);
+      }
       else {
-	ROS_FATAL_STREAM("Deserialization failed: type \"" << type << "\" not recognized." << flush);
-	abort();
+	PL_ABORT("Deserialization failed: type \"" << type << "\" not recognized.");
       }
       getline(in, buf);
     }
             
   }
 
-  void Params::assertValid(const std::string& name) const
+  bool Params::exists(const std::string& name) const
   {
-    ROS_ASSERT(name.find(" ") == std::string::npos);
+    return (storage_.count(name) != 0);
   }
-
+  
 } // namespace pipeline

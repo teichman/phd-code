@@ -8,9 +8,8 @@ namespace pipeline {
     num_threads_(num_threads),
     debug_(false),
     done_computation_(false),
-    num_nodes_computing_(0),
-    destructing_(false),
-    cnf_(new ComputeNodeFactory)
+    num_pods_computing_(0),
+    destructing_(false)
   {
     pthread_mutex_init(&mutex_, NULL);
     pthread_cond_init(&queue_cv_, NULL);
@@ -21,22 +20,20 @@ namespace pipeline {
   }
 
   Pipeline::~Pipeline() {
-    delete cnf_;
-
     killThreadPool();
     pthread_mutex_destroy(&mutex_);
     pthread_cond_destroy(&queue_cv_);
     pthread_cond_destroy(&done_cv_);
 
-    for(size_t i = 0; i < nodes_.size(); ++i)
-      delete nodes_[i];
+    for(size_t i = 0; i < pods_.size(); ++i)
+      delete pods_[i];
   }
 
   void Pipeline::setDebug(bool debug)
   {
     debug_ = debug;
-    for(size_t i = 0; i < nodes_.size(); ++i)
-      nodes_[i]->debug_ = debug;
+    for(size_t i = 0; i < pods_.size(); ++i)
+      pods_[i]->debug_ = debug;
   }
 
   bool Pipeline::getDebug() const
@@ -53,29 +50,38 @@ namespace pipeline {
 
   void Pipeline::assertNoDuplicates() const
   {
-    // TODO: Add nicer error messages.
-
-    // Check for duplicate node pointers.
-    set<ComputeNode*> all;
-    for(size_t i = 0; i < nodes_.size(); ++i)
-      all.insert(nodes_[i]);
-    ROS_ASSERT(all.size() == nodes_.size());
+    // Check for duplicate pod pointers.
+    set<Pod*> all;
+    for(size_t i = 0; i < pods_.size(); ++i)
+      all.insert(pods_[i]);
+    if(all.size() != pods_.size())
+      PL_ABORT("Duplicate Pod pointers found in Pipeline.");
 
     // Check for duplicated names.
     set<string> names;
-    for(size_t i = 0; i < nodes_.size(); ++i) {
-      ROS_ASSERT(names.count(nodes_[i]->getName()) == 0);
-      names.insert(nodes_[i]->getName());
+    for(size_t i = 0; i < pods_.size(); ++i) {
+      if(names.count(pods_[i]->getName()) != 0)
+	PL_ABORT("Duplicate Pod name \"" << pods_[i]->getName() << "\".");
+      names.insert(pods_[i]->getName());
     }
   }
   
-  void Pipeline::addComponent(ComputeNode* node)
+  void Pipeline::addConnectedComponent(Pod* pod)
   {
-    vector<ComputeNode*> component = getComponent(node);
-    nodes_.insert(nodes_.end(), component.begin(), component.end());
-    assertNoDuplicates();
+    addPods(getComponent(pod));
   }
 
+  void Pipeline::addPods(const std::vector<Pod*> pods)
+  {
+    for(size_t i = 0; i < pods.size(); ++i) { 
+      pods_.push_back(pods[i]);
+      pod_names_[pods[i]->getName()] = pods[i];
+    }
+    assertCompleteness();
+    assertNoDuplicates();
+    PL_ASSERT(pods_.size() == pod_names_.size());
+  }
+  
   bool Pipeline::trylock() {
     if(pthread_mutex_trylock(&mutex_) == EBUSY)
       return false;
@@ -92,56 +98,152 @@ namespace pipeline {
   }
   
   void Pipeline::assertCompleteness() {
-    queue<ComputeNode*> to_check;
-    for(size_t i = 0; i < nodes_.size(); ++i) {
-      if(nodes_[i]->upstream_.empty())
-	to_check.push(nodes_[i]);
+    queue<Pod*> to_check;
+    for(size_t i = 0; i < pods_.size(); ++i) {
+      if(pods_[i]->parents_.empty())
+	to_check.push(pods_[i]);
     }
 
-    set<ComputeNode*> found;
+    set<Pod*> found;
     while(!to_check.empty()) {
-      ComputeNode* active = to_check.front();
+      Pod* active = to_check.front();
       to_check.pop();
       found.insert(active); //Won't insert duplicates.
-      for(size_t i = 0; i < active->downstream_.size(); ++i) {
-	to_check.push(active->downstream_[i]);
+      for(size_t i = 0; i < active->children_.size(); ++i) {
+	to_check.push(active->children_[i]);
       }
     }
 
-    assert(found.size() == nodes_.size());  
+    assert(found.size() == pods_.size());  
   }
   
-  void Pipeline::flush() {
-    num_nodes_computing_ = 0;
-    for(size_t i = 0; i < nodes_.size(); ++i) { 
-      nodes_[i]->flush();
-      assert(!nodes_[i]->done_computation_);
-    }
-    done_computation_ = false;
-  }
-
   void Pipeline::reset()
   {
-    flush();
-    for(size_t i = 0; i < nodes_.size(); ++i)
-      nodes_[i]->reset();
+    for(size_t i = 0; i < pods_.size(); ++i)
+      pods_[i]->reset();
   }
 
-  string Pipeline::reportTiming() {
+  string Pipeline::reportSlowestPath() const
+  {
+    // -- Check for duplicated node.
+    set<Pod*> all;
+    for(size_t i = 0; i < pods_.size(); ++i)
+      all.insert(pods_[i]);
+    PL_ASSERT(pods_.size() == all.size());
+          
+    map<Pod*, double> times;
+    map<Pod*, Pod*> backptrs;
+
+    // -- Initialize with entry points.
+    queue<Pod*> to_check;
+    set<Pod*> marked;
+    for(size_t i = 0; i < pods_.size(); ++i) { 
+      if(pods_[i]->parents_.empty()) { 
+	to_check.push(pods_[i]);
+	marked.insert(pods_[i]);
+	backptrs[pods_[i]] = NULL;
+	times[pods_[i]] = pods_[i]->getComputationTime();
+	PL_ASSERT(times.count(pods_[i]) == 1);
+      }
+    }
+
+    // -- Propagate max path times through the graph.
+    while(!to_check.empty()) {
+      // Check parents.
+      Pod* active = to_check.front();
+      to_check.pop();
+      
+      double max = -std::numeric_limits<double>::max();
+      for(size_t i = 0; i < active->parents_.size(); ++i) {
+	PL_ASSERT(marked.count(active->parents_[i]));
+	PL_ASSERT(times.count(active->parents_[i]));
+	double val = times[active->parents_[i]] + active->getComputationTime();
+	if(val > max) { 
+	  max = val;
+	  times[active] = val;
+	  backptrs[active] = active->parents_[i];
+	}
+      }
+      
+      // Add children.
+      for(size_t i = 0; i < active->children_.size(); ++i) {
+	Pod* child = active->children_[i];
+	if(marked.count(child)) {
+	  continue;
+	}
+	bool all_parents_done = true;
+	for(size_t j = 0; j < child->parents_.size(); ++j) {
+	  if(!times.count(child->parents_[j])) { 
+	    all_parents_done = false;
+	    break;
+	  }
+	}
+
+	if(all_parents_done) { 
+	  to_check.push(child);
+	  PL_ASSERT(marked.count(child) == 0);
+	  marked.insert(child);
+	}
+
+
+      }
+    }
+
+    if(marked.size() != pods_.size()) { 
+      for(size_t i = 0; i < pods_.size(); ++i)
+	if(marked.count(pods_[i]) == 0)
+	  cout << "Node not in marked: " << pods_[i]->getName() << endl;
+
+      cout << "Error in pipeline2::reportSlowestPath.  marked.size() == "
+	   << marked.size() << ", pods_.size() == " << pods_.size() << endl;
+      abort();
+    }
+    
+    // -- Find the endpoint with longest time.
+    double max = 0;
+    Pod* active = NULL;
+    map<Pod*, double>::iterator it;
+    for(it = times.begin(); it != times.end(); ++it) {
+      //cout << it->first->_getName() << ": " << it->second << endl;
+      if(it->second > max) {
+	max = it->second;
+	active = it->first;
+      }
+    }
+
+    // -- Trace the path back to the entry point.
+    vector<Pod*> path;
+    while(active) {
+      path.push_back(active);
+      active = backptrs[active];
+    }
+
+    ostringstream oss;
+    oss << "Slowest path (" << max << " ms): " << endl;
+    for(int i = (int)path.size() - 1; i >= 0; --i) {
+      oss << "  " << fixed << setprecision(2) << setw(8) << times[path[i]]
+	  << "\t" << fixed << setprecision(2) << setw(8) << path[i]->getComputationTime()
+	  << "\t" << path[i]->getName() << endl;
+    }
+    return oss.str();
+  }
+  
+  string Pipeline::reportTiming() const
+  {
     assert(done_computation_);
     
     ostringstream oss;
     oss << "============================================================" << endl;
     oss << "Pipeline timing report" << endl;
-    oss << "Time (ms) \tNode name" << endl;
+    oss << "Time (ms) \tPod name" << endl;
     oss << "------------------------------------------------------------" << endl;
     vector<string> names;
     vector<double> times;
     vector< pair<double, size_t> > index;
     double total_time = 0;
-    for(size_t i = 0; i < nodes_.size(); ++i) {
-      names.push_back(nodes_[i]->getName());
-      times.push_back(nodes_[i]->getComputationTime());
+    for(size_t i = 0; i < pods_.size(); ++i) {
+      names.push_back(pods_[i]->getName());
+      times.push_back(pods_[i]->getComputationTime());
       index.push_back(pair<double, size_t>(times.back(), i));
       total_time += times.back();
     }
@@ -151,9 +253,11 @@ namespace pipeline {
       size_t idx = index[i].second;
       oss << times[idx] << "\t" << "\t" << names[idx] << endl;
     }
-    oss << "Number of threads:\t" << threads_.size() << endl;
-    oss << "Sum of node compute times:\t" << total_time << " ms." << endl;
+    oss << "Number of threads:\t\t" << threads_.size() << endl;
+    oss << "Sum of pod compute times:\t" << total_time << " ms." << endl;
     oss << "Start-to-finish wall time:\t" << time_msec_ << " ms." << endl;
+    oss << endl;
+    oss << reportSlowestPath() << endl;
     oss << "============================================================" << endl;
     
     return oss.str();
@@ -169,15 +273,15 @@ namespace pipeline {
     oss << "digraph {" << endl;
     oss << endl;
 
-    for(size_t i = 0; i < nodes_.size(); ++i) {
-      oss << (uint64_t)nodes_[i] << " [label=\"" << sanitize(nodes_[i]->getName()) << "\"]" << endl;
+    for(size_t i = 0; i < pods_.size(); ++i) {
+      oss << (uint64_t)pods_[i] << " [label=\"" << sanitize(pods_[i]->getName()) << "\"]" << endl;
     }
     oss << endl;
 
-    for(size_t i = 0; i < nodes_.size(); ++i) {
-      vector<ComputeNode*>& downstream = nodes_[i]->downstream_;
-      for(size_t j = 0; j < downstream.size(); ++j) {
-	oss << (uint64_t)nodes_[i] << "->" << (uint64_t)downstream[j] << endl;
+    for(size_t i = 0; i < pods_.size(); ++i) {
+      vector<Pod*>& children = pods_[i]->children_;
+      for(size_t j = 0; j < children.size(); ++j) {
+	oss << (uint64_t)pods_[i] << "->" << (uint64_t)children[j] << endl;
       }
     }
     oss << endl;
@@ -194,18 +298,18 @@ namespace pipeline {
     file.close();
   }
 
-  int Pipeline::switchComponent(ComputeNode* node, bool disabled)
+  int Pipeline::switchComponent(Pod* pod, bool disabled)
   {
-    // -- Ensure one of this Pipeline's nodes is the one being disabled.
-    assert(node);
+    // -- Ensure one of this Pipeline's pods is the one being disabled.
+    assert(pod);
     bool valid = false;
-    for(size_t i = 0; i < nodes_.size(); ++i) {
-      if(node == nodes_[i])
+    for(size_t i = 0; i < pods_.size(); ++i) {
+      if(pod == pods_[i])
 	valid = true;
     }
     assert(valid);
 
-    vector<ComputeNode*> component = getComponent(node);
+    vector<Pod*> component = getComponent(pod);
     for(size_t i = 0; i < component.size(); ++i)
       component[i]->disabled_ = disabled;
 
@@ -214,24 +318,24 @@ namespace pipeline {
 
   void Pipeline::enableAll()
   {
-    for(size_t i = 0; i < nodes_.size(); ++i)
-      nodes_[i]->disabled_ = false;
+    for(size_t i = 0; i < pods_.size(); ++i)
+      pods_[i]->disabled_ = false;
   }
   
   void Pipeline::disableAll()
   {
-    for(size_t i = 0; i < nodes_.size(); ++i)
-      nodes_[i]->disabled_ = true;
+    for(size_t i = 0; i < pods_.size(); ++i)
+      pods_[i]->disabled_ = true;
   }
   
-  int Pipeline::disableComponent(ComputeNode* node)
+  int Pipeline::disableComponent(Pod* pod)
   {
-    return switchComponent(node, true);
+    return switchComponent(pod, true);
   }
 
-  int Pipeline::enableComponent(ComputeNode* node)
+  int Pipeline::enableComponent(Pod* pod)
   {
-    return switchComponent(node, false);
+    return switchComponent(pod, false);
   }
 
   void Pipeline::spawnThreadPool(int num_threads) {
@@ -265,23 +369,30 @@ namespace pipeline {
     lock();
     HighResTimer hrt;
     hrt.start();
-    assert(!done_computation_);
     assert(queue_.empty());
     assert(!threads_.empty());
 
-    // -- Find all ready nodes and put them into the queue.
-    for(size_t i = 0; i < nodes_.size(); ++i) {
-      nodes_[i]->lock();
-      if(nodes_[i]->ready()) {
-	nodes_[i]->on_queue_ = true;
-	queue_.push_back(nodes_[i]);
+    // -- Set up.
+    num_pods_computing_ = 0;
+    done_computation_ = false;
+    for(size_t i = 0; i < pods_.size(); ++i) { 
+      pods_[i]->flush();
+      assert(!pods_[i]->done_computation_);
+    }
+
+    // -- Find all ready pods and put them into the queue.
+    for(size_t i = 0; i < pods_.size(); ++i) {
+      pods_[i]->lock();
+      if(pods_[i]->ready()) {
+	pods_[i]->on_queue_ = true;
+	queue_.push_back(pods_[i]);
 	pthread_cond_signal(&queue_cv_);
       }
-      nodes_[i]->unlock();
+      pods_[i]->unlock();
     }
     assert(!queue_.empty());
 
-    // -- Wait for the worker nodes to complete.
+    // -- Wait for the worker pods to complete.
     pthread_cond_wait(&done_cv_, &mutex_);
     
     done_computation_ = true;
@@ -290,19 +401,19 @@ namespace pipeline {
     unlock();
   }
   
-  void Pipeline::registerCompleted(ComputeNode* node) { 
-    for(size_t i = 0; i < node->downstream_.size(); ++i) {
-      node->downstream_[i]->lock();
-      if(node->downstream_[i]->ready()) {
+  void Pipeline::registerCompleted(Pod* pod) { 
+    for(size_t i = 0; i < pod->children_.size(); ++i) {
+      pod->children_[i]->lock();
+      if(pod->children_[i]->ready()) {
 	// Debugging.  TODO: remove.
 	for(size_t j = 0; j < queue_.size(); ++j)
-	  assert(queue_[j] != node->downstream_[i]);
+	  assert(queue_[j] != pod->children_[i]);
 	
-	node->downstream_[i]->on_queue_ = true;
-	queue_.push_back(node->downstream_[i]);
+	pod->children_[i]->on_queue_ = true;
+	queue_.push_back(pod->children_[i]);
 	pthread_cond_signal(&queue_cv_);
       }
-      node->downstream_[i]->unlock();
+      pod->children_[i]->unlock();
     }
   }
 
@@ -316,7 +427,7 @@ namespace pipeline {
       }
             
       if(queue_.empty()) {
-	if(num_nodes_computing_ == 0)
+	if(num_pods_computing_ == 0)
 	  pthread_cond_signal(&done_cv_);
 	
 	pthread_cond_wait(&queue_cv_, &mutex_);
@@ -324,24 +435,24 @@ namespace pipeline {
 
       // pthread signal might awaken more than one thread.
       if(!queue_.empty()) {
-	ComputeNode* node = queue_.back();
+	Pod* pod = queue_.back();
 	queue_.pop_back();
 
 	// Debugging. TODO: remove.
-	assert(node->on_queue_);
+	assert(pod->on_queue_);
 	for(size_t i = 0; i < queue_.size(); ++i)
-	  assert(queue_[i] != node);
+	  assert(queue_[i] != pod);
 
-	++num_nodes_computing_;
+	++num_pods_computing_;
 	unlock();
 
-	node->lock();
-	node->compute();
-	node->unlock();
+	pod->lock();
+	pod->pl_compute();
+	pod->unlock();
 
 	lock();
-	registerCompleted(node);
-	--num_nodes_computing_;
+	registerCompleted(pod);
+	--num_pods_computing_;
       }
     }
   }
@@ -353,93 +464,128 @@ namespace pipeline {
     return NULL;
   }
 
-  vector<ComputeNode*> getComponent(ComputeNode* node)
+  vector<Pod*> getComponent(Pod* pod)
   {
-    queue<ComputeNode*> to_check;
-    to_check.push(node);
+    queue<Pod*> to_check;
+    to_check.push(pod);
 
-    set<ComputeNode*> component;
+    set<Pod*> component;
     while(!to_check.empty()) {
-      ComputeNode* active = to_check.front();
+      Pod* active = to_check.front();
       to_check.pop();
       component.insert(active); //Won't insert duplicates.
-      for(size_t i = 0; i < active->downstream_.size(); ++i) {
-	if(component.count(active->downstream_[i]) == 0)
-	  to_check.push(active->downstream_[i]);
+      for(size_t i = 0; i < active->children_.size(); ++i) {
+	if(component.count(active->children_[i]) == 0)
+	  to_check.push(active->children_[i]);
       }
-      for(size_t i = 0; i < active->upstream_.size(); ++i) { 
-	if(component.count(active->upstream_[i]) == 0)
-	  to_check.push(active->upstream_[i]);
+      for(size_t i = 0; i < active->parents_.size(); ++i) { 
+	if(component.count(active->parents_[i]) == 0)
+	  to_check.push(active->parents_[i]);
       }
     }
 
-    vector<ComputeNode*> vec;
+    vector<Pod*> vec;
     vec.reserve(component.size());
-    set<ComputeNode*>::const_iterator it;
+    set<Pod*>::const_iterator it;
     for(it = component.begin(); it != component.end(); ++it) {
       vec.push_back(*it);
     }
     return vec;
   }
-
-  void Pipeline::setFactory(ComputeNodeFactory* cnf)
-  {
-    if(cnf_)
-      delete cnf_;
-    cnf_ = cnf;
-  }
   
   void Pipeline::serialize(std::ostream& out) const
   {
-    ROS_ASSERT(cnf_);
     out << "Pipeline" << endl;
     out << "Serialization version 1" << endl;
-    out << "Nodes (" << nodes_.size() << ")" << endl << endl;
-    for(size_t i = 0; i < nodes_.size(); ++i)
-      out << cnf_->serializeNode(nodes_[i]);
+    out << "Pods (" << pods_.size() << ")" << endl << endl;
+    for(size_t i = 0; i < pods_.size(); ++i)
+      out << *pods_[i] << endl;
   }
   
   void Pipeline::deserialize(std::istream& in)
   {
-    ROS_ASSERT(nodes_.empty());
+    PL_ASSERT(pods_.empty());
 
     string buf;
     getline(in, buf);
-    ROS_ASSERT(buf.compare("Pipeline") == 0);
+    PL_ASSERT(buf.compare("Pipeline") == 0);
     getline(in, buf); // serialization version
     in >> buf;
-    ROS_ASSERT(buf.compare("Nodes") == 0);
+    PL_ASSERT(buf.compare("Pods") == 0);
     in >> buf;
-    size_t num_nodes = atoi(buf.substr(1, buf.size() - 1).c_str());
+    size_t num_pods = atoi(buf.substr(1, buf.size() - 1).c_str());
     getline(in, buf);
 
     vector<string> input_lines;
-    map<string, ComputeNode*> nodes; // Storage until we can get them hooked up.
-    for(size_t i = 0; i < num_nodes; ++i) { 
-      ComputeNode* node = cnf_->deserializeNode(in, &input_lines);
-      ROS_ASSERT(nodes.count(node->getName()) == 0);
-      nodes[node->getName()] = node;
-      nodes_.push_back(node);
+    vector<string> multi_input_lines;
+    map<string, Pod*> pod_names; // Storage until we can get them hooked up.
+    vector<Pod*> pods;
+    for(size_t i = 0; i < num_pods; ++i) {
+      string name;
+      getline(in, name); // empty line
+      getline(in, name);
+      string type;
+      getline(in, type);
+
+      // Inputs
+      string buf;
+      in >> buf;
+      PL_ASSERT(buf.compare("Inputs") == 0);
+      in >> buf;
+      size_t num_inputs = atoi(buf.substr(1, buf.size() - 1).c_str());
+      getline(in, buf);
+      
+      for(size_t i = 0; i < num_inputs; ++i) {
+	getline(in, buf);
+	input_lines.push_back(name + " " + buf);
+      }
+
+      // Params
+      Params params;
+      params.deserialize(in);
+      Pod* pod = Pod::createPod(type, name, params);
+
+      PL_ASSERT(pod_names.count(pod->getName()) == 0);
+      pod_names[pod->getName()] = pod;
+      pods.push_back(pod);
     }
 
     for(size_t i = 0; i < input_lines.size(); ++i) {
       istringstream iss(input_lines[i]);
-      string input_node_name;
-      string input_outlet_name;
-      string output_node_name;
-      string output_outlet_name;
+      string consumer_pod_name;
+      string input_name;
       string buf;
-      iss >> input_node_name;
-      iss >> input_outlet_name;
-      iss >> buf;
-      iss >> output_node_name;
-      iss >> output_outlet_name;
+      iss >> consumer_pod_name;
+      iss >> input_name;
+      PL_ASSERT(pod_names.count(consumer_pod_name) == 1);
+      iss >> buf; // <-
 
-      ROS_ASSERT(nodes.count(input_node_name) == 1);
-      ROS_ASSERT(nodes.count(output_node_name) == 1);
-      nodes[input_node_name]->registerInput(input_outlet_name, nodes[output_node_name]->getOutlet(output_outlet_name));
+      vector<string> producer_pod_names;
+      vector<string> output_names;
+      while(!iss.eof()) {
+	iss >> buf;
+	producer_pod_names.push_back(buf.substr(0, buf.find(':')));
+	output_names.push_back(buf.substr(buf.find(':') + 1));
+	PL_ASSERT(pod_names.count(producer_pod_names.back()) == 1);
+      }
+      PL_ASSERT(!producer_pod_names.empty());
+      PL_ASSERT(producer_pod_names.size() == output_names.size());
+      for(size_t j = 0; j < producer_pod_names.size(); ++j)
+	pod_names[consumer_pod_name]->registerInput(input_name, pod_names[producer_pod_names[j]], output_names[j]);
     }
 
+    addPods(pods);
+  }
+
+  Pod* Pipeline::getPod(const std::string& name) const
+  {
+    PL_ASSERT(pod_names_.size() == pods_.size());
+    map<string, Pod*>::const_iterator it;
+    it = pod_names_.find(name);
+    if(it == pod_names_.end()) {
+      PL_ABORT("Called getPod(\"" << name << "\"), but no Pod with that name exists.");
+    }
+    return it->second;
   }
   
 } // namespace pipeline

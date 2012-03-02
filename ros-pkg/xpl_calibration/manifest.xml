@@ -1,0 +1,17 @@
+<package>
+  <description brief="xpl_calibration">
+
+     xpl_calibration
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/xpl_calibration</url>
+  <depend package="rgbd_sequence"/>
+  <depend package="bag_of_tricks"/>
+  <depend package="eigen_extensions"/>
+
+</package>
+
+

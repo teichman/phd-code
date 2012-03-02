@@ -1,0 +1,22 @@
+<package>
+  <description brief="rgbd_sequence">
+
+     rgbd_sequence
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/rgbd_sequence</url>
+  <depend package="pcl_bleeding"/>
+  <depend package="serializable"/>
+  <depend package="opencv2_flags"/>
+
+  <export>
+    <cpp cflags="-I${prefix}/include"
+	 lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lrgbd_sequence" />
+  </export>
+  
+</package>
+
+
