@@ -98,7 +98,13 @@ namespace dst
     KinectCloud::ConstPtr pcd = kdtree_otl_->pull().current_pcd_;
     pcl::PointCloud<pcl::PointXYZRGBNormal> cn;
     pcl::concatenateFields(*pcd, *normals_, cn);
-    pcl::io::savePCDFileBinary("debug/" + getRunName() + ".pcd", cn);
+
+    if(!cn.empty())
+      pcl::io::savePCDFileBinary("debug/" + getRunName() + ".pcd", cn);
+    else { 
+      int retval = system(("touch debug/" + getRunName() + ".pcd").c_str());
+      --retval;
+    }
   }
 
   void SurfaceNormalNode::_flush()

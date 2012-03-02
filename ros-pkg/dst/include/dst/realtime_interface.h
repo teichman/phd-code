@@ -35,7 +35,7 @@ namespace dst
     std::vector<cv::Mat3b> imgs_;
     bool segmenting_;
     cv::Mat1b seed_;
-    cv::Mat3b seed_vis_;
+    cv::Mat3b vis_;
     cv::Mat3b current_img_;
     std::vector<cv::Mat1b> segmentations_;
     std::vector<KinectCloud::Ptr> pcd_results_;
@@ -51,7 +51,7 @@ namespace dst
     void initializeGrabber();
     void segmentLatest();
     void processQueues();
-    void drawSeedVis();
+    void drawVis();
   };
 
 }

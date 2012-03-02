@@ -13,7 +13,10 @@ namespace dst
   class Recorder : public Lockable
   {
   public:
-    Recorder(const std::string& device_id = "");
+    //! 640x480: OpenNI_VGA_30Hz
+    //! 160x120: OpenNI_QQVGA_30Hz
+    Recorder(const std::string& device_id = "",
+	     pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz);
     void cloudCallback(const KinectCloud::ConstPtr& cloud);
     void imageCallback(const boost::shared_ptr<openni_wrapper::Image>& image);
     void irCallback(const boost::shared_ptr<openni_wrapper::IRImage>& oni_img);
@@ -23,6 +26,7 @@ namespace dst
 
   protected:
     std::string device_id_;
+    pcl::OpenNIGrabber::Mode mode_;
     pcl::OpenNIGrabber grabber_;
     pcl::visualization::CloudViewer cloud_viewer_;
     bool recording_;

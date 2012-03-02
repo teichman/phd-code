@@ -59,7 +59,13 @@ namespace dst
       return;
 
     cout << "Previous foreground PCD has " << fg_pcd_->size() << " points." << endl;
-    pcl::io::savePCDFileBinary("debug/" + getRunName() + ".pcd", *fg_pcd_);
+    if(!fg_pcd_->empty())
+      pcl::io::savePCDFileBinary("debug/" + getRunName() + ".pcd", *fg_pcd_);
+    else { 
+      int retval = system(("touch debug/" + getRunName() + ".pcd").c_str());
+      --retval;
+    }
+
   }
 
   void ForegroundKdTreeNode::_flush()

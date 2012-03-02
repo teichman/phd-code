@@ -6,7 +6,7 @@
 #include <dst/node_potential_generator.h>
 #include <dst/kdtree_node.h>
 #include <dst/scene_alignment_node.h>
-#include <dst/image_region_iterator.h>
+#include <bag_of_tricks/image_region_iterator.h>
 
 namespace dst
 {

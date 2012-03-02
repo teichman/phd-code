@@ -7,18 +7,22 @@ using namespace Eigen;
 namespace dst
 {
 
-  OrganizedSurfaceNormalNode::OrganizedSurfaceNormalNode(pipeline2::Outlet<DepthProjector::Output>* index_otl,
+  OrganizedSurfaceNormalNode::OrganizedSurfaceNormalNode(pipeline2::Outlet<KinectCloud::ConstPtr>* pcd_otl,
 							 pipeline2::Outlet<cv::Mat1b>* mask_otl,
 							 int radius) :
     ComputeNode(),
     normals_otl_(this),
-    index_otl_(index_otl),
+    pcd_otl_(pcd_otl),
     mask_otl_(mask_otl),
     radius_(radius),
     normals_(new Normals())
   {
-    registerInput(index_otl_->getNode());
-    registerInput(mask_otl_->getNode());
+    // Gross hack.
+    // TODO: There should be a good way to call ComputeNode functionality without having an entire pipeline.
+    if(mask_otl_->getNode())
+      registerInput(mask_otl_->getNode());
+    if(pcd_otl_->getNode())
+      registerInput(pcd_otl_->getNode());
   }
 
   void OrganizedSurfaceNormalNode::computeNormal(const KinectCloud& pcd,
@@ -44,9 +48,9 @@ namespace dst
   	continue;
       }
 
-      //double dist = pcl::euclideanDistance(pcd[indices[i]], center);
-      double dist = fabs(pcd[indices[i]].z - center.z); // Rough approximation.
-      double sigma = 0.02; // TODO: Parameterize.
+      double dist = pcl::euclideanDistance(pcd[indices[i]], center);
+      //double dist = fabs(pcd[indices[i]].z - center.z); // Rough approximation.
+      double sigma = 0.1; // TODO: Parameterize.
       weights_[i] = exp(-dist / sigma); 
       //weights_[i] = 1.0;
       total_weight += weights_[i];
@@ -97,17 +101,16 @@ namespace dst
     indices_.clear();
     inliers_.clear();
     
-    ImageRegionIterator it(cv::Size(pcd.width, pcd.height),
-			   img_pt, radius_);
-    for(; !it.done(); ++it) {
-      int idx = it.indexRowMajor();
-      if(idx % 2 != 0)
-	continue;
+    ImageRegionIterator it(cv::Size(pcd.width, pcd.height), radius_);
+    for(it.setCenter(img_pt); !it.done(); ++it) {
+      int idx = it.index();
+      // if(idx % 2 != 0)
+      // 	continue;
       
       if(isnan(pcd[idx].z))
 	continue;
 
-      indices_.push_back(it.indexRowMajor());
+      indices_.push_back(it.index());
     }
 
     computeNormal(pcd, pt, indices_, normal);
@@ -115,7 +118,7 @@ namespace dst
   
   void OrganizedSurfaceNormalNode::_compute()
   {
-    KinectCloud::ConstPtr pcd = index_otl_->pull().current_pcd_;
+    KinectCloud::ConstPtr pcd = pcd_otl_->pull();
     ROS_ASSERT(normals_->empty());
     normals_->resize(pcd->size());
 
@@ -148,27 +151,51 @@ namespace dst
     c[1] = fabs(p.normal[1]) * 255;
     c[2] = fabs(p.normal[2]) * 255;
   }
+
+  cv::Mat3b OrganizedSurfaceNormalNode::getSurfNorm(const KinectCloud& pcd)
+  {
+    cv::Mat3b vis(pcd.height, pcd.width, cv::Vec3b(0, 0, 0));
+    normals_->resize(pcd.size());
+    for(size_t y = 0; y < pcd.height; ++y) {
+      for(size_t x = 0; x < pcd.width; ++x) {
+	int idx = y * pcd.width + x;
+	cv::Point2i img_pt(x, y);
+	if(pcd.at(idx).x != pcd.at(idx).x) { // this will only occur if it's 'nan'
+	  continue;
+	}
+	computeNormal(pcd, pcd.at(idx), img_pt, &normals_->at(idx));
+	normalToColor(normals_->at(idx), &vis(y, x));
+      }
+    }
+    normals_otl_.push(normals_);
+    return vis;
+  }
   
   void OrganizedSurfaceNormalNode::_display() const
   {
-    cv::Mat1i index = index_otl_->pull().current_index_;
-    cv::Mat3b vis(index.size(), cv::Vec3b(0, 0, 0));
+    const KinectCloud& pcd = *pcd_otl_->pull();
+    cv::Mat3b vis(cv::Size(pcd.width, pcd.height), cv::Vec3b(0, 0, 0));
 
     for(int y = 0; y < vis.rows; ++y) {
       for(int x = 0; x < vis.cols; ++x) {
-	if(index(y, x) == -1)
+	int idx = y * pcd.width + x;
+	if(isnan(pcd[idx].x))
 	  continue;
 
-	normalToColor(normals_->at(index(y, x)), &vis(y, x));
+	normalToColor(normals_->at(idx), &vis(y, x));
       }
     }
 
     cv::imwrite("debug/" + getRunName() + ".png", vis);
 
-    KinectCloud::ConstPtr pcd = index_otl_->pull().current_pcd_;
     pcl::PointCloud<pcl::PointXYZRGBNormal> cn;
-    pcl::concatenateFields(*pcd, *normals_, cn);
-    pcl::io::savePCDFileBinary("debug/" + getRunName() + ".pcd", cn);
+    pcl::concatenateFields(pcd, *normals_, cn);
+    if(!cn.empty())
+      pcl::io::savePCDFileBinary("debug/" + getRunName() + ".pcd", cn);
+    else { 
+      int retval = system(("touch debug/" + getRunName() + ".pcd").c_str());
+      --retval;
+    }
   }
 
   void OrganizedSurfaceNormalNode::_flush()

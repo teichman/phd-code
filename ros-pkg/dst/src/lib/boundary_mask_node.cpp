@@ -1,5 +1,7 @@
 #include <dst/boundary_mask_node.h>
 
+#define MASK getenv("MASK")
+
 using namespace std;
 using namespace Eigen;
 
@@ -96,10 +98,10 @@ namespace dst
 	  
 	  // -- Determine if this point has any neighbors in 3d worth considering.
 	  int center_label = seg(y, x);
-	  ImageRegionIterator it(rough_mask_.size(), cv::Point2i(x, y), radius_2d_);
-	  for(; !it.done(); ++it) {
+	  ImageRegionIterator it(rough_mask_.size(), radius_2d_);
+	  for(it.setCenter(cv::Point2i(x, y)); !it.done(); ++it) {
 	    if(seg(*it) != center_label && seg(*it) != 127) { 
-	      const pcl::PointXYZRGB& pt = prev_pcd[it.indexRowMajor()];
+	      const pcl::PointXYZRGB& pt = prev_pcd[it.index()];
 	      if(isnan(pt.z))
 		continue;
 	      
@@ -133,7 +135,7 @@ namespace dst
       *refined_pcd_indices_ = *rough_pcd_indices_;
     }
 
-    if(getenv("NO_MASK")) {
+    if(!MASK) {
       refined_mask_ = 255;
       refined_pcd_indices_->clear();
       const KinectCloud& pcd = *pcd_otl_->pull();
@@ -148,7 +150,8 @@ namespace dst
 	if(refined_mask_(y, x) != 255) { 
 	  if(seg(y, x) == 255)
 	    source_potentials_(y, x) = 1;
-	  else if(seg(y, x) == 0)
+	  //else if(seg(y, x) == 0)
+	  else 
 	    sink_potentials_(y, x) = 1;
 	}
       }

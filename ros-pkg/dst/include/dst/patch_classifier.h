@@ -126,10 +126,10 @@ namespace dst
     Fern(int radius);
     virtual ~Fern();
 
-    //! You must make sure pt is at least radius_ away from the img.
+    //! You must make sure pt is at least radius_ away from the edge.
     void train(PatchClassifierData& data, const cv::Point2i& pt, uchar label);
     void train(const FeatureVector& f, uchar label);
-    //! You must make sure pt is at least radius_ away from the img.
+    //! You must make sure pt is at least radius_ away from the edge.
     float classify(PatchClassifierData& data, const cv::Point2i& pt) const;
     float classify(const FeatureVector& f) const;
     virtual FeatureVector computeFeatures(PatchClassifierData& data, const cv::Point2i& pt) const;
@@ -203,6 +203,8 @@ namespace dst
     PatchClassifier::FeatureCache cached_features_;
     PatchClassifier::FeatureCache prev_cached_features_;
     std::vector<cv::Point2i> fps_;
+    std::vector<cv::Point2i> fg_pts_;
+    std::vector<cv::Point2i> bg_pts_;
 
     void initializeClassifier();
     void updateClassifier();

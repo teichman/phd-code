@@ -22,7 +22,11 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
-rosbuild_add_library(${PROJECT_NAME} src/high_res_timer.cpp)
+rosbuild_add_library(${PROJECT_NAME}
+  src/high_res_timer.cpp
+  src/image_region_iterator.cpp
+  )
+
 target_link_libraries(${PROJECT_NAME} rt)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()

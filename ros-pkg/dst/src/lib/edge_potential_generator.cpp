@@ -11,6 +11,15 @@ namespace dst
   {
   }
 
+  void EdgePotentialGenerator::initializeStorage(int num_nodes, double reserve_per_node)
+  {
+    if(potentials_.rows() != num_nodes || potentials_.cols() != num_nodes) { 
+      potentials_ = SparseMatrix<double, RowMajor>(num_nodes, num_nodes);
+      potentials_.reserve((int)(reserve_per_node * num_nodes));
+    }
+    potentials_.setZero();
+  }
+  
   void drawLine(cv::Point pt, const cv::Point& pt1, double potential, cv::Mat3b vis)
   {
     if(pt1.x < 0 || pt1.x >= vis.cols)

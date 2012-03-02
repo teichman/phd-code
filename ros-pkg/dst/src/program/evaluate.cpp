@@ -40,7 +40,7 @@ int main(int argc, char** argv)
   for(int i = 2; i < argc - 1; ++i) {
     loadSequences(argv[i], &sequences);
     for(size_t j = 0; j < sequences.size(); ++j)
-      evaluator.evaluate(sequences[j]);
+      evaluator.evaluate(sequences[j], argv[i]);
 
     sequences.clear();
   }

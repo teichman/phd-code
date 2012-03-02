@@ -8,11 +8,11 @@ using namespace std;
 namespace dst
 {
   
-  Recorder::Recorder(const std::string& device_id) :
+  Recorder::Recorder(const std::string& device_id,
+		     pcl::OpenNIGrabber::Mode mode) :
     device_id_(device_id),
-    grabber_(device_id_,
-	     pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz,
-	     pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz),
+    mode_(mode),
+    grabber_(device_id_, mode, mode),
     cloud_viewer_("PointCloud"),
     recording_(false)
   {
@@ -139,10 +139,12 @@ namespace dst
     if(recording_)
       return;
 
-    string name;
-    cout << "Save sequence as: ";
-    cin >> name;
-
+    // string name;
+    // cout << "Save sequence as: ";
+    // cin >> name;
+    string name = generateFilename("recorded_sequences", "seq");
+    
+    
     // -- Get matching frames, put into KinectSequence.
     KinectSequence seq;
     size_t img_idx = 0;
@@ -160,19 +162,29 @@ namespace dst
 	KinectCloud::Ptr tmp(new KinectCloud(*clouds_[pcd_idx]));
 	seq.pointclouds_.push_back(tmp);
 
-	// QQVGA appears to work for the pcd but not for the img.
-	// Resize the image here.
-	ROS_ASSERT(images_[img_idx].cols == 320);
-	ROS_ASSERT(images_[img_idx].rows == 240);
-	ROS_ASSERT(tmp->width == 160);
-	ROS_ASSERT(tmp->height == 120);
-	// cout << "img size: " << images_[img_idx].cols << " " << images_[img_idx].rows << endl;
-	// cout << "pcd size: " << tmp->width << " " << tmp->height << endl;
-	
-	//seq.images_.push_back(images_[img_idx]);
-	cv::Mat3b small_img;
-	cv::resize(images_[img_idx], small_img, cv::Size(160, 120));
-	seq.images_.push_back(small_img);
+	if(mode_ == pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz) { 
+	  // QQVGA appears to work for the pcd but not for the img.
+	  // Resize the image here.
+	  ROS_ASSERT(images_[img_idx].cols == 320);
+	  ROS_ASSERT(images_[img_idx].rows == 240);
+	  ROS_ASSERT(tmp->width == 160);
+	  ROS_ASSERT(tmp->height == 120);
+	  // cout << "img size: " << images_[img_idx].cols << " " << images_[img_idx].rows << endl;
+	  // cout << "pcd size: " << tmp->width << " " << tmp->height << endl;
+	  
+	  //seq.images_.push_back(images_[img_idx]);
+	  cv::Mat3b small_img;
+	  cv::resize(images_[img_idx], small_img, cv::Size(160, 120));
+	  seq.images_.push_back(small_img);
+	}
+	else if(mode_ == pcl::OpenNIGrabber::OpenNI_VGA_30Hz) {
+	  ROS_ASSERT(images_[img_idx].cols == 640);
+	  ROS_ASSERT(images_[img_idx].rows == 480);
+	  ROS_ASSERT(clouds_[pcd_idx]->width == 640);
+	  ROS_ASSERT(clouds_[pcd_idx]->height == 480);
+	  
+	  seq.images_.push_back(images_[img_idx]);
+	}
 
 	++img_idx;
 	++pcd_idx;

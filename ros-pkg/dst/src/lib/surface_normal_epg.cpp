@@ -9,12 +9,14 @@ namespace dst
   SurfaceNormalEPG::SurfaceNormalEPG(pipeline2::Outlet<Normals::Ptr>* normals_otl,
 				     pipeline2::Outlet<DepthProjector::Output>* index_otl,
 				     pipeline2::Outlet<cv::Mat1b>* mask_otl,
-				     pipeline2::Outlet<cv::Mat3b>* image_otl) :
+				     pipeline2::Outlet<cv::Mat3b>* image_otl,
+				     double sigma) :
     EdgePotentialGenerator(),
     normals_otl_(normals_otl),
     index_otl_(index_otl),
     mask_otl_(mask_otl),
-    image_otl_(image_otl)
+    image_otl_(image_otl),
+    sigma_(sigma)
   {
     registerInput(normals_otl_->getNode());
     registerInput(index_otl_->getNode());
@@ -25,13 +27,20 @@ namespace dst
   inline
   double SurfaceNormalEPG::computePotential(int idx0, int idx1, Normals::Ptr normals) const
   {
-    double val = 0.0;
+    double dot = 0.0;
     if(!isnan(normals->at(idx0).normal[0]) && !isnan(normals->at(idx1).normal[0]))
       for(int i = 0; i < 3; ++i)
-	val += normals->at(idx0).normal[i] * normals->at(idx1).normal[i];
+	dot += normals->at(idx0).normal[i] * normals->at(idx1).normal[i];
 
-    //cout << val << " " << pow(fabs(val), 60) << endl;
-    return pow(fabs(val), 60); // TODO: parameterize.
+    double angle = acos(dot);
+    if(fabs(dot - 1e-6) > 1 || fabs(dot + 1e-6) > 1)
+      angle = 0; // acos(1) returns NaN.
+
+    if(isnan(angle)) {
+      ROS_FATAL_STREAM("NaN: " << dot << " " << acos(dot) << std::flush);
+      abort();
+    }
+    return exp(-angle / sigma_);
   }
   
   void SurfaceNormalEPG::fillPotentials(int y, int x, int idx)
@@ -61,9 +70,7 @@ namespace dst
   void SurfaceNormalEPG::_compute()
   {
     cv::Mat1i index = index_otl_->pull().current_index_;
-    int num_nodes = index.rows * index.cols;
-    //if(potentials_.rows() != num_nodes || potentials_.cols() != num_nodes)
-    potentials_ = SparseMatrix<double, RowMajor>(num_nodes, num_nodes); // TODO: Don't reallocate every time.
+    initializeStorage(index.rows * index.cols);
 
     cv::Mat1b mask = mask_otl_->pull();
     for(int y = 0; y < index.rows; ++y) {

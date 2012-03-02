@@ -18,6 +18,7 @@ namespace dst
 		 float sigma_color,
 		 float delta_transform_thresh,
 		 bool use_prev_bg,
+		 int skip,
 		 const std::vector<int>& lookback) :
     NodePotentialGenerator(),
     aligned_fg_otl_(this),
@@ -34,6 +35,7 @@ namespace dst
     sigma_color_(sigma_color),
     delta_transform_thresh_(delta_transform_thresh),
     use_prev_bg_(use_prev_bg),
+    skip_(skip),
     lookback_(lookback),
     aligned_fg_(new KinectCloud()),
     aligned_fg_kdtree_(new KdTree())
@@ -143,6 +145,9 @@ namespace dst
     vector<int> indices(1);
     vector<float> distances(1);
     for(size_t i = 0; i < object.size(); ++i) {
+      if(rand() % skip_ != 0)
+	continue;
+      
       curr_kdtree.nearestKSearch(object[i], 1, indices, distances);
       int idx = curr_kdtree.getIndices()->at(indices[0]);
       //int idx = indices[0];

@@ -61,11 +61,9 @@ namespace dst
     cv::cvtColor(img, gray, CV_BGR2GRAY);
     cv::Canny(gray, canny_, threshold1_, threshold2_);
 
-    // -- Fill the edge potentials.
-    int num_nodes = img.rows * img.cols;
-    //if(potentials_.rows() != num_nodes || potentials_.cols() != num_nodes)
-    potentials_ = SparseMatrix<double, RowMajor>(num_nodes, num_nodes); // TODO: Don't reallocate every time.
+    initializeStorage(img.rows * img.cols);
 
+    // -- Fill the edge potentials.
     for(int y = 0; y < canny_.rows; ++y) {
       for(int x = 0; x < canny_.cols; ++x) {
 	int idx = getIdx(y, x, canny_.cols);

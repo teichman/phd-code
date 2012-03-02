@@ -150,6 +150,19 @@ namespace dst
     return *this;
   }  
 
+  size_t KinectSequence::totalPixels() const
+  {
+    return images_.size() * pixelsPerFrame();
+  }
+
+  size_t KinectSequence::pixelsPerFrame() const
+  {
+    if(images_.empty())
+      return 0;
+    else
+      return images_[0].rows * images_[0].cols;
+  }
+  
   void loadSequences(const std::string& path,
 		     std::vector<KinectSequence::Ptr>* sequences)
   {
@@ -173,6 +186,84 @@ namespace dst
       seq->load(path);
       ROS_DEBUG_STREAM("Loaded sequence " << path << " with  " << seq->images_.size() << " frames.");
       sequences->push_back(seq);
+    }
+  }
+
+  void visualizeSeedLabels(cv::Mat1b seed, cv::Mat3b img, cv::Mat3b vis)
+  {    
+    img.copyTo(vis);
+    for(int y = 0; y < vis.rows; ++y) {
+      for(int x = 0; x < vis.cols; ++x) {
+	if(seed(y, x) == 0)
+	  vis(y, x) = cv::Vec3b(0, 0, 0);
+	else if(seed(y, x) == 255)
+	  vis(y, x) = cv::Vec3b(255, 255, 255);
+      }
+    }
+  }
+
+  void visualizeSegmentation(cv::Mat1b seg, cv::Mat3b img, cv::Mat3b vis)
+  {
+    // -- Dull the colors of the background.
+    cv::Mat3b dull_bg = img.clone();
+    for(int y = 0; y < seg.rows; ++y) { 
+      for(int x = 0; x < seg.cols; ++x) { 
+	if(seg(y, x) != 255) { 
+	  dull_bg(y, x)[0] *= 0.5; 
+	  dull_bg(y, x)[1] *= 0.5;
+	  dull_bg(y, x)[2] *= 0.5;
+	}
+      }
+    }
+
+    // -- Add a red border around the object.    
+    cv::Mat3b mask = dull_bg.clone();
+    cv::Mat1b dilation;
+    cv::dilate(seg, dilation, cv::Mat(), cv::Point(-1, -1), 4);
+    for(int y = 0; y < seg.rows; ++y) 
+      for(int x = 0; x < seg.cols; ++x)
+	if(dilation(y, x) == 255 && seg(y, x) != 255)
+	  mask(y, x) = cv::Vec3b(0, 0, 255);
+    cv::addWeighted(dull_bg, 0.5, mask, 0.5, 0.0, vis);
+  }
+  
+  void KinectSequence::saveVisualization(const std::string& path) const
+  {
+    if(bfs::exists(path)) { 
+      ROS_ERROR_STREAM("Save path " << path << " already exists.  Not saving visualization.");
+      return;
+    }
+
+    if(segmentations_.size() != images_.size() || seed_images_.size() != images_.size()) {
+      ROS_ERROR_STREAM("Sequence must have an equal number of images, seed image, and segmentations to call saveVisualization().");
+      return;
+    }
+
+    bfs::create_directory(path);
+    for(size_t i = 0; i < segmentations_.size(); ++i) {
+      {
+	cv::Mat3b vis(segmentations_[i].size());
+	visualizeSegmentation(segmentations_[i], images_[i], vis);
+	ostringstream oss;
+	oss << path << "/segvis" << setw(4) << setfill('0') << i << ".png";
+	cv::imwrite(oss.str(), vis);
+      }
+      
+      {
+	// -- Only save seed visualizations that have content.
+	bool flag = false;
+	for(int y = 0; y < seed_images_[i].rows; ++y)
+	  for(int x = 0; x < seed_images_[i].cols; ++x)
+	    if(seed_images_[i](y, x) == 0 || seed_images_[i](y, x) == 255)
+	      flag = true;
+	if(flag) { 
+	  cv::Mat3b vis(seed_images_[i].size());
+	  visualizeSeedLabels(seed_images_[i], images_[i], vis);
+	  ostringstream oss;
+	  oss << path << "/seedvis" << setw(4) << setfill('0') << i << ".png";
+	  cv::imwrite(oss.str(), vis);
+	}
+      }
     }
   }
   

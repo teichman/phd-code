@@ -13,7 +13,7 @@
 
 #define NUM_THREADS (getenv("NUM_THREADS") ? atoi(getenv("NUM_THREADS")) : 1)
 #define DEBUG (getenv("DEBUG"))
-#define DISPLAY (getenv("DISPLAY"))
+#define VISUALIZE (getenv("VISUALIZE"))
 
 using namespace std;
 using namespace Eigen;
@@ -84,7 +84,7 @@ int main(int argc, char** argv)
     }
 
     cv::Mat3b seg_vis = drawSegVis(seq->images_[i], seq->segmentations_[i]);
-    if(DISPLAY) { 
+    if(VISUALIZE) { 
       cvMoveWindow("Segmentation", 300, 0);
       cv::imshow("Segmentation", seg_vis);
       cv::imshow("Image", seq->images_[i]);

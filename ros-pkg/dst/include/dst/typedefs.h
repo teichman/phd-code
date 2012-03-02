@@ -7,9 +7,11 @@
 
 namespace dst
 {
+  
   typedef pcl::PointCloud<pcl::PointXYZRGB> KinectCloud;
   typedef pcl::PointXYZRGB Point;
   typedef Graph<double, double, double> Graph3d;
   typedef boost::shared_ptr<Graph3d> Graph3dPtr;
   typedef pcl::KdTreeFLANN<pcl::PointXYZRGB> KdTree;
+  
 }

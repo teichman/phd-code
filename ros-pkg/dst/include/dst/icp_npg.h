@@ -37,7 +37,9 @@ namespace dst
 	   float sigma_color,
 	   float delta_transform_thresh,
 	   bool use_prev_bg,
+	   int skip,
 	   const std::vector<int>& lookback = std::vector<int>(1, 0));
+      
 
     //! Iteratively transforms curr_fg to fit into curr_kdtree.
     //! Returns num_inliers / curr_fg->size as score.
@@ -65,6 +67,7 @@ namespace dst
     //! of this much to continue searching.
     float delta_transform_thresh_;
     bool use_prev_bg_;
+    int skip_;
     //! Do ICP using FG from these previous frames.  The first must be 0.
     //! lookback_[i] = k means that fg_buffer_[k] will be used.
     std::vector<int> lookback_;

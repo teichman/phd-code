@@ -21,7 +21,6 @@ namespace dst
     cloud_viewer_("PointCloud"),
     segmenting_(false),
     seed_(cv::Size(160, 120), 127),
-    seed_vis_(cv::Size(160, 120)),
     needs_redraw_(false),
     thresh_(0.01)
   {
@@ -30,6 +29,7 @@ namespace dst
     imgs_.reserve(1000);
 
     img_view_.setDelegate((OpenCVViewDelegate*)this);
+    img_view_.scale_ = 3;
   }
   
   void RealTimeInterface::run()
@@ -37,27 +37,39 @@ namespace dst
     grabber_.start();
     while(!cloud_viewer_.wasStopped(1)) {
       if(needs_redraw_) {
-	drawSeedVis();
+	drawVis();
       }
-      usleep(1e3);
+      usleep(3e4);
     }
     grabber_.stop();
   }
 
-  void RealTimeInterface::drawSeedVis()
+  void RealTimeInterface::drawVis()
   {
-    current_img_.copyTo(seed_vis_);
+    lock();
+    cv::Mat3b background;
+    if(segmenting_) {
+      if(imgs_.empty()) {
+	unlock();
+	return;
+      }
+      background = imgs_.back();
+    }
+    else
+      background = current_img_;
+      
+    background.copyTo(vis_);
     for(int y = 0; y < seed_.rows; ++y) {
       for(int x = 0; x < seed_.cols; ++x) {
 	switch(seed_(y, x)) {
 	case 127:
-	  seed_vis_(y, x) = current_img_(y, x);
+	  vis_(y, x) = background(y, x);
 	  break;
 	case 0:
-	  seed_vis_(y, x) = cv::Vec3b(0, 0, 0);
+	  vis_(y, x) = cv::Vec3b(0, 0, 0);
 	  break;
 	case 255:
-	  seed_vis_(y, x) = cv::Vec3b(255, 255, 255);
+	  vis_(y, x) = cv::Vec3b(255, 255, 255);
 	  break;
 	default:
 	  break;
@@ -65,9 +77,11 @@ namespace dst
       }
     }
 
-    img_view_.updateImage(seed_vis_);
+    if(segmenting_)
+      visualizeSegmentation(segmentations_.back(), vis_, vis_);
+    
+    img_view_.updateImage(vis_);
     char key = img_view_.cvWaitKey(8);
-    lock();
     switch(key) {
     case ' ':
       segmenting_ = !segmenting_;
@@ -99,9 +113,9 @@ namespace dst
   void RealTimeInterface::cloudCallback(const KinectCloud::ConstPtr& cloud)
   {
     lock();
-    cloud_viewer_.showCloud(cloud);
-
-    if(segmenting_) { 
+    if(!segmenting_)
+      cloud_viewer_.showCloud(cloud);
+    else { 
       pcd_queue_.push_back(cloud);
       processQueues();
     }
@@ -251,7 +265,11 @@ namespace dst
     }
     
     // -- Visualize the segmentation.
-    cv::imshow("Segmentation", segmentations_.back());    
+    // double scale = 3;
+    // cv::Size sz(segmentations_.back().cols * scale, segmentations_.back().rows * scale);
+    // cv::resize(segmentations_.back(), seg_vis_, sz, cv::INTER_NEAREST);
+    // cv::imshow("Segmentation", seg_vis_);
+    //cv::imshow("Segmentation", segmentations_.back());    
   }
   
   void RealTimeInterface::imageCallback(const boost::shared_ptr<openni_wrapper::Image>& oni_img)

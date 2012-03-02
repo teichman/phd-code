@@ -1,28 +1,37 @@
+#include <eigen_extensions/eigen_extensions.h>
 #include <dst/sequence_segmentation_view_controller.h>
+#include <pcl/segmentation/impl/extract_clusters.hpp>
 
 using namespace std;
+using namespace Eigen;
+using namespace pcl;
+using namespace pcl::visualization;
 
 #define NUM_THREADS (getenv("NUM_THREADS") ? atoi(getenv("NUM_THREADS")) : 1)
+#define VWEIGHTS (getenv("VWEIGHTS"))
 
 namespace dst
 {
 
-  SequenceSegmentationViewController::SequenceSegmentationViewController(KinectSequence::Ptr seq) :
+  SequenceSegmentationViewController::SequenceSegmentationViewController(KinectSequence::Ptr seq,
+									 SegmentationPipeline::Ptr sp) :
     OpenCVViewDelegate(),
     Lockable(),
     seq_(seq),
     seg_view_("Segmentation"),
-    pcd_view_("Cloud"),
+    vis_("Visualizer"),
     img_view_("Image"),
-    seed_radius_(0),
-    sp_(NUM_THREADS),
+    seed_radius_(3),
+    sp_(sp),
     current_idx_(0),
     quitting_(false),
     needs_redraw_(true),
     state_(RAW),
-    show_depth_(true),
+    vis_type_(0),
     show_seg_3d_(false),
-    max_range_(3.0)
+    max_range_(3.0),
+    cluster_tol_(0.02),
+    background_model_(new KinectCloud)
   {
     img_view_.setDelegate((OpenCVViewDelegate*)this);
     img_view_.message_scale_ = 0.25;
@@ -30,7 +39,60 @@ namespace dst
     
     segmented_pcds_.resize(seq->images_.size());
     for(size_t i = 0; i < segmented_pcds_.size(); ++i)
-      segmented_pcds_[i] = KinectCloud::Ptr(new KinectCloud());
+      segmented_pcds_[i] = generateForeground(seq->segmentations_[i], *seq->pointclouds_[i]);
+
+    // -- Hardcode the camera for the Kinect.
+    vis_.camera_.clip[0] = 0.00387244;
+    vis_.camera_.clip[1] = 3.87244;
+    vis_.camera_.focal[0] = -0.160878;
+    vis_.camera_.focal[1] = -0.0444743;
+    vis_.camera_.focal[2] = 1.281;
+    vis_.camera_.pos[0] = 0.0402195;
+    vis_.camera_.pos[1] = 0.0111186;
+    vis_.camera_.pos[2] = -1.7;
+    vis_.camera_.view[0] = 0;
+    vis_.camera_.view[1] = -1;
+    vis_.camera_.view[2] = 0;
+    vis_.camera_.window_size[0] = 1678;
+    vis_.camera_.window_size[1] = 525;
+    vis_.camera_.window_pos[0] = 2;
+    vis_.camera_.window_pos[1] = 82;
+    vis_.updateCamera();
+
+    vis_.registerKeyboardCallback(&SequenceSegmentationViewController::keyboardEventOccurred, *this);
+    vis_.setBackgroundColor(255, 255, 255);
+    PointCloudColorHandlerCustom<PointXYZRGB> single_color(seq_->pointclouds_[current_idx_], 0, 0, 0);
+    vis_.addPointCloud(seq_->pointclouds_[current_idx_], single_color, "original");
+    vis_.addPointCloud(segmented_pcds_[current_idx_], "segmented");
+    vis_.setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, 1, "original");
+    vis_.setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, 5, "segmented");
+  }
+
+  void SequenceSegmentationViewController::keyboardEventOccurred(const KeyboardEvent &event, void* data)
+  {
+    if(event.keyDown()) {
+      //cout << event.getKeySym() << endl;
+      if(event.getKeySym().size() == 1)
+	handleKeypress(event.getKeySym());
+      else if(event.getKeySym().compare("period") == 0)
+	handleKeypress('.');
+      else if(event.getKeySym().compare("comma") == 0)
+	handleKeypress(',');
+    }
+  }
+  
+  KinectCloud::Ptr SequenceSegmentationViewController::generateForeground(cv::Mat1b seg, const KinectCloud& cloud) const
+  {
+    KinectCloud::Ptr fg(new KinectCloud);
+    for(int y = 0; y < seg.rows; ++y) {
+      for(int x = 0; x < seg.cols; ++x) {
+	if(seg(y, x) == 255) {
+	  int idx = y * seg.cols + x;
+	  fg->push_back(cloud[idx]);
+	}
+      }
+    }
+    return fg;
   }
 
   SequenceSegmentationViewController::~SequenceSegmentationViewController()
@@ -41,9 +103,10 @@ namespace dst
   {
     ROS_ASSERT(seq_);
     seed_vis_ = seq_->images_[current_idx_].clone();
-    seg_vis_ = cv::Mat3b(seq_->images_[current_idx_].size(), 127);
-    
+    seg_vis_  = cv::Mat3b(seq_->images_[current_idx_].size(), 127);
+
     while(true) {
+      vis_.spinOnce(5);
       if(needs_redraw_)
 	draw();
 
@@ -58,9 +121,9 @@ namespace dst
   void SequenceSegmentationViewController::increaseSeedWeights()
   {
     ROS_INFO_STREAM("Increasing seed weights.  Assuming seed weight is the 0th node weight.");
-    Eigen::VectorXd w = sp_.getWeights();
-    w(sp_.getEdgeWeights().rows()) *= 10.0;
-    sp_.setWeights(w);
+    Eigen::VectorXd w = sp_->getWeights();
+    w(sp_->getEdgeWeights().rows()) *= 10.0;
+    sp_->setWeights(w);
   }
   
   void SequenceSegmentationViewController::useSegmentationAsSeed()
@@ -76,9 +139,9 @@ namespace dst
   
   void SequenceSegmentationViewController::toggleDebug()
   {
-    sp_.toggleDebug();
+    sp_->toggleDebug();
     
-    if(sp_.getDebug())
+    if(sp_->getDebug())
       cout << "Debug mode is on." << endl;
     else
       cout << "Debug mode is off." << endl;
@@ -89,10 +152,66 @@ namespace dst
     string filename = "segmentation_pipeline_graphviz";
     ofstream f;
     f.open(filename.c_str());
-    f << sp_.getGraphviz();
+    f << sp_->getGraphviz();
     f.close();
 
     cout << "Saved pipeline graphviz to " << filename << endl;
+  }
+
+  void SequenceSegmentationViewController::saveVisualization()
+  {
+    string path;
+    cout << "Save path: " << flush;
+    cin >> path;
+    cout << "Saving visualization to " << path << endl;
+    seq_->saveVisualization(path);
+    
+    for(current_idx_ = 0; current_idx_ < (int)seq_->segmentations_.size(); ++current_idx_) {
+      draw();
+      ostringstream oss;
+      oss << path << "/pcdvis" << setw(4) << setfill('0') << current_idx_ << ".png";
+      cout << "Saving to " << oss.str() << endl;
+      vis_.saveScreenshot(oss.str());
+    }
+    --current_idx_;
+
+    cout << "Done." << endl;
+  }
+  
+  void SequenceSegmentationViewController::runVolumeSegmentation()
+  {
+    VectorXd weights;
+    if(!VWEIGHTS) { 
+      cout << "No volumetric weights supplied, using defaults." << endl;
+      int num_intra_edge = sp_->getEdgeWeights().rows();
+      weights = VectorXd::Ones(num_intra_edge + 4);
+      weights.head(num_intra_edge) = sp_->getEdgeWeights();
+      weights(num_intra_edge) = 10.0; // flow edges
+      weights(num_intra_edge + 1) = 10.0; // dense inter-frame
+      weights(num_intra_edge + 2) = 0.000001;  // prior
+      weights(num_intra_edge + 3) = 1000;  // seed
+    }
+    else {
+      cout << "Using weights at " << VWEIGHTS << endl;
+      eigen_extensions::loadASCII(VWEIGHTS, &weights);
+    }
+    cout << weights.transpose() << endl;
+    VolumeSegmenter vs(weights);
+    seq_->segmentations_.clear();
+    vs.segment(seq_, &seq_->segmentations_);
+
+    // Regenerate foreground pointclouds.
+    for(size_t i = 0; i < seq_->segmentations_.size(); ++i)
+      segmented_pcds_[i] = generateForeground(seq_->segmentations_[i], *seq_->pointclouds_[i]);
+    
+    needs_redraw_ = true;
+    cout << "Done." << endl;
+  }
+
+  void SequenceSegmentationViewController::handleKeypress(string key)
+  {
+    ROS_ASSERT(key.size() == 1);
+    handleKeypress((char)(key[0]));
   }
   
   void SequenceSegmentationViewController::handleKeypress(char key)
@@ -108,11 +227,17 @@ namespace dst
       if(retval.compare("y") == 0)
 	quitting_ = true;
       break;
-    case 'j':
+    case ',':
       advance(-1);
       break;
-    case 'k':
+    case '.':
       advance(1);
+      break;
+    case '<':
+      advance(-100);
+      break;
+    case '>':
+      advance(100);
       break;
     case 'F':
       increaseSeedWeights();
@@ -123,12 +248,18 @@ namespace dst
     case 'r':
       transitionTo(RAW);
       break;
-    case 'v':
+    case 'g':
       saveGraphviz();
       break;
-    case 'p':
+    case 'v':
       show_seg_3d_ = !show_seg_3d_;
       needs_redraw_ = true;
+      break;
+    // case 'V':
+    //   runVolumeSegmentation();
+    //   break;
+    case 'V':
+      saveVisualization();
       break;
     case '[':
       max_range_ -= 0.33;
@@ -149,12 +280,14 @@ namespace dst
       case 'D':
 	toggleDebug();
 	break;
-      case 'd':
-	show_depth_ = !show_depth_;
-	needs_redraw_ = true;
-	break;
       case 'i':
 	segmentImage();
+	break;
+      case 't':
+	++vis_type_;
+	if(vis_type_ > 2)
+	  vis_type_ = 0;
+       	needs_redraw_ = true;
 	break;
       case 's':
 	segmentSequence();
@@ -183,6 +316,44 @@ namespace dst
       case 'c':
 	seq_->seed_images_[current_idx_] = 127;
 	needs_redraw_ = true;
+	break;
+      case 'e':
+	extractConnectedComponent();
+	break;
+      case 'E':
+	for(current_idx_ = 0; current_idx_ < (int)seq_->segmentations_.size(); ++current_idx_) {
+	  cout << current_idx_ << " / " << seq_->segmentations_.size() << endl;
+	  useSegmentationAsSeed();
+	  extractConnectedComponent();
+	  segmentImage();
+	}
+	--current_idx_;
+	break;
+      case 'm':
+	*background_model_ += *seq_->pointclouds_[current_idx_];
+	cout << "Background model now has " << background_model_->size() << " points." << endl;
+	break;
+      case 'M':
+	background_model_->clear();
+	cout << "Background model cleared." << endl;
+	break;
+      case 'b':
+	segmentUsingBackgroundModel();
+	break;
+      case 'B':
+	segmentAllUsingBackgroundModel();
+	break;
+      case '*':
+	cluster_tol_ *= 2.0;
+	cout << "Cluster tolerance: " << cluster_tol_ << endl;
+	break;
+      case '/':
+	cluster_tol_ /= 2.0;
+	cout << "Cluster tolerance: " << cluster_tol_ << endl;
+	break;
+      case 'p':
+	extractPlane();
+	break;
       default:
 	break;
       }
@@ -207,6 +378,160 @@ namespace dst
     unlock();
   }
 
+  void SequenceSegmentationViewController::extractPlane()
+  {
+    // -- Make a pointcloud with just the background seed labels.
+    const KinectCloud& cloud = *seq_->pointclouds_[current_idx_];
+    cv::Mat1b seed = seq_->seed_images_[current_idx_];
+    vector<int> indices;
+    for(size_t i = 0; i < cloud.size(); ++i) {
+      int y = (int)i / cloud.width;
+      int x = (int)i - y * cloud.width;
+      if(seed(y, x) == 0)
+	indices.push_back(i);
+    }
+    if(indices.empty()) {
+      cout << "No bg pts." << endl;
+      return;
+    }
+
+    // -- Fit the best plane.
+    double tol = 0.005;
+    SampleConsensusModelPlane<Point>::Ptr plane(new SampleConsensusModelPlane<Point>(seq_->pointclouds_[current_idx_], indices));
+    RandomSampleConsensus<Point> ransac(plane);
+    ransac.setDistanceThreshold(tol);
+    ransac.computeModel();
+    std::vector<int> inliers;
+    ransac.getInliers(inliers);  // inliers indexes into the original pointcloud, not indices.
+    VectorXf raw_coefs;
+    ransac.getModelCoefficients(raw_coefs);
+    VectorXf coefs;
+    plane->optimizeModelCoefficients(inliers, raw_coefs, coefs);
+    
+    for(size_t i = 0; i < cloud.size(); ++i) {
+      if(fabs(coefs.dot(cloud[i].getVector4fMap()) + coefs(3)) < tol) { 
+	int y = (int)i / cloud.width;
+	int x = (int)i - y * cloud.width;
+	seed(y, x) = 0;
+      }
+    }
+
+    needs_redraw_ = true;
+  }
+
+  void SequenceSegmentationViewController::segmentAllUsingBackgroundModel()
+  {
+    pcl::search::KdTree<Point>::Ptr tree(new pcl::search::KdTree<Point>);
+    tree->setInputCloud(background_model_);
+
+    for(current_idx_ = 0; current_idx_ < (int)seq_->segmentations_.size(); ++current_idx_) {
+      cout << current_idx_ << " / " << seq_->segmentations_.size() << endl;
+      segmentUsingBackgroundModel(tree);
+      draw();
+      cv::waitKey(10);
+    }
+    --current_idx_;
+    needs_redraw_ = true;
+  }
+  
+  void SequenceSegmentationViewController::segmentUsingBackgroundModel(pcl::search::KdTree<Point>::Ptr tree)
+  {
+    if(background_model_->empty()) { 
+      cout << "No background model yet." << endl;
+      return;
+    }
+
+    if(!tree) { 
+      tree = pcl::search::KdTree<Point>::Ptr(new pcl::search::KdTree<Point>);
+      tree->setInputCloud(background_model_);
+    }
+
+    cout << "Segmenting using background model..." << endl;
+    vector<int> indices;
+    vector<float> distances;
+    cv::Mat1b seed = seq_->seed_images_[current_idx_];
+    KinectCloud& pcd = *seq_->pointclouds_[current_idx_];
+    for(size_t i = 0; i < pcd.size(); ++i) {
+      if(isnan(pcd[i].x))
+	continue;
+      
+      indices.clear();
+      distances.clear();
+      tree->radiusSearch(pcd[i], 0.01, indices, distances, 1);
+      
+      int y = i / pcd.width;
+      int x = i - y * pcd.width;
+      if(indices.empty())
+	seed(y, x) = 255;
+      else
+	seed(y, x) = 0;
+    }
+
+    extractConnectedComponent();
+    segmentImage();
+  }
+  
+  void SequenceSegmentationViewController::extractConnectedComponent()
+  {
+    // -- Make a pointcloud with just the foreground seed labels.
+    const KinectCloud& cloud = *seq_->pointclouds_[current_idx_];
+    cv::Mat1b seed = seq_->seed_images_[current_idx_];
+    KinectCloud::Ptr fg(new KinectCloud);
+    vector<int> indices;
+    for(size_t i = 0; i < cloud.size(); ++i) {
+      int y = (int)i / cloud.width;
+      int x = (int)i - y * cloud.width;
+      if(seed(y, x) == 255) { 
+	fg->push_back(cloud[i]);
+	indices.push_back(i);
+      }
+    }
+    if(fg->empty()) {
+      cout << "No fg pts." << endl;
+      return;
+    }
+    
+    // -- Run euclidean cluster extraction.
+    pcl::search::KdTree<Point>::Ptr tree(new pcl::search::KdTree<Point>);
+    tree->setInputCloud(fg);
+    pcl::EuclideanClusterExtraction<Point> ec;
+    ec.setClusterTolerance(cluster_tol_);
+    ec.setMinClusterSize(0);
+    ec.setMaxClusterSize(25000);
+    ec.setSearchMethod(tree);
+    ec.setInputCloud(fg);
+    std::vector<pcl::PointIndices> cluster_indices;
+    ec.extract(cluster_indices);
+    cout << "Found " << cluster_indices.size() << " clusters." << endl;
+
+    // -- Find the biggest cluster.
+    int maxnum = -1;
+    int biggest = -1;
+    for(size_t i = 0; i < cluster_indices.size(); ++i) {
+      vector<int>& ind = cluster_indices[i].indices;
+      if((int)ind.size() > maxnum) {
+	maxnum = ind.size();
+	biggest = i;
+      }
+    }
+    
+    // -- Unlabel all points not in the biggest cluster.
+    for(size_t i = 0; i < cluster_indices.size(); ++i) {
+      if((int)i == biggest)
+	continue;
+      
+      vector<int>& ind = cluster_indices[i].indices;
+      for(size_t j = 0; j < ind.size(); ++j) {
+	int idx = indices[ind[j]]; // Indexes into the original cloud.
+	int y = idx / cloud.width;
+	int x = idx - y * cloud.width;
+	seed(y, x) = 0; // Explicitly set these to background.
+      }
+    }
+
+    needs_redraw_ = true;
+  }
+  
   void SequenceSegmentationViewController::clearHelperSeedLabels()
   {
     for(size_t i = 1; i < seq_->seed_images_.size(); ++i)
@@ -214,15 +539,25 @@ namespace dst
 
     needs_redraw_ = true;
   }
+
+  void SequenceSegmentationViewController::updatePCLVisualizer()
+  {
+    ostringstream oss;
+    oss << "Frame " << setw(4) << setfill('0') << current_idx_;
+    vis_.removeShape("frame_number");
+    vis_.addText(oss.str(), 10, 10, 0, 0, 0, "frame_number");
+    vis_.updatePointCloud(segmented_pcds_[current_idx_], "segmented");
+    PointCloudColorHandlerCustom<PointXYZRGB> single_color(seq_->pointclouds_[current_idx_], 0, 0, 0);
+    vis_.updatePointCloud(seq_->pointclouds_[current_idx_], single_color, "original");
+    vis_.spinOnce(5);
+  }
   
   void SequenceSegmentationViewController::draw()
   {
+    updatePCLVisualizer();
+    
     drawSegVis();
     seg_view_.updateImage(seg_vis_);
-    if(show_seg_3d_ && !segmented_pcds_[current_idx_]->empty())
-      pcd_view_.showCloud(segmented_pcds_[current_idx_]);
-    else
-      pcd_view_.showCloud(seq_->pointclouds_[current_idx_]);
 
     ostringstream oss;
     oss << "raw - " << current_idx_;
@@ -263,12 +598,20 @@ namespace dst
       }
     }
   }
-  
+
   void SequenceSegmentationViewController::drawSeedVis()
   {
-    cv::Mat3b vis = seq_->images_[current_idx_];
-    if(show_depth_)
-      vis = sp_.getZBuffer(*seq_->pointclouds_[current_idx_], 0, 0.5, max_range_);
+    
+    cv::Mat3b vis;
+        
+    if(vis_type_ == 0)
+      vis = seq_->images_[current_idx_];
+    else if(vis_type_ == 1)
+      vis = sp_->getZBuffer(*seq_->pointclouds_[current_idx_], 0, 0.5, max_range_);
+    else if(vis_type_ == 2)
+      vis = sp_->getSurfNorm(*seq_->pointclouds_[current_idx_]);
+    else
+      abort();
     
     for(int y = 0; y < seed_vis_.rows; ++y) {
       for(int x = 0; x < seed_vis_.cols; ++x) {
@@ -291,8 +634,10 @@ namespace dst
 
   void SequenceSegmentationViewController::segmentImage()
   {
-    sp_.reset();
-    sp_.run(seq_->seed_images_[current_idx_],
+    assert( seq_->images_[current_idx_].rows > 0);
+
+    sp_->reset();
+    sp_->run(seq_->seed_images_[current_idx_],
 	    seq_->images_[current_idx_],
 	    seq_->pointclouds_[current_idx_],
 	    cv::Mat3b(),
@@ -316,11 +661,11 @@ namespace dst
     draw();
     cv::waitKey(10);
     
-    sp_.reset();
+    sp_->reset();
     for(; current_idx_ < (int)seq_->images_.size(); ++current_idx_) {
       // First in the sequence doesn't get passed in 'prev' data.
       if(current_idx_ == 0) {
-	sp_.run(seq_->seed_images_[current_idx_],
+	sp_->run(seq_->seed_images_[current_idx_],
 		seq_->images_[current_idx_],
 		seq_->pointclouds_[current_idx_],
 		cv::Mat3b(),
@@ -330,7 +675,7 @@ namespace dst
 		segmented_pcds_[current_idx_]);
       }
       else {
-	sp_.run(seq_->seed_images_[current_idx_],
+	sp_->run(seq_->seed_images_[current_idx_],
 		seq_->images_[current_idx_],
 		seq_->pointclouds_[current_idx_],
 		seq_->images_[current_idx_-1],
@@ -342,7 +687,7 @@ namespace dst
 
       draw();
       int wait_time = 10;
-      if(sp_.getDebug()) {
+      if(sp_->getDebug()) {
 	cout << "Press s to stop, any other key to continue." << endl;
 	//wait_time = 0;
 	
@@ -379,26 +724,26 @@ namespace dst
 
   void SequenceSegmentationViewController::saveSequence()
   {
-    bool flag = true;
-    for(size_t i = 1; flag && i < seq_->seed_images_.size(); ++i)
-      for(int y = 0; flag && y < seq_->seed_images_[i].rows; ++y)
-	for(int x = 0; flag && x < seq_->seed_images_[i].cols; ++x)
-	  if(seq_->seed_images_[i](y, x) != 127)
-	    flag = false;
+    // bool flag = true;
+    // for(size_t i = 1; flag && i < seq_->seed_images_.size(); ++i)
+    //   for(int y = 0; flag && y < seq_->seed_images_[i].rows; ++y)
+    // 	for(int x = 0; flag && x < seq_->seed_images_[i].cols; ++x)
+    // 	  if(seq_->seed_images_[i](y, x) != 127)
+    // 	    flag = false;
     
-    if(!flag) { 
-      cout << "This will clear all seed labels except those in the first frame." << endl;
-      cout << "Continue?  (y/n): " << endl;
-      string retval;
-      cin >> retval;
-      if(retval.compare("y") != 0) {
-	cout << "Aborted." << endl;
-	return;
-      }
-      clearHelperSeedLabels();
-      draw();
-      cv::waitKey(10);
-    }
+    // if(!flag) { 
+    //   cout << "This will clear all seed labels except those in the first frame." << endl;
+    //   cout << "Continue?  (y/n): " << endl;
+    //   string retval;
+    //   cin >> retval;
+    //   if(retval.compare("y") != 0) {
+    // 	cout << "Aborted." << endl;
+    // 	return;
+    //   }
+    //   clearHelperSeedLabels();
+    //   draw();
+    //   cv::waitKey(10);
+    // }
     
     cout << "Dir name for new sequence: " << endl;
     string dirname;

@@ -195,7 +195,13 @@ namespace dst
     KinectCloud::Ptr transformed(new KinectCloud());
     pcl::transformPointCloud(*index_otl_->pull().current_pcd_, *transformed, transform_);
     *transformed += *index_otl_->pull().previous_pcd_;
-    pcl::io::savePCDFileBinary("debug/" + getRunName() + ".pcd", *transformed);
+
+    if(!transformed->empty())
+      pcl::io::savePCDFileBinary("debug/" + getRunName() + ".pcd", *transformed);
+    else { 
+      int retval = system(("touch debug/" + getRunName() + ".pcd").c_str());
+      --retval;
+    }
   }
 
   void SceneAlignmentNode::_flush()

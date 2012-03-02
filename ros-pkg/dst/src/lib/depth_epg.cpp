@@ -25,7 +25,8 @@ namespace dst
     registerInput(normals_otl_->getNode());
     registerInput(mask_otl_->getNode());
 
-    ROS_ASSERT(radius2d_ == 1); // Otherwise edge_potential_generator drawLine fails.
+    // TODO: radius should be 10?
+//    ROS_ASSERT(radius2d_ == 1); // Otherwise edge_potential_generator drawLine fails.
   }
 
   DepthEPG::~DepthEPG()
@@ -94,13 +95,16 @@ namespace dst
 
   void DepthEPG::_compute()
   {
+    // -- Initialize the potentials and weights storage.
     cv::Mat1i index = index_otl_->pull().current_index_;
-
     int num_nodes = index.rows * index.cols;
-    if(potentials_.rows() != num_nodes || potentials_.cols() != num_nodes)
-      potentials_ = SparseMatrix<double, RowMajor>(num_nodes, num_nodes);
-    if(weights_.rows() != num_nodes || weights_.cols() != num_nodes)
+    initializeStorage(num_nodes);
+    
+    if(weights_.rows() != num_nodes || weights_.cols() != num_nodes) { 
       weights_ = SparseMatrix<double, RowMajor>(num_nodes, num_nodes);
+      weights_.reserve(2 * num_nodes);
+    }
+    weights_.setZero();
     
     // -- For each pixel with a depth point, find all neighbors with a depth point.
     //    Add edges for those that are close.

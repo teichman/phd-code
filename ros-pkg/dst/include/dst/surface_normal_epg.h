@@ -14,13 +14,15 @@ namespace dst
     SurfaceNormalEPG(pipeline2::Outlet<Normals::Ptr>* normals_otl,
 		     pipeline2::Outlet<DepthProjector::Output>* index_otl,
 		     pipeline2::Outlet<cv::Mat1b>* mask_otl,
-		     pipeline2::Outlet<cv::Mat3b>* image_otl);
+		     pipeline2::Outlet<cv::Mat3b>* image_otl,
+		     double sigma);
 
   protected:
     pipeline2::Outlet<Normals::Ptr>* normals_otl_;
     pipeline2::Outlet<DepthProjector::Output>* index_otl_;
     pipeline2::Outlet<cv::Mat1b>* mask_otl_;
     pipeline2::Outlet<cv::Mat3b>* image_otl_;
+    double sigma_;
 
     double computePotential(int idx0, int idx1, Normals::Ptr normals) const;
     void fillPotentials(int y, int x, int idx);

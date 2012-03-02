@@ -31,6 +31,8 @@ namespace dst
     //! All node ids are in row major.
     Eigen::SparseMatrix<double, Eigen::RowMajor> potentials_;
 
+    //! Allocates new sparse matrix if necessary; just sets to zero otherwise.
+    void initializeStorage(int num_nodes, double reserve_per_node = 2);
     virtual std::string _getName() const = 0;
     void displayEdges(cv::Mat3b img) const;
   };

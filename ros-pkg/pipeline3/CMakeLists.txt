@@ -25,9 +25,8 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 rosbuild_add_library(${PROJECT_NAME}
   src/pipeline.cpp
   src/params.cpp
-  src/compute_node.cpp
-  src/common_nodes.cpp
-  src/compute_node_factory.cpp
+  src/pod.cpp
+  src/example_pods.cpp
   )
 #target_link_libraries(${PROJECT_NAME} another_library)
 rosbuild_add_boost_directories()
@@ -35,6 +34,6 @@ rosbuild_add_boost_directories()
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_gtest(any_test src/any_test.cpp)
-rosbuild_add_gtest_build_flags(any_test)
-target_link_libraries(any_test pipeline3)
+rosbuild_add_gtest(test_pipeline src/test_pipeline.cpp)
+rosbuild_add_gtest_build_flags(test_pipeline)
+target_link_libraries(test_pipeline pipeline3)

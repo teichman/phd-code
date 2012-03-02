@@ -11,6 +11,20 @@ namespace dst
     return edge_potentials_.size() + source_potentials_.size();
   }
 
+  long int FramePotentialsCache::bytes() const
+  {
+    long int bytes = 0;
+    for(size_t i = 0; i < edge_potentials_.size(); ++i)
+      bytes += sizeof(double) * edge_potentials_[i].nonZeros();
+    for(size_t i = 0; i < source_potentials_.size(); ++i) { 
+      bytes += sizeof(double) * source_potentials_[i].rows() * source_potentials_[i].cols();
+      bytes += sizeof(double) * sink_potentials_[i].rows() * sink_potentials_[i].cols();
+    }
+    bytes += sizeof(int) * depth_index_.rows * depth_index_.cols;
+    
+    return bytes;
+  }
+  
   double FramePotentialsCache::computeScore(cv::Mat1b labels,
 					    const Eigen::VectorXd edge_weights,
 					    const Eigen::VectorXd node_weights,
@@ -26,7 +40,8 @@ namespace dst
     // -- Add up scores for edge potentials.
     for(size_t i = 0; i < edge_potentials_.size(); ++i) {
       const SparseMatrix<double, Eigen::RowMajor>& epot = edge_potentials_[i];
-      SparseMatrix<double, Eigen::RowMajor> sym = (epot + epot.transpose()) / 2.0;
+      SparseMatrix<double, Eigen::RowMajor> trans(epot.transpose());  // Unfortunately, yes.
+      SparseMatrix<double, Eigen::RowMajor> sym = (epot + trans) / 2.0;
       for(int j = 0; j < sym.outerSize(); ++j) {
 	for(SparseMatrix<double, RowMajor>::InnerIterator it(sym, j); it; ++it) {
 	  if(it.col() <= it.row())

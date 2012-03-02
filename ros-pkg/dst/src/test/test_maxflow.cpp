@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <maxflow/graph.h>
-#include <dst/image_region_iterator.h>
+#include <bag_of_tricks/image_region_iterator.h>
 #include <dst/helper_functions.h>
 
 using namespace std;

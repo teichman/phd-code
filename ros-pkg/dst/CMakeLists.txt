@@ -7,7 +7,7 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 #  Release        : w/o debug symbols, w/ optimization
 #  RelWithDebInfo : w/ debug symbols, w/ optimization
 #  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-#set(ROS_BUILD_TYPE RelWithDebInfo)
+set(ROS_BUILD_TYPE Release)
 
 rosbuild_init()
 
@@ -15,10 +15,9 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 include_directories(/usr/include/openni)
-#include_directories(/usr/include/pcl-1.3)
-#include_directories(/usr/include/vtk-5.6)
 
 rosbuild_add_library(dst
+  src/lib/volume_segmenter.cpp
   src/lib/recorder.cpp
   src/lib/realtime_interface.cpp
   src/lib/potentials_cache.cpp
@@ -30,6 +29,7 @@ rosbuild_add_library(dst
   src/lib/canny_epg.cpp
   src/lib/color_delta_epg.cpp
   src/lib/depth_epg.cpp
+  src/lib/depth_epg_velodyne.cpp
   src/lib/node_potential_aggregator.cpp
   src/lib/edge_potential_aggregator.cpp
   src/lib/node_potential_generator.cpp
@@ -43,9 +43,9 @@ rosbuild_add_library(dst
   src/lib/surface_normal_node.cpp
   src/lib/surface_normal_epg.cpp
   src/lib/flow_clustering_epg.cpp
+  src/lib/edge_potential_product_epg.cpp
   src/lib/bilateral_npg.cpp
   src/lib/helper_functions.cpp
-  src/lib/image_region_iterator.cpp
   src/lib/organized_surface_normal_node.cpp
   src/lib/segmentation_visualizer.cpp
   src/lib/patch_classifier.cpp
@@ -55,6 +55,8 @@ rosbuild_add_library(dst
   src/lib/foreground_kdtree_node.cpp
   src/lib/distance_npg.cpp
   src/lib/image_processing_nodes.cpp
+  src/lib/cie-xyz-image-node.cpp
+  src/lib/sobel-image-node.cpp
   src/lib/boundary_mask_node.cpp
   src/lib/sequence_segmentation_view_controller.cpp
   src/lib/segmentation_pipeline.cpp
@@ -75,6 +77,27 @@ target_link_libraries(kinect_cut dst)
 rosbuild_add_executable(train src/program/train.cpp)
 target_link_libraries(train dst)
 rosbuild_add_compile_flags(train -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
+
+rosbuild_add_executable(generate_houghtrack_input src/program/generate_houghtrack_input.cpp)
+target_link_libraries(generate_houghtrack_input dst)
+rosbuild_add_compile_flags(generate_houghtrack_input -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
+rosbuild_add_executable(evaluate_houghtrack src/program/evaluate_houghtrack.cpp)
+target_link_libraries(evaluate_houghtrack dst)
+rosbuild_add_compile_flags(evaluate_houghtrack -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
+rosbuild_add_executable(sequence_stats src/program/sequence_stats.cpp)
+target_link_libraries(sequence_stats dst)
+rosbuild_add_compile_flags(sequence_stats -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
+rosbuild_add_executable(train_volumetric_segmenter src/program/train_volumetric_segmenter.cpp)
+target_link_libraries(train_volumetric_segmenter dst)
+rosbuild_add_compile_flags(train_volumetric_segmenter -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
+rosbuild_add_executable(variance src/program/variance.cpp)
+target_link_libraries(variance dst)
+rosbuild_add_compile_flags(variance -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
 rosbuild_add_executable(segmentation_visualizer src/program/segmentation_visualizer.cpp)
 target_link_libraries(segmentation_visualizer dst)

@@ -4,6 +4,7 @@
 #include <pcl/io/pcd_io.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <sensor_msgs/CameraInfo.h>
 #include <serializable/serializable.h>
 #include <dst/typedefs.h>
@@ -36,13 +37,17 @@ namespace dst
     void load(const std::string& filename);
     void serialize(std::ostream& out) const;
     void deserialize(std::istream& in);
+    size_t totalPixels() const;
+    size_t pixelsPerFrame() const;
+    void saveVisualization(const std::string& path) const;
   };
 
   //! path can point to a directory of sequences or a single sequence.
   //! sequences does not have to be empty.
   void loadSequences(const std::string& path,
 		     std::vector<KinectSequence::Ptr>* sequences);
-  
+  void visualizeSeedLabels(cv::Mat1b seed, cv::Mat3b img, cv::Mat3b vis);
+  void visualizeSegmentation(cv::Mat1b seg, cv::Mat3b img, cv::Mat3b vis);
 }
 
 

@@ -2,11 +2,15 @@
 #define SEQUENCE_SEGMENTATION_VIEW_CONTROLLER_H
 
 #include <image_labeler/opencv_view.h>
-#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/segmentation/extract_clusters.h>
+#include <pcl/sample_consensus/sac_model_plane.h>
+#include <pcl/sample_consensus/ransac.h>
 #include <dst/kinect_sequence.h>
 #include <dst/lockable.h>
 #include <dst/segmentation_pipeline.h>
 #include <dst/segmentation_visualizer.h>
+#include <dst/volume_segmenter.h>
 
 namespace dst
 {  
@@ -17,35 +21,45 @@ namespace dst
     
     KinectSequence::Ptr seq_;
     OpenCVView seg_view_;
-    pcl::visualization::CloudViewer pcd_view_;
+    pcl::visualization::PCLVisualizer vis_;
     OpenCVView img_view_;
     int seed_radius_;
 
-    SequenceSegmentationViewController(KinectSequence::Ptr seq);
+    SequenceSegmentationViewController(KinectSequence::Ptr seq, SegmentationPipeline::Ptr sp);
     ~SequenceSegmentationViewController();
     void run();
-    void setWeights(const Eigen::VectorXd& weights) { sp_.setWeights(weights, true); }
+    void setWeights(const Eigen::VectorXd& weights) { sp_->setWeights(weights, true); }
 
   private:
-    SegmentationPipeline sp_;
+    SegmentationPipeline::Ptr sp_;
     int current_idx_;
     bool quitting_;
     bool needs_redraw_;
     state_t state_;
     cv::Mat3b seed_vis_;
     cv::Mat3b seg_vis_;
-    bool show_depth_;
+    int vis_type_;
     bool show_seg_3d_;
     std::vector<KinectCloud::Ptr> segmented_pcds_;
     float max_range_;
+    double cluster_tol_;
+    KinectCloud::Ptr background_model_;
 
+    KinectCloud::Ptr generateForeground(cv::Mat1b seg, const KinectCloud& cloud) const;
     void increaseSeedWeights();
     void useSegmentationAsSeed();
     void toggleDebug();
     void saveGraphviz() const;
+    void runVolumeSegmentation();
+    void saveVisualization();
+    void handleKeypress(std::string key);
     void handleKeypress(char key);
     void mouseEvent(int event, int x, int y, int flags, void* param);
     void advance(int num);
+    void segmentUsingBackgroundModel(pcl::search::KdTree<Point>::Ptr tree = pcl::search::KdTree<Point>::Ptr());
+    void segmentAllUsingBackgroundModel();
+    void extractConnectedComponent();
+    void extractPlane();
     void clearHelperSeedLabels();
     void draw();
     void drawSegVis();
@@ -55,6 +69,9 @@ namespace dst
     void saveSequence();
     size_t size() const;
     void transitionTo(state_t state);
+    void updatePCLVisualizer();
+    //! For PCL.
+    void keyboardEventOccurred(const pcl::visualization::KeyboardEvent &event, void* data);
     
     friend class OpenCVView;
   };

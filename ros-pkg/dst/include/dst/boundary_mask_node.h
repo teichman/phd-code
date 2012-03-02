@@ -7,7 +7,7 @@
 #include <pipeline2/pipeline2.h>
 #include <dst/typedefs.h>
 #include <dst/node_potential_generator.h>
-#include <dst/image_region_iterator.h>
+#include <bag_of_tricks/image_region_iterator.h>
 
 namespace dst
 {

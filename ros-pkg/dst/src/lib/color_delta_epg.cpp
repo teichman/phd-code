@@ -48,12 +48,9 @@ namespace dst
   void ColorDeltaEPG::_compute()
   {
     cv::Mat3b img = image_otl_->pull();
+    initializeStorage(img.rows * img.cols);
 
-    // TODO: Don't reallocate every time.
-    int num_nodes = img.rows * img.cols;
-    potentials_ = Eigen::SparseMatrix<double, Eigen::RowMajor>(num_nodes, num_nodes);
-    potentials_.reserve(num_nodes * 10);
-
+    // -- Fill the edge potentials.
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x) {
 	processPixel(y, x);
@@ -66,6 +63,9 @@ namespace dst
 
   void ColorDeltaEPG::_display() const
   {
+    //cv::Mat3b img(image_otl_->pull());
+    //cv::Mat3b img = image_otl_->pull().clone();
+    //img += cv::Scalar::all(64);
     displayEdges(image_otl_->pull());
   }
 

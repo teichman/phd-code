@@ -52,11 +52,8 @@ namespace dst
       return;
     }
 
-    // TODO: Don't reallocate every time.
     cv::Mat3b img = optflow_otl_->pull().img_;
-    int num_nodes = img.rows * img.cols;
-    potentials_ = Eigen::SparseMatrix<double, Eigen::RowMajor>(num_nodes, num_nodes);
-    potentials_.reserve(num_nodes * 10);
+    initializeStorage(img.rows * img.cols, 0.10);
 
     if(cluster_index_.rows == 0)
       cluster_index_ = cv::Mat1i(img.size(), -1);
@@ -162,9 +159,10 @@ namespace dst
 	if(cluster.size() < 5) {
 	  for(size_t i = 0; i < cluster.size(); ++i) { 
 	    int idx1 = cluster[i];
-	    if(i > 0)
+	    if(i > 0) { 
 	      ROS_ASSERT(cluster[i] > cluster[i-1]);
 	    //cout << "FC: Adding edge between " << idx0 << " and " << idx1 << endl;
+	    }
 	    if(idx0 != idx1)
 	      potentials_.insertBack(idx0, idx1) = 1.0;
 	  }

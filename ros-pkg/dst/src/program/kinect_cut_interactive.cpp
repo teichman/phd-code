@@ -10,6 +10,7 @@
 #include <dst/segmentation_pipeline.h>
 
 #define SCALE (getenv("SCALE") ? atof(getenv("SCALE")) : 1.0)
+#define NUM_THREADS (getenv("NUM_THREADS") ? atoi(getenv("NUM_THREADS")) : 1)
 
 using namespace std;
 using namespace Eigen;
@@ -34,7 +35,9 @@ int main(int argc, char** argv)
   seq->load(argv[1]);
   ROS_ASSERT(seq->images_.size() == seq->pointclouds_.size());
 
-  SequenceSegmentationViewController ssvc(seq);
+  SegmentationPipeline::Ptr sp(new SegmentationPipeline(NUM_THREADS));
+  SequenceSegmentationViewController ssvc(seq, sp);
+  cout << "Setting scale to " << SCALE << endl;
   ssvc.img_view_.scale_ = SCALE;
   ssvc.seg_view_.scale_ = SCALE;
 

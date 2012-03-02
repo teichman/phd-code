@@ -478,42 +478,59 @@ namespace dst
 	  if(prev_seg(pt) == 255 || prev_seg(pt) == 0)
 	    classifier_->train(prev_data_, pt, prev_seg(pt));
   }
-  
+
   void PatchClassifierNPG::updateClassifier()
   {
-    // -- Train on all positive examples in the previous image.
-    cv::Mat3b prev_bgr = prev_data_.bgr_;
+    // -- Get fg vs bg labels for previous frame.
+    fg_pts_.clear();
+    bg_pts_.clear();
+    fg_pts_.reserve(data_.bgr_.rows * data_.bgr_.cols);
+    bg_pts_.reserve(data_.bgr_.rows * data_.bgr_.cols);
+
     cv::Mat1b prev_seg = prev_seg_otl_->pull();
     cv::Mat1b mask = mask_otl_->pull();
     cv::Point2i pt;
-    int num_pos = 0;
-    for(pt.y = radius_; pt.y < prev_bgr.rows - radius_; ++pt.y) {
-      for(pt.x = radius_; pt.x < prev_bgr.cols - radius_; ++pt.x) {
-	if(mask(pt) == 255 && prev_seg(pt) == 255) {
-	  //classifier_->train(cached_features_, pt, 255);
-	  classifier_->train(prev_data_, pt, 255);
-	  ++num_pos;
+    for(pt.y = radius_; pt.y < mask.rows - radius_; ++pt.y) { 
+      for(pt.x = radius_; pt.x < mask.cols - radius_; ++pt.x) { 
+	if(mask(pt) == 255 && (rand() % skip_) == 0) {
+//	if(mask(pt) == 255) {
+	  if(prev_seg(pt) == 0)
+	    bg_pts_.push_back(pt);
+	  else if(prev_seg(pt) == 255)
+	    fg_pts_.push_back(pt);
 	}
       }
     }
-    
-    // -- Train on num_pos randomly selected false positives
-    //    from the previous image.
-    fps_.clear();
-    for(pt.y = radius_; pt.y < prev_bgr.rows - radius_; ++pt.y)
-      for(pt.x = radius_; pt.x < prev_bgr.cols - radius_; ++pt.x) 
-	if(mask(pt) == 255 && prev_seg(pt) == 0 &&
-	   classifier_->classify(cached_features_, pt) > 0) 
-	  fps_.push_back(pt);
-    
-    std::random_shuffle(fps_.begin(), fps_.end());
-    for(int i = 0; i < min(num_pos, (int)fps_.size()); ++i) { 
-      //classifier_->train(cached_features_, fps_[i], 0);
-      classifier_->train(prev_data_, fps_[i], 0);
-    }
-    
-  }
 
+    // -- Determine smaller vs larger.
+    vector<cv::Point2i>* larger;
+    vector<cv::Point2i>* smaller;
+    int larger_label;
+    int smaller_label;
+    if(fg_pts_.size() > bg_pts_.size()) {
+      larger = &fg_pts_;
+      larger_label = 255;
+      smaller = &bg_pts_;
+      smaller_label = 0;
+    }
+    else {
+      larger = &bg_pts_;
+      larger_label = 0;
+      smaller = &fg_pts_;
+      smaller_label = 255;
+    }
+
+    // -- Train on all of the smaller.
+    for(size_t i = 0; i < smaller->size(); ++i)
+      classifier_->train(prev_data_, smaller->at(i), smaller_label);      
+
+    // -- Train on the same number of the larger.
+    for(size_t i = 0; i < smaller->size(); ++i) {
+      int idx = rand() % larger->size();
+      classifier_->train(prev_data_, larger->at(idx), larger_label);
+    }
+  }
+  
   void PatchClassifierNPG::classifyCurrent()
   {
     //ScopedTimer st("classifyCurrent");
@@ -559,7 +576,8 @@ namespace dst
     if(cached_classifications_.rows != prev_seg.rows)
       initializeClassifier();
 
-    updateClassifierWithAll();    
+    //updateClassifierWithAll();
+    updateClassifier();
     
     // -- Classify the current image.
     //classifier_->cacheFeatures(data_, cached_features_, mask);

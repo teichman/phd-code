@@ -104,10 +104,10 @@ namespace dst
 					       cv::Mat3b prev_img,
 					       cv::Mat1b prev_seg)
   {
-    ImageRegionIterator it(curr_img.size(), curr_pt, img_radius_);
+    ImageRegionIterator it(curr_img.size(), img_radius_);
     double numerator = 0;
     double denominator = 0;
-    for(; !it.done(); ++it) {
+    for(it.setCenter(curr_pt); !it.done(); ++it) {
       double z = computeTerm(curr_pt, curr_img(curr_pt),
 			     *it, prev_img(*it));
       double label = 0.0;
@@ -138,8 +138,8 @@ namespace dst
     // cout << "------------------------------------------------------------" << endl;
     // cout << "Got " << distances_.size() << " neighbors." << endl;
       
-    double numerator = 0.0;
-    double denominator = 0.0;
+    double numerator = 0;
+    double denominator = 0;
     for(size_t i = 0; i < indices_.size(); ++i) {
       int idx = prev_kdtree.getIndices()->at(indices_[i]);
       cv::Point2i prev_img_pt = prev_rindex[idx];
@@ -149,7 +149,7 @@ namespace dst
       if(rand() % neighbor_skip_ != 0)
       	continue;
       
-      double label = 0.0;
+      double label = 0;
       if(prev_seg(prev_img_pt) == 255)
 	label = 1.0;
       else if(prev_seg(prev_img_pt) == 0)

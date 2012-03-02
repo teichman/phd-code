@@ -14,6 +14,7 @@ namespace dst
   {
   public:
     typedef boost::shared_ptr<FramePotentialsCache> Ptr;
+    typedef boost::shared_ptr<const FramePotentialsCache> ConstPtr;
 
     //! In order of weights.
     std::vector< Eigen::SparseMatrix<double, Eigen::RowMajor> > edge_potentials_;
@@ -21,7 +22,8 @@ namespace dst
     std::vector<Eigen::MatrixXd> sink_potentials_;
     std::vector<Eigen::MatrixXd> source_potentials_;
     cv::Mat1i depth_index_;
-    
+
+    long int bytes() const;
     int getNumWeights() const;
     int getNumEdgeWeights() const { return edge_potentials_.size(); }
     double computeScore(cv::Mat1b labels,

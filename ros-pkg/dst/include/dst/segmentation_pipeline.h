@@ -18,10 +18,15 @@ namespace dst
   class SegmentationPipeline
   {
   public:
+    typedef boost::shared_ptr<SegmentationPipeline> Ptr;
+
+    pipeline2::Pipeline2 pipeline_;
     bool verbose_;
     SceneAlignmentNode* scene_alignment_node_;
+    BoundaryMaskNode* boundary_mask_node_;
     
     SegmentationPipeline(int num_threads);
+    virtual ~SegmentationPipeline() {}
     //! Returns a 1-channel uchar image.  0 = BG, 255 = FG.
     //! Only re-allocates the graph if necessary.
     //! Pass cv::Mat1b() to prev_seg if none.
@@ -63,7 +68,7 @@ namespace dst
 			 int spread,
 			 float min_range,
 			 float max_range) const;
-
+    cv::Mat3b getSurfNorm(const KinectCloud& cloud) const;
     void generateSegmentationFromGraph(Graph3d& graph,
 				       cv::Mat1i index,
 				       cv::Mat1b img_seg,
@@ -71,9 +76,11 @@ namespace dst
 				       KinectCloud::ConstPtr((KinectCloud*)NULL),
 				       KinectCloud::Ptr pcd_seg =
 				       KinectCloud::Ptr((KinectCloud*)NULL)) const;
+
+    //! Make a new SegmentationPipeline of this type.
+    virtual SegmentationPipeline::Ptr mitosis(int num_threads) const;
     
-  private:
-    pipeline2::Pipeline2 pipeline_;
+  protected:
     Graph3dPtr graph_;
     EntryPoint<cv::Mat3b>* image_ep_;
     EntryPoint<cv::Mat3b>* previous_image_ep_;
@@ -85,9 +92,8 @@ namespace dst
     EdgePotentialAggregator* edge_aggregator_;
     NodePotentialAggregator* node_aggregator_;
     DepthProjector* depth_projector_;
+    OrganizedSurfaceNormalNode* normals_node_;
     int num_threads_;
-    
-    void initializePipeline();
   };
 
 } // namespace dst
