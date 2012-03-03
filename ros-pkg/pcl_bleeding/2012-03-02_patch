@@ -29,7 +29,7 @@ Index: io/src/oni_grabber.cpp
    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud <pcl::PointXYZ>);
  
 -  // TODO cloud->header.stamp = time;
-+  cloud->header.stamp = depth_image->getTimeStamp();
++  cloud->header.stamp.fromSec(depth_image->getTimeStamp() * 1e-6);
    cloud->height = depth_height_;
    cloud->width = depth_width_;
    cloud->is_dense = false;

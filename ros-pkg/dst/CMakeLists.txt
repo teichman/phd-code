@@ -60,53 +60,48 @@ rosbuild_add_library(dst
   src/lib/struct_svm.cpp
   src/lib/evaluator.cpp
   )
-rosbuild_add_compile_flags(dst -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+rosbuild_add_compile_flags(dst -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 rosbuild_link_boost(dst system)
-#target_link_libraries(dst vtksys vtkCommon vtkViews vtkRendering vtkCharts)
-#target_link_libraries(dst pcl_io)
 
 rosbuild_add_executable(image_cut src/program/image_cut.cpp)
-#rosbuild_add_executable(planar_image_cut src/program/planar_image_cut.cpp)
 rosbuild_add_executable(kinect_cut src/program/kinect_cut.cpp)
 target_link_libraries(kinect_cut dst)
 
-
 rosbuild_add_executable(train src/program/train.cpp)
 target_link_libraries(train dst)
-rosbuild_add_compile_flags(train -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
-
+rosbuild_add_compile_flags(train -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
 rosbuild_add_executable(generate_houghtrack_input src/program/generate_houghtrack_input.cpp)
 target_link_libraries(generate_houghtrack_input dst)
-rosbuild_add_compile_flags(generate_houghtrack_input -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+rosbuild_add_compile_flags(generate_houghtrack_input -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
 rosbuild_add_executable(evaluate_houghtrack src/program/evaluate_houghtrack.cpp)
 target_link_libraries(evaluate_houghtrack dst)
-rosbuild_add_compile_flags(evaluate_houghtrack -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+rosbuild_add_compile_flags(evaluate_houghtrack -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
 rosbuild_add_executable(sequence_stats src/program/sequence_stats.cpp)
 target_link_libraries(sequence_stats dst)
-rosbuild_add_compile_flags(sequence_stats -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+rosbuild_add_compile_flags(sequence_stats -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
 rosbuild_add_executable(train_volumetric_segmenter src/program/train_volumetric_segmenter.cpp)
 target_link_libraries(train_volumetric_segmenter dst)
-rosbuild_add_compile_flags(train_volumetric_segmenter -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+rosbuild_add_compile_flags(train_volumetric_segmenter -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
 rosbuild_add_executable(variance src/program/variance.cpp)
 target_link_libraries(variance dst)
-rosbuild_add_compile_flags(variance -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+rosbuild_add_compile_flags(variance -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
 rosbuild_add_executable(segmentation_visualizer src/program/segmentation_visualizer.cpp)
 target_link_libraries(segmentation_visualizer dst)
-rosbuild_add_compile_flags(segmentation_visualizer -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable)
+rosbuild_add_compile_flags(segmentation_visualizer -Wno-deprecated -Wno-unused-but-set-variable)
 
 rosbuild_add_executable(kinect_cut_interactive src/program/kinect_cut_interactive.cpp)
 target_link_libraries(kinect_cut_interactive dst)
-rosbuild_add_compile_flags(kinect_cut_interactive -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable)
+rosbuild_add_compile_flags(kinect_cut_interactive -Wno-deprecated -Wno-unused-but-set-variable)
 
 rosbuild_add_executable(openni_viewer_simple src/program/openni_viewer_simple.cpp)
 target_link_libraries(openni_viewer_simple dst)
-rosbuild_add_compile_flags(openni_viewer_simple -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+rosbuild_add_compile_flags(openni_viewer_simple -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
 rosbuild_add_executable(realtime_interface src/program/realtime_interface.cpp)
 target_link_libraries(realtime_interface dst)
