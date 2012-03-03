@@ -75,6 +75,7 @@ namespace pipeline
     // -- Declarations to use
     // -- in your constructor
     // ----------------------------------------
+    template<typename T> void declareParam(std::string name, T default_value);
     template<typename T> void declareParam(std::string name);
     template<typename T> void declareInput(std::string name);
     template<typename T> void declareOutput(std::string name);
@@ -215,13 +216,16 @@ namespace pipeline
     
     return params_.get<T>(name);
   }
+
+  template<typename T> void Pod::declareParam(std::string name, T default_value)
+  {
+    assertValidName(name);
+    declared_params_.insert(name);
+    setParam<T>(name, default_value);
+  }
   
   template<typename T> void Pod::declareParam(std::string name)
   {
-    if(!params_.storage_.empty())
-      PL_ABORT("Tried to declare param \"" << name << "\" after at least one param had been set."
-	       << " All params should be declared in the Pod constructor, before setting of params.");
-    
     assertValidName(name);
     declared_params_.insert(name);
   }

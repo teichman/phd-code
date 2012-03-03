@@ -3,13 +3,17 @@
 using namespace std;
 
 OrbExtractor::OrbExtractor() :
-  extractor_(1000, cv::ORB::CommonParams(1.2, 3, 7, 0))
+  
 {
 }
 
 OrbExtractor::PackedDescriptorsPtr OrbExtractor::extractOrb(cv::Mat3b img,
 							    vector<cv::KeyPoint>* keypoints)
 {
+  if(!extractor_) {
+    extractor_ = shared_ptr<cv::Orb>(new cv::Orb(1000, cv::ORB::CommonParams(1.2, 3, 7, 0)));
+  }
+  
   // -- Compute keypoints on the image.
   cv::Mat descriptors; // descriptors is num_descr x 32
 

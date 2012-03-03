@@ -36,6 +36,7 @@ namespace rgbd
     void load(const std::string& filename);
     void serialize(std::ostream& out) const;
     void deserialize(std::istream& in);
+    size_t size() const { ROS_ASSERT(imgs_.size() == pcds_.size()); return imgs_.size(); }
   };
 
   //! path can point to a directory of sequences or a single sequence.

@@ -11,6 +11,7 @@
   <depend package="rgbd_sequence"/>
   <depend package="bag_of_tricks"/>
   <depend package="eigen_extensions"/>
+  <depend package="pipeline3"/>
 
 </package>
 

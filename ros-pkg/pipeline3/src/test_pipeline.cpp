@@ -80,17 +80,14 @@ Pod* generateDefaultPipeline()
   HistogramGenerator* h2 = new HistogramGenerator("Histogram2");
   HistogramGenerator* h3 = new HistogramGenerator("Histogram3");
   h0->registerInput("Points", s0, "Sorted");
-  h0->setParam("Normalize", false);
   h0->setParam("BinWidth", 0.5);
   h0->setParam("Min", -2.0);
   h0->setParam("Max", 2.0);
   h1->registerInput("Points", s1, "Sorted");
-  h1->setParam("Normalize", false);
   h1->setParam("BinWidth", 0.5);
   h1->setParam("Min", -2.0);
   h1->setParam("Max", 2.0);
   h2->registerInput("Points", s2, "Sorted");
-  h2->setParam("Normalize", false);
   h2->setParam("BinWidth", 0.5);
   h2->setParam("Min", -2.0);
   h2->setParam("Max", 2.0);
@@ -185,7 +182,6 @@ TEST(Pipeline, UniqueString)
     summarizer0->registerInput("Points", s0, "Sorted");
     HistogramGenerator* h0 = new HistogramGenerator("Histogram0");
     h0->registerInput("Points", s0, "Sorted");
-    h0->setParam("Normalize", false);
     h0->setParam("BinWidth", 0.1);
     h0->setParam("Min", -2.0);
     h0->setParam("Max", 2.0);
@@ -225,7 +221,6 @@ TEST(Pipeline, UniqueString)
     summarizer0->registerInput("Points", s0, "Sorted");
     HistogramGenerator* h0 = new HistogramGenerator("Histogram0");
     h0->registerInput("Points", s0, "Sorted");
-    h0->setParam("Normalize", false);
     h0->setParam("BinWidth", 0.1);
     h0->setParam("Min", -2.0);
     h0->setParam("Max", 2.0);
@@ -253,7 +248,6 @@ TEST(Pipeline, UniqueString)
     summarizer1->registerInput("Points", s0, "Sorted");
     HistogramGenerator* h0 = new HistogramGenerator("Histogram0");
     h0->registerInput("Points", s0, "Sorted");
-    h0->setParam("Normalize", false);
     h0->setParam("BinWidth", 0.1);
     h0->setParam("Min", -2.0);
     h0->setParam("Max", 2.0);
@@ -357,7 +351,6 @@ TEST(Pipeline, OptionalInputs)
     summarizer0->registerInput("Points", s0, "Sorted");
     HistogramGenerator* h0 = new HistogramGenerator("Histogram0");
     h0->registerInput("Points", s0, "Sorted");
-    h0->setParam("Normalize", false);
     h0->setParam("BinWidth", 0.1);
     h0->setParam("Min", -2.0);
     h0->setParam("Max", 2.0);
@@ -381,7 +374,6 @@ TEST(Pipeline, OptionalInputs)
     summarizer0->registerInput("Points", s0, "Sorted");
     HistogramGenerator* h0 = new HistogramGenerator("Histogram0");
     h0->registerInput("Points", s0, "Sorted");
-    h0->setParam("Normalize", false);
     h0->setParam("BinWidth", 0.1);
     h0->setParam("Min", -2.0);
     h0->setParam("Max", 2.0);
@@ -412,7 +404,6 @@ TEST(Pod, ComputeOutsidePipeline)
   // The above can be non-ideal, so using
   // a non-static member function instead might be preferable.
   HistogramGenerator hg("aoeu");
-  hg.setParam("Normalize", false);
   hg.setParam("BinWidth", 0.1);
   hg.setParam("Min", -2.0);
   hg.setParam("Max", 2.0);

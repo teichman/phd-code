@@ -63,7 +63,7 @@ namespace pipeline
 	declareParam<double>("BinWidth");
 	declareParam<double>("Min");
 	declareParam<double>("Max");
-	declareParam<bool>("Normalize"); // Whether or not the final histogram should sum to one.
+	declareParam<bool>("Normalize", false); // Whether or not the final histogram should sum to one. Default false.
 	declareInput<VecConstPtr>("Points"); // Must be sorted.
 	declareOutput<VecConstPtr>("Histogram");
 	declareOutput<VecConstPtr>("LowerBounds"); // Vector of the lower bounds of each bin.
