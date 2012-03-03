@@ -19,8 +19,7 @@ Eigen::Affine3f CalibrationPipelineOrb::calibrate(rgbd::Sequence::ConstPtr seq0,
   pl_.setDebug(true);
   pl_.compute();
 
-  return Affine3f::Identity();
-  //return pl_.getOutput<Affine3f>("TransformValidator", "BestTransform");
+  return pl_.getOutput<Affine3f>("TransformValidator", "BestTransform");
 }
 
 void CalibrationPipelineOrb::initializePipeline()

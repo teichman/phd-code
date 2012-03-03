@@ -8,13 +8,13 @@ using namespace rgbd;
 
 #define VISUALIZE (getenv("VISUALIZE") ? atoi(getenv("VISUALIZE")) : 0)
 
-TransformValidator::TransformValidator(double gamma) :
-  gamma_(gamma)
+void TransformValidator::compute()
 {
-}
 
-Eigen::Affine3f TransformValidator::compute()
-{
+  const Candidates& candidates = *pull<CandidatesConstPtr>("Candidates");
+  Cloud::ConstPtr cloud0 = pull<Cloud::ConstPtr>("Cloud0");
+  Cloud::ConstPtr cloud1 = pull<Cloud::ConstPtr>("Cloud1");
+  
   // -- Try all candidates.  Choose the best.
   Eigen::Affine3f best_transform = Eigen::Affine3f::Identity();
   double best_loss = numeric_limits<double>::max();
@@ -22,22 +22,22 @@ Eigen::Affine3f TransformValidator::compute()
   Cloud best_transformed;
   Cloud::Ptr overlay(new Cloud);
   visualization::CloudViewer vis("viewer");
-  for(size_t i = 0; i < candidates_.size(); ++i) {
+  for(size_t i = 0; i < candidates.size(); ++i) {
     transformed.clear();
-    transformPointCloud(*tar_pcd_, transformed, candidates_[i]);
-    double loss = computeLoss(*ref_pcd_, *ref_normals_, *ref_tree_, transformed);
+    transformPointCloud(*cloud1, transformed, candidates[i]);
+    double loss = computeLoss(*cloud0, *ref_normals_, *ref_tree_, transformed);
     if(loss < best_loss) {
       best_loss = loss;
-      best_transform = candidates_[i];
+      best_transform = candidates[i];
       best_transformed = transformed;
     }
 
     if(VISUALIZE) { 
-      cout << "Validating " << i << " / " << candidates_.size() << ".  ";
+      cout << "Validating " << i << " / " << candidates.size() << ".  ";
       cout << "Loss = " << loss << ", best so far = " << best_loss << endl;
 
       overlay->clear();
-      *overlay = *ref_pcd_;
+      *overlay = *cloud0;
       *overlay += best_transformed;
       vis.showCloud(overlay);
     }
@@ -45,7 +45,7 @@ Eigen::Affine3f TransformValidator::compute()
 
   
   // -- Run the best through ICP.
-  fineTuneAlignment(*ref_pcd_, *ref_tree_, *ref_normals_, *tar_pcd_, &best_transform);
+  fineTuneAlignment(*cloud0, *ref_tree_, *ref_normals_, *cloud1, &best_transform);
   return best_transform;
 }
 
