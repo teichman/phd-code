@@ -26,7 +26,7 @@ public:
   OrbMatcher(std::string name) :
     Pod(name)
   {
-    declareParam<int>("NumSamples", 1000);
+    declareParam<int>("NumSamples", 100000);
     declareParam<double>("DistanceThresh", 0.04);
     
     declareInput<rgbd::Cloud::ConstPtr>("Cloud0");

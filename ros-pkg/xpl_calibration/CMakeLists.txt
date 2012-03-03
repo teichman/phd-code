@@ -26,7 +26,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/xpl_calibrator.cpp
   src/plane_finder.cpp
   src/color_wheel.cpp
-#  src/transform_validator.cpp
+  src/transform_validator.cpp
   src/orb_extractor.cpp
   src/orb_matcher.cpp
   src/descriptor_database.cpp

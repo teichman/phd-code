@@ -10,13 +10,13 @@ using namespace rgbd;
 string usageString()
 {
   ostringstream oss;
-  oss << "Usage: calibrate_sequences SEQ SEQ" << endl;
+  oss << "Usage: calibrate_sequences SEQ SEQ [PIPELINE]" << endl;
   return oss.str();
 }
 
 int main(int argc, char** argv)
 {
-  if(argc != 3) {
+  if(argc != 3 && argc != 4) {
     cout << usageString() << endl;
     return 0;
   }
@@ -26,8 +26,14 @@ int main(int argc, char** argv)
   seq0->load(argv[1]);
   seq1->load(argv[2]);
 
+  string pipeline_path = "";
+  if(argc == 4) { 
+    pipeline_path = argv[3];
+    cout << "Using custom Pipeline specification: " << pipeline_path << endl;
+  }
+  
   Eigen::Affine3f transform;
-  CalibrationPipelineOrb cp(NUM_THREADS);
+  CalibrationPipelineOrb cp(NUM_THREADS, pipeline_path);
   transform = cp.calibrate(seq0, seq1);
   
   cout << transform.matrix() << endl;

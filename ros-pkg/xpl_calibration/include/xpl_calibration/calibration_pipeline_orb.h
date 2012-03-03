@@ -6,14 +6,18 @@
 #include <xpl_calibration/frame_selector.h>
 #include <xpl_calibration/orb_extractor.h>
 #include <xpl_calibration/orb_matcher.h>
+#include <xpl_calibration/kdtree_pod.h>
+#include <xpl_calibration/transform_validator.h>
 
 class CalibrationPipelineOrb
 {
 public:
   //! Alphanumeric typenames are needed for Pipeline.
   typedef rgbd::Sequence::ConstPtr SequenceConstPtr; 
+
+  //! If no file is given, it will create its own with initializePipeline().
+  CalibrationPipelineOrb(int num_threads, std::string pipeline_file = "");
   
-  CalibrationPipelineOrb(int num_threads);
   //! Computes transform that will move target to reference.
   //! T * seq1 = seq0.
   Eigen::Affine3f calibrate(rgbd::Sequence::ConstPtr seq0,

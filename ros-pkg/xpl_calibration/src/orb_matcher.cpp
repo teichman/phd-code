@@ -98,6 +98,9 @@ pcl::PointXYZRGB OrbMatcher::getPoint(const cv::KeyPoint& keypoint, const Cloud&
 
 void OrbMatcher::debug() const
 {
+  cout << *this << endl;
+  cout << "Found " << transforms_.size() << " candidate transforms." << endl;
+
   cv::Mat3b img0 = pull<cv::Mat3b>("Image0");
   cv::Mat3b img1 = pull<cv::Mat3b>("Image1");
   
