@@ -58,6 +58,7 @@ namespace pipeline
     //! Returns pod name with the number of times it has been run.
     std::string getRunName(int width = 4) const;
     //! Returns a reasonable debug path for Pods to save output to.
+    //! ".pipeline-debug/####-PodName"
     std::string getDebugPath() const;
 
 
@@ -118,7 +119,8 @@ namespace pipeline
     Params params_;
     //! Stores name and type.
     std::map<std::string, boost::any> declared_inputs_;
-    std::set<std::string> declared_params_;
+    //! Stores name and type.
+    std::map<std::string, boost::any> declared_params_;
     std::map<std::string, std::vector<const Outlet*> > inputs_;
     std::map<std::string, Outlet*> outlets_;
     std::vector<Pod*> parents_;
@@ -223,14 +225,15 @@ namespace pipeline
   template<typename T> void Pod::declareParam(std::string name, T default_value)
   {
     assertValidName(name);
-    declared_params_.insert(name);
+    declared_params_[name] = default_value;
     setParam<T>(name, default_value);
   }
   
   template<typename T> void Pod::declareParam(std::string name)
   {
     assertValidName(name);
-    declared_params_.insert(name);
+    T tmp;
+    declared_params_[name] = tmp;
   }
 
   template<typename T> void Pod::declareOutput(std::string name)
@@ -306,6 +309,13 @@ namespace pipeline
   {
     if(declared_params_.count(name) == 0)
       PL_ABORT(getClassName() << " \"" << getName() << "\" tried to set undeclared param \"" << name << "\".");
+
+    try {
+      boost::any_cast<T>(declared_params_[name]);
+    }
+    catch(boost::bad_any_cast& e) {
+      PL_ABORT(getClassName() << " \"" << getName() << "\" tried to set param \"" << name << "\" to type that differs from declared type.");
+    }
     
     params_.set(name, val);
   }
