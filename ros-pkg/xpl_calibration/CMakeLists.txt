@@ -28,8 +28,8 @@ rosbuild_add_library(${PROJECT_NAME}
   src/color_wheel.cpp
   src/transform_validator.cpp
   src/orb_extractor.cpp
-  src/xpl_calibrator_orb.cpp
   src/descriptor_database.cpp
+  src/calibration_pipeline_orb.cpp
   )
 rosbuild_link_boost(${PROJECT_NAME} system)
 #target_link_libraries(${PROJECT_NAME} another_library)

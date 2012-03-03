@@ -8,7 +8,7 @@ void OrbExtractor::compute()
   PackedDescriptorsConstPtr descriptors = extractOrb(img, &keypoints_);
 
   push("Descriptors", descriptors);
-  push<const vector<cv::Keypoints>*>("Keypoints", &keypoints_);
+  push<const vector<cv::KeyPoint>*>("Keypoints", &keypoints_);
 }
 
 OrbExtractor::PackedDescriptorsPtr OrbExtractor::extractOrb(cv::Mat3b img,
@@ -21,12 +21,12 @@ OrbExtractor::PackedDescriptorsPtr OrbExtractor::extractOrb(cv::Mat3b img,
 			      31,
 			      param<int>("FirstLevel"));
     int num = param<int>("DesiredNumKeypoints");
-    extractor_ = shared_ptr<cv::Orb>(new cv::Orb(num, ocp));
+    extractor_ = boost::shared_ptr<cv::ORB>(new cv::ORB(num, ocp));
   }
   
   // -- Compute keypoints on the image.
   cv::Mat descriptors; // descriptors is num_descr x 32
-  extractor_(img, cv::Mat(), *keypoints, descriptors);
+  (*extractor_)(img, cv::Mat(), *keypoints, descriptors);
   assert(descriptors.type() == CV_8UC1);
   
   if(keypoints->empty())
@@ -43,7 +43,11 @@ OrbExtractor::PackedDescriptorsPtr OrbExtractor::extractOrb(cv::Mat3b img,
   return packed;
 }
 
-OrbExtractor::debug()
+void OrbExtractor::debug() const
 {
+  cv::Mat3b vis = pull<cv::Mat3b>("Image").clone();
+  for(size_t i = 0; i < keypoints_.size(); ++i)
+    cv::circle(vis, keypoints_[i].pt, 2, cv::Scalar(0, 0, 255), -1);
 
+  cv::imwrite(getDebugPath() + "-keypoints.png", vis);
 }

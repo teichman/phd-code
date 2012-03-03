@@ -3,6 +3,7 @@
 using namespace std;
 using namespace Eigen;
 using namespace rgbd;
+using namespace pipeline;
 
 CalibrationPipelineOrb::CalibrationPipelineOrb(int num_threads) :
   pl_(num_threads)
@@ -15,8 +16,11 @@ Eigen::Affine3f CalibrationPipelineOrb::calibrate(rgbd::Sequence::ConstPtr seq0,
 {
   pl_.setInput("Sequence0", seq0);
   pl_.setInput("Sequence1", seq1);
+  pl_.setDebug(true);
   pl_.compute();
-  return pl_.getOutput<Affine3f>("TransformValidator", "BestTransform");
+
+  return Affine3f::Identity();
+  //return pl_.getOutput<Affine3f>("TransformValidator", "BestTransform");
 }
 
 void CalibrationPipelineOrb::initializePipeline()
@@ -33,27 +37,29 @@ void CalibrationPipelineOrb::initializePipeline()
   fs0->registerInput("Sequence", ep0, "Output");
   fs1->registerInput("Sequence", ep1, "Output");
 
-  OrbGenerator* og0 = new OrbGenerator("OrbGenerator0");
-  OrbGenerator* og1 = new OrbGenerator("OrbGenerator1");
+  OrbExtractor* og0 = new OrbExtractor("OrbExtractor0");
+  OrbExtractor* og1 = new OrbExtractor("OrbExtractor1");
   og0->registerInput("Image", fs0, "Image");
   og1->registerInput("Image", fs1, "Image");
   
-  OrbMatcher* om = new OrbMatcher("OrbMatcher");
-  om->registerInput("Keypoints", og0, "Keypoints");
-  om->registerInput("Keypoints", og1, "Keypoints");
+  // OrbMatcher* om = new OrbMatcher("OrbMatcher");
+  // om->registerInput("Keypoints", og0, "Keypoints");
+  // om->registerInput("Keypoints", og1, "Keypoints");
 
-  TransformValidator* tv = new TransformValidator("TransformValidator");
-  tv->registerInput("Transforms", om, "Transforms");
+  // TransformValidator* tv = new TransformValidator("TransformValidator");
+  // tv->registerInput("Transforms", om, "Transforms");
   
   pl_.addConnectedComponent(ep0);
+  pl_.addConnectedComponent(ep1);
+  pl_.writeGraphviz("graphviz");
 }
 
 void CalibrationPipelineOrb::registerPods() const
 {
   REGISTER_POD_TEMPLATE(EntryPoint, SequenceConstPtr);
   REGISTER_POD(FrameSelector);
-  REGISTER_POD(OrbGenerator);
-  REGISTER_POD(OrbMatcher);
-  REGISTER_POD(TransformValidator);
+  REGISTER_POD(OrbExtractor);
+  //REGISTER_POD(OrbMatcher);
+  //REGISTER_POD(TransformValidator);
 }
 

@@ -2,12 +2,15 @@
 #define CALIBRATION_PIPELINE_H
 
 #include <pipeline/pipeline.h>
+#include <rgbd_sequence/rgbd_sequence.h>
+#include <xpl_calibration/frame_selector.h>
+#include <xpl_calibration/orb_extractor.h>
 
 class CalibrationPipelineOrb
 {
 public:
   //! Alphanumeric typenames are needed for Pipeline.
-  typedef Sequence::ConstPtr SequenceConstPtr; 
+  typedef rgbd::Sequence::ConstPtr SequenceConstPtr; 
   
   CalibrationPipelineOrb(int num_threads);
   //! Computes transform that will move target to reference.
@@ -16,7 +19,7 @@ public:
 			    rgbd::Sequence::ConstPtr target);
   
 protected:
-  Pipeline pl_;
+  pipeline::Pipeline pl_;
   void registerPods() const;
   void initializePipeline();
 };

@@ -6,11 +6,12 @@
 
 class FrameSelector : public pipeline::Pod
 {
+public:
   DECLARE_POD(FrameSelector);
   FrameSelector(std::string name) :
     Pod(name)
   {
-    declareParam<size_t>("FrameId");
+    declareParam<int>("FrameId");
     declareInput<rgbd::Sequence::ConstPtr>("Sequence");
     declareOutput<cv::Mat3b>("Image");
     declareOutput<rgbd::Cloud::ConstPtr>("Cloud");
@@ -19,10 +20,10 @@ class FrameSelector : public pipeline::Pod
   void compute()
   {
     const rgbd::Sequence& seq = *pull<rgbd::Sequence::ConstPtr>("Sequence");
-    ROS_ASSERT(seq.size() > param<size_t>("FrameId"));
+    ROS_ASSERT((int)seq.size() > param<int>("FrameId"));
     
-    push<rgbd::Cloud::ConstPtr>("Image", seq.imgs_[param<size_t>("FrameId")]);
-    push<rgbd::Cloud::ConstPtr>("Cloud", seq.pcds_[param<size_t>("FrameId")]);
+    push<cv::Mat3b>("Image", seq.imgs_[param<int>("FrameId")]);
+    push<rgbd::Cloud::ConstPtr>("Cloud", seq.pcds_[param<int>("FrameId")]);
   }
 };
 
