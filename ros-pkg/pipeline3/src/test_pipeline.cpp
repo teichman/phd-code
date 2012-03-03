@@ -423,6 +423,13 @@ TEST(Pod, ComputeOutsidePipeline)
   hg.debug();
 }
 
+TEST(Pod, MulitpleRegistration)
+{
+  // This should never crash.
+  registerPods();
+  registerPods();
+}
+
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
