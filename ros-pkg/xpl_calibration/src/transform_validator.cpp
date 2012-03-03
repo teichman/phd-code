@@ -4,7 +4,7 @@
 using namespace std;
 using namespace Eigen;
 using namespace pcl;
-
+using namespace rgbd;
 
 #define VISUALIZE (getenv("VISUALIZE") ? atoi(getenv("VISUALIZE")) : 0)
 
@@ -18,9 +18,9 @@ Eigen::Affine3f TransformValidator::compute()
   // -- Try all candidates.  Choose the best.
   Eigen::Affine3f best_transform = Eigen::Affine3f::Identity();
   double best_loss = numeric_limits<double>::max();
-  RGBDCloud transformed;
-  RGBDCloud best_transformed;
-  RGBDCloud::Ptr overlay(new RGBDCloud);
+  Cloud transformed;
+  Cloud best_transformed;
+  Cloud::Ptr overlay(new Cloud);
   visualization::CloudViewer vis("viewer");
   for(size_t i = 0; i < candidates_.size(); ++i) {
     transformed.clear();
@@ -49,16 +49,16 @@ Eigen::Affine3f TransformValidator::compute()
   return best_transform;
 }
 
-void TransformValidator::fineTuneAlignment(const RGBDCloud& ref,
+void TransformValidator::fineTuneAlignment(const Cloud& ref,
 					   search::KdTree<pcl::PointXYZRGB>& ref_tree,
 					   const PointCloud<Normal>& ref_normals,
-					   const RGBDCloud& tar,
+					   const Cloud& tar,
 					   Eigen::Affine3f* transform) const
 {
   vector<int> indices(1);
   vector<float> distances(1);
   int iter = 0;
-  RGBDCloud working;
+  Cloud working;
   transformPointCloud(tar, working, *transform);
   
   while(true) {
@@ -91,10 +91,10 @@ void TransformValidator::fineTuneAlignment(const RGBDCloud& ref,
   }
 }
   
-double TransformValidator::computeLoss(const RGBDCloud& ref,
+double TransformValidator::computeLoss(const Cloud& ref,
 				       const PointCloud<Normal>& ref_normals,
 				       pcl::search::KdTree<pcl::PointXYZRGB>& ref_tree,
-				       const RGBDCloud& tar) const
+				       const Cloud& tar) const
 {
   double score = 0;
   double max_term = 0.1;

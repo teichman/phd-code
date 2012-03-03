@@ -3,7 +3,7 @@
 using namespace std;
 using namespace Eigen;
 using namespace pcl;
-
+using namespace rgbd;
 
 #define SRAND (getenv("SRAND") ? atoi(getenv("SRAND")) : 0)
 #define VISUALIZE (getenv("VISUALIZE") ? atoi(getenv("VISUALIZE")) : 0)
@@ -17,7 +17,7 @@ PlaneFinder::PlaneFinder(size_t min_inliers,
 {
 }
 
-void PlaneFinder::compute(const RGBDCloud& pcd,
+void PlaneFinder::compute(const Cloud& pcd,
 			  const pcl::PointCloud<pcl::Normal>& normals)
 {
   ScopedTimer st("PlaneFinder::compute");
@@ -94,7 +94,7 @@ void PlaneFinder::compute(const RGBDCloud& pcd,
   }
 }
 
-bool PlaneFinder::findPlanarSurface(const RGBDCloud& pcd,
+bool PlaneFinder::findPlanarSurface(const Cloud& pcd,
 				    const PointCloud<Normal>& normals,
 				    size_t center_idx,
 				    int new_plane_id)
@@ -143,7 +143,7 @@ bool PlaneFinder::findPlanarSurface(const RGBDCloud& pcd,
   }
 }
 
-void PlaneFinder::getInPlaneNeighbors(const RGBDCloud& pcd,
+void PlaneFinder::getInPlaneNeighbors(const Cloud& pcd,
 				      const PointCloud<Normal>& normals,
 				      size_t center_idx,
 				      const Vector3f& plane_normal,

@@ -51,8 +51,8 @@ public:
   XplCalibrator();
   //! Computes transform that will move target to reference.
   //! T * target = reference.
-  Eigen::Affine3f calibrate(RGBDSequence::ConstPtr reference,
-			    RGBDSequence::ConstPtr target) const;
+  Eigen::Affine3f calibrate(rgbd::Sequence::ConstPtr reference,
+			    rgbd::Sequence::ConstPtr target) const;
 
 protected:
   double distance_thresh_;
@@ -63,30 +63,30 @@ protected:
   //! Step size to use in searching over the translation.
   double granularity_;
 
-  double computeLoss(const RGBDCloud& ref,
+  double computeLoss(const rgbd::Cloud& ref,
 		     const pcl::PointCloud<pcl::Normal>& ref_normals,
 		     pcl::search::KdTree<pcl::PointXYZRGB>& ref_tree,
-		     const RGBDCloud& tar) const;
+		     const rgbd::Cloud& tar) const;
   
   bool computeTransform(const Junction& ref,
 			const Junction& tar,
 			Eigen::Affine3f* transform) const;
   
-  void findJunctions(const RGBDCloud& pcd,
+  void findJunctions(const rgbd::Cloud& pcd,
 		     const pcl::PointCloud<pcl::Normal>& normals,
 		     std::vector<Junction>* junctions) const;
 
-  void applyTranslation(const RGBDCloud& src,
+  void applyTranslation(const rgbd::Cloud& src,
 			const Eigen::Vector3f& translation,
-			RGBDCloud* dst) const;
+			rgbd::Cloud* dst) const;
 
   cv::Mat3b visualizeJunctions(const std::vector<Junction>& junctions,
 			       cv::Mat3b img) const;
 
-  void fineTuneAlignment(const RGBDCloud& ref,
+  void fineTuneAlignment(const rgbd::Cloud& ref,
 			 pcl::search::KdTree<pcl::PointXYZRGB>& ref_tree,
 			 const pcl::PointCloud<pcl::Normal>& ref_normals,
-			 const RGBDCloud& tar,
+			 const rgbd::Cloud& tar,
 			 Eigen::Affine3f* transform) const;
     
 };

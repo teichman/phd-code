@@ -4,7 +4,7 @@
 using namespace std;
 using namespace Eigen;
 using namespace pcl;
-
+using namespace rgbd;
 
 #define VISUALIZE (getenv("VISUALIZE") ? atoi(getenv("VISUALIZE")) : 0)
 
@@ -12,7 +12,7 @@ XplCalibratorOrb::XplCalibratorOrb()
 {
 }
 
-pcl::PointXYZRGB XplCalibratorOrb::getPoint(const cv::KeyPoint& keypoint, const RGBDCloud& pcd) const
+pcl::PointXYZRGB XplCalibratorOrb::getPoint(const cv::KeyPoint& keypoint, const Cloud& pcd) const
 {
   int y = keypoint.pt.y;
   int x = keypoint.pt.x;
@@ -21,7 +21,7 @@ pcl::PointXYZRGB XplCalibratorOrb::getPoint(const cv::KeyPoint& keypoint, const 
 }
 
 pcl::PointXYZRGB XplCalibratorOrb::samplePoint(const std::vector<cv::KeyPoint>& keypoints,
-					 const RGBDCloud& pcd,
+					 const Cloud& pcd,
 					 int* idx = NULL) const
 {
   for(int i = 0; i < 1000; ++i) { 
@@ -41,11 +41,11 @@ pcl::PointXYZRGB XplCalibratorOrb::samplePoint(const std::vector<cv::KeyPoint>& 
   return bad;
 }
 
-Eigen::Affine3f XplCalibratorOrb::calibrate(RGBDSequence::ConstPtr refseq,
-					    RGBDSequence::ConstPtr tarseq) const
+Eigen::Affine3f XplCalibratorOrb::calibrate(Sequence::ConstPtr refseq,
+					    Sequence::ConstPtr tarseq) const
 {
-  RGBDCloud::Ptr ref = refseq->pcds_[0];
-  RGBDCloud::Ptr tar = tarseq->pcds_[0];
+  Cloud::Ptr ref = refseq->pcds_[0];
+  Cloud::Ptr tar = tarseq->pcds_[0];
 
   // -- Compute orb features.
   HighResTimer hrt("Orb");

@@ -18,8 +18,8 @@ class TransformValidator
 public:
   //! tar to ref
   std::vector<Eigen::Affine3f> candidates_;
-  RGBDCloud::ConstPtr ref_pcd_;
-  RGBDCloud::ConstPtr tar_pcd_;
+  rgbd::Cloud::ConstPtr ref_pcd_;
+  rgbd::Cloud::ConstPtr tar_pcd_;
   pcl::PointCloud<pcl::Normal>::ConstPtr ref_normals_;
   pcl::PointCloud<pcl::Normal>::ConstPtr tar_normals_;
   pcl::search::KdTree<pcl::PointXYZRGB>::Ptr ref_tree_;
@@ -27,15 +27,15 @@ public:
   
   TransformValidator(double gamma = 0.1);
   Eigen::Affine3f compute();
-  double computeLoss(const RGBDCloud& ref,
+  double computeLoss(const rgbd::Cloud& ref,
 		     const pcl::PointCloud<pcl::Normal>& ref_normals,
 		     pcl::search::KdTree<pcl::PointXYZRGB>& ref_tree,
-		     const RGBDCloud& tar) const;
+		     const rgbd::Cloud& tar) const;
   
-  void fineTuneAlignment(const RGBDCloud& ref,
+  void fineTuneAlignment(const rgbd::Cloud& ref,
 			 pcl::search::KdTree<pcl::PointXYZRGB>& ref_tree,
 			 const pcl::PointCloud<pcl::Normal>& ref_normals,
-			 const RGBDCloud& tar,
+			 const rgbd::Cloud& tar,
 			 Eigen::Affine3f* transform) const;
 
 protected:

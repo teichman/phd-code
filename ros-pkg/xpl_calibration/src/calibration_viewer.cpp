@@ -4,13 +4,13 @@
 #include <rgbd_sequence/rgbd_sequence.h>
 
 using namespace std;
-
+using namespace rgbd;
 
 string usageString()
 {
   ostringstream oss;
   oss << "Usage: calibration_viewer SEQ SEQ CAL" << endl;
-  oss << "  where SEQ is a RGBDSequence and CAL is a 4x4 .eig.txt file that describes" << endl;
+  oss << "  where SEQ is a Sequence and CAL is a 4x4 .eig.txt file that describes" << endl;
   oss << "  the transform that brings the second sequence to the coordinate system that the" << endl;
   oss << "  first lives in." << endl;
   return oss.str();
@@ -28,13 +28,13 @@ int main(int argc, char** argv)
   cout << "Loaded transform: " << endl;
   cout << mat << endl;
   
-  RGBDSequence::Ptr reference(new RGBDSequence);
-  RGBDSequence::Ptr target(new RGBDSequence);
+  Sequence::Ptr reference(new Sequence);
+  Sequence::Ptr target(new Sequence);
   reference->load(argv[1]);
   target->load(argv[2]);
     
-  RGBDCloud::Ptr overlay(new RGBDCloud);
-  RGBDCloud::Ptr transformed(new RGBDCloud);
+  Cloud::Ptr overlay(new Cloud);
+  Cloud::Ptr transformed(new Cloud);
   *overlay = *reference->pcds_[0];
   Eigen::Affine3f transform(mat);
   transformPointCloud(*target->pcds_[0], *transformed, transform);

@@ -4,7 +4,7 @@
 
 using namespace std;
 using namespace pcl;
-
+using namespace rgbd;
 
 #define USE_PLANES (getenv("USE_PLANES") ? atoi(getenv("USE_PLANES")) : 0)
 
@@ -22,8 +22,8 @@ int main(int argc, char** argv)
     return 0;
   }
 
-  RGBDSequence::Ptr reference(new RGBDSequence);
-  RGBDSequence::Ptr target(new RGBDSequence);
+  Sequence::Ptr reference(new Sequence);
+  Sequence::Ptr target(new Sequence);
   reference->load(argv[1]);
   target->load(argv[2]);
 

@@ -1,7 +1,7 @@
 #include <rgbd_sequence/recorder.h>
 
 using namespace std;
-using namespace rgbd_sequence;
+using namespace rgbd;
 
 string usageString()
 {

@@ -5,7 +5,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <rgbd_sequence/rgbd_sequence.h>
 
-namespace rgbd_sequence
+namespace rgbd
 {
 
   class Recorder

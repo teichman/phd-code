@@ -3,7 +3,7 @@
 using namespace std;
 namespace bfs = boost::filesystem;
 
-namespace rgbd_sequence
+namespace rgbd
 {
 
   Sequence::Sequence() :
@@ -126,4 +126,4 @@ namespace rgbd_sequence
     }
   }
   
-} // namespace rgbd_sequence
+} // namespace rgbd

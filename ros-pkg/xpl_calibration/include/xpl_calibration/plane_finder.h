@@ -30,7 +30,7 @@ public:
   PlaneFinder(size_t min_inliers,
 	      double angle_thresh,
 	      double distance_thresh);
-  void compute(const RGBDCloud& cloud,
+  void compute(const rgbd::Cloud& cloud,
 	       const pcl::PointCloud<pcl::Normal>& normals);
 
 protected:
@@ -38,12 +38,12 @@ protected:
   double angle_thresh_;
   double distance_thresh_;
 
-  bool findPlanarSurface(const RGBDCloud& pcd,
+  bool findPlanarSurface(const rgbd::Cloud& pcd,
 			 const pcl::PointCloud<pcl::Normal>& normals,
 			 size_t center_idx,
 			 int new_plane_id);
   
-  void getInPlaneNeighbors(const RGBDCloud& pcd,
+  void getInPlaneNeighbors(const rgbd::Cloud& pcd,
 			   const pcl::PointCloud<pcl::Normal>& normals,
 			   size_t center_idx,
 			   const Eigen::Vector3f& plane_normal,

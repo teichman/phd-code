@@ -12,7 +12,7 @@
 #include <pcl/point_types.h>
 #include <serializable/serializable.h>
 
-namespace rgbd_sequence
+namespace rgbd
 {
 
   typedef pcl::PointXYZRGB Point;

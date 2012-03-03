@@ -4,7 +4,7 @@
 using namespace std;
 using namespace Eigen;
 using namespace pcl;
-
+using namespace rgbd;
 
 #define VISUALIZE (getenv("VISUALIZE") ? atoi(getenv("VISUALIZE")) : 0)
 
@@ -53,7 +53,7 @@ XplCalibrator::XplCalibrator() :
 {
 }
 
-void XplCalibrator::findJunctions(const RGBDCloud& pcd,
+void XplCalibrator::findJunctions(const Cloud& pcd,
 				  const PointCloud<Normal>& normals,
 				  vector<Junction>* junctions) const
 {
@@ -167,13 +167,13 @@ cv::Mat3b XplCalibrator::visualizeJunctions(const std::vector<Junction>& junctio
 }
 
 
-Eigen::Affine3f XplCalibrator::calibrate(RGBDSequence::ConstPtr refseq,
-					 RGBDSequence::ConstPtr tarseq) const
+Eigen::Affine3f XplCalibrator::calibrate(Sequence::ConstPtr refseq,
+					 Sequence::ConstPtr tarseq) const
 {
   vector<Junction> ref_junctions;
   vector<Junction> tar_junctions;
-  RGBDCloud::Ptr ref = refseq->pcds_[0];
-  RGBDCloud::Ptr tar = tarseq->pcds_[0];
+  Cloud::Ptr ref = refseq->pcds_[0];
+  Cloud::Ptr tar = tarseq->pcds_[0];
 
   HighResTimer hrt("KdTrees");
   hrt.start();
@@ -187,7 +187,7 @@ Eigen::Affine3f XplCalibrator::calibrate(RGBDSequence::ConstPtr refseq,
   hrt.reset("Normals");
   hrt.start();
 
-  // pipeline2::Outlet<RGBDCloud::ConstPtr> pcd_otl(NULL);
+  // pipeline2::Outlet<Cloud::ConstPtr> pcd_otl(NULL);
   // pipeline2::Outlet<cv::Mat1b> mask_otl(NULL);
   // pcd_otl.push(ref);
   // mask_otl.push(cv::Mat1b(cv::Size(ref->width, ref->height), 255));
@@ -238,8 +238,8 @@ Eigen::Affine3f XplCalibrator::calibrate(RGBDSequence::ConstPtr refseq,
   visualization::CloudViewer vis("viewer");
   double best_loss = numeric_limits<double>::max();
   Affine3f best_transform = Affine3f::Identity();
-  RGBDCloud transformed = *ref;
-  RGBDCloud::Ptr overlay(new RGBDCloud);
+  Cloud transformed = *ref;
+  Cloud::Ptr overlay(new Cloud);
   for(size_t i = 0; i < ref_junctions.size(); ++i) {
     for(size_t j = 0; j < tar_junctions.size(); ++j) {
   // for(size_t i = 0; i < 1; ++i) {
@@ -272,7 +272,7 @@ Eigen::Affine3f XplCalibrator::calibrate(RGBDSequence::ConstPtr refseq,
 	  continue;
 	}
 	
-	RGBDCloud base_transformed;
+	Cloud base_transformed;
 	transformPointCloud(*tar, base_transformed, base_transform);
 
 	// Get the min and max.
@@ -355,17 +355,17 @@ Eigen::Affine3f XplCalibrator::calibrate(RGBDSequence::ConstPtr refseq,
   return best_transform;
 }
 
-void XplCalibrator::fineTuneAlignment(const RGBDCloud& ref,
+void XplCalibrator::fineTuneAlignment(const Cloud& ref,
 				      search::KdTree<pcl::PointXYZRGB>& ref_tree,
 				      const PointCloud<Normal>& ref_normals,
-				      const RGBDCloud& tar,
+				      const Cloud& tar,
 				      Eigen::Affine3f* transform) const
 {
 
   vector<int> indices(1);
   vector<float> distances(1);
   int iter = 0;
-  RGBDCloud working;
+  Cloud working;
   transformPointCloud(tar, working, *transform);
   
   while(true) {
@@ -398,7 +398,7 @@ void XplCalibrator::fineTuneAlignment(const RGBDCloud& ref,
   }
 }
   
-void XplCalibrator::applyTranslation(const RGBDCloud& src, const Vector3f& translation, RGBDCloud* dst) const
+void XplCalibrator::applyTranslation(const Cloud& src, const Vector3f& translation, Cloud* dst) const
 {
   ROS_ASSERT(src.size() == dst->size());
   for(size_t i = 0; i < src.size(); ++i)
@@ -406,10 +406,10 @@ void XplCalibrator::applyTranslation(const RGBDCloud& src, const Vector3f& trans
       dst->at(i).getVector3fMap() = src[i].getVector3fMap() + translation;
 }
 
-double XplCalibrator::computeLoss(const RGBDCloud& ref,
+double XplCalibrator::computeLoss(const Cloud& ref,
 				  const PointCloud<Normal>& ref_normals,
 				  pcl::search::KdTree<pcl::PointXYZRGB>& ref_tree,
-				  const RGBDCloud& tar) const
+				  const Cloud& tar) const
 {
   double score = 0;
   double max_term = 0.1;
