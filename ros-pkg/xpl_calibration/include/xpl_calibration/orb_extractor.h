@@ -33,6 +33,7 @@ public:
   }
 
   void compute();
+  void debug() const;
   
 protected:
   boost::shared_ptr<cv::ORB> extractor_;

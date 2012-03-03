@@ -37,8 +37,11 @@ namespace pipeline
     // ----------------------------------------
     // -- Control
     // ----------------------------------------
-    //! Sets the debug_ flag on all pods.
-    void setDebug(bool debug);
+    //! Sets the debug_ flag on all Pods.
+    //! If true, also creates dir so that Pods can easily save output there.
+    void setDebug(bool debug, const std::string& dir = ".pipeline-debug");
+    //! Returns .pipeline-debug
+    std::string getDebugPath() const;
     bool getDebug() const;
     void setNumThreads(int num_threads);
     //! Disables pod and all other pods connected to it.

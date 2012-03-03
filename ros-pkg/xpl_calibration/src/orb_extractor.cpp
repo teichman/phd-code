@@ -2,43 +2,31 @@
 
 using namespace std;
 
-OrbExtractor::OrbExtractor() :
-  
+void OrbExtractor::compute()
 {
+  cv::Mat3b img = pull<cv::Mat3b>("Image");
+  PackedDescriptorsConstPtr descriptors = extractOrb(img, &keypoints_);
+
+  push("Descriptors", descriptors);
+  push<const vector<cv::Keypoints>*>("Keypoints", &keypoints_);
 }
 
 OrbExtractor::PackedDescriptorsPtr OrbExtractor::extractOrb(cv::Mat3b img,
 							    vector<cv::KeyPoint>* keypoints)
 {
+  keypoints_.clear();
   if(!extractor_) {
-    extractor_ = shared_ptr<cv::Orb>(new cv::Orb(1000, cv::ORB::CommonParams(1.2, 3, 7, 0)));
+    cv::ORB::CommonParams ocp(param<double>("ScaleFactor"),
+			      param<int>("NumLevels"),
+			      31,
+			      param<int>("FirstLevel"));
+    int num = param<int>("DesiredNumKeypoints");
+    extractor_ = shared_ptr<cv::Orb>(new cv::Orb(num, ocp));
   }
   
   // -- Compute keypoints on the image.
   cv::Mat descriptors; // descriptors is num_descr x 32
-
-  // Strangely, OpenCV is not computing orb features anywhere except the very middle of the image.
-  // Workaround: pad the image.
-  // cv::Mat3b buf(img.size() * 3, cv::Vec3b(0, 0, 0));
-  // for(int y = 0; y < buf.rows; ++y) {
-  //   for(int x = 0; x < buf.cols; ++x) {
-  //     if(x >= img.cols && x < 2*img.cols &&
-  // 	 y >= img.rows && y < 2*img.rows)
-  // 	buf(y, x) = img(y - img.rows, x - img.cols);
-  //   }
-  // }
-  //extractor_(buf, cv::Mat(), *keypoints, descriptors);
-
-  // // Translate back to original image coords.
-  // for(size_t i = 0; i < keypoints->size(); ++i) {
-  //   keypoints->at(i).pt.x -= img.cols;
-  //   keypoints->at(i).pt.y -= img.rows;
-  // }
-
   extractor_(img, cv::Mat(), *keypoints, descriptors);
-  // cout << "cols: " << descriptors.cols << endl;
-  // cout << "rows: " << descriptors.rows << endl;
-  // cout << descriptors.type() << endl;
   assert(descriptors.type() == CV_8UC1);
   
   if(keypoints->empty())
@@ -53,4 +41,9 @@ OrbExtractor::PackedDescriptorsPtr OrbExtractor::extractOrb(cv::Mat3b img,
   }
 
   return packed;
+}
+
+OrbExtractor::debug()
+{
+
 }
