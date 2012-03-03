@@ -1,6 +1,7 @@
 #ifndef STRUCTURAL_SVM_H
 #define STRUCTURAL_SVM_H
 
+#define BOOST_FILESYSTEM_VERSION 2
 #include <boost/filesystem.hpp>
 #include <optimization/nips.h>
 #include <optimization/common_functions.h>

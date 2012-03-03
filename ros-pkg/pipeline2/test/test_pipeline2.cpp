@@ -151,7 +151,7 @@ class ExampleNode2 : public ComputeNode {
  protected:
   void _flush() {}
   void _compute() {}
-  std::string _getName() const {return string("foo");}
+  std::string _getName() const {return string("ExampleNode2");}
 };
 
 vector<ComputeNode*> getNodes2() {
@@ -162,7 +162,7 @@ vector<ComputeNode*> getNodes2() {
   nodes.back()->disabled_ = true;
   return nodes;
 }
-	
+
 TEST(Pipeline2, filterNodes) {
   Pipeline2 pl(sysconf(_SC_NPROCESSORS_ONLN), getNodes2());
 
@@ -184,6 +184,20 @@ TEST(Pipeline2, getShortName) {
   Pipeline2 pl(1, getNodes());
   for(size_t i = 0; i < pl.nodes_.size(); ++i)
     cout << pl.nodes_[i]->getShortName() << endl;
+}
+
+TEST(Pipeline2, getNode)
+{
+  vector<ComputeNode*> nodes;
+  nodes.push_back(new ExampleNode2);
+  EXPECT_TRUE(!getNode<ExampleNode>(nodes));
+  EXPECT_TRUE(getNode<ExampleNode2>(nodes)->getFullName().compare("ExampleNode2") == 0);
+  nodes.push_back(new ExampleNode(100));
+  EXPECT_TRUE(getNode<ExampleNode>(nodes)->getFullName().compare("ExampleNode100") == 0);
+
+  Pipeline2 pl(1, nodes);
+  EXPECT_TRUE(pl.getNode<ExampleNode>());
+  EXPECT_TRUE(pl.getNode<ExampleNode>()->getFullName().compare("ExampleNode100") == 0);
 }
 
 int main(int argc, char** argv) {

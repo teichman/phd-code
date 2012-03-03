@@ -3,21 +3,19 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <dst/typedefs.h>
-#include <dst/lockable.h>
-#include <dst/kinect_sequence.h>
+#include <rgbd_sequence/rgbd_sequence.h>
 
-namespace dst
+namespace rgbd_sequence
 {
 
-  class Recorder : public Lockable
+  class Recorder
   {
   public:
     //! 640x480: OpenNI_VGA_30Hz
     //! 160x120: OpenNI_QQVGA_30Hz
     Recorder(const std::string& device_id = "",
 	     pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz);
-    void cloudCallback(const KinectCloud::ConstPtr& cloud);
+    void cloudCallback(const Cloud::ConstPtr& cloud);
     void imageCallback(const boost::shared_ptr<openni_wrapper::Image>& image);
     void irCallback(const boost::shared_ptr<openni_wrapper::IRImage>& oni_img);
     void depthImageCallback(const boost::shared_ptr<openni_wrapper::DepthImage>& oni);
@@ -30,8 +28,8 @@ namespace dst
     pcl::OpenNIGrabber grabber_;
     pcl::visualization::CloudViewer cloud_viewer_;
     bool recording_;
-    std::vector<KinectCloud::ConstPtr> clouds_;
-    std::vector<cv::Mat3b> images_;
+    std::vector<Cloud::ConstPtr> clouds_;
+    std::vector<cv::Mat3b> imgs_;
     std::vector<double> image_timestamps_;
 
     cv::Mat3b oniToCV(const boost::shared_ptr<openni_wrapper::Image>& oni) const;

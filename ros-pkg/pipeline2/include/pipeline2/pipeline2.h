@@ -42,6 +42,18 @@ namespace pipeline2 {
     double getComputationTime() const;
     int getNumTimesComputed() const;
     std::string getRunName(int width = 4) const;
+
+    //! Function called after node computes if debug_ == true.
+    //! Virtual for overloading by ComputeNode subclasses that are abstract, e.g. DescriptorNode.
+    virtual void display() const; 
+    //! Performs computation, given data from nodes in inputs_.
+    virtual void _compute() = 0;
+    //! Clears cached data to prepare for next run.
+    virtual void _flush() = 0;
+    //! Hard reset; clears everything, including data not cleared by _flush().
+    virtual void _reset();
+    //! Returns a name that is unique for any parameter settings of this node.
+    virtual std::string _getName() const = 0;
     
   protected:
     void registerInput(ComputeNode* input);
@@ -62,18 +74,6 @@ namespace pipeline2 {
     double time_msec_;
     int num_times_computed_;
     
-    //! Function called after node computes if debug_ == true.
-    //! Virtual for overloading by ComputeNode subclasses that are abstract, e.g. DescriptorNode.
-    virtual void display() const; 
-    //! Performs computation, given data from nodes in inputs_.
-    virtual void _compute() = 0;
-    //! Clears cached data to prepare for next run.
-    virtual void _flush() = 0;
-    //! Hard reset; clears everything, including data not cleared by _flush().
-    virtual void _reset();
-    //! Returns a name that is unique for any parameter settings of this node.
-    virtual std::string _getName() const = 0;
-
     void flush();
     void reset();
     void compute();
@@ -98,6 +98,8 @@ namespace pipeline2 {
 
     //! Return all nodes of type T for which the given the test function evaluates to true.
     template<typename T> std::vector<T*> filterNodes(bool (*test)(T* node) = NULL) const;
+    //! There must be only one node of type T that passes the test.
+    template<typename T> T* getNode() const;
 
     //! Adds all nodes that are connected to node.
     void addComponent(ComputeNode* node);
@@ -238,6 +240,9 @@ namespace pipeline2 {
   std::vector<T*>
   filterNodes(const std::vector<ComputeNode*>& nodes, bool (*test)(T* node) = NULL);
 
+  //! Returns the one node of type T.  There must be only one.
+  template<typename T> T* getNode(const std::vector<ComputeNode*>& nodes);
+
   //! Function that Pipeline2 worker threads call.
   void* propagateComputation(void *pipeline2);
 
@@ -270,6 +275,33 @@ namespace pipeline2 {
     return passed;
   }
 
+  
+  template<typename T>
+  T* Pipeline2::getNode() const
+  {
+    return pipeline2::getNode<T>(nodes_);
+  }
+  
+  template<typename T>
+  T* getNode(const std::vector<ComputeNode*>& nodes)
+  {
+    std::vector<T*> passed;
+    passed.reserve(nodes.size());
+    for(size_t i = 0; i < nodes.size(); ++i) {
+      T* casted = dynamic_cast<T*>(nodes[i]);
+      if(!casted)
+	continue;
+      passed.push_back(casted);
+    }
+
+    ROS_ASSERT(passed.size() == 1 || passed.size() == 0);
+    if(passed.size() == 1)
+      return passed[0];
+    else
+      return NULL;
+  }
+
+  
 } // namespace pipeline2
 
 #endif // PIPELINE2_H_

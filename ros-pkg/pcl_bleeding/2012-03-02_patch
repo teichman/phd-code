@@ -1,0 +1,35 @@
+Index: common/include/pcl/point_cloud.h
+===================================================================
+--- common/include/pcl/point_cloud.h	(revision 4900)
++++ common/include/pcl/point_cloud.h	(working copy)
+@@ -637,7 +637,7 @@
+         width (pc.width), height (pc.height), is_dense (pc.is_dense)
+       {
+         // Copy the obvious
+-        properties.acquisition_time   = pc.header.stamp;
++        properties.acquisition_time   = pc.header.stamp.toSec();
+         properties.sensor_origin      = pc.sensor_origin_;//.head<3> ();
+         properties.sensor_orientation = pc.sensor_orientation_;
+ 
+@@ -670,7 +670,7 @@
+         width (pc.width), height (pc.height), is_dense (pc.is_dense)
+       {
+         // Copy the obvious
+-        properties.acquisition_time   = pc.header.stamp;
++        properties.acquisition_time   = pc.header.stamp.toSec();
+         properties.sensor_origin      = pc.sensor_origin_;//.head<3> ();
+         properties.sensor_orientation = pc.sensor_orientation_;
+ 
+Index: io/src/oni_grabber.cpp
+===================================================================
+--- io/src/oni_grabber.cpp	(revision 4900)
++++ io/src/oni_grabber.cpp	(working copy)
+@@ -270,7 +270,7 @@
+ {
+   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud <pcl::PointXYZ>);
+ 
+-  // TODO cloud->header.stamp = time;
++  cloud->header.stamp = depth_image->getTimeStamp();
+   cloud->height = depth_height_;
+   cloud->width = depth_width_;
+   cloud->is_dense = false;

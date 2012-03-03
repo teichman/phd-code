@@ -11,6 +11,7 @@
   <depend package="pcl_bleeding"/>
   <depend package="serializable"/>
   <depend package="opencv2_flags"/>
+  <depend package="bag_of_tricks"/>
 
   <export>
     <cpp cflags="-I${prefix}/include"

@@ -1,13 +1,14 @@
-#include <dst/recorder.h>
+#include <rgbd_sequence/recorder.h>
 #include <bag_of_tricks/high_res_timer.h>
 
 #define SHOW_IR (getenv("SHOW_IR"))
 #define DESYNC (getenv("DESYNC"))
 using namespace std;
+namespace bfs = boost::filesystem;
 
-namespace dst
+namespace rgbd_sequence
 {
-  
+
   Recorder::Recorder(const std::string& device_id,
 		     pcl::OpenNIGrabber::Mode mode) :
     device_id_(device_id),
@@ -18,7 +19,7 @@ namespace dst
   {
     initializeGrabber();
     clouds_.reserve(100000);
-    images_.reserve(100000);
+    imgs_.reserve(100000);
     image_timestamps_.reserve(100000);
   }
   
@@ -31,23 +32,14 @@ namespace dst
     grabber_.stop();
   }
 
-  void Recorder::cloudCallback(const KinectCloud::ConstPtr& cloud)
+  void Recorder::cloudCallback(const Cloud::ConstPtr& cloud)
   {
-    //ScopedTimer st("cloud callback");
-    
-//    static double prev = 0;
-    //double delta = cloud->header.stamp.toSec() - prev;
-//    ROS_WARN_STREAM_COND(delta > 0.05, "Dropped at least one pointcloud.  Delta is " << delta << ".  (Frame alignment should not be affected.)");
-//    prev = cloud->header.stamp.toSec();
-
-    //lock();
     if(recording_) {
       clouds_.push_back(cloud);
     }
     else {
       cloud_viewer_.showCloud(cloud);
     }
-    //unlock();
   }
 
   cv::Mat1b Recorder::irToCV(const boost::shared_ptr<openni_wrapper::IRImage>& ir) const
@@ -58,7 +50,7 @@ namespace dst
     int i = 0;
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x, ++i) {
-      	img(y, x) = data[i];
+	img(y, x) = data[i];
       }
     }
     
@@ -73,9 +65,9 @@ namespace dst
     int i = 0;
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x, i+=3) {
-      	img(y, x)[0] = data[i+2];
-    	img(y, x)[1] = data[i+1];
-    	img(y, x)[2] = data[i];
+	img(y, x)[0] = data[i+2];
+	img(y, x)[1] = data[i+1];
+	img(y, x)[2] = data[i];
       }
     }
     
@@ -84,31 +76,25 @@ namespace dst
   
   void Recorder::imageCallback(const boost::shared_ptr<openni_wrapper::Image>& oni_img)
   {
-    //ScopedTimer st("image callback");
-    //lock();
     cv::Mat3b img = oniToCV(oni_img);
     if(recording_) { 
-      images_.push_back(img);
+      imgs_.push_back(img);
       image_timestamps_.push_back((double)oni_img->getTimeStamp() / (double)1e6);
     }
     else { 
       cv::imshow("Image", img);
       cv::waitKey(10);
     }
-    //unlock();
   }
 
   void Recorder::irCallback(const boost::shared_ptr<openni_wrapper::IRImage>& oni_img)
   {
-    //ScopedTimer st("ir image callback");
-    //lock();
     if(!recording_) { 
       cv::Mat1b img = irToCV(oni_img);
       cv::namedWindow("IR", CV_WINDOW_NORMAL);
       cv::imshow("IR", img);
       cv::waitKey(3);
     }
-    //unlock();
   }
 
   void Recorder::depthImageCallback(const boost::shared_ptr<openni_wrapper::DepthImage>& oni)
@@ -132,6 +118,30 @@ namespace dst
     }
   }
 
+  std::string generateFilename(const bfs::path& dir,
+			       const std::string& basename,
+			       int width)
+  {
+    // -- Create the directory if necessary.
+    ROS_ASSERT(!bfs::exists(dir) || bfs::is_directory(dir));
+    if(!bfs::exists(dir))
+      bfs::create_directory(dir);
+
+    // -- Find the next number.
+    int num = 0;
+    bfs::directory_iterator end_itr; // default construction yields past-the-end
+    for(bfs::directory_iterator itr(dir); itr != end_itr; ++itr) { 
+      if(itr->leaf().substr(width+1).compare(basename) == 0)
+	++num;
+    }
+    
+    ostringstream filename;
+    filename << setw(width) << setfill('0') << num << "-" << basename;
+    ostringstream oss;
+    oss << dir / filename.str();
+    return oss.str();
+  }
+  
   void Recorder::toggleRecording()
   {
     recording_ = !recording_;
@@ -142,11 +152,11 @@ namespace dst
     // string name;
     // cout << "Save sequence as: ";
     // cin >> name;
-    string name = generateFilename("recorded_sequences", "seq");
+    string name = generateFilename("recorded_sequences", "seq", 4);
     
     
-    // -- Get matching frames, put into KinectSequence.
-    KinectSequence seq;
+    // -- Get matching frames, put into Sequence.
+    Sequence seq;
     size_t img_idx = 0;
     size_t pcd_idx = 0;
     // 30fps, so 1/60 sec is max possible difference.  Allow for 10% slop.
@@ -159,31 +169,31 @@ namespace dst
       cout << img_ts << " " << pcd_ts << ", |dt| = " << dt << endl;
       
       if(dt < thresh) {
-	KinectCloud::Ptr tmp(new KinectCloud(*clouds_[pcd_idx]));
-	seq.pointclouds_.push_back(tmp);
+	Cloud::Ptr tmp(new Cloud(*clouds_[pcd_idx]));
+	seq.pcds_.push_back(tmp);
 
 	if(mode_ == pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz) { 
 	  // QQVGA appears to work for the pcd but not for the img.
 	  // Resize the image here.
-	  ROS_ASSERT(images_[img_idx].cols == 320);
-	  ROS_ASSERT(images_[img_idx].rows == 240);
+	  ROS_ASSERT(imgs_[img_idx].cols == 320);
+	  ROS_ASSERT(imgs_[img_idx].rows == 240);
 	  ROS_ASSERT(tmp->width == 160);
 	  ROS_ASSERT(tmp->height == 120);
-	  // cout << "img size: " << images_[img_idx].cols << " " << images_[img_idx].rows << endl;
+	  // cout << "img size: " << imgs_[img_idx].cols << " " << imgs_[img_idx].rows << endl;
 	  // cout << "pcd size: " << tmp->width << " " << tmp->height << endl;
 	  
-	  //seq.images_.push_back(images_[img_idx]);
+	  //seq.imgs_.push_back(imgs_[img_idx]);
 	  cv::Mat3b small_img;
-	  cv::resize(images_[img_idx], small_img, cv::Size(160, 120));
-	  seq.images_.push_back(small_img);
+	  cv::resize(imgs_[img_idx], small_img, cv::Size(160, 120));
+	  seq.imgs_.push_back(small_img);
 	}
 	else if(mode_ == pcl::OpenNIGrabber::OpenNI_VGA_30Hz) {
-	  ROS_ASSERT(images_[img_idx].cols == 640);
-	  ROS_ASSERT(images_[img_idx].rows == 480);
+	  ROS_ASSERT(imgs_[img_idx].cols == 640);
+	  ROS_ASSERT(imgs_[img_idx].rows == 480);
 	  ROS_ASSERT(clouds_[pcd_idx]->width == 640);
 	  ROS_ASSERT(clouds_[pcd_idx]->height == 480);
 	  
-	  seq.images_.push_back(images_[img_idx]);
+	  seq.imgs_.push_back(imgs_[img_idx]);
 	}
 
 	++img_idx;
@@ -196,17 +206,17 @@ namespace dst
       else
 	++pcd_idx;
 
-      if(img_idx == images_.size() || pcd_idx == clouds_.size())
+      if(img_idx == imgs_.size() || pcd_idx == clouds_.size())
 	break;
     }
 
-    cout << "Num images: " << images_.size() << endl;
+    cout << "Num images: " << imgs_.size() << endl;
     cout << "Num pcds: " << clouds_.size() << endl;
-    cout << "Mean dt: " << total_dt / (double)seq.images_.size() << endl;
+    cout << "Mean dt: " << total_dt / (double)seq.imgs_.size() << endl;
 
     seq.save(name);
     cout << "Saved to " << name << endl;
-    images_.clear();
+    imgs_.clear();
     clouds_.clear();
     image_timestamps_.clear();
   }
@@ -225,7 +235,7 @@ namespace dst
       image_cb = boost::bind(&Recorder::imageCallback, this, _1);
       grabber_.registerCallback(image_cb);
 
-      boost::function<void (const KinectCloud::ConstPtr&)> cloud_cb;
+      boost::function<void (const Cloud::ConstPtr&)> cloud_cb;
       cloud_cb = boost::bind(&Recorder::cloudCallback, this, _1);
       grabber_.registerCallback(cloud_cb);
       grabber_.getDevice()->setSynchronization(true);

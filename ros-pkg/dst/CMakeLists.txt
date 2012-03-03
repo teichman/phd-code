@@ -14,11 +14,8 @@ rosbuild_init()
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-include_directories(/usr/include/openni)
-
 rosbuild_add_library(dst
   src/lib/volume_segmenter.cpp
-  src/lib/recorder.cpp
   src/lib/realtime_interface.cpp
   src/lib/potentials_cache.cpp
   src/lib/kinect_sequence.cpp
@@ -111,10 +108,6 @@ rosbuild_add_executable(openni_viewer_simple src/program/openni_viewer_simple.cp
 target_link_libraries(openni_viewer_simple dst)
 rosbuild_add_compile_flags(openni_viewer_simple -DBOOST_FILESYSTEM_VERSION=2 -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
-rosbuild_add_executable(record src/program/record.cpp)
-target_link_libraries(record dst)
-rosbuild_add_compile_flags(record -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
-
 rosbuild_add_executable(realtime_interface src/program/realtime_interface.cpp)
 target_link_libraries(realtime_interface dst)
 rosbuild_add_compile_flags(realtime_interface -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
@@ -126,9 +119,6 @@ rosbuild_add_compile_flags(translate_sequence -Wno-deprecated -Wno-unused-but-se
 rosbuild_add_executable(evaluate src/program/evaluate.cpp)
 target_link_libraries(evaluate dst)
 rosbuild_add_compile_flags(evaluate -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
-
-#rosbuild_add_executable(receive src/program/receive.cpp)
-#target_link_libraries(receive dst)
 
 rosbuild_add_gtest(test_maxflow src/test/test_maxflow.cpp)
 target_link_libraries(test_maxflow dst)

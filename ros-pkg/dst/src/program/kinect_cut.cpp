@@ -1,4 +1,3 @@
-#define BOOST_FILESYSTEM_VERSION 2
 #include <maxflow/graph.h>
 #include <image_labeler/opencv_view.h>
 #include <bag_of_tricks/high_res_timer.h>

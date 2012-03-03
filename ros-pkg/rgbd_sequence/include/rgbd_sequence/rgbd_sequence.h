@@ -1,6 +1,7 @@
 #ifndef RGBD_SEQUENCE_H
 #define RGBD_SEQUENCE_H
 
+#define BOOST_FILESYSTEM_VERSION 2
 #include <boost/filesystem.hpp>
 #include <boost/shared_ptr.hpp>
 #include <opencv2/core/core.hpp>
@@ -11,31 +12,37 @@
 #include <pcl/point_types.h>
 #include <serializable/serializable.h>
 
-typedef pcl::PointCloud<pcl::PointXYZRGB> RGBDCloud;
-  
-class RGBDSequence : public Serializable
+namespace rgbd_sequence
 {
-public:
-  typedef boost::shared_ptr<RGBDSequence> Ptr;
-  typedef boost::shared_ptr<const RGBDSequence> ConstPtr;
+
+  typedef pcl::PointXYZRGB Point;
+  typedef pcl::PointCloud<Point> Cloud;
+
+  class Sequence : public Serializable
+  {
+  public:
+    typedef boost::shared_ptr<Sequence> Ptr;
+    typedef boost::shared_ptr<const Sequence> ConstPtr;
   
-  std::vector<cv::Mat3b> imgs_;
-  std::vector<RGBDCloud::Ptr> pcds_;
+    std::vector<cv::Mat3b> imgs_;
+    std::vector<Cloud::Ptr> pcds_;
 
-  RGBDSequence();
-  //! Deep-copies.
-  RGBDSequence(const RGBDSequence& seq);
-  //! Deep-copies.
-  RGBDSequence& operator=(const RGBDSequence& seq);
-  void save(const std::string& filename) const;
-  void load(const std::string& filename);
-  void serialize(std::ostream& out) const;
-  void deserialize(std::istream& in);
-};
+    Sequence();
+    //! Deep-copies.
+    Sequence(const Sequence& seq);
+    //! Deep-copies.
+    Sequence& operator=(const Sequence& seq);
+    void save(const std::string& filename) const;
+    void load(const std::string& filename);
+    void serialize(std::ostream& out) const;
+    void deserialize(std::istream& in);
+  };
 
-//! path can point to a directory of sequences or a single sequence.
-//! sequences does not have to be empty.
-void loadSequences(const std::string& path,
-		   std::vector<RGBDSequence::Ptr>* sequences);
+  //! path can point to a directory of sequences or a single sequence.
+  //! sequences does not have to be empty.
+  void loadSequences(const std::string& path,
+		     std::vector<Sequence::Ptr>* sequences);
+
+}
 
 #endif // RGBD_SEQUENCE_H

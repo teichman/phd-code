@@ -1,7 +1,7 @@
-#include <dst/recorder.h>
+#include <rgbd_sequence/recorder.h>
 
 using namespace std;
-using namespace dst;
+using namespace rgbd_sequence;
 
 string usageString()
 {
