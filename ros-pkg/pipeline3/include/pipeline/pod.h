@@ -268,6 +268,9 @@ namespace pipeline
 
   template<typename T> T Pod::pull(std::string name) const
   {
+    if(!declared_inputs_.count(name))
+      PL_ABORT(getClassName() << " \"" << name_ << "\" tried to pull from undeclared input \"" << name << "\".");
+    
     std::map<std::string, std::vector<const Outlet*> >::const_iterator it;
     it = inputs_.find(name);
     if(it == inputs_.end()) {
@@ -290,7 +293,7 @@ namespace pipeline
     PL_ASSERT(dest->empty());
     
     if(!declared_inputs_.count(name))
-      PL_ABORT(getClassName() << " \"" << name_ << " tried to pull from undeclared input " << name << ".");
+      PL_ABORT(getClassName() << " \"" << name_ << "\" tried to pull from undeclared input \"" << name << "\".");
     
     // --  If there are no registered inputs, just return.
     std::map<std::string, std::vector<const Outlet*> >::const_iterator it;

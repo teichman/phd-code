@@ -165,8 +165,8 @@ namespace pipeline
     
     const Outlet* outlet = pod->getOutlet(output_name);
     if(!outlet->checkType(declared_inputs_[input_name])) { 
-      PL_ABORT(getClassName() << " \"" << getName() << "\" tried to register \"" << input_name << "\" <- "
-	       << pod->getName() << ":" << output_name << ", but types do not match.");
+      PL_ABORT(getClassName() << " \"" << getName() << "\" tried to register \"" << input_name << " <- "
+	       << pod->getName() << ":" << output_name << "\", but types do not match.");
     }
 
     inputs_[input_name].push_back(outlet);
