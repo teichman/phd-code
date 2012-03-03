@@ -1,6 +1,8 @@
 #include <pipeline/pipeline.h>
+#include <boost/filesystem.hpp>
 
 using namespace std;
+namespace bfs = boost::filesystem;
 
 namespace pipeline {
 
@@ -34,6 +36,9 @@ namespace pipeline {
     debug_ = debug;
     for(size_t i = 0; i < pods_.size(); ++i)
       pods_[i]->debug_ = debug;
+
+    if(debug && !bfs::exists(".pipeline-debug"))
+      bfs::create_directory(".pipeline-debug");
   }
 
   bool Pipeline::getDebug() const

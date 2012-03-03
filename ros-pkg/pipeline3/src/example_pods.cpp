@@ -180,6 +180,10 @@ namespace pipeline
       }
 
       cout << oss.str() << endl;
+
+      ofstream f((getDebugPath() + "-histogram.txt").c_str());
+      f << oss.str() << endl;
+      f.close();
     }
     
   } // namespace example

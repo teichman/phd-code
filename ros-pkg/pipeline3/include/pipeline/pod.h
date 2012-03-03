@@ -57,6 +57,9 @@ namespace pipeline
     int getNumTimesComputed() const;
     //! Returns pod name with the number of times it has been run.
     std::string getRunName(int width = 4) const;
+    //! Returns a reasonable debug path for Pods to save output to.
+    std::string getDebugPath() const;
+
 
   protected:
     // ----------------------------------------
@@ -104,7 +107,6 @@ namespace pipeline
     static void registerPodType(std::string type_name, CreatorFnPtr fp);
     static void registerPodType(const Pod& pod);
     static Pod* createPod(std::string type_name, std::string name, Params params);
-    static std::string debug_dir_;
     virtual std::string getClassName() const = 0;
     void serialize(std::ostream& out) const;
     void deserialize(std::istream& in);

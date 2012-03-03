@@ -134,6 +134,13 @@ namespace pipeline
     oss << setw(width) << setfill('0') << num_times_computed_ << "-" << name_;
     return oss.str();
   }
+
+  string Pod::getDebugPath() const
+  {
+    ostringstream oss;
+    oss << ".pipeline-debug/" << getRunName(4);
+    return oss.str();
+  }
   
   bool Pod::ready() {
     if(disabled_ || on_queue_ || done_computation_ || started_computation_)
