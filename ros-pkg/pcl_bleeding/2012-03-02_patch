@@ -33,3 +33,24 @@ Index: io/src/oni_grabber.cpp
    cloud->height = depth_height_;
    cloud->width = depth_width_;
    cloud->is_dense = false;
+Index: io/src/openni_grabber.cpp
+===================================================================
+--- io/src/openni_grabber.cpp	(revision 4900)
++++ io/src/openni_grabber.cpp	(working copy)
+@@ -494,7 +494,7 @@
+   // check if we have color point cloud slots
+   if (point_cloud_rgb_signal_->num_slots () > 0)
+   {
+-    PCL_WARN ("PointXYZRGB callbacks deprecated. Use PointXYZRGBA instead.\n");
++    //PCL_WARN ("PointXYZRGB callbacks deprecated. Use PointXYZRGBA instead.\n");
+     point_cloud_rgb_signal_->operator()(convertToXYZRGBPointCloud<pcl::PointXYZRGB> (image, depth_image));
+   }
+ 
+@@ -608,6 +608,7 @@
+   boost::shared_ptr<pcl::PointCloud<PointT> > cloud (new pcl::PointCloud<PointT>);
+ 
+   cloud->header.frame_id = rgb_frame_id_;
++  cloud->header.stamp.fromSec(1e-6 * depth_image->getTimeStamp());
+   cloud->height = std::max (image_height_, depth_height_);
+   cloud->width = std::max (image_width_, depth_width_);
+   cloud->is_dense = false;

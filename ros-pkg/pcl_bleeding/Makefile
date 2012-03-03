@@ -14,6 +14,7 @@ svn:
 	svn co -r4900 http://svn.pointclouds.org/pcl/trunk $@
 	cd $@ && patch -p0 < ../2012-03-02_patch
 
+
 clean:
 	cd svn/build && make clean
 	cd svn/common/include; \
