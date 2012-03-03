@@ -5,6 +5,7 @@
 #include <rgbd_sequence/rgbd_sequence.h>
 #include <xpl_calibration/frame_selector.h>
 #include <xpl_calibration/orb_extractor.h>
+#include <xpl_calibration/orb_matcher.h>
 
 class CalibrationPipelineOrb
 {
@@ -14,9 +15,9 @@ public:
   
   CalibrationPipelineOrb(int num_threads);
   //! Computes transform that will move target to reference.
-  //! T * target = reference.
-  Eigen::Affine3f calibrate(rgbd::Sequence::ConstPtr reference,
-			    rgbd::Sequence::ConstPtr target);
+  //! T * seq1 = seq0.
+  Eigen::Affine3f calibrate(rgbd::Sequence::ConstPtr seq0,
+			    rgbd::Sequence::ConstPtr seq1);
   
 protected:
   pipeline::Pipeline pl_;

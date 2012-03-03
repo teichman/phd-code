@@ -16,12 +16,13 @@ class DescriptorDatabase
 public:
   typedef Eigen::Matrix<uchar, 32, Eigen::Dynamic> PackedDescriptors;
   typedef boost::shared_ptr<PackedDescriptors> PackedDescriptorsPtr;
+  typedef boost::shared_ptr<const PackedDescriptors> PackedDescriptorsConstPtr;
   typedef Eigen::Matrix<uchar, 32, 1> PackedDescriptor;
   
   //! descriptor length x num descriptors.
-  PackedDescriptorsPtr packed_descriptors_;
+  PackedDescriptorsConstPtr packed_descriptors_;
 
-  DescriptorDatabase(PackedDescriptorsPtr packed_descriptors);
+  DescriptorDatabase(PackedDescriptorsConstPtr packed_descriptors);
   //! Fills indices (column numbers) with all descriptors within threshold of d.
   //! Returns the index of the closest, or -1 if none within threshold.
   virtual int query(const PackedDescriptor& d,
@@ -45,7 +46,7 @@ class NaiveDescriptorDatabase : public DescriptorDatabase
 public:
   typedef boost::shared_ptr<NaiveDescriptorDatabase> Ptr;
   
-  NaiveDescriptorDatabase(PackedDescriptorsPtr packed_descriptors);
+  NaiveDescriptorDatabase(PackedDescriptorsConstPtr packed_descriptors);
   //! Returns all descriptors within threshold of d.
   int query(const PackedDescriptor& d,
 	    std::vector<int>* indices,
@@ -58,10 +59,10 @@ class ProjectionIndex
 public:
   typedef boost::shared_ptr<ProjectionIndex> Ptr;
   
-  DescriptorDatabase::PackedDescriptorsPtr packed_descriptors_;
+  DescriptorDatabase::PackedDescriptorsConstPtr packed_descriptors_;
   int byte_number_;
   
-  ProjectionIndex(DescriptorDatabase::PackedDescriptorsPtr packed_descriptors, int byte_number);
+  ProjectionIndex(DescriptorDatabase::PackedDescriptorsConstPtr packed_descriptors, int byte_number);
   const std::vector<int>& query(const DescriptorDatabase::PackedDescriptor& d) const;
 
 private:
@@ -71,7 +72,7 @@ private:
 class LSHDescriptorDatabase : public DescriptorDatabase
 {
 public:
-  LSHDescriptorDatabase(DescriptorDatabase::PackedDescriptorsPtr packed_descriptors);
+  LSHDescriptorDatabase(DescriptorDatabase::PackedDescriptorsConstPtr packed_descriptors);
   int query(const DescriptorDatabase::PackedDescriptor& d, std::vector<int>* indices, double thresh = 45);
   
 private:

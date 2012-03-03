@@ -42,15 +42,20 @@ void CalibrationPipelineOrb::initializePipeline()
   og0->registerInput("Image", fs0, "Image");
   og1->registerInput("Image", fs1, "Image");
   
-  // OrbMatcher* om = new OrbMatcher("OrbMatcher");
-  // om->registerInput("Keypoints", og0, "Keypoints");
-  // om->registerInput("Keypoints", og1, "Keypoints");
+  OrbMatcher* om = new OrbMatcher("OrbMatcher");
+  om->registerInput("Keypoints0", og0, "Keypoints");
+  om->registerInput("Keypoints1", og1, "Keypoints");
+  om->registerInput("Descriptors0", og0, "Descriptors");
+  om->registerInput("Descriptors1", og1, "Descriptors");
+  om->registerInput("Image0", fs0, "Image");
+  om->registerInput("Image1", fs1, "Image");
+  om->registerInput("Cloud0", fs0, "Cloud");
+  om->registerInput("Cloud1", fs1, "Cloud");
 
   // TransformValidator* tv = new TransformValidator("TransformValidator");
   // tv->registerInput("Transforms", om, "Transforms");
   
   pl_.addConnectedComponent(ep0);
-  pl_.addConnectedComponent(ep1);
   pl_.writeGraphviz("graphviz");
 }
 

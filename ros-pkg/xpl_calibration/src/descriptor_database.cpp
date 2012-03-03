@@ -7,7 +7,7 @@ using namespace std;
  * DescriptorDatabase
  ************************************************************/
 
-DescriptorDatabase::DescriptorDatabase(PackedDescriptorsPtr packed_descriptors) :
+DescriptorDatabase::DescriptorDatabase(PackedDescriptorsConstPtr packed_descriptors) :
   packed_descriptors_(packed_descriptors)
 {
   assert(packed_descriptors_);
@@ -66,7 +66,7 @@ double DescriptorDatabase::dot(const PackedDescriptor& a, const PackedDescriptor
  * NaiveDescriptorDatabase
  ************************************************************/
 
-NaiveDescriptorDatabase::NaiveDescriptorDatabase(PackedDescriptorsPtr packed_descriptors) :
+NaiveDescriptorDatabase::NaiveDescriptorDatabase(PackedDescriptorsConstPtr packed_descriptors) :
   DescriptorDatabase(packed_descriptors)
 {
 
@@ -97,7 +97,7 @@ int NaiveDescriptorDatabase::query(const PackedDescriptor& d, std::vector<int>* 
  * ProjectionIndex
  ************************************************************/
 
-ProjectionIndex::ProjectionIndex(DescriptorDatabase::PackedDescriptorsPtr packed_descriptors,
+ProjectionIndex::ProjectionIndex(DescriptorDatabase::PackedDescriptorsConstPtr packed_descriptors,
 				 int byte_number) :
   packed_descriptors_(packed_descriptors),
   byte_number_(byte_number),
@@ -119,7 +119,7 @@ const std::vector<int>& ProjectionIndex::query(const DescriptorDatabase::PackedD
  * LSHDescriptorDatabase
  ************************************************************/
 
-LSHDescriptorDatabase::LSHDescriptorDatabase(DescriptorDatabase::PackedDescriptorsPtr packed_descriptors) :
+LSHDescriptorDatabase::LSHDescriptorDatabase(DescriptorDatabase::PackedDescriptorsConstPtr packed_descriptors) :
   DescriptorDatabase(packed_descriptors),
   flags_(packed_descriptors->cols(), false)
 {

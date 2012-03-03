@@ -28,6 +28,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/color_wheel.cpp
   src/transform_validator.cpp
   src/orb_extractor.cpp
+  src/orb_matcher.cpp
   src/descriptor_database.cpp
   src/calibration_pipeline_orb.cpp
   )
