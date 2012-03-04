@@ -19,7 +19,7 @@
 
   <export>
     <cpp cflags="-I${prefix}/include"
-	 lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lrgbd_sequence" />
+	 lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lrgbd_sequence `rosboost-cfg --lflags filesystem`" />
   </export>
   
 </package>
