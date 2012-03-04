@@ -6,14 +6,15 @@ using namespace rgbd;
 string usageString()
 {
   ostringstream oss;
-  oss << "Usage: record MODE" << endl;
+  oss << "Usage: record MODE IDX" << endl;
   oss << "  where MODE is --vga (i.e. 640x480) or --qqvga (i.e. 160x120)." << endl;
+  oss << "  where IDX is #1, #2, #3, etc" << endl;
   return oss.str();
 }
 
 int main(int argc, char** argv)
 {
-  if(argc != 2) {
+  if(argc < 2) {
     cout << usageString() << endl;
     return 0;
   }
@@ -27,8 +28,11 @@ int main(int argc, char** argv)
     cout << usageString() << endl;
     return 0;
   }
+  string device_id = "";
+  if(argc == 3)
+    device_id = argv[2];
   
-  Recorder rec("", mode);
+  Recorder rec(device_id, mode);
   rec.run();
   
   return 0;
