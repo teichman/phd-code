@@ -43,6 +43,8 @@ namespace rgbd
       ostringstream oss;
       oss << "clk" << setw(4) << setfill('0') << i << ".clk";
       ofstream fs( (dir+"/" +oss.str()).c_str());
+      fs.precision(10);
+      fs.setf(ios::fixed,ios::floatfield);
       fs << pcds_[i]->header.stamp.toSec() << endl;
       fs.close();
     }

@@ -158,7 +158,7 @@ namespace rgbd
     // string name;
     // cout << "Save sequence as: ";
     // cin >> name;
-    string name = generateFilename("recorded_sequences", "seq", 4);
+    string name = generateFilename("recorded_sequences", "seq-"+device_id_, 4);
     
     
     // -- Get matching frames, put into Sequence.
