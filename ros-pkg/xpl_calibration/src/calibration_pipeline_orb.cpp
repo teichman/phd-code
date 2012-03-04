@@ -31,6 +31,20 @@ void CalibrationPipelineOrb::initializePipeline()
   EntryPoint<SequenceConstPtr>* ep0 = new EntryPoint<SequenceConstPtr>("Sequence0");
   EntryPoint<SequenceConstPtr>* ep1 = new EntryPoint<SequenceConstPtr>("Sequence1");
 
+  GaussianBackgroundModeler* bm0 = new GaussianBackgroundModeler("GaussianBackgroundModeler0");
+  GaussianBackgroundModeler* bm1 = new GaussianBackgroundModeler("GaussianBackgroundModeler1");
+  bm0->registerInput("Sequence", ep0, "Output");
+  bm1->registerInput("Sequence", ep1, "Output");
+
+  BackgroundSubtractor* bs0 = new BackgroundSubtractor("BackgroundSubtractor0");
+  BackgroundSubtractor* bs1 = new BackgroundSubtractor("BackgroundSubtractor1");
+  bs0->registerInput("Sequence", ep0, "Output");
+  bs0->registerInput("MaxDistances", bm0, "MaxDistances");
+  bs0->registerInput("MinDistances", bm0, "MinDistances");
+  bs1->registerInput("Sequence", ep1, "Output");
+  bs1->registerInput("MaxDistances", bm1, "MaxDistances");
+  bs1->registerInput("MinDistances", bm1, "MinDistances");
+  
   FrameSelector* fs0 = new FrameSelector("FrameSelector0");
   FrameSelector* fs1 = new FrameSelector("FrameSelector1");
   fs0->setParam("FrameId", 0);
@@ -78,5 +92,7 @@ void CalibrationPipelineOrb::registerPods() const
   REGISTER_POD(OrbMatcher);
   REGISTER_POD(TransformValidator);
   REGISTER_POD(KdTreePod);
+  REGISTER_POD(BackgroundModeler);
+  REGISTER_POD(GaussianBackgroundModeler);
 }
 

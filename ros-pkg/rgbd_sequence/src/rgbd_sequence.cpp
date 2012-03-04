@@ -58,7 +58,7 @@ namespace rgbd
     vector<string> clk_names;
     
     bfs::recursive_directory_iterator it(dir), eod;
-    BOOST_FOREACH(bfs::path const & p, make_pair(it, eod)) {
+    BOOST_FOREACH(const bfs::path& p, make_pair(it, eod)) {
       ROS_ASSERT(is_regular_file(p));
       if(p.leaf().substr(0, 3).compare("img") == 0 && bfs::extension(p).compare(".png") == 0)
 	img_names.push_back(p.string());
@@ -68,6 +68,7 @@ namespace rgbd
 	clk_names.push_back(p.string());
     }
     ROS_ASSERT(img_names.size() == pcd_names.size());
+    ROS_ASSERT(img_names.size() == clk_names.size());
 
     // -- Sort all filenames.
     sort(img_names.begin(), img_names.end());

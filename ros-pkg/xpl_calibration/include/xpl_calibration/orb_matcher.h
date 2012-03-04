@@ -1,18 +1,7 @@
 #ifndef ORB_MATCHER_H
 #define ORB_MATCHER_H
 
-#include <boost/shared_ptr.hpp>
-#include <Eigen/Eigen>
-#include <opencv2/core/core.hpp>
-#include <opencv2/features2d/features2d.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <pcl/common/transforms.h>
-#include <pcl/common/transformation_from_correspondences.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <ros/console.h>
-#include <pipeline/pod.h>
-#include <xpl_calibration/descriptor_database.h>
-#include <rgbd_sequence/rgbd_sequence.h>
+#include <xpl_calibration/common.h>
 
 class OrbMatcher : public pipeline::Pod
 {

@@ -21,7 +21,7 @@
   <depend package="qpOASES"/>
   
   <export>
-    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath ${prefix}/lib -ldst"/>
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath ${prefix}/lib -ldst `rosboost-cfg --lflags system`"/>
   </export>
 
   

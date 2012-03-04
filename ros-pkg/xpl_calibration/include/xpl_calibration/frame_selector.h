@@ -1,8 +1,7 @@
 #ifndef FRAME_SELECTOR_H
 #define FRAME_SELECTOR_H
 
-#include <pipeline/pod.h>
-#include <rgbd_sequence/rgbd_sequence.h>
+#include <xpl_calibration/common.h>
 
 class FrameSelector : public pipeline::Pod
 {

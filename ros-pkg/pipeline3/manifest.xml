@@ -12,7 +12,7 @@
   <depend package="serializable"/>
 
   <export>
-    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath ${prefix}/lib -lpipeline3"/>
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath ${prefix}/lib -lpipeline3 `rosboost-cfg --lflags filesystem`"/>
   </export>
   
 </package>

@@ -1,9 +1,7 @@
 #ifndef KDTREE_POD_H
 #define KDTREE_POD_H
 
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pipeline/pod.h>
-#include <rgbd_sequence/rgbd_sequence.h>
+#include <xpl_calibration/common.h>
 
 class KdTreePod : public pipeline::Pod
 {
