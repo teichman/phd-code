@@ -85,7 +85,40 @@ void OrbMatcher::compute()
     }
   }
 
-  push<TransformsConstPtr>("Transforms", &transforms_);
+  // -- Now accept only those transforms that have a sufficient number of inliers
+  //    among the other orb keypoints.
+  keypoint_cloud0_->clear();
+  for(size_t i = 0; i < keypoints0.size(); ++i)
+    keypoint_cloud0_->push_back(getPoint(keypoints0[i], *cloud0));
+  keypoint_cloud1_->clear();
+  for(size_t i = 0; i < keypoints1.size(); ++i)
+    keypoint_cloud1_->push_back(getPoint(keypoints1[i], *cloud1));
+
+  pcl::KdTreeFLANN<Point> kdtree0;
+  kdtree0.setInputCloud(keypoint_cloud0_);
+  
+  pruned_.clear();
+  vector<int> indices;
+  vector<float> distances;
+  for(size_t i = 0; i < transforms_.size(); ++i) {
+    transformed_keypoint_cloud1_.clear();
+    transformPointCloud(*keypoint_cloud1_, transformed_keypoint_cloud1_, transforms_[i]);
+
+    int num_inliers = 0;
+    for(size_t j = 0; j < transformed_keypoint_cloud1_.size(); ++j) {
+      indices.clear();
+      distances.clear();
+      kdtree0.nearestKSearch(transformed_keypoint_cloud1_[j], 1, indices, distances);
+      if(distances.size() != 0 && distances[0] < param<double>("DistanceThresh"))
+	++num_inliers;
+    }
+
+    //cout << "min num inliers: " << (int)(param<double>("MinInlierPercent") * valid.size()) << endl;
+    if(num_inliers > (int)(param<double>("MinInlierPercent") * valid.size()))
+      pruned_.push_back(transforms_[i]);
+  }
+  
+  push<TransformsConstPtr>("Transforms", &pruned_);
 }
 
 pcl::PointXYZRGB OrbMatcher::getPoint(const cv::KeyPoint& keypoint, const Cloud& pcd) const
@@ -100,6 +133,7 @@ void OrbMatcher::debug() const
 {
   cout << *this << endl;
   cout << "Found " << transforms_.size() << " candidate transforms." << endl;
+  cout << "Found " << pruned_.size() << " candidate transforms after pruning." << endl;
 
   cv::Mat3b img0 = pull<cv::Mat3b>("Image0");
   cv::Mat3b img1 = pull<cv::Mat3b>("Image1");
