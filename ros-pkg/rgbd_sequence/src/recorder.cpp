@@ -15,7 +15,8 @@ namespace rgbd
     mode_(mode),
     grabber_(device_id_, mode, mode),
     cloud_viewer_("PointCloud"),
-    recording_(false)
+    recording_(false),
+    start_(-1)
   {
     initializeGrabber();
     clouds_.reserve(100000);
@@ -34,6 +35,12 @@ namespace rgbd
 
   void Recorder::cloudCallback(const Cloud::ConstPtr& cloud)
   {
+    if(start_ == -1) {
+      timespec clk;
+      clock_gettime(CLOCK_REALTIME, &clk);
+      start_ = clk.tv_sec + clk.tv_nsec * 1e-9;
+    }
+    
     if(recording_) {
       clouds_.push_back(cloud);
     }
@@ -75,7 +82,7 @@ namespace rgbd
   }
   
   void Recorder::imageCallback(const boost::shared_ptr<openni_wrapper::Image>& oni_img)
-  {
+  {	
     cv::Mat3b img = oniToCV(oni_img);
     if(recording_) { 
       imgs_.push_back(img);
@@ -214,6 +221,14 @@ namespace rgbd
     cout << "Num pcds: " << clouds_.size() << endl;
     cout << "Mean dt: " << total_dt / (double)seq.imgs_.size() << endl;
 
+    // -- Adjust the timestamps so that they reflect something close to system time.
+    for(size_t i = 0; i < seq.pcds_.size(); ++i) {
+      double t = start_ + seq.pcds_[i]->header.stamp.toSec();
+      seq.pcds_[i]->header.stamp.fromSec(t);
+      cout << "Adjusted timestamp " << i << ": " << seq.pcds_[i]->header.stamp.fromSec(t) << endl;
+    }
+
+    // -- Save
     seq.save(name);
     cout << "Saved to " << name << endl;
     imgs_.clear();
