@@ -34,8 +34,7 @@ namespace rgbd
     std::vector<Cloud::ConstPtr> clouds_;
     std::vector<cv::Mat3b> imgs_;
     std::vector<double> image_timestamps_;
-    double start_;
-    bool start_flag_;
+    std::vector<double> cloud_callback_timestamps_;
 
     cv::Mat3b oniToCV(const boost::shared_ptr<openni_wrapper::Image>& oni) const;
     cv::Mat1b irToCV(const boost::shared_ptr<openni_wrapper::IRImage>& ir) const;

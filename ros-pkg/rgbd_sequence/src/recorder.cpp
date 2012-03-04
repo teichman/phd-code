@@ -15,13 +15,13 @@ namespace rgbd
     mode_(mode),
     grabber_(device_id_, mode, mode),
     cloud_viewer_("PointCloud"),
-    recording_(false),
-    start_(-1)
+    recording_(false)
   {
     initializeGrabber();
     clouds_.reserve(100000);
     imgs_.reserve(100000);
     image_timestamps_.reserve(100000);
+    cloud_callback_timestamps_.reserve(100000);
   }
   
   void Recorder::run()
@@ -34,14 +34,12 @@ namespace rgbd
   }
 
   void Recorder::cloudCallback(const Cloud::ConstPtr& cloud)
-  {
-    if(start_ == -1) {
+  {    
+    if(recording_) {
       timespec clk;
       clock_gettime(CLOCK_REALTIME, &clk);
-      start_ = clk.tv_sec + clk.tv_nsec * 1e-9;
-    }
-    
-    if(recording_) {
+      cloud_callback_timestamps_.push_back(clk.tv_sec + clk.tv_nsec * 1e-9);
+      
       clouds_.push_back(cloud);
     }
     else {
@@ -169,6 +167,7 @@ namespace rgbd
     // 30fps, so 1/60 sec is max possible difference.  Allow for 10% slop.
     double thresh = 1.1 * (1.0 / 60.0);
     double total_dt = 0;
+    vector<double> filtered_cct;
     while(true) {
       double img_ts = image_timestamps_[img_idx];
       double pcd_ts = clouds_[pcd_idx]->header.stamp.toSec();
@@ -177,6 +176,7 @@ namespace rgbd
       
       if(dt < thresh) {
 	Cloud::Ptr tmp(new Cloud(*clouds_[pcd_idx]));
+	filtered_cct.push_back(cloud_callback_timestamps_[pcd_idx]);
 	seq.pcds_.push_back(tmp);
 
 	if(mode_ == pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz) { 
@@ -220,10 +220,19 @@ namespace rgbd
     cout << "Num images: " << imgs_.size() << endl;
     cout << "Num pcds: " << clouds_.size() << endl;
     cout << "Mean dt: " << total_dt / (double)seq.imgs_.size() << endl;
+    cloud_callback_timestamps_ = filtered_cct;
 
     // -- Adjust the timestamps so that they reflect something close to system time.
+    ROS_ASSERT(seq.pcds_.size() == cloud_callback_timestamps_.size());
+    double mean_offset = 0;
+    for(size_t i = 0; i < seq.pcds_.size(); ++i) { 
+      mean_offset += cloud_callback_timestamps_[i] - seq.pcds_[i]->header.stamp.toSec();
+    }
+    mean_offset /= (double)seq.pcds_.size();
+    cout << "Mean offset between sensor time and system time is " << setprecision(16) << mean_offset << endl;
+    	
     for(size_t i = 0; i < seq.pcds_.size(); ++i) {
-      double t = start_ + seq.pcds_[i]->header.stamp.toSec();
+      double t = mean_offset + seq.pcds_[i]->header.stamp.toSec();
       seq.pcds_[i]->header.stamp.fromSec(t);
       cout << "Adjusted timestamp " << i << ": " << seq.pcds_[i]->header.stamp.fromSec(t) << endl;
     }
