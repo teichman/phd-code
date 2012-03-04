@@ -1,19 +1,7 @@
 #ifndef XPL_CALIBRATOR_H
 #define XPL_CALIBRATOR_H
 
-#include <pcl/features/normal_3d.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/common/transforms.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pipeline/pod.h>
-#include <bag_of_tricks/high_res_timer.h>
-#include <bag_of_tricks/image_region_iterator.h>
-#include <rgbd_sequence/rgbd_sequence.h>
-#include <xpl_calibration/plane_finder.h>
-
+#include <xpl_calibration/common.h>
 
 class TransformValidator : public pipeline::Pod
 {

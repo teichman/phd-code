@@ -31,6 +31,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/orb_matcher.cpp
   src/descriptor_database.cpp
   src/calibration_pipeline_orb.cpp
+  src/background_modeler.cpp
   )
 rosbuild_link_boost(${PROJECT_NAME} system)
 #target_link_libraries(${PROJECT_NAME} another_library)

@@ -31,6 +31,11 @@ void CalibrationPipelineOrb::initializePipeline()
   EntryPoint<SequenceConstPtr>* ep0 = new EntryPoint<SequenceConstPtr>("Sequence0");
   EntryPoint<SequenceConstPtr>* ep1 = new EntryPoint<SequenceConstPtr>("Sequence1");
 
+  BackgroundModeler* bm0 = new BackgroundModeler("BackgroundModeler0");
+  BackgroundModeler* bm1 = new BackgroundModeler("BackgroundModeler1");
+  bm0->registerInput("Sequence", ep0, "Output");
+  bm1->registerInput("Sequence", ep1, "Output");
+  
   FrameSelector* fs0 = new FrameSelector("FrameSelector0");
   FrameSelector* fs1 = new FrameSelector("FrameSelector1");
   fs0->setParam("FrameId", 0);
@@ -78,5 +83,6 @@ void CalibrationPipelineOrb::registerPods() const
   REGISTER_POD(OrbMatcher);
   REGISTER_POD(TransformValidator);
   REGISTER_POD(KdTreePod);
+  REGISTER_POD(BackgroundModeler);
 }
 

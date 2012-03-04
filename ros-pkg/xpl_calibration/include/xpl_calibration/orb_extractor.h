@@ -1,12 +1,7 @@
 #ifndef ORB_EXTRACTOR_H
 #define ORB_EXTRACTOR_H
 
-#include <boost/shared_ptr.hpp>
-#include <Eigen/Eigen>
-#include <opencv2/core/core.hpp>
-#include <opencv2/features2d/features2d.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <pipeline/pod.h>
+#include <xpl_calibration/common.h>
 
 /** \brief @b OrbExtractor produces nicely-formatted Orb features and descriptors.
  *   It is a wrapper around the OpenCV functionality.
