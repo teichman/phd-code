@@ -1,3 +1,6 @@
+#ifndef RECORDER_H
+#define RECORDER_H
+
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/openni_grabber.h>
 #include <opencv2/core/core.hpp>
@@ -31,6 +34,7 @@ namespace rgbd
     std::vector<Cloud::ConstPtr> clouds_;
     std::vector<cv::Mat3b> imgs_;
     std::vector<double> image_timestamps_;
+    std::vector<double> cloud_callback_timestamps_;
 
     cv::Mat3b oniToCV(const boost::shared_ptr<openni_wrapper::Image>& oni) const;
     cv::Mat1b irToCV(const boost::shared_ptr<openni_wrapper::IRImage>& ir) const;
@@ -39,3 +43,5 @@ namespace rgbd
   };
 
 }
+
+#endif // RECORDER_H

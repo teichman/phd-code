@@ -9,6 +9,8 @@ string usageString()
   oss << "Usage: record MODE IDX" << endl;
   oss << "  where MODE is --vga (i.e. 640x480) or --qqvga (i.e. 160x120)." << endl;
   oss << "  where IDX is #1, #2, #3, etc" << endl;
+  oss << "  Timestamps are based on system time at callback." << endl;
+  oss << "  If recording on multiple machines, you probably want to run 'sudo ntpdate -b ntp.ubuntu.com' on both beforehand." << endl;
   return oss.str();
 }
 
