@@ -39,6 +39,13 @@ namespace rgbd
       oss << "pcd" << setw(4) << setfill('0') << i << ".pcd";
       pcl::io::savePCDFileBinary(dir + "/" + oss.str(), *pcds_[i]);
     }
+    for(size_t i = 0; i < pcds_.size(); ++i) {
+      ostringstream oss;
+      oss << "clk" << setw(4) << setfill('0') << i << ".clk";
+      ofstream fs( (dir+"/" +oss.str()).c_str());
+      fs << pcds_[i]->header.stamp.toSec() << endl;
+      fs.close();
+    }
   }
 
   void Sequence::load(const std::string& dir)
@@ -46,6 +53,7 @@ namespace rgbd
     // -- Get filenames.
     vector<string> img_names;
     vector<string> pcd_names;
+    vector<string> clk_names;
     
     bfs::recursive_directory_iterator it(dir), eod;
     BOOST_FOREACH(bfs::path const & p, make_pair(it, eod)) {
@@ -54,6 +62,8 @@ namespace rgbd
 	img_names.push_back(p.string());
       else if(bfs::extension(p).compare(".pcd") == 0)
 	pcd_names.push_back(p.string());
+      else if(bfs::extension(p).compare(".clk") == 0)
+	clk_names.push_back(p.string());
     }
     ROS_ASSERT(img_names.size() == pcd_names.size());
 
@@ -68,6 +78,11 @@ namespace rgbd
       imgs_[i] = cv::imread(img_names[i], 1);
       pcds_[i] = Cloud::Ptr(new Cloud());
       pcl::io::loadPCDFile<pcl::PointXYZRGB>(pcd_names[i], *pcds_[i]);
+      ifstream fs(clk_names[i].c_str());
+      double stamp;
+      fs >> stamp;
+      fs.close();
+      pcds_[i]->header.stamp.fromSec( stamp );
     }
   }
   

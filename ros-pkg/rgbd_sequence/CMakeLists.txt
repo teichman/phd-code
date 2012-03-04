@@ -25,6 +25,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 rosbuild_add_library(rgbd_sequence
   src/rgbd_sequence.cpp
   src/recorder.cpp
+  src/publisher.cpp
   )
 rosbuild_link_boost(rgbd_sequence system)
 rosbuild_add_compile_flags(rgbd_sequence -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
@@ -37,3 +38,7 @@ rosbuild_add_compile_flags(rgbd_sequence -Wno-deprecated -Wno-unused-but-set-var
 rosbuild_add_executable(record src/record.cpp)
 target_link_libraries(record rgbd_sequence)
 rosbuild_add_compile_flags(record -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
+rosbuild_add_executable(publish src/publish.cpp)
+target_link_libraries(publish rgbd_sequence)
+rosbuild_add_compile_flags(publish -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
