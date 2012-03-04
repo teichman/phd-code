@@ -14,7 +14,7 @@ namespace rgbd
     device_id_(device_id),
     mode_(mode),
     grabber_(device_id_, mode, mode),
-    cloud_viewer_("PointCloud"),
+    cloud_viewer_("PointCloud"+device_id_),
     recording_(false)
   {
     initializeGrabber();
@@ -87,9 +87,10 @@ namespace rgbd
       image_timestamps_.push_back((double)oni_img->getTimeStamp() / (double)1e6);
     }
     else { 
-      cv::imshow("Image", img);
+      cv::imshow("Image"+device_id_, img);
       cv::waitKey(10);
     }
+    //std::cout << "focal length is: " << grabber_.getDevice()->getImageFocalLength( img.cols ) << std::endl;
   }
 
   void Recorder::irCallback(const boost::shared_ptr<openni_wrapper::IRImage>& oni_img)

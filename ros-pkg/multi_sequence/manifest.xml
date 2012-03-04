@@ -1,0 +1,22 @@
+<package>
+  <description brief="multi_sequence">
+
+     multi_sequence
+
+  </description>
+  <author>Stephen Miller</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/multi_sequence</url>
+  <depend package="roscpp"/>
+  <depend package="serializable"/>
+  <depend package="rgbd_sequence"/>
+
+  <export>
+    <cpp cflags="-I${prefix}/include"
+      lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lmulti_sequence" />
+  </export>
+
+</package>
+
+
