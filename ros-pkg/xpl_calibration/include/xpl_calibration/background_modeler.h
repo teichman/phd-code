@@ -29,8 +29,8 @@ public:
   BackgroundModeler(std::string name) :
     Pod(name)
   {
-    declareParam<double>("Resolution", 0.25); // meters
-    declareParam<double>("MaxDepth", 10.0); 
+    declareParam<double>("Resolution", 0.5); // meters
+    declareParam<double>("MaxDepth", 5.0); 
     declareParam<int>("MinNumPoints", 20);
     declareInput<rgbd::Sequence::ConstPtr>("Sequence");
     // Points between min and max are background.

@@ -9,6 +9,9 @@
 #include <xpl_calibration/kdtree_pod.h>
 #include <xpl_calibration/transform_validator.h>
 #include <xpl_calibration/background_modeler.h>
+#include <xpl_calibration/gaussian_background_modeler.h>
+#include <xpl_calibration/background_subtractor.h>
+
 
 class CalibrationPipelineOrb
 {
