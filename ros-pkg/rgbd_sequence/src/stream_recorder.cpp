@@ -54,7 +54,7 @@ namespace rgbd
       {
         cout << setprecision(25) << "timestamp" << real_timestamp << endl;
         DepthMat depth = oniDepthToEigen( oni_depth );
-        //seq_->addFrame( img, depth, 1.0/f_inv, real_timestamp ); //TODO verify timing
+        seq_->addFrame( img, depth, 1.0/f_inv, real_timestamp ); //TODO verify timing
       }
 	  }
     else{
@@ -121,7 +121,7 @@ namespace rgbd
       string name = generateFilenameStream("recorded_sequences", "seq-"+device_id_, 4);
       seq_ = StreamSequence::Ptr( new StreamSequence( name ) );
     } else{
-      seq_.reset(); 
+      //seq_.reset(); 
     }
   }
   
