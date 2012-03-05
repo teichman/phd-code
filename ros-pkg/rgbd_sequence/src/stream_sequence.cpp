@@ -17,6 +17,8 @@ namespace rgbd
     Serializable(),
     save_dir_(save_dir)
   {
+    ROS_ASSERT(!bfs::exists(save_dir_));
+    bfs::create_directory(save_dir_);
   }
 
   void StreamSequence::serialize(std::ostream& out) const

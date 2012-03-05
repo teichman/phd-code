@@ -28,6 +28,7 @@ rosbuild_add_library(rgbd_sequence
   src/stream_sequence.cpp
   src/recorder.cpp
   src/compact_recorder.cpp
+  src/stream_recorder.cpp
   src/publisher.cpp
   )
 rosbuild_link_boost(rgbd_sequence system)
@@ -46,6 +47,10 @@ rosbuild_add_executable(record_compact src/record_compact.cpp)
 target_link_libraries(record_compact rgbd_sequence)
 rosbuild_add_compile_flags(record_compact -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
+rosbuild_add_executable(record_stream src/record_stream.cpp)
+target_link_libraries(record_stream rgbd_sequence)
+rosbuild_add_compile_flags(record_stream -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
 rosbuild_add_executable(publish src/publish.cpp)
 target_link_libraries(publish rgbd_sequence)
 rosbuild_add_compile_flags(publish -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
@@ -53,3 +58,7 @@ rosbuild_add_compile_flags(publish -Wno-deprecated -Wno-unused-but-set-variable 
 rosbuild_add_executable(view_compact src/view_compact.cpp)
 target_link_libraries(view_compact rgbd_sequence)
 rosbuild_add_compile_flags(view_compact -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
+rosbuild_add_executable(view_stream src/view_stream.cpp)
+target_link_libraries(view_stream rgbd_sequence)
+rosbuild_add_compile_flags(view_stream -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)

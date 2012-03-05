@@ -38,21 +38,22 @@ namespace rgbd
       cloud_viewer_.showCloud(cloud); //For now, so we can still visualize the cloud
     }
   }
-  void rgbdCallback( const boost::shared_ptr<openni_wrapper::Image>& oni_rgb,
+  void StreamRecorder::rgbdCallback( const boost::shared_ptr<openni_wrapper::Image>& oni_rgb,
       const boost::shared_ptr<openni_wrapper::DepthImage>& oni_depth, float f_inv )
   {
-    cv::Mat3b img = oniToCV(oni_img);
+    cv::Mat3b img = oniToCV(oni_rgb);
 	  if(recording_) {
       timespec clk;
       clock_gettime(CLOCK_REALTIME, &clk);
-      double real_timesamp = clk.tv_sec + clk.tv_nsec * 1e-9;
-      double depth_timestamp = (double)oni_depth_img->getTimeStamp() / (double)1e6;
-      double image_timestamps = (double)oni_img->getTimeStamp() / (double)1e6;
+      double real_timestamp = clk.tv_sec + clk.tv_nsec * 1e-9;
+      double depth_timestamp = (double)oni_depth->getTimeStamp() / (double)1e6;
+      double image_timestamp = (double)oni_rgb->getTimeStamp() / (double)1e6;
       double thresh = 1.1 * (1.0 / 60.0);
       if(fabs(depth_timestamp - image_timestamp) < thresh)
       {
-        DepthMat depth = oniDepthtoEigen( oni_rgb );
-        seq_->addFrame( img, depth, 1.0/f_inv, real_timestamp ); //TODO verify timing
+        cout << setprecision(25) << "timestamp" << real_timestamp << endl;
+        DepthMat depth = oniDepthToEigen( oni_depth );
+        //seq_->addFrame( img, depth, 1.0/f_inv, real_timestamp ); //TODO verify timing
       }
 	  }
     else{
@@ -130,11 +131,11 @@ namespace rgbd
     boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&
                          ,const boost::shared_ptr<openni_wrapper::DepthImage>&
                          ,float)> rgbd_cb;
-    rgbd_cb = boost::bind(&StrreamRecorder::rgbdCallback, this, _1, _2, _3);
+    rgbd_cb = boost::bind(&StreamRecorder::rgbdCallback, this, _1, _2, _3);
     grabber_.registerCallback(rgbd_cb);
       
     boost::function<void (const Cloud::ConstPtr&)> cloud_cb;
-    cloud_cb = boost::bind(&CompactRecorder::cloudCallback, this, _1);
+    cloud_cb = boost::bind(&StreamRecorder::cloudCallback, this, _1);
     grabber_.registerCallback(cloud_cb);
 
     grabber_.getDevice()->setSynchronization(true);
