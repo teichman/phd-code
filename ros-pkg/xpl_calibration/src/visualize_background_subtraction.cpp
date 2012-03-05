@@ -16,6 +16,32 @@ string usageString()
   return oss.str();
 }
 
+
+class KBHandler
+{
+public:
+  bool pressed_;
+
+  KBHandler() :
+    pressed_(false)
+  {
+  }
+  
+  void keyboardCallback(const pcl::visualization::KeyboardEvent& event)
+  {
+    pressed_ = true;
+    
+    if (event.getKeyCode())
+      cout << "the key \'" << event.getKeyCode() << "\' (" << (int)event.getKeyCode() << ") was";
+    else
+      cout << "the special key \'" << event.getKeySym() << "\' was";
+    if (event.keyDown())
+      cout << " pressed" << endl;
+    else
+      cout << " released" << endl;  
+  }
+};
+
 int main(int argc, char** argv)
 {
   if(argc != 2 && argc != 3) {
@@ -66,12 +92,15 @@ int main(int argc, char** argv)
   }
 
   // -- Run pipeline.
+  pl.setDebug(true);
   pl.setInput<Sequence::ConstPtr>("Sequence", seq);
   pl.compute();
   const vector< vector<int> >* fg_indices;
   pl.getOutput("BackgroundSubtractor", "ForegroundIndices", &fg_indices);
 
   pcl::visualization::CloudViewer vis("Foreground");
+  // KBHandler h;
+  // vis.registerKeyboardCallback(boost::bind(&KBHandler::keyboardCallback, &h, _1));
   Cloud::Ptr fg(new Cloud);
   while(true) {    
     for(size_t i = 0; i < seq->size(); ++i) {
@@ -85,11 +114,10 @@ int main(int argc, char** argv)
       }
       
       vis.showCloud(fg);
-      usleep(1000 * 30);
+      cin.ignore();
     }
 
     cout << "Press return to re-run." << endl;
-    cin.ignore();
     if(argc == 3) {
       pl.load(argv[2]);
       cout << "Re-loaded " << argv[2] << endl;

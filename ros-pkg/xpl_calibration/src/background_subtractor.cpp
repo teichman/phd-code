@@ -42,14 +42,17 @@ void BackgroundSubtractor::debug() const
     const Cloud& pcd = *seq.pcds_[i];
     const vector<int>& indices = fg_indices_[i];
 
-    Cloud fg;
-    fg.reserve(indices.size());
-    for(size_t j = 0; j < indices.size(); ++j)
-      fg.push_back(pcd[indices[j]]);
+    Cloud::Ptr fg(new Cloud);
+    *fg = pcd;
+    for(size_t j = 0; j < indices.size(); ++j) { 
+      fg->at(indices[j]).r = 255;
+      fg->at(indices[j]).g = 0;
+      fg->at(indices[j]).b = 0;
+    }
 
     ostringstream oss;
     oss << getDebugPath() << "-cloud" << setw(4) << setfill('0') << i << ".pcd";
-    pcl::io::savePCDFileBinary(oss.str(), fg);
+    pcl::io::savePCDFileBinary(oss.str(), *fg);
   }
 }
 
