@@ -33,6 +33,7 @@ namespace rgbd
     pcl::visualization::CloudViewer cloud_viewer_;
     bool recording_;
     StreamSequence::Ptr seq_;
+    bool view_cloud_;
 
     cv::Mat3b oniToCV(const boost::shared_ptr<openni_wrapper::Image>& oni) const;
     cv::Mat1b irToCV(const boost::shared_ptr<openni_wrapper::IRImage>& ir) const;

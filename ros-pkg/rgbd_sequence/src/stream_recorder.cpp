@@ -15,7 +15,8 @@ namespace rgbd
     mode_(mode),
     grabber_(device_id_, mode, mode),
     cloud_viewer_("PointCloud"+device_id_),
-    recording_(false)
+    recording_(false),
+    view_cloud_(false)
   {
     initializeGrabber();
   }
@@ -134,9 +135,11 @@ namespace rgbd
     rgbd_cb = boost::bind(&StreamRecorder::rgbdCallback, this, _1, _2, _3);
     grabber_.registerCallback(rgbd_cb);
       
-    boost::function<void (const Cloud::ConstPtr&)> cloud_cb;
-    cloud_cb = boost::bind(&StreamRecorder::cloudCallback, this, _1);
-    grabber_.registerCallback(cloud_cb);
+    if(view_cloud_){
+      boost::function<void (const Cloud::ConstPtr&)> cloud_cb;
+      cloud_cb = boost::bind(&StreamRecorder::cloudCallback, this, _1);
+      grabber_.registerCallback(cloud_cb);
+    }
 
     grabber_.getDevice()->setSynchronization(true);
     ROS_ASSERT(grabber_.getDevice()->isSynchronized());
