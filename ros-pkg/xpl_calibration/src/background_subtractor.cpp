@@ -7,19 +7,18 @@ using namespace rgbd;
 
 void BackgroundSubtractor::compute()
 {
-  const vector<double>& min_distances = *pull<const vector<double>*>("MinDistances");
-  const vector<double>& max_distances = *pull<const vector<double>*>("MaxDistances");
+
+  const BackgroundModel& model = *pull<const BackgroundModel*>("BackgroundModel");
   const Sequence& seq = *pull<Sequence::ConstPtr>("Sequence");
   ROS_ASSERT(seq.size() > 0);
-  ROS_ASSERT(seq.pcds_[0]->size() == min_distances.size());
-  ROS_ASSERT(seq.pcds_[0]->size() == max_distances.size());
+  ROS_ASSERT(seq.pcds_[0]->size() == model.size());
   
   fg_indices_.resize(seq.size());
   for(size_t i = 0; i < fg_indices_.size(); ++i)
     fg_indices_[i].clear();
   
   for(size_t i = 0; i < seq.size(); ++i)
-    findForeground(*seq.pcds_[i], min_distances, max_distances, &fg_indices_[i]);
+    findForeground(*seq.pcds_[i], model, &fg_indices_[i]);
 
   push<const vector< vector<int> >*>("ForegroundIndices", &fg_indices_);
 }
@@ -43,8 +42,7 @@ void BackgroundSubtractor::debug() const
 }
 
 void BackgroundSubtractor::findForeground(const Cloud& pcd,
-					  const vector<double>& min_distances,
-					  const vector<double>& max_distances,
+					  const BackgroundModel& model,
 					  vector<int>* indices) const
 {
   indices->clear();
@@ -52,12 +50,10 @@ void BackgroundSubtractor::findForeground(const Cloud& pcd,
     double z = pcd[i].z;
     if(isinf(z))
       continue;
-    ROS_ASSERT(min_distances[i] <= max_distances[i]);
-    if(z < min_distances[i] || z > max_distances[i]) {
+    if(!model.isBackground(i, z))
       indices->push_back(i);
-    }
   }
-
+  
   cout << "Foreground: " << indices->size() << ", Total: " << pcd.size() << endl;
 }
 

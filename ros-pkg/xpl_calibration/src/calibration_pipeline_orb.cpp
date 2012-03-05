@@ -92,7 +92,7 @@ void CalibrationPipelineOrb::registerPods() const
   REGISTER_POD(OrbMatcher);
   REGISTER_POD(TransformValidator);
   REGISTER_POD(KdTreePod);
-  REGISTER_POD(BackgroundModeler);
+  REGISTER_POD(HistogramBackgroundModeler);
   REGISTER_POD(GaussianBackgroundModeler);
 }
 
