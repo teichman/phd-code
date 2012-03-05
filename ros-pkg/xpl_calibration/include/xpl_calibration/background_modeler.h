@@ -13,14 +13,16 @@ public:
   void insert(double val);
   void clear();
   size_t total() const { return total_; }
-  size_t getCounts(size_t idx) const { return bins_[idx]; }
-  
+  int getNumNearby(double z) const;
+  void finalize();
+    
 protected:
   double minval_;
   double maxval_;
   double binwidth_;
   std::vector<double> lower_limits_;
   std::vector<size_t> bins_;
+  std::vector<size_t> num_nearby_;
   size_t total_;
 };
 
@@ -42,7 +44,8 @@ public:
     Pod(name)
   {
     declareParam<double>("Resolution", 0.1); // meters
-    declareParam<double>("MaxDepth", 15); 
+    declareParam<double>("MaxDepth", 10);
+    declareParam<int>("Stride", 10); // Use every kth pointcloud for building the model.
     declareParam<double>("MinPercent", 0.2); // [0, 1]
     declareInput<rgbd::Sequence::ConstPtr>("Sequence");
     declareOutput<const BackgroundModel*>("BackgroundModel");
@@ -55,7 +58,8 @@ public:
 
 protected:
   std::vector<DepthHistogram::Ptr> histograms_; // row major
-
+  double min_pct_;
+    
   cv::Mat1f getZBuffer(const rgbd::Cloud& pcd) const;
 };
 

@@ -32,8 +32,8 @@ void DepthHistogram::insert(double val)
   if(idx < 0 || idx > (int)bins_.size())
     return;
 
-  ++bins_[idx];
   ++total_;
+  ++bins_[idx];
 }
 
 void DepthHistogram::clear()
@@ -43,8 +43,28 @@ void DepthHistogram::clear()
   binwidth_ = -1;
   lower_limits_.clear();
   bins_.clear();
+  num_nearby_.clear();
   total_ = 0;
-}  
+}
+
+void DepthHistogram::finalize()
+{
+  num_nearby_.resize(bins_.size());
+  for(int idx = 0; idx < (int)num_nearby_.size(); ++idx)
+    for(int i = idx - 1; i <= idx + 1; ++i)
+      if(i >= 0 && i < (int)bins_.size())
+	num_nearby_[idx] = max(bins_[i], num_nearby_[idx]);
+}
+
+int DepthHistogram::getNumNearby(double z) const
+{
+  ROS_ASSERT(num_nearby_.size() == bins_.size());
+  int idx = (z - minval_) / binwidth_;
+  if(idx < 0 || idx >= (int)bins_.size())
+    return -1;
+  else
+    return num_nearby_[idx];
+}
 
 void HistogramBackgroundModeler::compute()
 {
@@ -52,6 +72,7 @@ void HistogramBackgroundModeler::compute()
   const Sequence& seq = *pull<Sequence::ConstPtr>("Sequence");
   ROS_ASSERT(seq.pcds_[0]->isOrganized());
   size_t num_pixels = seq.pcds_[0]->size();
+  min_pct_ = param<double>("MinPercent"); // The param call is slow.
   
   if(histograms_.size() != num_pixels) {
     histograms_.clear();
@@ -69,7 +90,7 @@ void HistogramBackgroundModeler::compute()
   // -- Compute histograms of z values.
   HighResTimer hrt("Accumulating");
   hrt.start();
-  for(size_t i = 0; i < seq.size(); ++i) {
+  for(size_t i = 0; i < seq.size(); i += param<int>("Stride")) {
     const Cloud& pcd = *seq.pcds_[i];
     for(size_t j = 0; j < pcd.size(); ++j) {
       if(!isinf(pcd[j].z))
@@ -79,6 +100,9 @@ void HistogramBackgroundModeler::compute()
   hrt.stop();
   cout << hrt.report() << endl;
 
+  for(size_t i = 0; i < histograms_.size(); ++i)
+    histograms_[i]->finalize();
+  
   push<const BackgroundModel*>("BackgroundModel", this);
 }
 
@@ -104,8 +128,13 @@ cv::Mat1f HistogramBackgroundModeler::getZBuffer(const rgbd::Cloud& pcd) const
 bool HistogramBackgroundModeler::isBackground(size_t idx, double z) const
 {
   ROS_ASSERT(idx < histograms_.size());
-  double pct = (double)histograms_[idx]->getCounts(idx) / (double)histograms_[idx]->total();
-  if(pct > param<double>("MinPercent"))
+
+  int num = histograms_[idx]->getNumNearby(z);
+  if(num == -1)
+    return true;
+    
+  double pct = (double)num / (double)histograms_[idx]->total();
+  if(pct > min_pct_)
     return true;
   else
     return false;
