@@ -11,6 +11,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <serializable/serializable.h>
+#include <ros/assert.h>
 
 namespace rgbd
 {

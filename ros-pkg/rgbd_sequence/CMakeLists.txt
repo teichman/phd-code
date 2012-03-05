@@ -24,7 +24,10 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #common commands for building c++ executables and libraries
 rosbuild_add_library(rgbd_sequence
   src/rgbd_sequence.cpp
+  src/compact_sequence.cpp
+  src/stream_sequence.cpp
   src/recorder.cpp
+  src/compact_recorder.cpp
   src/publisher.cpp
   )
 rosbuild_link_boost(rgbd_sequence system)
@@ -39,6 +42,14 @@ rosbuild_add_executable(record src/record.cpp)
 target_link_libraries(record rgbd_sequence)
 rosbuild_add_compile_flags(record -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
+rosbuild_add_executable(record_compact src/record_compact.cpp)
+target_link_libraries(record_compact rgbd_sequence)
+rosbuild_add_compile_flags(record_compact -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
 rosbuild_add_executable(publish src/publish.cpp)
 target_link_libraries(publish rgbd_sequence)
 rosbuild_add_compile_flags(publish -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
+rosbuild_add_executable(view_compact src/view_compact.cpp)
+target_link_libraries(view_compact rgbd_sequence)
+rosbuild_add_compile_flags(view_compact -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
