@@ -19,7 +19,7 @@ void BackgroundSubtractor::compute()
   
   for(size_t i = 0; i < seq.size(); ++i)
     findForeground(*seq.pcds_[i], model, &fg_indices_[i]);
-
+  
   push<const vector< vector<int> >*>("ForegroundIndices", &fg_indices_);
 }
 
@@ -46,13 +46,25 @@ void BackgroundSubtractor::findForeground(const Cloud& pcd,
 					  vector<int>* indices) const
 {
   indices->clear();
-  for(size_t i = 0; i < pcd.size(); ++i) {
+
+  cv::Mat1b img(cv::Size(pcd.width, pcd.height), 0);
+  for(size_t i = 0; i < pcd.size(); ++i) {        
     double z = pcd[i].z;
     if(isinf(z))
       continue;
-    if(!model.isBackground(i, z))
-      indices->push_back(i);
+    if(!model.isBackground(i, z)) {
+      int y = i / pcd.width;
+      int x = i - y * pcd.width;
+      img(y, x) = 255;
+    }
   }
+
+  cv::erode(img, img, cv::Mat(), cv::Point(-1, -1), param<int>("NumErosions"));
+  
+  for(int y = 0; y < img.rows; ++y)
+    for(int x = 0; x < img.cols; ++x)
+      if(img(y, x) != 0)
+	indices->push_back(y * img.cols + x);
   
   cout << "Foreground: " << indices->size() << ", Total: " << pcd.size() << endl;
 }
