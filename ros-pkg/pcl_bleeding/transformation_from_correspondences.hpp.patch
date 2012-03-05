@@ -1,0 +1,16 @@
+--- transformation_from_correspondences.hpp.backup	2012-02-15 15:35:47.867883031 -0800
++++ transformation_from_correspondences.hpp	2012-02-15 15:35:59.797883023 -0800
+@@ -43,11 +43,13 @@
+ 
+ namespace pcl {
+ 
++inline
+ TransformationFromCorrespondences::TransformationFromCorrespondences ()
+ {
+   reset();
+ }
+ 
++inline
+ TransformationFromCorrespondences::~TransformationFromCorrespondences ()
+ {
+ }
