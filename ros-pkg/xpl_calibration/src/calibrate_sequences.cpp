@@ -21,8 +21,8 @@ int main(int argc, char** argv)
     return 0;
   }
 
-  Sequence::Ptr seq0(new Sequence);
-  Sequence::Ptr seq1(new Sequence);
+  StreamSequence::Ptr seq0(new StreamSequence);
+  StreamSequence::Ptr seq1(new StreamSequence);
   cout << "Loading " << argv[1] << "." << endl;
   seq0->load(argv[1]);
   cout << "Loading " << argv[2] << "." << endl;

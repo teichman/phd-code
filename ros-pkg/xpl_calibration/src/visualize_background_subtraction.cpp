@@ -51,10 +51,21 @@ int main(int argc, char** argv)
     pl.save("bgs-default.pl");
   }
   
-  Sequence::Ptr seq(new Sequence);
+  StreamSequence::Ptr sseq(new StreamSequence);
   cout << "Loading " << argv[1] << "." << endl;
-  seq->load(argv[1]);
+  sseq->load(argv[1]);
 
+  // -- Downsample the sequence heavily.
+  size_t interval = 20;
+  Sequence::Ptr seq(new Sequence);
+  seq->pcds_.reserve(sseq->size());
+  seq->imgs_.reserve(sseq->size());
+  for(size_t i = 0; i < sseq->size(); i += interval) {
+    seq->pcds_.push_back(sseq->getCloud(i));
+    seq->imgs_.push_back(sseq->getImage(i));
+  }
+
+  // -- Run pipeline.
   pl.setInput<Sequence::ConstPtr>("Sequence", seq);
   pl.compute();
   const vector< vector<int> >* fg_indices;

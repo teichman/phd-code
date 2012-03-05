@@ -47,6 +47,8 @@ namespace rgbd
     size_t size() const { ROS_ASSERT(img_names_.size() == dpt_names_.size()); return img_names_.size(); }
     Cloud::Ptr getCloud(size_t frame) const;
     Mat3b getImage(size_t frame) const;
+    Cloud::Ptr getCloud(double timestamp, double* dt) const;
+    Mat3b getImage(double timestamp, double* dt) const;
     void addFrame( const Mat3b &img, const DepthMat &depth, 
         double focal_length, double timestamp);
 
@@ -56,6 +58,7 @@ namespace rgbd
     void loadImage(const std::string& dir, size_t frame, Mat3b &img) const;
     void loadDepth(const std::string& dir, size_t frame, 
         DepthMat &depth, double &focal_length, double &timestamp) const;
+    size_t seek(double timestamp, double* dt) const;
   };
 
 

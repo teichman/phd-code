@@ -89,11 +89,11 @@ namespace rgbd
     BOOST_FOREACH(const bfs::path& p, make_pair(it, eod)) {
       ROS_ASSERT(is_regular_file(p));
       if(p.leaf().substr(0, 3).compare("img") == 0 && bfs::extension(p).compare(".png") == 0)
-	img_names_.push_back(p.string());
+	img_names_.push_back(p.leaf());
       else if(bfs::extension(p).compare(".dpt") == 0)
-	dpt_names_.push_back(p.string());
+	dpt_names_.push_back(p.leaf());
       else if(bfs::extension(p).compare(".clk") == 0)
-	clk_names_.push_back(p.string());
+	clk_names_.push_back(p.leaf());
     }
     ROS_ASSERT(img_names_.size() == dpt_names_.size());
     ROS_ASSERT(img_names_.size() == clk_names_.size());
@@ -116,9 +116,9 @@ namespace rgbd
 
   void StreamSequence::loadImage(const string &dir, size_t frame, Mat3b &img) const
   {
-      img = cv::imread(dir+"/"+img_names_[frame], 1);
-    
+    img = cv::imread(dir+"/"+img_names_[frame], 1);
   }
+  
   void StreamSequence::loadDepth(const string &dir, size_t frame,
                  DepthMat &depth, double &focal_length, double &timestamp ) const
   {
@@ -130,6 +130,34 @@ namespace rgbd
       timestamp = timestamps_[frame]; //In memory already
   }
 
+  size_t StreamSequence::seek(double timestamp, double* dt) const
+  {
+    ROS_ASSERT(!timestamps_.empty());
+    
+    // TODO: This could be much faster than linear search.
+    size_t nearest = 0;
+    *dt = numeric_limits<double>::max();
+    for(size_t i = 0; i < timestamps_.size(); ++i) {
+      double d = fabs(timestamp - timestamps_[i]);
+      if(d < *dt) {
+	*dt = d;
+	nearest = i;
+      }
+    }
+
+    return nearest;
+  }
+  
+  Cloud::Ptr StreamSequence::getCloud(double timestamp, double* dt) const
+  {
+    return getCloud(seek(timestamp, dt));
+  }
+  
+  Mat3b StreamSequence::getImage(double timestamp, double* dt) const
+  {
+    return getImage(seek(timestamp, dt));
+  }
+  
   Cloud::Ptr StreamSequence::getCloud(size_t frame) const
   {
     ROS_ASSERT(frame < dpt_names_.size());

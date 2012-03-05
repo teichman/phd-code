@@ -30,13 +30,16 @@ void ObjectExtractor::extractObjectsFromFrame(const rgbd::Cloud& pcd,
 
   // -- Get the cloud of just foreground points.
   Cloud::Ptr fg(new Cloud);
-  fg->resize(indices.size());
+  fg->reserve(indices.size());
   for(size_t i = 0; i < indices.size(); ++i)
     fg->push_back(pcd[indices[i]]);
     
   // -- Run euclidean cluster extraction.
+  HighResTimer hrt("Cluster extraction");
+  hrt.start();
   pcl::search::KdTree<Point>::Ptr tree(new pcl::search::KdTree<Point>);
   tree->setInputCloud(fg);
+  cout << "Searching for objects among " << fg->size() << " foreground points." << endl;
   pcl::EuclideanClusterExtraction<Point> ec;
   ec.setClusterTolerance(param<double>("ClusterTolerance"));
   ec.setMinClusterSize(param<int>("MinClusterSize"));
@@ -45,6 +48,8 @@ void ObjectExtractor::extractObjectsFromFrame(const rgbd::Cloud& pcd,
   ec.setInputCloud(fg);
   std::vector<pcl::PointIndices> cluster_indices;
   ec.extract(cluster_indices);
+  hrt.stop();
+  cout << hrt.report() << endl;
   cout << "Found " << cluster_indices.size() << " clusters." << endl;
 
   // -- Add each cluster as an object.

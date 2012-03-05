@@ -15,11 +15,34 @@ CalibrationPipelineOrb::CalibrationPipelineOrb(int num_threads, std::string pipe
     pl_.load(pipeline_file);
 }
 
-Eigen::Affine3f CalibrationPipelineOrb::calibrate(SeqConstPtr seq0,
-						  SeqConstPtr seq1)
+Eigen::Affine3f CalibrationPipelineOrb::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
+						  rgbd::StreamSequence::ConstPtr sseq1)
 {
-  pl_.setInput("Sequence0", seq0);
-  pl_.setInput("Sequence1", seq1);
+  // -- Downsample the sequences heavily.
+  size_t interval = 20;
+  double thresh = 0.3;
+  Sequence::Ptr seq0(new Sequence);
+  Sequence::Ptr seq1(new Sequence);
+  seq0->pcds_.reserve(sseq0->size());
+  seq1->pcds_.reserve(sseq1->size());
+  seq0->imgs_.reserve(sseq0->size());
+  seq1->imgs_.reserve(sseq1->size());
+  for(size_t i = 0; i < sseq0->size(); i += interval) {
+    double dt = -1;
+    double ts0 = sseq0->timestamps_[i];
+    Cloud::Ptr pcd1 = sseq1->getCloud(ts0, &dt);
+    if(dt > thresh)
+      continue;
+
+    seq0->pcds_.push_back(sseq0->getCloud(i));
+    seq1->pcds_.push_back(pcd1);
+    seq0->imgs_.push_back(sseq0->getImage(i));
+    seq1->imgs_.push_back(sseq0->getImage(ts0, &dt));
+  }
+
+  // -- Compute calibration.
+  pl_.setInput<Sequence::ConstPtr>("Sequence0", seq0);
+  pl_.setInput<Sequence::ConstPtr>("Sequence1", seq1);
   pl_.setDebug(true);
   pl_.compute();
 
@@ -28,8 +51,8 @@ Eigen::Affine3f CalibrationPipelineOrb::calibrate(SeqConstPtr seq0,
 
 void CalibrationPipelineOrb::initializePipeline()
 { 
-  EntryPoint<SeqConstPtr>* ep0 = new EntryPoint<SeqConstPtr>("Sequence0");
-  EntryPoint<SeqConstPtr>* ep1 = new EntryPoint<SeqConstPtr>("Sequence1");
+  EntryPoint<SequenceConstPtr>* ep0 = new EntryPoint<SequenceConstPtr>("Sequence0");
+  EntryPoint<SequenceConstPtr>* ep1 = new EntryPoint<SequenceConstPtr>("Sequence1");
 
   GaussianBackgroundModeler* bm0 = new GaussianBackgroundModeler("GaussianBackgroundModeler0");
   GaussianBackgroundModeler* bm1 = new GaussianBackgroundModeler("GaussianBackgroundModeler1");
@@ -86,7 +109,7 @@ void CalibrationPipelineOrb::initializePipeline()
 
 void CalibrationPipelineOrb::registerPods() const
 {
-  REGISTER_POD_TEMPLATE(EntryPoint, SeqConstPtr);
+  REGISTER_POD_TEMPLATE(EntryPoint, SequenceConstPtr);
   REGISTER_POD(FrameSelector);
   REGISTER_POD(OrbExtractor);
   REGISTER_POD(OrbMatcher);
