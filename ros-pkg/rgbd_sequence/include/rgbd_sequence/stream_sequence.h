@@ -40,7 +40,7 @@ namespace rgbd
     //! Deep-copies.
     // TODO StreamSequence& operator=(const StreamSequence& seq);
     // ! This changes the save_dir and saves everything to it
-    void save(const std::string& filename) const;
+    void save(const std::string& filename);
     void load(const std::string& filename);
     void serialize(std::ostream& out) const;
     void deserialize(std::istream& in);
