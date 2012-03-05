@@ -20,9 +20,9 @@ int main(int argc, char** argv)
   
   string output_dir = argv[1];
   float dt = atof(argv[2]);
-  vector<rgbd::Sequence::Ptr> seqs(argc-3);
+  vector<rgbd::StreamSequence::Ptr> seqs(argc-3);
   for(int i = 0; i < argc-3; i++ ){
-    seqs[i] = rgbd::Sequence::Ptr( new rgbd::Sequence );
+    seqs[i] = rgbd::StreamSequence::Ptr( new rgbd::StreamSequence );
     seqs[i]->load(argv[i+3]);
   }
   MultiSequence mseq(dt, seqs);

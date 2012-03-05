@@ -218,8 +218,9 @@ namespace multi_sequence
       clouds_[i].clear();
       image_timestamps_[i].clear();
     }
-    MultiSequence mseq(thresh, seqs);
-    mseq.save(name);
+    //TODO fix this to work with StreamSequences
+    //MultiSequence mseq(thresh, seqs);
+    //mseq.save(name);
   }
   
   void MultiRecorder::initializeGrabber(size_t idx)
