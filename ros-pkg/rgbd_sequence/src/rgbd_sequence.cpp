@@ -73,6 +73,7 @@ namespace rgbd
     // -- Sort all filenames.
     sort(img_names.begin(), img_names.end());
     sort(pcd_names.begin(), pcd_names.end());
+    sort(clk_names.begin(), clk_names.end());
 
     // -- Load images and pointclouds.
     imgs_.resize(img_names.size());
