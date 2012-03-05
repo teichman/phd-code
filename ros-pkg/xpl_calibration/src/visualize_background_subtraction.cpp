@@ -26,7 +26,7 @@ int main(int argc, char** argv)
   typedef Sequence::ConstPtr SequenceConstPtr;
   REGISTER_POD_TEMPLATE(EntryPoint, SequenceConstPtr);
   REGISTER_POD(GaussianBackgroundModeler);
-  REGISTER_POD(BackgroundModeler);
+  REGISTER_POD(HistogramBackgroundModeler);
   REGISTER_POD(BackgroundSubtractor);
   
   Pipeline pl(NUM_THREADS);
@@ -37,13 +37,11 @@ int main(int argc, char** argv)
   }
   else { 
     EntryPoint<Sequence::ConstPtr>* ep = new EntryPoint<Sequence::ConstPtr>("Sequence");
-    GaussianBackgroundModeler* bm = new GaussianBackgroundModeler("GaussianBackgroundModeler");
-    //BackgroundModeler* bm = new BackgroundModeler("BackgroundModeler");
+    HistogramBackgroundModeler* bm = new HistogramBackgroundModeler("HistogramBackgroundModeler");
     bm->registerInput("Sequence", ep, "Output");
     BackgroundSubtractor* bs = new BackgroundSubtractor("BackgroundSubtractor");
     bs->registerInput("Sequence", ep, "Output");
-    bs->registerInput("MaxDistances", bm, "MaxDistances");
-    bs->registerInput("MinDistances", bm, "MinDistances");
+    bs->registerInput("BackgroundModel", bm, "BackgroundModel");
     pl.addConnectedComponent(ep);
     pl.save("bgs-default.pl");
   }

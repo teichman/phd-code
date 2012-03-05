@@ -1,7 +1,7 @@
 #ifndef BACKGROUND_SUBTRACTOR_H
 #define BACKGROUND_SUBTRACTOR_H
 
-#include <xpl_calibration/common.h>
+#include <xpl_calibration/background_modeler.h>
 
 class BackgroundSubtractor : public pipeline::Pod
 {
@@ -10,9 +10,7 @@ public:
   BackgroundSubtractor(std::string name) :
     Pod(name)
   {
-    // Min and max distances define the range that is considered background for each pixel.
-    declareInput<const std::vector<double>*>("MinDistances");
-    declareInput<const std::vector<double>*>("MaxDistances");
+    declareInput<const BackgroundModel*>("BackgroundModel");
     declareInput<rgbd::Sequence::ConstPtr>("Sequence");
 
     declareOutput<const std::vector< std::vector<int> >*>("ForegroundIndices");
@@ -25,8 +23,7 @@ protected:
   std::vector< std::vector<int> > fg_indices_;
 
   void findForeground(const rgbd::Cloud& pcd,
-		      const std::vector<double>& min_distances,
-		      const std::vector<double>& max_distances,
+		      const BackgroundModel& model,
 		      std::vector<int>* indices) const;
     
 };
