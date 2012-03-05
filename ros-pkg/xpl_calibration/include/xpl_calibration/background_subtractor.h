@@ -12,7 +12,7 @@ public:
   {
     declareInput<const BackgroundModel*>("BackgroundModel");
     declareInput<rgbd::Sequence::ConstPtr>("Sequence");
-
+    declareParam<int>("NumErosions", 5);
     declareOutput<const std::vector< std::vector<int> >*>("ForegroundIndices");
   }
 
