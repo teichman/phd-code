@@ -7,20 +7,32 @@ using namespace rgbd;
 
 void BackgroundSubtractor::compute()
 {
-
   const BackgroundModel& model = *pull<const BackgroundModel*>("BackgroundModel");
   const Sequence& seq = *pull<Sequence::ConstPtr>("Sequence");
   ROS_ASSERT(seq.size() > 0);
   ROS_ASSERT(seq.pcds_[0]->size() == model.size());
+
+  // -- Reset the foreground images and indices.
+  if(fg_imgs_.size() != seq.size()) { 
+    fg_imgs_.clear();
+    fg_imgs_.reserve(seq.size());
+    for(size_t i = 0; i < seq.size(); ++i)
+      fg_imgs_.push_back(cv::Mat1b(cv::Size(seq.pcds_[0]->width, seq.pcds_[0]->height), 0));
+  }
+  else
+    for(size_t i = 0; i < seq.size(); ++i)
+      fg_imgs_[i] = 0;
   
   fg_indices_.resize(seq.size());
   for(size_t i = 0; i < fg_indices_.size(); ++i)
     fg_indices_[i].clear();
-  
+
+  // -- Compute foreground.
   for(size_t i = 0; i < seq.size(); ++i)
-    findForeground(*seq.pcds_[i], model, &fg_indices_[i]);
+    findForeground(*seq.pcds_[i], model, &fg_indices_[i], fg_imgs_[i]);
   
   push<const vector< vector<int> >*>("ForegroundIndices", &fg_indices_);
+  push<const vector<cv::Mat1b>*>("ForegroundImages", &fg_imgs_);
 }
 
 void BackgroundSubtractor::debug() const
@@ -43,11 +55,11 @@ void BackgroundSubtractor::debug() const
 
 void BackgroundSubtractor::findForeground(const Cloud& pcd,
 					  const BackgroundModel& model,
-					  vector<int>* indices) const
+					  vector<int>* indices,
+					  cv::Mat1b img) const
 {
   indices->clear();
 
-  cv::Mat1b img(cv::Size(pcd.width, pcd.height), 0);
   for(size_t i = 0; i < pcd.size(); ++i) {        
     double z = pcd[i].z;
     if(isinf(z))
@@ -60,6 +72,7 @@ void BackgroundSubtractor::findForeground(const Cloud& pcd,
   }
 
   cv::erode(img, img, cv::Mat(), cv::Point(-1, -1), param<int>("NumErosions"));
+  cv::dilate(img, img, cv::Mat(), cv::Point(-1, -1), param<int>("NumDilations"));
   
   for(int y = 0; y < img.rows; ++y)
     for(int x = 0; x < img.cols; ++x)

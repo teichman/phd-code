@@ -13,7 +13,9 @@ public:
     declareInput<const BackgroundModel*>("BackgroundModel");
     declareInput<rgbd::Sequence::ConstPtr>("Sequence");
     declareParam<int>("NumErosions", 5);
+    declareParam<int>("NumDilations", 3);
     declareOutput<const std::vector< std::vector<int> >*>("ForegroundIndices");
+    declareOutput<const std::vector<cv::Mat1b>*>("ForegroundImages"); // 255 is foreground, 0 is background.
   }
 
   void compute();
@@ -21,10 +23,12 @@ public:
 
 protected:
   std::vector< std::vector<int> > fg_indices_;
+  std::vector<cv::Mat1b> fg_imgs_;
 
   void findForeground(const rgbd::Cloud& pcd,
 		      const BackgroundModel& model,
-		      std::vector<int>* indices) const;
+		      std::vector<int>* indices,
+		      cv::Mat1b img) const;
     
 };
 
