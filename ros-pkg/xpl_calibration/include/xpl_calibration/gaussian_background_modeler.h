@@ -29,6 +29,7 @@ protected:
   std::vector<double> counts_;
   
   cv::Mat1f getZBuffer(const rgbd::Cloud& pcd) const;
+  cv::Mat1b visualizeVector(const std::vector<double>& vec) const;
 };
 
 #endif // GAUSSIAN_BACKGROUND_MODELER_H

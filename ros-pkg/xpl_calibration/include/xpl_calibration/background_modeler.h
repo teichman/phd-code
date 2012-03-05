@@ -30,7 +30,7 @@ public:
     Pod(name)
   {
     declareParam<double>("Resolution", 0.5); // meters
-    declareParam<double>("MaxDepth", 5.0); 
+    declareParam<double>("MaxDepth", 15); 
     declareParam<int>("MinNumPoints", 20);
     declareInput<rgbd::Sequence::ConstPtr>("Sequence");
     // Points between min and max are background.

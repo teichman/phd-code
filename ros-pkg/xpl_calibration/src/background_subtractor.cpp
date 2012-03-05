@@ -21,6 +21,7 @@ void BackgroundSubtractor::compute()
   for(size_t i = 0; i < seq.size(); ++i)
     findForeground(*seq.pcds_[i], min_distances, max_distances, &fg_indices_[i]);
 
+  push<const vector< vector<int> >*>("ForegroundIndices", &fg_indices_);
 }
 
 void BackgroundSubtractor::debug() const
@@ -52,8 +53,11 @@ void BackgroundSubtractor::findForeground(const Cloud& pcd,
     if(isinf(z))
       continue;
     ROS_ASSERT(min_distances[i] <= max_distances[i]);
-    if(z < min_distances[i] || z > max_distances[i])
+    if(z < min_distances[i] || z > max_distances[i]) {
       indices->push_back(i);
+    }
   }
+
+  cout << "Foreground: " << indices->size() << ", Total: " << pcd.size() << endl;
 }
 

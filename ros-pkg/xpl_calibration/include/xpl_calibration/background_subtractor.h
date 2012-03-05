@@ -14,6 +14,8 @@ public:
     declareInput<const std::vector<double>*>("MinDistances");
     declareInput<const std::vector<double>*>("MaxDistances");
     declareInput<rgbd::Sequence::ConstPtr>("Sequence");
+
+    declareOutput<const std::vector< std::vector<int> >*>("ForegroundIndices");
   }
 
   void compute();

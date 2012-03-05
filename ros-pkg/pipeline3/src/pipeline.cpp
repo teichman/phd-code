@@ -509,7 +509,10 @@ namespace pipeline {
   
   void Pipeline::deserialize(std::istream& in)
   {
-    PL_ASSERT(pods_.empty());
+    for(size_t i = 0; i < pods_.size(); ++i)
+      delete pods_[i];
+    pods_.clear();
+    pod_names_.clear();
 
     string buf;
     getline(in, buf);

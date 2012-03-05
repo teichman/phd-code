@@ -23,7 +23,9 @@ int main(int argc, char** argv)
 
   Sequence::Ptr seq0(new Sequence);
   Sequence::Ptr seq1(new Sequence);
+  cout << "Loading " << argv[1] << "." << endl;
   seq0->load(argv[1]);
+  cout << "Loading " << argv[2] << "." << endl;
   seq1->load(argv[2]);
 
   string pipeline_path = "";

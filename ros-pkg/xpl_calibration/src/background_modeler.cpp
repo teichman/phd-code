@@ -55,9 +55,10 @@ void DepthHistogram::getBackground(int minpts, double* minval, double* maxval) c
     *minval = -1;
     *maxval = -1;
   }
-  else { 
-    *minval = lower_limits_[idx];
-    *maxval = lower_limits_[idx] + binwidth_;
+  else {
+    // Make the background region be three bins total.
+    *minval = lower_limits_[idx] - binwidth_; 
+    *maxval = lower_limits_[idx] + 2.0 * binwidth_;
   }
 }
 

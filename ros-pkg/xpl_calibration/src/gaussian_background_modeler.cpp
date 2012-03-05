@@ -42,14 +42,18 @@ void GaussianBackgroundModeler::compute()
     for(size_t j = 0; j < pcd.size(); ++j) {
       if(isinf(pcd[j].z))
 	continue;
-      stdevs_[j] += pow(pcd[j].z - means_[j], 2) / counts_[j];
+      stdevs_[j] += pow(pcd[j].z - means_[j], 2);
     }
   }
-
+  for(size_t i = 0; i < stdevs_.size(); ++i) { 
+    stdevs_[i] = sqrt(stdevs_[i] / counts_[i]);
+  }
+  
   // -- Compute the min and max distances.
   for(size_t i = 0; i < means_.size(); ++i) {
     min_distances_[i] = means_[i] - stdevs_[i] * param<double>("Stdevs");
     max_distances_[i] = means_[i] + stdevs_[i] * param<double>("Stdevs");
+    //cout << "mean: " << means_[i] << ", stdev: " << stdevs_[i] << ", min: " << min_distances_[i] << ", max: " << max_distances_[i] << endl;
   }
   
   push<const vector<double>*>("MinDistances", &min_distances_);
@@ -58,32 +62,12 @@ void GaussianBackgroundModeler::compute()
 
 void GaussianBackgroundModeler::debug() const
 {
-  const Sequence& seq = *pull<Sequence::ConstPtr>("Sequence");
-  const Cloud& pcd = *seq.pcds_[0];
-  cv::Mat1f bg(cv::Size(pcd.width, pcd.height), 0);
-
-  double max = -numeric_limits<double>::max();
-  for(int y = 0; y < bg.rows; ++y) {
-    for(int x = 0; x < bg.cols; ++x) {
-      int idx = y * bg.cols + x;
-      bg(y, x) = max_distances_[idx];
-      if(max_distances_[idx] > max)
-	max = max_distances_[idx];
-    }
-  }
-
-  cout << "Max: " << max << endl;
-  for(int y = 0; y < bg.rows; ++y)
-    for(int x = 0; x < bg.cols; ++x)
-      bg(y, x) /= max;
-
-  cv::Mat1b vis(bg.size(), 0);
-  for(int y = 0; y < bg.rows; ++y)
-    for(int x = 0; x < bg.cols; ++x)
-      vis(y, x) = bg(y, x) * 255;
+  cv::imwrite(getDebugPath() + "-maxdistance.png", visualizeVector(max_distances_));
+  cv::imwrite(getDebugPath() + "-mindistance.png", visualizeVector(min_distances_));
+  cv::imwrite(getDebugPath() + "-means.png", visualizeVector(means_));
+  cv::imwrite(getDebugPath() + "-stdevs.png", visualizeVector(stdevs_));
+  cv::imwrite(getDebugPath() + "-counts.png", visualizeVector(counts_));
   
-  cv::imwrite(getDebugPath() + "-background.png", vis);
-
   double mean_width = 0;
   for(size_t i = 0; i < max_distances_.size(); ++i) {
     ROS_ASSERT(min_distances_[i] <= max_distances_[i]);
@@ -105,4 +89,30 @@ cv::Mat1f GaussianBackgroundModeler::getZBuffer(const rgbd::Cloud& pcd) const
   }
 
   return zbuf;
+}
+
+cv::Mat1b GaussianBackgroundModeler::visualizeVector(const std::vector<double>& vec) const
+{
+  const Sequence& seq = *pull<Sequence::ConstPtr>("Sequence");
+  const Cloud& pcd = *seq.pcds_[0];
+  cv::Mat1f vis(cv::Size(pcd.width, pcd.height), 0);
+  
+  double max = -numeric_limits<double>::max();
+  for(int y = 0; y < vis.rows; ++y) {
+    for(int x = 0; x < vis.cols; ++x) {
+      int idx = y * vis.cols + x;
+      vis(y, x) = vec[idx];
+      if(vec[idx] > max)
+	max = vec[idx];
+    }
+  }
+  for(int y = 0; y < vis.rows; ++y)
+    for(int x = 0; x < vis.cols; ++x)
+      vis(y, x) /= max;
+  cv::Mat1b vis1b(vis.size(), 0);
+  for(int y = 0; y < vis.rows; ++y)
+    for(int x = 0; x < vis.cols; ++x)
+      vis1b(y, x) = vis(y, x) * 255;
+
+  return vis1b;
 }
