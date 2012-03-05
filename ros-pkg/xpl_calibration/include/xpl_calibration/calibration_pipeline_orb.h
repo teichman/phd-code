@@ -2,7 +2,7 @@
 #define CALIBRATION_PIPELINE_H
 
 #include <pipeline/pipeline.h>
-#include <rgbd_sequence/rgbd_sequence.h>
+#include <rgbd_sequence/stream_sequence.h>
 #include <xpl_calibration/frame_selector.h>
 #include <xpl_calibration/orb_extractor.h>
 #include <xpl_calibration/orb_matcher.h>
@@ -11,21 +11,21 @@
 #include <xpl_calibration/background_modeler.h>
 #include <xpl_calibration/gaussian_background_modeler.h>
 #include <xpl_calibration/background_subtractor.h>
-
+#include <xpl_calibration/object_extractor.h>
 
 class CalibrationPipelineOrb
 {
 public:
   //! Alphanumeric typenames are needed for Pipeline.
-  typedef rgbd::Sequence::ConstPtr SequenceConstPtr; 
+  typedef rgbd::StreamSequence::ConstPtr SeqConstPtr;
 
   //! If no file is given, it will create its own with initializePipeline().
   CalibrationPipelineOrb(int num_threads, std::string pipeline_file = "");
   
   //! Computes transform that will move target to reference.
   //! T * seq1 = seq0.
-  Eigen::Affine3f calibrate(rgbd::Sequence::ConstPtr seq0,
-			    rgbd::Sequence::ConstPtr seq1);
+  Eigen::Affine3f calibrate(SeqConstPtr seq0,
+			    SeqConstPtr seq1);
   
 protected:
   pipeline::Pipeline pl_;

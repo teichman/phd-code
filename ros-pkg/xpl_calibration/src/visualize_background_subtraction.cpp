@@ -42,6 +42,11 @@ int main(int argc, char** argv)
     BackgroundSubtractor* bs = new BackgroundSubtractor("BackgroundSubtractor");
     bs->registerInput("Sequence", ep, "Output");
     bs->registerInput("BackgroundModel", bm, "BackgroundModel");
+    ObjectExtractor* oe = new ObjectExtractor("ObjectExtractor");
+    oe->registerInput("Sequence", ep, "Output");
+    oe->registerInput("ForegroundImages", bs, "ForegroundImages");
+    oe->registerInput("ForegroundIndices", bs, "ForegroundIndices");
+    
     pl.addConnectedComponent(ep);
     pl.save("bgs-default.pl");
   }
