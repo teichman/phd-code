@@ -7,14 +7,14 @@ namespace multi_sequence
   MultiSequence::MultiSequence(double dt): 
     aligned_(false), dt_(dt) { }
 
-  MultiSequence::MultiSequence(double dt, const std::vector<rgbd::Sequence::Ptr> &seqs):
+  MultiSequence::MultiSequence(double dt, const std::vector<rgbd::StreamSequence::Ptr> &seqs):
     aligned_(false),
     dt_(dt),
     seqs_(seqs)
   {
     alignSequences();
   }
-  void MultiSequence::addSequence(const rgbd::Sequence::Ptr &seq )
+  void MultiSequence::addSequence(const rgbd::StreamSequence::Ptr &seq )
   {
     seqs_.push_back(seq);
     alignSequences();
@@ -33,7 +33,7 @@ namespace multi_sequence
     pcds.resize(num_sequences());
     for(size_t i=0; i < alignments_[frame].size(); i++)
     {
-      pcds[i] = seqs_[i]->pcds_[alignments_[frame][i]];
+      pcds[i] = seqs_[i]->getCloud(alignments_[frame][i]);
     }
   }
   void MultiSequence::getImages(int frame, std::vector<cv::Mat3b> &imgs) const
@@ -42,7 +42,7 @@ namespace multi_sequence
     imgs.resize(seqs_.size());
     for(size_t i=0; i < alignments_[frame].size(); i++)
     {
-      imgs[i] = seqs_[i]->imgs_[alignments_[frame][i]];
+      imgs[i] = seqs_[i]->getImage(alignments_[frame][i]);
     }
   }
 
@@ -89,7 +89,7 @@ namespace multi_sequence
     seqs_.clear();
     seqs_.resize(num_sequences);
     for( size_t i = 0; i < num_sequences; i++ ){
-      seqs_[i] = rgbd::Sequence::Ptr( new rgbd::Sequence );
+      seqs_[i] = rgbd::StreamSequence::Ptr( new rgbd::StreamSequence );
       std::ostringstream oss;
       oss << "seq" << std::setw(4) << std::setfill('0') << i;
       seqs_[i]->load(dir + "/" + oss.str());
@@ -111,7 +111,7 @@ namespace multi_sequence
           hit_end = true;
           break;
         }
-        timestamps[i] = seqs_[i]->pcds_[cur_frames[i]]->header.stamp.toSec();
+        timestamps[i] = seqs_[i]->timestamps_[cur_frames[i]];
       }
       if(hit_end)
         break;

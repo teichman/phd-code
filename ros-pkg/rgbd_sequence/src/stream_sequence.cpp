@@ -33,13 +33,24 @@ namespace rgbd
     abort();
   }
 
-  void StreamSequence::save(const std::string& dir) const
+  void StreamSequence::save(const std::string& dir)
   {
     if( dir == save_dir_ ){
       return; //No need to do anything at this point
     }
     ROS_ASSERT(!bfs::exists(dir));
     //TODO copy to new directory!
+    bfs::create_directory(dir);
+    for(size_t i = 0; i < timestamps_.size(); i++){
+      Mat3b img;
+      DepthMat depth;
+      double focal_length, timestamp;
+      loadImage(save_dir_, i, img);
+      loadDepth(save_dir_, i, depth, focal_length, timestamp);
+      ROS_ASSERT(timestamp == timestamps_[i]);
+      saveFrame(dir, i, img, depth, focal_length, timestamp );
+    }
+    //TODO modify save_dir_?
   }
 
   void StreamSequence::saveFrame(const string &dir, size_t frame, 

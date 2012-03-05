@@ -34,7 +34,8 @@ int main(int argc, char** argv)
     cv::imshow("image", seq.getImage(i));
     if(i < seq.size() ){
       double dt = seq.timestamps_[i+1]-seq.timestamps_[i];
-      cv::waitKey(1e3*dt);
+      cv::waitKey(5);
+      usleep(1e6*dt);
     }
   }
   
