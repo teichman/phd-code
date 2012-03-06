@@ -117,7 +117,8 @@ namespace rgbd
     // -- Load timestamps.
     timestamps_.resize(clk_names_.size());
     for(size_t i = 0; i < clk_names_.size(); ++i) {
-      ifstream fs(clk_names_[i].c_str());
+      ifstream fs((dir + "/" + clk_names_[i]).c_str());
+      ROS_ASSERT(fs.is_open());
       fs >> timestamps_[i];
       fs.close();
     }
@@ -224,6 +225,15 @@ namespace rgbd
   {
     saveFrame(save_dir_, timestamps_.size(), img, depth, focal_length, timestamp );
   }
+
+  size_t StreamSequence::size() const
+  {
+    ROS_ASSERT(img_names_.size() == dpt_names_.size());
+    ROS_ASSERT(img_names_.size() == clk_names_.size());
+    ROS_ASSERT(img_names_.size() == timestamps_.size());
+    return img_names_.size();
+  }
+  
 } // namespace rgbd
 
 
