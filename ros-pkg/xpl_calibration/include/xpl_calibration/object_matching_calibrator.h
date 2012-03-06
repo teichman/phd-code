@@ -7,14 +7,15 @@ class ObjectMatchingCalibrator : public pipeline::Pod
 {
 public:
   typedef std::vector< std::vector<rgbd::Cloud::ConstPtr> > Objects;
-  
+  typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
+
   DECLARE_POD(ObjectMatchingCalibrator);
   ObjectMatchingCalibrator(std::string name) :
     Pod(name)
   {
-    declareParam<double>("Threshold", 1.0); // Distance in meters between centroids to count as inliers.
-    declareParam<int>("NumRansacIters", 100);
-    declareParam<int>("NumCorrespondences", 5);
+    declareParam<double>("Threshold", 0.50); // Distance in meters between centroids to count as inliers.
+    declareParam<int>("NumRansacIters", 1000);
+    declareParam<int>("NumCorrespondences", 3);
 
     declareInput<rgbd::Sequence::ConstPtr>("Sequence0");
     declareInput<rgbd::Sequence::ConstPtr>("Sequence1");
@@ -22,6 +23,7 @@ public:
     declareInput<const Objects*>("Objects1");
 
     declareOutput<const Eigen::Affine3f*>("RoughTransform"); // Based on centroid matching only.
+    declareOutput<const Eigen::Affine3f*>("RefinedTransform"); // Alignment of object models.
   }
 
   void compute();
@@ -29,6 +31,7 @@ public:
 
 protected:
   Eigen::Affine3f rough_transform_;
+  Eigen::Affine3f refined_transform_;
 
   void computeCentroids(const Objects& objects,
 			std::vector< std::vector<Eigen::Vector3f> >* centroids) const;
@@ -43,8 +46,15 @@ protected:
 		   const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
 		   const std::vector< std::vector<Eigen::Vector3f> >& centroids1,
 		   double thresh,
-		   Eigen::Affine3f* refined_transform) const;
-  
+		   Eigen::Affine3f* refined_transform = NULL,
+		   std::vector<rgbd::Cloud::ConstPtr>* inliers0 = NULL,
+		   std::vector<rgbd::Cloud::ConstPtr>* inliers1 = NULL) const;
+    
+  Eigen::Affine3f alignInlierModels(const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
+				    const std::vector< std::vector<Eigen::Vector3f> >& centroids1) const;
+
+  bool isAlmostIdentity(const Eigen::Affine3f& trans) const;
+    
 };
 
 #endif // OBJECT_MATCHING_CALIBRATOR_H

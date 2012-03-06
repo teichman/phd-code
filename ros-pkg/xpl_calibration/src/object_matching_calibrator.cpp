@@ -27,7 +27,7 @@ void ObjectMatchingCalibrator::compute()
   Affine3f best_transform = Affine3f::Identity();
   int best_num_inliers = 0;
   for(int i = 0; i < num_iterations; ++i) {
-    cout << "iter " << i << endl;
+    cout << "RANSAC iter " << i << endl;
     pcl::TransformationFromCorrespondences tfc;
     for(int j = 0; j < num_correspondences; ++j)
       sampleCorrespondence(seq0, seq1, centroids0, centroids1, &tfc);
@@ -41,16 +41,23 @@ void ObjectMatchingCalibrator::compute()
 				   param<double>("Threshold"),
 				   &refined_transform);
     
+    
     // -- Save this transform if it's the best.
     if(num_inliers > best_num_inliers) {
       best_num_inliers = num_inliers;
-      best_transform = transform;
+      best_transform = refined_transform;
       cout << "Best transform has " << num_inliers << " inliers." << endl;
     }
   }
   rough_transform_ = best_transform;
 
+
+  // -- Using the above as a starting point, now run ICP on all
+  //    corresponding object clouds simultaneously.
+  refined_transform_ = alignInlierModels(centroids0, centroids1);
+
   push<const Affine3f*>("RoughTransform", &rough_transform_);
+  push<const Affine3f*>("RefinedTransform", &refined_transform_);
 }
 
 void ObjectMatchingCalibrator::debug() const
@@ -113,8 +120,19 @@ int ObjectMatchingCalibrator::countInliers(const Eigen::Affine3f& transform,
 					   const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
 					   const std::vector< std::vector<Eigen::Vector3f> >& centroids1,
 					   double thresh,
-					   Eigen::Affine3f* refined_transform) const
+					   Eigen::Affine3f* refined_transform,
+					   std::vector<Cloud::ConstPtr>* inliers0,
+					   std::vector<Cloud::ConstPtr>* inliers1) const
 {
+  const Objects& objects0 = *pull<const Objects*>("Objects0");
+  const Objects& objects1 = *pull<const Objects*>("Objects1");
+  if(inliers0 && inliers1) { 
+    inliers0->clear();
+    inliers0->reserve(objects0.size());
+    inliers1->clear();
+    inliers1->reserve(objects1.size());
+  }
+  
   TransformationFromCorrespondences tfc;
   int num_inliers = 0;
   for(size_t i = 0; i < centroids1.size(); ++i) {
@@ -126,14 +144,87 @@ int ObjectMatchingCalibrator::countInliers(const Eigen::Affine3f& transform,
 	if((centroids0[i][k] - transformed).norm() < thresh) { 
 	  ++num_inliers;
 	  tfc.add(centroids1[i][j], centroids0[i][k]);
+	  if(inliers0 && inliers1) { 
+	    inliers0->push_back(objects0[i][k]);
+	    inliers1->push_back(objects1[i][j]);
+	  }
 	  break;
 	}
       }
     }
   }
 
-  *refined_transform = tfc.getTransformation();
+  if(refined_transform)
+    *refined_transform = tfc.getTransformation();
   return num_inliers;
 }
 
 
+Affine3f ObjectMatchingCalibrator::alignInlierModels(const vector< vector<Vector3f> >& centroids0,
+						     const vector< vector<Vector3f> >& centroids1) const
+{
+  // -- Get inlier objects.
+  vector<Cloud::ConstPtr> objects0;
+  vector<Cloud::ConstPtr> objects1_const;
+  countInliers(rough_transform_, centroids0, centroids1,
+	       param<double>("Threshold"),
+	       NULL, &objects0, &objects1_const);
+  ROS_ASSERT(objects1_const.size() == objects0.size());
+  
+  // -- Move all objects in sensor1 by rough_transform_.
+  vector<Cloud::Ptr> objects1(objects1_const.size());
+  for(size_t i = 0; i < objects1_const.size(); ++i) { 
+    objects1[i] = Cloud::Ptr(new Cloud);
+    pcl::transformPointCloud(*objects1_const[i], *objects1[i], rough_transform_);
+    ROS_ASSERT(!objects1[i]->isOrganized());
+  }
+  
+  // -- Make KdTrees for all objects in sensor 0.
+  vector<KdTree::Ptr> trees0(objects0.size());
+  for(size_t i = 0; i < objects0.size(); ++i) {
+    trees0[i] = KdTree::Ptr(new KdTree);
+    trees0[i]->setInputCloud(objects0[i]);
+  }
+  
+  // -- Run ICP.
+  double thresh = param<double>("Threshold");
+  vector<int> indices;
+  vector<float> distances;
+  Affine3f overall_transform = rough_transform_;
+  int iter = 0;
+  while(true) {
+    cout << "ICP iter " << iter << endl;
+    ++iter;
+    
+    TransformationFromCorrespondences tfc;
+    for(size_t i = 0; i < objects1.size(); ++i) {
+      const Cloud& obj1 = *objects1[i];
+      const Cloud& obj0 = *objects0[i];
+      for(size_t j = 0; j < obj1.size(); ++j) {
+	indices.clear();
+	distances.clear();
+	trees0[i]->nearestKSearch(obj1[j], 1, indices, distances);
+	if(indices.empty() || distances[0] > thresh)
+	  continue;
+
+	tfc.add(obj1[j].getVector3fMap(), obj0[indices[0]].getVector3fMap());
+      }
+    }
+
+    Affine3f incremental_transform = tfc.getTransformation();
+    overall_transform = incremental_transform * overall_transform;
+    if(isAlmostIdentity(incremental_transform))
+      break;
+
+    // -- Move all the objects in sensor 1 by incremental_transform.
+    for(size_t i = 0; i < objects1.size(); ++i)
+      pcl::transformPointCloud(*objects1[i], *objects1[i], incremental_transform);
+  }
+
+  return overall_transform;
+}
+
+bool ObjectMatchingCalibrator::isAlmostIdentity(const Eigen::Affine3f& trans) const
+{
+  return (trans.matrix() - Matrix4f::Identity()).norm() < 0.001;
+}

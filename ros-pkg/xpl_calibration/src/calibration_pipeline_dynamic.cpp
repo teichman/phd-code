@@ -18,8 +18,8 @@ CalibrationPipelineDynamic::CalibrationPipelineDynamic(int num_threads, std::str
 Eigen::Affine3f CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
 						  rgbd::StreamSequence::ConstPtr sseq1)
 {
-  // -- Downsample the sequences heavily.
-  size_t interval = 20;
+  // -- Downsample the sequences.
+  size_t interval = 10;
   double thresh = 0.05;
   Sequence::Ptr seq0(new Sequence);
   Sequence::Ptr seq1(new Sequence);
@@ -50,7 +50,7 @@ Eigen::Affine3f CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::Cons
   pl_.setDebug(true);
   pl_.compute();
 
-  return *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "RoughTransform");
+  return *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "RefinedTransform");
 }
 
 void CalibrationPipelineDynamic::initializePipeline()
