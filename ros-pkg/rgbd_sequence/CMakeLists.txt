@@ -62,3 +62,7 @@ rosbuild_add_compile_flags(view_compact -Wno-deprecated -Wno-unused-but-set-vari
 rosbuild_add_executable(view_stream src/view_stream.cpp)
 target_link_libraries(view_stream rgbd_sequence)
 rosbuild_add_compile_flags(view_stream -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
+rosbuild_add_gtest(test_stream src/test_stream.cpp)
+target_link_libraries(test_stream rgbd_sequence)
+rosbuild_add_gtest_build_flags(test_stream)

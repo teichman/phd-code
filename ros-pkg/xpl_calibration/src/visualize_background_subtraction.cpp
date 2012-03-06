@@ -54,6 +54,7 @@ int main(int argc, char** argv)
   REGISTER_POD(GaussianBackgroundModeler);
   REGISTER_POD(HistogramBackgroundModeler);
   REGISTER_POD(BackgroundSubtractor);
+  REGISTER_POD(ObjectExtractor);
   
   Pipeline pl(NUM_THREADS);
   if(argc == 3) { 

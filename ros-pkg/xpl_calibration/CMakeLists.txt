@@ -35,6 +35,8 @@ rosbuild_add_library(${PROJECT_NAME}
   src/gaussian_background_modeler.cpp
   src/background_subtractor.cpp
   src/object_extractor.cpp
+  src/object_matching_calibrator.cpp
+  src/calibration_pipeline_dynamic.cpp
   )
 rosbuild_link_boost(${PROJECT_NAME} system)
 #target_link_libraries(${PROJECT_NAME} another_library)

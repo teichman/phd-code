@@ -10,10 +10,12 @@ public:
   BackgroundSubtractor(std::string name) :
     Pod(name)
   {
-    declareInput<const BackgroundModel*>("BackgroundModel");
     declareInput<rgbd::Sequence::ConstPtr>("Sequence");
+    declareInput<const BackgroundModel*>("BackgroundModel");
+        
     declareParam<int>("NumErosions", 5);
     declareParam<int>("NumDilations", 3);
+    
     declareOutput<const std::vector< std::vector<int> >*>("ForegroundIndices");
     declareOutput<const std::vector<cv::Mat1b>*>("ForegroundImages"); // 255 is foreground, 0 is background.
   }

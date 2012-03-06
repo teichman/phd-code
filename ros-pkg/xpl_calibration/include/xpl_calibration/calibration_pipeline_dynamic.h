@@ -1,0 +1,36 @@
+#ifndef CALIBRATION_PIPELINE_DYNAMIC_H
+#define CALIBRATION_PIPELINE_DYNAMIC_H
+
+#include <pipeline/pipeline.h>
+#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/rgbd_sequence.h>
+#include <xpl_calibration/frame_selector.h>
+#include <xpl_calibration/kdtree_pod.h>
+#include <xpl_calibration/transform_validator.h>
+#include <xpl_calibration/background_modeler.h>
+#include <xpl_calibration/background_subtractor.h>
+#include <xpl_calibration/object_extractor.h>
+#include <xpl_calibration/object_matching_calibrator.h>
+#include <pcl/visualization/cloud_viewer.h>
+
+class CalibrationPipelineDynamic
+{
+public:
+  //! Alphanumeric typenames are needed for Pipeline.
+  typedef rgbd::Sequence::ConstPtr SequenceConstPtr; 
+
+  //! If no file is given, it will create its own with initializePipeline().
+  CalibrationPipelineDynamic(int num_threads, std::string pipeline_file = "");
+  
+  //! Computes transform that will move target to reference.
+  //! T * seq1 = seq0.
+  Eigen::Affine3f calibrate(rgbd::StreamSequence::ConstPtr seq0,
+			    rgbd::StreamSequence::ConstPtr seq1);
+  
+protected:
+  pipeline::Pipeline pl_;
+  void registerPods() const;
+  void initializePipeline();
+};
+
+#endif // CALIBRATION_PIPELINE_DYNAMIC_H
