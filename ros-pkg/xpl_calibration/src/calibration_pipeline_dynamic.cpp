@@ -20,7 +20,7 @@ Eigen::Affine3f CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::Cons
 {
   // -- Downsample the sequences heavily.
   size_t interval = 20;
-  double thresh = 0.3;
+  double thresh = 0.05;
   Sequence::Ptr seq0(new Sequence);
   Sequence::Ptr seq1(new Sequence);
   seq0->pcds_.reserve(sseq0->size());
@@ -80,6 +80,8 @@ void CalibrationPipelineDynamic::initializePipeline()
   oe1->registerInput("ForegroundIndices", bs1, "ForegroundIndices");
 
   ObjectMatchingCalibrator* omc = new ObjectMatchingCalibrator("ObjectMatchingCalibrator");
+  omc->registerInput("Sequence0", ep0, "Output");
+  omc->registerInput("Sequence1", ep1, "Output");
   omc->registerInput("Objects0", oe0, "Objects");
   omc->registerInput("Objects1", oe1, "Objects");
   

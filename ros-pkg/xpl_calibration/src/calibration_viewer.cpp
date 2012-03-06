@@ -2,6 +2,7 @@
 #include <pcl/common/transforms.h>
 #include <eigen_extensions/eigen_extensions.h>
 #include <rgbd_sequence/rgbd_sequence.h>
+#include <rgbd_sequence/stream_sequence.h>
 
 using namespace std;
 using namespace rgbd;
@@ -27,26 +28,27 @@ int main(int argc, char** argv)
   eigen_extensions::loadASCII(argv[3], &mat);
   cout << "Loaded transform: " << endl;
   cout << mat << endl;
-  
-  Sequence::Ptr reference(new Sequence);
-  Sequence::Ptr target(new Sequence);
-  reference->load(argv[1]);
-  target->load(argv[2]);
-    
-  Cloud::Ptr overlay(new Cloud);
-  Cloud::Ptr transformed(new Cloud);
-  *overlay = *reference->pcds_[0];
   Eigen::Affine3f transform(mat);
-  transformPointCloud(*target->pcds_[0], *transformed, transform);
-  *overlay += *transformed;
+  
+  StreamSequence::Ptr sseq0(new StreamSequence);
+  StreamSequence::Ptr sseq1(new StreamSequence);
+  sseq0->load(argv[1]);
+  sseq1->load(argv[2]);
 
   pcl::visualization::CloudViewer vis("Overlay");
-  vis.showCloud(transformed);
-  cin.ignore();
-  vis.showCloud(reference->pcds_[0]);
-  cin.ignore();
-  vis.showCloud(overlay);
-  cin.ignore();
-  
+  double thresh = 0.1;
+  for(size_t i = 0; i < sseq0->size(); ++i) {
+    Cloud::Ptr overlay = sseq0->getCloud(i);
+    double ts0 = overlay->header.stamp.toSec();
+    double dt;
+    Cloud::Ptr pcd1 = sseq1->getCloud(ts0, &dt);
+    Cloud::Ptr transformed(new Cloud);
+    if(dt < thresh)
+      transformPointCloud(*pcd1, *transformed, transform);
+    *overlay += *transformed;
+    vis.showCloud(overlay);
+    usleep(30 * 1000);
+  }
+
   return 0;
 }
