@@ -1,0 +1,22 @@
+<package>
+  <description brief="cloud_calibration">
+
+     cloud_calibration
+
+  </description>
+  <author>Stephen Miller</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/cloud_calibration</url>
+  <depend package="roscpp"/>
+  <depend package="opencv2"/>
+  <depend package="eigen"/>
+  <depend package="pcl_bleeding"/>
+  <depend package="rgbd_sequence"/>
+  <depend package="multi_sequence"/>
+  <depend package="eigen_extensions"/>
+  <depend package="matrix_tricks"/>
+
+</package>
+
+
