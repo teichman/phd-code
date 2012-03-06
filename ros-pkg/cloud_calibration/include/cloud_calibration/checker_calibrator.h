@@ -26,21 +26,13 @@ namespace cloud_calibration
   public:
     CheckerCalibrator();
     CheckerCalibrator(int rows, int cols, float square_size);
-    //! For now, does pairwise
+    //! Calibrate a multi sequence #TODO switch to pair of sequences?
     Eigen::Affine3f calibrate( MultiSequence::ConstPtr &seq, 
-                              size_t ref_idx, size_t target_idx ) const;
-    Eigen::Affine3f calibrateInteractive( MultiSequence::ConstPtr &seq,
                               size_t ref_idx, size_t target_idx ) const;
 
   protected:
-    float focal_length_;
     int checker_rows_, checker_cols_;
     float square_size_;
-    //! Populate the camera matrix
-    void getCameraMatrix( Mat1d &mat, int img_rows, int img_cols ) const;
-    void getDistCoeffs( std::vector<float> &dst ) const;
-    //! Populate the objectPoints matrix
-    void getObjectPoints( std::vector<cv::Point3f> &pts ) const;
     //! False if a good affine trans was not discoverable
     bool estimateAffineFromFrame( MultiSequence::ConstPtr &seq, 
       size_t frame, size_t ref_idx, size_t target_idx, 

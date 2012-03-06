@@ -15,7 +15,6 @@
   <depend package="rgbd_sequence"/>
   <depend package="multi_sequence"/>
   <depend package="eigen_extensions"/>
-  <depend package="matrix_tricks"/>
 
 </package>
 
