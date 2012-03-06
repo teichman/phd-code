@@ -117,7 +117,7 @@ namespace rgbd
     // -- Load timestamps.
     timestamps_.resize(clk_names_.size());
     for(size_t i = 0; i < clk_names_.size(); ++i) {
-      ifstream fs(clk_names_[i].c_str());
+      ifstream fs((dir+"/"+clk_names_[i]).c_str());
       fs >> timestamps_[i];
       fs.close();
     }
