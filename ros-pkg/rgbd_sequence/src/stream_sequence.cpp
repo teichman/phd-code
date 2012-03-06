@@ -117,7 +117,8 @@ namespace rgbd
     // -- Load timestamps.
     timestamps_.resize(clk_names_.size());
     for(size_t i = 0; i < clk_names_.size(); ++i) {
-      ifstream fs((dir+"/"+clk_names_[i]).c_str());
+      ifstream fs((dir + "/" + clk_names_[i]).c_str());
+      ROS_ASSERT(fs.is_open());
       fs >> timestamps_[i];
       fs.close();
     }
@@ -127,9 +128,9 @@ namespace rgbd
 
   void StreamSequence::loadImage(const string &dir, size_t frame, Mat3b &img) const
   {
-      img = Mat3b(cv::imread(dir+"/"+img_names_[frame], 1));
-    
+    img = cv::imread(dir+"/"+img_names_[frame], 1);
   }
+  
   void StreamSequence::loadDepth(const string &dir, size_t frame,
                  DepthMat &depth, double &focal_length, double &timestamp ) const
   {
@@ -141,6 +142,34 @@ namespace rgbd
       timestamp = timestamps_[frame]; //In memory already
   }
 
+  size_t StreamSequence::seek(double timestamp, double* dt) const
+  {
+    ROS_ASSERT(!timestamps_.empty());
+    
+    // TODO: This could be much faster than linear search.
+    size_t nearest = 0;
+    *dt = numeric_limits<double>::max();
+    for(size_t i = 0; i < timestamps_.size(); ++i) {
+      double d = fabs(timestamp - timestamps_[i]);
+      if(d < *dt) {
+	*dt = d;
+	nearest = i;
+      }
+    }
+
+    return nearest;
+  }
+  
+  Cloud::Ptr StreamSequence::getCloud(double timestamp, double* dt) const
+  {
+    return getCloud(seek(timestamp, dt));
+  }
+  
+  Mat3b StreamSequence::getImage(double timestamp, double* dt) const
+  {
+    return getImage(seek(timestamp, dt));
+  }
+  
   Cloud::Ptr StreamSequence::getCloud(size_t frame) const
   {
     ROS_ASSERT(frame < dpt_names_.size());
@@ -196,6 +225,15 @@ namespace rgbd
   {
     saveFrame(save_dir_, timestamps_.size(), img, depth, focal_length, timestamp );
   }
+
+  size_t StreamSequence::size() const
+  {
+    ROS_ASSERT(img_names_.size() == dpt_names_.size());
+    ROS_ASSERT(img_names_.size() == clk_names_.size());
+    ROS_ASSERT(img_names_.size() == timestamps_.size());
+    return img_names_.size();
+  }
+  
 } // namespace rgbd
 
 

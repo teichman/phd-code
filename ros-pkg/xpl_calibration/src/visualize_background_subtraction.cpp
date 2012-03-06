@@ -16,6 +16,32 @@ string usageString()
   return oss.str();
 }
 
+
+class KBHandler
+{
+public:
+  bool pressed_;
+
+  KBHandler() :
+    pressed_(false)
+  {
+  }
+  
+  void keyboardCallback(const pcl::visualization::KeyboardEvent& event)
+  {
+    pressed_ = true;
+    
+    if (event.getKeyCode())
+      cout << "the key \'" << event.getKeyCode() << "\' (" << (int)event.getKeyCode() << ") was";
+    else
+      cout << "the special key \'" << event.getKeySym() << "\' was";
+    if (event.keyDown())
+      cout << " pressed" << endl;
+    else
+      cout << " released" << endl;  
+  }
+};
+
 int main(int argc, char** argv)
 {
   if(argc != 2 && argc != 3) {
@@ -28,6 +54,7 @@ int main(int argc, char** argv)
   REGISTER_POD(GaussianBackgroundModeler);
   REGISTER_POD(HistogramBackgroundModeler);
   REGISTER_POD(BackgroundSubtractor);
+  REGISTER_POD(ObjectExtractor);
   
   Pipeline pl(NUM_THREADS);
   if(argc == 3) { 
@@ -42,20 +69,39 @@ int main(int argc, char** argv)
     BackgroundSubtractor* bs = new BackgroundSubtractor("BackgroundSubtractor");
     bs->registerInput("Sequence", ep, "Output");
     bs->registerInput("BackgroundModel", bm, "BackgroundModel");
+    ObjectExtractor* oe = new ObjectExtractor("ObjectExtractor");
+    oe->registerInput("Sequence", ep, "Output");
+    oe->registerInput("ForegroundImages", bs, "ForegroundImages");
+    oe->registerInput("ForegroundIndices", bs, "ForegroundIndices");
+    
     pl.addConnectedComponent(ep);
     pl.save("bgs-default.pl");
   }
   
-  Sequence::Ptr seq(new Sequence);
+  StreamSequence::Ptr sseq(new StreamSequence);
   cout << "Loading " << argv[1] << "." << endl;
-  seq->load(argv[1]);
+  sseq->load(argv[1]);
 
+  // -- Downsample the sequence heavily.
+  size_t interval = 20;
+  Sequence::Ptr seq(new Sequence);
+  seq->pcds_.reserve(sseq->size());
+  seq->imgs_.reserve(sseq->size());
+  for(size_t i = 0; i < sseq->size(); i += interval) {
+    seq->pcds_.push_back(sseq->getCloud(i));
+    seq->imgs_.push_back(sseq->getImage(i));
+  }
+
+  // -- Run pipeline.
+  pl.setDebug(true);
   pl.setInput<Sequence::ConstPtr>("Sequence", seq);
   pl.compute();
   const vector< vector<int> >* fg_indices;
   pl.getOutput("BackgroundSubtractor", "ForegroundIndices", &fg_indices);
 
   pcl::visualization::CloudViewer vis("Foreground");
+  // KBHandler h;
+  // vis.registerKeyboardCallback(boost::bind(&KBHandler::keyboardCallback, &h, _1));
   Cloud::Ptr fg(new Cloud);
   while(true) {    
     for(size_t i = 0; i < seq->size(); ++i) {
@@ -69,11 +115,10 @@ int main(int argc, char** argv)
       }
       
       vis.showCloud(fg);
-      usleep(1000 * 30);
+      cin.ignore();
     }
 
     cout << "Press return to re-run." << endl;
-    cin.ignore();
     if(argc == 3) {
       pl.load(argv[2]);
       cout << "Re-loaded " << argv[2] << endl;

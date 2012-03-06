@@ -9,6 +9,7 @@
 #include <ros/console.h>
 #include <pcl/common/transforms.h>
 #include <pcl/common/transformation_from_correspondences.h>
+#include <pcl/segmentation/extract_clusters.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/sample_consensus/method_types.h>
@@ -21,5 +22,6 @@
 #include <pipeline/pod.h>
 #include <rgbd_sequence/rgbd_sequence.h>
 #include <xpl_calibration/descriptor_database.h>
+#include <xpl_calibration/organized_connected_components.h>
 
 #endif // XPL_CALIBRATION_PODS_H

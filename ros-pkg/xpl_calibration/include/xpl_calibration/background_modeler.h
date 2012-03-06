@@ -45,7 +45,7 @@ public:
   {
     declareParam<double>("Resolution", 0.1); // meters
     declareParam<double>("MaxDepth", 10);
-    declareParam<int>("Stride", 10); // Use every kth pointcloud for building the model.
+    declareParam<int>("Stride", 1); // Use every kth pointcloud for building the model.
     declareParam<double>("MinPercent", 0.2); // [0, 1]
     declareInput<rgbd::Sequence::ConstPtr>("Sequence");
     declareOutput<const BackgroundModel*>("BackgroundModel");

@@ -24,7 +24,7 @@ void GaussianBackgroundModeler::compute()
   max_distances_.resize(num_pixels, 0);
   
   // -- Compute the means for all pixels.
-  for(size_t i = 0; i < seq.pcds_.size(); ++i) {
+  for(size_t i = 0; i < seq.size(); ++i) {
     const Cloud& pcd = *seq.pcds_[i];
     for(size_t j = 0; j < pcd.size(); ++j) {
       if(isinf(pcd[j].z))
@@ -37,7 +37,7 @@ void GaussianBackgroundModeler::compute()
     means_[i] /= counts_[i];
 
   // -- Compute the stdevs for all pixels.
-  for(size_t i = 0; i < seq.pcds_.size(); ++i) {
+  for(size_t i = 0; i < seq.size(); ++i) {
     const Cloud& pcd = *seq.pcds_[i];
     for(size_t j = 0; j < pcd.size(); ++j) {
       if(isinf(pcd[j].z))
