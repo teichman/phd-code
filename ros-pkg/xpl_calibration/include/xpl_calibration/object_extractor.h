@@ -21,6 +21,7 @@ public:
     declareInput<const std::vector< std::vector<int> >*>("ForegroundIndices");
     
     declareOutput<const Objects*>("Objects");
+    declareOutput<const ObjectIndices*>("ObjectIndices"); // Indexes into the original cloud, not foreground indices.
   }
 
   void compute();

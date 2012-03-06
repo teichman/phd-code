@@ -23,6 +23,7 @@ void ObjectExtractor::compute()
     extractObjectsFromFrame(*seq.pcds_[i], fg_indices[i], &objects_[i], &object_indices_[i]);
 
   push<const Objects*>("Objects", &objects_);
+  push<const ObjectIndices*>("ObjectIndices", &object_indices_);
 }
 
 void ObjectExtractor::extractObjectsFromFrame(const rgbd::Cloud& pcd,
@@ -37,40 +38,29 @@ void ObjectExtractor::extractObjectsFromFrame(const rgbd::Cloud& pcd,
   
   // -- Get the cloud of just foreground points.
   Cloud::Ptr fg(new Cloud);
-  fg->reserve(fg_indices.size());
+  *fg = pcd;
+  for(size_t i = 0; i < fg->size(); ++i) { 
+    fg->at(i).x = numeric_limits<double>::infinity();
+    fg->at(i).y = numeric_limits<double>::infinity();
+    fg->at(i).z = numeric_limits<double>::infinity();
+  }
   for(size_t i = 0; i < fg_indices.size(); ++i)
-    fg->push_back(pcd[fg_indices[i]]);
-  
-  // -- Run euclidean cluster extraction.
-  HighResTimer hrt("Cluster extraction");
-  hrt.start();
-  pcl::search::KdTree<Point>::Ptr tree(new pcl::search::KdTree<Point>);
-  tree->setInputCloud(fg);
-  cout << "Searching for objects among " << fg->size() << " foreground points." << endl;
-  pcl::EuclideanClusterExtraction<Point> ec;
-  ec.setClusterTolerance(param<double>("ClusterTolerance"));
-  ec.setMinClusterSize(param<int>("MinClusterSize"));
-  ec.setMaxClusterSize(1e6);
-  ec.setSearchMethod(tree);
-  ec.setInputCloud(fg);
-  std::vector<pcl::PointIndices> cluster_indices;
-  ec.extract(cluster_indices);
-  hrt.stop();
-  cout << hrt.report() << endl;
-  cout << "Found " << cluster_indices.size() << " clusters." << endl;
+    fg->at(fg_indices[i]) = pcd[fg_indices[i]];
 
+  // -- Compute connected components.
+  OrganizedConnectedComponents occ(param<int>("MinClusterSize"),
+				   param<double>("ClusterTolerance"));
+  occ.compute(*fg);
+  
   // -- Add each cluster as an object.
-  object_indices->resize(cluster_indices.size());
-  for(size_t i = 0; i < cluster_indices.size(); ++i) {
-    vector<int>& ind = cluster_indices[i].indices;
+  *object_indices = occ.indices_;
+  for(size_t i = 0; i < object_indices->size(); ++i) {
+    const vector<int>& ind = object_indices->at(i);
     Cloud::Ptr obj(new Cloud);
     obj->reserve(ind.size());
-    object_indices->at(i).reserve(ind.size());
-    for(size_t j = 0; j < ind.size(); ++j) { 
+    for(size_t j = 0; j < ind.size(); ++j)
       obj->push_back(fg->at(ind[j]));
-      object_indices->at(i).push_back(ind[j]);
-    }
-
+    
     objects->push_back(obj);
   }
 }
@@ -78,9 +68,7 @@ void ObjectExtractor::extractObjectsFromFrame(const rgbd::Cloud& pcd,
 void ObjectExtractor::debug() const
 {
   cout << *this << endl;
-  
   const Sequence& seq = *pull<Sequence::ConstPtr>("Sequence");
-  const vector< vector<int> >& fg_indices = *pull<const vector< vector<int> >*>("ForegroundIndices");
   
   for(size_t i = 0; i < seq.size(); ++i) {
     cout << "Frame " << i << ": " << object_indices_[i].size() << " objects." << endl;
@@ -91,7 +79,10 @@ void ObjectExtractor::debug() const
       double g = (rand() % 256);
       double b = (rand() % 256);
       for(size_t k = 0; k < object_indices_[i][j].size(); ++k) {
-	int idx = fg_indices[i][object_indices_[i][j][k]];
+	ROS_ASSERT(object_indices_[i][j][k] < (int)vis.size());
+	ROS_ASSERT(object_indices_[i][j][k] >= 0);
+	
+	int idx = object_indices_[i][j][k];
 	vis[idx].r = r;
 	vis[idx].g = g;
 	vis[idx].b = b;

@@ -23,9 +23,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #common commands for building c++ executables and libraries
 rosbuild_add_library(${PROJECT_NAME}
-  src/xpl_calibrator.cpp
-  src/plane_finder.cpp
-  src/color_wheel.cpp
+#  src/xpl_calibrator.cpp
+#  src/plane_finder.cpp
+#  src/color_wheel.cpp
   src/transform_validator.cpp
   src/orb_extractor.cpp
   src/orb_matcher.cpp
@@ -37,6 +37,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/object_extractor.cpp
   src/object_matching_calibrator.cpp
   src/calibration_pipeline_dynamic.cpp
+  src/organized_connected_components.cpp
   )
 rosbuild_link_boost(${PROJECT_NAME} system)
 #target_link_libraries(${PROJECT_NAME} another_library)

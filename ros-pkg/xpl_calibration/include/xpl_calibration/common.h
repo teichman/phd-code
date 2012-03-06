@@ -22,5 +22,6 @@
 #include <pipeline/pod.h>
 #include <rgbd_sequence/rgbd_sequence.h>
 #include <xpl_calibration/descriptor_database.h>
+#include <xpl_calibration/organized_connected_components.h>
 
 #endif // XPL_CALIBRATION_PODS_H
