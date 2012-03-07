@@ -43,20 +43,31 @@ namespace cloud_calibration
     //Iterate over the board being flipped or not
     Eigen::Affine3f trans;
     float bestVar;
+    float reject_pct;
     for(int flip = 0; flip <= 1; flip++){
       cout << "Hypothesis: flip = " << flip << endl;
       vector<vector<Point> > points_ref_all, points_target_all;
       vector<Eigen::Affine3f> transforms;
-      for(size_t i = 0; i < seq->size(); i++)
-      {
-        vector<Point> points_ref, points_target;
-        Eigen::Affine3f frame_transform;
-        bool found = estimateAffineFromFrame(seq, i, ref_idx, target_idx, frame_transform, points_ref, points_target,
-            (bool) flip);
-        if( found ){
-          transforms.push_back(frame_transform);
-          points_ref_all.push_back(points_ref);
-          points_target_all.push_back(points_target);
+      for(int fast_check = 1; fast_check >= 0; fast_check--){
+        for(size_t i = 0; i < seq->size(); i++)
+        {
+          vector<Point> points_ref, points_target;
+          Eigen::Affine3f frame_transform;
+          bool found = estimateAffineFromFrame(seq, i, ref_idx, target_idx, frame_transform, points_ref, points_target,
+              (bool) flip, (bool) fast_check);
+          if( found ){
+            transforms.push_back(frame_transform);
+            points_ref_all.push_back(points_ref);
+            points_target_all.push_back(points_target);
+          }
+        }
+        if(transforms.size() > 0 && fast_check){
+          reject_pct = 0.25;
+          break;
+        }
+        else{
+          reject_pct = 0.5;
+          cout << "Couldn't find a checkerboard. Trying more in-depth search (slow)" << endl;
         }
       }
       // Estimate the transform throw out the furthest 25% from the mean
@@ -87,7 +98,8 @@ namespace cloud_calibration
       }
       // Throw all but N into the best section
       vector<Point> points_ref_best, points_target_best;
-      for(size_t i = 0; i < 0.75*transforms.size(); i++){
+      for(size_t i = 0; i < (1-reject_pct)*transforms.size(); i++){
+        cout << "Rejecting " << 100*reject_pct << "\% highest variance samples" << endl;
         size_t frame;
         variances.minCoeff(&frame);
         //Make sure this won't be counted again
@@ -97,7 +109,6 @@ namespace cloud_calibration
           points_ref_best.push_back(points_ref_all[frame][j]);
           points_target_best.push_back(points_target_all[frame][j]);
         }
-        cout << "Using frame " << frame << endl;
       }
       trans = estimateAffine(points_ref_best, points_target_best);
     }
@@ -110,18 +121,23 @@ namespace cloud_calibration
   bool CheckerCalibrator::estimateAffineFromFrame( const MultiSequence::ConstPtr &seq, 
       size_t frame, size_t ref_idx, size_t target_idx, 
       Eigen::Affine3f &trans, vector<Point> &points_ref, vector<Point> &points_target,
-      bool flip, bool interactive) const
+      bool flip, bool fast_check, bool interactive) const
   {
     vector<Mat3b> imgs;
     seq->getImages( frame, imgs );
     Mat3b& img_ref = imgs[ref_idx], img_target = imgs[target_idx];
     //Find the checkerboard -- assumes first point is above last, unless flip is set
     vector<cv::Point2f> corners_ref, corners_target;
+    int flags;
+    if(fast_check)
+      flags = cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_FAST_CHECK;
+    else
+      flags = cv::CALIB_CB_ADAPTIVE_THRESH;
     if(!cv::findChessboardCorners(img_ref, cv::Size(checker_cols_, checker_rows_), corners_ref, 
-                      cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_FAST_CHECK ) )
+                      flags ) )
       return false;
     if(!cv::findChessboardCorners(img_target, cv::Size(checker_cols_, checker_rows_), corners_target, 
-                      cv::CALIB_CB_ADAPTIVE_THRESH + cv::CALIB_CB_FAST_CHECK ) )
+                      flags ) )
       return false;
     //Do flipping
     if(corners_ref[0].y > corners_ref[corners_ref.size()-1].y)

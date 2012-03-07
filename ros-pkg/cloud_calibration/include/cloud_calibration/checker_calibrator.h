@@ -40,7 +40,7 @@ namespace cloud_calibration
     bool estimateAffineFromFrame( const MultiSequence::ConstPtr &seq, 
       size_t frame, size_t ref_idx, size_t target_idx, 
       Eigen::Affine3f &trans, std::vector<Point> &points_ref, std::vector<Point> &points_target,
-      bool flip, bool interactive=false) const;
+      bool flip, bool fast_check=true, bool interactive=false) const;
     Eigen::Affine3f estimateAffine( const std::vector<Point> &points_ref,
                                     const std::vector<Point> &points_target) const;
   };
