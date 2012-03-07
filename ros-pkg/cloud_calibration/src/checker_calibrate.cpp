@@ -7,10 +7,10 @@ using namespace cloud_calibration;
 string usageString()
 {
   ostringstream oss;
-  oss << "Usage: checker_calibrate SEQ_REF SEQ_TARGET EIG [DT_THRESH]" << endl;
-  oss << "Where SEQ_REF is the reference StreamSequence" << endl;
-  oss << "Where SEQ_TARGET is the target StreamSequence" << endl;
+  oss << "Usage: checker_calibrate SEQ SEQ EIG [DT_THRESH]" << endl;
+  oss << "Where SEQ is the reference StreamSequence" << endl;
   oss << "Where EIG is the location of the output transformation .eig.txt file" << endl;
+  oss << "which brings the second sequence into the first sequence's frame" << endl;
   oss << "Where DT_THRESH is how close frames must be in time to be considered" << endl;
   return oss.str();
 }

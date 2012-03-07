@@ -184,7 +184,7 @@ namespace cloud_calibration
     pcl::TransformationFromCorrespondences tc;
     for(size_t i = 0; i < points_ref.size(); i++)
     {
-      tc.add(pointToEigen(points_ref[i]), pointToEigen(points_target[i]));
+      tc.add(pointToEigen(points_target[i]), pointToEigen(points_ref[i]));
     }
     return tc.getTransformation();
   }
