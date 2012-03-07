@@ -10,16 +10,18 @@ using namespace rgbd;
 string usageString()
 {
   ostringstream oss;
-  oss << "Usage: calibration_viewer SEQ SEQ CAL" << endl;
-  oss << "  where SEQ is a Sequence and CAL is a 4x4 .eig.txt file that describes" << endl;
-  oss << "  the transform that brings the second sequence to the coordinate system that the" << endl;
-  oss << "  first lives in." << endl;
+  oss << "Usage: calibration_viewer SEQ SEQ CAL SYNC"  << endl;
+  oss << "  where SEQ is a Sequence," << endl;
+  oss << "  CAL is a 4x4 .eig.txt file that describes" << endl;
+  oss << "    the transform that brings the second sequence to the coordinate system that the" << endl;
+  oss << "    first lives in," << endl;
+  oss << "  SYNC is a 1x1 .eig.txt file with the time offset to add to the timestamps of the second SEQ." << endl;
   return oss.str();
 }
 
 int main(int argc, char** argv)
 {
-  if(argc != 4) {
+  if(argc != 5) {
     cout << usageString() << endl;
     return 0;
   }
@@ -29,20 +31,26 @@ int main(int argc, char** argv)
   cout << "Loaded transform: " << endl;
   cout << mat << endl;
   Eigen::Affine3f transform(mat);
+
+  Eigen::VectorXd sync;
+  eigen_extensions::loadASCII(argv[4], &sync);
   
   StreamSequence::Ptr sseq0(new StreamSequence);
   StreamSequence::Ptr sseq1(new StreamSequence);
   sseq0->load(argv[1]);
   sseq1->load(argv[2]);
+  sseq1->applyTimeOffset(sync(0));
 
   pcl::visualization::CloudViewer vis("Overlay");
-  double thresh = 0.1;
+  double thresh = 0.05;
+  ROS_WARN_STREAM("Showing clouds dt of less than " << thresh << ".");
   for(size_t i = 0; i < sseq0->size(); ++i) {
     Cloud::Ptr overlay = sseq0->getCloud(i);
     double ts0 = overlay->header.stamp.toSec();
     double dt;
     Cloud::Ptr pcd1 = sseq1->getCloud(ts0, &dt);
     Cloud::Ptr transformed(new Cloud);
+    cout << "dt = " << dt << endl;
     if(dt < thresh)
       transformPointCloud(*pcd1, *transformed, transform);
     *overlay += *transformed;

@@ -1,7 +1,9 @@
 #ifndef CALIBRATION_PIPELINE_DYNAMIC_H
 #define CALIBRATION_PIPELINE_DYNAMIC_H
 
+#include <pcl/visualization/cloud_viewer.h>
 #include <pipeline/pipeline.h>
+#include <eigen_extensions/eigen_extensions.h>
 #include <rgbd_sequence/stream_sequence.h>
 #include <rgbd_sequence/rgbd_sequence.h>
 #include <xpl_calibration/frame_selector.h>
@@ -11,7 +13,6 @@
 #include <xpl_calibration/background_subtractor.h>
 #include <xpl_calibration/object_extractor.h>
 #include <xpl_calibration/object_matching_calibrator.h>
-#include <pcl/visualization/cloud_viewer.h>
 
 class CalibrationPipelineDynamic
 {
@@ -24,9 +25,11 @@ public:
   
   //! Computes transform that will move target to reference.
   //! T * seq1 = seq0.
-  Eigen::Affine3f calibrate(rgbd::StreamSequence::ConstPtr seq0,
-			    rgbd::StreamSequence::ConstPtr seq1);
-  
+  void calibrate(rgbd::StreamSequence::ConstPtr seq0,
+		 rgbd::StreamSequence::ConstPtr seq1,
+		 Eigen::Affine3f* transform,
+		 double* sync);
+      
 protected:
   pipeline::Pipeline pl_;
   void registerPods() const;

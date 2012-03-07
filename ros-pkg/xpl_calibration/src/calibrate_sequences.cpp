@@ -11,9 +11,9 @@ using namespace rgbd;
 string usageString()
 {
   ostringstream oss;
-  oss << "Usage: calibrate_sequences MODE SEQ0 SEQ1 [PIPELINE]" << endl;
+  oss << "Usage: calibrate_sequences MODE SEQ0 SEQ1 BASENAME [PIPELINE]" << endl;
   oss << "  where MODE is --orb or --dynamic." << endl;
-  oss << "  A transform will be output to best_transform.eig.txt which should transform SEQ1 to SEQ0." << endl;
+  oss << "  A transform & sync will be output to transform.eig.txt and sync.eig.txt which should transform SEQ1 to SEQ0." << endl;
   return oss.str();
 }
 
@@ -58,11 +58,15 @@ int main(int argc, char** argv)
   }
   else { 
     CalibrationPipelineDynamic cp(NUM_THREADS, pipeline_path);
-    transform = cp.calibrate(sseq0, sseq1);
+    double sync;
+    cp.calibrate(sseq0, sseq1, &transform, &sync);
+    cout << "Sync offset: " << sync << endl;
+    Eigen::VectorXd vdt(1);
+    vdt(0) = sync;
+    eigen_extensions::saveASCII(vdt, "sync.eig.txt");
   }
-  
   cout << transform.matrix() << endl;
-  eigen_extensions::saveASCII(transform.matrix(), "best_transform.eig.txt");
+  eigen_extensions::saveASCII(transform.matrix(), "transform.eig.txt");
   
   return 0;
 }

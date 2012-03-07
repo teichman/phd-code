@@ -48,20 +48,49 @@ void ObjectExtractor::extractObjectsFromFrame(const rgbd::Cloud& pcd,
     fg->at(fg_indices[i]) = pcd[fg_indices[i]];
 
   // -- Compute connected components.
-  OrganizedConnectedComponents occ(param<int>("MinClusterSize"),
+  OrganizedConnectedComponents occ(param<int>("MinClusterPoints"),
 				   param<double>("ClusterTolerance"));
   occ.compute(*fg);
   
   // -- Add each cluster as an object.
-  *object_indices = occ.indices_;
-  for(size_t i = 0; i < object_indices->size(); ++i) {
-    const vector<int>& ind = object_indices->at(i);
+  //    Check if it is big enough.
+  double min_sz = param<double>("MinClusterSize");
+  object_indices->reserve(occ.indices_.size());
+  objects->reserve(occ.indices_.size());
+  for(size_t i = 0; i < occ.indices_.size(); ++i) {
+    const vector<int>& ind = occ.indices_[i];
     Cloud::Ptr obj(new Cloud);
+    obj->header.stamp = pcd.header.stamp;
     obj->reserve(ind.size());
-    for(size_t j = 0; j < ind.size(); ++j)
-      obj->push_back(fg->at(ind[j]));
-    
-    objects->push_back(obj);
+    double min_x = numeric_limits<double>::max();
+    double max_x = -numeric_limits<double>::max();
+    double min_y = numeric_limits<double>::max();
+    double max_y = -numeric_limits<double>::max();
+    double min_z = numeric_limits<double>::max();
+    double max_z = -numeric_limits<double>::max();
+    for(size_t j = 0; j < ind.size(); ++j) { 
+      Point pt = fg->at(ind[j]);
+      obj->push_back(pt);
+      if(pt.x < min_x)
+	min_x = pt.x;
+      if(pt.x > max_x)
+	max_x = pt.x;
+      if(pt.y < min_y)
+	min_y = pt.y;
+      if(pt.y > max_y)
+	max_y = pt.y;
+      if(pt.z < min_z)
+	min_z = pt.z;
+      if(pt.z > max_z)
+	max_z = pt.z;
+    }
+
+    if(max_x - min_x > min_sz ||
+       max_y - min_y > min_sz ||
+       max_z - min_z > min_sz) { 
+      object_indices->push_back(ind);
+      objects->push_back(obj);
+    }
   }
 }
 

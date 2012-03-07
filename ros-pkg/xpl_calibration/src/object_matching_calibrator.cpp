@@ -9,19 +9,20 @@ void ObjectMatchingCalibrator::compute()
 {
   const Sequence& seq0 = *pull<Sequence::ConstPtr>("Sequence0");
   const Sequence& seq1 = *pull<Sequence::ConstPtr>("Sequence1");
-  const Objects& objects0 = *pull<const Objects*>("Objects0");
-  const Objects& objects1 = *pull<const Objects*>("Objects1");
+  const ObjectClouds& objects0 = *pull<const ObjectClouds*>("Objects0");
+  const ObjectClouds& objects1 = *pull<const ObjectClouds*>("Objects1");
   ROS_ASSERT(seq0.size() == seq1.size());
   ROS_ASSERT(seq0.size() == objects0.size());
   ROS_ASSERT(seq0.size() == objects1.size());
-  
-  // -- Compute centroids for all objects.
-  vector< vector<Vector3f> > centroids0;
-  vector< vector<Vector3f> > centroids1;
-  computeCentroids(objects0, &centroids0);
-  computeCentroids(objects1, &centroids1);
 
-  // -- RANSAC.
+  // -- Find a good starting point using centroid RANSAC.
+  //    TODO: Make this use CorrespondenceManager.
+  
+  // Compute centroids for all objects.
+  computeCentroids(objects0, &centroids0_);
+  computeCentroids(objects1, &centroids1_);
+  
+  // RANSAC.
   int num_iterations = param<int>("NumRansacIters");
   int num_correspondences = param<int>("NumCorrespondences");
   Affine3f best_transform = Affine3f::Identity();
@@ -30,46 +31,131 @@ void ObjectMatchingCalibrator::compute()
     cout << "RANSAC iter " << i << endl;
     pcl::TransformationFromCorrespondences tfc;
     for(int j = 0; j < num_correspondences; ++j)
-      sampleCorrespondence(seq0, seq1, centroids0, centroids1, &tfc);
+      sampleCorrespondence(seq0, seq1, centroids0_, centroids1_, &tfc);
     
-    // -- Compute transform.
+    // Compute transform.
     Affine3f transform = tfc.getTransformation();
 
-    // -- Count up inliers.
-    Affine3f refined_transform;
-    int num_inliers = countInliers(transform, centroids0, centroids1,
-				   param<double>("Threshold"),
-				   &refined_transform);
+    // Count up inliers.
+    int num_inliers = countInliers(transform, centroids0_, centroids1_,
+				   param<double>("CentroidThreshold"));
     
     
-    // -- Save this transform if it's the best.
+    // Save this transform if it's the best.
     if(num_inliers > best_num_inliers) {
       best_num_inliers = num_inliers;
-      best_transform = refined_transform;
+      best_transform = transform;
       cout << "Best transform has " << num_inliers << " inliers." << endl;
     }
   }
   rough_transform_ = best_transform;
 
+  cout << "Num inliers before refinement: " << best_num_inliers << endl;
+  int new_num_inliers = countInliers(rough_transform_, centroids0_, centroids1_,
+				     param<double>("CentroidThreshold"), &ransac_refined_transform_);
+  cout << "Num inliers after refinement: " << new_num_inliers << endl;
 
   // -- Using the above as a starting point, now run ICP on all
   //    corresponding object clouds simultaneously.
-  refined_transform_ = alignInlierModels(centroids0, centroids1);
+  //icp_refined_transform_ = alignInlierModels(centroids0_, centroids1_);
+  
+  // -- Optimize time offset.
+  CorrespondenceManager cm(param<double>("TimeCorrespondenceThreshold"),
+			   param<double>("CentroidThreshold"),
+			   param<double>("DistanceThreshold"));
 
-  push<const Affine3f*>("RoughTransform", &rough_transform_);
-  push<const Affine3f*>("RefinedTransform", &refined_transform_);
+  // Add reference objects without changing them.
+  for(size_t i = 0; i < objects0.size(); ++i)
+    for(size_t j = 0; j < objects0[i].size(); ++j)
+      cm.addReferenceObject(objects0[i][j]);
+
+  // Add other objects, transformed as learned above.
+  for(size_t i = 0; i < objects1.size(); ++i) { 
+    for(size_t j = 0; j < objects1[i].size(); ++j) {
+      Cloud::Ptr obj = Cloud::Ptr(new Cloud);
+      pcl::transformPointCloud(*objects1[i][j], *obj, ransac_refined_transform_); // TODO: icp?
+      cm.addFloatingObject(obj);
+    }
+  }
+
+  double min_dt = -param<double>("TimeOffsetRange");
+  double max_dt = param<double>("TimeOffsetRange");
+  double ddt = param<double>("TimeOffsetResolution");
+  double best_loss = numeric_limits<double>::max();
+  double best_dt = 0;
+  for(double dt = min_dt; dt <= max_dt; dt += ddt) {
+    cm.applyTimeOffset(dt);
+    double loss = cm.computeLoss();
+    cout << "dt: " << dt << ", loss: " << loss << endl;
+    if(loss < best_loss) {
+      best_loss = loss;
+      best_dt = dt;
+    }
+  }
+  
+  push("SyncOffset", best_dt);
+  push("Loss", best_loss);
+  push<const Affine3f*>("RansacRoughTransform", &rough_transform_);
+  push<const Affine3f*>("RansacRefinedTransform", &ransac_refined_transform_);
+
+  push<const Affine3f*>("IcpRefinedTransform", &icp_refined_transform_);
 }
+
+Cloud::Ptr ObjectMatchingCalibrator::visualizeInliers(const Eigen::Affine3f& transform) const
+{
+
+  vector<Vector3f> inlier_centroids0;
+  vector<Vector3f> inlier_centroids1;
+  countInliers(transform, centroids0_, centroids1_,
+	       param<double>("CentroidThreshold"),
+	       NULL, NULL, NULL,
+	       &inlier_centroids0, &inlier_centroids1);
+
+  Cloud seq1;
+  pcl::transformPointCloud(*pull<Sequence::ConstPtr>("Sequence1")->pcds_[0],
+			   seq1, transform);
+   
+  ROS_ASSERT(inlier_centroids1.size() == inlier_centroids0.size());
+  Cloud::Ptr pcd(new Cloud);
+  *pcd = *pull<Sequence::ConstPtr>("Sequence0")->pcds_[0];
+  *pcd += seq1;
+
+  pcd->reserve(pcd->size() + inlier_centroids0.size());
+  for(size_t i = 0; i < inlier_centroids1.size(); ++i) {
+    Point pt;
+    pt.r = rand() % 255;
+    pt.g = rand() % 255;
+    pt.b = rand() % 255;
+    
+    Vector3f c = transform * inlier_centroids1[i];
+    pt.x = c(0);
+    pt.y = c(1);
+    pt.z = c(2);
+    pcd->push_back(pt);
+
+    pt.x = inlier_centroids0[i](0);
+    pt.y = inlier_centroids0[i](1);
+    pt.z = inlier_centroids0[i](2);
+    pcd->push_back(pt);
+  }
+
+  return pcd;
+}
+
 
 void ObjectMatchingCalibrator::debug() const
 {
-
+  pcl::io::savePCDFileBinary(getDebugPath() + "-ransac-rough.pcd", *visualizeInliers(rough_transform_));
+  pcl::io::savePCDFileBinary(getDebugPath() + "-ransac-refined.pcd", *visualizeInliers(ransac_refined_transform_));
+  pcl::io::savePCDFileBinary(getDebugPath() + "-icp.pcd", *visualizeInliers(icp_refined_transform_));
 }
 
-void ObjectMatchingCalibrator::computeCentroids(const Objects& objects,
+void ObjectMatchingCalibrator::computeCentroids(const ObjectClouds& objects,
 						std::vector< std::vector<Eigen::Vector3f> >* centroids) const
 {
   centroids->clear();
   centroids->resize(objects.size());
+  double total_num_pts = 0;
   for(size_t i = 0; i < objects.size(); ++i) {
     centroids->at(i).resize(objects[i].size(), Vector3f::Zero());
     for(size_t j = 0; j < objects[i].size(); ++j) {
@@ -82,8 +168,11 @@ void ObjectMatchingCalibrator::computeCentroids(const Objects& objects,
 	}
       }
       centroids->at(i)[j] /= num;
+      total_num_pts += num;
     }
   }
+
+  cout << "Mean num points in objects: " << total_num_pts / (double)objects.size() << endl;
 }
 
 void ObjectMatchingCalibrator::sampleCorrespondence(const rgbd::Sequence& seq0,
@@ -119,18 +208,26 @@ void ObjectMatchingCalibrator::sampleCorrespondence(const rgbd::Sequence& seq0,
 int ObjectMatchingCalibrator::countInliers(const Eigen::Affine3f& transform,
 					   const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
 					   const std::vector< std::vector<Eigen::Vector3f> >& centroids1,
-					   double thresh,
+					   double ransac_thresh,
 					   Eigen::Affine3f* refined_transform,
-					   std::vector<Cloud::ConstPtr>* inliers0,
-					   std::vector<Cloud::ConstPtr>* inliers1) const
+					   std::vector<Cloud::ConstPtr>* inlier_clouds0,
+					   std::vector<Cloud::ConstPtr>* inlier_clouds1,
+					   std::vector<Vector3f>* inlier_centroids0,
+					   std::vector<Vector3f>* inlier_centroids1) const
 {
-  const Objects& objects0 = *pull<const Objects*>("Objects0");
-  const Objects& objects1 = *pull<const Objects*>("Objects1");
-  if(inliers0 && inliers1) { 
-    inliers0->clear();
-    inliers0->reserve(objects0.size());
-    inliers1->clear();
-    inliers1->reserve(objects1.size());
+  const ObjectClouds& objects0 = *pull<const ObjectClouds*>("Objects0");
+  const ObjectClouds& objects1 = *pull<const ObjectClouds*>("Objects1");
+  if(inlier_clouds0 && inlier_clouds1) { 
+    inlier_clouds0->clear();
+    inlier_clouds0->reserve(objects0.size());
+    inlier_clouds1->clear();
+    inlier_clouds1->reserve(objects1.size());
+  }
+  if(inlier_centroids0 && inlier_centroids1) { 
+    inlier_centroids0->clear();
+    inlier_centroids0->reserve(objects0.size());
+    inlier_centroids1->clear();
+    inlier_centroids1->reserve(objects1.size());
   }
   
   TransformationFromCorrespondences tfc;
@@ -140,15 +237,27 @@ int ObjectMatchingCalibrator::countInliers(const Eigen::Affine3f& transform,
       continue;
     for(size_t j = 0; j < centroids1[i].size(); ++j) {
       Vector3f transformed = transform * centroids1[i][j];
+
+      double best_dist = numeric_limits<double>::max();
+      int best_idx = -1;
       for(size_t k = 0; k < centroids0[i].size(); ++k) {
-	if((centroids0[i][k] - transformed).norm() < thresh) { 
-	  ++num_inliers;
-	  tfc.add(centroids1[i][j], centroids0[i][k]);
-	  if(inliers0 && inliers1) { 
-	    inliers0->push_back(objects0[i][k]);
-	    inliers1->push_back(objects1[i][j]);
-	  }
-	  break;
+	double dist = (centroids0[i][k] - transformed).norm();
+	if(dist < best_dist) {
+	  best_dist = dist;
+	  best_idx = k;
+	}
+      }
+
+      if(best_dist < ransac_thresh) { 
+	++num_inliers;
+	tfc.add(centroids1[i][j], centroids0[i][best_idx]);
+	if(inlier_clouds0 && inlier_clouds1) { 
+	  inlier_clouds0->push_back(objects0[i][best_idx]);
+	  inlier_clouds1->push_back(objects1[i][j]);
+	}
+	if(inlier_centroids0 && inlier_centroids1) { 
+	  inlier_centroids0->push_back(centroids0[i][best_idx]);
+	  inlier_centroids1->push_back(centroids1[i][j]);
 	}
       }
     }
@@ -167,7 +276,7 @@ Affine3f ObjectMatchingCalibrator::alignInlierModels(const vector< vector<Vector
   vector<Cloud::ConstPtr> objects0;
   vector<Cloud::ConstPtr> objects1_const;
   countInliers(rough_transform_, centroids0, centroids1,
-	       param<double>("Threshold"),
+	       param<double>("CentroidThreshold"),
 	       NULL, &objects0, &objects1_const);
   ROS_ASSERT(objects1_const.size() == objects0.size());
   
@@ -187,7 +296,7 @@ Affine3f ObjectMatchingCalibrator::alignInlierModels(const vector< vector<Vector
   }
   
   // -- Run ICP.
-  double thresh = param<double>("Threshold");
+  double icp_thresh = param<double>("DistanceThreshold");
   vector<int> indices;
   vector<float> distances;
   Affine3f overall_transform = rough_transform_;
@@ -204,7 +313,7 @@ Affine3f ObjectMatchingCalibrator::alignInlierModels(const vector< vector<Vector
 	indices.clear();
 	distances.clear();
 	trees0[i]->nearestKSearch(obj1[j], 1, indices, distances);
-	if(indices.empty() || distances[0] > thresh)
+	if(indices.empty() || distances[0] > icp_thresh)
 	  continue;
 
 	tfc.add(obj1[j].getVector3fMap(), obj0[indices[0]].getVector3fMap());
@@ -227,4 +336,160 @@ Affine3f ObjectMatchingCalibrator::alignInlierModels(const vector< vector<Vector
 bool ObjectMatchingCalibrator::isAlmostIdentity(const Eigen::Affine3f& trans) const
 {
   return (trans.matrix() - Matrix4f::Identity()).norm() < 0.001;
+}
+
+
+/************************************************************
+ * CorrespondenceManager
+ ************************************************************/
+
+CorrespondenceManager::CorrespondenceManager(double dt_thresh, double centroid_thresh, double dist_thresh) :
+  dt_thresh_(dt_thresh),
+  centroid_thresh_(centroid_thresh),
+  dist_thresh_(dist_thresh)
+{
+}
+
+void CorrespondenceManager::addReferenceObject(rgbd::Cloud::ConstPtr pcd)
+{
+  objects0_.push_back(ReferenceObject::Ptr(new ReferenceObject(pcd)));
+}
+
+void CorrespondenceManager::addFloatingObject(rgbd::Cloud::Ptr pcd)
+{
+  objects1_.push_back(FloatingObject::Ptr(new FloatingObject(pcd)));
+}      
+    
+double CorrespondenceManager::computeLoss()
+{
+  computeCorrespondences();
+  
+  double loss = 0;
+  for(size_t i = 0; i < correspondences_.size(); ++i)
+    loss += correspondences_[i].computeLoss(dist_thresh_);
+
+  if(correspondences_.empty())
+    return std::numeric_limits<double>::max();
+  else
+    return loss / (double)correspondences_.size();
+}
+
+void CorrespondenceManager::applyTimeOffset(double dt)
+{
+  for(size_t i = 0; i < objects1_.size(); ++i)
+    objects1_[i]->timestamp_ = objects1_[i]->pcd_->header.stamp.toSec() + dt;
+}
+
+void CorrespondenceManager::computeCorrespondences()
+{
+  //ScopedTimer st("CorrespondenceManager::computeCorrespondences");
+  correspondences_.clear();
+  correspondences_.reserve(objects1_.size());
+  // TODO: O(n^2).  This could be faster.
+  vector<bool> marked0(objects0_.size(), false);
+  vector<double> distances;
+  vector<double> dts;
+  distances.resize(objects0_.size());
+  dts.resize(objects0_.size());
+  int num_found = 0;
+  for(size_t i = 0; i < objects1_.size(); ++i) {
+    for(size_t j = 0; j < objects0_.size(); ++j) {
+      if(marked0[j]) { 
+	dts[j] = numeric_limits<double>::max();
+	distances[j] = numeric_limits<double>::max();
+      }
+      else { 
+	dts[j] = fabs(objects1_[i]->timestamp_ - objects0_[j]->timestamp_);
+	distances[j] = (objects1_[i]->centroid_ - objects0_[j]->centroid_).norm();
+      }
+    }
+
+    int idx = -1;
+    double best = numeric_limits<double>::max();
+    ROS_ASSERT(!(best < best));
+    for(size_t j = 0;  j < distances.size(); ++j) {
+      if(dts[j] < dt_thresh_ && distances[j] < centroid_thresh_ && distances[j] < best) {
+	best = distances[j];
+	idx = j;
+      }
+    }
+    if(idx > -1) { 
+      marked0[idx] = true;
+      correspondences_.push_back(Correspondence(objects0_[idx], objects1_[i]));
+      ++num_found;
+      // cout << "Added correspondence with dt " << dts[idx] << " and dist " << best << endl;
+      // cout << "  " << objects1_[i]->timestamp_ << " " << objects0_[idx]->timestamp_ << endl;
+    }
+    else
+      correspondences_.push_back(Correspondence(ReferenceObject::Ptr(), objects1_[i]));
+  }
+  cout << "Found " << num_found << " correspondences." << endl;
+}
+
+
+/************************************************************
+ * Correspondence
+ ************************************************************/
+
+Correspondence::Correspondence(ReferenceObject::Ptr obj0, FloatingObject::Ptr obj1) :
+  obj0_(obj0),
+  obj1_(obj1)
+{
+  ROS_ASSERT(obj1_);
+}
+
+double Correspondence::computeLoss(double max_dist) const
+{
+  const Cloud& pcd1 = *obj1_->pcd_;
+  if(!obj0_) {
+    return pcd1.size() * max_dist;
+  }
+
+  double loss = 0;
+  vector<int> indices;
+  vector<float> distances;
+  for(size_t i = 0; i < pcd1.size(); ++i) {
+    indices.clear();
+    distances.clear();
+    obj0_->tree_->nearestKSearch(pcd1[i], 1, indices, distances);
+    if(indices.empty() || distances[0] > max_dist)
+      loss += max_dist;
+    else
+      loss += distances[0];
+  }
+  return loss / (double)pcd1.size();
+}
+
+
+/************************************************************
+ * Object
+ ************************************************************/
+
+ReferenceObject::ReferenceObject(rgbd::Cloud::ConstPtr pcd) :
+  pcd_(pcd),
+  timestamp_(pcd_->header.stamp.toSec()),
+  centroid_(computeCentroid(*pcd)),
+  tree_(KdTree::Ptr(new KdTree))
+{
+  tree_->setInputCloud(pcd_);
+}
+
+FloatingObject::FloatingObject(rgbd::Cloud::Ptr pcd) :
+  pcd_(pcd),
+  timestamp_(pcd_->header.stamp.toSec()),
+  centroid_(computeCentroid(*pcd_))
+{
+}
+
+Eigen::Vector3f computeCentroid(const Cloud& pcd)
+{
+  Vector3f centroid = Vector3f::Zero();
+  double num = 0;
+  for(size_t i = 0; i < pcd.size(); ++i) { 
+    if(!isinf(pcd[i].x)) { 
+      centroid += pcd[i].getVector3fMap();
+      ++num;
+    }
+  }
+  return centroid / num;
 }

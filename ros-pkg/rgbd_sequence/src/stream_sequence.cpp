@@ -233,6 +233,12 @@ namespace rgbd
     ROS_ASSERT(img_names_.size() == timestamps_.size());
     return img_names_.size();
   }
+
+  void StreamSequence::applyTimeOffset(double dt)
+  {
+    for(size_t i = 0; i < timestamps_.size(); ++i)
+      timestamps_[i] += dt;
+  }
   
 } // namespace rgbd
 

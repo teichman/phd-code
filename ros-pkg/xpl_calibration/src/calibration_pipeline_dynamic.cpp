@@ -5,6 +5,10 @@ using namespace Eigen;
 using namespace rgbd;
 using namespace pipeline;
 
+#define ON (getenv("ON") ? atoi(getenv("ON")) : 5)
+#define OFF (getenv("OFF") ? atoi(getenv("OFF")) : 50)
+#define DEBUG (getenv("DEBUG") ? atoi(getenv("DEBUG")) : 0)
+
 CalibrationPipelineDynamic::CalibrationPipelineDynamic(int num_threads, std::string pipeline_file) :
   pl_(num_threads)
 {
@@ -15,11 +19,12 @@ CalibrationPipelineDynamic::CalibrationPipelineDynamic(int num_threads, std::str
     pl_.load(pipeline_file);
 }
 
-Eigen::Affine3f CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
-						  rgbd::StreamSequence::ConstPtr sseq1)
+void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
+					   rgbd::StreamSequence::ConstPtr sseq1,
+					   Eigen::Affine3f* transform,
+					   double* sync)
 {
   // -- Downsample the sequences.
-  size_t interval = 10;
   double thresh = 0.05;
   Sequence::Ptr seq0(new Sequence);
   Sequence::Ptr seq1(new Sequence);
@@ -29,12 +34,23 @@ Eigen::Affine3f CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::Cons
   seq1->imgs_.reserve(sseq1->size());
   pcl::visualization::CloudViewer vis("Matched");
   ROS_ASSERT(sseq0->size() == sseq0->timestamps_.size());
-  for(size_t i = 0; i < sseq0->size(); i += interval) {
+  bool on = false;
+  for(size_t i = 0; i < sseq0->size(); ++i) {
+    if(on && ((int)i % ON == 0))
+      on = false;
+    if(!on && ((int)i % OFF == 0))
+      on = true;
+    if(!on)
+      continue;
+    
+    cout << "Considering frame " << i << endl;
+    
     double dt = -1;
     double ts0 = sseq0->timestamps_[i];
     Cloud::Ptr pcd1 = sseq1->getCloud(ts0, &dt);
     if(dt > thresh)
       continue;
+
 
     vis.showCloud(pcd1);
     usleep(1000 * 30);
@@ -42,15 +58,23 @@ Eigen::Affine3f CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::Cons
     seq1->pcds_.push_back(pcd1);
     seq0->imgs_.push_back(sseq0->getImage(i));
     seq1->imgs_.push_back(sseq1->getImage(ts0, &dt));
+    cout << "Added clouds with dt = " << dt << endl;
   }
 
   // -- Compute calibration.
   pl_.setInput<Sequence::ConstPtr>("Sequence0", seq0);
   pl_.setInput<Sequence::ConstPtr>("Sequence1", seq1);
-  pl_.setDebug(true);
+  pl_.setDebug(DEBUG);
   pl_.compute();
 
-  return *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "RefinedTransform");
+
+  Affine3f ransac = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "RansacRefinedTransform");
+  double dt = pl_.getOutput<double>("ObjectMatchingCalibrator", "SyncOffset");
+  cout << "Got sync offset of " << dt << endl;
+  cout << "Ransac transform" << endl << ransac.matrix() << endl;
+
+  *transform = ransac;
+  *sync = dt;
 }
 
 void CalibrationPipelineDynamic::initializePipeline()
@@ -106,7 +130,7 @@ void CalibrationPipelineDynamic::initializePipeline()
     
   pl_.addConnectedComponent(ep0);
   pl_.writeGraphviz("graphviz");
-  pl_.save("calibration_pipeline_orb.pl");
+  pl_.save("calibration_pipeline_dynamic.pl");
 }
 
 void CalibrationPipelineDynamic::registerPods() const
@@ -118,5 +142,6 @@ void CalibrationPipelineDynamic::registerPods() const
   REGISTER_POD(HistogramBackgroundModeler);
   REGISTER_POD(BackgroundSubtractor);
   REGISTER_POD(ObjectExtractor);
+  REGISTER_POD(ObjectMatchingCalibrator);
 }
 

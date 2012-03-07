@@ -13,7 +13,8 @@ public:
   ObjectExtractor(std::string name) :
     Pod(name)
   {
-    declareParam<int>("MinClusterSize", 100);
+    declareParam<double>("MinClusterSize", 0.5);
+    declareParam<int>("MinClusterPoints", 1000);
     declareParam<double>("ClusterTolerance", 0.1); // meters
     
     declareInput<rgbd::Sequence::ConstPtr>("Sequence");

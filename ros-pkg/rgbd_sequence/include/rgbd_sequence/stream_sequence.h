@@ -51,6 +51,8 @@ namespace rgbd
     Mat3b getImage(double timestamp, double* dt) const;
     void addFrame( const Mat3b &img, const DepthMat &depth, 
         double focal_length, double timestamp);
+    //! Adds dt to all timestamps.
+    void applyTimeOffset(double dt);
 
   protected:
     void saveFrame(const std::string& dir, size_t frame, const Mat3b &img, 
