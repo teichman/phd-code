@@ -59,9 +59,10 @@ dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	$(CALIBRATE_DYNAMIC) $</unstructured/camera*; \
 	fi > transform.eig.txt-log.txt
 
+MAX_DT := 0.01
 ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-#	cd $(@D) && rosrun xpl_calibration calibrate_sequences $(DATA_DIR)/$*/unstructured/camera*
+	rosrun cloud_calibration checker_calibrate $(DATA_DIR)/$*/unstructured/camera* $@ $(MAX_DT) > $@-log.txt
 
 
 ############################################################

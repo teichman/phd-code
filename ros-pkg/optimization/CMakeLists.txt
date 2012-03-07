@@ -22,7 +22,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
-rosbuild_add_library(${PROJECT_NAME} src/${PROJECT_NAME}.cpp src/nips.cpp) # Why can't these two be combined?
+rosbuild_add_library(${PROJECT_NAME} src/${PROJECT_NAME}.cpp src/nips.cpp src/grid_search.cpp)
 rosbuild_add_library(common_functions src/common_functions.cpp)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()

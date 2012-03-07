@@ -68,13 +68,11 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
   pl_.compute();
 
 
-  Affine3f ransac = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "RansacRefinedTransform");
-  double dt = pl_.getOutput<double>("ObjectMatchingCalibrator", "SyncOffset");
-  cout << "Got sync offset of " << dt << endl;
-  cout << "Ransac transform" << endl << ransac.matrix() << endl;
-
-  *transform = ransac;
-  *sync = dt;
+  *transform = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "IcpRefinedTransform");
+  //*transform = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "RansacRefinedTransform");
+  *sync = pl_.getOutput<double>("ObjectMatchingCalibrator", "SyncOffset");
+  cout << "Got sync offset of " << *sync << endl;
+  cout << "transform: " << endl << transform->matrix() << endl;
 }
 
 void CalibrationPipelineDynamic::initializePipeline()

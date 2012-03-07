@@ -57,7 +57,7 @@ void ObjectMatchingCalibrator::compute()
 
   // -- Using the above as a starting point, now run ICP on all
   //    corresponding object clouds simultaneously.
-  //icp_refined_transform_ = alignInlierModels(centroids0_, centroids1_);
+  icp_refined_transform_ = alignInlierModels(centroids0_, centroids1_);
   
   // -- Optimize time offset.
   CorrespondenceManager cm(param<double>("TimeCorrespondenceThreshold"),
@@ -73,7 +73,8 @@ void ObjectMatchingCalibrator::compute()
   for(size_t i = 0; i < objects1.size(); ++i) { 
     for(size_t j = 0; j < objects1[i].size(); ++j) {
       Cloud::Ptr obj = Cloud::Ptr(new Cloud);
-      pcl::transformPointCloud(*objects1[i][j], *obj, ransac_refined_transform_); // TODO: icp?
+      //pcl::transformPointCloud(*objects1[i][j], *obj, ransac_refined_transform_);
+      pcl::transformPointCloud(*objects1[i][j], *obj, icp_refined_transform_);
       cm.addFloatingObject(obj);
     }
   }

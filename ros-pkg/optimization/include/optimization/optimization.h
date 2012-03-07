@@ -6,6 +6,7 @@
 #include <Eigen/SVD>
 #include <iostream>
 #include <iomanip>
+#include <vector>
 #include <cfloat>
 #include <sys/time.h>
 
@@ -49,6 +50,31 @@ public:
 		  int max_num_iters = 0, bool debug = false);
 
   double solve();
+};
+
+class GridSearch
+{
+public:
+  ScalarFunction::ConstPtr objective_;
+  Eigen::VectorXd ranges_;
+  Eigen::VectorXd min_resolutions_;
+  Eigen::VectorXd max_resolutions_;
+  Eigen::VectorXd scale_multipliers_;
+  std::vector< std::vector<int> > couplings_;
+  double tol_;
+
+  Eigen::VectorXd solve(const Eigen::VectorXd& x);
+
+protected:
+  Eigen::VectorXd x_;
+  Eigen::VectorXd best_x_;
+  Eigen::VectorXd scales_;
+  Eigen::VectorXd lb_;
+  Eigen::VectorXd ub_;
+  Eigen::VectorXd res_;
+  Eigen::VectorXd lower_bound_;
+  Eigen::VectorXd upper_bound_;
+  double best_obj_;
 };
 
 class NesterovGradientSolver {
