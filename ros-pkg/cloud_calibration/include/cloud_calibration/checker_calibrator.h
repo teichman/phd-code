@@ -20,21 +20,24 @@ namespace cloud_calibration
   using cv::Mat3b;
   using cv::Mat1d;
   using multi_sequence::MultiSequence;
+  using rgbd::StreamSequence;
 
   class CheckerCalibrator
   {
   public:
     CheckerCalibrator();
-    CheckerCalibrator(int rows, int cols, float square_size);
-    //! Calibrate a multi sequence #TODO switch to pair of sequences?
-    Eigen::Affine3f calibrate( MultiSequence::ConstPtr &seq, 
+    CheckerCalibrator(int rows, int cols);
+    //! Calibrate a pair of sequences
+    Eigen::Affine3f calibrate( const StreamSequence::Ptr &seq_ref, const StreamSequence::Ptr &seq_target, 
+                               double dt_thresh=0.05) const;
+    //! Calibrate a multi sequence
+    Eigen::Affine3f calibrate( const MultiSequence::ConstPtr &seq, 
                               size_t ref_idx, size_t target_idx ) const;
 
   protected:
     int checker_rows_, checker_cols_;
-    float square_size_;
     //! False if a good affine trans was not discoverable
-    bool estimateAffineFromFrame( MultiSequence::ConstPtr &seq, 
+    bool estimateAffineFromFrame( const MultiSequence::ConstPtr &seq, 
       size_t frame, size_t ref_idx, size_t target_idx, 
       Eigen::Affine3f &trans, std::vector<Point> &points_ref, std::vector<Point> &points_target,
       bool flip, bool interactive=false) const;

@@ -17,22 +17,34 @@ namespace cloud_calibration
   using cv::Mat;
 
   CheckerCalibrator::CheckerCalibrator():
-    checker_rows_(6), checker_cols_(7), square_size_(0.1066)
+    checker_rows_(6), checker_cols_(7)
   {
   }
   
-  CheckerCalibrator::CheckerCalibrator(int rows, int cols, float square_size):
-    checker_rows_(rows), checker_cols_(cols), square_size_(square_size)
+  CheckerCalibrator::CheckerCalibrator(int rows, int cols):
+    checker_rows_(rows), checker_cols_(cols)
   {
   }
+  
+  Eigen::Affine3f CheckerCalibrator::calibrate( const StreamSequence::Ptr &seq_ref, 
+      const StreamSequence::Ptr &seq_target, double dt_thresh) const
+  {
+    // Create a multi sequence from the two
+    MultiSequence::Ptr seq( new MultiSequence(dt_thresh) );
+    seq->addSequence(seq_ref);
+    seq->addSequence(seq_target);
+    return calibrate(seq, 0, 1);
+  }
 
-  Eigen::Affine3f CheckerCalibrator::calibrate( MultiSequence::ConstPtr &seq, 
+  Eigen::Affine3f CheckerCalibrator::calibrate( const MultiSequence::ConstPtr &seq, 
                              size_t ref_idx, size_t target_idx ) const
   {
+    cout << "Considering " << seq->size() << " frames" << endl;
     //Iterate over the board being flipped or not
     Eigen::Affine3f trans;
     float bestVar;
     for(int flip = 0; flip <= 1; flip++){
+      cout << "Hypothesis: flip = " << flip << endl;
       vector<vector<Point> > points_ref_all, points_target_all;
       vector<Eigen::Affine3f> transforms;
       for(size_t i = 0; i < seq->size(); i++)
@@ -49,6 +61,7 @@ namespace cloud_calibration
       }
       // Estimate the transform throw out the furthest 25% from the mean
       ROS_ASSERT(transforms.size() > 0);
+      cout << "Found " << transforms.size() << " valid checkerboard frames" << endl;
       Eigen::Matrix4f mean_transform = Eigen::Matrix4f::Zero();
       for(size_t i = 0; i < transforms.size(); i++){
         mean_transform += transforms[i].matrix()/float(transforms.size());
@@ -62,11 +75,15 @@ namespace cloud_calibration
       // Store variance for later
       if(flip==0)
         bestVar = variances.sum();
-      else if( variances.sum() > bestVar ){
-        cout << "Chose not to flip" << endl;
-        break;
-      } else{
-        cout << "Chose to flip" << endl;
+      else{
+        float curVar = variances.sum();
+        cout << "Variance std: " << bestVar << ", Variance flip: " << curVar << endl;
+        if( curVar > bestVar ){
+          cout << "Chose not to flip" << endl;
+          return trans;
+        } else{
+          cout << "Chose to flip" << endl;
+        }
       }
       // Throw all but N into the best section
       vector<Point> points_ref_best, points_target_best;
@@ -80,17 +97,17 @@ namespace cloud_calibration
           points_ref_best.push_back(points_ref_all[frame][j]);
           points_target_best.push_back(points_target_all[frame][j]);
         }
+        cout << "Using frame " << frame << endl;
       }
       trans = estimateAffine(points_ref_best, points_target_best);
     }
 
-    cout << "Final affine: " << trans.matrix() << endl;
     return trans;
   }
 
 
 
-  bool CheckerCalibrator::estimateAffineFromFrame( MultiSequence::ConstPtr &seq, 
+  bool CheckerCalibrator::estimateAffineFromFrame( const MultiSequence::ConstPtr &seq, 
       size_t frame, size_t ref_idx, size_t target_idx, 
       Eigen::Affine3f &trans, vector<Point> &points_ref, vector<Point> &points_target,
       bool flip, bool interactive) const
@@ -141,7 +158,7 @@ namespace cloud_calibration
     vector<Cloud::Ptr> clouds;
     seq->getClouds( frame, clouds );
     Cloud::Ptr& cloud_ref = clouds[ref_idx], cloud_target = clouds[target_idx];
-    bool found_any = false;
+    int found_count = 0;
     for(size_t i = 0; i < corners_ref.size(); i++){
       Point& pt_ref = cloud_ref->at(corners_ref[i].x, corners_ref[i].y);
       if(isnan(pt_ref.z))
@@ -152,10 +169,13 @@ namespace cloud_calibration
       //If both are good, add them to the points
       points_ref.push_back(pt_ref);
       points_target.push_back(pt_target);
-      found_any = true;
+      found_count++;
+    }
+    if(found_count < 3){
+      return false;
     }
     trans = estimateAffine(points_ref, points_target);
-    return found_any;  
+    return true;  
   }
 
   Eigen::Affine3f CheckerCalibrator::estimateAffine( const vector<Point> &points_ref, 
