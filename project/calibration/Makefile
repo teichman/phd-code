@@ -2,30 +2,26 @@
 ############################################################
 # -- Global settings.
 ############################################################
-# You'll need to set REPO_ROOT.
-REPO_ROOT		:= /earth/jarvis.git
+export NUM_THREADS	:= 8
+SHELL			:= /bin/bash
+REPO_ROOT		:= $(shell rospack find xpl_calibration)/../..
 MAKE_ROOT		:= $(REPO_ROOT)/project/calibration
+MAKEFILE		:= $(MAKE_ROOT)/Makefile
 
 # You'll need a symlink in your project dir to the data.
 # This dir has subdirectories of configuration0, configuration1, etc.
 DATA_DIR		:= $(MAKE_ROOT)/data
 
-SHELL			:= /bin/bash
-MAKEFILE		:= $(MAKE_ROOT)/Makefile
-export NUM_THREADS	:= 8
-export ROS_PACKAGE_PATH	:=$(ROS_PACKAGE_PATH):$(REPO_ROOT)/src/ros-pkg
-
 .SECONDEXPANSION:	# Allows use of automatic vars in prerequisites.
 .SECONDARY:		# Prevents deletion of intermediate targets in a chain of implicit rules.
-
-
-CONFIGURATIONS		:= 	configuration0 \
-				configuration1
-
 
 all:
 	@echo You should probably be more specific.
 
+code:
+	rosmake -s xpl_calibration cloud_calibration
+
+CONFIGURATIONS := $(shell ls `rospack find xpl_calibration`/../../project/calibration/data)
 
 CALIBRATE_DYNAMIC := DEBUG=1 ON=20 OFF=50 rosrun xpl_calibration calibrate_sequences --dynamic
 VISUALIZE := rosrun xpl_calibration calibration_viewer
@@ -44,6 +40,7 @@ VISUALIZE := rosrun xpl_calibration calibration_viewer
 	@env >> $@
 
 all_dynamic: $(addprefix dynamic/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
+all_ground_truth: $(addprefix ground_truth/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))	
 
 visualize_dynamic-%: dynamic/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
 	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/camera* $< dynamic/configuration$*/sync.eig.txt
