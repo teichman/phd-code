@@ -3,6 +3,14 @@
 using namespace std;
 using namespace Eigen;
 
+GridSearch::GridSearch(int num_variables) :
+  ranges_(num_variables),
+  min_resolutions_(num_variables),
+  max_resolutions_(num_variables),
+  scale_multipliers_(num_variables)
+{
+}
+
 Eigen::VectorXd GridSearch::solve(const VectorXd& x)
 {
   assert(objective_);
@@ -36,7 +44,8 @@ Eigen::VectorXd GridSearch::solve(const VectorXd& x)
     for(size_t i = 0; i < couplings_.size(); ++i) {
       for(size_t j = 0; j < couplings_[i].size(); ++j) {
 	int k = couplings_[i][j];
-	for(x_[k] = lb_[k]; x_[k] <= ub_[k]; x_[k] += res_[k]) { 
+	for(x_[k] = lb_[k]; x_[k] <= ub_[k]; x_[k] += res_[k]) {
+	  cout << "Trying x_" << k << " = " << x_[k] << endl;
 	  double val = objective_->eval(x_);
 	  if(val < best_obj_) {
 	    best_obj_ = val;
@@ -48,7 +57,7 @@ Eigen::VectorXd GridSearch::solve(const VectorXd& x)
       x_ = best_x_;
     }
 
-    if(prev_best_obj - best_obj_ < tol_) {
+    if(x_.rows() == 1 || prev_best_obj - best_obj_ < tol_) {
       bool done = true;
       for(int i = 0; i < res_.rows(); ++i)
 	if(res_[i] > min_resolutions_[i])
@@ -61,8 +70,8 @@ Eigen::VectorXd GridSearch::solve(const VectorXd& x)
       lb_ = x_ - (scales_.array() * ranges_.array()).matrix();
       ub_ = x_ + (scales_.array() * ranges_.array()).matrix();
 
-      lb_.array() = lb_.array().max(lower_bounds_);
-      ub_.array() = ub_.array().min(upper_bounds_);
+      lb_ = lb_.array().max(lower_bounds_.array()).matrix();
+      ub_ = ub_.array().min(upper_bounds_.array()).matrix();
       
       cout << "lower: " << lb_.transpose() << ", upper: " << ub_.transpose() << endl;
     }

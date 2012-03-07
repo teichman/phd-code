@@ -18,8 +18,10 @@ DATA_DIR		:= $(MAKE_ROOT)/data
 all:
 	@echo You should probably be more specific.
 
+# -s is useless.
 code:
-	rosmake -s xpl_calibration cloud_calibration
+	rosmake xpl_calibration
+	rosmake cloud_calibration
 
 CONFIGURATIONS := $(shell ls `rospack find xpl_calibration`/../../project/calibration/data)
 

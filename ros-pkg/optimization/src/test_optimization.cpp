@@ -359,22 +359,13 @@ TEST(GridSearch, Easy)
   //A(0, 0) = 0.0;
   QuadraticFunction::Ptr obj(new QuadraticFunction(A, b, 0));
 
-  GridSearch gs;
+  GridSearch gs(2);
   gs.objective_ = obj;
   gs.tol_ = 0.001;
-  
-  gs.ranges_ = VectorXd(2);
-  gs.ranges_(0) = 1;
-  gs.ranges_(1) = 1;
-  gs.min_resolutions_ = VectorXd(2);
-  gs.min_resolutions_(0) = 0.0001;
-  gs.min_resolutions_(1) = 0.0001;
-  gs.max_resolutions_ = VectorXd(2);
-  gs.max_resolutions_(0) = 1;
-  gs.max_resolutions_(1) = 1;
-  gs.scale_multipliers_ = VectorXd(2);
-  gs.scale_multipliers_(0) = 0.1;
-  gs.scale_multipliers_(1) = 0.1;
+  gs.ranges_ << 1, 1;
+  gs.min_resolutions_ << 0.0001, 0.0001;
+  gs.max_resolutions_ << 1, 1;
+  gs.scale_multipliers_ << 0.1, 0.1;
 
   VectorXd init = VectorXd::Ones(2) * 9.1;
   VectorXd x = gs.solve(init);

@@ -2,6 +2,7 @@
 #define OBJECT_MATCHING_CALIBRATOR_H
 
 #include <xpl_calibration/common.h>
+#include <optimization/optimization.h>
 
 class ReferenceObject
 {
@@ -21,8 +22,9 @@ class FloatingObject
 {
 public:
   typedef boost::shared_ptr<FloatingObject> Ptr;
-  
-  rgbd::Cloud::Ptr pcd_;
+
+  rgbd::Cloud::Ptr pcd_; // has transforms applied to it.
+  rgbd::Cloud::Ptr ref_pcd_; // doesn't.
   double timestamp_;
   Eigen::Vector3f centroid_;
   
@@ -38,7 +40,7 @@ public:
   FloatingObject::Ptr obj1_;
   
   Correspondence(ReferenceObject::Ptr obj0, FloatingObject::Ptr obj1);
-  double computeLoss(double max_dist) const;
+  double computeLoss(double max_dist, double downsample) const;
 };
 
 class CorrespondenceManager
@@ -51,11 +53,11 @@ public:
   void addReferenceObject(rgbd::Cloud::ConstPtr pcd);
   void addFloatingObject(rgbd::Cloud::Ptr pcd);
   //! Recomputes correspondences.
-  double computeLoss();
+  double computeLoss(double downsample);
   //! Applies to clouds with id 1.
   void applyTimeOffset(double dt);
   //! Applies to clouds with id 1.
-  //void applyTransform(const Eigen::Affine3f& transform);
+  void applyTransform(const Eigen::Affine3f& transform);
   
 protected:
   double dt_thresh_;
@@ -94,7 +96,6 @@ public:
 
     declareOutput<const Eigen::Affine3f*>("RansacRoughTransform"); // Based on centroid matching only.
     declareOutput<double>("SyncOffset");
-    declareOutput<double>("Loss"); // Optimization objective after transform and dt optimization.
     declareOutput<const Eigen::Affine3f*>("RansacRefinedTransform");
     declareOutput<const Eigen::Affine3f*>("IcpRefinedTransform");
   }
@@ -136,6 +137,14 @@ protected:
   bool isAlmostIdentity(const Eigen::Affine3f& trans) const;
   rgbd::Cloud::Ptr visualizeInliers(const Eigen::Affine3f& transform) const;
   
+};
+
+class LossFunction : public ScalarFunction
+{
+public:
+  CorrespondenceManager* cm_;
+  LossFunction(CorrespondenceManager* cm);
+  double eval(const Eigen::VectorXd& x) const;
 };
 
 #endif // OBJECT_MATCHING_CALIBRATOR_H

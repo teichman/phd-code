@@ -63,6 +63,7 @@ public:
   std::vector< std::vector<int> > couplings_;
   double tol_;
 
+  GridSearch(int num_variables);
   Eigen::VectorXd solve(const Eigen::VectorXd& x);
 
 protected:
@@ -72,8 +73,8 @@ protected:
   Eigen::VectorXd lb_;
   Eigen::VectorXd ub_;
   Eigen::VectorXd res_;
-  Eigen::VectorXd lower_bound_;
-  Eigen::VectorXd upper_bound_;
+  Eigen::VectorXd lower_bounds_;
+  Eigen::VectorXd upper_bounds_;
   double best_obj_;
 };
 
