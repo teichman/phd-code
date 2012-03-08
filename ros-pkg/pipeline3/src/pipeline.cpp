@@ -516,7 +516,7 @@ namespace pipeline {
 
     string buf;
     getline(in, buf);
-    PL_ASSERT(buf.compare("Pipeline") == 0);
+    PL_ASSERT(buf.compare("Pipeline") == 0); // TODO: Die with better error message.
     getline(in, buf); // serialization version
     in >> buf;
     PL_ASSERT(buf.compare("Pods") == 0);
