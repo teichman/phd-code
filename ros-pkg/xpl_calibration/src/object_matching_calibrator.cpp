@@ -71,7 +71,7 @@ void ObjectMatchingCalibrator::compute()
 
   // // Match floating scenes to reference scenes.
   vector<Cloud::Ptr> pcds1;
-  downsampleAndTransform(seq1->pcds_, icp_refined_transform_, &pcds1);
+  downsampleAndTransform(seq1.pcds_, icp_refined_transform_, &pcds1);
 
   
   double sync;
@@ -279,7 +279,7 @@ void ObjectMatchingCalibrator::computeCentroids(const ObjectClouds& objects,
       const Cloud& obj = *objects[i][j];
       double num = 0;
       for(size_t k = 0; k < obj.size(); ++k) { 
-	if(!pcl_isfinite(obj[k].x)) { 
+	if(pcl_isfinite(obj[k].x)) { 
 	  centroids->at(i)[j] += obj[k].getVector3fMap();
 	  ++num;
 	}

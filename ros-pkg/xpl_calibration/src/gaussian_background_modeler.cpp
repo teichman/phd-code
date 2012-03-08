@@ -27,7 +27,7 @@ void GaussianBackgroundModeler::compute()
   for(size_t i = 0; i < seq.size(); ++i) {
     const Cloud& pcd = *seq.pcds_[i];
     for(size_t j = 0; j < pcd.size(); ++j) {
-      if(pcl_isfinite(pcd[j].z))
+      if(!pcl_isfinite(pcd[j].z))
 	continue;
       means_[j] += pcd[j].z;
       ++counts_[j];
@@ -40,7 +40,7 @@ void GaussianBackgroundModeler::compute()
   for(size_t i = 0; i < seq.size(); ++i) {
     const Cloud& pcd = *seq.pcds_[i];
     for(size_t j = 0; j < pcd.size(); ++j) {
-      if(pcl_isfinite(pcd[j].z))
+      if(!pcl_isfinite(pcd[j].z))
 	continue;
       stdevs_[j] += pow(pcd[j].z - means_[j], 2);
     }
