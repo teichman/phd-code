@@ -68,7 +68,7 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
   pl_.compute();
 
 
-  *transform = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "GridSearchTransform");
+  *transform = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "FinalTransform");
   //*transform = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "IcpRefinedTransform");
   //*transform = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "RansacRefinedTransform");
   *sync = pl_.getOutput<double>("ObjectMatchingCalibrator", "SyncOffset");

@@ -45,12 +45,15 @@ public:
   ObjectMatchingCalibrator(std::string name) :
     Pod(name)
   {
+    declareParam<bool>("UseGridSearch", false); // TODO: Factor this out into another node.
     declareParam<double>("CentroidThreshold", 0.5); // Distance in meters between centroids to count as inliers.
     declareParam<double>("DistanceThreshold", 0.3); // Maximum distance for hinge loss in objective function.
     declareParam<double>("TimeOffsetRange", 0.1);
     declareParam<double>("TimeOffsetResolution", 0.005);
     declareParam<double>("TimeCorrespondenceThreshold", 0.015);
-    declareParam<double>("Downsampling", 0.5); // Drop this fraction.  0.0 means using all the data.
+    declareParam<double>("ICPDownsampling", 0.0); // Drop this fraction.  0.0 means using all the data, 1.0 none.
+    declareParam<double>("ICPThreshold", 0.001);
+    declareParam<double>("GridSearchDownsampling", 0.95); // Drop this fraction.  0.0 means using all the data, 1.0 none.
     declareParam<int>("NumRansacIters", 1000);
     declareParam<int>("NumCorrespondences", 3);
 
@@ -64,6 +67,7 @@ public:
     declareOutput<const Eigen::Affine3f*>("RansacRefinedTransform");
     declareOutput<const Eigen::Affine3f*>("IcpRefinedTransform");
     declareOutput<const Eigen::Affine3f*>("GridSearchTransform");
+    declareOutput<const Eigen::Affine3f*>("FinalTransform");
   }
 
   void compute();
@@ -75,6 +79,7 @@ protected:
   Eigen::Affine3f ransac_refined_transform_;
   Eigen::Affine3f icp_refined_transform_;
   Eigen::Affine3f gridsearch_transform_;
+  Eigen::Affine3f final_transform_;
   std::vector<Eigen::VectorXd> gs_history_;
   std::vector< std::vector<Eigen::Vector3f> > centroids0_;
   std::vector< std::vector<Eigen::Vector3f> > centroids1_;

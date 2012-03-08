@@ -59,48 +59,51 @@ void ObjectMatchingCalibrator::compute()
   //    corresponding object clouds simultaneously.
   icp_refined_transform_ = alignInlierModels(centroids0_, centroids1_);				     
 				     
-  // -- Alternating grid search.
-  
-  // Match floating objects to reference scenes.
-  vector<Cloud::Ptr> objs1;
-  for(size_t i = 0; i < objects1.size(); ++i)
-    for(size_t j = 0; j < objects1[i].size(); ++j) { 
-      objs1.push_back(Cloud::Ptr(new Cloud(*objects1[i][j])));
-      objs1.back()->header = objects1[i][j]->header;
-    }
-  vector<Cloud::Ptr> pcds1;
-  downsampleAndTransform(objs1, icp_refined_transform_, &pcds1);
-  if(debug_) {
-    const Cloud& pcd0 = *seq0.pcds_[0];
-    for(size_t i = 0; i < pcds1.size(); ++i) {
-      if(i % 100)
-	continue;
-      
-      ostringstream oss;
-      oss << getDebugPath() << "-icp_obj_init-object" << setw(4) << setfill('0') << i << ".pcd";
-      Cloud overlay = pcd0;
-      overlay += *pcds1[0];
-      pcl::io::savePCDFileBinary(oss.str(), overlay);
-    }
-  }
-  
-  // // Match floating scenes to reference scenes.
-  // vector<Cloud::Ptr> pcds1;
-  // downsampleAndTransform(seq1.pcds_, icp_refined_transform_, &pcds1);
-  
+  // -- Alternating grid search.  
   double sync = 0;
-  Affine3f incremental;
-  gridSearch(seq0.pcds_, pcds1, &incremental, &sync);
-  gridsearch_transform_ = incremental * icp_refined_transform_;
+  gridsearch_transform_ = Affine3f::Identity();
+  if(param<bool>("UseGridSearch")) {
+    // Match floating objects to reference scenes.
+    vector<Cloud::Ptr> objs1;
+    for(size_t i = 0; i < objects1.size(); ++i)
+      for(size_t j = 0; j < objects1[i].size(); ++j) { 
+	objs1.push_back(Cloud::Ptr(new Cloud(*objects1[i][j])));
+	objs1.back()->header = objects1[i][j]->header;
+      }
+    vector<Cloud::Ptr> pcds1;
+    downsampleAndTransform(objs1, icp_refined_transform_, &pcds1);
+    if(debug_) {
+      const Cloud& pcd0 = *seq0.pcds_[0];
+      for(size_t i = 0; i < pcds1.size(); ++i) {
+	if(i % 100)
+	  continue;
+      
+	ostringstream oss;
+	oss << getDebugPath() << "-icp_obj_init-object" << setw(4) << setfill('0') << i << ".pcd";
+	Cloud overlay = pcd0;
+	overlay += *pcds1[0];
+	pcl::io::savePCDFileBinary(oss.str(), overlay);
+      }
+    }
+  
+    // // Match floating scenes to reference scenes.
+    // vector<Cloud::Ptr> pcds1;
+    // downsampleAndTransform(seq1.pcds_, icp_refined_transform_, &pcds1);
+
+    Affine3f incremental;
+    gridSearch(seq0.pcds_, pcds1, &incremental, &sync);
+    gridsearch_transform_ = incremental * icp_refined_transform_;
+    final_transform_ = gridsearch_transform_;
+  }
+  else
+    final_transform_ = icp_refined_transform_;
 
   push<double>("SyncOffset", sync);
   push<const Affine3f*>("RansacRoughTransform", &rough_transform_);
   push<const Affine3f*>("RansacRefinedTransform", &ransac_refined_transform_);
   push<const Affine3f*>("IcpRefinedTransform", &icp_refined_transform_);
-
-  // gridsearch_transform_ = icp_refined_transform_;
-  // ROS_WARN("Pushing ICP transform out gridsearch outlet.");
   push<const Affine3f*>("GridSearchTransform", &gridsearch_transform_);
+  push<const Affine3f*>("FinalTransform", &final_transform_);
 }
 
 void ObjectMatchingCalibrator::downsampleAndTransform(const std::vector<Cloud::Ptr>& source,
@@ -109,7 +112,7 @@ void ObjectMatchingCalibrator::downsampleAndTransform(const std::vector<Cloud::P
 {
   destination->clear();
   
-  double downsample = param<double>("Downsampling");
+  double downsample = param<double>("GridSearchDownsampling");
   for(size_t i = 0; i < source.size(); ++i) {
     const Cloud& src = *source[i];
     Cloud::Ptr dst(new Cloud);
@@ -444,7 +447,7 @@ Affine3f ObjectMatchingCalibrator::alignInlierModels(const vector< vector<Vector
   vector<float> distances;
   Affine3f overall_transform = rough_transform_;
   int iter = 0;
-  double downsample = param<double>("Downsampling");
+  double downsample = param<double>("ICPDownsampling");
   while(true) {
     ++iter;
     
@@ -470,7 +473,7 @@ Affine3f ObjectMatchingCalibrator::alignInlierModels(const vector< vector<Vector
     overall_transform = incremental_transform * overall_transform;
     double delta = (incremental_transform.matrix() - Matrix4f::Identity()).norm();
     cout << "ICP iter " << iter << ", delta " << delta << endl;
-    if(delta < 0.01)
+    if(delta < param<double>("ICPThreshold"))
       break;
     
     // -- Move all the objects in sensor 1 by incremental_transform.

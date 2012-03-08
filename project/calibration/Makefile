@@ -101,6 +101,7 @@ keypoint/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 
 evaluations/%.txt: ground_truth/%/transform.eig.txt dynamic/%/transform.eig.txt
 	mkdir -p $(@D)
+	$(EVALUATE) $^
 	$(EVALUATE) $^ > $@
 
 ############################################################
