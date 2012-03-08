@@ -4,6 +4,32 @@
 using namespace std;
 using namespace rgbd;
 
+TEST(projectPoint, projectPoint)
+{
+  Cloud::Ptr pcd(new Cloud);
+  pcl::io::loadPCDFile<pcl::PointXYZRGB>("test.pcd", *pcd);
+  pcl::visualization::CloudViewer vis("cloud");
+  vis.showCloud(pcd);
+
+  cv::Mat1b img(cv::Size(pcd->width, pcd->height), 0);
+  for(size_t i = 0; i < pcd->size(); ++i) {
+    if(!pcl_isfinite(pcd->at(i).z))
+      continue;
+
+    int y = i / pcd->width;
+    int x = i - y * pcd->width;
+    
+    int u, v;
+    int idx = projectPoint(*pcd, pcd->at(i), &u, &v);
+    //cout << u << ", " << v << ", " << " : " << x << ", " << y << endl;
+    if(idx != -1)
+      img(v, u) = 255;
+  }
+
+  cv::imshow("img", img);
+  cv::waitKey();
+}
+
 TEST(generateTransform, generateTransform)
 {
   Eigen::Affine3f trans = generateTransform(1, 2, 3, 0.5, 0.35, 0.56);

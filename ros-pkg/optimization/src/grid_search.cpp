@@ -1,4 +1,4 @@
-#include <optimization/optimization.h>
+#include <optimization/grid_search.h>
 
 using namespace std;
 using namespace Eigen;
@@ -7,7 +7,8 @@ GridSearch::GridSearch(int num_variables) :
   ranges_(num_variables),
   min_resolutions_(num_variables),
   max_resolutions_(num_variables),
-  scale_multipliers_(num_variables)
+  scale_multipliers_(num_variables),
+  max_passes_(0)
 {
 }
 
@@ -37,7 +38,8 @@ Eigen::VectorXd GridSearch::solve(const VectorXd& x)
   ub_ = x_ + (scales_.array() * ranges_.array()).matrix();
   lower_bounds_ = lb_;
   upper_bounds_ = ub_;
-  
+
+  int pass = 0;
   while(true) {
     bool improved = false;
     
@@ -59,7 +61,8 @@ Eigen::VectorXd GridSearch::solve(const VectorXd& x)
       x_ = best_x_;
     }
 
-    if(x_.rows() == 1 || !improved) {
+    ++pass;
+    if(x_.rows() == 1 || pass == max_passes_ || !improved) {
       cout << "Scaling down." << endl;
       bool done = true;
       for(int i = 0; i < res_.rows(); ++i)
@@ -67,19 +70,27 @@ Eigen::VectorXd GridSearch::solve(const VectorXd& x)
 	  done = false;
       if(done)
 	break;
-      
-      res_ = res_.array() * scale_multipliers_.array();
-      scales_ = scales_.array() * scale_multipliers_.array();
-      lb_ = x_ - (scales_.array() * ranges_.array()).matrix();
-      ub_ = x_ + (scales_.array() * ranges_.array()).matrix();
-
-      lb_ = lb_.array().max(lower_bounds_.array()).matrix();
-      ub_ = ub_.array().min(upper_bounds_.array()).matrix();
-      
-      cout << "lower: " << lb_.transpose() << ", upper: " << ub_.transpose() << endl;
     }
-  }
 
+    res_ = res_.array() * scale_multipliers_.array();
+    scales_ = scales_.array() * scale_multipliers_.array();
+    lb_ = x_ - (scales_.array() * ranges_.array()).matrix();
+    ub_ = x_ + (scales_.array() * ranges_.array()).matrix();
+    
+    lb_ = lb_.array().max(lower_bounds_.array()).matrix();
+    ub_ = ub_.array().min(upper_bounds_.array()).matrix();
+    
+    cout << "lower: " << lb_.transpose() << ", upper: " << ub_.transpose() << endl;
+  }
+  
   return x_;
 }
   
+
+
+  // void* propagateComputation(void *pipeline)
+  // {
+  //   Pipeline& pl = *((Pipeline*) pipeline);
+  //   pl.run();
+  //   return NULL;
+  // }

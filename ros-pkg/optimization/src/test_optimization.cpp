@@ -3,6 +3,7 @@
 #include <optimization/optimization.h>
 #include <optimization/common_functions.h>
 #include <optimization/nips.h>
+#include <optimization/grid_search.h>
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -365,7 +366,7 @@ TEST(GridSearch, Easy)
   gs.min_resolutions_ << 0.0001, 0.0001;
   gs.max_resolutions_ << 1, 1;
   gs.scale_multipliers_ << 0.1, 0.1;
-
+  
   VectorXd init = VectorXd::Ones(2) * 9.1;
   VectorXd x = gs.solve(init);
 

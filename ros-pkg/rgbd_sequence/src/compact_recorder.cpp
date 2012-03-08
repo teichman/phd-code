@@ -98,7 +98,7 @@ namespace rgbd
       cv::imshow("Image"+device_id_, img);
       cv::waitKey(10);
     }
-    //std::cout << "focal length is: " << grabber_.getDevice()->getImageFocalLength( img.cols ) << std::endl;
+    std::cout << "focal length is: " << grabber_.getDevice()->getImageFocalLength( img.cols ) << std::endl;
   }
 
   void CompactRecorder::irCallback(const boost::shared_ptr<openni_wrapper::IRImage>& oni_img)
