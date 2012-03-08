@@ -100,6 +100,9 @@ void ObjectExtractor::debug() const
   const Sequence& seq = *pull<Sequence::ConstPtr>("Sequence");
   
   for(size_t i = 0; i < seq.size(); ++i) {
+    if(i % 100)
+      continue;
+    
     cout << "Frame " << i << ": " << object_indices_[i].size() << " objects." << endl;
     Cloud vis = *seq.pcds_[i];
     for(size_t j = 0; j < object_indices_[i].size(); ++j) {

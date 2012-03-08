@@ -28,7 +28,7 @@ public:
     {
     }
   
-  double eval(const Eigen::VectorXd& x)
+  double eval(const Eigen::VectorXd& x) const
     {
       return 0.5 * x.transpose() * A_ * x + b_.dot(x) + c_;
     }
@@ -52,7 +52,7 @@ public:
     {
     }
   
-  VectorXd eval(const Eigen::VectorXd& x)
+  VectorXd eval(const Eigen::VectorXd& x) const
     {
       return A_ * x + b_;
     }
@@ -71,7 +71,7 @@ public:
     {
     }
 
-  MatrixXd eval(const Eigen::VectorXd& x)
+  MatrixXd eval(const Eigen::VectorXd& x) const
     {
       return A_;
     }

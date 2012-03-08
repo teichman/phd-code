@@ -17,7 +17,6 @@ GridSearch::GridSearch(int num_variables) :
 
 Eigen::VectorXd GridSearch::solve(const VectorXd& x)
 {
-  omp_set_num_threads(NUM_THREADS);
   history_.clear();
   assert(objective_);
   assert(x.rows() == min_resolutions_.rows());
@@ -57,6 +56,7 @@ Eigen::VectorXd GridSearch::solve(const VectorXd& x)
 	  xs.push_back(x);
 	VectorXd vals(xs.size());
 
+	omp_set_num_threads(NUM_THREADS);
         #pragma omp parallel for
 	for(size_t l = 0; l < xs.size(); ++l) { 
 	  vals(l) = objective_->eval(xs[l]);

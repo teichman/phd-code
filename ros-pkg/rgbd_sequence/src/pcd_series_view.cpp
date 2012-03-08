@@ -12,6 +12,13 @@ string usageString()
   return oss.str();
 }
 
+bool g_pressed = false;
+void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie)
+{
+  if(event.getKeyCode() == 32 && event.keyDown())
+    g_pressed = true;
+}
+
 int main(int argc, char** argv)
 {
   if(argc < 3) {
@@ -19,13 +26,28 @@ int main(int argc, char** argv)
     return 0;
   }
 
-  double delay = atof(argv[1]);
+  int delay = atoi(argv[1]);
   pcl::visualization::CloudViewer vis("Cloud");
+  if(delay == 0) { 
+    vis.registerKeyboardCallback(&keyboardCallback, NULL);
+    cout << "No delay set.  Press space to advance." << endl;
+  }
+  
   Cloud::Ptr pcd(new Cloud);
   for(int i = 2; i < argc; ++i) {
     pcl::io::loadPCDFile(argv[i], *pcd);
     cout << argv[i] << endl;
     vis.showCloud(pcd);
-    usleep(delay * 1000);
+    if(delay)
+      usleep(delay * 1000);
+    else { 
+      while(true) {
+	if(g_pressed) {
+	  g_pressed = false;
+	  break;
+	}
+	usleep(1000);
+      }
+    }
   }
 }

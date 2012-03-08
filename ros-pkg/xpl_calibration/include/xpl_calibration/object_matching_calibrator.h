@@ -9,6 +9,9 @@
 
 typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
 
+
+class ObjectMatchingCalibrator;
+
 class LossFunction : public ScalarFunction
 {
 public:
@@ -17,7 +20,7 @@ public:
 	       const std::vector<rgbd::Cloud::Ptr>& pcds0,
 	       const std::vector<rgbd::Cloud::Ptr>& pcds1);
   
-  double eval(const Eigen::VectorXd& x);
+  double eval(const Eigen::VectorXd& x) const;
 
 protected:
   double max_dist_;
@@ -65,6 +68,7 @@ public:
 
   void compute();
   void debug() const;
+  void visualizeTransform(const std::string& name, const Eigen::Affine3f& transform) const;
 
 protected:
   Eigen::Affine3f rough_transform_;
