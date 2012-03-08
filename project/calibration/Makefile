@@ -46,6 +46,7 @@ EVALUATE := rosrun xpl_calibration evaluate
 all_dynamic: $(addprefix dynamic/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
 all_keypoint: $(addprefix keypoint/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
 all_ground_truth: $(addprefix ground_truth/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
+all_ground_truth_user: $(addprefix ground_truth_user/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
 
 visualize_dynamic-%: dynamic/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
 	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/camera* $< dynamic/configuration$*/sync.eig.txt
@@ -70,11 +71,16 @@ dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	$(CALIBRATE_DYNAMIC) $</unstructured/camera*; \
 	fi &> transform.eig.txt-log.txt
 
-MAX_DT := 0.01
+MAX_DT := 0.015
 ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	rosrun cloud_calibration checker_calibrate $(DATA_DIR)/$*/checkerboard/camera* $@ $(MAX_DT) > $@-log.txt
 	echo "0" > $(@D)/sync.eig.txt #NO syncing for now
+
+ground_truth_user/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	rosrun cloud_calibration user_calibrate $(DATA_DIR)/$*/checkerboard/camera* $@ $(MAX_DT) > $@-log.txt
+	rosrun xpl_calibration offset_maker $(DATA_DIR)/$*/unstructured/camera* $(@D)/sync.eig.txt > $(@D)/sync.eig.txt-log.txt
 
 keypoint/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)

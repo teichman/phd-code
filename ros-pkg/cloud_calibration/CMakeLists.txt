@@ -22,10 +22,12 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
-rosbuild_add_library(${PROJECT_NAME} src/checker_calibrator.cpp)
+rosbuild_add_library(${PROJECT_NAME} src/checker_calibrator.cpp src/user_calibrator.cpp)
 
 rosbuild_add_executable(checker_calibrate src/checker_calibrate.cpp)
 target_link_libraries(checker_calibrate ${PROJECT_NAME})
+rosbuild_add_executable(user_calibrate src/user_calibrate.cpp)
+target_link_libraries(user_calibrate ${PROJECT_NAME})
 #target_link_libraries(${PROJECT_NAME} another_library)
 rosbuild_add_boost_directories()
 rosbuild_link_boost(${PROJECT_NAME} system)

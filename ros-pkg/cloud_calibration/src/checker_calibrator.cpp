@@ -17,7 +17,7 @@ namespace cloud_calibration
   using cv::Mat;
 
   CheckerCalibrator::CheckerCalibrator():
-    checker_rows_(6), checker_cols_(7)
+    checker_rows_(6), checker_cols_(8)
   {
   }
   
@@ -30,14 +30,16 @@ namespace cloud_calibration
       const StreamSequence::Ptr &seq_target, double dt_thresh) const
   {
     // Create a multi sequence from the two
+    vector<Point> points_ref, points_target;
     MultiSequence::Ptr seq( new MultiSequence(dt_thresh) );
     seq->addSequence(seq_ref);
     seq->addSequence(seq_target);
-    return calibrate(seq, 0, 1);
+    return calibrate(seq, 0, 1, points_ref, points_target);
   }
 
   Eigen::Affine3f CheckerCalibrator::calibrate( const MultiSequence::ConstPtr &seq, 
-                             size_t ref_idx, size_t target_idx ) const
+                             size_t ref_idx, size_t target_idx, 
+                             vector<Point> &points_ref_best, vector<Point> &points_target_best ) const
   {
     cout << "Considering " << seq->size() << " frames" << endl;
     //Iterate over the board being flipped or not
@@ -97,7 +99,7 @@ namespace cloud_calibration
         }
       }
       // Throw all but N into the best section
-      vector<Point> points_ref_best, points_target_best;
+      //vector<Point> points_ref_best, points_target_best;
       for(size_t i = 0; i < (1-reject_pct)*transforms.size(); i++){
         cout << "Rejecting " << 100*reject_pct << "\% highest variance samples" << endl;
         size_t frame;
@@ -188,6 +190,7 @@ namespace cloud_calibration
       found_count++;
     }
     if(found_count < 3){
+      cout << "Found less than 3" << endl;
       return false;
     }
     trans = estimateAffine(points_ref, points_target);
@@ -209,4 +212,5 @@ namespace cloud_calibration
   {
     return Eigen::Vector3f( point.x, point.y, point.z );
   }
+  
 }
