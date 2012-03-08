@@ -58,16 +58,16 @@ dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	else \
 	echo Using programmatically generated pipeline.; \
 	$(CALIBRATE_DYNAMIC) $</unstructured/camera*; \
-	fi > transform.eig.txt-log.txt
+	fi &> transform.eig.txt-log.txt
 
 MAX_DT := 0.01
 ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	rosrun cloud_calibration checker_calibrate $(DATA_DIR)/$*/unstructured/camera* $@ $(MAX_DT) > $@-log.txt
+	rosrun cloud_calibration checker_calibrate $(DATA_DIR)/$*/unstructured/camera* $@ $(MAX_DT) &> $@-log.txt
 
 keypoint/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	$(CALIBRATE_ORB) $(DATA_DIR)/$*/unstructured/camera* > $@-log.txt
+	$(CALIBRATE_ORB) $(DATA_DIR)/$*/unstructured/camera* &> $@-log.txt
 
 
 ############################################################
