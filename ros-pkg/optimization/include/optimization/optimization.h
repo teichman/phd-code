@@ -61,7 +61,7 @@ public:
   Eigen::VectorXd max_resolutions_;
   Eigen::VectorXd scale_multipliers_;
   std::vector< std::vector<int> > couplings_;
-  double tol_;
+  std::vector<Eigen::VectorXd> history_;
 
   GridSearch(int num_variables);
   Eigen::VectorXd solve(const Eigen::VectorXd& x);

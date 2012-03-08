@@ -26,6 +26,7 @@ code:
 CONFIGURATIONS := $(shell ls `rospack find xpl_calibration`/../../project/calibration/data)
 
 CALIBRATE_DYNAMIC := DEBUG=1 ON=20 OFF=50 rosrun xpl_calibration calibrate_sequences --dynamic
+CALIBRATE_ORB := rosrun xpl_calibration calibrate_sequences --orb
 VISUALIZE := rosrun xpl_calibration calibration_viewer
 
 ############################################################
@@ -42,7 +43,8 @@ VISUALIZE := rosrun xpl_calibration calibration_viewer
 	@env >> $@
 
 all_dynamic: $(addprefix dynamic/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
-all_ground_truth: $(addprefix ground_truth/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))	
+all_keypoint: $(addprefix keypoint/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
+all_ground_truth: $(addprefix ground_truth/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
 
 visualize_dynamic-%: dynamic/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
 	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/camera* $< dynamic/configuration$*/sync.eig.txt
@@ -62,6 +64,10 @@ MAX_DT := 0.01
 ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	rosrun cloud_calibration checker_calibrate $(DATA_DIR)/$*/unstructured/camera* $@ $(MAX_DT) > $@-log.txt
+
+keypoint/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	$(CALIBRATE_ORB) $(DATA_DIR)/$*/unstructured/camera* > $@-log.txt
 
 
 ############################################################

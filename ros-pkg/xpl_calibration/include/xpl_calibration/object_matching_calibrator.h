@@ -3,6 +3,8 @@
 
 #include <xpl_calibration/common.h>
 #include <optimization/optimization.h>
+#include <Eigen/Geometry>
+#include <pcl/visualization/cloud_viewer.h>
 
 class ReferenceObject
 {
@@ -47,8 +49,15 @@ class CorrespondenceManager
 {
 public:
   typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
+
+  double dt_thresh_;
+  double centroid_thresh_;
+  double dist_thresh_;
+  std::vector<Correspondence> correspondences_;
+  std::vector<ReferenceObject::Ptr> objects0_;
+  std::vector<FloatingObject::Ptr> objects1_;
   
-  CorrespondenceManager(double dt_thresh, double centroid_thresh, double dist_thresh);
+  CorrespondenceManager(double dt_thresh = 0.03, double centroid_thresh = 0.5, double dist_thresh = 0.1);
   //! Makes a kdtree.
   void addReferenceObject(rgbd::Cloud::ConstPtr pcd);
   void addFloatingObject(rgbd::Cloud::Ptr pcd);
@@ -58,17 +67,8 @@ public:
   void applyTimeOffset(double dt);
   //! Applies to clouds with id 1.
   void applyTransform(const Eigen::Affine3f& transform);
-  
-protected:
-  double dt_thresh_;
-  double centroid_thresh_;
-  double dist_thresh_;
-  std::vector<ReferenceObject::Ptr> objects0_;
-  std::vector<FloatingObject::Ptr> objects1_;
-  std::vector<Correspondence> correspondences_;
-
+  void clear();
   void computeCorrespondences();
-
 };
 
 class ObjectMatchingCalibrator : public pipeline::Pod
@@ -98,15 +98,19 @@ public:
     declareOutput<double>("SyncOffset");
     declareOutput<const Eigen::Affine3f*>("RansacRefinedTransform");
     declareOutput<const Eigen::Affine3f*>("IcpRefinedTransform");
+    declareOutput<const Eigen::Affine3f*>("GridSearchTransform");
   }
 
   void compute();
   void debug() const;
 
 protected:
+  CorrespondenceManager cm_;
   Eigen::Affine3f rough_transform_;
   Eigen::Affine3f ransac_refined_transform_;
   Eigen::Affine3f icp_refined_transform_;
+  Eigen::Affine3f gridsearch_transform_;
+  std::vector<Eigen::VectorXd> gs_history_;
   std::vector< std::vector<Eigen::Vector3f> > centroids0_;
   std::vector< std::vector<Eigen::Vector3f> > centroids1_;
 
@@ -142,9 +146,15 @@ protected:
 class LossFunction : public ScalarFunction
 {
 public:
+  mutable pcl::visualization::CloudViewer vis_; // Kill me now.
   CorrespondenceManager* cm_;
   LossFunction(CorrespondenceManager* cm);
   double eval(const Eigen::VectorXd& x) const;
 };
+
+//! Rotations are in radians.
+Eigen::Affine3f generateTransform(double rx, double ry, double rz,
+				  double tx, double ty, double tz);
+
 
 #endif // OBJECT_MATCHING_CALIBRATOR_H

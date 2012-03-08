@@ -11,7 +11,7 @@ using namespace rgbd;
 string usageString()
 {
   ostringstream oss;
-  oss << "Usage: calibrate_sequences MODE SEQ0 SEQ1 BASENAME [PIPELINE]" << endl;
+  oss << "Usage: calibrate_sequences MODE SEQ0 SEQ1 [PIPELINE]" << endl;
   oss << "  where MODE is --orb or --dynamic." << endl;
   oss << "  A transform & sync will be output to transform.eig.txt and sync.eig.txt which should transform SEQ1 to SEQ0." << endl;
   return oss.str();

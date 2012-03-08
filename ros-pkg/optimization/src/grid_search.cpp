@@ -13,12 +13,12 @@ GridSearch::GridSearch(int num_variables) :
 
 Eigen::VectorXd GridSearch::solve(const VectorXd& x)
 {
+  history_.clear();
   assert(objective_);
   assert(x.rows() == min_resolutions_.rows());
   assert(ranges_.rows() == min_resolutions_.rows());
   assert(ranges_.rows() == max_resolutions_.rows());
   assert(ranges_.rows() == scale_multipliers_.rows());
-  assert(tol_ > 0);
 
   for(int i = 0; i < scale_multipliers_.rows(); ++i)
     assert(scale_multipliers_[i] > 0 && scale_multipliers_[i] < 1);
@@ -39,28 +39,31 @@ Eigen::VectorXd GridSearch::solve(const VectorXd& x)
   upper_bounds_ = ub_;
   
   while(true) {
-    double prev_best_obj = best_obj_;
+    bool improved = false;
     
     for(size_t i = 0; i < couplings_.size(); ++i) {
       for(size_t j = 0; j < couplings_[i].size(); ++j) {
 	int k = couplings_[i][j];
 	for(x_[k] = lb_[k]; x_[k] <= ub_[k]; x_[k] += res_[k]) {
-	  cout << "Trying x_" << k << " = " << x_[k] << endl;
 	  double val = objective_->eval(x_);
+	  cout << "x[" << k << "] = " << x_[k] << ": " << val << endl;
 	  if(val < best_obj_) {
+	    improved = true;
 	    best_obj_ = val;
 	    best_x_ = x_;
-	    cout << "Best obj so far: " << best_obj_ << ", best x: " << x_.transpose() << endl;
+	    cout << "** Best obj so far: " << best_obj_ << ", best x: " << x_.transpose() << endl;
+	    history_.push_back(x_);
 	  }
 	}
       }
       x_ = best_x_;
     }
 
-    if(x_.rows() == 1 || prev_best_obj - best_obj_ < tol_) {
+    if(x_.rows() == 1 || !improved) {
+      cout << "Scaling down." << endl;
       bool done = true;
       for(int i = 0; i < res_.rows(); ++i)
-	if(res_[i] > min_resolutions_[i])
+	if(res_[i] - min_resolutions_[i] > 1e-6)
 	  done = false;
       if(done)
 	break;

@@ -32,7 +32,7 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
   seq1->pcds_.reserve(sseq1->size());
   seq0->imgs_.reserve(sseq0->size());
   seq1->imgs_.reserve(sseq1->size());
-  pcl::visualization::CloudViewer vis("Matched");
+  //pcl::visualization::CloudViewer vis("Matched");
   ROS_ASSERT(sseq0->size() == sseq0->timestamps_.size());
   bool on = false;
   for(size_t i = 0; i < sseq0->size(); ++i) {
@@ -52,7 +52,7 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
       continue;
 
 
-    vis.showCloud(pcd1);
+    //vis.showCloud(pcd1);
     usleep(1000 * 30);
     seq0->pcds_.push_back(sseq0->getCloud(i));
     seq1->pcds_.push_back(pcd1);
@@ -68,7 +68,8 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
   pl_.compute();
 
 
-  *transform = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "IcpRefinedTransform");
+  *transform = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "GridSearchTransform");
+  //*transform = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "IcpRefinedTransform");
   //*transform = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "RansacRefinedTransform");
   *sync = pl_.getOutput<double>("ObjectMatchingCalibrator", "SyncOffset");
   cout << "Got sync offset of " << *sync << endl;

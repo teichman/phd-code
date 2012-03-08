@@ -51,3 +51,7 @@ target_link_libraries(calibration_viewer ${PROJECT_NAME})
 
 rosbuild_add_executable(visualize_background_subtraction src/visualize_background_subtraction.cpp)
 target_link_libraries(visualize_background_subtraction ${PROJECT_NAME})
+
+rosbuild_add_gtest(test_calibration src/test_calibration.cpp)
+target_link_libraries(test_calibration ${PROJECT_NAME})
+rosbuild_add_gtest_build_flags(test_calibration)
