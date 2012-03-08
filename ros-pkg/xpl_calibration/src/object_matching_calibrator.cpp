@@ -60,14 +60,19 @@ void ObjectMatchingCalibrator::compute()
   // -- Alternating grid search.
   
   // // Match floating objects to reference scenes.
-  vector<Cloud::Ptr> objs1;
-  for(size_t i = 0; i < objects1.size(); ++i)
-    for(size_t j = 0; j < objects1[i].size(); ++j) { 
-      objs1.push_back(Cloud::Ptr(new Cloud(*objects1[i][j])));
-      objs1.back()->header = objects1[i][j]->header;
-    }
+  // vector<Cloud::Ptr> objs1;
+  // for(size_t i = 0; i < objects1.size(); ++i)
+  //   for(size_t j = 0; j < objects1[i].size(); ++j) { 
+  //     objs1.push_back(Cloud::Ptr(new Cloud(*objects1[i][j])));
+  //     objs1.back()->header = objects1[i][j]->header;
+  //   }
+  // vector<Cloud::Ptr> pcds1;
+  // downsampleAndTransform(objs1, icp_refined_transform_, &pcds1);
+
+  // // Match floating scenes to reference scenes.
   vector<Cloud::Ptr> pcds1;
-  downsampleAndTransform(objs1, icp_refined_transform_, &pcds1);
+  downsampleAndTransform(seq1->pcds_, icp_refined_transform_, &pcds1);
+
   
   double sync;
   Affine3f incremental;
