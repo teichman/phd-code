@@ -6,11 +6,14 @@
 #include <Eigen/Geometry>
 #include <pcl/visualization/cloud_viewer.h>
 
+
+typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
+
 class ObjectMatchingCalibrator : public pipeline::Pod
 {
 public:
   typedef std::vector< std::vector<rgbd::Cloud::ConstPtr> > ObjectClouds;
-  typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
+
 
   DECLARE_POD(ObjectMatchingCalibrator);
   ObjectMatchingCalibrator(std::string name) :
@@ -20,7 +23,8 @@ public:
     declareParam<double>("DistanceThreshold", 0.1); // Maximum distance for hinge loss in objective function.
     declareParam<double>("TimeOffsetRange", 0.1);
     declareParam<double>("TimeOffsetResolution", 0.005);
-    declareParam<double>("TimeCorrespondenceThreshold", 0.03);
+    declareParam<double>("TimeCorrespondenceThreshold", 0.015);
+    declareParam<double>("Downsampling", 0.98); // Drop this fraction.  0.0 means using all the data.
     declareParam<int>("NumRansacIters", 1000);
     declareParam<int>("NumCorrespondences", 3);
 
@@ -75,12 +79,42 @@ protected:
   
 };
 
-// class LossFunction : public ScalarFunction
-// {
-// public:
-//   LossFunction(aoeu);
-//   double eval(const Eigen::VectorXd& x) const;
-// };
+class LossFunction : public ScalarFunction
+{
+public:
+  LossFunction(double max_dist,
+	       double dt_thresh,
+	       double downsample,
+	       const std::vector<KdTree::Ptr>& trees0,
+	       const std::vector<rgbd::Cloud::Ptr>& pcds0,
+	       const std::vector<rgbd::Cloud::Ptr>& pcds1,
+	       double sync);
+
+  LossFunction(double max_dist,
+	       double dt_thresh,
+	       double downsample,
+	       const std::vector<KdTree::Ptr>& trees0,
+	       const std::vector<rgbd::Cloud::Ptr>& pcds0,
+	       const std::vector<rgbd::Cloud::Ptr>& pcds1,
+	       const Eigen::Affine3f& transform);
+  
+  double eval(const Eigen::VectorXd& x);
+
+protected:
+  double max_dist_;
+  double dt_thresh_;
+  double downsample_;
+  std::vector<KdTree::Ptr> trees0_;
+  std::vector<rgbd::Cloud::Ptr> pcds0_;
+  std::vector<rgbd::Cloud::Ptr> pcds1_;
+  bool transform_set_;
+  bool sync_set_;
+  Eigen::Affine3f transform_;
+  double sync_;
+  
+  double computeLoss(KdTree::Ptr tree0, const rgbd::Cloud& pcd) const;
+  int seek(double ts1) const;
+};
 
 
 //! Rotations are in radians.

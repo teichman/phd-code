@@ -21,7 +21,7 @@ template <typename Domain, typename Codomain> class Function
   typedef boost::shared_ptr<Function> Ptr;
   typedef boost::shared_ptr<const Function> ConstPtr;
   
-  virtual Codomain eval(const Domain& x) const = 0;
+  virtual Codomain eval(const Domain& x) = 0;
   Codomain operator()(const Domain& x) {return eval(x);}
 };
 
@@ -55,7 +55,7 @@ public:
 class GridSearch
 {
 public:
-  ScalarFunction::ConstPtr objective_;
+  ScalarFunction::Ptr objective_;
   Eigen::VectorXd ranges_;
   Eigen::VectorXd min_resolutions_;
   Eigen::VectorXd max_resolutions_;

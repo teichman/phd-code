@@ -9,8 +9,8 @@ class NesterovInteriorPointSolver
 public:
   Eigen::VectorXd* optimal_solution_;
   
-  NesterovInteriorPointSolver(ScalarFunction::ConstPtr objective,
-			      VectorFunction::ConstPtr gradient,
+  NesterovInteriorPointSolver(ScalarFunction::Ptr objective,
+			      VectorFunction::Ptr gradient,
 			      double initial_mu,
 			      double tol,
 			      double alpha,
@@ -19,21 +19,21 @@ public:
 			      double initial_stepsize,
 			      int restart,
 			      int debug);
-  void addConstraint(ScalarFunction::ConstPtr constraint,
-		     VectorFunction::ConstPtr gradient);
+  void addConstraint(ScalarFunction::Ptr constraint,
+		     VectorFunction::Ptr gradient);
   Eigen::VectorXd solve(const Eigen::VectorXd& init,
 			long int* num_steps = NULL);
   bool feasible(const Eigen::VectorXd& x);
 
 protected:
   //! f_0(x)
-  ScalarFunction::ConstPtr objective_;
+  ScalarFunction::Ptr objective_;
   //! grad f_0(x)
-  VectorFunction::ConstPtr gradient_;
+  VectorFunction::Ptr gradient_;
   //! f_i(x) \leq 0
-  std::vector<ScalarFunction::ConstPtr> constraints_;
+  std::vector<ScalarFunction::Ptr> constraints_;
   //! grad f_i(x)
-  std::vector<VectorFunction::ConstPtr> grad_constraints_;
+  std::vector<VectorFunction::Ptr> grad_constraints_;
   double initial_mu_;
   double tol_;
   double alpha_;

@@ -10,7 +10,7 @@ SparseLinearFunction::SparseLinearFunction(SMConstPtr A, SVConstPtr b) :
 {
 }
 
-Eigen::VectorXd SparseLinearFunction::eval(const Eigen::VectorXd& x) const
+Eigen::VectorXd SparseLinearFunction::eval(const Eigen::VectorXd& x)
 {
   Eigen::VectorXd result = (*A_) * x;
   for(SparseVector<double>::InnerIterator it(*b_); it; ++it)
@@ -26,7 +26,7 @@ SparseQuadraticFunction::SparseQuadraticFunction(SMConstPtr A, SVConstPtr b, dou
 {
 }
 
-double SparseQuadraticFunction::eval(const Eigen::VectorXd& x) const
+double SparseQuadraticFunction::eval(const Eigen::VectorXd& x)
 {
   return 0.5 * x.transpose() * (*A_) * x + b_->dot(x) + c_;
 }
@@ -60,7 +60,7 @@ ObjectiveMELSparse::ObjectiveMELSparse(Eigen::SparseMatrix<double, Eigen::ColMaj
   assert(A_->cols() == b_->rows());
 }
 
-double ObjectiveMELSparse::eval(const VectorXd& x) const { 
+double ObjectiveMELSparse::eval(const VectorXd& x) { 
   VectorXd vals = x.transpose() * (*A_);
   double obj = 0.0;
   for(int i = 0; i < vals.rows(); ++i)
@@ -82,7 +82,7 @@ GradientMELSparse::GradientMELSparse(Eigen::SparseMatrix<double, Eigen::ColMajor
   assert(A_->cols() == b_->rows());
 }
 
-VectorXd GradientMELSparse::eval(const VectorXd& x) const {
+VectorXd GradientMELSparse::eval(const VectorXd& x) {
   VectorXd grad = VectorXd::Zero(x.rows());
   VectorXd vals = x.transpose() * (*A_);
 
@@ -116,7 +116,7 @@ ObjectiveMLSSparse::ObjectiveMLSSparse(Eigen::SparseMatrix<double, Eigen::ColMaj
   assert(A_->cols() == b_->rows());
 }
 
-double ObjectiveMLSSparse::eval(const VectorXd& x) const { 
+double ObjectiveMLSSparse::eval(const VectorXd& x) { 
   VectorXd vals = -x.transpose() * (*A_);
   double obj = 0.0;
   for(int i = 0; i < vals.rows(); ++i)
@@ -134,7 +134,7 @@ GradientMLSSparse::GradientMLSSparse(Eigen::SparseMatrix<double, Eigen::ColMajor
   assert(A_->cols() == b_->rows());
 }
 
-VectorXd GradientMLSSparse::eval(const VectorXd& x) const {
+VectorXd GradientMLSSparse::eval(const VectorXd& x) {
   VectorXd grad = VectorXd::Zero(x.rows());
   VectorXd vals = x.transpose() * (*A_);
 
@@ -157,7 +157,7 @@ HessianMLSSparse::HessianMLSSparse(Eigen::SparseMatrix<double, Eigen::ColMajor>*
   assert(A_->cols() == b_->rows());
 }
 
-MatrixXd HessianMLSSparse::eval(const VectorXd& x) const {
+MatrixXd HessianMLSSparse::eval(const VectorXd& x) {
   MatrixXd hess = MatrixXd::Zero(x.rows(), x.rows());
 
   VectorXd vals = x.transpose() * (*A_);
@@ -186,7 +186,7 @@ ObjectiveMLS::ObjectiveMLS(const MatrixXd& a, const VectorXd& b) :
   assert(a_.cols() == b_.rows());
 }
 
-double ObjectiveMLS::eval(const VectorXd& x) const { 
+double ObjectiveMLS::eval(const VectorXd& x) { 
   double obj = 0.0;
   for(int i = 0; i < a_.cols(); ++i)
     obj -= logsig(-x.dot(a_.col(i)) - b_(i));
@@ -202,7 +202,7 @@ GradientMLS::GradientMLS(const MatrixXd& a, const VectorXd& b) :
   assert(a_.cols() == b_.rows());
 }
 
-VectorXd GradientMLS::eval(const VectorXd& x) const {
+VectorXd GradientMLS::eval(const VectorXd& x) {
   VectorXd grad = VectorXd::Zero(x.rows());
   for(int i = 0; i < a_.cols(); ++i)
     grad += a_.col(i) * sigmoid(x.dot(a_.col(i)) + b_(i));
@@ -218,7 +218,7 @@ HessianMLS::HessianMLS(const MatrixXd& a, const VectorXd& b) :
   assert(a_.cols() == b_.rows());
 }
 
-MatrixXd HessianMLS::eval(const VectorXd& x) const {
+MatrixXd HessianMLS::eval(const VectorXd& x) {
   MatrixXd hess = MatrixXd::Zero(x.rows(), x.rows());
   for(int i = 0; i < a_.cols(); ++i)
     hess += a_.col(i) * a_.col(i).transpose() * sigmoid(x.dot(a_.col(i)) + b_(i)) * sigmoid(-x.dot(a_.col(i)) - b_(i));
@@ -239,7 +239,7 @@ ObjectiveMLSNoCopy::ObjectiveMLSNoCopy(boost::shared_ptr<const Eigen::MatrixXd> 
   assert(A_->cols() == b_->rows());
 }
 
-double ObjectiveMLSNoCopy::eval(const Eigen::VectorXd& x) const
+double ObjectiveMLSNoCopy::eval(const Eigen::VectorXd& x)
 {
   double obj = 0.0;
   for(int i = 0; i < A_->cols(); ++i)
@@ -256,7 +256,7 @@ GradientMLSNoCopy::GradientMLSNoCopy(boost::shared_ptr<const Eigen::MatrixXd> A,
   assert(A_->cols() == b_->rows());
 }
 
-VectorXd GradientMLSNoCopy::eval(const VectorXd& x) const {
+VectorXd GradientMLSNoCopy::eval(const VectorXd& x) {
   VectorXd grad = VectorXd::Zero(x.rows());
   for(int i = 0; i < A_->cols(); ++i)
     grad += A_->col(i) * sigmoid(x.dot(A_->col(i)) + b_->coeff(i));
@@ -277,7 +277,7 @@ ObjectiveMEL::ObjectiveMEL(const MatrixXd& a, const VectorXd& b) :
   assert(a_.cols() == b_.rows());
 }
 
-double ObjectiveMEL::eval(const VectorXd& x) const {
+double ObjectiveMEL::eval(const VectorXd& x) {
   double obj = 0.0;
   for(int i = 0; i < a_.cols(); ++i)
     obj += exp(x.dot(a_.col(i)) + b_(i));
@@ -293,7 +293,7 @@ GradientMEL::GradientMEL(const MatrixXd& a, const VectorXd& b) :
   assert(a_.cols() == b_.rows());
 }
 
-VectorXd GradientMEL::eval(const VectorXd& x) const {
+VectorXd GradientMEL::eval(const VectorXd& x) {
   VectorXd grad = VectorXd::Zero(x.rows());
   for(int i = 0; i < a_.cols(); ++i)
     grad += a_.col(i) * exp(x.dot(a_.col(i)) + b_(i));
@@ -309,7 +309,7 @@ HessianMEL::HessianMEL(const MatrixXd& a, const VectorXd& b) :
   assert(a_.cols() == b_.rows());
 }
 
-MatrixXd HessianMEL::eval(const VectorXd& x) const {
+MatrixXd HessianMEL::eval(const VectorXd& x) {
   MatrixXd hess = MatrixXd::Zero(x.rows(), x.rows());
   for(int i = 0; i < a_.cols(); ++i)
     hess += a_.col(i) * a_.col(i).transpose() * exp(x.dot(a_.col(i)) + b_(i));

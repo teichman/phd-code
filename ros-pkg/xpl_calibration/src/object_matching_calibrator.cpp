@@ -55,53 +55,77 @@ void ObjectMatchingCalibrator::compute()
 
   // -- Using the above as a starting point, now run ICP on all
   //    corresponding object clouds simultaneously.
-  icp_refined_transform_ = alignInlierModels(centroids0_, centroids1_);
+  icp_refined_transform_ = alignInlierModels(centroids0_, centroids1_);				     
+				     
 
-  // -- Grid search over offset.
-  // GridSearch gs(1);
-  // gs.objective_ = LossFunction::Ptr(new LossFunction(true, &cm_));
-  // gs.ranges_ << 0.2;
-  // gs.min_resolutions_ << 0.01;
-  // gs.max_resolutions_ << 0.1;
-  // gs.scale_multipliers_ << 0.5;
-  // VectorXd init = VectorXd::Zero(1);
-  // VectorXd x = gs.solve(init);
-  // double best_dt = x(0);
-  // apply_best_dt;
+
+  // -- Alternating grid search.
+  gridsearch_transform_ = icp_refined_transform_;
+  double best_dt = 0;
   
-  // // -- Grid search over transform.
-  // //    rx, ry, rz, tx, ty, tz
-  // cout << "Starting grid search over transform." << endl;
-  // gridsearch_transform_ = icp_refined_transform_;
-  // while(true) {
-  //   GridSearch gst(6);
-  //   gst.objective_ = LossFunction::Ptr(new LossFunction());
-  //   double ar = 1.0 * M_PI / 180.0;
-  //   double tr = 0.05;;
-  //   gst.ranges_ << ar, ar, ar, tr, tr, tr;
-  //   double minrr = 1.0 * M_PI / 180.0;
-  //   double minrt = 0.05;
-  //   gst.min_resolutions_ << minrr, minrr, minrr, minrt, minrt, minrt;
-  //   double maxrr = minrr;
-  //   double maxrt = minrt;
-  //   gst.max_resolutions_ << maxrr, maxrr, maxrr, maxrt, maxrt, maxrt;
-  //   double smr = 0.8;
-  //   double smt = 0.8;
-  //   gst.scale_multipliers_ << smr, smr, smr, smt, smt, smt;
+  cout << "Making trees." << endl;
+  vector<KdTree::Ptr> trees0(seq0.pcds_.size());
+  for(size_t i = 0; i < seq0.pcds_.size(); ++i) {
+    trees0[i] = KdTree::Ptr(new KdTree);
+    trees0[i]->setInputCloud(seq0.pcds_[i]);
+  }
+  cout << "Done." << endl;
 
-  //   VectorXd initt = VectorXd::Zero(6);
-  //   VectorXd xt = gst.solve(initt);
-  //   cout << "GridSearch solution: " << xt.transpose() << endl;
-  //   Affine3f incremental_transform = generateTransform(xt(0), xt(1), xt(2), xt(3), xt(4), xt(5));
-  //   gridsearch_transform_ = incremental_transform * gridsearch_transform_;
+  while(true) {
+    // Grid search over offset.
+    LossFunction::Ptr lf_sync(new LossFunction(param<double>("DistanceThreshold"),
+					       param<double>("TimeCorrespondenceThreshold"),
+					       param<double>("Downsampling"),
+					       trees0, seq0.pcds_, seq1.pcds_,
+					       gridsearch_transform_));
+    GridSearch gs(1);
+    gs.objective_ = lf_sync;
+    gs.ranges_ << 0.2;
+    gs.min_resolutions_ << 0.01;
+    gs.max_resolutions_ << 0.1;
+    gs.scale_multipliers_ << 0.5;
+    VectorXd init = VectorXd::Zero(1);
+    cout << "Starting GridSearch." << endl;
+    VectorXd x = gs.solve(init);
+    best_dt = x(0);
     
-  //   double delta = (incremental_transform.matrix() - Matrix4f::Identity()).norm();
-  //   if(delta < 0.01)
-  //     break;
-  // }
+  // Grid search of transform.
+  // rx, ry, rz, tx, ty, tz
+  LossFunction::Ptr lf_trans(new LossFunction(param<double>("DistanceThreshold"),
+					      param<double>("TimeCorrespondenceThreshold"),
+					      param<double>("Downsampling"),
+					      trees0, seq0.pcds_, seq1.pcds_,
+					      best_dt));
+  
+  cout << "Starting grid search over transform." << endl;
 
-  ROS_WARN("Pushing 0 for sync offset");
-  push<double>("SyncOffset", 0);
+    GridSearch gst(6);
+    gst.objective_ = LossFunction::Ptr(new LossFunction());
+    double ar = 1.0 * M_PI / 180.0;
+    double tr = 0.05;;
+    gst.ranges_ << ar, ar, ar, tr, tr, tr;
+    double minrr = 1.0 * M_PI / 180.0;
+    double minrt = 0.05;
+    gst.min_resolutions_ << minrr, minrr, minrr, minrt, minrt, minrt;
+    double maxrr = minrr;
+    double maxrt = minrt;
+    gst.max_resolutions_ << maxrr, maxrr, maxrr, maxrt, maxrt, maxrt;
+    double smr = 0.8;
+    double smt = 0.8;
+    gst.scale_multipliers_ << smr, smr, smr, smt, smt, smt;
+
+    VectorXd initt = VectorXd::Zero(6);
+    VectorXd xt = gst.solve(initt);
+    cout << "GridSearch solution: " << xt.transpose() << endl;
+    Affine3f incremental_transform = generateTransform(xt(0), xt(1), xt(2), xt(3), xt(4), xt(5));
+    gridsearch_transform_ = incremental_transform * gridsearch_transform_;
+    
+    double delta = (incremental_transform.matrix() - Matrix4f::Identity()).norm();
+    if(delta < 0.01)
+      break;
+  }
+
+  push<double>("SyncOffset", best_dt);
   push<const Affine3f*>("RansacRoughTransform", &rough_transform_);
   push<const Affine3f*>("RansacRefinedTransform", &ransac_refined_transform_);
   push<const Affine3f*>("IcpRefinedTransform", &icp_refined_transform_);
@@ -371,3 +395,121 @@ Affine3f ObjectMatchingCalibrator::alignInlierModels(const vector< vector<Vector
   return overall_transform;
 }
 
+LossFunction::LossFunction(double max_dist,
+			   double dt_thresh,
+			   double downsample,
+			   const std::vector<KdTree::Ptr>& trees0,
+			   const std::vector<rgbd::Cloud::Ptr>& pcds0,
+			   const std::vector<rgbd::Cloud::Ptr>& pcds1,
+			   double sync) :
+  max_dist_(max_dist),
+  dt_thresh_(dt_thresh),
+  downsample_(downsample),
+  trees0_(trees0),
+  pcds0_(pcds0),
+  pcds1_(pcds1),
+  transform_set_(false),
+  sync_set_(true),
+  transform_(generateTransform(0, 0, 0, 1000, 0, 0)),
+  sync_(sync)
+{
+}
+
+LossFunction::LossFunction(double max_dist,
+			   double dt_thresh,
+			   double downsample,
+			   const std::vector<KdTree::Ptr>& trees0,
+			   const std::vector<rgbd::Cloud::Ptr>& pcds0,
+			   const std::vector<rgbd::Cloud::Ptr>& pcds1,
+			   const Eigen::Affine3f& transform) :
+  max_dist_(max_dist),
+  dt_thresh_(dt_thresh),
+  downsample_(downsample),
+  trees0_(trees0),
+  pcds0_(pcds0),
+  pcds1_(pcds1),
+  transform_set_(true),
+  sync_set_(false),
+  transform_(transform),
+  sync_(numeric_limits<double>::max())
+{
+}
+
+double LossFunction::eval(const Eigen::VectorXd& x)
+{
+  if(x.rows() == 1) {
+    ROS_ASSERT(transform_set_);
+    sync_ = x(0);
+  }
+  else if(x.rows() == 6) {
+    ROS_ASSERT(sync_set_);
+    transform_ = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
+  }
+
+  double val = 0;
+  double count = 0;
+  for(size_t i = 0; i < pcds1_.size(); ++i) { 
+    const Cloud& pcd1 = *pcds1_[i];
+    double ts1 = pcd1.header.stamp.toSec() + sync_;
+    int idx = seek(ts1);
+    if(idx == -1)
+      continue;
+    
+    val += computeLoss(trees0_[idx], pcd1);
+    ++count;
+  }
+  
+  return val / count;
+}
+
+double LossFunction::computeLoss(KdTree::Ptr tree0, const Cloud& pcd) const
+{
+  vector<int> indices;
+  vector<float> distances;
+  double count = 0;
+  double val = 0;
+  double max_term = max_dist_;
+  Point transformed;
+  for(size_t i = 0; i < pcd.size(); ++i) {
+    if(((double)rand() / (double)RAND_MAX) < downsample_)
+      continue;
+    const Point& pt = pcd[i];
+    if(!pcl_isfinite(pt.x) || !pcl_isfinite(pt.y) || !pcl_isfinite(pt.z))
+      continue;
+    ++count;
+
+    indices.clear();
+    distances.clear();
+    transformed.getVector3fMap() = transform_ * pt.getVector3fMap();
+    tree0->nearestKSearch(transformed, 1, indices, distances);
+    if(indices.empty() || distances[0] > max_dist_)
+      val += max_term;
+    else
+      val += distances[0];
+  }
+
+  return val / count;
+}
+
+int LossFunction::seek(double ts1) const
+{
+  int idx = -1;
+  double min = numeric_limits<double>::max();
+  // TODO: This could be faster than linear search.
+  for(size_t i = 0; i < pcds0_.size(); ++i) {
+    double ts0 = pcds0_[i]->header.stamp.toSec();
+    double dt = fabs(ts0 - ts1);
+    if(dt < min) {
+      min = dt;
+      idx = i;
+    }
+  }
+
+  if(min < dt_thresh_)
+    return idx;
+  else
+    return -1;
+}
+
+
+  
