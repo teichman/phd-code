@@ -28,6 +28,7 @@ CONFIGURATIONS := $(shell ls `rospack find xpl_calibration`/../../project/calibr
 CALIBRATE_DYNAMIC := DEBUG=1 ON=20 OFF=50 rosrun xpl_calibration calibrate_sequences --dynamic
 CALIBRATE_ORB := rosrun xpl_calibration calibrate_sequences --orb
 VISUALIZE := rosrun xpl_calibration calibration_viewer
+EVALUATE := rosrun xpl_calibration evaluate
 
 ############################################################
 # -- Experiments
@@ -79,6 +80,10 @@ keypoint/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) &&	$(CALIBRATE_ORB) $(DATA_DIR)/$*/unstructured/camera* > transform.eig.txt-log.txt
 	echo "0" > $(@D)/sync.eig.txt #NO syncing for now
+
+evaluations/%.txt: ground_truth/%/transform.eig.txt dynamic/%/transform.eig.txt
+	mkdir -p $(@D)
+	$(EVALUATE) $^ > $@
 
 ############################################################
 # -- Plots

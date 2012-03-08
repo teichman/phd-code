@@ -88,9 +88,10 @@ Eigen::VectorXd GridSearch::solve(const VectorXd& x)
   
 
 
-  // void* propagateComputation(void *pipeline)
-  // {
-  //   Pipeline& pl = *((Pipeline*) pipeline);
-  //   pl.run();
-  //   return NULL;
-  // }
+// void* search(void* gridsearch)
+// {
+//   GridSearch& gs = *((GridSearch*) gridsearch);
+//   gs.objective_->eval(
+//   pl.run();
+//   return NULL;
+// }

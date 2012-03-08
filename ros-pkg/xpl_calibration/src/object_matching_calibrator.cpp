@@ -520,7 +520,7 @@ double LossFunction::computeLoss(KdTree::Ptr tree0, const Cloud& pcd0,
     double fsv = 0;
     if(idx != -1 && pcl_isfinite(pcd0[idx].z))
       fsv = fmax(0.0, pcd0[idx].z - pt.z);
-    val += fsv;
+    val += fsv * 0.2;
     
     if(indices.empty() || distances[0] > max_dist_)
       val += max_term;
