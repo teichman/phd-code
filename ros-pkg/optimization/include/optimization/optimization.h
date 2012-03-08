@@ -10,7 +10,6 @@
 #include <cfloat>
 #include <sys/time.h>
 
-
 /************************************************************
  * Function representation
  ************************************************************/
@@ -21,7 +20,7 @@ template <typename Domain, typename Codomain> class Function
   typedef boost::shared_ptr<Function> Ptr;
   typedef boost::shared_ptr<const Function> ConstPtr;
   
-  virtual Codomain eval(const Domain& x) const = 0;
+  virtual Codomain eval(const Domain& x) = 0;
   Codomain operator()(const Domain& x) {return eval(x);}
 };
 
@@ -50,32 +49,6 @@ public:
 		  int max_num_iters = 0, bool debug = false);
 
   double solve();
-};
-
-class GridSearch
-{
-public:
-  ScalarFunction::ConstPtr objective_;
-  Eigen::VectorXd ranges_;
-  Eigen::VectorXd min_resolutions_;
-  Eigen::VectorXd max_resolutions_;
-  Eigen::VectorXd scale_multipliers_;
-  std::vector< std::vector<int> > couplings_;
-  std::vector<Eigen::VectorXd> history_;
-
-  GridSearch(int num_variables);
-  Eigen::VectorXd solve(const Eigen::VectorXd& x);
-
-protected:
-  Eigen::VectorXd x_;
-  Eigen::VectorXd best_x_;
-  Eigen::VectorXd scales_;
-  Eigen::VectorXd lb_;
-  Eigen::VectorXd ub_;
-  Eigen::VectorXd res_;
-  Eigen::VectorXd lower_bounds_;
-  Eigen::VectorXd upper_bounds_;
-  double best_obj_;
 };
 
 class NesterovGradientSolver {

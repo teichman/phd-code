@@ -3,8 +3,8 @@
 using namespace std;
 using namespace Eigen;
 
-NesterovInteriorPointSolver::NesterovInteriorPointSolver(ScalarFunction::ConstPtr objective,
-							 VectorFunction::ConstPtr gradient,
+NesterovInteriorPointSolver::NesterovInteriorPointSolver(ScalarFunction::Ptr objective,
+							 VectorFunction::Ptr gradient,
 							 double initial_mu,
 							 double tol,
 							 double alpha,
@@ -31,8 +31,8 @@ NesterovInteriorPointSolver::NesterovInteriorPointSolver(ScalarFunction::ConstPt
     cout << "Initializing with debugging level " << debug_ << endl;
 }
 
-void NesterovInteriorPointSolver::addConstraint(ScalarFunction::ConstPtr constraint,
-						VectorFunction::ConstPtr gradient)
+void NesterovInteriorPointSolver::addConstraint(ScalarFunction::Ptr constraint,
+						VectorFunction::Ptr gradient)
 {
   constraints_.push_back(constraint);
   grad_constraints_.push_back(gradient);

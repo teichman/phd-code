@@ -2,80 +2,41 @@
 #define OBJECT_MATCHING_CALIBRATOR_H
 
 #include <xpl_calibration/common.h>
-#include <optimization/optimization.h>
+#include <optimization/grid_search.h>
 #include <Eigen/Geometry>
 #include <pcl/visualization/cloud_viewer.h>
 
-class ReferenceObject
+
+typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
+
+class LossFunction : public ScalarFunction
 {
 public:
-  typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
-  typedef boost::shared_ptr<ReferenceObject> Ptr;
+  LossFunction(double max_dist,
+	       double dt_thresh,
+	       const std::vector<rgbd::Cloud::Ptr>& pcds0,
+	       const std::vector<rgbd::Cloud::Ptr>& pcds1);
   
-  rgbd::Cloud::ConstPtr pcd_;
-  double timestamp_;
-  Eigen::Vector3f centroid_;
-  KdTree::Ptr tree_;
-  
-  ReferenceObject(rgbd::Cloud::ConstPtr pcd);
-};
+  double eval(const Eigen::VectorXd& x);
 
-class FloatingObject
-{
-public:
-  typedef boost::shared_ptr<FloatingObject> Ptr;
-
-  rgbd::Cloud::Ptr pcd_; // has transforms applied to it.
-  rgbd::Cloud::Ptr ref_pcd_; // doesn't.
-  double timestamp_;
-  Eigen::Vector3f centroid_;
-  
-  FloatingObject(rgbd::Cloud::Ptr pcd);
-};
-
-Eigen::Vector3f computeCentroid(const rgbd::Cloud& pcd);
-
-class Correspondence
-{
-public:
-  ReferenceObject::Ptr obj0_;
-  FloatingObject::Ptr obj1_;
-  
-  Correspondence(ReferenceObject::Ptr obj0, FloatingObject::Ptr obj1);
-  double computeLoss(double max_dist, double downsample) const;
-};
-
-class CorrespondenceManager
-{
-public:
-  typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
-
+protected:
+  double max_dist_;
   double dt_thresh_;
-  double centroid_thresh_;
-  double dist_thresh_;
-  std::vector<Correspondence> correspondences_;
-  std::vector<ReferenceObject::Ptr> objects0_;
-  std::vector<FloatingObject::Ptr> objects1_;
+  std::vector<KdTree::Ptr> trees0_;
+  std::vector<rgbd::Cloud::Ptr> pcds0_;
+  std::vector<rgbd::Cloud::Ptr> pcds1_;
   
-  CorrespondenceManager(double dt_thresh = 0.03, double centroid_thresh = 0.5, double dist_thresh = 0.1);
-  //! Makes a kdtree.
-  void addReferenceObject(rgbd::Cloud::ConstPtr pcd);
-  void addFloatingObject(rgbd::Cloud::Ptr pcd);
-  //! Recomputes correspondences.
-  double computeLoss(double downsample);
-  //! Applies to clouds with id 1.
-  void applyTimeOffset(double dt);
-  //! Applies to clouds with id 1.
-  void applyTransform(const Eigen::Affine3f& transform);
-  void clear();
-  void computeCorrespondences();
+  double computeLoss(KdTree::Ptr tree0, const rgbd::Cloud& pcd0,
+		     const rgbd::Cloud& pcd1, const Eigen::Affine3f& transform) const;
+  int seek(double ts1) const;
 };
+
 
 class ObjectMatchingCalibrator : public pipeline::Pod
 {
 public:
   typedef std::vector< std::vector<rgbd::Cloud::ConstPtr> > ObjectClouds;
-  typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
+
 
   DECLARE_POD(ObjectMatchingCalibrator);
   ObjectMatchingCalibrator(std::string name) :
@@ -85,7 +46,8 @@ public:
     declareParam<double>("DistanceThreshold", 0.1); // Maximum distance for hinge loss in objective function.
     declareParam<double>("TimeOffsetRange", 0.1);
     declareParam<double>("TimeOffsetResolution", 0.005);
-    declareParam<double>("TimeCorrespondenceThreshold", 0.03);
+    declareParam<double>("TimeCorrespondenceThreshold", 0.015);
+    declareParam<double>("Downsampling", 0.9); // Drop this fraction.  0.0 means using all the data.
     declareParam<int>("NumRansacIters", 1000);
     declareParam<int>("NumCorrespondences", 3);
 
@@ -105,7 +67,6 @@ public:
   void debug() const;
 
 protected:
-  CorrespondenceManager cm_;
   Eigen::Affine3f rough_transform_;
   Eigen::Affine3f ransac_refined_transform_;
   Eigen::Affine3f icp_refined_transform_;
@@ -113,7 +74,6 @@ protected:
   std::vector<Eigen::VectorXd> gs_history_;
   std::vector< std::vector<Eigen::Vector3f> > centroids0_;
   std::vector< std::vector<Eigen::Vector3f> > centroids1_;
-
 
   void computeCentroids(const ObjectClouds& objects,
 			std::vector< std::vector<Eigen::Vector3f> >* centroids) const;
@@ -139,23 +99,29 @@ protected:
 				    const std::vector< std::vector<Eigen::Vector3f> >& centroids1) const;
 
   rgbd::Cloud::Ptr visualizeInliers(const Eigen::Affine3f& transform) const;
+
+  void gridSearch(const std::vector<rgbd::Cloud::Ptr>& pcds0,
+		  const std::vector<rgbd::Cloud::Ptr>& pcds1,
+		  Eigen::Affine3f* final_transform,
+		  double* final_sync) const;
+
+  void downsampleAndTransform(const std::vector<rgbd::Cloud::Ptr>& source,
+			      const Eigen::Affine3f& transform,
+			      std::vector<rgbd::Cloud::Ptr>* destination) const;
+
+  Eigen::Affine3f gridSearchTransform(LossFunction::Ptr lf) const;
+  double gridSearchSync(LossFunction::Ptr lf) const;
+    
+
   
 };
 
-class LossFunction : public ScalarFunction
-{
-public:
-  bool recompute_corr_;
-  boost::shared_ptr<pcl::visualization::CloudViewer> vis_;
-  
-  CorrespondenceManager* cm_;
-  LossFunction(bool recompute_corr, CorrespondenceManager* cm);
-  double eval(const Eigen::VectorXd& x) const;
-};
 
 //! Rotations are in radians.
 Eigen::Affine3f generateTransform(double rx, double ry, double rz,
 				  double tx, double ty, double tz);
 
+int projectPoint(const rgbd::Cloud& pcd, const rgbd::Point& pt,
+		 int* u, int* v);
 
 #endif // OBJECT_MATCHING_CALIBRATOR_H

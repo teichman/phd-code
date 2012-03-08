@@ -15,8 +15,7 @@ void ObjectMatchingCalibrator::compute()
   ROS_ASSERT(seq0.size() == objects1.size());
 
   // -- Find a good starting point using centroid RANSAC.
-  //    TODO: Make this use CorrespondenceManager.
-  
+
   // Compute centroids for all objects.
   computeCentroids(objects0, &centroids0_);
   computeCentroids(objects1, &centroids1_);
@@ -56,92 +55,141 @@ void ObjectMatchingCalibrator::compute()
 
   // -- Using the above as a starting point, now run ICP on all
   //    corresponding object clouds simultaneously.
-  icp_refined_transform_ = alignInlierModels(centroids0_, centroids1_);
+  icp_refined_transform_ = alignInlierModels(centroids0_, centroids1_);				     
+				     
+  // -- Alternating grid search.
+  // Downsample so it will be faster.
 
-   // -- Set up CorrespondenceManager.
-  cm_.clear();
-  cm_.dt_thresh_ = param<double>("TimeCorrespondenceThreshold");
-  cm_.centroid_thresh_ = param<double>("CentroidThreshold");
-  cm_.dist_thresh_ = param<double>("DistanceThreshold");
+  // vector<Cloud::Ptr> pcds1;
+  // downsampleAndTransform(seq1.pcds_, icp_refined_transform_, &pcds1);
 
-  // Add reference objects without changing them.
-  for(size_t i = 0; i < objects0.size(); ++i)
-    for(size_t j = 0; j < objects0[i].size(); ++j)
-      cm_.addReferenceObject(objects0[i][j]);
-
-  // Add other objects, transformed as learned above.
-  for(size_t i = 0; i < objects1.size(); ++i) { 
-    for(size_t j = 0; j < objects1[i].size(); ++j) {
-      Cloud::Ptr obj = Cloud::Ptr(new Cloud);
-      //pcl::transformPointCloud(*objects1[i][j], *obj, ransac_refined_transform_);
-      pcl::transformPointCloud(*objects1[i][j], *obj, icp_refined_transform_);
-      cm_.addFloatingObject(obj);
+  // Match floating objects to reference scene.
+  vector<Cloud::Ptr> objs1;
+  for(size_t i = 0; i < objects1.size(); ++i)
+    for(size_t j = 0; j < objects1[i].size(); ++j) { 
+      objs1.push_back(Cloud::Ptr(new Cloud(*objects1[i][j])));
+      objs1.back()->header = objects1[i][j]->header;
     }
-  }
-
-  cm_.computeCorrespondences();
-  double loss0 = cm_.computeLoss(0.2);
-  cout << "Initial loss: " << loss0 << endl;
-  cm_.applyTimeOffset(100);
-  cm_.computeCorrespondences();
-  double loss1 = cm_.computeLoss(0.2);
-  cout << "Loss with bad time offset: " << loss1 << endl;
-  cm_.applyTimeOffset(0);
-  cm_.computeCorrespondences();
-  double loss2 = cm_.computeLoss(0.2);
-  cout << "Initial loss: " << loss2 << endl;
-  cm_.applyTransform(generateTransform(0, 0, 0, 100, 0, 0));
-  double loss3 = cm_.computeLoss(0.2);
-  cout << "Loss with bad transform: " << loss3 << endl;
-  cm_.applyTransform(generateTransform(0, 0, 0, 0, 0, 0));
-  double loss4 = cm_.computeLoss(0.2);
-  cout << "Initial loss: " << loss4 << endl;
-  cm_.computeCorrespondences();
-
-  // -- Grid search over offset.
-  GridSearch gs(1);
-  gs.objective_ = LossFunction::Ptr(new LossFunction(true, &cm_));
-  gs.ranges_ << 0.2;
-  gs.min_resolutions_ << 0.01;
-  gs.max_resolutions_ << 0.1;
-  gs.scale_multipliers_ << 0.5;
-  VectorXd init = VectorXd::Zero(1);
-  VectorXd x = gs.solve(init);
-  double best_dt = x(0);
-
-  // -- Grid search over transform.
-  //    rx, ry, rz, tx, ty, tz
-  cout << "Starting grid search over transform." << endl;
-  GridSearch gst(6);
-  gst.objective_ = LossFunction::Ptr(new LossFunction(false, &cm_));
-  double ar = 20.0 * M_PI / 180.0;
-  double tr = 2.0;
-  gst.ranges_ << ar, ar, ar, tr, tr, tr;
-  double minrr = 0.2 * M_PI / 180.0;
-  double minrt = 0.02;
-  gst.min_resolutions_ << minrr, minrr, minrr, minrt, minrt, minrt;
-  double maxrr = 10.0 * M_PI / 180.0;
-  double maxrt = 1.0;
-  gst.max_resolutions_ << maxrr, maxrr, maxrr, maxrt, maxrt, maxrt;
-  double smr = 0.8;
-  double smt = 0.8;
-  gst.scale_multipliers_ << smr, smr, smr, smt, smt, smt;
   
-  VectorXd initt = VectorXd::Zero(6);
-  VectorXd xt = gst.solve(initt);
-  cout << "Final GridSearch solution: " << xt.transpose() << endl;
-  gridsearch_transform_ = generateTransform(xt(0), xt(1), xt(2), xt(3), xt(4), xt(5)) * icp_refined_transform_;
-  gs_history_ = gst.history_;
-  ROS_ASSERT(!gs_history_.empty());
-
+  vector<Cloud::Ptr> pcds1;
+  downsampleAndTransform(objs1, icp_refined_transform_, &pcds1);
   
-  push("SyncOffset", best_dt);
+  double sync;
+  gridSearch(seq0.pcds_, pcds1, &gridsearch_transform_, &sync);
+
+  push<double>("SyncOffset", sync);
   push<const Affine3f*>("RansacRoughTransform", &rough_transform_);
   push<const Affine3f*>("RansacRefinedTransform", &ransac_refined_transform_);
   push<const Affine3f*>("IcpRefinedTransform", &icp_refined_transform_);
   push<const Affine3f*>("GridSearchTransform", &gridsearch_transform_);
 }
 
+void ObjectMatchingCalibrator::downsampleAndTransform(const std::vector<Cloud::Ptr>& source,
+						      const Eigen::Affine3f& transform,
+						      std::vector<Cloud::Ptr>* destination) const
+{
+  destination->clear();
+  
+  double downsample = param<double>("Downsampling");
+  for(size_t i = 0; i < source.size(); ++i) {
+    const Cloud& src = *source[i];
+    Cloud::Ptr dst(new Cloud);
+    dst->header = src.header;
+    dst->reserve(src.size());
+    for(size_t j = 0; j < src.size(); ++j)
+      if(((double)rand() / (double)RAND_MAX) > downsample)
+	dst->push_back(src[j]);
+
+    pcl::transformPointCloud(*dst, *dst, transform);
+    destination->push_back(dst);
+  }
+}
+
+void ObjectMatchingCalibrator::gridSearch(const std::vector<rgbd::Cloud::Ptr>& pcds0,
+					  const std::vector<rgbd::Cloud::Ptr>& pcds1,
+					  Eigen::Affine3f* final_transform,
+					  double* final_sync) const
+{
+  *final_transform = Affine3f::Identity();
+  *final_sync = 0;
+
+  LossFunction::Ptr lf(new LossFunction(param<double>("DistanceThreshold"),
+					param<double>("TimeCorrespondenceThreshold"),
+					pcds0, pcds1));
+  
+  int iter = 0;
+  while(true) {    
+    if(debug_) {
+      ostringstream oss;
+      oss << getDebugPath() << "-gsiter" << setw(4) << setfill('0') << iter << ".pcd";
+      Cloud overlay = *pcds0[0];
+      overlay += *pcds1[0];
+      pcl::io::savePCDFileBinary(oss.str(), overlay);
+    }
+    ++iter;
+    
+    double best_dt = gridSearchSync(lf);
+    *final_sync += best_dt;
+    for(size_t i = 0; i < pcds1.size(); ++i) {
+      double ts = pcds1[i]->header.stamp.toSec() + best_dt;
+      pcds1[i]->header.stamp.fromSec(ts);
+    }
+    
+    // Grid search to find the next step.
+    // rx, ry, rz, tx, ty, tz
+    Affine3f incremental_transform = gridSearchTransform(lf);
+    *final_transform = incremental_transform * (*final_transform);
+    cout << "Transforming clouds." << endl;
+    for(size_t i = 0; i < pcds1.size(); ++i) {
+      pcl::transformPointCloud(*pcds1[i], *pcds1[i], incremental_transform);
+    }
+    cout << "Done" << endl;
+
+    double delta = (incremental_transform.matrix() - Matrix4f::Identity()).norm();
+    if(delta < 0.01)
+      break;
+  }
+}
+
+Eigen::Affine3f ObjectMatchingCalibrator::gridSearchTransform(LossFunction::Ptr lf) const
+{
+  cout << "Starting grid search over transform." << endl;
+  GridSearch gs(6);
+  gs.max_passes_ = 1;
+  gs.objective_ = lf;
+  double ar = 2.0 * M_PI / 180.0;
+  double tr = 0.1;
+  gs.ranges_ << ar, ar, ar, tr, tr, tr;
+  double minrr = 1.0 * M_PI / 180.0;
+  double minrt = 0.05;
+  gs.min_resolutions_ << minrr, minrr, minrr, minrt, minrt, minrt;
+  double maxrr = minrr;
+  double maxrt = minrt;
+  gs.max_resolutions_ << maxrr, maxrr, maxrr, maxrt, maxrt, maxrt;
+  double smr = 0.8;
+  double smt = 0.8;
+  gs.scale_multipliers_ << smr, smr, smr, smt, smt, smt;
+  VectorXd init = VectorXd::Zero(6);
+  VectorXd x = gs.solve(init);
+  cout << "GridSearch solution: " << x.transpose() << endl;
+  return generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
+}
+
+double ObjectMatchingCalibrator::gridSearchSync(LossFunction::Ptr lf) const
+{
+  GridSearch gs(1);
+  gs.objective_ = lf;
+  gs.max_passes_ = 1;
+  gs.ranges_ << 0.025;
+  gs.min_resolutions_ << 0.01;
+  gs.max_resolutions_ << 0.01;
+  gs.scale_multipliers_ << 0.5;
+  VectorXd init = VectorXd::Zero(1);
+  cout << "Starting grid search over offset." << endl;
+  VectorXd x = gs.solve(init);
+  return x(0);
+}
+  
 Eigen::Affine3f generateTransform(double rx, double ry, double rz,
 				  double tx, double ty, double tz)
 
@@ -213,25 +261,6 @@ void ObjectMatchingCalibrator::debug() const
     Cloud overlay;
     overlay = *pull<Sequence::ConstPtr>("Sequence0")->pcds_[0];
     overlay += pcd1;
-
-    ostringstream oss;
-    oss << getDebugPath() << "-gsiter" << setw(4) << setfill('0') << i << ".pcd";
-    pcl::io::savePCDFileBinary(oss.str(), overlay);
-
-    for(size_t j = 0; j < cm_.correspondences_.size(); ++j) {
-      Correspondence c = cm_.correspondences_[j];
-      if(!c.obj0_ || !c.obj1_)
-	continue;
-
-      Cloud overlay;
-      overlay = *c.obj0_->pcd_;
-      Cloud obj1;
-      pcl::transformPointCloud(*c.obj1_->pcd_, obj1, transform);
-      overlay += obj1;
-      ostringstream oss;
-      oss << getDebugPath() << "-object" << setw(4) << setfill('0') << j << "-gsiter" << i << ".pcd";
-      pcl::io::savePCDFileBinary(oss.str(), overlay);
-    }
   }
 }
 
@@ -386,6 +415,7 @@ Affine3f ObjectMatchingCalibrator::alignInlierModels(const vector< vector<Vector
   vector<float> distances;
   Affine3f overall_transform = rough_transform_;
   int iter = 0;
+  double downsample = param<double>("Downsampling");
   while(true) {
     ++iter;
     
@@ -393,9 +423,8 @@ Affine3f ObjectMatchingCalibrator::alignInlierModels(const vector< vector<Vector
     for(size_t i = 0; i < objects1.size(); ++i) {
       const Cloud& obj1 = *objects1[i];
       const Cloud& obj0 = *objects0[i];
-      double downsample = 0.1;
       for(size_t j = 0; j < obj1.size(); ++j) {
-	if(((double)rand() / (double)RAND_MAX) > downsample)
+	if(((double)rand() / (double)RAND_MAX) < downsample)
 	  continue;
 	
 	indices.clear();
@@ -403,11 +432,11 @@ Affine3f ObjectMatchingCalibrator::alignInlierModels(const vector< vector<Vector
 	trees0[i]->nearestKSearch(obj1[j], 1, indices, distances);
 	if(indices.empty() || distances[0] > icp_thresh)
 	  continue;
-
+	
 	tfc.add(obj1[j].getVector3fMap(), obj0[indices[0]].getVector3fMap());
       }
     }
-
+    
     Affine3f incremental_transform = tfc.getTransformation();
     overall_transform = incremental_transform * overall_transform;
     double delta = (incremental_transform.matrix() - Matrix4f::Identity()).norm();
@@ -423,239 +452,128 @@ Affine3f ObjectMatchingCalibrator::alignInlierModels(const vector< vector<Vector
   return overall_transform;
 }
 
-
-
-/************************************************************
- * CorrespondenceManager
- ************************************************************/
-
-CorrespondenceManager::CorrespondenceManager(double dt_thresh, double centroid_thresh, double dist_thresh) :
+LossFunction::LossFunction(double max_dist,
+			   double dt_thresh,
+			   const std::vector<rgbd::Cloud::Ptr>& pcds0,
+			   const std::vector<rgbd::Cloud::Ptr>& pcds1) :
+  max_dist_(max_dist),
   dt_thresh_(dt_thresh),
-  centroid_thresh_(centroid_thresh),
-  dist_thresh_(dist_thresh)
+  pcds0_(pcds0),
+  pcds1_(pcds1)
 {
+  trees0_.resize(pcds0_.size());
+  for(size_t i = 0; i < pcds0_.size(); ++i) {
+    ROS_ASSERT(pcds0_[i]->isOrganized()); // For projection.
+    trees0_[i] = KdTree::Ptr(new KdTree);
+    trees0_[i]->setInputCloud(pcds0_[i]);
+  }
 }
 
-void CorrespondenceManager::addReferenceObject(rgbd::Cloud::ConstPtr pcd)
+double LossFunction::eval(const Eigen::VectorXd& x)
 {
-  objects0_.push_back(ReferenceObject::Ptr(new ReferenceObject(pcd)));
-}
+  Affine3f transform = Affine3f::Identity();
+  double sync = 0;
+  if(x.rows() == 1) {
+    sync = x(0);
+  }
+  else if(x.rows() == 6) {
+    transform = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
+  }
 
-void CorrespondenceManager::addFloatingObject(rgbd::Cloud::Ptr pcd)
-{
-  objects1_.push_back(FloatingObject::Ptr(new FloatingObject(pcd)));
-}      
+  double val = 0;
+  double count = 0;
+  for(size_t i = 0; i < pcds1_.size(); ++i) {
+    const Cloud& pcd1 = *pcds1_[i];
+    double ts1 = pcd1.header.stamp.toSec() + sync;
+    int idx = seek(ts1);
+    if(idx == -1)
+      continue;
     
-double CorrespondenceManager::computeLoss(double downsample)
-{
-  double loss = 0;
-  for(size_t i = 0; i < correspondences_.size(); ++i) {
-    loss += correspondences_[i].computeLoss(dist_thresh_, downsample);
+    val += computeLoss(trees0_[idx], *pcds0_[idx], pcd1, transform);
+    ++count;
   }
-
-  if(correspondences_.empty())
-    return std::numeric_limits<double>::max();
-  else
-    return loss / (double)correspondences_.size();
+  
+  return val / count;
 }
-
-void CorrespondenceManager::applyTimeOffset(double dt)
+			   
+double LossFunction::computeLoss(KdTree::Ptr tree0, const Cloud& pcd0,
+				 const Cloud& pcd1, const Eigen::Affine3f& transform) const
+				 
 {
-  for(size_t i = 0; i < objects1_.size(); ++i)
-    objects1_[i]->timestamp_ = objects1_[i]->pcd_->header.stamp.toSec() + dt;
-}
-
-void CorrespondenceManager::applyTransform(const Eigen::Affine3f& transform)
-{
-  for(size_t i = 0; i < objects1_.size(); ++i) {
-    size_t before = objects1_[i]->pcd_->size();
-    pcl::transformPointCloud(*objects1_[i]->ref_pcd_, *objects1_[i]->pcd_, transform);
-    ROS_ASSERT(before == objects1_[i]->pcd_->size());
-
-    objects1_[i]->centroid_ = computeCentroid(*objects1_[i]->pcd_);
-  }
-}
-
-void CorrespondenceManager::clear()
-{
-  objects0_.clear();
-  objects1_.clear();
-  correspondences_.clear();
-}
-
-void CorrespondenceManager::computeCorrespondences()
-{
-  //ScopedTimer st("CorrespondenceManager::computeCorrespondences");
-  correspondences_.clear();
-  correspondences_.reserve(objects1_.size());
-  // TODO: O(n^2).  This could be faster.
-  vector<bool> marked0(objects0_.size(), false);
-  vector<double> distances;
-  vector<double> dts;
-  distances.resize(objects0_.size());
-  dts.resize(objects0_.size());
-  int num_found = 0;
-  for(size_t i = 0; i < objects1_.size(); ++i) {
-    for(size_t j = 0; j < objects0_.size(); ++j) {
-      if(marked0[j]) { 
-	dts[j] = numeric_limits<double>::max();
-	distances[j] = numeric_limits<double>::max();
-      }
-      else { 
-	dts[j] = fabs(objects1_[i]->timestamp_ - objects0_[j]->timestamp_);
-	distances[j] = (objects1_[i]->centroid_ - objects0_[j]->centroid_).norm();
-      }
-    }
-
-    int idx = -1;
-    double best = numeric_limits<double>::max();
-    ROS_ASSERT(!(best < best));
-    for(size_t j = 0;  j < distances.size(); ++j) {
-      if(dts[j] < dt_thresh_ && distances[j] < centroid_thresh_ && distances[j] < best) {
-	best = distances[j];
-	idx = j;
-      }
-    }
-    if(idx > -1) { 
-      marked0[idx] = true;
-      correspondences_.push_back(Correspondence(objects0_[idx], objects1_[i]));
-      ++num_found;
-      // cout << "Added correspondence with dt " << dts[idx] << " and dist " << best << endl;
-      // cout << "  " << objects1_[i]->timestamp_ << " " << objects0_[idx]->timestamp_ << endl;
-    }
-    else
-      correspondences_.push_back(Correspondence(ReferenceObject::Ptr(), objects1_[i]));
-  }
-  cout << "Found " << num_found << " correspondences." << endl;
-}
-
-
-/************************************************************
- * Correspondence
- ************************************************************/
-
-Correspondence::Correspondence(ReferenceObject::Ptr obj0, FloatingObject::Ptr obj1) :
-  obj0_(obj0),
-  obj1_(obj1)
-{
-  ROS_ASSERT(obj1_);
-}
-
-double Correspondence::computeLoss(double max_dist, double downsample) const
-{
-  double max_term_loss = max_dist + 0.1;
-  const Cloud& pcd1 = *obj1_->pcd_;
-  if(!obj0_) {
-    return pcd1.size() * max_term_loss;
-  }
-
-  double loss = 0;
   vector<int> indices;
   vector<float> distances;
   double count = 0;
+  double val = 0;
+  double max_term = max_dist_;
+  Point transformed;
   for(size_t i = 0; i < pcd1.size(); ++i) {
-    if(((double)rand() / (double)RAND_MAX) > downsample)
+    const Point& pt = pcd1[i];
+    if(!pcl_isfinite(pt.x) || !pcl_isfinite(pt.y) || !pcl_isfinite(pt.z))
       continue;
-
     ++count;
+
     indices.clear();
     distances.clear();
-    obj0_->tree_->nearestKSearch(pcd1[i], 1, indices, distances);
-    if(indices.empty() || distances[0] > max_dist)
-      loss += max_term_loss;
-    else {
-      const Point& pt0 = obj0_->pcd_->at(indices[0]);
-      const Point& pt1 = pcd1[i];
-      double dc = 0;
-      double r0 = pt0.r / 255.0;
-      double r1 = pt1.r / 255.0;
-      double g0 = pt0.g / 255.0;
-      double g1 = pt1.g / 255.0;
-      double b0 = pt0.b / 255.0;
-      double b1 = pt1.b / 255.0;
-      dc = sqrt((r0-r1)*(r0-r1) + (g0-g1)*(g0-g1) + (b0-b1)*(b0-b1));
-      loss += min(max_term_loss, distances[0] + dc / (10.0 * sqrt(3)));
+    transformed.getVector3fMap() = transform * pt.getVector3fMap();
+    tree0->nearestKSearch(transformed, 1, indices, distances);
+
+    int u, v;
+    int idx = projectPoint(pcd0, transformed, &u, &v);
+    double fsv = 0;
+    if(idx != -1 && pcl_isfinite(pcd0[idx].z))
+      fsv = fmax(0.0, pcd0[idx].z - pt.z);
+    val += fsv;
+    
+    if(indices.empty() || distances[0] > max_dist_)
+      val += max_term;
+    else
+      val += distances[0];
+  }
+
+  return val / count;
+}
+
+int projectPoint(const rgbd::Cloud& pcd, const rgbd::Point& pt,
+		 int* u, int* v)
+{
+  ROS_ASSERT(pcd.isOrganized());
+  ROS_ASSERT(pcl_isfinite(pt.x) && pcl_isfinite(pt.y) && pcl_isfinite(pt.z));
+
+  double f = 525; // Oh yes I did.
+  double centerX = (pcd.width >> 1 );
+  double centerY = (pcd.height >> 1);
+
+  *u = f * pt.x / pt.z + centerX;
+  *v = f * pt.y / pt.z + centerY;
+
+  int idx = *v * pcd.width + *u;
+  if(*u < 0 || *u >= (int)pcd.width)
+    idx = -1;
+  if(*v < 0 || *v >= (int)pcd.height)
+    idx = -1;
+
+  return idx;
+}
+
+int LossFunction::seek(double ts1) const
+{
+  int idx = -1;
+  double min = numeric_limits<double>::max();
+  // TODO: This could be faster than linear search.
+  for(size_t i = 0; i < pcds0_.size(); ++i) {
+    double ts0 = pcds0_[i]->header.stamp.toSec();
+    double dt = fabs(ts0 - ts1);
+    if(dt < min) {
+      min = dt;
+      idx = i;
     }
   }
-  return loss / count;
+
+  if(min < dt_thresh_)
+    return idx;
+  else
+    return -1;
 }
 
 
-/************************************************************
- * Object
- ************************************************************/
-
-ReferenceObject::ReferenceObject(rgbd::Cloud::ConstPtr pcd) :
-  pcd_(pcd),
-  timestamp_(pcd_->header.stamp.toSec()),
-  centroid_(computeCentroid(*pcd)),
-  tree_(KdTree::Ptr(new KdTree))
-{
-  tree_->setInputCloud(pcd_);
-}
-
-FloatingObject::FloatingObject(rgbd::Cloud::Ptr pcd) :
-  pcd_(pcd),
-  timestamp_(pcd_->header.stamp.toSec()),
-  centroid_(computeCentroid(*pcd_))
-{
-  ref_pcd_ = Cloud::Ptr(new Cloud);
-  *ref_pcd_ = *pcd_;
-}
-
-Eigen::Vector3f computeCentroid(const Cloud& pcd)
-{
-  Vector3f centroid = Vector3f::Zero();
-  double num = 0;
-  for(size_t i = 0; i < pcd.size(); ++i) { 
-    if(!isinf(pcd[i].x)) { 
-      centroid += pcd[i].getVector3fMap();
-      ++num;
-    }
-  }
-  return centroid / num;
-}
-
-
-/************************************************************
- * LossFunction
- ************************************************************/
-
-LossFunction::LossFunction(bool recompute_corr, CorrespondenceManager* cm) :
-  recompute_corr_(recompute_corr),
-  cm_(cm)
-{
-  if(!recompute_corr_)
-    vis_ = boost::shared_ptr<pcl::visualization::CloudViewer>(new pcl::visualization::CloudViewer("GridSearch"));
-}
-
-double LossFunction::eval(const Eigen::VectorXd& x) const
-{
-  double loss = 0;
-  if(recompute_corr_) {
-    cm_->applyTimeOffset(x(0));
-    cm_->computeCorrespondences();
-    loss = cm_->computeLoss(0.2);
-  }
-  else {
-    Affine3f transform = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
-    cm_->applyTransform(transform);
-    loss = cm_->computeLoss(0.2);
-    cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" << endl;
-    cout << x.transpose() << endl;
-    cout << "Overall loss: " << loss << endl;
-    //for(size_t i = 0; i < cm_->correspondences_.size(); ++i) {
-    size_t i = 10;
-    if(i < cm_->correspondences_.size() && cm_->correspondences_[i].obj0_ && cm_->correspondences_[i].obj1_) {
-      cout << "Corr " << i << endl;
-      cout << "Single-object Loss: " << cm_->correspondences_[i].computeLoss(cm_->dist_thresh_, 0.2) << endl;
-      Cloud::Ptr overlay(new Cloud);
-      *overlay = *cm_->correspondences_[i].obj0_->pcd_;
-      *overlay += *cm_->correspondences_[i].obj1_->pcd_;
-      vis_->showCloud(overlay);
-      //cin.ignore();
-    }
-    cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
-  }
-  return loss;
-}
+  

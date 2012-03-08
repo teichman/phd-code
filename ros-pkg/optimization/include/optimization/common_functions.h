@@ -24,7 +24,7 @@ public:
   SMConstPtr A_;
   SVConstPtr b_;
   SparseLinearFunction(SMConstPtr A, SVConstPtr b);
-  Eigen::VectorXd eval(const Eigen::VectorXd& x) const;
+  Eigen::VectorXd eval(const Eigen::VectorXd& x);
 };
 
 //! 1/2 x^T A x + b^T x + c
@@ -38,7 +38,7 @@ public:
   double c_;
 
   SparseQuadraticFunction(SMConstPtr A, SVConstPtr b, double c);
-  double eval(const Eigen::VectorXd& x) const;
+  double eval(const Eigen::VectorXd& x);
 };
 
 //! 1/M sum_i exp(A_i^T x + b_i)
@@ -52,7 +52,7 @@ public:
 
   ObjectiveMELSparse(Eigen::SparseMatrix<double, Eigen::ColMajor> const* A,
 		     Eigen::VectorXd const* b);
-  double eval(const Eigen::VectorXd& x) const;
+  double eval(const Eigen::VectorXd& x);
 };
 
 class GradientMELSparse : public VectorFunction
@@ -63,7 +63,7 @@ public:
   
   GradientMELSparse(Eigen::SparseMatrix<double, Eigen::ColMajor>* A,
 		    Eigen::VectorXd* b);
-  Eigen::VectorXd eval(const Eigen::VectorXd& x) const;
+  Eigen::VectorXd eval(const Eigen::VectorXd& x);
 };
 
 //! 1/M sum_i log(1 + exp(A_i^T x + b_i))
@@ -77,7 +77,7 @@ public:
 
   ObjectiveMLSSparse(Eigen::SparseMatrix<double, Eigen::ColMajor> const* A,
 		     Eigen::VectorXd const* b);
-  double eval(const Eigen::VectorXd& x) const;
+  double eval(const Eigen::VectorXd& x);
 };
 
 class GradientMLSSparse : public VectorFunction
@@ -88,7 +88,7 @@ public:
   
   GradientMLSSparse(Eigen::SparseMatrix<double, Eigen::ColMajor>* A,
 		    Eigen::VectorXd* b);
-  Eigen::VectorXd eval(const Eigen::VectorXd& x) const;
+  Eigen::VectorXd eval(const Eigen::VectorXd& x);
 };
 
 class HessianMLSSparse : public MatrixFunction
@@ -99,7 +99,7 @@ public:
 
   HessianMLSSparse(Eigen::SparseMatrix<double, Eigen::ColMajor>* A,
 		   Eigen::VectorXd* b);
-  Eigen::MatrixXd eval(const Eigen::VectorXd& x) const;
+  Eigen::MatrixXd eval(const Eigen::VectorXd& x);
 };
 
 //! 1/M sum_i log(1 + exp(a_i^T x + b_i))
@@ -111,7 +111,7 @@ public:
   Eigen::VectorXd b_;
 
   ObjectiveMLS(const Eigen::MatrixXd& a, const Eigen::VectorXd& b);
-  double eval(const Eigen::VectorXd& x) const;
+  double eval(const Eigen::VectorXd& x);
 };
 
 class GradientMLS : public VectorFunction
@@ -121,7 +121,7 @@ public:
   Eigen::VectorXd b_;
 
   GradientMLS(const Eigen::MatrixXd& a, const Eigen::VectorXd& b);
-  Eigen::VectorXd eval(const Eigen::VectorXd& x) const;
+  Eigen::VectorXd eval(const Eigen::VectorXd& x);
 };
 
 class HessianMLS : public MatrixFunction
@@ -131,7 +131,7 @@ public:
   Eigen::VectorXd b_;
 
   HessianMLS(const Eigen::MatrixXd& a, const Eigen::VectorXd& b);
-  Eigen::MatrixXd eval(const Eigen::VectorXd& x) const;
+  Eigen::MatrixXd eval(const Eigen::VectorXd& x);
 };
 
 //! 1/M sum_i log(1 + exp(A_{:,i}^T x + b_i))
@@ -144,7 +144,7 @@ public:
   boost::shared_ptr<const Eigen::VectorXd> b_;
 
   ObjectiveMLSNoCopy(boost::shared_ptr<const Eigen::MatrixXd> A, boost::shared_ptr<const Eigen::VectorXd> b);
-  double eval(const Eigen::VectorXd& x) const;
+  double eval(const Eigen::VectorXd& x);
 };
 
 //! TODO: This should replace GradientMLS.
@@ -155,7 +155,7 @@ public:
   boost::shared_ptr<const Eigen::VectorXd> b_;
 
   GradientMLSNoCopy(boost::shared_ptr<const Eigen::MatrixXd> A, boost::shared_ptr<const Eigen::VectorXd> b);
-  Eigen::VectorXd eval(const Eigen::VectorXd& x) const;
+  Eigen::VectorXd eval(const Eigen::VectorXd& x);
 };
 
 
@@ -168,7 +168,7 @@ public:
   Eigen::VectorXd b_;
 
   ObjectiveMEL(const Eigen::MatrixXd& a, const Eigen::VectorXd& b);
-  double eval(const Eigen::VectorXd& x) const;
+  double eval(const Eigen::VectorXd& x);
 };
     
 class GradientMEL : public VectorFunction
@@ -178,7 +178,7 @@ public:
   Eigen::VectorXd b_;
 
   GradientMEL(const Eigen::MatrixXd& a, const Eigen::VectorXd& b);
-  Eigen::VectorXd eval(const Eigen::VectorXd& x) const;
+  Eigen::VectorXd eval(const Eigen::VectorXd& x);
 };
 
 class HessianMEL : public MatrixFunction
@@ -188,7 +188,7 @@ public:
   Eigen::VectorXd b_;
 
   HessianMEL(const Eigen::MatrixXd& a, const Eigen::VectorXd& b);
-  Eigen::MatrixXd eval(const Eigen::VectorXd& x) const;
+  Eigen::MatrixXd eval(const Eigen::VectorXd& x);
 };
 
 #endif // COMMON_FUNCTIONS_H

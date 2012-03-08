@@ -3,6 +3,7 @@
 #include <optimization/optimization.h>
 #include <optimization/common_functions.h>
 #include <optimization/nips.h>
+#include <optimization/grid_search.h>
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -27,7 +28,7 @@ public:
     {
     }
   
-  double eval(const Eigen::VectorXd& x) const
+  double eval(const Eigen::VectorXd& x)
     {
       return 0.5 * x.transpose() * A_ * x + b_.dot(x) + c_;
     }
@@ -51,7 +52,7 @@ public:
     {
     }
   
-  VectorXd eval(const Eigen::VectorXd& x) const
+  VectorXd eval(const Eigen::VectorXd& x)
     {
       return A_ * x + b_;
     }
@@ -70,7 +71,7 @@ public:
     {
     }
 
-  MatrixXd eval(const Eigen::VectorXd& x) const
+  MatrixXd eval(const Eigen::VectorXd& x)
     {
       return A_;
     }
@@ -361,12 +362,11 @@ TEST(GridSearch, Easy)
 
   GridSearch gs(2);
   gs.objective_ = obj;
-  gs.tol_ = 0.001;
   gs.ranges_ << 1, 1;
   gs.min_resolutions_ << 0.0001, 0.0001;
   gs.max_resolutions_ << 1, 1;
   gs.scale_multipliers_ << 0.1, 0.1;
-
+  
   VectorXd init = VectorXd::Ones(2) * 9.1;
   VectorXd x = gs.solve(init);
 

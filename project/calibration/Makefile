@@ -68,7 +68,7 @@ dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	else \
 	echo Using programmatically generated pipeline.; \
 	$(CALIBRATE_DYNAMIC) $</unstructured/camera*; \
-	fi > transform.eig.txt-log.txt
+	fi &> transform.eig.txt-log.txt
 
 MAX_DT := 0.015
 ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
@@ -85,7 +85,6 @@ keypoint/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) &&	$(CALIBRATE_ORB) $(DATA_DIR)/$*/unstructured/camera* > transform.eig.txt-log.txt
 	echo "0" > $(@D)/sync.eig.txt #NO syncing for now
-
 
 ############################################################
 # -- Plots
