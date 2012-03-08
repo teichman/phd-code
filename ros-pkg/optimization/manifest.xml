@@ -13,7 +13,7 @@
   <depend package="pipeline3"/>
 
   <export>
-    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -loptimization -lcommon_functions"/>
+    <cpp cflags="-I${prefix}/include -fopenmp" lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -loptimization -lcommon_functions -fopenmp"/>
   </export>
 
   

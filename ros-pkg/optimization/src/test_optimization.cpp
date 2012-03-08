@@ -373,6 +373,28 @@ TEST(GridSearch, Easy)
   cout << x.transpose() << endl;
 }
 
+
+TEST(GridSearch, Long)
+{
+  MatrixXd A = MatrixXd::Identity(2, 2);
+  VectorXd b = VectorXd::Zero(2);
+  QuadraticFunction::Ptr obj(new QuadraticFunction(A, b, 0));
+
+  GridSearch gs(2);
+  gs.verbose_ = false;
+  gs.objective_ = obj;
+  gs.ranges_ << 1000000, 1000000;
+  gs.min_resolutions_ << 0.00000001, 0.00000001;
+  gs.max_resolutions_ << 1, 1;
+  gs.scale_multipliers_ << 0.8, 0.8;
+  
+  VectorXd init = VectorXd::Ones(2) * 9.1;
+  VectorXd x = gs.solve(init);
+
+  cout << x.transpose() << endl;
+}
+
+
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

@@ -147,6 +147,7 @@ void ObjectMatchingCalibrator::gridSearch(const std::vector<rgbd::Cloud::Ptr>& p
       pcl::transformPointCloud(*pcds1[i], *pcds1[i], incremental_transform);
     }
     cout << "Done" << endl;
+    cout << "Objective after applying transforms: " << lf->eval(VectorXd::Zero(1)) << endl;
 
     double delta = (incremental_transform.matrix() - Matrix4f::Identity()).norm();
     if(delta < 0.01)
@@ -160,17 +161,17 @@ Eigen::Affine3f ObjectMatchingCalibrator::gridSearchTransform(LossFunction::Ptr 
   GridSearch gs(6);
   gs.max_passes_ = 1;
   gs.objective_ = lf;
-  double ar = 2.0 * M_PI / 180.0;
-  double tr = 0.1;
+  double ar = 5.0 * M_PI / 180.0;
+  double tr = 0.5;
   gs.ranges_ << ar, ar, ar, tr, tr, tr;
-  double minrr = 1.0 * M_PI / 180.0;
-  double minrt = 0.05;
+  double minrr = 0.5 * M_PI / 180.0;
+  double minrt = 0.025;
   gs.min_resolutions_ << minrr, minrr, minrr, minrt, minrt, minrt;
-  double maxrr = minrr;
-  double maxrt = minrt;
+  double maxrr = 3.0 * M_PI / 180.0;
+  double maxrt = 0.5;
   gs.max_resolutions_ << maxrr, maxrr, maxrr, maxrt, maxrt, maxrt;
-  double smr = 0.8;
-  double smt = 0.8;
+  double smr = 0.5;
+  double smt = 0.5;
   gs.scale_multipliers_ << smr, smr, smr, smt, smt, smt;
   VectorXd init = VectorXd::Zero(6);
   VectorXd x = gs.solve(init);
