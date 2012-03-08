@@ -20,7 +20,7 @@ template <typename Domain, typename Codomain> class Function
   typedef boost::shared_ptr<Function> Ptr;
   typedef boost::shared_ptr<const Function> ConstPtr;
   
-  virtual Codomain eval(const Domain& x) = 0;
+  virtual Codomain eval(const Domain& x) const = 0;
   Codomain operator()(const Domain& x) {return eval(x);}
 };
 

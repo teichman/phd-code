@@ -72,7 +72,10 @@ void ObjectMatchingCalibrator::compute()
   downsampleAndTransform(objs1, icp_refined_transform_, &pcds1);
   if(debug_) {
     const Cloud& pcd0 = *seq0.pcds_[0];
-    for(size_t i = 0; i < pcds1.size(); ++i) { 
+    for(size_t i = 0; i < pcds1.size(); ++i) {
+      if(i % 100)
+	continue;
+      
       ostringstream oss;
       oss << getDebugPath() << "-icp_obj_init-object" << setw(4) << setfill('0') << i << ".pcd";
       Cloud overlay = pcd0;
@@ -85,7 +88,7 @@ void ObjectMatchingCalibrator::compute()
   // vector<Cloud::Ptr> pcds1;
   // downsampleAndTransform(seq1.pcds_, icp_refined_transform_, &pcds1);
   
-  double sync;
+  double sync = 0;
   Affine3f incremental;
   gridSearch(seq0.pcds_, pcds1, &incremental, &sync);
   gridsearch_transform_ = incremental * icp_refined_transform_;
@@ -94,6 +97,9 @@ void ObjectMatchingCalibrator::compute()
   push<const Affine3f*>("RansacRoughTransform", &rough_transform_);
   push<const Affine3f*>("RansacRefinedTransform", &ransac_refined_transform_);
   push<const Affine3f*>("IcpRefinedTransform", &icp_refined_transform_);
+
+  // gridsearch_transform_ = icp_refined_transform_;
+  // ROS_WARN("Pushing ICP transform out gridsearch outlet.");
   push<const Affine3f*>("GridSearchTransform", &gridsearch_transform_);
 }
 
@@ -118,6 +124,14 @@ void ObjectMatchingCalibrator::downsampleAndTransform(const std::vector<Cloud::P
   }
 }
 
+void ObjectMatchingCalibrator::visualizeTransform(const std::string& name, const Eigen::Affine3f& transform) const
+{
+  Cloud overlay;
+  pcl::transformPointCloud(*pull<Sequence::ConstPtr>("Sequence1")->pcds_[0], overlay, transform);
+  overlay += *pull<Sequence::ConstPtr>("Sequence0")->pcds_[0];
+  pcl::io::savePCDFileBinary(getDebugPath() + name + ".pcd", overlay);
+}
+
 void ObjectMatchingCalibrator::gridSearch(const std::vector<rgbd::Cloud::Ptr>& pcds0,
 					  const std::vector<rgbd::Cloud::Ptr>& pcds1,
 					  Eigen::Affine3f* final_transform,
@@ -129,15 +143,13 @@ void ObjectMatchingCalibrator::gridSearch(const std::vector<rgbd::Cloud::Ptr>& p
   LossFunction::Ptr lf(new LossFunction(param<double>("DistanceThreshold"),
 					param<double>("TimeCorrespondenceThreshold"),
 					pcds0, pcds1));
-  
+					  
   int iter = 0;
   while(true) {    
     if(debug_) {
       ostringstream oss;
-      oss << getDebugPath() << "-gsiter" << setw(4) << setfill('0') << iter << ".pcd";
-      Cloud overlay = *pcds0[0];
-      overlay += *pcds1[0];
-      pcl::io::savePCDFileBinary(oss.str(), overlay);
+      oss << "gs_outer_iter" << setw(4) << setfill('0') << iter;
+      visualizeTransform(oss.str(), *final_transform);
     }
     ++iter;
 
@@ -174,14 +186,14 @@ Eigen::Affine3f ObjectMatchingCalibrator::gridSearchTransform(LossFunction::Ptr 
   GridSearch gs(6);
   gs.max_passes_ = 1;
   gs.objective_ = lf;
-  double ar = 2.0 * M_PI / 180.0;
-  double tr = 0.2;
+  double ar = 1.0 * M_PI / 180.0;
+  double tr = 0.1;
   gs.ranges_ << ar, ar, ar, tr, tr, tr;
   double minrr = 0.1 * M_PI / 180.0;
   double minrt = 0.02;
   gs.min_resolutions_ << minrr, minrr, minrr, minrt, minrt, minrt;
-  double maxrr = 2.0 * M_PI / 180.0;
-  double maxrt = 0.2;
+  double maxrr = 1.0 * M_PI / 180.0;
+  double maxrt = 0.1;
   gs.max_resolutions_ << maxrr, maxrr, maxrr, maxrt, maxrt, maxrt;
   double smr = 0.5;
   double smt = 0.5;
@@ -197,9 +209,9 @@ double ObjectMatchingCalibrator::gridSearchSync(LossFunction::Ptr lf) const
   GridSearch gs(1);
   gs.objective_ = lf;
   gs.max_passes_ = 1;
-  gs.ranges_ << 0.08;
-  gs.min_resolutions_ << 0.02;
-  gs.max_resolutions_ << 0.02;
+  gs.ranges_ << 0.1;
+  gs.min_resolutions_ << 0.005;
+  gs.max_resolutions_ << 0.05;
   gs.scale_multipliers_ << 0.5;
   VectorXd init = VectorXd::Zero(1);
   cout << "Starting grid search over offset." << endl;
@@ -487,16 +499,15 @@ LossFunction::LossFunction(double max_dist,
   }
 }
 
-double LossFunction::eval(const Eigen::VectorXd& x)
+double LossFunction::eval(const Eigen::VectorXd& x) const
 {
   Affine3f transform = Affine3f::Identity();
   double sync = 0;
-  if(x.rows() == 1) {
+  if(x.rows() == 1)
     sync = x(0);
-  }
-  else if(x.rows() == 6) {
+  else if(x.rows() == 6)
     transform = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
-  }
+
 
   double val = 0;
   double count = 0;

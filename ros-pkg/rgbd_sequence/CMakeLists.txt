@@ -67,6 +67,10 @@ rosbuild_add_executable(offset_timestamps src/offset_timestamps.cpp)
 target_link_libraries(offset_timestamps rgbd_sequence)
 rosbuild_add_compile_flags(offset_timestamps -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
+rosbuild_add_executable(pcd_series_view src/pcd_series_view.cpp)
+target_link_libraries(pcd_series_view rgbd_sequence)
+rosbuild_add_compile_flags(pcd_series_view -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
 rosbuild_add_gtest(test_stream src/test_stream.cpp)
 target_link_libraries(test_stream rgbd_sequence)
 rosbuild_add_gtest_build_flags(test_stream)
