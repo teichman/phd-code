@@ -26,8 +26,7 @@ protected:
   std::vector<rgbd::Cloud::Ptr> pcds0_;
   std::vector<rgbd::Cloud::Ptr> pcds1_;
   
-  double computeLoss(KdTree::Ptr tree0, const rgbd::Cloud& pcd0,
-		     const rgbd::Cloud& pcd1, const Eigen::Affine3f& transform) const;
+  double computeLoss(KdTree::Ptr tree0, const rgbd::Cloud& pcd0, const rgbd::Cloud& pcd1) const;
   int seek(double ts1) const;
 };
 
@@ -47,7 +46,7 @@ public:
     declareParam<double>("TimeOffsetRange", 0.1);
     declareParam<double>("TimeOffsetResolution", 0.005);
     declareParam<double>("TimeCorrespondenceThreshold", 0.015);
-    declareParam<double>("Downsampling", 0.98); // Drop this fraction.  0.0 means using all the data.
+    declareParam<double>("Downsampling", 0.5); // Drop this fraction.  0.0 means using all the data.
     declareParam<int>("NumRansacIters", 1000);
     declareParam<int>("NumCorrespondences", 3);
 
