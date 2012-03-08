@@ -279,7 +279,7 @@ void ObjectMatchingCalibrator::computeCentroids(const ObjectClouds& objects,
       const Cloud& obj = *objects[i][j];
       double num = 0;
       for(size_t k = 0; k < obj.size(); ++k) { 
-	if(!isinf(obj[k].x)) { 
+	if(!pcl_isfinite(obj[k].x)) { 
 	  centroids->at(i)[j] += obj[k].getVector3fMap();
 	  ++num;
 	}

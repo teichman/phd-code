@@ -93,7 +93,7 @@ void HistogramBackgroundModeler::compute()
   for(size_t i = 0; i < seq.size(); i += param<int>("Stride")) {
     const Cloud& pcd = *seq.pcds_[i];
     for(size_t j = 0; j < pcd.size(); ++j) {
-      if(!isinf(pcd[j].z))
+      if(!pcl_isfinite(pcd[j].z))
 	histograms_[j]->insert(pcd[j].z);
     }
   }
