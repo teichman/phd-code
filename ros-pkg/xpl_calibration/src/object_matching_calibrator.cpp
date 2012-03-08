@@ -58,8 +58,8 @@ void ObjectMatchingCalibrator::compute()
   icp_refined_transform_ = alignInlierModels(centroids0_, centroids1_);				     
 				     
   // -- Alternating grid search.
-
-  // Match floating objects to reference scene.
+  
+  // // Match floating objects to reference scenes.
   vector<Cloud::Ptr> objs1;
   for(size_t i = 0; i < objects1.size(); ++i)
     for(size_t j = 0; j < objects1[i].size(); ++j) { 
@@ -178,9 +178,9 @@ double ObjectMatchingCalibrator::gridSearchSync(LossFunction::Ptr lf) const
   GridSearch gs(1);
   gs.objective_ = lf;
   gs.max_passes_ = 1;
-  gs.ranges_ << 0.025;
-  gs.min_resolutions_ << 0.01;
-  gs.max_resolutions_ << 0.01;
+  gs.ranges_ << 0.08;
+  gs.min_resolutions_ << 0.02;
+  gs.max_resolutions_ << 0.02;
   gs.scale_multipliers_ << 0.5;
   VectorXd init = VectorXd::Zero(1);
   cout << "Starting grid search over offset." << endl;
@@ -502,30 +502,33 @@ double LossFunction::computeLoss(KdTree::Ptr tree0, const Cloud& pcd0,
   vector<float> distances;
   double count = 0;
   double val = 0;
-  double max_term = max_dist_;
   Point transformed;
   for(size_t i = 0; i < pcd1.size(); ++i) {
     const Point& pt = pcd1[i];
     if(!pcl_isfinite(pt.x) || !pcl_isfinite(pt.y) || !pcl_isfinite(pt.z))
       continue;
     ++count;
-
-    indices.clear();
-    distances.clear();
     transformed.getVector3fMap() = transform * pt.getVector3fMap();
-    tree0->nearestKSearch(transformed, 1, indices, distances);
 
     int u, v;
     int idx = projectPoint(pcd0, transformed, &u, &v);
-    double fsv = 0;
+    double fsv = max_dist_;
     if(idx != -1 && pcl_isfinite(pcd0[idx].z))
-      fsv = fmax(0.0, pcd0[idx].z - pt.z);
-    val += fsv * 0.2;
-    
+      fsv = fmin(max_dist_, fmax(0.0, pcd0[idx].z - pt.z));
+    val += fsv;
+
+    indices.clear();
+    distances.clear();
+    tree0->nearestKSearch(transformed, 1, indices, distances);
     if(indices.empty() || distances[0] > max_dist_)
-      val += max_term;
-    else
+      val += max_dist_;
+    else { 
       val += distances[0];
+      // const Point& pt0 = pcd0[indices[0]];
+      // val += sqrt(pow((float)(pt.r-pt0.r)/255.0, 2.0) +
+      // 		  pow((float)(pt.b-pt0.b)/255.0, 2.0) +
+      // 		  pow(((float)pt.g-pt0.g)/255.0, 2.0));
+    }
   }
 
   return val / count;

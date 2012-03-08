@@ -43,7 +43,7 @@ public:
     Pod(name)
   {
     declareParam<double>("CentroidThreshold", 0.5); // Distance in meters between centroids to count as inliers.
-    declareParam<double>("DistanceThreshold", 0.1); // Maximum distance for hinge loss in objective function.
+    declareParam<double>("DistanceThreshold", 0.3); // Maximum distance for hinge loss in objective function.
     declareParam<double>("TimeOffsetRange", 0.1);
     declareParam<double>("TimeOffsetResolution", 0.005);
     declareParam<double>("TimeCorrespondenceThreshold", 0.015);

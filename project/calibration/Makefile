@@ -25,7 +25,7 @@ code:
 
 CONFIGURATIONS := $(shell ls `rospack find xpl_calibration`/../../project/calibration/data)
 
-CALIBRATE_DYNAMIC := DEBUG=1 ON=20 OFF=50 rosrun xpl_calibration calibrate_sequences --dynamic
+CALIBRATE_DYNAMIC := DEBUG=1 ON=30 OFF=50 rosrun xpl_calibration calibrate_sequences --dynamic
 CALIBRATE_ORB := rosrun xpl_calibration calibrate_sequences --orb
 VISUALIZE := rosrun xpl_calibration calibration_viewer
 EVALUATE := rosrun xpl_calibration evaluate
