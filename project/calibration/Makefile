@@ -55,6 +55,9 @@ visualize_ground_truth-%: ground_truth/configuration%/transform.eig.txt $(DATA_D
 visualize_keypoint-%: keypoint/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
 	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/camera* $< keypoint/configuration$*/sync.eig.txt
 
+ground_truth_sync-%: $(DATA_DIR)/configuration%
+	rosrun xpl_calibration offset_maker $(DATA_DIR)/configuration$*/unstructured/camera* ground_truth/configuration$*/sync.eig.txt ground_truth/configuration$*/sync.eig.txt
+
 dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) && if [ -e $(MAKE_ROOT)/custom_pipelines/dynamic.pl ]; then \
@@ -69,7 +72,7 @@ dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 MAX_DT := 0.01
 ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	rosrun cloud_calibration checker_calibrate $(DATA_DIR)/$*/unstructured/camera* $@ $(MAX_DT) > $@-log.txt
+	rosrun cloud_calibration checker_calibrate $(DATA_DIR)/$*/checkerboard/camera* $@ $(MAX_DT) > $@-log.txt
 	echo "0" > $(@D)/sync.eig.txt #NO syncing for now
 
 keypoint/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
