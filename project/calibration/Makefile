@@ -53,6 +53,9 @@ visualize_dynamic-%: dynamic/configuration%/transform.eig.txt $(DATA_DIR)/config
 visualize_ground_truth-%: ground_truth/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
 	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/camera* $< ground_truth/configuration$*/sync.eig.txt
 
+visualize_ground_truth_user-%: ground_truth_user/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
+	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/camera* $< ground_truth_user/configuration$*/sync.eig.txt
+
 visualize_keypoint-%: keypoint/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
 	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/camera* $< keypoint/configuration$*/sync.eig.txt
 
