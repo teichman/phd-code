@@ -65,7 +65,7 @@ void BackgroundSubtractor::findForeground(const Cloud& pcd,
 
   for(size_t i = 0; i < pcd.size(); ++i) {        
     double z = pcd[i].z;
-    if(isinf(z))
+    if(!pcl_isfinite(z))
       continue;
     if(!model.isBackground(i, z)) {
       int y = i / pcd.width;

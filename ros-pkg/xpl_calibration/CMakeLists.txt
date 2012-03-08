@@ -52,6 +52,9 @@ target_link_libraries(calibration_viewer ${PROJECT_NAME})
 rosbuild_add_executable(interactive_calibration_viewer src/interactive_calibration_viewer.cpp)
 target_link_libraries(interactive_calibration_viewer ${PROJECT_NAME})
 
+rosbuild_add_executable(evaluate src/evaluate.cpp)
+target_link_libraries(evaluate ${PROJECT_NAME})
+
 rosbuild_add_executable(visualize_background_subtraction src/visualize_background_subtraction.cpp)
 target_link_libraries(visualize_background_subtraction ${PROJECT_NAME})
 

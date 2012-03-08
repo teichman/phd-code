@@ -24,6 +24,8 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #common commands for building c++ executables and libraries
 rosbuild_add_library(${PROJECT_NAME} src/${PROJECT_NAME}.cpp src/nips.cpp src/grid_search.cpp)
 rosbuild_add_library(common_functions src/common_functions.cpp)
+rosbuild_add_compile_flags(${PROJECT_NAME} -fopenmp)
+rosbuild_add_link_flags(${PROJECT_NAME} -fopenmp)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
