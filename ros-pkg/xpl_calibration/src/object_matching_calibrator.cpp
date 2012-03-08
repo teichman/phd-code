@@ -58,10 +58,6 @@ void ObjectMatchingCalibrator::compute()
   icp_refined_transform_ = alignInlierModels(centroids0_, centroids1_);				     
 				     
   // -- Alternating grid search.
-  // Downsample so it will be faster.
-
-  // vector<Cloud::Ptr> pcds1;
-  // downsampleAndTransform(seq1.pcds_, icp_refined_transform_, &pcds1);
 
   // Match floating objects to reference scene.
   vector<Cloud::Ptr> objs1;
@@ -70,12 +66,13 @@ void ObjectMatchingCalibrator::compute()
       objs1.push_back(Cloud::Ptr(new Cloud(*objects1[i][j])));
       objs1.back()->header = objects1[i][j]->header;
     }
-  
   vector<Cloud::Ptr> pcds1;
   downsampleAndTransform(objs1, icp_refined_transform_, &pcds1);
   
   double sync;
-  gridSearch(seq0.pcds_, pcds1, &gridsearch_transform_, &sync);
+  Affine3f incremental;
+  gridSearch(seq0.pcds_, pcds1, &incremental, &sync);
+  gridsearch_transform_ = incremental * icp_refined_transform_;
 
   push<double>("SyncOffset", sync);
   push<const Affine3f*>("RansacRoughTransform", &rough_transform_);
@@ -134,6 +131,7 @@ void ObjectMatchingCalibrator::gridSearch(const std::vector<rgbd::Cloud::Ptr>& p
       double ts = pcds1[i]->header.stamp.toSec() + best_dt;
       pcds1[i]->header.stamp.fromSec(ts);
     }
+    cout << "Best sync offset so far is " << *final_sync << endl;
     
     // Grid search to find the next step.
     // rx, ry, rz, tx, ty, tz
