@@ -4,6 +4,8 @@ using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 
+#define USE_FSV (getenv("USE_FSV") ? atoi(getenv("USE_FSV")) : 1)
+
 void ObjectMatchingCalibrator::compute()
 {
   const Sequence& seq0 = *pull<Sequence::ConstPtr>("Sequence0");
@@ -474,7 +476,8 @@ LossFunction::LossFunction(double max_dist,
   max_dist_(max_dist),
   dt_thresh_(dt_thresh),
   pcds0_(pcds0),
-  pcds1_(pcds1)
+  pcds1_(pcds1),
+  use_fsv_(USE_FSV)
 {
   trees0_.resize(pcds0_.size());
   for(size_t i = 0; i < pcds0_.size(); ++i) {
@@ -528,13 +531,15 @@ double LossFunction::computeLoss(KdTree::Ptr tree0, const Cloud& pcd0, const Clo
       continue;
     ++count;
 
-    int u, v;
-    int idx = projectPoint(pcd0, pt, &u, &v);
-    double fsv = max_dist_;
-    if(idx != -1 && pcl_isfinite(pcd0[idx].z))
-      fsv = fmin(max_dist_, fmax(0.0, pcd0[idx].z - pt.z));
-    val += fsv;
-
+    if(use_fsv_) { 
+      int u, v;
+      int idx = projectPoint(pcd0, pt, &u, &v);
+      double fsv = max_dist_;
+      if(idx != -1 && pcl_isfinite(pcd0[idx].z))
+	fsv = fmin(max_dist_, fmax(0.0, pcd0[idx].z - pt.z));
+      val += fsv;
+    }
+    
     indices.clear();
     distances.clear();
     tree0->nearestKSearch(pt, 1, indices, distances);

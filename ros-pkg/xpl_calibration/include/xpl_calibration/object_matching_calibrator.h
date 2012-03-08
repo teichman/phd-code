@@ -25,6 +25,7 @@ protected:
   std::vector<KdTree::Ptr> trees0_;
   std::vector<rgbd::Cloud::Ptr> pcds0_;
   std::vector<rgbd::Cloud::Ptr> pcds1_;
+  bool use_fsv_;
   
   double computeLoss(KdTree::Ptr tree0, const rgbd::Cloud& pcd0, const rgbd::Cloud& pcd1) const;
   int seek(double ts1) const;

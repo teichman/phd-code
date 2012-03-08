@@ -43,7 +43,8 @@ EVALUATE := rosrun xpl_calibration evaluate
 	@echo '' >> $@
 	@env >> $@
 
-all_dynamic: $(addprefix dynamic/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
+all_dynamic: 	$(addprefix dynamic/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS))) \
+		$(addprefix dynamic-fsv/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
 all_keypoint: $(addprefix keypoint/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
 all_ground_truth: $(addprefix ground_truth/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
 all_ground_truth_user: $(addprefix ground_truth_user/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
@@ -60,15 +61,26 @@ visualize_keypoint-%: keypoint/configuration%/transform.eig.txt $(DATA_DIR)/conf
 ground_truth_sync-%: $(DATA_DIR)/configuration%
 	rosrun xpl_calibration offset_maker $(DATA_DIR)/configuration$*/unstructured/camera* ground_truth/configuration$*/sync.eig.txt ground_truth/configuration$*/sync.eig.txt
 
+dynamic-fsv/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	cd $(@D) && if [ -e $(MAKE_ROOT)/custom_pipelines/dynamic.pl ]; then \
+	echo Using custom pipeline $(MAKE_ROOT)/custom_pipelines/dynamic.pl; \
+	cat $(MAKE_ROOT)/custom_pipelines/dynamic.pl; \
+	USE_FSV=1 $(CALIBRATE_DYNAMIC) $</unstructured/camera* $(MAKE_ROOT)/custom_pipelines/dynamic.pl; \
+	else \
+	echo Using programmatically generated pipeline.; \
+	USE_FSV=1 $(CALIBRATE_DYNAMIC) $</unstructured/camera*; \
+	fi &> transform.eig.txt-log.txt
+
 dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) && if [ -e $(MAKE_ROOT)/custom_pipelines/dynamic.pl ]; then \
 	echo Using custom pipeline $(MAKE_ROOT)/custom_pipelines/dynamic.pl; \
 	cat $(MAKE_ROOT)/custom_pipelines/dynamic.pl; \
-	$(CALIBRATE_DYNAMIC) $</unstructured/camera* $(MAKE_ROOT)/custom_pipelines/dynamic.pl; \
+	USE_FSV=0 $(CALIBRATE_DYNAMIC) $</unstructured/camera* $(MAKE_ROOT)/custom_pipelines/dynamic.pl; \
 	else \
 	echo Using programmatically generated pipeline.; \
-	$(CALIBRATE_DYNAMIC) $</unstructured/camera*; \
+	USE_FSV=0 $(CALIBRATE_DYNAMIC) $</unstructured/camera*; \
 	fi &> transform.eig.txt-log.txt
 
 MAX_DT := 0.015
