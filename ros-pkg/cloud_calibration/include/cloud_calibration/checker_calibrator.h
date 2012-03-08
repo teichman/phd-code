@@ -32,8 +32,11 @@ namespace cloud_calibration
                                double dt_thresh=0.05) const;
     //! Calibrate a multi sequence
     Eigen::Affine3f calibrate( const MultiSequence::ConstPtr &seq, 
-                              size_t ref_idx, size_t target_idx ) const;
+                              size_t ref_idx, size_t target_idx, 
+                              std::vector<Point> &points_ref, std::vector<Point> &points_target) const;
 
+    Eigen::Affine3f estimateAffine( const std::vector<Point> &points_ref,
+                                    const std::vector<Point> &points_target) const;
   protected:
     int checker_rows_, checker_cols_;
     //! False if a good affine trans was not discoverable
@@ -41,8 +44,6 @@ namespace cloud_calibration
       size_t frame, size_t ref_idx, size_t target_idx, 
       Eigen::Affine3f &trans, std::vector<Point> &points_ref, std::vector<Point> &points_target,
       bool flip, bool fast_check=true, bool interactive=false) const;
-    Eigen::Affine3f estimateAffine( const std::vector<Point> &points_ref,
-                                    const std::vector<Point> &points_target) const;
   };
   Eigen::Vector3f pointToEigen( const Point &point );
 }
