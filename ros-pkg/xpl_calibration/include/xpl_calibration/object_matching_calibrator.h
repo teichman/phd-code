@@ -138,7 +138,6 @@ protected:
   Eigen::Affine3f alignInlierModels(const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
 				    const std::vector< std::vector<Eigen::Vector3f> >& centroids1) const;
 
-  bool isAlmostIdentity(const Eigen::Affine3f& trans) const;
   rgbd::Cloud::Ptr visualizeInliers(const Eigen::Affine3f& transform) const;
   
 };
@@ -146,9 +145,11 @@ protected:
 class LossFunction : public ScalarFunction
 {
 public:
-  mutable pcl::visualization::CloudViewer vis_; // Kill me now.
+  bool recompute_corr_;
+  boost::shared_ptr<pcl::visualization::CloudViewer> vis_;
+  
   CorrespondenceManager* cm_;
-  LossFunction(CorrespondenceManager* cm);
+  LossFunction(bool recompute_corr, CorrespondenceManager* cm);
   double eval(const Eigen::VectorXd& x) const;
 };
 
