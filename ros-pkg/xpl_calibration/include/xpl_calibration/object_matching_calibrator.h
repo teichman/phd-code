@@ -67,6 +67,7 @@ public:
   void applyTimeOffset(double dt);
   //! Applies to clouds with id 1.
   void applyTransform(const Eigen::Affine3f& transform);
+  void moveReferenceModels(const Eigen::Affine3f& transform);
   void clear();
   void computeCorrespondences();
 };

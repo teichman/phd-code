@@ -90,7 +90,7 @@ void ObjectMatchingCalibrator::compute()
   cm_.computeCorrespondences();
   double loss2 = cm_.computeLoss(0.2);
   cout << "Initial loss: " << loss2 << endl;
-  cm_.applyTransform(generateTransform(0, 0, 0, 100, 0, 0));
+  cm_.applyTransform(generateTransform(1, 1, 1, 100, 100, 100));
   double loss3 = cm_.computeLoss(0.2);
   cout << "Loss with bad transform: " << loss3 << endl;
   cm_.applyTransform(generateTransform(0, 0, 0, 0, 0, 0));
@@ -108,33 +108,49 @@ void ObjectMatchingCalibrator::compute()
   VectorXd init = VectorXd::Zero(1);
   VectorXd x = gs.solve(init);
   double best_dt = x(0);
-
+  cout << "Loss before time offset: " << cm_.computeLoss(0.2) << endl;
+  cm_.applyTimeOffset(best_dt);
+  cm_.computeCorrespondences();
+  cout << "Loss after time offset: " << cm_.computeLoss(0.2) << endl;
+  
   // -- Grid search over transform.
   //    rx, ry, rz, tx, ty, tz
   cout << "Starting grid search over transform." << endl;
-  GridSearch gst(6);
-  gst.objective_ = LossFunction::Ptr(new LossFunction(false, &cm_));
-  double ar = 20.0 * M_PI / 180.0;
-  double tr = 2.0;
-  gst.ranges_ << ar, ar, ar, tr, tr, tr;
-  double minrr = 0.2 * M_PI / 180.0;
-  double minrt = 0.02;
-  gst.min_resolutions_ << minrr, minrr, minrr, minrt, minrt, minrt;
-  double maxrr = 10.0 * M_PI / 180.0;
-  double maxrt = 1.0;
-  gst.max_resolutions_ << maxrr, maxrr, maxrr, maxrt, maxrt, maxrt;
-  double smr = 0.8;
-  double smt = 0.8;
-  gst.scale_multipliers_ << smr, smr, smr, smt, smt, smt;
-  
-  VectorXd initt = VectorXd::Zero(6);
-  VectorXd xt = gst.solve(initt);
-  cout << "Final GridSearch solution: " << xt.transpose() << endl;
-  gridsearch_transform_ = generateTransform(xt(0), xt(1), xt(2), xt(3), xt(4), xt(5)) * icp_refined_transform_;
-  gs_history_ = gst.history_;
-  ROS_ASSERT(!gs_history_.empty());
+  gridsearch_transform_ = icp_refined_transform_;
+  while(true) {
+    GridSearch gst(6);
+    gst.objective_ = LossFunction::Ptr(new LossFunction(false, &cm_));
+    double ar = 1.0 * M_PI / 180.0;
+    double tr = 0.05;;
+    gst.ranges_ << ar, ar, ar, tr, tr, tr;
+    double minrr = 1.0 * M_PI / 180.0;
+    double minrt = 0.05;
+    gst.min_resolutions_ << minrr, minrr, minrr, minrt, minrt, minrt;
+    double maxrr = minrr;
+    double maxrt = minrt;
+    gst.max_resolutions_ << maxrr, maxrr, maxrr, maxrt, maxrt, maxrt;
+    double smr = 0.8;
+    double smt = 0.8;
+    gst.scale_multipliers_ << smr, smr, smr, smt, smt, smt;
 
-  
+    VectorXd initt = VectorXd::Zero(6);
+    VectorXd xt = gst.solve(initt);
+    cout << "GridSearch solution: " << xt.transpose() << endl;
+
+    cm_.applyTransform(generateTransform(0, 0, 0, 0, 0, 0)); // Floating models become ref models.
+    cout << "Loss before transform: " << cm_.computeLoss(0.2) << endl; // Score based on floating models.
+    Affine3f incremental_transform = generateTransform(xt(0), xt(1), xt(2), xt(3), xt(4), xt(5));
+    cm_.moveReferenceModels(incremental_transform); // Move ref models to new location.
+    cm_.applyTransform(generateTransform(0, 0, 0, 0, 0, 0)); // Floating models become ref models.
+    cout << "Loss after transform: " << cm_.computeLoss(0.2) << endl;
+    
+    gridsearch_transform_ = incremental_transform * gridsearch_transform_;
+    
+    double delta = (incremental_transform.matrix() - Matrix4f::Identity()).norm();
+    if(delta < 0.01)
+      break;
+  }
+    
   push("SyncOffset", best_dt);
   push<const Affine3f*>("RansacRoughTransform", &rough_transform_);
   push<const Affine3f*>("RansacRefinedTransform", &ransac_refined_transform_);
@@ -465,6 +481,13 @@ void CorrespondenceManager::applyTimeOffset(double dt)
     objects1_[i]->timestamp_ = objects1_[i]->pcd_->header.stamp.toSec() + dt;
 }
 
+void CorrespondenceManager::moveReferenceModels(const Eigen::Affine3f& transform)
+{
+  for(size_t i = 0; i < objects1_.size(); ++i) {
+    pcl::transformPointCloud(*objects1_[i]->ref_pcd_, *objects1_[i]->ref_pcd_, transform);
+  }
+}
+
 void CorrespondenceManager::applyTransform(const Eigen::Affine3f& transform)
 {
   for(size_t i = 0; i < objects1_.size(); ++i) {
@@ -546,7 +569,7 @@ double Correspondence::computeLoss(double max_dist, double downsample) const
   double max_term_loss = max_dist + 0.1;
   const Cloud& pcd1 = *obj1_->pcd_;
   if(!obj0_) {
-    return pcd1.size() * max_term_loss;
+    return pcd1.size() * max_term_loss / (double)pcd1.size();
   }
 
   double loss = 0;
@@ -625,8 +648,8 @@ LossFunction::LossFunction(bool recompute_corr, CorrespondenceManager* cm) :
   recompute_corr_(recompute_corr),
   cm_(cm)
 {
-  if(!recompute_corr_)
-    vis_ = boost::shared_ptr<pcl::visualization::CloudViewer>(new pcl::visualization::CloudViewer("GridSearch"));
+  // if(!recompute_corr_)
+  //   vis_ = boost::shared_ptr<pcl::visualization::CloudViewer>(new pcl::visualization::CloudViewer("GridSearch"));
 }
 
 double LossFunction::eval(const Eigen::VectorXd& x) const
@@ -643,7 +666,7 @@ double LossFunction::eval(const Eigen::VectorXd& x) const
     loss = cm_->computeLoss(0.2);
     cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv" << endl;
     cout << x.transpose() << endl;
-    cout << "Overall loss: " << loss << endl;
+    cout << "Overall loss: " << setprecision(16) << loss << endl;
     //for(size_t i = 0; i < cm_->correspondences_.size(); ++i) {
     size_t i = 10;
     if(i < cm_->correspondences_.size() && cm_->correspondences_[i].obj0_ && cm_->correspondences_[i].obj1_) {
@@ -652,7 +675,7 @@ double LossFunction::eval(const Eigen::VectorXd& x) const
       Cloud::Ptr overlay(new Cloud);
       *overlay = *cm_->correspondences_[i].obj0_->pcd_;
       *overlay += *cm_->correspondences_[i].obj1_->pcd_;
-      vis_->showCloud(overlay);
+      //vis_->showCloud(overlay);
       //cin.ignore();
     }
     cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^" << endl;
