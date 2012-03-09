@@ -65,6 +65,7 @@ int main(int argc, char** argv)
     vdt(0) = sync;
     eigen_extensions::saveASCII(vdt, "sync.eig.txt");
   }
+  cout << "Final transform" << endl;
   cout << transform.matrix() << endl;
   eigen_extensions::saveASCII(transform.matrix(), "transform.eig.txt");
   
