@@ -100,8 +100,8 @@ namespace cloud_calibration
       }
       // Throw all but N into the best section
       //vector<Point> points_ref_best, points_target_best;
+      cout << "Rejecting " << 100*reject_pct << "\% highest variance samples" << endl;
       for(size_t i = 0; i < (1-reject_pct)*transforms.size(); i++){
-        cout << "Rejecting " << 100*reject_pct << "\% highest variance samples" << endl;
         size_t frame;
         variances.minCoeff(&frame);
         //Make sure this won't be counted again
