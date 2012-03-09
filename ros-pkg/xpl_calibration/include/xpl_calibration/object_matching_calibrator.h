@@ -10,30 +10,24 @@
 typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
 
 
-class ObjectMatchingCalibrator;
-
-class LossFunction : public ScalarFunction
+class SyncLossFunction : public ScalarFunction
 {
 public:
-  LossFunction(double max_dist,
-	       double dt_thresh,
-	       const std::vector<rgbd::Cloud::Ptr>& pcds0,
-	       const std::vector<rgbd::Cloud::Ptr>& pcds1);
-  
+  SyncLossFunction(const std::vector<KdTree::Ptr>& trees0,
+		 const std::vector<rgbd::Cloud::ConstPtr>& scenes0,
+		   const std::vector<rgbd::Cloud::Ptr>& scenes1,
+		   double dt_thresh,
+		   double max_dist);
   double eval(const Eigen::VectorXd& x) const;
+  double computeLoss(KdTree::Ptr tree0, const rgbd::Cloud& pcd0, const rgbd::Cloud& pcd1) const;
 
 protected:
-  double max_dist_;
-  double dt_thresh_;
   std::vector<KdTree::Ptr> trees0_;
-  std::vector<rgbd::Cloud::Ptr> pcds0_;
-  std::vector<rgbd::Cloud::Ptr> pcds1_;
-  bool use_fsv_;
-  
-  double computeLoss(KdTree::Ptr tree0, const rgbd::Cloud& pcd0, const rgbd::Cloud& pcd1) const;
-  int seek(double ts1) const;
+  std::vector<rgbd::Cloud::ConstPtr> scenes0_;
+  std::vector<rgbd::Cloud::Ptr> scenes1_;
+  double dt_thresh_;
+  double max_dist_;
 };
-
 
 class ObjectMatchingCalibrator : public pipeline::Pod
 {
@@ -62,28 +56,36 @@ public:
     declareInput<const ObjectClouds*>("Objects0");
     declareInput<const ObjectClouds*>("Objects1");
 
-    declareOutput<const Eigen::Affine3f*>("RansacRoughTransform"); // Based on centroid matching only.
     declareOutput<double>("SyncOffset");
-    declareOutput<const Eigen::Affine3f*>("RansacRefinedTransform");
-    declareOutput<const Eigen::Affine3f*>("IcpRefinedTransform");
+    declareOutput<const Eigen::Affine3f*>("CentroidRansacTransform");
+    declareOutput<const Eigen::Affine3f*>("IcpTransform");
     declareOutput<const Eigen::Affine3f*>("GridSearchTransform");
     declareOutput<const Eigen::Affine3f*>("FinalTransform");
   }
 
   void compute();
-  void debug() const;
-  void visualizeTransform(const std::string& name, const Eigen::Affine3f& transform) const;
 
 protected:
-  Eigen::Affine3f rough_transform_;
-  Eigen::Affine3f ransac_refined_transform_;
-  Eigen::Affine3f icp_refined_transform_;
-  Eigen::Affine3f gridsearch_transform_;
+  double sync_;
+  Eigen::Affine3f ransac_transform_;
+  Eigen::Affine3f icp_transform_;
   Eigen::Affine3f final_transform_;
   std::vector<Eigen::VectorXd> gs_history_;
-  std::vector< std::vector<Eigen::Vector3f> > centroids0_;
-  std::vector< std::vector<Eigen::Vector3f> > centroids1_;
 
+  void extractScenes(const ObjectClouds& objects,
+		     std::vector<rgbd::Cloud::Ptr>* scenes) const;
+  void getScenes(std::vector<KdTree::Ptr>* trees0,
+		 std::vector<rgbd::Cloud::ConstPtr>* scenes0,
+		 std::vector<rgbd::Cloud::Ptr>* scenes1) const;
+
+  void checkInput() const;
+  Eigen::Affine3f centroidRansac() const;
+  rgbd::Cloud::ConstPtr getNearestReferenceObject(const rgbd::Cloud& pcd1) const;
+  void getSyncedInlierModels(const Eigen::Affine3f& transform,
+			     double sync,
+			     std::vector<rgbd::Cloud::ConstPtr>* inliers0,
+			     std::vector<rgbd::Cloud::Ptr>* inliers1) const;
+    
   void computeCentroids(const ObjectClouds& objects,
 			std::vector< std::vector<Eigen::Vector3f> >* centroids) const;
 
@@ -103,11 +105,16 @@ protected:
 		   std::vector<Eigen::Vector3f>* inlier_centroids0 = NULL,
 		   std::vector<Eigen::Vector3f>* inlier_centroids1 = NULL) const;
 
-    
-  Eigen::Affine3f alignInlierModels(const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
-				    const std::vector< std::vector<Eigen::Vector3f> >& centroids1) const;
 
-  rgbd::Cloud::Ptr visualizeInliers(const Eigen::Affine3f& transform) const;
+  Eigen::Affine3f updateICP(const std::vector<KdTree::Ptr>& trees0,
+			    const std::vector<rgbd::Cloud::ConstPtr>& scenes0,
+			    const std::vector<rgbd::Cloud::Ptr>& scenes1) const;
+  double updateSync(const std::vector<KdTree::Ptr>& trees0,
+		    const std::vector<rgbd::Cloud::ConstPtr>& scenes0,
+		    const std::vector<rgbd::Cloud::Ptr>& scenes1) const;
+      
+  void visualizeInliers(const std::string& name, const Eigen::Affine3f& transform) const;
+  void visualizeTransform(const std::string& name, const Eigen::Affine3f& transform) const;
 
   void gridSearch(const std::vector<rgbd::Cloud::Ptr>& pcds0,
 		  const std::vector<rgbd::Cloud::Ptr>& pcds1,
@@ -118,19 +125,21 @@ protected:
 			      const Eigen::Affine3f& transform,
 			      std::vector<rgbd::Cloud::Ptr>* destination) const;
 
-  Eigen::Affine3f gridSearchTransform(LossFunction::Ptr lf) const;
-  double gridSearchSync(LossFunction::Ptr lf) const;
-    
-
-  
+  double gridSearchSync(ScalarFunction::Ptr lf) const;
 };
 
+int seek(const std::vector<rgbd::Cloud::ConstPtr>& scenes0,
+	 double ts1, double dt_thresh);
+	 
 
-//! Rotations are in radians.
-Eigen::Affine3f generateTransform(double rx, double ry, double rz,
-				  double tx, double ty, double tz);
 
-int projectPoint(const rgbd::Cloud& pcd, const rgbd::Point& pt,
-		 int* u, int* v);
+// //! Rotations are in radians.
+// Eigen::Affine3f generateTransform(double rx, double ry, double rz,
+// 				  double tx, double ty, double tz);
+
+// int projectPoint(const rgbd::Cloud& pcd, const rgbd::Point& pt,
+// 		 int* u, int* v);
 
 #endif // OBJECT_MATCHING_CALIBRATOR_H
+
+
