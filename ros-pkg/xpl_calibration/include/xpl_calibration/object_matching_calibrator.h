@@ -43,9 +43,9 @@ public:
     declareParam<int>("NumCorrespondences", 3);
     declareParam<double>("CentroidThreshold", 0.5); // Distance in meters between centroids to count as inliers.
     declareParam<double>("TimeCorrespondenceThreshold", 0.015);
-    declareParam<double>("ICPDownsampling", 0.0); // Drop this fraction.  0.0 means using all the data, 1.0 none.
+    declareParam<double>("ICPDownsampling", 0.75); // Drop this fraction.  0.0 means using all the data, 1.0 none.
     declareParam<double>("ICPDistanceThreshold", 0.3); // Maximum distance for hinge loss in objective function.
-    declareParam<double>("ICPTransformThreshold", 0.001);
+    declareParam<double>("ICPTransformThreshold", 0.01);
 
     declareInput<rgbd::Sequence::ConstPtr>("Sequence0");
     declareInput<rgbd::Sequence::ConstPtr>("Sequence1");
