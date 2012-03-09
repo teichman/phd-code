@@ -23,9 +23,9 @@ code:
 	rosmake xpl_calibration
 	rosmake cloud_calibration
 
-CONFIGURATIONS := $(shell ls `rospack find xpl_calibration`/../../project/calibration/data)
+CONFIGURATIONS := $(shell ls `rospack find xpl_calibration`/../../project/calibration/data/)
 
-CALIBRATE_DYNAMIC := DEBUG=1 ON=5 OFF=10 rosrun xpl_calibration calibrate_sequences --dynamic
+CALIBRATE_DYNAMIC := DEBUG=1 rosrun xpl_calibration calibrate_sequences --dynamic
 CALIBRATE_ORB := rosrun xpl_calibration calibrate_sequences --orb
 VISUALIZE := rosrun xpl_calibration calibration_viewer
 EVALUATE := rosrun xpl_calibration evaluate
@@ -43,8 +43,8 @@ EVALUATE := rosrun xpl_calibration evaluate
 	@echo '' >> $@
 	@env >> $@
 
-all_dynamic: 	$(addprefix dynamic/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS))) \
-		$(addprefix dynamic-fsv/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
+all_dynamic: 	$(addprefix dynamic/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
+all_evaluations: $(addprefix evaluations/, $(addsuffix .txt, $(CONFIGURATIONS)))
 all_keypoint: $(addprefix keypoint/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
 all_ground_truth: $(addprefix ground_truth/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
 all_ground_truth_user: $(addprefix ground_truth_user/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
@@ -64,28 +64,29 @@ visualize_keypoint-%: keypoint/configuration%/transform.eig.txt $(DATA_DIR)/conf
 ground_truth_sync-%: $(DATA_DIR)/configuration%
 	rosrun xpl_calibration offset_maker $(DATA_DIR)/configuration$*/unstructured/camera* ground_truth/configuration$*/sync.eig.txt ground_truth/configuration$*/sync.eig.txt
 
-
-dynamic-fsv/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
-	mkdir -p $(@D)
-	cd $(@D) && if [ -e $(MAKE_ROOT)/custom_pipelines/dynamic.pl ]; then \
-	echo Using custom pipeline $(MAKE_ROOT)/custom_pipelines/dynamic.pl; \
-	cat $(MAKE_ROOT)/custom_pipelines/dynamic.pl; \
-	USE_FSV=1 $(CALIBRATE_DYNAMIC) $</unstructured/camera* $(MAKE_ROOT)/custom_pipelines/dynamic.pl; \
-	else \
-	echo Using programmatically generated pipeline.; \
-	USE_FSV=1 $(CALIBRATE_DYNAMIC) $</unstructured/camera*; \
-	fi &> transform.eig.txt-log.txt
-
 dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) && if [ -e $(MAKE_ROOT)/custom_pipelines/dynamic.pl ]; then \
-	echo Using custom pipeline $(MAKE_ROOT)/custom_pipelines/dynamic.pl; \
-	cat $(MAKE_ROOT)/custom_pipelines/dynamic.pl; \
-	USE_FSV=0 $(CALIBRATE_DYNAMIC) $</unstructured/camera* $(MAKE_ROOT)/custom_pipelines/dynamic.pl; \
-	else \
-	echo Using programmatically generated pipeline.; \
-	USE_FSV=0 $(CALIBRATE_DYNAMIC) $</unstructured/camera*; \
-	fi &> transform.eig.txt-log.txt
+	cd $(@D) && ON=5 OFF=10 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+
+dynamic/configuration11/transform.eig.txt: $(DATA_DIR)/configuration11 $$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+
+dynamic/configuration10/transform.eig.txt: $(DATA_DIR)/configuration10 $$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+
+dynamic/configuration9/transform.eig.txt: $(DATA_DIR)/configuration9 $$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+
+dynamic/configuration8/transform.eig.txt: $(DATA_DIR)/configuration8 $$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+
+dynamic/configuration7/transform.eig.txt: $(DATA_DIR)/configuration7 $$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
 MAX_DT := 0.015
 ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
@@ -118,6 +119,7 @@ keypoint/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 
 evaluations/%.txt: ground_truth/%/transform.eig.txt dynamic/%/transform.eig.txt
 	mkdir -p $(@D)
+	$(EVALUATE) $^
 	$(EVALUATE) $^ > $@
 
 ############################################################

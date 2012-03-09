@@ -42,7 +42,7 @@ int main(int argc, char** argv)
   sseq1->applyTimeOffset(sync(0));
 
   pcl::visualization::CloudViewer vis("Overlay");
-  double thresh = 0.05;
+  double thresh = 0.015;
   ROS_WARN_STREAM("Showing clouds dt of less than " << thresh << ".");
   for(size_t i = 0; i < sseq0->size(); ++i) {
     Cloud::Ptr overlay = sseq0->getCloud(i);
@@ -51,11 +51,15 @@ int main(int argc, char** argv)
     Cloud::Ptr pcd1 = sseq1->getCloud(ts0, &dt);
     Cloud::Ptr transformed(new Cloud);
     cout << "dt = " << dt << endl;
-    if(dt < thresh)
-      transformPointCloud(*pcd1, *transformed, transform);
+    if(dt > thresh)
+      continue;
+
+    
+    transformPointCloud(*pcd1, *transformed, transform);
     *overlay += *transformed;
     vis.showCloud(overlay);
-    usleep(30 * 1000);
+    if(vis.wasStopped(30))
+      break;
   }
 
   return 0;
