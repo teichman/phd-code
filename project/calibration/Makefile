@@ -154,10 +154,10 @@ iros/iros2012.pdf: 	$$(MAKE_ROOT)/iros/iros2012.tex \
 	ln -sf $(MAKE_ROOT)/iros/iros2012.bib; \
 	ln -sf $(MAKE_ROOT)/iros/latex_macros.tex; \
 	fi
-	-cd $(@D) && pdflatex iros2012
-	-cd $(@D) && bibtex iros2012
-	-cd $(@D) && pdflatex iros2012
-	-cd $(@D) && pdflatex iros2012
-	-cd $(@D) && rm iros2012.{aux,bbl,blg,log,idx,out}
+	cd $(@D) && pdflatex iros2012
+	cd $(@D) && bibtex iros2012
+	cd $(@D) && pdflatex iros2012
+	cd $(@D) && pdflatex iros2012
+	cd $(@D) && rm iros2012.{aux,bbl,blg,log,out}
 
 

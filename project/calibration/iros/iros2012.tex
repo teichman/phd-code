@@ -19,12 +19,13 @@
 
 \usepackage{hyperref}
 % The following packages can be found on http:\\www.ctan.org
-\usepackage{graphics} % for pdf, bitmapped graphics files
-%\usepackage{mathptmx} % assumes new font selection scheme installed
+\usepackage{mathptmx} % assumes new font selection scheme installed
 \usepackage{times} % assumes new font selection scheme installed
 \usepackage{amsmath} % assumes amsmath package installed
 \usepackage{amssymb}  % assumes amsmath package installed
 \usepackage{multirow}
+\usepackage[ruled,vlined]{algorithm2e}
+\usepackage{algorithmic}
 
 \title{\LARGE \bf
 Unsupervised Calibration of Multiple Depth Sensors (TODO come up with real title)}
@@ -33,8 +34,7 @@ Unsupervised Calibration of Multiple Depth Sensors (TODO come up with real title
 \author{Alex Teichman, Stephen Miller, and Sebastian Thrun
 \thanks{Alex Teichman, Stephen Miller, and Sebastian Thrun are with the Department of Computer Science at Stanford University. \newline E-mail: \{teichman, stephen, thrun\}@cs.stanford.edu } }
 
-
-
+\include{latex_macros}
 \begin{document}
 
 \maketitle
@@ -57,7 +57,7 @@ TODO
 %TODO@SDM Write
 
 \section{RELATED WORK}
-TODO \cite{rubleeorb}
+%TODO \cite{rubleeorb}
 %TODO@SDM Write
 
 
@@ -65,17 +65,90 @@ TODO \cite{rubleeorb}
 TODO
 %TODO@SDM Write
 
+
+
+
+
+\begin{algorithm}
+  \caption{Algorithm sketch}
+  \label{alg:sketch}
+  \SetLine
+  \KwData{Two roughly synchronized RGBD videos}
+  \KwResult{Transform and synchronization offset}
+  \phantom{\;}
+  Background subtraction to find foreground points\;
+  Connected components to find large objects\;
+  $T$ = centroidRANSAC()\;
+  Apply $T$ to floating scenes\;
+  \While{$||T||_F > 0.001$}{
+    $T$ = updateTransformICP()\;
+    Apply $T$ to floating scenes\;
+    $s$ = updateSync()\;
+    Apply $s$ to floating scenes\;
+  }
+\end{algorithm}
+
+
+
+referred to as \texttt{centroidRANSAC()} in Algorithm~\ref{alg:sketch}, provides a rough estimate of the transform which serves as a reasonable starting point for ICP.  To accomplish this, we first 
+
+This methods assumes that objects are we first assume that NTP or similar methods can provide synchronization to within about 100ms.
+
+However, naively running ICP on entire frames can result in very poor alignments, an example of which can be seen in Figure \todo{x}.  This is because ICP rewards transforms in which many points are nearby, and floors often have more observed points on them than the people or robots walking on them.  However, running ICP on just these foreground prevents this problem.
+
+\newcommand{\dmax}{d_{\mbox{\tiny{max}}}}
+\begin{align*}
+  \frac{1}{M} \sum_{i=1}^M \frac{1}{N_i} \sum_{j=1}^{N_i}    (\dmax, ||p_j - p_j'||_2)
+\end{align*}
+
+\begin{algorithm}
+  \caption{Centroid RANSAC}
+  \label{alg:cal}
+  \SetLine
+  \KwData{Two roughly synchronized RGBD videos}
+  \KwResult{Rough guess of transform}
+  \phantom{\;}
+  Background subtraction to find foreground points\;
+  Connected components to find large objects\;
+  $T$ = centroidRANSAC()\;
+  Apply $T$ to floating scenes\;
+  \While{$||T||_F > 0.001$}{
+    $T$ = updateTransformICP()\;
+    Apply $T$ to floating scenes\;
+    $s$ = updateSync()\;
+    Apply $s$ to floating scenes\;
+  }
+\end{algorithm}
+
+
+
 \section{EXPERIMENTS}
 TODO
 %TODO@SDM Write
+
+To keep the amount of data manageable but still produce a good result, we used between about thirty and ten percent of the total frames in each sequence, sampling chunks of consecutive frames to allow synchronization search to work.
+
+Because of the availability of NTP, approximate synchronization of the sensors is possible across multiple machines.  However, NTP alone does not provide sufficient precision for aligning 30fps RBGD data, where offsets tens of milliseconds are significant.
+
+
+sensors do not trigger at the same time, leading to unavoidable synchronization slop that we do not address.
+
+
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{img/bargraph.pdf}
+  \caption{}
+  \label{fig:}
+\end{figure}
+
 
 \section{CONCLUSIONS}
 TODO
 %TODO@SDM Write
 
-\bibliographystyle{IEEEtran}
+%\bibliographystyle{IEEEtran}
 %\bibliography{iros2012}
-
 
 \end{document}
 
