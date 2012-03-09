@@ -23,7 +23,7 @@ string usageString()
 
 int main(int argc, char** argv)
 {
-  if(argc != 5) {
+  if(argc != 5 && argc != 6) {
     cout << usageString() << endl;
     return 0;
   }
@@ -48,46 +48,52 @@ int main(int argc, char** argv)
   //Compute some simple Eigen transforms
   Eigen::Affine3f moveLeft, moveRight, moveUp, moveDown, moveForward, moveBackward,
                   rollLeft, rollRight, pitchUp, pitchDown, yawLeft, yawRight;
-  dx = 0.001;
-  da = M_PI/100;
-  moveLeft = Translation3f(-dx,0,0);
-  moveRight = Translation3f(dx,0,0);
-  moveUp = Translation3f(0,dx,0);
-  moveDown = Translation3f(0,-dx,0);
-  moveForward = Translation3f(0,0,dx);
-  moveBackward = Translation3f(0,0,-dx);
-  rollLeft = AngleAxisf(da, Vector3f(0,0,1));
-  rollRight = AngleAxisf(-da, Vector3f(0,0,1));
-  pitchUp = AngleAxisf(da, Vector3f(1,0,0));
-  pitchDown = AngleAxisf(-da, Vector3f(1,0,0));
-  yawLeft = AngleAxisf(da, Vector3f(0,1,0));
-  yawRight = AngleAxisf(-da, Vector3f(0,1,0));
+  float dx = 0.001;
+  float da = M_PI/1000;
   bool quit = false;
   bool update_frame = true, update_transform = true;
   int frame = 0;
   double dt;
   Cloud::Ptr cloud0, cloud1;
-  pcl::visualization::CloudViewer vis("Overlay");
   while(!quit){
-    cout << "Transformation: " << transform.matrix() << endl;
+    moveLeft = Translation3f(-dx,0,0);
+    moveRight = Translation3f(dx,0,0);
+    moveUp = Translation3f(0,-dx,0);
+    moveDown = Translation3f(0,dx,0);
+    moveForward = Translation3f(0,0,dx);
+    moveBackward = Translation3f(0,0,-dx);
+    rollLeft = AngleAxisf(da, Vector3f(0,0,1));
+    rollRight = AngleAxisf(-da, Vector3f(0,0,1));
+    pitchUp = AngleAxisf(da, Vector3f(1,0,0));
+    pitchDown = AngleAxisf(-da, Vector3f(1,0,0));
+    yawLeft = AngleAxisf(da, Vector3f(0,1,0));
+    yawRight = AngleAxisf(-da, Vector3f(0,1,0));
     if(update_frame){
       cloud0 = sseq0->getCloud(frame);    
-      cloud1 = sseq->getCloud(cloud->header.stamp.toSec(), dt);
+      cloud1 = sseq1->getCloud(cloud0->header.stamp.toSec(), &dt);
+      cout << "dt = " << dt << endl;
     }
     if(update_frame || update_transform){
       Cloud::Ptr overlay(new Cloud);
       *overlay = *cloud0;
       Cloud::Ptr transformed(new Cloud);
-      cout << "dt = " << dt << ednl;
-      if(dt < 0.05)
+      if (update_transform){
+        cout << "Transformation: " << transform.matrix() << endl;
+      }
+      if(dt < 0.05){
         transformPointCloud(*cloud1, *transformed, transform);
-      *overlay += *transformed;
-      vis.showCloud(overlay)
-        usleep(10 * 1000);
+        *overlay += *transformed;
+      }
+      else{
+        cout << "dt > 0.05" << endl;
+      }
+      vis.showCloud(overlay);
     }
     update_frame = false;
     update_transform = false;
-    char cmd = cv::waitKey();
+    char cmd = cv::waitKey(frame_wait);
+    string save_loc;
+    int frame_wait = 0;
     switch(cmd)
     {
       case 'a':
@@ -108,12 +114,12 @@ int main(int argc, char** argv)
       case 's':
         transform = moveDown*transform;
         cout << "Moving down by " << dx << endl;
-        downdate_transform = true;
+        update_transform = true;
         break;
       case 'e':
         transform = moveForward*transform;
         cout << "Moving forward by " << dx << endl;
-        forwarddate_transform = true;
+        update_transform = true;
         break;
       case 'q':
         transform = moveBackward*transform;
@@ -164,6 +170,42 @@ int main(int argc, char** argv)
         break;
       case '1':
         quit = true;
+        break;
+      case '2':
+        if(argc==6){
+          save_loc = argv[5];
+        } else{
+          cout << "Did not specify a save directory. Overwrite?" << endl;
+          char val;
+          cin >> val;
+          if (val == 'y')
+            save_loc = argv[3];
+          else
+            break;
+        }
+        cout << "Saving to: " << save_loc << endl;
+        eigen_extensions::saveASCII(transform.matrix(), save_loc );
+        quit = true;
+        break;
+      case '.':
+        da *= 10;
+        dx *= 10;
+        cout << "da: " << da << endl;
+        cout << "dx: " << dx << endl;
+        break;
+      case ',':
+        da /= 10;
+        dx /= 10;
+        cout << "da: " << da << endl;
+        cout << "dx: " << dx << endl;
+        break;
+      case ' ':
+        if(frame_wait == 0){
+          frame_wait = 30;
+        }
+        else{
+          frame_wait = 0;
+        }
         break;
     }
 
