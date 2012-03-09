@@ -64,6 +64,7 @@ visualize_keypoint-%: keypoint/configuration%/transform.eig.txt $(DATA_DIR)/conf
 ground_truth_sync-%: $(DATA_DIR)/configuration%
 	rosrun xpl_calibration offset_maker $(DATA_DIR)/configuration$*/unstructured/camera* ground_truth/configuration$*/sync.eig.txt ground_truth/configuration$*/sync.eig.txt
 
+
 dynamic-fsv/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) && if [ -e $(MAKE_ROOT)/custom_pipelines/dynamic.pl ]; then \
@@ -90,17 +91,30 @@ MAX_DT := 0.015
 ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	rosrun cloud_calibration checker_calibrate $(DATA_DIR)/$*/checkerboard/camera* $@ $(MAX_DT) > $@-log.txt
-	echo "0" > $(@D)/sync.eig.txt #NO syncing for now
+	if [ ! -f $(@D)/sync.eig.txt ];\
+	then \ 
+		echo "Since no sync has been made, we will set it to zero" \
+		echo "0" > $(@D)/sync.eig.txt \
+	fi
 
 ground_truth_user/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	rosrun cloud_calibration user_calibrate $(DATA_DIR)/$*/checkerboard/camera* $@ $(MAX_DT) > $@-log.txt
 	rosrun xpl_calibration offset_maker $(DATA_DIR)/$*/unstructured/camera* $(@D)/sync.eig.txt > $(@D)/sync.eig.txt-log.txt
 
+ground_truth_user-%: $(DATA_DIR)/configuration%
+	mkdir -p $(MAKE_ROOT)/ground_truth_user/configuration$*
+	rosrun cloud_calibration user_calibrate $(DATA_DIR)/configuration$*/checkerboard/camera* ground_truth_user/configuration$*/transform.eig.txt $(MAX_DT)
+
+
 keypoint/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) &&	$(CALIBRATE_ORB) $(DATA_DIR)/$*/unstructured/camera* > transform.eig.txt-log.txt
-	echo "0" > $(@D)/sync.eig.txt #NO syncing for now
+	if [ ! -f $(D)/sync.eig.txt ];
+	then \
+		echo "Since no sync has been made, we will set it to zero" \
+		echo "0" > $(@D)/sync.eig.txt \
+	fi
 
 evaluations/%.txt: ground_truth/%/transform.eig.txt dynamic/%/transform.eig.txt
 	mkdir -p $(@D)
