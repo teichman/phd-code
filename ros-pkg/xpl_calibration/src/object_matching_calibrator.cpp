@@ -67,21 +67,21 @@ void ObjectMatchingCalibrator::compute()
     cout << "========================================" << endl;
     cout << "Outer iteration " << iter << endl;
     cout << "========================================" << endl;
-    if(debug_) {
-      ostringstream oss;
-      oss << "icp-iter" << setw(4) << setfill('0') << iter;
-      visualizeTransform(oss.str(), icp_transform_);
-    }
 
     Affine3f incremental = updateICP(trees0, scenes0, scenes1);
     icp_transform_ = incremental * icp_transform_;
-    
     double delta = (incremental.matrix() - Matrix4f::Identity()).norm();
 
     cout << "Incremental transform: " << endl << incremental.matrix() << endl;
     cout << "Current final transform: " << endl << icp_transform_.matrix() << endl;
     cout << "Outer delta: " << delta << endl;
-    if(delta < param<double>("ICPThreshold"))
+    if(debug_) {
+      ostringstream oss;
+      oss << "icp-iter" << setw(4) << setfill('0') << iter;
+      visualizeTransform(oss.str(), icp_transform_);
+    }
+    
+    if(delta < param<double>("ICPTransformThreshold"))
       break;
 
     double dt = updateSync(trees0, scenes0, scenes1);
@@ -450,7 +450,7 @@ Affine3f ObjectMatchingCalibrator::updateICP(const std::vector<KdTree::Ptr>& tre
 {
   Affine3f transform = Affine3f::Identity();
   
-  double icp_thresh = param<double>("DistanceThreshold");
+  double max_dist = param<double>("ICPDistanceThreshold");
   vector<int> indices;
   vector<float> distances;
   int iter = 0;
@@ -476,7 +476,7 @@ Affine3f ObjectMatchingCalibrator::updateICP(const std::vector<KdTree::Ptr>& tre
 	indices.clear();
 	distances.clear();
 	tree0->nearestKSearch(pcd1[j], 1, indices, distances);
-	if(indices.empty() || distances[0] > icp_thresh)
+	if(indices.empty() || distances[0] > max_dist)
 	  continue;
 	
 	tfc.add(pcd1[j].getVector3fMap(), pcd0[indices[0]].getVector3fMap());
@@ -487,7 +487,7 @@ Affine3f ObjectMatchingCalibrator::updateICP(const std::vector<KdTree::Ptr>& tre
     transform = incremental * transform;
     double delta = (incremental.matrix() - Matrix4f::Identity()).norm();
     cout << "  Inner ICP iter " << iter << ", delta " << delta << endl;
-    if(delta < param<double>("ICPThreshold"))
+    if(delta < param<double>("ICPTransformThreshold"))
       break;
     
     // -- Move all the scenes in sensor 1 by incremental.

@@ -39,17 +39,13 @@ public:
   ObjectMatchingCalibrator(std::string name) :
     Pod(name)
   {
-    declareParam<bool>("UseGridSearch", false); // TODO: Factor this out into another node.
-    declareParam<double>("CentroidThreshold", 0.5); // Distance in meters between centroids to count as inliers.
-    declareParam<double>("DistanceThreshold", 0.3); // Maximum distance for hinge loss in objective function.
-    declareParam<double>("TimeOffsetRange", 0.1);
-    declareParam<double>("TimeOffsetResolution", 0.005);
-    declareParam<double>("TimeCorrespondenceThreshold", 0.015);
-    declareParam<double>("ICPDownsampling", 0.0); // Drop this fraction.  0.0 means using all the data, 1.0 none.
-    declareParam<double>("ICPThreshold", 0.001);
-    declareParam<double>("GridSearchDownsampling", 0.95); // Drop this fraction.  0.0 means using all the data, 1.0 none.
     declareParam<int>("NumRansacIters", 1000);
     declareParam<int>("NumCorrespondences", 3);
+    declareParam<double>("CentroidThreshold", 0.5); // Distance in meters between centroids to count as inliers.
+    declareParam<double>("TimeCorrespondenceThreshold", 0.015);
+    declareParam<double>("ICPDownsampling", 0.0); // Drop this fraction.  0.0 means using all the data, 1.0 none.
+    declareParam<double>("ICPDistanceThreshold", 0.3); // Maximum distance for hinge loss in objective function.
+    declareParam<double>("ICPTransformThreshold", 0.001);
 
     declareInput<rgbd::Sequence::ConstPtr>("Sequence0");
     declareInput<rgbd::Sequence::ConstPtr>("Sequence1");
@@ -59,7 +55,6 @@ public:
     declareOutput<double>("SyncOffset");
     declareOutput<const Eigen::Affine3f*>("CentroidRansacTransform");
     declareOutput<const Eigen::Affine3f*>("IcpTransform");
-    declareOutput<const Eigen::Affine3f*>("GridSearchTransform");
     declareOutput<const Eigen::Affine3f*>("FinalTransform");
   }
 
