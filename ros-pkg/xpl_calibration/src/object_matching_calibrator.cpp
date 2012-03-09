@@ -98,6 +98,8 @@ void ObjectMatchingCalibrator::compute()
     ++outer_iter_;
   }
 
+  visualizeTransform("icp-final", icp_transform_);
+  
   push<double>("SyncOffset", sync_);
   push<const Affine3f*>("CentroidRansacTransform", &ransac_transform_);
   push<const Affine3f*>("IcpTransform", &icp_transform_);

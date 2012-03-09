@@ -39,7 +39,7 @@ void BackgroundSubtractor::debug() const
 {
   const Sequence& seq = *pull<Sequence::ConstPtr>("Sequence");
   for(size_t i = 0; i < seq.size(); ++i) {
-    if(i % 100)
+    if(i % 25)
       continue;
     
     const Cloud& pcd = *seq.pcds_[i];

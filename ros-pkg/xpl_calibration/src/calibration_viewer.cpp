@@ -1,4 +1,4 @@
-#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/common/transforms.h>
 #include <eigen_extensions/eigen_extensions.h>
 #include <rgbd_sequence/rgbd_sequence.h>
@@ -6,6 +6,7 @@
 
 using namespace std;
 using namespace rgbd;
+using namespace pcl::visualization;
 
 string usageString()
 {
@@ -41,7 +42,33 @@ int main(int argc, char** argv)
   sseq1->load(argv[2]);
   sseq1->applyTimeOffset(sync(0));
 
-  pcl::visualization::CloudViewer vis("Overlay");
+  PCLVisualizer vis("Overlay");
+  vis.setBackgroundColor(255, 255, 255);
+  Cloud::Ptr transformed(new Cloud);
+  transformPointCloud(*sseq1->getCloud(0), *transformed, transform);
+  vis.addPointCloud(sseq0->getCloud(0), "pcd0");
+  vis.addPointCloud(transformed, "pcd1");
+  vis.setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, 3, "pcd0");
+  vis.setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, 3, "pcd1");
+
+  // -- Hardcode the camera for the Kinect.
+  vis.camera_.clip[0] = 0.00387244;
+  vis.camera_.clip[1] = 3.87244;
+  vis.camera_.focal[0] = -0.160878;
+  vis.camera_.focal[1] = -0.0444743;
+  vis.camera_.focal[2] = 1.281;
+  vis.camera_.pos[0] = 0.0402195;
+  vis.camera_.pos[1] = 0.0111186;
+  vis.camera_.pos[2] = -1.7;
+  vis.camera_.view[0] = 0;
+  vis.camera_.view[1] = -1;
+  vis.camera_.view[2] = 0;
+  vis.camera_.window_size[0] = 1678;
+  vis.camera_.window_size[1] = 525;
+  vis.camera_.window_pos[0] = 2;
+  vis.camera_.window_pos[1] = 82;
+  vis.updateCamera();
+  
   double thresh = 0.015;
   ROS_WARN_STREAM("Showing clouds dt of less than " << thresh << ".");
   for(size_t i = 0; i < sseq0->size(); ++i) {
@@ -54,11 +81,11 @@ int main(int argc, char** argv)
     if(dt > thresh)
       continue;
 
-    
     transformPointCloud(*pcd1, *transformed, transform);
-    *overlay += *transformed;
-    vis.showCloud(overlay);
-    if(vis.wasStopped(30))
+    vis.updatePointCloud(sseq0->getCloud(i), "pcd0");
+    vis.updatePointCloud(pcd1, "pcd1");
+    vis.spinOnce(15);
+    if(vis.wasStopped())
       break;
   }
 
