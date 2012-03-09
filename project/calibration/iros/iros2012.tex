@@ -68,6 +68,10 @@ TODO
 
 
 
+ we first assume that NTP or similar methods can provide synchronization to within about 100ms.  The core idea of the approach is to use the rough locations of moving objects to provide a reasonable starting point for ICP over transforms and grid search over synchronization offsets.
+
+However, naively running ICP on entire frames can result in very poor alignments, an example of which can be seen in Figure \todo{x}.  This is because ICP rewards transforms in which many points are nearby, and floors often have more observed points on them than the people or robots walking on them.  Running ICP on just the foreground objects in each frame produces much better results.
+
 
 \begin{algorithm}
   \caption{Algorithm sketch}
@@ -88,36 +92,29 @@ TODO
   }
 \end{algorithm}
 
+background subtraction is a histogram of depth values for each pixel.  If at least some percent of the values in the histogram have ended up in that bin, then it's a background point.
 
+connected components is the usual thing, with erode and dilate to get rid of small points.  objects were required to be at least 0.5m in one direction and 1000 points.
 
-referred to as \texttt{centroidRANSAC()} in Algorithm~\ref{alg:sketch}, provides a rough estimate of the transform which serves as a reasonable starting point for ICP.  To accomplish this, we first 
-
-This methods assumes that objects are we first assume that NTP or similar methods can provide synchronization to within about 100ms.
-
-However, naively running ICP on entire frames can result in very poor alignments, an example of which can be seen in Figure \todo{x}.  This is because ICP rewards transforms in which many points are nearby, and floors often have more observed points on them than the people or robots walking on them.  However, running ICP on just these foreground prevents this problem.
-
+updateSync was done by grid search over
 \newcommand{\dmax}{d_{\mbox{\tiny{max}}}}
 \begin{align*}
-  \frac{1}{M} \sum_{i=1}^M \frac{1}{N_i} \sum_{j=1}^{N_i}    (\dmax, ||p_j - p_j'||_2)
+  \frac{1}{M} \sum_{i=1}^M \frac{1}{N_i} \sum_{j=1}^{N_i}    (\dmax, ||p_j - p'||_2)
 \end{align*}
+where $i$ ranges over matched foreground scenes and $j$ over points in the floating sensor.  $p'$ is the nearest neighbor.
+
+
+referred to as \texttt{centroidRANSAC()} in Algorithm~\ref{alg:sketch}, provides a rough estimate of the transform which serves as a reasonable starting point for ICP.
+
 
 \begin{algorithm}
   \caption{Centroid RANSAC}
   \label{alg:cal}
   \SetLine
-  \KwData{Two roughly synchronized RGBD videos}
+  \KwData{Two roughly synchronized sets of foreground objects from RGBD videos}
   \KwResult{Rough guess of transform}
   \phantom{\;}
-  Background subtraction to find foreground points\;
-  Connected components to find large objects\;
-  $T$ = centroidRANSAC()\;
-  Apply $T$ to floating scenes\;
-  \While{$||T||_F > 0.001$}{
-    $T$ = updateTransformICP()\;
-    Apply $T$ to floating scenes\;
-    $s$ = updateSync()\;
-    Apply $s$ to floating scenes\;
-  }
+  inlier threshold 0.5m.  RANSAC, 1000 samples of correspondences.
 \end{algorithm}
 
 
