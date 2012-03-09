@@ -55,6 +55,7 @@ int main(int argc, char** argv)
   int frame = 0;
   double dt;
   Cloud::Ptr cloud0, cloud1;
+  int frame_wait = 0;
   while(!quit){
     moveLeft = Translation3f(-dx,0,0);
     moveRight = Translation3f(dx,0,0);
@@ -93,7 +94,6 @@ int main(int argc, char** argv)
     update_transform = false;
     char cmd = cv::waitKey(frame_wait);
     string save_loc;
-    int frame_wait = 0;
     switch(cmd)
     {
       case 'a':
