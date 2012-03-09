@@ -65,6 +65,14 @@ dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) && ON=5 OFF=10 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
+dynamic/configuration11/transform.eig.txt: $(DATA_DIR)/configuration11 $$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+
+dynamic/configuration10/transform.eig.txt: $(DATA_DIR)/configuration10 $$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+
 dynamic/configuration9/transform.eig.txt: $(DATA_DIR)/configuration9 $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt

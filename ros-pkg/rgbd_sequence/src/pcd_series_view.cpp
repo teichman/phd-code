@@ -38,16 +38,22 @@ int main(int argc, char** argv)
     pcl::io::loadPCDFile(argv[i], *pcd);
     cout << argv[i] << endl;
     vis.showCloud(pcd);
-    if(delay)
-      usleep(delay * 1000);
+
+    if(delay && vis.wasStopped(delay))
+      return 0;
     else { 
       while(true) {
 	if(g_pressed) {
 	  g_pressed = false;
 	  break;
 	}
-	usleep(1000);
+	
+	if(vis.wasStopped(1))
+	  return 0;
       }
     }
   }
+
+  while(!vis.wasStopped(10));
+  return 0;
 }

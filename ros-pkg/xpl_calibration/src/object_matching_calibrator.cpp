@@ -59,26 +59,27 @@ void ObjectMatchingCalibrator::compute()
 
   for(size_t i = 0; i < scenes1.size(); ++i)
     pcl::transformPointCloud(*scenes1[i], *scenes1[i], ransac_transform_);
+  visualizeScenes("ransac", scenes0, scenes1);
   
-  int iter = 0;
+  outer_iter_ = 0;
   icp_transform_ = ransac_transform_;
   sync_ = 0;
   while(true) {
     cout << "========================================" << endl;
-    cout << "Outer iteration " << iter << endl;
+    cout << "Outer iteration " << outer_iter_ << endl;
     cout << "========================================" << endl;
 
     Affine3f incremental = updateICP(trees0, scenes0, scenes1);
     icp_transform_ = incremental * icp_transform_;
     double delta = (incremental.matrix() - Matrix4f::Identity()).norm();
-
+    
     cout << "Incremental transform: " << endl << incremental.matrix() << endl;
     cout << "Current final transform: " << endl << icp_transform_.matrix() << endl;
     cout << "Outer delta: " << delta << endl;
     if(debug_) {
       ostringstream oss;
-      oss << "icp-iter" << setw(4) << setfill('0') << iter;
-      visualizeTransform(oss.str(), icp_transform_);
+      oss << "icp-outer-iter" << setw(4) << setfill('0') << outer_iter_;
+      visualizeScenes(oss.str(), scenes0, scenes1);
     }
     
     if(delta < param<double>("ICPTransformThreshold"))
@@ -88,8 +89,13 @@ void ObjectMatchingCalibrator::compute()
     sync_ += dt;
     cout << "dt: " << dt << endl;
     cout << "Current sync offset: " << sync_ << endl;
+    if(debug_) {
+      ostringstream oss;
+      oss << "sync-iter" << setw(4) << setfill('0') << outer_iter_;
+      visualizeScenes(oss.str(), scenes0, scenes1);
+    }
     
-    ++iter;
+    ++outer_iter_;
   }
 
   push<double>("SyncOffset", sync_);
@@ -241,14 +247,45 @@ double ObjectMatchingCalibrator::gridSearchSync(ScalarFunction::Ptr lf) const
   GridSearch gs(1);
   gs.objective_ = lf;
   gs.max_passes_ = 1;
-  gs.ranges_ << 0.1;
-  gs.min_resolutions_ << 0.005;
-  gs.max_resolutions_ << 0.05;
+  gs.ranges_ << 0.05;
+  gs.min_resolutions_ << 0.003;
+  gs.max_resolutions_ << 0.01;
   gs.scale_multipliers_ << 0.5;
   VectorXd init = VectorXd::Zero(1);
   cout << "Starting grid search over offset." << endl;
   VectorXd x = gs.solve(init);
   return x(0);
+}
+
+
+void ObjectMatchingCalibrator::visualizeScenes(const std::string& name,
+					       const std::vector<Cloud::ConstPtr>& scenes0,
+					       const std::vector<Cloud::Ptr>& scenes1) const
+{
+  for(size_t i = 0; i < scenes1.size(); ++i) {
+    int idx = seek(scenes0, scenes1[i]->header.stamp.toSec(), param<double>("TimeCorrespondenceThreshold"));
+    if(idx == -1)
+      continue;
+
+    Cloud overlay = *scenes0[idx];
+    for(size_t j = 0; j < overlay.size(); ++j) {
+      overlay[j].r = 255;
+      overlay[j].g = 0;
+      overlay[j].b = 0;
+    }
+    
+    overlay += *scenes1[i];
+    for(size_t j = scenes0[idx]->size(); j < overlay.size(); ++j) {
+      overlay[j].r = 0;
+      overlay[j].g = 0;
+      overlay[j].b = 255;
+    }
+
+    ostringstream oss;
+    oss << getDebugPath() << "-" << name << "-scene" << setw(4) << setfill('0') << i << ".pcd";
+    cout << "Saving to " << oss.str() << endl;
+    pcl::io::savePCDFileBinary(oss.str(), overlay);
+  }
 }
 
 
@@ -456,6 +493,12 @@ Affine3f ObjectMatchingCalibrator::updateICP(const std::vector<KdTree::Ptr>& tre
   int iter = 0;
   double downsample = param<double>("ICPDownsampling");
   while(true) {
+    if(debug_) {
+      ostringstream oss;
+      oss << "icp-outer-iter"  << setw(4) << setfill('0') << outer_iter_
+	  << "-inner-iter" << setw(4) << setfill('0') << iter;
+      visualizeScenes(oss.str(), scenes0, scenes1);
+    }
     ++iter;
     
     pcl::TransformationFromCorrespondences tfc;
