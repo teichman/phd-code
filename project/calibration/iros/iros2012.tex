@@ -92,6 +92,14 @@ However, naively running ICP on entire frames can result in very poor alignments
   }
 \end{algorithm}
 
+\begin{figure*}
+  \centering
+  \includegraphics[width=\linewidth]{static_img/intuition/intuition.pdf}
+  \caption{Background subtraction (foreground shown in red), object extraction, rough initialization from ransac, final result after running alternating sync search and ICP on all foreground models simultaneously. }
+  \label{fig:}
+\end{figure*}
+
+
 background subtraction is a histogram of depth values for each pixel.  If at least some percent of the values in the histogram have ended up in that bin, then it's a background point.
 
 connected components is the usual thing, with erode and dilate to get rid of small points.  objects were required to be at least 0.5m in one direction and 1000 points.
@@ -139,6 +147,9 @@ sensors do not trigger at the same time, leading to unavoidable synchronization 
   \label{fig:}
 \end{figure}
 
+
+
+Angular error results are reported as the angle in the angle-axis representation of the rotation matrix 
 
 \section{CONCLUSIONS}
 TODO

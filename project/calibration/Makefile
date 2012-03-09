@@ -136,9 +136,9 @@ bargraph.pdf: $(addprefix evaluations/, $(addsuffix .txt, $(CONFIGURATIONS)))
 ############################################################
 
 .PHONY: iros/img
-iros/img: bargraph.pdf
-	mkdir -p $@
-	cp $< $@
+#iros/img: bargraph.pdf#
+#	mkdir -p $@
+#	cp $< $@
 
 # You'll need to get static_img from firetail.
 # There must be a cleaner way to handle multiple workspaces.
