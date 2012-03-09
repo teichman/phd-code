@@ -93,7 +93,7 @@ ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	rosrun cloud_calibration checker_calibrate $(DATA_DIR)/$*/checkerboard/camera* $@ $(MAX_DT) > $@-log.txt
 	if [ ! -f $(@D)/sync.eig.txt ];\
-	then \ 
+	then \
 		echo "Since no sync has been made, we will set it to zero" \
 		echo "0" > $(@D)/sync.eig.txt \
 	fi
@@ -119,8 +119,8 @@ keypoint/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 
 evaluations/%.txt: ground_truth/%/transform.eig.txt dynamic/%/transform.eig.txt
 	mkdir -p $(@D)
-	$(EVALUATE) $^
-	$(EVALUATE) $^ > $@
+	$(EVALUATE) $^ ground_truth/$*/sync.eig.txt dynamic/$*/sync.eig.txt
+	$(EVALUATE) $^ ground_truth/$*/sync.eig.txt dynamic/$*/sync.eig.txt > $@
 
 ############################################################
 # -- Plots

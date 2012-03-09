@@ -8,16 +8,24 @@ using namespace Eigen;
 string usageString()
 {
   ostringstream oss;
-  oss << "Usage: evaluate GROUND_TRUTH_EIG ESTIMATED_EIG" << endl;
+  oss << "Usage: evaluate GROUND_TRUTH_TRANS ESTIMATED_TRANS GROUND_TRUTH_SYNC ESTIMATED_SYNC" << endl;
   return oss.str();
 }
 
 int main(int argc, char** argv)
 {
-  if(argc != 3) {
+  if(argc != 5) {
     cout << usageString() << endl;
     return 0;
   }
+
+  VectorXd gtt;
+  VectorXd estt;
+  eigen_extensions::loadASCII(argv[3], &gtt);
+  eigen_extensions::loadASCII(argv[4], &estt);
+  cout << "Ground truth sync: " << gtt(0) << endl;
+  cout << "Estimated sync: " << estt(0) << endl;
+  cout << "Sync error: " << fabs(gtt(0) - estt(0)) << endl;
 
   MatrixXd gt;
   MatrixXd est;
@@ -38,8 +46,6 @@ int main(int argc, char** argv)
   AngleAxisd aa(Rest.inverse() * Rgt);
   cout << "Angle: " << aa.angle() << endl;
   cout << "Axis: " << aa.axis().transpose() << endl;
-
-
   
   AngleAxisd final(AngleAxisd(M_PI/2.0, Vector3d::UnitZ()) * AngleAxisd(M_PI/2.0, Vector3d::UnitY()));
   cout << "jesse: " << final.angle() << endl;
