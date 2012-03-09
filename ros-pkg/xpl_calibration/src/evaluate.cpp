@@ -28,7 +28,21 @@ int main(int argc, char** argv)
   cout << "Estimated: " << endl << est << endl;
 
   cout << "Frobenius: " << (gt - est).norm() << endl;
-  cout << "Translation: " << (gt.block<3, 1>(0, 3) - est.block<3, 1>(0, 3)).norm() << endl;
+
+  Vector3d Tgt = gt.block<3, 1>(0, 3);
+  Vector3d Test = est.block<3, 1>(0, 3);
+  cout << "Euclidean distance: " << (Tgt - Test).norm() << endl;
+  
+  Matrix3d Rgt = gt.block<3, 3>(0, 0);
+  Matrix3d Rest = est.block<3, 3>(0, 0);
+  AngleAxisd aa(Rest.inverse() * Rgt);
+  cout << "Angle: " << aa.angle() << endl;
+  cout << "Axis: " << aa.axis().transpose() << endl;
+
+
+  
+  AngleAxisd final(AngleAxisd(M_PI/2.0, Vector3d::UnitZ()) * AngleAxisd(M_PI/2.0, Vector3d::UnitY()));
+  cout << "jesse: " << final.angle() << endl;
 
   return 0;
 }
