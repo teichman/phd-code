@@ -122,12 +122,42 @@ evaluations/%.txt: ground_truth/%/transform.eig.txt dynamic/%/transform.eig.txt
 	$(EVALUATE) $^ ground_truth/$*/sync.eig.txt dynamic/$*/sync.eig.txt
 	$(EVALUATE) $^ ground_truth/$*/sync.eig.txt dynamic/$*/sync.eig.txt > $@
 
+
 ############################################################
 # -- Plots
 ############################################################
+
+bargraph.pdf: $(addprefix evaluations/, $(addsuffix .txt, $(CONFIGURATIONS)))
+	python $(MAKE_ROOT)/plot_bargraph.py
 
 
 ############################################################
 # -- Latex
 ############################################################
+
+.PHONY: iros/img
+iros/img: bargraph.pdf
+	mkdir -p $@
+	cp $< $@
+
+# You'll need to get static_img from firetail.
+# There must be a cleaner way to handle multiple workspaces.
+iros/iros2012.pdf: 	$$(MAKE_ROOT)/iros/iros2012.tex \
+			$$(MAKE_ROOT)/iros/iros2012.bib \
+			$$(MAKE_ROOT)/iros/latex_macros.tex \
+			iros/img \
+			iros/static_img
+	mkdir -p $(@D)
+	if [ `pwd` != $(MAKE_ROOT) ]; then \
+	cd $(@D) && cp $(MAKE_ROOT)/iros/*.{sty,cls,bst} .; \
+	ln -sf $(MAKE_ROOT)/iros/iros2012.tex; \
+	ln -sf $(MAKE_ROOT)/iros/iros2012.bib; \
+	ln -sf $(MAKE_ROOT)/iros/latex_macros.tex; \
+	fi
+	-cd $(@D) && pdflatex iros2012
+	-cd $(@D) && bibtex iros2012
+	-cd $(@D) && pdflatex iros2012
+	-cd $(@D) && pdflatex iros2012
+	-cd $(@D) && rm iros2012.{aux,bbl,blg,log,idx,out}
+
 
