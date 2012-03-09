@@ -112,7 +112,8 @@ protected:
 		    const std::vector<rgbd::Cloud::Ptr>& scenes1) const;
       
   void visualizeInliers(const std::string& name, const Eigen::Affine3f& transform) const;
-  void visualizeTransform(const std::string& name, const Eigen::Affine3f& transform) const;
+  void visualizeResult(const std::string& name, const Eigen::Affine3f& transform, double sync) const;
+  
 
   void gridSearch(const std::vector<rgbd::Cloud::Ptr>& pcds0,
 		  const std::vector<rgbd::Cloud::Ptr>& pcds1,
@@ -126,7 +127,10 @@ protected:
   double gridSearchSync(ScalarFunction::Ptr lf) const;
 };
 
+
 int seek(const std::vector<rgbd::Cloud::ConstPtr>& scenes0,
+	 double ts1, double dt_thresh);
+int seek(const std::vector<rgbd::Cloud::Ptr>& scenes0,
 	 double ts1, double dt_thresh);
 	 
 

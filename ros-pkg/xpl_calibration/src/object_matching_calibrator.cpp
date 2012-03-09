@@ -59,7 +59,7 @@ void ObjectMatchingCalibrator::compute()
 
   for(size_t i = 0; i < scenes1.size(); ++i)
     pcl::transformPointCloud(*scenes1[i], *scenes1[i], ransac_transform_);
-  visualizeScenes("ransac", scenes0, scenes1);
+  //visualizeScenes("ransac", scenes0, scenes1);
   
   outer_iter_ = 0;
   icp_transform_ = ransac_transform_;
@@ -79,7 +79,7 @@ void ObjectMatchingCalibrator::compute()
     if(debug_) {
       ostringstream oss;
       oss << "icp-outer-iter" << setw(4) << setfill('0') << outer_iter_;
-      visualizeScenes(oss.str(), scenes0, scenes1);
+      //visualizeScenes(oss.str(), scenes0, scenes1);
     }
     
     if(delta < param<double>("ICPTransformThreshold"))
@@ -92,13 +92,13 @@ void ObjectMatchingCalibrator::compute()
     if(debug_) {
       ostringstream oss;
       oss << "sync-iter" << setw(4) << setfill('0') << outer_iter_;
-      visualizeScenes(oss.str(), scenes0, scenes1);
+      //visualizeScenes(oss.str(), scenes0, scenes1);
     }
     
     ++outer_iter_;
   }
 
-  visualizeTransform("icp-final", icp_transform_);
+  visualizeResult("icp-final", icp_transform_, sync_);
   
   push<double>("SyncOffset", sync_);
   push<const Affine3f*>("CentroidRansacTransform", &ransac_transform_);
@@ -225,8 +225,8 @@ Eigen::Affine3f ObjectMatchingCalibrator::centroidRansac() const
   cout << "Num inliers after refinement: " << new_num_inliers << endl;
 
   if(debug_) {
-    visualizeTransform("ransac-rough", best_transform);
-    visualizeTransform("ransac-refined", refined);
+    visualizeResult("ransac-rough", best_transform, 0);
+    visualizeResult("ransac-refined", refined, 0);
     visualizeInliers("ransac-inliers-rough", best_transform);
     visualizeInliers("ransac-inliers-refined", refined);
   }
@@ -291,12 +291,24 @@ void ObjectMatchingCalibrator::visualizeScenes(const std::string& name,
 }
 
 
-void ObjectMatchingCalibrator::visualizeTransform(const std::string& name, const Eigen::Affine3f& transform) const
+void ObjectMatchingCalibrator::visualizeResult(const std::string& name, const Eigen::Affine3f& transform, double sync) const
 {
-  Cloud overlay;
-  pcl::transformPointCloud(*pull<Sequence::ConstPtr>("Sequence1")->pcds_[0], overlay, transform);
-  overlay += *pull<Sequence::ConstPtr>("Sequence0")->pcds_[0];
-  pcl::io::savePCDFileBinary(getDebugPath() + "-" + name + ".pcd", overlay);
+  const Sequence& seq0 = *pull<Sequence::ConstPtr>("Sequence0");
+  const Sequence& seq1 = *pull<Sequence::ConstPtr>("Sequence1");
+  
+  for(size_t i = 0; i < seq1.size(); i += 5) {
+    int idx = seek(seq0.pcds_, seq1.pcds_[i]->header.stamp.toSec() + sync, param<double>("TimeCorrespondenceThreshold"));
+    if(idx == -1)
+      continue;
+    
+    Cloud overlay;
+    pcl::transformPointCloud(*seq1.pcds_[i], overlay, transform);
+    overlay += *seq0.pcds_[idx];
+
+    ostringstream oss;
+    oss << getDebugPath() << "-" << name << "-overlay" << setw(4) << setfill('0') << i << ".pcd";
+    pcl::io::savePCDFileBinary(oss.str(), overlay);
+  }
 }
 
 void ObjectMatchingCalibrator::visualizeInliers(const std::string& name, const Eigen::Affine3f& transform) const
@@ -463,6 +475,15 @@ int ObjectMatchingCalibrator::countInliers(const Eigen::Affine3f& transform,
   return num_inliers;
 }
 
+int seek(const std::vector<Cloud::Ptr>& scenes0, double ts1, double dt_thresh)
+{
+  vector<Cloud::ConstPtr> cc;
+  for(size_t i = 0; i < scenes0.size(); ++i)
+    cc.push_back(scenes0[i]);
+
+  return seek(cc, ts1, dt_thresh);
+}
+
 int seek(const std::vector<Cloud::ConstPtr>& scenes0, double ts1, double dt_thresh)
 {
   int idx = -1;
@@ -499,7 +520,7 @@ Affine3f ObjectMatchingCalibrator::updateICP(const std::vector<KdTree::Ptr>& tre
       ostringstream oss;
       oss << "icp-outer-iter"  << setw(4) << setfill('0') << outer_iter_
 	  << "-inner-iter" << setw(4) << setfill('0') << iter;
-      visualizeScenes(oss.str(), scenes0, scenes1);
+      //visualizeScenes(oss.str(), scenes0, scenes1);
     }
     ++iter;
     
