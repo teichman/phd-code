@@ -34,7 +34,12 @@ Unsupervised Calibration of Multiple Depth Sensors (TODO come up with real title
 \author{Alex Teichman, Stephen Miller, and Sebastian Thrun
 \thanks{Alex Teichman, Stephen Miller, and Sebastian Thrun are with the Department of Computer Science at Stanford University. \newline E-mail: \{teichman, stephen, thrun\}@cs.stanford.edu } }
 
+
+
 \include{latex_macros}
+\newcommand{\img}{../img}
+\newcommand{\simg}{static_img}
+
 \begin{document}
 
 \maketitle
@@ -57,7 +62,7 @@ TODO
 %TODO@SDM Write
 
 \section{RELATED WORK}
-%TODO \cite{rubleeorb}
+\cite{rubleeorb}
 %TODO@SDM Write
 
 
@@ -94,7 +99,7 @@ However, naively running ICP on entire frames can result in very poor alignments
 
 \begin{figure*}
   \centering
-  \includegraphics[width=\linewidth]{static_img/intuition/intuition.pdf}
+  \includegraphics[width=\linewidth]{\simg/intuition/intuition.pdf}
   \caption{Background subtraction (foreground shown in red), object extraction, rough initialization from ransac, final result after running alternating sync search and ICP on all foreground models simultaneously. }
   \label{fig:}
 \end{figure*}
@@ -142,7 +147,7 @@ sensors do not trigger at the same time, leading to unavoidable synchronization 
 
 \begin{figure}
   \centering
-  \includegraphics[width=\linewidth]{img/bargraph.pdf}
+  \includegraphics[width=\linewidth]{\img/bargraph.pdf}
   \caption{}
   \label{fig:}
 \end{figure}
@@ -155,8 +160,8 @@ Angular error results are reported as the angle in the angle-axis representation
 TODO
 %TODO@SDM Write
 
-%\bibliographystyle{IEEEtran}
-%\bibliography{iros2012}
+\bibliographystyle{IEEEtran}
+\bibliography{icra2013}
 
 \end{document}
 

@@ -40,24 +40,35 @@ namespace rgbd
     }
   }
   void StreamRecorder::rgbdCallback( const boost::shared_ptr<openni_wrapper::Image>& oni_rgb,
-      const boost::shared_ptr<openni_wrapper::DepthImage>& oni_depth, float f_inv )
+				     const boost::shared_ptr<openni_wrapper::DepthImage>& oni_depth, float f_inv )
   {
-    cv::Mat3b img = oniToCV(oni_rgb);
-	  if(recording_) {
+    if(recording_) {
       timespec clk;
       clock_gettime(CLOCK_REALTIME, &clk);
-      double real_timestamp = clk.tv_sec + clk.tv_nsec * 1e-9;
+      double callback_timestamp = clk.tv_sec + clk.tv_nsec * 1e-9;
       double depth_timestamp = (double)oni_depth->getTimeStamp() / (double)1e6;
       double image_timestamp = (double)oni_rgb->getTimeStamp() / (double)1e6;
+            
       double thresh = 1.1 * (1.0 / 60.0);
       if(fabs(depth_timestamp - image_timestamp) < thresh)
       {
-        cout << setprecision(25) << "timestamp" << real_timestamp << endl;
+	cout << " ********** Adding pair." << endl;
+	cout << "rgbdCallback system timestamp: " << setprecision(16) << callback_timestamp << endl;
+	cout << "depth system timestamp: " << setprecision(16) << oni_depth->getSystemTimeStamp() << endl;
+	cout << "difference: " << setprecision(16) << oni_depth->getSystemTimeStamp() - callback_timestamp << endl;
+	cout << "depth timestamp: " << setprecision(16) << depth_timestamp << endl;
+	cout << "image timestamp: " << setprecision(16) << image_timestamp << endl;
+	
         DepthMat depth = oniDepthToEigen( oni_depth );
-        seq_->addFrame( img, depth, 1.0/f_inv, real_timestamp ); //TODO verify timing
+	cv::Mat3b img = oniToCV(oni_rgb);
+        seq_->addFrame( img, depth, 1.0/f_inv, oni_depth->getSystemTimeStamp() ); //TODO verify timing
       }
-	  }
+      else {
+	ROS_WARN_STREAM("rgbdCallback got an rgbd pair with timestamp delta of " << depth_timestamp - image_timestamp);
+      }
+    }
     else{
+      cv::Mat3b img = oniToCV(oni_rgb);
       cv::imshow("Image"+device_id_, img);
       cv::waitKey(10);
     }
