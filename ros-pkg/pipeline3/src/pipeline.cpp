@@ -497,6 +497,32 @@ namespace pipeline {
     }
     return vec;
   }
+
+  void Pipeline::load(const std::string& filename)
+  {
+    if(filename.substr(filename.size()-3).compare(".pl") != 0)
+      PL_ABORT("Tried to load Pipeline from \"" << filename << "\".  Pipeline files must have a .pl extension.");
+    
+    ifstream f;
+    f.open(filename.c_str());
+    if(!f.is_open())
+      PL_ABORT("Failed to open \"" << filename << "\".");
+    deserialize(f);
+    f.close();
+  }
+
+  void Pipeline::save(const std::string& filename) const
+  {
+    if(filename.substr(filename.size()-3).compare(".pl") != 0)
+      PL_ABORT("Tried to save Pipeline to \"" << filename << "\".  Pipeline files must have a .pl extension.");
+
+    ofstream f;
+    f.open(filename.c_str());
+    if(!f.is_open())
+      PL_ABORT("Failed to open \"" << filename << "\".");
+    serialize(f);
+    f.close();
+  }
   
   void Pipeline::serialize(std::ostream& out) const
   {
@@ -516,10 +542,12 @@ namespace pipeline {
 
     string buf;
     getline(in, buf);
-    PL_ASSERT(buf.compare("Pipeline") == 0); // TODO: Die with better error message.
+    if(buf.compare("Pipeline") != 0)
+      PL_ABORT("Error deserializing Pipeline. Expected \"Pipeline\", got \"" << buf << "\".");
     getline(in, buf); // serialization version
     in >> buf;
-    PL_ASSERT(buf.compare("Pods") == 0);
+    if(buf.compare("Pods") != 0)
+      PL_ABORT("Error deserializing Pipeline. Expected \"Pods\", got \"" << buf << "\".");
     in >> buf;
     size_t num_pods = atoi(buf.substr(1, buf.size() - 1).c_str());
     getline(in, buf);
@@ -538,7 +566,8 @@ namespace pipeline {
       // Inputs
       string buf;
       in >> buf;
-      PL_ASSERT(buf.compare("Inputs") == 0);
+      if(buf.compare("Inputs") != 0)
+	PL_ABORT("Error deserializing Pipeline. Expected \"Inputs\", got \"" << buf << "\".");
       in >> buf;
       size_t num_inputs = atoi(buf.substr(1, buf.size() - 1).c_str());
       getline(in, buf);
