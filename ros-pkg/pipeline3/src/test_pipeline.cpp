@@ -414,12 +414,11 @@ TEST(Pod, ComputeOutsidePipeline)
   hg.debug();
 }
 
-TEST(Pod, MulitpleRegistration)
-{
-  // This should never crash.
-  registerPods();
-  registerPods();
-}
+// TEST(Pod, BadLoad)
+// {
+//   Pipeline pl(1);
+//   pl.load("lib/libpipeline3.so");
+// }
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
