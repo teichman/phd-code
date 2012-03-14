@@ -49,6 +49,9 @@ target_link_libraries(calibrate_sequences ${PROJECT_NAME})
 rosbuild_add_executable(calibration_viewer src/calibration_viewer.cpp)
 target_link_libraries(calibration_viewer ${PROJECT_NAME})
 
+rosbuild_add_executable(calibration_viewer_vis src/calibration_viewer_vis.cpp)
+target_link_libraries(calibration_viewer_vis ${PROJECT_NAME})
+
 rosbuild_add_executable(interactive_calibration_viewer src/interactive_calibration_viewer.cpp)
 target_link_libraries(interactive_calibration_viewer ${PROJECT_NAME})
 
