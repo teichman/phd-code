@@ -1,6 +1,7 @@
 #include <rgbd_sequence/stream_sequence.h>
 #include <eigen_extensions/eigen_extensions.h>
-
+#define USE_DEFAULT_CALIBRATION (getenv("USE_DEFAULT_CALIBRATION") ? atoi(getenv("USE_DEFAULT_CALIBRATION")) : 0)
+#define LOAD_LEGACY (getenv("LOAD_LEGACY") ? atoi(getenv("LOAD_LEGACY")) : 0)
 using namespace std;
 namespace bfs = boost::filesystem;
 
@@ -9,8 +10,14 @@ namespace rgbd
 
   StreamSequence::StreamSequence() :
     Serializable(),
-    save_dir_(".")
+    save_dir_("."),
+    initialized_calibration_(false)
   {
+    if(USE_DEFAULT_CALIBRATION){
+      cout << "Using default calibration" << endl;
+    } else{
+      cout << "Using saved calibration" << endl;
+    }
   }
   
   StreamSequence::StreamSequence(const string& save_dir) :
@@ -126,6 +133,11 @@ namespace rgbd
       fs >> timestamps_[i];
       fs.close();
     }
+    // Load one cloud, for calibration parameters
+    DepthMat depth;
+    double timestamp;
+    loadDepth(dir, 0, depth, fx_, fy_, cx_, cy_, timestamp);
+    initialized_calibration_ = true;
     //Update save_dir_
     save_dir_ = dir;
   }
@@ -141,11 +153,30 @@ namespace rgbd
       ifstream infile;
       infile.open((dir+"/"+dpt_names_[frame]).c_str());
       eigen_extensions::deserialize(infile, &depth);
-      infile.read((char*)&fx, sizeof(double));
-      infile.read((char*)&fy, sizeof(double));
-      infile.read((char*)&cx, sizeof(double));
-      infile.read((char*)&cy, sizeof(double));
-      infile.close();
+      if(!LOAD_LEGACY){
+        infile.read((char*)&fx, sizeof(double));
+        infile.read((char*)&fy, sizeof(double));
+        infile.read((char*)&cx, sizeof(double));
+        infile.read((char*)&cy, sizeof(double));
+        infile.close();
+      } else{
+        string calibration_file = dir+"/calib.yaml";
+        if (bfs::exists(calibration_file)){
+          cv::FileStorage fs( calibration_file, cv::FileStorage::READ );
+          cv::Mat1f camera_matrix;
+          fs["camera_matrix"] >> camera_matrix;
+          fx = camera_matrix(0,0);
+          cx = camera_matrix(0,2);
+          fy = camera_matrix(1,1);
+          cy = camera_matrix(1,2);
+        }
+        else{
+          infile.read((char*)&fx, sizeof(double));
+          fy = fx;
+          cx = 320;
+          cy = 240;
+        }
+      }
       timestamp = timestamps_[frame]; //In memory already
   }
 
@@ -185,6 +216,11 @@ namespace rgbd
     double fx, fy, cx, cy , timestamp;
     loadImage(save_dir_, frame, img);
     loadDepth(save_dir_, frame, depth_mat, fx, fy, cx, cy, timestamp);
+    if( USE_DEFAULT_CALIBRATION){
+      fx = fy = 535;
+      cx = depth_mat.cols()/2;
+      cy = depth_mat.rows()/2;
+    }
     Cloud::Ptr cloud (new Cloud);
     cloud->height = depth_mat.rows();
     cloud->width = depth_mat.cols();
