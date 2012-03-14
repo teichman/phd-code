@@ -12,7 +12,7 @@ built: svn
 
 svn:
 	svn co -r3516 http://svn.pointclouds.org/pcl/trunk $@
-	cd svn && patch < ../patch-2012-03-13
+	cd svn && patch -p0 < ../patch-2012-03-13
 
 remove_msgs:
 	cd svn/common/include; \
