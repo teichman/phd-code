@@ -56,6 +56,7 @@ int main(int argc, char** argv)
   double dt;
   Cloud::Ptr cloud0, cloud1;
   int frame_wait = 0;
+  int direction = 1;
   while(!quit){
     moveLeft = Translation3f(-dx,0,0);
     moveRight = Translation3f(dx,0,0);
@@ -168,6 +169,10 @@ int main(int argc, char** argv)
           update_frame = true;
         }
         break;
+      case 'r':
+        cout << "Reversing" << endl;
+        direction *= -1;
+        break;
       case '1':
         quit = true;
         break;
@@ -207,6 +212,9 @@ int main(int argc, char** argv)
           frame_wait = 0;
         }
         break;
+    }
+    if (frame_wait != 0 ){
+      frame+= direction;
     }
 
   }

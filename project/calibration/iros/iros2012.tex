@@ -24,7 +24,7 @@
 \usepackage{amsmath} % assumes amsmath package installed
 \usepackage{amssymb}  % assumes amsmath package installed
 \usepackage{multirow}
-\usepackage[ruled,vlined]{algorithm2e}
+\usepackage[ruled,vlined,oldcommands]{algorithm2e}
 \usepackage{algorithmic}
 
 \title{\LARGE \bf
@@ -53,12 +53,61 @@ TODO
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{INTRODUCTION}
 
-TODO
 %TODO@SDM Write
+Until quite recently, depth data was a luxury available only to a handful of research labs. It would require 
+either expensive equipment, such as LIDAR, or a finely calibrated pair of stereo cameras. With the recent 
+introduction of inexpensive RGB-D sensors like the Microsoft Kinect \cite{kinect} or Asus Xtion Pro \cite{xtion}, 
+however, virtually anyone can collect colored 3D pointclouds for the cost of a point-and-shoot camera.
+
+The impact of RGB-D data is undeniable. Rather than discerning information from a rectangular grid of pixels, algorithms 
+are able to reason in the intuitive world of Euclidian space---shape and relative distance can be precisely known. 
+Problems which are very difficult in the 2D realm, such as segmentation and tracking, greatly benefit from depth 
+information \cite{rgbdtracking}.  Others, such as classification and pose estimation, have shown great promise 
+from the use of 3D models with corresponding keypoints \cite{rgbdclassification}.
+And with the availability of datasets such as \cite{rgbd-dataset} and \cite{nist-dataset}, newer algorithms continue to 
+be developed to exploit this new modality.
+
+While these sensors provide fairly accurate depth readings, they are limited in their field of view. Rather than reasoning 
+about entire objects or scenes, one must instead reason about a single viewpoint \ref{fig:viewpoint}, which is rarely 
+an intuitive 3D shape. In order to 
+construct accurate 3D models from a single camera, one must use a precisely calibrated rig to collect 
+data \cite{solutionsinperception}, or else hold it stationary and move the camera, successively aligning frames til a 
+full model is reconstructed. Both of these approaches, while successful, are limited in scope: the first requires a 
+great amount of human intervention, and both require objects of interest to be rigid.
+
+One can imagine instead a room with multiple RGB-D cameras, each with a novel view of the scene. With good 
+extrinsic calibration---knowledge of the translation, rotation, and time offset of each sensor with respect to a world frame---
+3D models of moving objects can be constructed on the fly, allowing algorithms to analyze dynamic 3D scenes. Such extrinsics 
+are often difficult to get, however, requiring ground-truth correspondences by means of a precise calibration pattern 
+\cite{checkerboard} or IR light source \cite{IRlight}. If any camera drifts or is bumped, as would likely be the case in 
+a household or office setting, the calibration sequence must be redone. Like the aforementioned reconstruction techniques, 
+intentional human effort is still required.
+
+In this paper, we aim to make the extrinsic calibration task as painless and off-the-shelf as the sensors themselves, 
+requiring no intentional human effort. Rather than relying on structured calibration patterns, 
+we will use the scene itself to calibrate. As objects move within the scene, their motion provides automatic
+correspondences between all sensors which view it, which is used to estimate extrinsics. 
+The shape and appearance of these objects---as well as overlapping portions of the scene itself---can be used to further 
+refine this estimate. We make no assumptions about the objects in the scene or the way they move, nor do we assume anything 
+about the relative poses of the cameras, beyond the existence of \emph{some} overlap in field of view.
+
+%TODO say how rest of the paper is organized
+
+\begin{figure*}
+  \centering
+  \includegraphics[width=\linewidth]{static_img/example_alignment.pdf}
+  \caption{An example calibration task. \textbf{Left}: the image and associated point cloud for both sensors. \textbf{Right}: The desired combined cloud.}
+  \label{fig:example_alignment}
+\end{figure*}
 
 \section{RELATED WORK}
 %TODO \cite{rubleeorb}
 %TODO@SDM Write
+\subsection{Calibration}
+
+\subsection{Reconstruction}
+
+\subsection{RGB-D}
 
 
 \section{OUR APPROACH}
@@ -130,6 +179,7 @@ referred to as \texttt{centroidRANSAC()} in Algorithm~\ref{alg:sketch}, provides
 \section{EXPERIMENTS}
 TODO
 %TODO@SDM Write
+%TODO@SDM Try to see if ground truth can be better. Really seems like these errors aren't fair.
 
 To keep the amount of data manageable but still produce a good result, we used between about thirty and ten percent of the total frames in each sequence, sampling chunks of consecutive frames to allow synchronization search to work.
 
@@ -144,10 +194,14 @@ sensors do not trigger at the same time, leading to unavoidable synchronization 
   \centering
   \includegraphics[width=\linewidth]{img/bargraph.pdf}
   \caption{}
-  \label{fig:}
+  \label{fig:bargraph}
 \end{figure}
 
-
+\begin{figure}
+  \centering
+  \input{tables/results_table.tex}
+  \label{fig:results}
+\end{figure}
 
 Angular error results are reported as the angle in the angle-axis representation of the rotation matrix 
 
