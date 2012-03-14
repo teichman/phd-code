@@ -75,6 +75,8 @@ namespace pipeline
     ~Pipeline();
     void serialize(std::ostream& out) const;
     void deserialize(std::istream& in);
+    void save(const std::string& path) const;
+    void load(const std::string& path);
       
   private:
     std::vector<Pod*> pods_;

@@ -150,8 +150,8 @@ namespace rgbd
     size_t nearest = 0;
     *dt = numeric_limits<double>::max();
     for(size_t i = 0; i < timestamps_.size(); ++i) {
-      double d = fabs(timestamp - timestamps_[i]);
-      if(d < *dt) {
+      double d = timestamp - timestamps_[i];
+      if(fabs(d) < *dt) {
 	*dt = d;
 	nearest = i;
       }

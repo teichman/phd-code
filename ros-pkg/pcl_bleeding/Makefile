@@ -12,17 +12,24 @@ built: svn
 
 svn:
 	svn co -r3516 http://svn.pointclouds.org/pcl/trunk $@
-	cd svn/common/include/pcl && patch < ../../../../patch
-	cd svn/io/src/ && patch < ../../../openni_grabber.cpp.patch
-	cd svn/common/include/pcl/common/impl && patch < ../../../../../../transformation_from_correspondences.hpp.patch
+	cd svn && patch -p0 < ../patch-2012-03-13
 
-clean:
-	cd svn/build && make clean
+remove_msgs:
+	cd svn/common/include; \
+	if [ -d std_msgs ]; then \
+	mv std_msgs std_msgs_pcl_do_not_use; \
+	mv sensor_msgs sensor_msgs_pcl_do_not_use; \
+	fi
+
+restore_msgs:
 	cd svn/common/include; \
 	if [ -d std_msgs_pcl_do_not_use ]; then \
 	mv std_msgs_pcl_do_not_use std_msgs; \
 	mv sensor_msgs_pcl_do_not_use sensor_msgs; \
 	fi
+
+clean: restore_msgs
+	cd svn/build && make clean
 	-rm built
 
 wipe:

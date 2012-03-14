@@ -51,7 +51,7 @@ int main(int argc, char** argv)
     Cloud::Ptr pcd1 = sseq1->getCloud(ts0, &dt);
     Cloud::Ptr transformed(new Cloud);
     cout << "dt = " << dt << endl;
-    if(dt > thresh)
+    if(fabs(dt) > thresh)
       continue;
 
     

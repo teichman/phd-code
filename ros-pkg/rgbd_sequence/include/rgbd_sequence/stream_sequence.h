@@ -47,7 +47,9 @@ namespace rgbd
     size_t size() const;
     Cloud::Ptr getCloud(size_t frame) const;
     Mat3b getImage(size_t frame) const;
+    //! dt is signed.
     Cloud::Ptr getCloud(double timestamp, double* dt) const;
+    //! dt is signed.
     Mat3b getImage(double timestamp, double* dt) const;
     void addFrame( const Mat3b &img, const DepthMat &depth, 
         double focal_length, double timestamp);
@@ -60,6 +62,7 @@ namespace rgbd
     void loadImage(const std::string& dir, size_t frame, Mat3b &img) const;
     void loadDepth(const std::string& dir, size_t frame, 
         DepthMat &depth, double &focal_length, double &timestamp) const;
+    //! dt is signed.
     size_t seek(double timestamp, double* dt) const;
   };
 

@@ -23,7 +23,8 @@ code:
 	rosmake xpl_calibration
 	rosmake cloud_calibration
 
-CONFIGURATIONS := $(shell ls `rospack find xpl_calibration`/../../project/calibration/data/)
+#CONFIGURATIONS := $(shell ls `rospack find xpl_calibration`/../../project/calibration/data/)
+CONFIGURATIONS := $(addprefix configuration, 00 01 02 03 04 05 06 07 08 09)
 
 CALIBRATE_DYNAMIC := DEBUG=1 rosrun xpl_calibration calibrate_sequences --dynamic
 CALIBRATE_ORB := rosrun xpl_calibration calibrate_sequences --orb
@@ -68,6 +69,14 @@ dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) && ON=5 OFF=10 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
+dynamic/configuration13/transform.eig.txt: $(DATA_DIR)/configuration11 $$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+
+dynamic/configuration12/transform.eig.txt: $(DATA_DIR)/configuration11 $$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+
 dynamic/configuration11/transform.eig.txt: $(DATA_DIR)/configuration11 $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
@@ -76,15 +85,15 @@ dynamic/configuration10/transform.eig.txt: $(DATA_DIR)/configuration10 $$@-exper
 	mkdir -p $(@D)
 	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
-dynamic/configuration9/transform.eig.txt: $(DATA_DIR)/configuration9 $$@-experiment_metadata.txt
+dynamic/configuration09/transform.eig.txt: $(DATA_DIR)/configuration09 $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
-dynamic/configuration8/transform.eig.txt: $(DATA_DIR)/configuration8 $$@-experiment_metadata.txt
+dynamic/configuration08/transform.eig.txt: $(DATA_DIR)/configuration08 $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
-dynamic/configuration7/transform.eig.txt: $(DATA_DIR)/configuration7 $$@-experiment_metadata.txt
+dynamic/configuration07/transform.eig.txt: $(DATA_DIR)/configuration07 $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
@@ -135,29 +144,26 @@ bargraph.pdf: $(addprefix evaluations/, $(addsuffix .txt, $(CONFIGURATIONS)))
 # -- Latex
 ############################################################
 
-.PHONY: iros/img
-#iros/img: bargraph.pdf#
-#	mkdir -p $@
-#	cp $< $@
+.PHONY: img
+img: bargraph.pdf
+	mkdir -p $@
+	cp $< $@
 
-# You'll need to get static_img from firetail.
-# There must be a cleaner way to handle multiple workspaces.
-iros/iros2012.pdf: 	$$(MAKE_ROOT)/iros/iros2012.tex \
-			$$(MAKE_ROOT)/iros/iros2012.bib \
-			$$(MAKE_ROOT)/iros/latex_macros.tex \
-			iros/img \
-			iros/static_img
-	mkdir -p $(@D)
+$(MAKE_ROOT)/icra2013/static_img:
+	rsync -av alex@firetail:~/static_img $@
+
+icra2013.pdf: 	$(MAKE_ROOT)/icra2013/icra2013.tex \
+		$(MAKE_ROOT)/icra2013/icra2013.bib \
+		$(MAKE_ROOT)/icra2013/latex_macros.tex \
+		$(MAKE_ROOT)/icra2013/static_img \
+		img
+	rsync -av $(MAKE_ROOT)/icra2013 .
+	cd icra2013 && pdflatex icra2013
+	cd icra2013 && bibtex icra2013
+	cd icra2013 && pdflatex icra2013
+	cd icra2013 && pdflatex icra2013
+	mv icra2013/icra2013.pdf $@
+	cd icra2013 && rm icra2013.{aux,bbl,blg,log,out}
 	if [ `pwd` != $(MAKE_ROOT) ]; then \
-	cd $(@D) && cp $(MAKE_ROOT)/iros/*.{sty,cls,bst} .; \
-	ln -sf $(MAKE_ROOT)/iros/iros2012.tex; \
-	ln -sf $(MAKE_ROOT)/iros/iros2012.bib; \
-	ln -sf $(MAKE_ROOT)/iros/latex_macros.tex; \
+	rm -rf icra2013; \
 	fi
-	cd $(@D) && pdflatex iros2012
-	cd $(@D) && bibtex iros2012
-	cd $(@D) && pdflatex iros2012
-	cd $(@D) && pdflatex iros2012
-	cd $(@D) && rm iros2012.{aux,bbl,blg,log,out}
-
-

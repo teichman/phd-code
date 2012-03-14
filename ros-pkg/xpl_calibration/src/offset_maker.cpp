@@ -46,7 +46,7 @@ int main(int argc, char** argv)
     cv::Mat3b image1 = sseq1->getImage(ts0, &dt);
     cout << "dt = " << dt << endl;
     cv::imshow("Image0", image0);
-    if(dt < thresh){
+    if(fabs(dt) < thresh){
       cv::imshow("Image1", image1);
     } else{
       cv::imshow("Image1", cv::Mat3b::zeros(480,640) );

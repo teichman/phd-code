@@ -31,7 +31,7 @@ Eigen::Affine3f CalibrationPipelineOrb::calibrate(rgbd::StreamSequence::ConstPtr
     double dt = -1;
     double ts0 = sseq0->timestamps_[i];
     Cloud::Ptr pcd1 = sseq1->getCloud(ts0, &dt);
-    if(dt > thresh)
+    if(fabs(dt) > thresh)
       continue;
 
     seq0->pcds_.push_back(sseq0->getCloud(i));
