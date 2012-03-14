@@ -34,12 +34,17 @@ namespace rgbd
     bool recording_;
     StreamSequence::Ptr seq_;
     bool view_cloud_;
+    //Calibration info
+    float fx_, fy_, cx_, cy_;
+    int image_width_, image_height_;
+    bool manual_calibration_;
 
     cv::Mat3b oniToCV(const boost::shared_ptr<openni_wrapper::Image>& oni) const;
     cv::Mat1b irToCV(const boost::shared_ptr<openni_wrapper::IRImage>& ir) const;
     DepthMat oniDepthToEigen(const boost::shared_ptr<openni_wrapper::DepthImage>& oni) const;
     void initializeGrabber();
     void toggleRecording();
+    void initializeCalibration();
   };
 
 }

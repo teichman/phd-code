@@ -52,16 +52,18 @@ namespace rgbd
     //! dt is signed.
     Mat3b getImage(double timestamp, double* dt) const;
     void addFrame( const Mat3b &img, const DepthMat &depth, 
-        double focal_length, double timestamp);
+        double fx, double fy, double cx, double cy, double timestamp);
     //! Adds dt to all timestamps.
     void applyTimeOffset(double dt);
 
   protected:
     void saveFrame(const std::string& dir, size_t frame, const Mat3b &img, 
-        const DepthMat &depth, double focal_length, double timestamp);
+        const DepthMat &depth, double fx, double fy, double cx, double cy, 
+        double timestamp);
     void loadImage(const std::string& dir, size_t frame, Mat3b &img) const;
     void loadDepth(const std::string& dir, size_t frame, 
-        DepthMat &depth, double &focal_length, double &timestamp) const;
+        DepthMat &depth, double &fx, double &fy, double &cx, double &cy, 
+        double &timestamp) const;
     //! dt is signed.
     size_t seek(double timestamp, double* dt) const;
   };

@@ -1,0 +1,17 @@
+<package>
+  <description brief="xpl_camera">
+
+     xpl_camera
+
+  </description>
+  <author>Stephen Miller</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/xpl_camera</url>
+  <depend package="nodelet"/>
+  <depend package="openni_camera"/>
+  <depend package="pcl_ros"/>
+
+</package>
+
+

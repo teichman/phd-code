@@ -44,18 +44,19 @@ namespace rgbd
     for(size_t i = 0; i < timestamps_.size(); i++){
       Mat3b img;
       DepthMat depth;
-      double focal_length, timestamp;
+      double fx, fy, cx, cy, timestamp;
       loadImage(save_dir_, i, img);
-      loadDepth(save_dir_, i, depth, focal_length, timestamp);
+      loadDepth(save_dir_, i, depth, fx, fy, cx, cy, timestamp);
       ROS_ASSERT(timestamp == timestamps_[i]);
-      saveFrame(dir, i, img, depth, focal_length, timestamp );
+      saveFrame(dir, i, img, depth, fx, fy, cx, cy, timestamp );
     }
     //TODO modify save_dir_?
   }
 
   void StreamSequence::saveFrame(const string &dir, size_t frame, 
       const Mat3b &img, const DepthMat &depth, 
-      double focal_length, double timestamp){
+      double fx, double fy, double cx, double cy, 
+      double timestamp){
     //Write image  
     ostringstream oss;
     oss << "img" << setw(4) << setfill('0') << frame << ".png";
@@ -69,7 +70,10 @@ namespace rgbd
     ofstream outfile;
     outfile.open((dir+"/"+oss.str()).c_str());
     eigen_extensions::serialize(depth, outfile);
-    outfile.write((char*)&focal_length, sizeof(double));
+    outfile.write((char*)&fx, sizeof(double));
+    outfile.write((char*)&fy, sizeof(double));
+    outfile.write((char*)&cx, sizeof(double));
+    outfile.write((char*)&cy, sizeof(double));
     outfile.close();
     if(dpt_names_.size() <= frame)
       dpt_names_.resize(frame+1);
@@ -132,12 +136,15 @@ namespace rgbd
   }
   
   void StreamSequence::loadDepth(const string &dir, size_t frame,
-                 DepthMat &depth, double &focal_length, double &timestamp ) const
+                 DepthMat &depth, double &fx, double &fy, double &cx, double &cy, double &timestamp ) const
   {
       ifstream infile;
       infile.open((dir+"/"+dpt_names_[frame]).c_str());
       eigen_extensions::deserialize(infile, &depth);
-      infile.read((char*)&focal_length, sizeof(double));
+      infile.read((char*)&fx, sizeof(double));
+      infile.read((char*)&fy, sizeof(double));
+      infile.read((char*)&cx, sizeof(double));
+      infile.read((char*)&cy, sizeof(double));
       infile.close();
       timestamp = timestamps_[frame]; //In memory already
   }
@@ -175,17 +182,14 @@ namespace rgbd
     ROS_ASSERT(frame < dpt_names_.size());
     DepthMat depth_mat;
     cv::Mat3b img;
-    double focal_length, timestamp;
+    double fx, fy, cx, cy , timestamp;
     loadImage(save_dir_, frame, img);
-    loadDepth(save_dir_, frame, depth_mat, focal_length, timestamp);
+    loadDepth(save_dir_, frame, depth_mat, fx, fy, cx, cy, timestamp);
     Cloud::Ptr cloud (new Cloud);
     cloud->height = depth_mat.rows();
     cloud->width = depth_mat.cols();
     cloud->is_dense = false;
     cloud->points.resize(cloud->height * cloud->width);
-    float constant = 1.0f / focal_length;
-    register int centerX = (cloud->width >> 1 );
-    int centerY = (cloud->height >> 1);
     float bad_point = std::numeric_limits<float>::quiet_NaN ();
     int pt_idx = 0;
     for(int y = 0; y < depth_mat.rows(); ++y){
@@ -198,8 +202,8 @@ namespace rgbd
         }
         else{
           pt.z = z * 0.001f;
-          pt.x = (x-centerX) * pt.z * constant;
-          pt.y = (y-centerY) * pt.z * constant;
+          pt.x = (x-cx) * pt.z / fx;
+          pt.y = (y-cy) * pt.z / fy;
           pt.b = img(y,x)[0];
           pt.g = img(y,x)[1];
           pt.r = img(y,x)[2];
@@ -221,9 +225,9 @@ namespace rgbd
 
 
   void StreamSequence::addFrame( const Mat3b &img, const DepthMat &depth, 
-      double focal_length, double timestamp)
+      double fx, double fy, double cx, double cy, double timestamp)
   {
-    saveFrame(save_dir_, timestamps_.size(), img, depth, focal_length, timestamp );
+    saveFrame(save_dir_, timestamps_.size(), img, depth, fx, fy, cx, cy, timestamp );
   }
 
   size_t StreamSequence::size() const

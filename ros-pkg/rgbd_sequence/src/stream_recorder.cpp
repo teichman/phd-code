@@ -16,8 +16,10 @@ namespace rgbd
     grabber_(device_id_, mode, mode),
     cloud_viewer_("PointCloud"+device_id_),
     recording_(false),
-    view_cloud_(false)
+    view_cloud_(false),
+    manual_calibration_(false)
   {
+    initializeCalibration();
     initializeGrabber();
   }
   
@@ -61,7 +63,7 @@ namespace rgbd
 	
         DepthMat depth = oniDepthToEigen( oni_depth );
 	cv::Mat3b img = oniToCV(oni_rgb);
-        seq_->addFrame( img, depth, 1.0/f_inv, oni_depth->getSystemTimeStamp() ); //TODO verify timing
+        seq_->addFrame( img, depth, fx_, fy_, cx_, cy_, oni_depth->getSystemTimeStamp() ); //TODO verify timing
       }
       else {
 	ROS_WARN_STREAM("rgbdCallback got an rgbd pair with timestamp delta of " << depth_timestamp - image_timestamp);
@@ -157,6 +159,13 @@ namespace rgbd
 
     if(DESYNC)
 	    grabber_.getDevice()->setSynchronization(false);
+    if(!manual_calibration_){
+      cout << "Reverting to default calibration" << endl;
+      fx_ = fy_ = grabber_.getDevice()->getImageFocalLength(image_width_);
+      cx_ = (image_width_ >> 1);
+      cy_ = (image_height_ >> 1);
+    }
+
   }
 
   DepthMat StreamRecorder::oniDepthToEigen(const boost::shared_ptr<openni_wrapper::DepthImage>& oni) const
@@ -177,6 +186,38 @@ namespace rgbd
   return depth;
   }
 
+
+  void StreamRecorder::initializeCalibration()
+  {
+    //First, get image size
+    if(mode_ == pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz){
+      image_width_ = 160;
+      image_height_ = 120;
+    }
+    else if(mode_ == pcl::OpenNIGrabber::OpenNI_VGA_30Hz){
+      image_width_ = 640;
+      image_height_ = 480;
+    }
+    char* calibration_file = getenv("XPL_CALIBRATION_FILE");
+    if (calibration_file != NULL){
+      cout << "Using calibration file " << calibration_file << endl;
+      cv::FileStorage fs( calibration_file, cv::FileStorage::READ );
+      // Get scale
+      int calib_width, calib_height;
+      fs["image_width"] >> calib_width;
+      fs["image_height"] >> calib_height;
+      float scale = image_width_ / float(calib_width);
+      cv::Mat1f camera_matrix;
+      fs["camera_matrix"] >> camera_matrix;
+      // Scale the matrix, in pixels, appropriately
+      camera_matrix *= scale;
+      fx_ = camera_matrix(0,0);
+      cx_ = camera_matrix(0,2);
+      fy_ = camera_matrix(1,1);
+      cy_ = camera_matrix(1,2);
+      manual_calibration_ = true;
+    }
+  }
 }
 
 
