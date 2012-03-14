@@ -48,7 +48,7 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
     double dt = -1;
     double ts0 = sseq0->timestamps_[i];
     Cloud::Ptr pcd1 = sseq1->getCloud(ts0, &dt);
-    if(dt > thresh)
+    if(fabs(dt) > thresh)
       continue;
 
 

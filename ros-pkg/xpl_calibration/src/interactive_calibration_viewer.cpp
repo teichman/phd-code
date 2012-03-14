@@ -81,7 +81,7 @@ int main(int argc, char** argv)
       if (update_transform){
         cout << "Transformation: " << transform.matrix() << endl;
       }
-      if(dt < 0.05){
+      if(fabs(dt) < 0.05){
         transformPointCloud(*cloud1, *transformed, transform);
         *overlay += *transformed;
       }
