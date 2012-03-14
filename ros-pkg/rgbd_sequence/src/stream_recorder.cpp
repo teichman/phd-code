@@ -160,7 +160,7 @@ namespace rgbd
     if(DESYNC)
 	    grabber_.getDevice()->setSynchronization(false);
     if(!manual_calibration_){
-      cout << "Reverting to default calibration" << endl;
+      cout << "$XPL_CALIBRATION_FILE not set. Reverting to default calibration" << endl;
       fx_ = fy_ = grabber_.getDevice()->getImageFocalLength(image_width_);
       cx_ = (image_width_ >> 1);
       cy_ = (image_height_ >> 1);
