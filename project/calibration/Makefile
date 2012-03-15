@@ -70,7 +70,7 @@ ground_truth_sync-%: $(DATA_DIR)/configuration%
 
 dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) && ON=30 OFF=270 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+	cd $(@D) && ON=30 OFF=200 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
 MAX_DT := 0.015
 ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt

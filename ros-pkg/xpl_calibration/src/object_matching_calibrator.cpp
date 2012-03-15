@@ -219,7 +219,7 @@ void ObjectMatchingCalibrator::visualizeResult(const std::string& name, const Ei
   const Sequence& seq1 = *pull<Sequence::ConstPtr>("Sequence1");
 
   double max_dt = 0.3; // More lenient than that used for calibration.
-  for(size_t i = 0; i < seq1.size(); ++i) {
+  for(size_t i = 0; i < seq1.size(); i+=100) {
     int idx = seek(seq0.pcds_, seq1.pcds_[i]->header.stamp.toSec() + sync, max_dt);
     if(idx == -1)
       continue;
