@@ -373,6 +373,26 @@ TEST(GridSearch, Easy)
   cout << x.transpose() << endl;
 }
 
+TEST(GridSearch, Coupling)
+{
+  MatrixXd A = MatrixXd::Identity(3, 3);
+  VectorXd b = VectorXd::Zero(3);
+  QuadraticFunction::Ptr obj(new QuadraticFunction(A, b, 0));
+
+  GridSearch gs(3);
+  gs.objective_ = obj;
+  gs.num_scalings_ = 2;
+  gs.max_resolutions_ << 1, 1, 1;
+  gs.grid_radii_ << 2, 2, 2;
+  gs.scale_factors_ << 0.1, 0.1, 0.1;
+  gs.couplings_ << 1, 0, 0; // Search the last two jointly.
+  
+  ArrayXd init = ArrayXd::Ones(3) * 9.1;
+  ArrayXd x = gs.search(init);
+
+  cout << x.transpose() << endl;
+}
+
 
 TEST(GridSearch, Long)
 {
