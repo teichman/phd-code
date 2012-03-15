@@ -32,6 +32,7 @@ CONFIGURATIONS := $(shell ls $(DATA_DIR))
 CALIBRATE_DYNAMIC := DEBUG=1 rosrun xpl_calibration calibrate_sequences --dynamic
 CALIBRATE_ORB := rosrun xpl_calibration calibrate_sequences --orb
 VISUALIZE := rosrun xpl_calibration calibration_viewer
+VISUALIZE_EXTRA := rosrun xpl_calibration calibration_viewer_vis
 EVALUATE := rosrun xpl_calibration evaluate
 
 ############################################################
@@ -54,16 +55,16 @@ all_ground_truth: $(addprefix ground_truth/, $(addsuffix /transform.eig.txt, $(C
 all_ground_truth_user: $(addprefix ground_truth_user/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
 
 visualize_dynamic-%: dynamic/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
-	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/camera* $< dynamic/configuration$*/sync.eig.txt
+	$(VISUALIZE_EXTRA) $(DATA_DIR)/configuration$*/unstructured/camera* $< dynamic/configuration$*/sync.eig.txt
 
 visualize_ground_truth-%: ground_truth/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
-	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/camera* $< ground_truth/configuration$*/sync.eig.txt
+	$(VISUALIZE_EXTRA) $(DATA_DIR)/configuration$*/unstructured/camera* $< ground_truth/configuration$*/sync.eig.txt
 
 visualize_ground_truth_user-%: ground_truth_user/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
-	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/camera* $< ground_truth_user/configuration$*/sync.eig.txt
+	$(VISUALIZE_EXTRA) $(DATA_DIR)/configuration$*/unstructured/camera* $< ground_truth_user/configuration$*/sync.eig.txt
 
 visualize_keypoint-%: keypoint/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
-	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/camera* $< keypoint/configuration$*/sync.eig.txt
+	$(VISUALIZE_EXTRA) $(DATA_DIR)/configuration$*/unstructured/camera* $< keypoint/configuration$*/sync.eig.txt
 
 ground_truth_sync-%: $(DATA_DIR)/configuration%
 	rosrun xpl_calibration offset_maker $(DATA_DIR)/configuration$*/unstructured/camera* ground_truth/configuration$*/sync.eig.txt ground_truth/configuration$*/sync.eig.txt
