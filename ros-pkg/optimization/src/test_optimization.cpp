@@ -362,13 +362,13 @@ TEST(GridSearch, Easy)
 
   GridSearch gs(2);
   gs.objective_ = obj;
-  gs.ranges_ << 1, 1;
-  gs.min_resolutions_ << 0.0001, 0.0001;
   gs.max_resolutions_ << 1, 1;
-  gs.scale_multipliers_ << 0.1, 0.1;
+  gs.grid_radii_ << 2, 2;
+  gs.scale_factors_ << 0.1, 0.1;
+  gs.num_scalings_ = 2;
   
-  VectorXd init = VectorXd::Ones(2) * 9.1;
-  VectorXd x = gs.solve(init);
+  ArrayXd init = ArrayXd::Ones(2) * 9.1;
+  ArrayXd x = gs.search(init);
 
   cout << x.transpose() << endl;
 }
@@ -383,13 +383,13 @@ TEST(GridSearch, Long)
   GridSearch gs(2);
   gs.verbose_ = false;
   gs.objective_ = obj;
-  gs.ranges_ << 1000000, 1000000;
-  gs.min_resolutions_ << 0.00000001, 0.00000001;
   gs.max_resolutions_ << 1, 1;
-  gs.scale_multipliers_ << 0.8, 0.8;
+  gs.grid_radii_ << 1e6, 1e6;
+  gs.scale_factors_ << 0.8, 0.8;
+  gs.num_scalings_ = 1e3;
   
-  VectorXd init = VectorXd::Ones(2) * 9.1;
-  VectorXd x = gs.solve(init);
+  ArrayXd init = ArrayXd::Ones(2) * 9.1;
+  ArrayXd x = gs.search(init);
 
   cout << x.transpose() << endl;
 }

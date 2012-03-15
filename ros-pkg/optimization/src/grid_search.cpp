@@ -7,110 +7,73 @@ using namespace Eigen;
 
 GridSearch::GridSearch(int num_variables) :
   verbose_(true),
-  ranges_(num_variables),
-  min_resolutions_(num_variables),
   max_resolutions_(num_variables),
-  scale_multipliers_(num_variables),
-  max_passes_(0)
+  grid_radii_(num_variables),
+  scale_factors_(num_variables),
+  num_scalings_(-1)
 {
 }
 
-Eigen::VectorXd GridSearch::solve(const VectorXd& x)
+Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
 {
-  history_.clear();
+  assert(num_scalings_ >= 0);
   assert(objective_);
-  assert(x.rows() == min_resolutions_.rows());
-  assert(ranges_.rows() == min_resolutions_.rows());
-  assert(ranges_.rows() == max_resolutions_.rows());
-  assert(ranges_.rows() == scale_multipliers_.rows());
-
-  for(int i = 0; i < scale_multipliers_.rows(); ++i)
-    assert(scale_multipliers_[i] > 0 && scale_multipliers_[i] < 1);
-  
-  if(couplings_.empty()) {
-    couplings_.resize(x.rows());
-    for(int i = 0; i < x.rows(); ++i)
-      couplings_[i].push_back(i);
-  }
+  assert(x.rows() == max_resolutions_.rows());
+  assert(x.rows() == grid_radii_.rows());
+  assert(x.rows() == scale_factors_.rows());
+  for(int i = 0; i < scale_factors_.rows(); ++i)
+    assert(scale_factors_[i] > 0 && scale_factors_[i] < 1);
+  history_.clear();
 
   x_ = x;
   best_obj_ = numeric_limits<double>::max();
-  scales_ = VectorXd::Ones(x_.rows());
   res_ = max_resolutions_;
-  lb_ = x_ - (scales_.array() * ranges_.array()).matrix();
-  ub_ = x_ + (scales_.array() * ranges_.array()).matrix();
-  lower_bounds_ = lb_;
-  upper_bounds_ = ub_;
 
-  int pass = 0;
+  int ns = 0;
   while(true) {
     bool improved = false;
     
-    for(size_t i = 0; i < couplings_.size(); ++i) {
-      for(size_t j = 0; j < couplings_[i].size(); ++j) {
-	int k = couplings_[i][j];
-	VectorXd x = x_;
-		
-	vector<VectorXd> xs;
-	for(x[k] = lb_[k]; x[k] <= ub_[k]; x[k] += res_[k])
-	  xs.push_back(x);
-	VectorXd vals(xs.size());
-
-	omp_set_num_threads(NUM_THREADS);
-        #pragma omp parallel for
-	for(size_t l = 0; l < xs.size(); ++l) { 
-	  vals(l) = objective_->eval(xs[l]);
-	}
-	
-	for(int l = 0; l < vals.rows(); ++l) {
-	  if(verbose_)
-	    cout << "x[" << k << "] = " << xs[l](k) << ": " << vals(l) << endl;
-	  if(vals(l) < best_obj_) {
-	    improved = true;
-	    best_obj_ = vals(l);
-	    best_x_ = xs[l];
-	    if(verbose_)
-	      cout << "** Best obj so far: " << best_obj_ << ", best x: " << x.transpose() << endl;
-	    history_.push_back(x);
-	  }
-	}
+    for(int i = 0; i < x_.rows(); ++i) {
+      // -- Get all values of x to try in parallel.
+      vector<ArrayXd> xs;  // TODO: reserve
+      ArrayXd x = x_;
+      for(int j = -grid_radii_[i]; j <= grid_radii_[i]; ++j)  {
+	x[i] = x_[i] + j * res_[i];
+	xs.push_back(x);
       }
-      x_ = best_x_;
-    }
-
-    ++pass;
-    if(x_.rows() == 1 || pass == max_passes_ || !improved) {
-      if(verbose_)
-	cout << "Scaling down." << endl;
-      bool done = true;
-      for(int i = 0; i < res_.rows(); ++i)
-	if(res_[i] - min_resolutions_[i] > 1e-6)
-	  done = false;
-      if(done)
-	break;
-    }
-
-    res_ = res_.array() * scale_multipliers_.array();
-    scales_ = scales_.array() * scale_multipliers_.array();
-    lb_ = x_ - (scales_.array() * ranges_.array()).matrix();
-    ub_ = x_ + (scales_.array() * ranges_.array()).matrix();
     
-    lb_ = lb_.array().max(lower_bounds_.array()).matrix();
-    ub_ = ub_.array().min(upper_bounds_.array()).matrix();
+      // -- Try them all in parallel.
+      ArrayXd vals(xs.size());
+      omp_set_num_threads(NUM_THREADS);
+      #pragma omp parallel for
+      for(size_t j = 0; j < xs.size(); ++j)
+	vals(j) = objective_->eval(xs[j]);
 
+      // -- Look for improvement.
+      for(int j = 0; j < vals.rows(); ++j) {
+	if(vals(j) < best_obj_) {
+	  improved = true;
+	  best_obj_ = vals(j);
+	  x_ = xs[j];
+	  if(verbose_)
+	    cout << "*** ";
+	  history_.push_back(x_);
+	}
+
+	if(verbose_)
+	  cout << "obj = " << vals(j) << ", x = " << xs[j].transpose() << endl;
+      }
+    }
+
+    if(improved)
+      continue;
+    if(ns == num_scalings_)
+      break;
+    ++ns;
+    res_ *= scale_factors_;
     if(verbose_)
-      cout << "lower: " << lb_.transpose() << ", upper: " << ub_.transpose() << endl;
+      cout << "Using step sizes of " << res_.transpose() << endl;
   }
-  
+    
   return x_;
 }
-  
-
-
-// void* search(void* gridsearch)
-// {
-//   GridSearch& gs = *((GridSearch*) gridsearch);
-//   gs.objective_->eval(
-//   pl.run();
-//   return NULL;
-// }

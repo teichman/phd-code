@@ -28,7 +28,7 @@ CONFIGURATIONS := $(addprefix configuration, 00 01 02 03 04 05 06 07 08 09)
 
 CALIBRATE_DYNAMIC := DEBUG=1 rosrun xpl_calibration calibrate_sequences --dynamic
 CALIBRATE_ORB := rosrun xpl_calibration calibrate_sequences --orb
-VISUALIZE := rosrun xpl_calibration calibration_viewer
+VISUALIZE := rosrun xpl_calibration calibration_viewer_vis
 EVALUATE := rosrun xpl_calibration evaluate
 
 ############################################################
@@ -67,35 +67,35 @@ ground_truth_sync-%: $(DATA_DIR)/configuration%
 
 dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) && ON=5 OFF=10 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+	cd $(@D) && ON=10 OFF=20 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
 dynamic/configuration13/transform.eig.txt: $(DATA_DIR)/configuration11 $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+	cd $(@D) && ON=10 OFF=100 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
 dynamic/configuration12/transform.eig.txt: $(DATA_DIR)/configuration11 $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+	cd $(@D) && ON=10 OFF=100 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
 dynamic/configuration11/transform.eig.txt: $(DATA_DIR)/configuration11 $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+	cd $(@D) && ON=10 OFF=100 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
 dynamic/configuration10/transform.eig.txt: $(DATA_DIR)/configuration10 $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+	cd $(@D) && ON=10 OFF=100 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
 dynamic/configuration09/transform.eig.txt: $(DATA_DIR)/configuration09 $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+	cd $(@D) && ON=10 OFF=100 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
 dynamic/configuration08/transform.eig.txt: $(DATA_DIR)/configuration08 $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+	cd $(@D) && ON=10 OFF=100 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
 dynamic/configuration07/transform.eig.txt: $(DATA_DIR)/configuration07 $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) && ON=5 OFF=50 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+	cd $(@D) && ON=10 OFF=100 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
 
 MAX_DT := 0.015
 ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt

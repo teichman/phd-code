@@ -2,53 +2,31 @@
 #define GRID_SEARCH_H
 
 #include <optimization/optimization.h>
-#include <pipeline/pipeline.h>
-
-class GridSearchPod : public pipeline::Pod
-{
-  double result_;
-  
-  DECLARE_POD(GridSearchPod);
-  GridSearchPod(std::string name) :
-    Pod(name)
-  {
-  }
-    
-  void compute()
-  {
-    result_ = objective_->eval(x_);
-  }
-
-protected:
-  ScalarFunction::Ptr objective_;
-  Eigen::VectorXd x_;
-};
 
 class GridSearch
 {
 public:
   bool verbose_;
   ScalarFunction::Ptr objective_;
-  Eigen::VectorXd ranges_;
-  Eigen::VectorXd min_resolutions_;
-  Eigen::VectorXd max_resolutions_;
-  Eigen::VectorXd scale_multipliers_;
-  std::vector< std::vector<int> > couplings_;
-  std::vector<Eigen::VectorXd> history_;
-  int max_passes_;
+  //! max_resolutions_(i) is the starting step size for variable i.
+  //! Step size decreases with each scaling.
+  Eigen::ArrayXd max_resolutions_;
+  //! grid_radii_(i) is how many steps to search in each direction for variable i.
+  Eigen::ArrayXi grid_radii_;
+  //! scale_factors_(i) is the factor to apply to the search resolution for variable i.
+  Eigen::ArrayXd scale_factors_;
+  //! Number of times to scale down the search.
+  int num_scalings_;
+
+  std::vector<Eigen::ArrayXd> history_;
 
   GridSearch(int num_variables);
-  Eigen::VectorXd solve(const Eigen::VectorXd& x);
+  Eigen::ArrayXd search(const Eigen::ArrayXd& x);
 
 protected:
-  Eigen::VectorXd x_;
-  Eigen::VectorXd best_x_;
-  Eigen::VectorXd scales_;
-  Eigen::VectorXd lb_;
-  Eigen::VectorXd ub_;
-  Eigen::VectorXd res_;
-  Eigen::VectorXd lower_bounds_;
-  Eigen::VectorXd upper_bounds_;
+  Eigen::ArrayXd x_;
+  //! Current stepsizes for all variables.
+  Eigen::ArrayXd res_;
   double best_obj_;
 };
 

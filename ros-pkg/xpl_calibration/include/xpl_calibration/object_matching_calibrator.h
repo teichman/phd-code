@@ -31,7 +31,6 @@ protected:
   double cx_;
   double cy_;
   bool use_fsv_;
-  rgbd::Cloud::Ptr transformed_;
 };
 
 class ObjectMatchingCalibrator : public pipeline::Pod
@@ -78,14 +77,11 @@ protected:
   Eigen::Affine3f final_transform_;
   int outer_iter_;
 
-  void visualizeScenes(const std::string& name,
-		       const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
-		       const std::vector<rgbd::Cloud::Ptr>& pcds1) const;
-  void extractScenes(const ObjectClouds& objects,
-		     std::vector<rgbd::Cloud::Ptr>* pcds) const;
-  void getScenes(std::vector<KdTree::Ptr>* trees0,
-		 std::vector<rgbd::Cloud::ConstPtr>* pcds0,
-		 std::vector<rgbd::Cloud::Ptr>* pcds1) const;
+  void accumulateObjects(const ObjectClouds& objects,
+			 std::vector<rgbd::Cloud::Ptr>* pcds) const;
+  void getData(std::vector<KdTree::Ptr>* trees0,
+	       std::vector<rgbd::Cloud::ConstPtr>* pcds0,
+	       std::vector<rgbd::Cloud::Ptr>* pcds1) const;
 
   void checkInput() const;
   Eigen::Affine3f centroidRansac() const;
@@ -128,6 +124,9 @@ protected:
       
   void visualizeInliers(const std::string& name, const Eigen::Affine3f& transform) const;
   void visualizeResult(const std::string& name, const Eigen::Affine3f& transform, double sync) const;
+  void visualizeScenes(const std::string& name,
+		       const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
+		       const std::vector<rgbd::Cloud::Ptr>& pcds1) const;
   
   void downsampleAndTransform(const std::vector<rgbd::Cloud::Ptr>& source,
 			      const Eigen::Affine3f& transform,
