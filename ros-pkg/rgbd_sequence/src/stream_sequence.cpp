@@ -134,10 +134,12 @@ namespace rgbd
       fs.close();
     }
     // Load one cloud, for calibration parameters
+    cout << "Initializing calibration parameters" << endl;
     DepthMat depth;
     double timestamp;
     loadDepth(dir, 0, depth, fx_, fy_, cx_, cy_, timestamp);
     initialized_calibration_ = true;
+    cout << "Done" << endl;
     //Update save_dir_
     save_dir_ = dir;
   }
