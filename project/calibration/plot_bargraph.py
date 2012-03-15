@@ -29,6 +29,22 @@ average_angle = np.sum(angles) / len(angles)
 average_translation = np.sum(translations) / len(translations)
 average_sync = np.sum(syncs) / len(syncs)
 
+# Save tex of the table while we're at it
+std_trans = np.std(translations)
+std_angle = np.std(angles)
+std_sync = np.std(syncs)
+texfile = open('results_table.tex','w')
+texfile.write('\\begin{tabular}{ l | r | r | r }\n')
+texfile.write('Sequence & Translation & Rotation & Sync \\\ \n')
+texfile.write('\\hline\n')
+for i in range(len(translations)):
+    texfile.write('%.2d & %.2f & %.2f & %.2f \\\ \n'%(i+1, translations[i], angles[i], syncs[i]))
+texfile.write('\\hline\n')
+texfile.write('Avg & %.2f$\pm$%.2f & %.2f$\pm$%.2f & %.2f$\pm$%.2f \\\ \n'%(average_translation, std_trans, average_angle,std_angle, average_sync, std_sync))
+texfile.write('\end{tabular}\n')
+texfile.close()
+
+
 angles = hstack([angles, 0, 0, average_angle, 0])
 translations = hstack([translations, 0, 0, average_translation, 0])
 syncs = hstack([syncs, 0, 0, average_sync, 0])
@@ -88,4 +104,5 @@ bbea = [txt1]
 savefig('bargraph.pdf', bbox_inches=bbi, pad_inches=pad, bbox_extra_artists=bbea)
 savefig('bargraph.eps', bbox_inches=bbi, pad_inches=pad, bbox_extra_artists=bbea)
 savefig('bargraph.png', bbox_inches=bbi, pad_inches=pad, bbox_extra_artists=bbea)
+
 

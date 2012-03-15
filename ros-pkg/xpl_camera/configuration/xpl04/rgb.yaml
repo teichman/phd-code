@@ -1,0 +1,25 @@
+%YAML:1.0
+image_width: 640
+image_height: 480
+camera_name: rgb
+camera_matrix: !!opencv-matrix
+  dt: f
+  rows: 3
+  cols: 3
+  data: [537.882173459126, 0, 316.939810276218, 0, 536.190339655641, 243.329999589635, 0, 0, 1]
+distortion_model: plumb_bob
+distortion_coefficients: !!opencv-matrix
+  dt: f
+  rows: 1
+  cols: 5
+  data: [0.0547184391164594, -0.163132931356536, 0.00379304362125499, -0.00147380206953922, 0]
+rectification_matrix: !!opencv-matrix
+  dt: f
+  rows: 3
+  cols: 3
+  data: [1, 0, 0, 0, 1, 0, 0, 0, 1]
+projection_matrix: !!opencv-matrix
+  dt: f
+  rows: 3
+  cols: 4
+  data: [536.450134277344, 0, 315.405627917218, 0, 0, 537.427612304688, 244.096802358141, 0, 0, 0, 1, 0]

@@ -4,7 +4,7 @@
 ############################################################
 export NUM_THREADS	:= 8
 SHELL			:= /bin/bash
-REPO_ROOT		:= $(shell rospack find xpl_calibration)/../..
+REPO_ROOT		:= $(shell dirname $$(dirname $$(rospack find xpl_calibration)))
 MAKE_ROOT		:= $(REPO_ROOT)/project/calibration
 MAKEFILE		:= $(MAKE_ROOT)/Makefile
 
@@ -105,11 +105,6 @@ MAX_DT := 0.015
 ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	rosrun cloud_calibration checker_calibrate $(DATA_DIR)/$*/checkerboard/camera* $@ $(MAX_DT) > $@-log.txt
-	if [ ! -f $(@D)/sync.eig.txt ];\
-	then \
-		echo "Since no sync has been made, we will set it to zero" \
-		echo "0" > $(@D)/sync.eig.txt \
-	fi
 
 ground_truth_user/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
@@ -124,11 +119,6 @@ ground_truth_user-%: $(DATA_DIR)/configuration%
 keypoint/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) &&	$(CALIBRATE_ORB) $(DATA_DIR)/$*/unstructured/camera* > transform.eig.txt-log.txt
-	if [ ! -f $(D)/sync.eig.txt ];
-	then \
-		echo "Since no sync has been made, we will set it to zero" \
-		echo "0" > $(@D)/sync.eig.txt \
-	fi
 
 evaluations/%.txt: ground_truth/%/transform.eig.txt dynamic/%/transform.eig.txt
 	mkdir -p $(@D)
@@ -148,26 +138,40 @@ bargraph.pdf: $(addprefix evaluations/, $(addsuffix .txt, $(CONFIGURATIONS)))
 # -- Latex
 ############################################################
 
-.PHONY: img
-img: bargraph.pdf
-	mkdir -p $@
+.PHONY: icra2013/img
+icra2013/img: icra2013/img/bargraph.pdf
+
+icra2013/img/bargraph.pdf: bargraph.pdf
+	mkdir -p $(@D)
 	cp $< $@
 
 $(MAKE_ROOT)/icra2013/static_img:
-	rsync -av alex@firetail:~/static_img $@
+	mkdir -p $(@D)
+	rsync -av alex@firetail:~/static_img/* $@/
 
-icra2013.pdf: 	$(MAKE_ROOT)/icra2013/icra2013.tex \
-		$(MAKE_ROOT)/icra2013/icra2013.bib \
-		$(MAKE_ROOT)/icra2013/latex_macros.tex \
-		$(MAKE_ROOT)/icra2013/static_img \
-		img
-	rsync -av $(MAKE_ROOT)/icra2013 .
-	cd icra2013 && pdflatex icra2013
-	cd icra2013 && bibtex icra2013
-	cd icra2013 && pdflatex icra2013
-	cd icra2013 && pdflatex icra2013
-	mv icra2013/icra2013.pdf $@
-	cd icra2013 && rm icra2013.{aux,bbl,blg,log,out}
+icra2013/icra2013.pdf: 	$(MAKE_ROOT)/icra2013/icra2013.tex \
+			$(MAKE_ROOT)/icra2013/icra2013.bib \
+			$(MAKE_ROOT)/icra2013/latex_macros.tex \
+			$(MAKE_ROOT)/icra2013/static_img \
+			icra2013/img
+	mkdir -p $(@D)
 	if [ `pwd` != $(MAKE_ROOT) ]; then \
-	rm -rf icra2013; \
+	rsync -av $(MAKE_ROOT)/icra2013/* --exclude='*.tex' --exclude='*.bib' $(@D); \
+	cd $(@D); \
+	ln -sf $(MAKE_ROOT)/icra2013/icra2013.tex; \
+	ln -sf $(MAKE_ROOT)/icra2013/icra2013.bib; \
+	ln -sf $(MAKE_ROOT)/icra2013/latex_macros.tex; \
 	fi
+	cd $(@D) && pdflatex icra2013
+	cd $(@D) && bibtex icra2013
+	cd $(@D) && pdflatex icra2013
+	cd $(@D) && pdflatex icra2013
+	cd $(@D) && rm icra2013.{aux,bbl,blg,log,out} latex_macros.aux texput.log
+
+test_make_root:
+	if [ `pwd` != $(MAKE_ROOT) ]; then \
+	echo In an external workspace.; \
+	else \
+	echo In MAKE_ROOT.; \
+	fi
+
