@@ -27,8 +27,7 @@ code:
 	rosmake xpl_calibration
 	rosmake cloud_calibration
 
-#CONFIGURATIONS := $(shell ls `rospack find xpl_calibration`/../../project/calibration/data/)
-CONFIGURATIONS := $(addprefix configuration, 00 01 02 03 04 05 06 07 08 09)
+CONFIGURATIONS := $(shell ls $(DATA_DIR))
 
 CALIBRATE_DYNAMIC := DEBUG=1 rosrun xpl_calibration calibrate_sequences --dynamic
 CALIBRATE_ORB := rosrun xpl_calibration calibrate_sequences --orb
