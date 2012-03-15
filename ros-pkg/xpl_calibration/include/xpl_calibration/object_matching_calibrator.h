@@ -6,6 +6,7 @@
 #include <Eigen/Geometry>
 #include <pcl/visualization/cloud_viewer.h>
 
+#define TRANSFORM_SEARCH_METHOD (getenv("TRANSFORM_SEARCH_METHOD") ? std::string(getenv("TRANSFORM_SEARCH_METHOD")) : std::string("GridSearch"))
 
 typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
 
@@ -50,10 +51,11 @@ public:
     declareParam<int>("NumCorrespondences", 3);
     declareParam<double>("CentroidThreshold", 0.5); // Distance in meters between centroids to count as inliers.
     declareParam<double>("TimeCorrespondenceThreshold", 0.015);
-    declareParam<double>("Downsampling", 0.0); // Drop this fraction.  0.0 means using all the data, 1.0 none.
+    declareParam<double>("Downsampling", 0.9); // Drop this fraction.  0.0 means using all the data, 1.0 none.
     declareParam<double>("DistanceThreshold", 0.02); // Maximum distance for hinge loss in objective function.
     declareParam<double>("TransformThreshold", 0.01);
-
+    declareParam<std::string>("TransformSearchMethod", TRANSFORM_SEARCH_METHOD); // "GridSearch" or "ICP"
+    
     // Camera intrinsics for sequence 0.
     // These should come from the corresponding StreamSequence members.
     declareParam<double>("Seq0Fx");

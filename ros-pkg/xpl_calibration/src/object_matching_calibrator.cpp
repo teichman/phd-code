@@ -8,6 +8,21 @@ using namespace rgbd;
  * ObjectMatchingCalibrator
  ************************************************************/
 
+Cloud::Ptr downsampleCloud(const Cloud& orig, double ds)
+{
+  Cloud::Ptr pcd(new Cloud);
+  pcd->reserve(orig.size());
+  pcd->header = orig.header;
+  for(size_t i = 0; i < orig.size(); ++i) {
+    if(((double)rand() / (double)RAND_MAX) < ds)
+      continue;
+    pcd->push_back(orig[i]);
+  }
+
+  ROS_ASSERT(!pcd->empty());
+  return pcd;
+}
+
 void ObjectMatchingCalibrator::accumulateObjects(const ObjectClouds& objects,
 						 std::vector<Cloud::Ptr>* pcds) const
 {
@@ -45,6 +60,10 @@ void ObjectMatchingCalibrator::getData(std::vector<KdTree::Ptr>* trees0,
   // -- Get floating objects, with downsampling.
   const ObjectClouds& objects1 = *pull<const ObjectClouds*>("Objects1");
   accumulateObjects(objects1, pcds1);
+  // Also get one floating frame.
+  //const Sequence& seq1 = *pull<Sequence::ConstPtr>("Sequence1");
+  //pcds1->push_back(downsampleCloud(*seq1.pcds_[seq1.pcds_.size() / 2], param<double>("Downsampling")));
+  //pcds1->push_back(downsampleCloud(*seq1.pcds_[seq1.pcds_.size() / 2], 0.0));
 
   // -- Get entire reference frames without downsampling.
   const Sequence& seq0 = *pull<Sequence::ConstPtr>("Sequence0");
@@ -85,8 +104,13 @@ void ObjectMatchingCalibrator::compute()
     cout << "Outer iteration " << outer_iter_ << endl;
     cout << "========================================" << endl;
 
-    //Affine3f incremental = updateTransformICP(trees0, pcds0, pcds1);
-    Affine3f incremental = updateTransformGS(trees0, pcds0, pcds1);
+    Affine3f incremental;
+    if(param<string>("TransformSearchMethod").compare("ICP") == 0)
+      incremental = updateTransformICP(trees0, pcds0, pcds1);
+    else if(param<string>("TransformSearchMethod").compare("GridSearch") == 0)
+      incremental = updateTransformGS(trees0, pcds0, pcds1);
+    else
+      abort();
     transform_ = incremental * transform_;
     double delta = (incremental.matrix() - Matrix4f::Identity()).norm();
     
@@ -206,7 +230,7 @@ double ObjectMatchingCalibrator::gridSearchSync(ScalarFunction::Ptr lf) const
   gs.max_resolutions_ << 0.025;
   gs.grid_radii_ << 2;
   gs.scale_factors_ << 0.5;
-  gs.num_scalings_ = 3;
+  gs.num_scalings_ = 4;
   
   cout << "Starting grid search over offset." << endl;
   ArrayXd x = gs.search(ArrayXd::Zero(1));
@@ -403,14 +427,15 @@ Eigen::Affine3f ObjectMatchingCalibrator::gridSearchTransform(ScalarFunction::Pt
   cout << "Starting grid search over transform." << endl;
   GridSearch gs(6);
   gs.objective_ = lf;
+  gs.num_scalings_ = 5;
   double maxrr = 2.0 * M_PI / 180.0;
-  double maxrt = 0.1;
+  double maxrt = 0.2;
   gs.max_resolutions_ << maxrr, maxrr, maxrr, maxrt, maxrt, maxrt;
-  int gr = 2;
+  int gr = 3;
   gs.grid_radii_ << gr, gr, gr, gr, gr, gr;
   double sf = 0.5;
   gs.scale_factors_ << sf, sf, sf, sf, sf, sf;
-  gs.num_scalings_ = 2;
+  gs.couplings_ << 0, 1, 2, 1, 0, 3;  // Search over (pitch, y) and (yaw, x) jointly.
 
   ArrayXd x = gs.search(ArrayXd::Zero(6));
   cout << "GridSearch solution: " << x.transpose() << endl;
