@@ -10,13 +10,14 @@ namespace rgbd
 {
 
   StreamRecorder::StreamRecorder(const std::string& device_id,
-		     pcl::OpenNIGrabber::Mode mode) :
+		     pcl::OpenNIGrabber::Mode mode, const std::string& calib_file) :
     device_id_(device_id),
     mode_(mode),
     grabber_(device_id_, mode, mode),
     cloud_viewer_("PointCloud"+device_id_),
     recording_(false),
     view_cloud_(false),
+    calib_file_(calib_file),
     manual_calibration_(false)
   {
     initializeCalibration();
@@ -198,10 +199,9 @@ namespace rgbd
       image_width_ = 640;
       image_height_ = 480;
     }
-    char* calibration_file = getenv("XPL_CALIBRATION_FILE");
-    if (calibration_file != NULL){
-      cout << "Using calibration file " << calibration_file << endl;
-      cv::FileStorage fs( calibration_file, cv::FileStorage::READ );
+    if (calib_file_ != ""){
+      cout << "Using calibration file " << calib_file_ << endl;
+      cv::FileStorage fs( calib_file_, cv::FileStorage::READ );
       // Get scale
       int calib_width, calib_height;
       fs["image_width"] >> calib_width;

@@ -18,7 +18,8 @@ namespace rgbd
     //! 640x480: OpenNI_VGA_30Hz
     //! 160x120: OpenNI_QQVGA_30Hz
     StreamRecorder(const std::string& device_id = "",
-	     pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz);
+	     pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz, 
+       const std::string& calib_file="");
     void cloudCallback(const Cloud::ConstPtr& cloud);
     void irCallback(const boost::shared_ptr<openni_wrapper::IRImage>& oni_img);
     void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie);
@@ -35,6 +36,7 @@ namespace rgbd
     StreamSequence::Ptr seq_;
     bool view_cloud_;
     //Calibration info
+    std::string calib_file_;
     float fx_, fy_, cx_, cy_;
     int image_width_, image_height_;
     bool manual_calibration_;
