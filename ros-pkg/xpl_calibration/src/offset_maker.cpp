@@ -35,13 +35,14 @@ int main(int argc, char** argv)
   sseq1->load(argv[2]);
   sseq1->applyTimeOffset(sync(0));
 
-  double thresh = 0.05;
-  ROS_WARN_STREAM("Showing images dt of less than " << thresh << ".");
+  double thresh = 0.015;
+  ROS_WARN_STREAM("Showing images with dt of less than " << thresh << ".");
   int i = 0;
   while(true){
     cout << "Current offset: " << sync(0) << endl;
     cv::Mat3b image0 = sseq0->getImage(i);
     double ts0 = sseq0->timestamps_[i];
+    cout << "ts0: " << setprecision(16) << ts0 << endl;
     double dt;
     cv::Mat3b image1 = sseq1->getImage(ts0, &dt);
     cout << "dt = " << dt << endl;

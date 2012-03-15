@@ -4,47 +4,66 @@ using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 
+
+/************************************************************
+ * ObjectMatchingCalibrator
+ ************************************************************/
+
 void ObjectMatchingCalibrator::extractScenes(const ObjectClouds& objects,
-					     std::vector<Cloud::Ptr>* scenes) const
+					     std::vector<Cloud::Ptr>* pcds) const
 {
-  scenes->clear();
-  
+  pcds->clear();
   for(size_t i = 0; i < objects.size(); ++i) {
     if(objects[i].empty())
       continue;
     
-    Cloud::Ptr scene(new Cloud);
-    scene->header = objects[i][0]->header;
-    for(size_t j = 0; j < objects[i].size(); ++j)
-      *scene += *objects[i][j];
+    Cloud::Ptr pcd(new Cloud);
+    pcd->header = objects[i][0]->header;
 
-    ROS_ASSERT(scene->size() > 0);
-    scenes->push_back(scene);
+    double downsample = param<double>("Downsampling");
+    for(size_t j = 0; j < objects[i].size(); ++j) {
+      pcd->reserve(pcd->size() + objects[i][j]->size());
+      for(size_t k = 0; k < objects[i][j]->size(); ++k) {
+	if(((double)rand() / (double)RAND_MAX) < downsample)
+	  continue;
+	pcd->push_back(objects[i][j]->at(k));
+      }
+    }
+
+    ROS_ASSERT(pcd->size() > 0);
+    pcds->push_back(pcd);
   }
 }
 
 void ObjectMatchingCalibrator::getScenes(std::vector<KdTree::Ptr>* trees0,
-					 std::vector<Cloud::ConstPtr>* scenes0,
-					 std::vector<Cloud::Ptr>* scenes1) const
+					 std::vector<Cloud::ConstPtr>* pcds0,
+					 std::vector<Cloud::Ptr>* pcds1) const
 {
   trees0->clear();
-  scenes0->clear();
-  scenes1->clear();
-  
+  pcds0->clear();
+  pcds1->clear();
+
+  // -- Get floating objects, with downsampling.
   const ObjectClouds& objects0 = *pull<const ObjectClouds*>("Objects0");
   const ObjectClouds& objects1 = *pull<const ObjectClouds*>("Objects1");
-  extractScenes(objects1, scenes1);
-  vector<Cloud::Ptr> tmp;
-  extractScenes(objects0, &tmp);
-  for(size_t i = 0; i < tmp.size(); ++i)
-    scenes0->push_back(tmp[i]);
+  extractScenes(objects1, pcds1);
+
+  // -- Get entire reference frames without downsampling.
+  const Sequence& seq0 = *pull<Sequence::ConstPtr>("Sequence0");
+  for(size_t i = 0; i < seq0.pcds_.size(); ++i)
+    pcds0->push_back(seq0.pcds_[i]);
   
-  // -- Make KdTrees for all reference scenes.
-  for(size_t i = 0; i < scenes0->size(); ++i) {
+  // -- Make KdTrees for all reference pcds.
+  for(size_t i = 0; i < pcds0->size(); ++i) {
     KdTree::Ptr tree(new KdTree);
-    tree->setInputCloud(scenes0->at(i));
+    tree->setInputCloud(pcds0->at(i));
     trees0->push_back(tree);
   }
+
+  cout << "Pcd sizes: " << endl;
+  cout << trees0->size() << endl;
+  cout << pcds0->size() << endl;
+  cout << pcds1->size() << endl;
 }
 
 void ObjectMatchingCalibrator::compute()
@@ -53,132 +72,71 @@ void ObjectMatchingCalibrator::compute()
   ransac_transform_ = centroidRansac();
 
   vector<KdTree::Ptr> trees0;
-  vector<Cloud::ConstPtr> scenes0;
-  vector<Cloud::Ptr> scenes1;
-  getScenes(&trees0, &scenes0, &scenes1);
+  vector<Cloud::ConstPtr> pcds0;
+  vector<Cloud::Ptr> pcds1;
+  getScenes(&trees0, &pcds0, &pcds1);
 
-  for(size_t i = 0; i < scenes1.size(); ++i)
-    pcl::transformPointCloud(*scenes1[i], *scenes1[i], ransac_transform_);
-  //visualizeScenes("ransac", scenes0, scenes1);
+  for(size_t i = 0; i < pcds1.size(); ++i)
+    pcl::transformPointCloud(*pcds1[i], *pcds1[i], ransac_transform_);
+  //visualizeScenes("ransac", pcds0, pcds1);
   
   outer_iter_ = 0;
-  icp_transform_ = ransac_transform_;
+  transform_ = ransac_transform_;
   sync_ = 0;
   while(true) {
     cout << "========================================" << endl;
     cout << "Outer iteration " << outer_iter_ << endl;
     cout << "========================================" << endl;
 
-    Affine3f incremental = updateICP(trees0, scenes0, scenes1);
-    icp_transform_ = incremental * icp_transform_;
+    //Affine3f incremental = updateTransformICP(trees0, pcds0, pcds1);
+    Affine3f incremental = updateTransformGS(trees0, pcds0, pcds1);
+    transform_ = incremental * transform_;
     double delta = (incremental.matrix() - Matrix4f::Identity()).norm();
     
     cout << "Incremental transform: " << endl << incremental.matrix() << endl;
-    cout << "Current final transform: " << endl << icp_transform_.matrix() << endl;
+    cout << "Current final transform: " << endl << transform_.matrix() << endl;
     cout << "Outer delta: " << delta << endl;
     if(debug_) {
       ostringstream oss;
       oss << "icp-outer-iter" << setw(4) << setfill('0') << outer_iter_;
-      //visualizeScenes(oss.str(), scenes0, scenes1);
+      //visualizeScenes(oss.str(), pcds0, pcds1);
     }
     
-    if(delta < param<double>("ICPTransformThreshold"))
+    if(delta < param<double>("TransformThreshold"))
       break;
 
-    double dt = updateSync(trees0, scenes0, scenes1);
+    double dt = updateSync(trees0, pcds0, pcds1);
     sync_ += dt;
     cout << "dt: " << dt << endl;
     cout << "Current sync offset: " << sync_ << endl;
     if(debug_) {
       ostringstream oss;
       oss << "sync-iter" << setw(4) << setfill('0') << outer_iter_;
-      //visualizeScenes(oss.str(), scenes0, scenes1);
+      //visualizeScenes(oss.str(), pcds0, pcds1);
     }
     
     ++outer_iter_;
   }
 
-  visualizeResult("icp-final", icp_transform_, sync_);
+  visualizeResult("final-transform", transform_, sync_);
   
-  push<double>("SyncOffset", sync_);
   push<const Affine3f*>("CentroidRansacTransform", &ransac_transform_);
-  push<const Affine3f*>("IcpTransform", &icp_transform_);
-  final_transform_ = icp_transform_;
-  push<const Affine3f*>("FinalTransform", &final_transform_);
+  push<const Affine3f*>("FinalTransform", &transform_);
+  push<double>("SyncOffset", sync_);
 }
 
 double ObjectMatchingCalibrator::updateSync(const std::vector<KdTree::Ptr>& trees0,
-					    const std::vector<Cloud::ConstPtr>& scenes0,
-					    const std::vector<Cloud::Ptr>& scenes1) const
+					    const std::vector<Cloud::ConstPtr>& pcds0,
+					    const std::vector<Cloud::Ptr>& pcds1) const
 {
-  SyncLossFunction::Ptr slf(new SyncLossFunction(trees0, scenes0, scenes1,
-						 param<double>("TimeCorrespondenceThreshold"),
-						 param<double>("CentroidThreshold")));
-  double dt = gridSearchSync(slf);
-  for(size_t i = 0; i < scenes1.size(); ++i) {
-    double ts = scenes1[i]->header.stamp.toSec();
-    scenes1[i]->header.stamp.fromSec(ts + dt);
+  LossFunction::Ptr lf(new LossFunction(trees0, pcds0, pcds1, getParams()));
+  double dt = gridSearchSync(lf);
+  for(size_t i = 0; i < pcds1.size(); ++i) {
+    double ts = pcds1[i]->header.stamp.toSec();
+    pcds1[i]->header.stamp.fromSec(ts + dt);
   }
   return dt;
 }
-
-SyncLossFunction::SyncLossFunction(const std::vector<KdTree::Ptr>& trees0,
-				   const std::vector<Cloud::ConstPtr>& scenes0,
-				   const std::vector<Cloud::Ptr>& scenes1,
-				   double dt_thresh,
-				   double max_dist) :
-  trees0_(trees0),
-  scenes0_(scenes0),
-  scenes1_(scenes1),
-  dt_thresh_(dt_thresh),
-  max_dist_(max_dist)
-{
-}
-
-double SyncLossFunction::eval(const VectorXd& x) const
-{
-  ROS_ASSERT(x.rows() == 1);
-  double dt = x(0);
-
-  double count = 0;
-  double val = 0;
-  for(size_t i = 0; i < scenes1_.size(); ++i) {
-    int idx = seek(scenes0_, dt + scenes1_[i]->header.stamp.toSec(), dt_thresh_);
-    if(idx == -1)
-      continue;
-    ++count;
-    
-    KdTree::Ptr tree0 = trees0_[idx];
-    const Cloud& pcd0 = *scenes0_[idx];
-    const Cloud& pcd1 = *scenes1_[i];
-    val += computeLoss(tree0, pcd0, pcd1);
-  }
-  return val / count;
-}
-
-double SyncLossFunction::computeLoss(KdTree::Ptr tree0, const Cloud& pcd0, const Cloud& pcd1) const
-{
-  vector<int> indices;
-  vector<float> distances;
-  double count = 0;
-  double val = 0;
-  for(size_t i = 0; i < pcd1.size(); ++i) {
-    const Point& pt = pcd1[i];
-    if(!pcl_isfinite(pt.x) || !pcl_isfinite(pt.y) || !pcl_isfinite(pt.z))
-      continue;
-    ++count;
-
-    indices.clear();
-    distances.clear();
-    tree0->nearestKSearch(pt, 1, indices, distances);
-    if(indices.empty() || distances[0] > max_dist_)
-      val += max_dist_;
-    else 
-      val += distances[0];
-  }
-  return val / count;
-}
-
 Eigen::Affine3f ObjectMatchingCalibrator::centroidRansac() const
 {
   // Compute centroids for all objects.
@@ -259,37 +217,35 @@ double ObjectMatchingCalibrator::gridSearchSync(ScalarFunction::Ptr lf) const
   return x(0);
 }
 
-
 void ObjectMatchingCalibrator::visualizeScenes(const std::string& name,
-					       const std::vector<Cloud::ConstPtr>& scenes0,
-					       const std::vector<Cloud::Ptr>& scenes1) const
+					       const std::vector<Cloud::ConstPtr>& pcds0,
+					       const std::vector<Cloud::Ptr>& pcds1) const
 {
-  for(size_t i = 0; i < scenes1.size(); ++i) {
-    int idx = seek(scenes0, scenes1[i]->header.stamp.toSec(), param<double>("TimeCorrespondenceThreshold"));
+  for(size_t i = 0; i < pcds1.size(); ++i) {
+    int idx = seek(pcds0, pcds1[i]->header.stamp.toSec(), param<double>("TimeCorrespondenceThreshold"));
     if(idx == -1)
       continue;
 
-    Cloud overlay = *scenes0[idx];
+    Cloud overlay = *pcds0[idx];
     for(size_t j = 0; j < overlay.size(); ++j) {
       overlay[j].r = 255;
       overlay[j].g = 0;
       overlay[j].b = 0;
     }
     
-    overlay += *scenes1[i];
-    for(size_t j = scenes0[idx]->size(); j < overlay.size(); ++j) {
+    overlay += *pcds1[i];
+    for(size_t j = pcds0[idx]->size(); j < overlay.size(); ++j) {
       overlay[j].r = 0;
       overlay[j].g = 0;
       overlay[j].b = 255;
     }
 
     ostringstream oss;
-    oss << getDebugPath() << "-" << name << "-scene" << setw(4) << setfill('0') << i << ".pcd";
+    oss << getDebugPath() << "-" << name << "-pcd" << setw(4) << setfill('0') << i << ".pcd";
     cout << "Saving to " << oss.str() << endl;
     pcl::io::savePCDFileBinary(oss.str(), overlay);
   }
 }
-
 
 void ObjectMatchingCalibrator::visualizeResult(const std::string& name, const Eigen::Affine3f& transform, double sync) const
 {
@@ -390,7 +346,7 @@ void ObjectMatchingCalibrator::sampleCorrespondence(const rgbd::Sequence& seq0,
 {
   int iter = 0;
   while(true) {
-    ROS_ASSERT(iter < 10000);
+    ROS_ASSERT(iter < 100000);
     ++iter;
     
     // -- Randomly sample corresponding centroids.
@@ -475,70 +431,89 @@ int ObjectMatchingCalibrator::countInliers(const Eigen::Affine3f& transform,
   return num_inliers;
 }
 
-int seek(const std::vector<Cloud::Ptr>& scenes0, double ts1, double dt_thresh)
+Eigen::Affine3f ObjectMatchingCalibrator::gridSearchTransform(ScalarFunction::Ptr lf) const
 {
-  vector<Cloud::ConstPtr> cc;
-  for(size_t i = 0; i < scenes0.size(); ++i)
-    cc.push_back(scenes0[i]);
-
-  return seek(cc, ts1, dt_thresh);
+  cout << "Starting grid search over transform." << endl;
+  GridSearch gs(6);
+  gs.max_passes_ = 1;
+  gs.objective_ = lf;
+  double ar = 1.0 * M_PI / 180.0;
+  double tr = 0.1;
+  gs.ranges_ << ar, ar, ar, tr, tr, tr;
+  double minrr = 0.1 * M_PI / 180.0;
+  double minrt = 0.02;
+  gs.min_resolutions_ << minrr, minrr, minrr, minrt, minrt, minrt;
+  double maxrr = 1.0 * M_PI / 180.0;
+  double maxrt = 0.1;
+  gs.max_resolutions_ << maxrr, maxrr, maxrr, maxrt, maxrt, maxrt;
+  double smr = 0.5;
+  double smt = 0.5;
+  gs.scale_multipliers_ << smr, smr, smr, smt, smt, smt;
+  VectorXd init = VectorXd::Zero(6);
+  VectorXd x = gs.solve(init);
+  cout << "GridSearch solution: " << x.transpose() << endl;
+  return generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
 }
 
-int seek(const std::vector<Cloud::ConstPtr>& scenes0, double ts1, double dt_thresh)
+Affine3f ObjectMatchingCalibrator::updateTransformGS(const std::vector<KdTree::Ptr>& trees0,
+						     const std::vector<Cloud::ConstPtr>& pcds0,
+						     const std::vector<Cloud::Ptr>& pcds1) const
 {
-  int idx = -1;
-  double min = numeric_limits<double>::max();
-  // TODO: This could be faster than linear search.
-  for(size_t i = 0; i < scenes0.size(); ++i) {
-    double ts0 = scenes0[i]->header.stamp.toSec();
-    double dt = fabs(ts0 - ts1);
-    if(dt < min) {
-      min = dt;
-      idx = i;
-    }
+  Affine3f transform = Affine3f::Identity();
+  int iter = 0;
+  while(true) {
+    // -- Use grid search to find the next best move.
+    LossFunction::Ptr lf(new LossFunction(trees0, pcds0, pcds1, getParams()));
+    Affine3f incremental = gridSearchTransform(lf);
+    transform = incremental * transform;
+    
+    // -- Apply this move to the data in sensor 1.
+    for(size_t i = 0; i < pcds1.size(); ++i)
+      pcl::transformPointCloud(*pcds1[i], *pcds1[i], incremental);
+
+    // -- If we haven't moved much, stop.
+    double delta = (incremental.matrix() - Matrix4f::Identity()).norm();
+    cout << "  Grid search move iter " << iter << ", delta " << delta << endl;
+    if(delta < param<double>("TransformThreshold"))
+      break;
+    
+    ++iter;
   }
 
-  if(min < dt_thresh)
-    return idx;
-  else
-    return -1;
+  return transform;
 }
 
-Affine3f ObjectMatchingCalibrator::updateICP(const std::vector<KdTree::Ptr>& trees0,
-					     const std::vector<Cloud::ConstPtr>& scenes0,
-					     const std::vector<Cloud::Ptr>& scenes1) const
+Affine3f ObjectMatchingCalibrator::updateTransformICP(const std::vector<KdTree::Ptr>& trees0,
+						      const std::vector<Cloud::ConstPtr>& pcds0,
+						      const std::vector<Cloud::Ptr>& pcds1) const
 {
   Affine3f transform = Affine3f::Identity();
   
-  double max_dist = param<double>("ICPDistanceThreshold");
+  double max_dist = param<double>("DistanceThreshold");
   vector<int> indices;
   vector<float> distances;
   int iter = 0;
-  double downsample = param<double>("ICPDownsampling");
   while(true) {
     if(debug_) {
       ostringstream oss;
       oss << "icp-outer-iter"  << setw(4) << setfill('0') << outer_iter_
 	  << "-inner-iter" << setw(4) << setfill('0') << iter;
-      //visualizeScenes(oss.str(), scenes0, scenes1);
+      //visualizeScenes(oss.str(), pcds0, pcds1);
     }
     ++iter;
     
     pcl::TransformationFromCorrespondences tfc;
-    for(size_t i = 0; i < scenes1.size(); ++i) {
-      int idx = seek(scenes0, scenes1[i]->header.stamp.toSec(),
+    for(size_t i = 0; i < pcds1.size(); ++i) {
+      int idx = seek(pcds0, pcds1[i]->header.stamp.toSec(),
 		     param<double>("TimeCorrespondenceThreshold"));
       if(idx == -1)
 	continue;
       
       KdTree::Ptr tree0 = trees0[idx];
-      const Cloud& pcd0 = *scenes0[idx];
-      const Cloud& pcd1 = *scenes1[i];
+      const Cloud& pcd0 = *pcds0[idx];
+      const Cloud& pcd1 = *pcds1[i];
             
       for(size_t j = 0; j < pcd1.size(); ++j) {
-	if(((double)rand() / (double)RAND_MAX) < downsample)
-	  continue;
-	
 	indices.clear();
 	distances.clear();
 	tree0->nearestKSearch(pcd1[j], 1, indices, distances);
@@ -553,13 +528,174 @@ Affine3f ObjectMatchingCalibrator::updateICP(const std::vector<KdTree::Ptr>& tre
     transform = incremental * transform;
     double delta = (incremental.matrix() - Matrix4f::Identity()).norm();
     cout << "  Inner ICP iter " << iter << ", delta " << delta << endl;
-    if(delta < param<double>("ICPTransformThreshold"))
+    if(delta < param<double>("TransformThreshold"))
       break;
     
-    // -- Move all the scenes in sensor 1 by incremental.
-    for(size_t i = 0; i < scenes1.size(); ++i)
-      pcl::transformPointCloud(*scenes1[i], *scenes1[i], incremental);
+    // -- Move all clouds in sensor 1 by incremental.
+    for(size_t i = 0; i < pcds1.size(); ++i)
+      pcl::transformPointCloud(*pcds1[i], *pcds1[i], incremental);
   }
   
   return transform;
+}
+
+
+/************************************************************
+ * LossFunction
+ ************************************************************/
+
+LossFunction::LossFunction(const std::vector<KdTree::Ptr>& trees0,
+			   const std::vector<Cloud::ConstPtr>& pcds0,
+			   const std::vector<Cloud::Ptr>& pcds1,
+			   const pipeline::Params& params) :
+  trees0_(trees0),
+  pcds0_(pcds0),
+  pcds1_(pcds1),
+  use_fsv_(true),
+  transformed_(new Cloud)
+{
+  ROS_ASSERT(trees0_.size() == pcds0_.size());
+  for(size_t i = 0; i < pcds0_.size(); ++i)
+    ROS_ASSERT(pcds0_[i]->isOrganized());
+  for(size_t i = 0; i < pcds1_.size(); ++i)
+    ROS_ASSERT(!pcds1_[i]->isOrganized());
+
+  dt_thresh_ = params.get<double>("TimeCorrespondenceThreshold");
+  max_dist_ = params.get<double>("DistanceThreshold");
+  fx_ = params.get<double>("Seq0Fx");
+  fy_ = params.get<double>("Seq0Fy");
+  cx_ = params.get<double>("Seq0Cx");
+  cy_ = params.get<double>("Seq0Cy");
+}
+
+double LossFunction::eval(const VectorXd& x) const
+{
+  ROS_ASSERT(x.rows() == 1 || x.rows() == 6);
+  double dt = 0;
+  Affine3f transform = Affine3f::Identity();
+  if(x.rows() == 1)
+    dt = x(0);
+  else
+    transform = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
+    
+  double count = 0;
+  double val = 0;
+  for(size_t i = 0; i < pcds1_.size(); ++i) {
+    int idx = seek(pcds0_, dt + pcds1_[i]->header.stamp.toSec(), dt_thresh_);
+    if(idx == -1)
+      continue;
+    ++count;
+    
+    KdTree::Ptr tree0 = trees0_[idx];
+    const Cloud& pcd0 = *pcds0_[idx];
+    const Cloud& pcd1 = *pcds1_[i];
+    if(x.rows() == 1)
+      val += computeLoss(tree0, pcd0, pcd1);
+    else {
+      transformed_->clear();
+      pcl::transformPointCloud(pcd1, *transformed_, transform);
+      val += computeLoss(tree0, pcd0, *transformed_);
+    }
+  }
+  return val / count;
+}
+
+double LossFunction::computeLoss(KdTree::Ptr tree0, const Cloud& pcd0, const Cloud& pcd1) const
+{
+  vector<int> indices;
+  vector<float> distances;
+  double count = 0;
+  double val = 0;
+  for(size_t i = 0; i < pcd1.size(); ++i) {
+    const Point& pt = pcd1[i];
+    if(!pcl_isfinite(pt.x) || !pcl_isfinite(pt.y) || !pcl_isfinite(pt.z))
+      continue;
+    ++count;
+
+    if(use_fsv_) {
+      int u, v;
+      int idx = projectPoint(pcd0, pt, &u, &v);
+      double fsv = max_dist_;
+      if(idx != -1 && pcl_isfinite(pcd0[idx].z))
+	fsv = fmin(max_dist_, fmax(0.0, pcd0[idx].z - pt.z));
+      val += fsv;
+    }
+        
+    indices.clear();
+    distances.clear();
+    tree0->nearestKSearch(pt, 1, indices, distances);
+    if(indices.empty() || distances[0] > max_dist_)
+      val += max_dist_;
+    else 
+      val += distances[0];
+  }
+  return val / count;
+}
+
+
+/************************************************************
+ * Helper functions
+ ************************************************************/
+
+int seek(const std::vector<Cloud::Ptr>& pcds0, double ts1, double dt_thresh)
+{
+  vector<Cloud::ConstPtr> cc;
+  for(size_t i = 0; i < pcds0.size(); ++i)
+    cc.push_back(pcds0[i]);
+
+  return seek(cc, ts1, dt_thresh);
+}
+
+int seek(const std::vector<Cloud::ConstPtr>& pcds0, double ts1, double dt_thresh)
+{
+  int idx = -1;
+  double min = numeric_limits<double>::max();
+  // TODO: This could be faster than linear search.
+  for(size_t i = 0; i < pcds0.size(); ++i) {
+    double ts0 = pcds0[i]->header.stamp.toSec();
+    double dt = fabs(ts0 - ts1);
+    if(dt < min) {
+      min = dt;
+      idx = i;
+    }
+  }
+
+  if(min < dt_thresh)
+    return idx;
+  else
+    return -1;
+}
+
+int projectPoint(const rgbd::Cloud& pcd, const rgbd::Point& pt,
+		 int* u, int* v)
+{
+  ROS_ASSERT(pcd.isOrganized());
+  ROS_ASSERT(pcl_isfinite(pt.x) && pcl_isfinite(pt.y) && pcl_isfinite(pt.z));
+
+  // TODO: Intrinsics should use the calibrated values.
+  double f = 525;
+  double centerX = (pcd.width >> 1);
+  double centerY = (pcd.height >> 1);
+  
+  *u = f * pt.x / pt.z + centerX;
+  *v = f * pt.y / pt.z + centerY;
+  
+  int idx = *v * pcd.width + *u;
+  if(*u < 0 || *u >= (int)pcd.width)
+    idx = -1;
+  if(*v < 0 || *v >= (int)pcd.height)
+    idx = -1;
+  
+  return idx;
+}
+
+Eigen::Affine3f generateTransform(double rx, double ry, double rz,
+				  double tx, double ty, double tz)
+{
+  Affine3f Rx, Ry, Rz, T;
+  Rx = Eigen::AngleAxisf(rx, Vector3f(1, 0, 0));
+  Ry = Eigen::AngleAxisf(ry, Vector3f(0, 1, 0));
+  Rz = Eigen::AngleAxisf(rz, Vector3f(0, 0, 1));
+  T = Eigen::Translation3f(tx, ty, tz);
+  return T * Rz * Ry * Rx;
 }

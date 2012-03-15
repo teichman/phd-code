@@ -24,6 +24,16 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
 					   Eigen::Affine3f* transform,
 					   double* sync)
 {
+  // pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fx", sseq0->fx_);
+  // pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fy", sseq0->fy_);
+  // pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cx", sseq0->cx_);
+  // pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cy", sseq0->cy_);
+  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fx", 525);
+  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fy", 525);
+  Cloud::Ptr pcd = sseq0->getCloud(0);
+  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cx", pcd->width / 2);
+  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cy", pcd->height / 2);
+
   // -- Downsample the sequences.
   double thresh = 0.05;
   Sequence::Ptr seq0(new Sequence);
@@ -32,9 +42,9 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
   seq1->pcds_.reserve(sseq1->size());
   seq0->imgs_.reserve(sseq0->size());
   seq1->imgs_.reserve(sseq1->size());
-  //pcl::visualization::CloudViewer vis("Matched");
   ROS_ASSERT(sseq0->size() == sseq0->timestamps_.size());
   bool on = false;
+  pcl::visualization::CloudViewer vis("Matched");
   for(size_t i = 0; i < sseq0->size(); ++i) {
     if(on && ((int)i % ON == 0))
       on = false;
@@ -51,8 +61,7 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
     if(fabs(dt) > thresh)
       continue;
 
-
-    //vis.showCloud(pcd1);
+    vis.showCloud(pcd1);
     usleep(1000 * 30);
     seq0->pcds_.push_back(sseq0->getCloud(i));
     seq1->pcds_.push_back(pcd1);
@@ -69,8 +78,6 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
 
 
   *transform = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "FinalTransform");
-  //*transform = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "IcpRefinedTransform");
-  //*transform = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "RansacRefinedTransform");
   *sync = pl_.getOutput<double>("ObjectMatchingCalibrator", "SyncOffset");
   cout << "Got sync offset of " << *sync << endl;
   cout << "transform: " << endl << transform->matrix() << endl;

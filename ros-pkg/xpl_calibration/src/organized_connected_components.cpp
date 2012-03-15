@@ -72,11 +72,10 @@ bool OrganizedConnectedComponents::findComponent(const Cloud& pcd,
     getNeighbors(pcd, idx, &indices);
 
     for(size_t i = 0; i < indices.size(); ++i) {
-      if(assignments_[indices[i]] == UNTOUCHED) { 
-	inliers.push_back(indices[i]);
-	que.push(indices[i]);
-	assignments_[indices[i]] = PROCESSING;
-      }
+      ROS_ASSERT(assignments_[indices[i]] == UNTOUCHED);
+      inliers.push_back(indices[i]);
+      que.push(indices[i]);
+      assignments_[indices[i]] = PROCESSING;
     }
   }
 
@@ -100,6 +99,8 @@ void OrganizedConnectedComponents::getNeighbors(const Cloud& pcd,
   int center_x = center_idx - center_y * pcd.width;
   ImageRegionIterator iri(cv::Size(pcd.width, pcd.height), 2);
   for(iri.setCenter(cv::Point2i(center_x, center_y)); !iri.done(); ++iri) {
+    if(assignments_[iri.index()] != UNTOUCHED)
+      continue;
     if(iri.index() == (int)center_idx)
       continue;
 
