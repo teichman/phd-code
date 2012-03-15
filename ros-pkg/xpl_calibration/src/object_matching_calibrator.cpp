@@ -594,6 +594,24 @@ double LossFunction::computeLoss(KdTree::Ptr tree0, const Cloud& pcd0, const Clo
   return val / count;
 }
 
+int LossFunction::projectPoint(const rgbd::Cloud& pcd, const rgbd::Point& pt,
+			       int* u, int* v) const
+{
+  ROS_ASSERT(pcd.isOrganized());
+  ROS_ASSERT(pcl_isfinite(pt.x) && pcl_isfinite(pt.y) && pcl_isfinite(pt.z));
+
+  *u = fx_ * pt.x / pt.z + cx_;
+  *v = fy_ * pt.y / pt.z + cy_;
+  
+  int idx = *v * pcd.width + *u;
+  if(*u < 0 || *u >= (int)pcd.width)
+    idx = -1;
+  if(*v < 0 || *v >= (int)pcd.height)
+    idx = -1;
+  
+  return idx;
+}
+
 
 /************************************************************
  * Helper functions
@@ -626,29 +644,6 @@ int seek(const std::vector<Cloud::ConstPtr>& pcds0, double ts1, double dt_thresh
     return idx;
   else
     return -1;
-}
-
-int projectPoint(const rgbd::Cloud& pcd, const rgbd::Point& pt,
-		 int* u, int* v)
-{
-  ROS_ASSERT(pcd.isOrganized());
-  ROS_ASSERT(pcl_isfinite(pt.x) && pcl_isfinite(pt.y) && pcl_isfinite(pt.z));
-
-  // TODO: Intrinsics should use the calibrated values.
-  double f = 525;
-  double centerX = (pcd.width >> 1);
-  double centerY = (pcd.height >> 1);
-  
-  *u = f * pt.x / pt.z + centerX;
-  *v = f * pt.y / pt.z + centerY;
-  
-  int idx = *v * pcd.width + *u;
-  if(*u < 0 || *u >= (int)pcd.width)
-    idx = -1;
-  if(*v < 0 || *v >= (int)pcd.height)
-    idx = -1;
-  
-  return idx;
 }
 
 Eigen::Affine3f generateTransform(double rx, double ry, double rz,

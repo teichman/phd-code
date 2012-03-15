@@ -31,6 +31,9 @@ protected:
   double cx_;
   double cy_;
   bool use_fsv_;
+
+  int projectPoint(const rgbd::Cloud& pcd, const rgbd::Point& pt,
+		   int* u, int* v) const;
 };
 
 class ObjectMatchingCalibrator : public pipeline::Pod
@@ -144,8 +147,6 @@ int seek(const std::vector<rgbd::Cloud::Ptr>& pcds0,
 //! Rotations are in radians.
 Eigen::Affine3f generateTransform(double rx, double ry, double rz,
 				  double tx, double ty, double tz);
-int projectPoint(const rgbd::Cloud& pcd, const rgbd::Point& pt,
-		 int* u, int* v);
 
 #endif // OBJECT_MATCHING_CALIBRATOR_H
 

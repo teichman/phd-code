@@ -24,16 +24,17 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
 					   Eigen::Affine3f* transform,
 					   double* sync)
 {
-  // pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fx", sseq0->fx_);
-  // pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fy", sseq0->fy_);
-  // pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cx", sseq0->cx_);
-  // pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cy", sseq0->cy_);
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fx", 525);
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fy", 525);
-  Cloud::Ptr pcd = sseq0->getCloud(0);
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cx", pcd->width / 2);
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cy", pcd->height / 2);
+  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fx", sseq0->fx_);
+  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fy", sseq0->fy_);
+  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cx", sseq0->cx_);
+  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cy", sseq0->cy_);
 
+  cout << "Intrinsics: " << endl;
+  cout << "fx: " << sseq0->fx_ << endl;
+  cout << "fy: " << sseq0->fy_ << endl;
+  cout << "cx: " << sseq0->cx_ << endl;
+  cout << "cy: " << sseq0->cy_ << endl;
+  
   // -- Downsample the sequences.
   double thresh = 0.05;
   Sequence::Ptr seq0(new Sequence);
