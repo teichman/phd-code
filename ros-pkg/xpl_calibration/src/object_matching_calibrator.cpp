@@ -4,7 +4,6 @@ using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 
-
 /************************************************************
  * ObjectMatchingCalibrator
  ************************************************************/
@@ -204,8 +203,8 @@ double ObjectMatchingCalibrator::gridSearchSync(ScalarFunction::Ptr lf) const
 {
   GridSearch gs(1);
   gs.objective_ = lf;
-  gs.max_resolutions_ << 0.02;
-  gs.grid_radii_ << 5;
+  gs.max_resolutions_ << 0.025;
+  gs.grid_radii_ << 2;
   gs.scale_factors_ << 0.5;
   gs.num_scalings_ = 3;
   
@@ -220,7 +219,7 @@ void ObjectMatchingCalibrator::visualizeResult(const std::string& name, const Ei
   const Sequence& seq1 = *pull<Sequence::ConstPtr>("Sequence1");
 
   double max_dt = 0.3; // More lenient than that used for calibration.
-  for(size_t i = 0; i < seq1.size(); i += 5) {
+  for(size_t i = 0; i < seq1.size(); ++i) {
     int idx = seek(seq0.pcds_, seq1.pcds_[i]->header.stamp.toSec() + sync, max_dt);
     if(idx == -1)
       continue;
