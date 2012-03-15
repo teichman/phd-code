@@ -18,13 +18,16 @@ DATA_DIR		:= $(MAKE_ROOT)/data
 all:
 	@echo You should probably be more specific.
 
-# -s is useless.
+# rosmake does not play nicely with -j.
+# 'make -j8 code' fails with "make[3]: *** read jobs pipe: No such file or directory.  Stop."
+# 'make code' succeeds.
+# 'make -l8 code' succeeds.
+# TODO: This can probably become rosmake -s.
 code:
 	rosmake xpl_calibration
 	rosmake cloud_calibration
 
-#CONFIGURATIONS := $(shell ls `rospack find xpl_calibration`/../../project/calibration/data/)
-CONFIGURATIONS := $(addprefix configuration, 00 01 02 03 04 05 06 07 08 09)
+CONFIGURATIONS := $(shell ls $(DATA_DIR))
 
 CALIBRATE_DYNAMIC := DEBUG=1 rosrun xpl_calibration calibrate_sequences --dynamic
 CALIBRATE_ORB := rosrun xpl_calibration calibrate_sequences --orb
