@@ -18,7 +18,7 @@ namespace bfs = boost::filesystem;
 string usageString()
 {
   ostringstream oss;
-  oss << "Usage: calibration_viewer SEQ SEQ CAL SYNC OUTFOLDER [--checker] [CAL_GROUND]"  << endl;
+  oss << "Usage: calibration_viewer SEQ SEQ CAL SYNC [OUTFOLDER] [--checker] [CAL_GROUND]"  << endl;
   oss << "  where SEQ is a Sequence," << endl;
   oss << "  CAL is a 4x4 .eig.txt file that describes" << endl;
   oss << "    the transform that brings the second sequence to the coordinate system that the" << endl;
@@ -40,7 +40,7 @@ void viewerOneOff (pcl::visualization::PCLVisualizer& viewer)
 
 int main(int argc, char** argv)
 {
-  if(argc != 6 && argc != 7) {
+  if(argc != 5 && argc != 6 && argc != 7) {
     cout << usageString() << endl;
     return 0;
   }
@@ -53,6 +53,10 @@ int main(int argc, char** argv)
   bool use_ground = false;
   Eigen::Affine3f ground_transform;
   bool use_checker = false;
+  string dir = ".";
+  if(argc >= 6){
+    dir = argv[5];
+  }
   if(argc == 7){
     string arg = argv[6];
     if (arg == "--checker")
@@ -78,7 +82,6 @@ int main(int argc, char** argv)
   double thresh = 0.05;
   ROS_WARN_STREAM("Showing clouds dt of less than " << thresh << ".");
   Mode_t view_mode = ALL;
-  string dir = argv[5];
   bool pause = false;
   for(size_t i = 0; i < sseq0->size(); ) {
     Cloud::Ptr overlay = sseq0->getCloud(i);
