@@ -48,7 +48,7 @@ namespace rgbd
     void serialize(std::ostream& out) const;
     void deserialize(std::istream& in);
     size_t size() const;
-    Cloud::Ptr getCloud(size_t frame) const;
+    Cloud::Ptr getCloud(size_t frame, double f = 0) const;
     Mat3b getImage(size_t frame) const;
     //! dt is signed.
     Cloud::Ptr getCloud(double timestamp, double* dt) const;

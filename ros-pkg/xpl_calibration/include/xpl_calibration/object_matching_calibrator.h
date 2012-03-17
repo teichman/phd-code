@@ -52,7 +52,7 @@ public:
     declareParam<double>("CentroidThreshold", 0.5); // Distance in meters between centroids to count as inliers.
     declareParam<double>("TimeCorrespondenceThreshold", 0.015);
     declareParam<double>("Downsampling", 0.9); // Drop this fraction.  0.0 means using all the data, 1.0 none.
-    declareParam<double>("DistanceThreshold", 0.02); // Maximum distance for hinge loss in objective function.
+    declareParam<double>("DistanceThreshold", 0.3); // Maximum distance for hinge loss in objective function.
     declareParam<double>("TransformThreshold", 0.01);
     declareParam<std::string>("TransformSearchMethod", TRANSFORM_SEARCH_METHOD); // "GridSearch" or "ICP"
     

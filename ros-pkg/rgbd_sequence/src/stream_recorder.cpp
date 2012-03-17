@@ -10,13 +10,15 @@ namespace rgbd
 {
 
   StreamRecorder::StreamRecorder(const std::string& device_id,
-		     pcl::OpenNIGrabber::Mode mode, const std::string& calib_file) :
+				 pcl::OpenNIGrabber::Mode mode,
+				 const std::string& calib_file,
+				 bool view_cloud) :
     device_id_(device_id),
     mode_(mode),
     grabber_(device_id_, mode, mode),
     cloud_viewer_("PointCloud"+device_id_),
     recording_(false),
-    view_cloud_(false),
+    view_cloud_(view_cloud),
     calib_file_(calib_file),
     manual_calibration_(false)
   {

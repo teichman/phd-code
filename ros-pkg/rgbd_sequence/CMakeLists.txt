@@ -27,6 +27,7 @@ rosbuild_add_library(rgbd_sequence
   src/stream_sequence.cpp
   src/stream_recorder.cpp
   src/publisher.cpp
+  src/projector.cpp
   )
 rosbuild_link_boost(rgbd_sequence system)
 rosbuild_add_compile_flags(rgbd_sequence -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
@@ -59,3 +60,10 @@ rosbuild_add_compile_flags(pcd_series_view -Wno-deprecated -Wno-unused-but-set-v
 rosbuild_add_gtest(test_stream src/test_stream.cpp)
 target_link_libraries(test_stream rgbd_sequence)
 rosbuild_add_gtest_build_flags(test_stream)
+
+rosbuild_add_executable(get_primesense_info src/get_primesense_info.cpp)
+rosbuild_add_compile_flags(get_primesense_info -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
+rosbuild_add_executable(test_intrinsics src/test_intrinsics.cpp)
+rosbuild_add_compile_flags(test_intrinsics -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+target_link_libraries(test_intrinsics rgbd_sequence)

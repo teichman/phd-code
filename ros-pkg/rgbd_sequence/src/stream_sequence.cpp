@@ -209,8 +209,8 @@ namespace rgbd
   {
     return getImage(seek(timestamp, dt));
   }
-  
-  Cloud::Ptr StreamSequence::getCloud(size_t frame) const
+    
+  Cloud::Ptr StreamSequence::getCloud(size_t frame, double f) const
   {
     ROS_ASSERT(frame < dpt_names_.size());
     DepthMat depth_mat;
@@ -218,6 +218,9 @@ namespace rgbd
     double fx, fy, cx, cy , timestamp;
     loadImage(save_dir_, frame, img);
     loadDepth(save_dir_, frame, depth_mat, fx, fy, cx, cy, timestamp);
+    if(f != 0)
+      fx = fy = f;
+    
     if( USE_DEFAULT_CALIBRATION){
       fx = fy = 535;
       cx = depth_mat.cols()/2;

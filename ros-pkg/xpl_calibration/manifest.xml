@@ -14,6 +14,7 @@
   <depend package="pipeline3"/>
   <depend package="multi_sequence"/>
   <depend package="optimization"/>
+  <depend package="google-perftools"/>
 
   <export>
     <cpp cflags="-I${prefix}/include"

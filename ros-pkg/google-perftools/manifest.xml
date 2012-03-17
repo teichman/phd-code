@@ -10,7 +10,7 @@
   <url>http://ros.org/wiki/google-perftools</url>
 
   <export>
-    <cpp cflags="" lflags="-Wl,-rpath,${prefix}/build/gperftools-2.0/.libs -L${prefix}/build/gperftools-2.0/.libs -lprofiler" />
+    <cpp cflags="" lflags="-Wl,-rpath,${prefix}/build/gperftools-2.0/.libs -L${prefix}/build/gperftools-2.0/.libs -Wl,--no-as-needed -lprofiler -Wl,--as-needed" />
   </export>
 </package>
 

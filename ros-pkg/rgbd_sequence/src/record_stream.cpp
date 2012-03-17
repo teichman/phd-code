@@ -3,6 +3,8 @@
 using namespace std;
 using namespace rgbd;
 
+#define VIEW_CLOUD (getenv("VIEW_CLOUD") ? atoi(getenv("VIEW_CLOUD")) : 0)
+
 string usageString()
 {
   ostringstream oss;
@@ -37,7 +39,7 @@ int main(int argc, char** argv)
   if(argc == 4)
     device_id = argv[3];
   
-  StreamRecorder rec(device_id, mode, calib_file);
+  StreamRecorder rec(device_id, mode, calib_file, VIEW_CLOUD);
   rec.run();
   
   return 0;
