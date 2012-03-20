@@ -15,7 +15,7 @@ using namespace rgbd;
 string usageString()
 {
   ostringstream oss;
-  oss << "Usage: test_intrinsics SEQ" << endl;
+  oss << "Usage: visualize_intrinsics SEQ" << endl;
   oss << "  SEQ is a particular test sequence." << endl;
   return oss.str();
 }

@@ -64,6 +64,10 @@ rosbuild_add_gtest_build_flags(test_stream)
 rosbuild_add_executable(get_primesense_info src/get_primesense_info.cpp)
 rosbuild_add_compile_flags(get_primesense_info -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
-rosbuild_add_executable(test_intrinsics src/test_intrinsics.cpp)
-rosbuild_add_compile_flags(test_intrinsics -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
-target_link_libraries(test_intrinsics rgbd_sequence)
+rosbuild_add_executable(visualize_intrinsics src/visualize_intrinsics.cpp)
+rosbuild_add_compile_flags(visualize_intrinsics -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+target_link_libraries(visualize_intrinsics rgbd_sequence)
+
+rosbuild_add_executable(intrinsics_search src/intrinsics_search.cpp)
+rosbuild_add_compile_flags(intrinsics_search -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+target_link_libraries(intrinsics_search rgbd_sequence)
