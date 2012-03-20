@@ -28,6 +28,8 @@ rosbuild_add_library(rgbd_sequence
   src/stream_recorder.cpp
   src/publisher.cpp
   src/projector.cpp
+  src/vis_wrapper.cpp
+  src/tube_measurer.cpp
   )
 rosbuild_link_boost(rgbd_sequence system)
 rosbuild_add_compile_flags(rgbd_sequence -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)

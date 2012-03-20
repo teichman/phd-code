@@ -221,8 +221,8 @@ namespace rgbd
     if(f != 0)
       fx = fy = f;
     
-    if( USE_DEFAULT_CALIBRATION){
-      fx = fy = 535;
+    if(USE_DEFAULT_CALIBRATION){
+      fx = fy = 525;
       cx = depth_mat.cols()/2;
       cy = depth_mat.rows()/2;
     }

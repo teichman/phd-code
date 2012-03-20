@@ -72,6 +72,11 @@ namespace rgbd
   };
 
 
+  inline bool isFinite(const Point& pt)
+  {
+    return (pcl_isfinite(pt.x) && pcl_isfinite(pt.y) && pcl_isfinite(pt.z));
+  }
+
 }
 
 #endif // STREAM_SEQUENCE_H
