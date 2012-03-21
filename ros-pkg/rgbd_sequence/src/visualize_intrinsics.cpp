@@ -80,6 +80,8 @@ int main(int argc, char** argv)
   proj.fy_ = sseq.fy_;
   proj.cx_ = sseq.cx_;
   proj.cy_ = sseq.cy_;
+  proj.width_ = pcd->width;
+  proj.height_ = pcd->height;
   Frame frame;
   proj.cloudToFrame(*pcd, &frame);
   CloudViewer vis("Cloud");

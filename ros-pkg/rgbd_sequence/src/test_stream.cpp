@@ -37,6 +37,8 @@ TEST(Projector, Projector)
     proj.fy_ = sseq.fy_;
     proj.cx_ = sseq.cx_;
     proj.cy_ = sseq.cy_;
+    proj.width_ = pcd.width;
+    proj.height_ = pcd.height;
 
     int idx = 0;
     for(size_t v = 0; v < pcd.height; ++v) {

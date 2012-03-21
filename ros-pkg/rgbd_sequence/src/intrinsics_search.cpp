@@ -13,21 +13,22 @@ using namespace rgbd;
 string usageString()
 {
   ostringstream oss;
-  oss << "Usage: intrinsics_search SEQ" << endl;
+  oss << "Usage: intrinsics_search SEQ DISTANCE" << endl;
   oss << "  SEQ is a sequence made for this purpose." << endl;
+  oss << "  DISTANCE is the ground truth distance between two reference points." << endl;
   return oss.str();
 }
 
 
 int main(int argc, char** argv)
 {
-  if(argc != 2) {
+  if(argc != 3) {
     cout << usageString() << endl;
     return -1;
   }
   
   TubeMeasurer tm;
-  tm.run(argv[1]);
+  tm.run(argv[1], atof(argv[2]));
 
   return 0;
 }
