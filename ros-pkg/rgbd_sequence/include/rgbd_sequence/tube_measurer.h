@@ -43,6 +43,7 @@ namespace rgbd
     void clearSelection();
     void acceptVisible();
     void saveAccepted() const;
+    void loadAccepted();
     void gridSearch();
   };
 

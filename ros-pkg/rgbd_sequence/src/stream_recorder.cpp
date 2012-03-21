@@ -72,11 +72,10 @@ namespace rgbd
 	ROS_WARN_STREAM("rgbdCallback got an rgbd pair with timestamp delta of " << depth_timestamp - image_timestamp);
       }
     }
-    else{
-      cv::Mat3b img = oniToCV(oni_rgb);
-      cv::imshow("Image"+device_id_, img);
-      cv::waitKey(10);
-    }
+
+    cv::Mat3b img = oniToCV(oni_rgb);
+    cv::imshow("Image"+device_id_, img);
+    cv::waitKey(10);
   }
 
   cv::Mat3b StreamRecorder::oniToCV(const boost::shared_ptr<openni_wrapper::Image>& oni) const

@@ -66,6 +66,9 @@ namespace rgbd
       case 's':
 	saveAccepted();
 	break;
+      case 'l':
+	loadAccepted();
+	break;
       case 'd':
 	cout << "Accepted points: " << endl;
 	cout << accepted_;
@@ -198,6 +201,19 @@ namespace rgbd
     accepted_.save(p);
   }
 
+  void TubeMeasurer::loadAccepted()
+  {
+    string p = path_;
+    if(p[p.size() - 1] == '/')
+      p = p.substr(0, p.size() - 1);
+    p += "-accepted.txt";
+    cout << "Loading accepted points from " << p << endl;
+    accepted_.load(p);
+
+    cout << "New accepted points: " << endl;
+    cout << accepted_;
+  }
+
   void TubeMeasurer::gridSearch()
   {
     if(accepted_.empty()) {
@@ -216,6 +232,7 @@ namespace rgbd
 
     ArrayXd init(4);
     init << proj_.fx_, proj_.fy_, proj_.cx_, proj_.cy_;
+    cout << "Loss before optimization: " << gs.objective_->eval(init) << endl;
     ArrayXd xstar = gs.search(init);
 
     cout << "Got intrinsics of: " << xstar.transpose() << endl;
