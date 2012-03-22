@@ -233,6 +233,7 @@ namespace rgbd
     ArrayXd init(4);
     init << proj_.fx_, proj_.fy_, proj_.cx_, proj_.cy_;
     cout << "Loss before optimization: " << gs.objective_->eval(init) << endl;
+    printErrors(init);
     ArrayXd xstar = gs.search(init);
 
     cout << "Got intrinsics of: " << xstar.transpose() << endl;
@@ -241,6 +242,21 @@ namespace rgbd
     proj_.cx_ = xstar(2);
     proj_.cy_ = xstar(3);
     cout << "Best loss: " << gs.objective_->eval(xstar) << endl;
+    printErrors(xstar);
+  }
+
+  void TubeMeasurer::printErrors(const Eigen::ArrayXd& x) const
+  {
+    ROS_ASSERT(x.rows() == 4);
+    
+    for(size_t i = 0; i < accepted_.size(); ++i) {
+      Point pt0;
+      Point pt1;
+      Projector::project(x(0), x(1), x(2), x(3), accepted_[i].first, &pt0);
+      Projector::project(x(0), x(1), x(2), x(3), accepted_[i].second, &pt1);
+      double dist = pcl::euclideanDistance(pt0, pt1);
+      cout << "Error " << i << ": " << fabs(dist - actual_distance_) << endl;
+    }
   }
   
   LossFunction::LossFunction(const AcceptedPoints& accepted,

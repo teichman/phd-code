@@ -35,6 +35,7 @@ private:
   double total_us_;
   timespec start_;
   timespec end_;
+  bool stopped_;
 };
 
 class ScopedTimer

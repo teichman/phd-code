@@ -44,8 +44,9 @@ namespace rgbd
       cloud_viewer_.showCloud(cloud); //For now, so we can still visualize the cloud
     }
   }
-  void StreamRecorder::rgbdCallback( const boost::shared_ptr<openni_wrapper::Image>& oni_rgb,
-				     const boost::shared_ptr<openni_wrapper::DepthImage>& oni_depth, float f_inv )
+
+  void StreamRecorder::rgbdCallback(const boost::shared_ptr<openni_wrapper::Image>& oni_rgb,
+				    const boost::shared_ptr<openni_wrapper::DepthImage>& oni_depth, float f_inv)
   {
     if(recording_) {
       timespec clk;
@@ -75,10 +76,10 @@ namespace rgbd
 
     cv::Mat3b img = oniToCV(oni_rgb);
     cv::imshow("Image"+device_id_, img);
-    cv::waitKey(10);
+    cv::waitKey(10); // TODO: This is probably too long.
   }
 
-  cv::Mat3b StreamRecorder::oniToCV(const boost::shared_ptr<openni_wrapper::Image>& oni) const
+  cv::Mat3b StreamRecorder::oniToCV(const boost::shared_ptr<openni_wrapper::Image>& oni)
   {
     cv::Mat3b img(oni->getHeight(), oni->getWidth());
     uchar data[img.rows * img.cols * 3];
@@ -170,22 +171,27 @@ namespace rgbd
 
   }
 
-  DepthMat StreamRecorder::oniDepthToEigen(const boost::shared_ptr<openni_wrapper::DepthImage>& oni) const
+  DepthMatPtr StreamRecorder::oniDepthToEigenPtr(const boost::shared_ptr<openni_wrapper::DepthImage>& oni)
   {
-    DepthMat depth(oni->getHeight(), oni->getWidth());
-    unsigned short data[depth.rows() * depth.cols()];
-    oni->fillDepthImageRaw(depth.cols(), depth.rows(), data);
+    DepthMatPtr depth(new DepthMat(oni->getHeight(), oni->getWidth()));
+    unsigned short data[depth->rows() * depth->cols()];
+    oni->fillDepthImageRaw(depth->cols(), depth->rows(), data);
     int i = 0;
-    for(int y = 0; y < depth.rows(); ++y){
-      for(int x = 0; x < depth.cols(); ++x, ++i){
+    for(int y = 0; y < depth->rows(); ++y){
+      for(int x = 0; x < depth->cols(); ++x, ++i){
         if(data[i] == oni->getNoSampleValue() || data[i] == oni->getShadowValue()){
-          depth(y,x) = 0;
+          depth->coeffRef(y,x) = 0;
         }else{
-          depth(y,x) = data[i];
+          depth->coeffRef(y,x) = data[i];
         }
       }
     }
-  return depth;
+    return depth;
+  }
+  
+  DepthMat StreamRecorder::oniDepthToEigen(const boost::shared_ptr<openni_wrapper::DepthImage>& oni)
+  {
+    return *oniDepthToEigenPtr(oni);
   }
 
 

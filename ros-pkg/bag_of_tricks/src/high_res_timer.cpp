@@ -4,35 +4,46 @@
 
 HighResTimer::HighResTimer(const std::string& description) :
   description_(description),
-  total_us_(0)
+  total_us_(0),
+  stopped_(true)
 {
 }
 
 void HighResTimer::start()
 {
   clock_gettime(HRTCLOCK, &start_);
+  stopped_ = false;
 }
 
 void HighResTimer::stop()
 {
   clock_gettime(HRTCLOCK, &end_);
   total_us_ += 1e6 * (end_.tv_sec - start_.tv_sec) + 1e-3 * (end_.tv_nsec - start_.tv_nsec);
+  stopped_ = true;
 }
 
 void HighResTimer::reset(const std::string& description)
 {
   description_ = description;
   total_us_ = 0;
+  stopped_ = true;
 }
 
 void HighResTimer::reset()
 {
   total_us_ = 0;
+  stopped_ = true;
 }
 
 double HighResTimer::getMicroseconds() const
 {
-  return total_us_;
+  if(stopped_)
+    return total_us_;
+  else { 
+    timespec curr;
+    clock_gettime(HRTCLOCK, &curr);
+    return total_us_ + 1e6 * (curr.tv_sec - start_.tv_sec) + 1e-3 * (curr.tv_nsec - start_.tv_nsec);
+  }
 }
 
 double HighResTimer::getMilliseconds() const

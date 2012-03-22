@@ -12,11 +12,11 @@ stty echo
 set timeout 10
 
 while { 1 } {
-    spawn sudo ls
-    expect "teichman:" { send -- "$PASSWD\r" }
+    spawn rsync -av --size-only .sentinel_log rg:~/
+    expect "password:" { send -- "$PASSWD\r" }
     expect "\\$"
 
-    sleep 5
+    sleep 60
     
     spawn date
     expect "\\$"

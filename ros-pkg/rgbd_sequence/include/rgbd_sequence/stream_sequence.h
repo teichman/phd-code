@@ -19,6 +19,8 @@ namespace rgbd
   typedef pcl::PointXYZRGB Point;
   typedef pcl::PointCloud<Point> Cloud;
   typedef Eigen::Matrix<unsigned short, Eigen::Dynamic, Eigen::Dynamic> DepthMat;
+  typedef boost::shared_ptr<DepthMat> DepthMatPtr;
+  typedef boost::shared_ptr<const DepthMat> DepthMatConstPtr;
   using cv::Mat3b;
 
   class StreamSequence : public Serializable
