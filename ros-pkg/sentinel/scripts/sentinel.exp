@@ -1,0 +1,23 @@
+#!/usr/bin/expect
+
+spawn date
+expect "\\$"
+
+send_user "passwd:"
+stty -echo
+expect_user -re "(.*)\n" {set PASSWD $expect_out(1,string)}
+send_user "\n"
+stty echo
+
+set timeout 10
+
+while { 1 } {
+    spawn sudo ls
+    expect "teichman:" { send -- "$PASSWD\r" }
+    expect "\\$"
+
+    sleep 5
+    
+    spawn date
+    expect "\\$"
+}
