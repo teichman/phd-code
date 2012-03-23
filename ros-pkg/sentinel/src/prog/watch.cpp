@@ -39,7 +39,7 @@ int main(int argc, char** argv)
   double update_interval = 1;
   double save_interval = 1;
   double threshold = 0.00001;
-  int max_training_imgs = 60;
+  int max_training_imgs = 180;
   Sentinel sen(name, update_interval, save_interval, max_training_imgs, threshold, device_id, mode);
   sen.run();
 
