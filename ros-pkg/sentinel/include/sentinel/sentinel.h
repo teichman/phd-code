@@ -1,6 +1,7 @@
 #ifndef SENTINEL_H
 #define SENTINEL_H
 
+#include <ctime>
 #include <queue>
 #include <pcl/io/openni_grabber.h>
 #include <opencv2/core/core.hpp>
@@ -15,11 +16,13 @@
 class Sentinel
 {
 public:
-  Sentinel(double update_interval,
+  Sentinel(std::string name,
+	   double update_interval,
+	   double save_interval,
 	   int max_training_imgs,
 	   double threshold,
 	   const std::string& device_id = "",
-	   pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz);
+	   pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QVGA_30Hz);
   void rgbdCallback(const boost::shared_ptr<openni_wrapper::Image>& rgb,
 		    const boost::shared_ptr<openni_wrapper::DepthImage>& depth,
 		    float f_inv);
@@ -30,13 +33,18 @@ protected:
   BackgroundModel model_;
   std::queue<rgbd::DepthMatConstPtr> training_;
   double update_interval_;
+  double save_interval_;
   int max_training_imgs_;
-  HighResTimer hrt_;
+  HighResTimer update_timer_;
+  HighResTimer save_timer_;
   cv::Mat3b vis_;
   double threshold_;
+  std::string dir_;
+  cv::Mat1b mask_;
   
-  void process(rgbd::DepthMatConstPtr depth, cv::Mat3b img);
+  void process(rgbd::DepthMatConstPtr depth, cv::Mat3b img, double ts);
   void updateModel(rgbd::DepthMatConstPtr depth);
+  void save(rgbd::DepthMatConstPtr depth, cv::Mat3b img, cv::Mat3b vis, double ts) const;
 };
 
 #endif // SENTINEL_H
