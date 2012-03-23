@@ -23,7 +23,7 @@ while [ 1 ]; do
     fi
     PREV_NUM=$NUM
     
-    SEC=$(( $RANDOM / 60 ))
+    SEC=$(( $RANDOM / 600 ))
     echo Sleeping for $SEC seconds
     sleep $SEC
 done
