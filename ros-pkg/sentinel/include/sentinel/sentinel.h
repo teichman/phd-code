@@ -45,6 +45,7 @@ protected:
   void process(rgbd::DepthMatConstPtr depth, cv::Mat3b img, double ts);
   void updateModel(rgbd::DepthMatConstPtr depth);
   void save(rgbd::DepthMatConstPtr depth, cv::Mat3b img, cv::Mat3b vis, double ts) const;
+  cv::Mat1b depthMatToCV(const rgbd::DepthMat& depth) const;
 };
 
 #endif // SENTINEL_H
