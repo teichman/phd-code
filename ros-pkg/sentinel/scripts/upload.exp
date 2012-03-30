@@ -4,7 +4,7 @@ set PASSWD [lindex $argv 0]
 set DIRS [lindex $argv 1]
 #set DIRS [lrange $argv 1 end]
 set timeout 60
-spawn rsync -av --size-only $DIRS rg:/proteus/sentinel/
+spawn rsync -av --bwlimit=200 --size-only $DIRS rg:/proteus/sentinel/
 expect "password:" { send -- "$PASSWD\r" }
 expect "\\$"
 
