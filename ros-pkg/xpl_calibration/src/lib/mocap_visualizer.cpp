@@ -6,35 +6,21 @@ using namespace Eigen;
 using namespace rgbd;
 
 MocapVisualizer::MocapVisualizer(const TRCParser& trc,
-				 const std::vector<rgbd::Cloud::Ptr>& xpl,
+				 rgbd::StreamSequence::ConstPtr sseq,
 				 double tol) :
   trc_(trc),
-  xpl_(xpl),
+  sseq_(sseq),
   tol_(tol),
   trc_idx_(0),
   xpl_idx_(0),
-  sync_(0)
+  sync_(0),
+  sseq_start_(sseq_->getCloud(0)->header.stamp.toSec())
 {
-  // -- Make the XPL data start at zero.
-  double offset = xpl_[0]->header.stamp.toSec();
-  for(size_t i = 0; i < xpl_.size(); ++i) {
-    double ts = xpl_[i]->header.stamp.toSec() - offset;
-    xpl_[i]->header.stamp.fromSec(ts);
-  }
-
-  // -- Make the XPL data red.
-  for(size_t i = 0; i < xpl_.size(); ++i) {
-    for(size_t j = 0; j < xpl_[i]->size(); ++j) {
-      xpl_[i]->at(j).r = 255;
-      xpl_[i]->at(j).g = 0;
-      xpl_[i]->at(j).b = 0;
-    }
-  }
 }
 
-void MocapVisualizer::getTRCPointTypes(const rgbd::Cloud& frame,
-				       rgbd::Cloud* camera,
-				       rgbd::Cloud* checker) const
+void MocapVisualizer::getTRCPoints(const rgbd::Cloud& frame,
+				   rgbd::Cloud* camera,
+				   rgbd::Cloud* checker) const
 {
   // -- Find the camera.
   for(size_t i = 0; i < frame.size(); ++i) {
@@ -67,18 +53,49 @@ void MocapVisualizer::getTRCPointTypes(const rgbd::Cloud& frame,
     checker->at(i).b = 255;
   }
 }
-  
+
+void MocapVisualizer::getXPLPoints(rgbd::Cloud* xpl) const
+{
+  xpl->clear();
+
+  MocapDetector md;
+  Point tl, tr, bl, br;
+  bool found = md.locatePoints(sseq_, xpl_idx_, tl, tr, bl, br);
+  if(!found)
+    return;
+
+  xpl->push_back(tl);
+  xpl->push_back(tr);
+  xpl->push_back(bl);
+  xpl->push_back(br);
+  for(size_t i = 0; i < xpl->size(); ++i) {
+    xpl->at(i).r = 255;
+    xpl->at(i).g = 0;
+    xpl->at(i).b = 0;
+  }
+}
+
 void MocapVisualizer::run()
 {
   Cloud::Ptr vis(new Cloud);
   vw_.vis_.addText("aoeu", 10, 10, 0, 0, 0, "frame_number");
     
   while(true) {
+    cout << "------------------------------" << endl;
+    cout << "xpl #" << xpl_idx_ << ", trc #" << trc_idx_ << endl;
+    cout << "xpl ts: " << sseq_->timestamps_[xpl_idx_] - sseq_start_ << endl;
+    cv::imshow("img", sseq_->getImage(xpl_idx_));
+    cv::waitKey(2);
+    
     const Cloud& frame = *trc_.frames_[trc_idx_];
     rgbd::Cloud camera;
     rgbd::Cloud checker;
-    getTRCPointTypes(frame, &camera, &checker);
+    getTRCPoints(frame, &camera, &checker);
+    rgbd::Cloud xpl;
+    getXPLPoints(&xpl);
+    cout << "#xpl: " << xpl.size() << ", #trc_cam: " << camera.size() << ", #trc_checker: " << checker.size() << endl;
 
+    
     // -- Visualize.
     Affine3f transform = Affine3f::Identity();
     if(camera.size() == 3) { 
@@ -86,7 +103,7 @@ void MocapVisualizer::run()
       *vis = camera;
       *vis += checker;
       pcl::transformPointCloud(*vis, *vis, transform);
-      *vis += *xpl_[xpl_idx_]; // This should come after the transform call.
+      *vis += xpl;
 
       vw_.showCloud(vis);
       ostringstream oss;
@@ -124,10 +141,10 @@ void MocapVisualizer::run()
       incrementSync(1.0 / 120.0);
       break;
     case '{':
-      incrementSync(100.0 / 120.0);
+      incrementSync(-10.0 / 120.0);
       break;
     case '}':
-      incrementSync(100.0 / 120.0);
+      incrementSync(10.0 / 120.0);
       break;
     }
   }
@@ -145,12 +162,12 @@ void MocapVisualizer::incrementXPL(int val)
   xpl_idx_ += val;
   if(xpl_idx_ < 0)
     xpl_idx_ = 0;
-  if(xpl_idx_ >= (int)xpl_.size())
-    xpl_idx_ = xpl_.size() - 1;
+  if(xpl_idx_ >= (int)sseq_->size())
+    xpl_idx_ = sseq_->size() - 1;
 
   // -- Seek for the closest trc_idx_.
   double min = numeric_limits<double>::max();
-  double ts = xpl_[xpl_idx_]->header.stamp.toSec() + sync_;
+  double ts = sseq_->timestamps_[xpl_idx_] - sseq_start_ + sync_;
   int best = -1;
   for(size_t i = 0; i < trc_.frames_.size(); ++i) {
     double dt = fabs(ts - trc_.frames_[i]->header.stamp.toSec());
