@@ -37,6 +37,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/organized_connected_components.cpp
   src/lib/trc_parser.cpp
   src/lib/mocap_visualizer.cpp
+  src/lib/mocap_detector.cpp
   )
 rosbuild_link_boost(${PROJECT_NAME} system)
 #target_link_libraries(${PROJECT_NAME} another_library)
@@ -70,3 +71,7 @@ rosbuild_add_gtest_build_flags(test_calibration)
 rosbuild_add_executable(visualize_mocap src/prog/visualize_mocap.cpp)
 rosbuild_add_compile_flags(visualize_mocap -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 target_link_libraries(visualize_mocap ${PROJECT_NAME})
+
+rosbuild_add_executable(test_mocap src/prog/test_mocap.cpp)
+rosbuild_add_compile_flags(test_mocap -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+target_link_libraries(test_mocap ${PROJECT_NAME})
