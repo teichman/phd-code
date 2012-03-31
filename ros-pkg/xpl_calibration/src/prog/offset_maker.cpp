@@ -70,7 +70,7 @@ int main(int argc, char** argv)
         cout << "Decreased offset by " << off_add << endl; 
         break;
       case 'd':
-        if(i < sseq0->size()-1)
+        if(i < (int)sseq0->size()-1)
           i += 1;
         break;
       case 'a':
