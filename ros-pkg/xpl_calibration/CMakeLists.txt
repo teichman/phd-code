@@ -38,6 +38,8 @@ rosbuild_add_library(${PROJECT_NAME}
   src/object_matching_calibrator.cpp
   src/calibration_pipeline_dynamic.cpp
   src/organized_connected_components.cpp
+  src/lib/trc_parser.cpp
+  src/lib/mocap_visualizer.cpp
   )
 rosbuild_link_boost(${PROJECT_NAME} system)
 #target_link_libraries(${PROJECT_NAME} another_library)
@@ -67,3 +69,7 @@ target_link_libraries(offset_maker ${PROJECT_NAME})
 rosbuild_add_gtest(test_calibration src/test_calibration.cpp)
 target_link_libraries(test_calibration ${PROJECT_NAME})
 rosbuild_add_gtest_build_flags(test_calibration)
+
+rosbuild_add_executable(visualize_mocap src/prog/visualize_mocap.cpp)
+rosbuild_add_compile_flags(visualize_mocap -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+target_link_libraries(visualize_mocap ${PROJECT_NAME})

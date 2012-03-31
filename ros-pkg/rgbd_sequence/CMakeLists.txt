@@ -30,8 +30,6 @@ rosbuild_add_library(rgbd_sequence
   src/projector.cpp
   src/vis_wrapper.cpp
   src/tube_measurer.cpp
-  src/trc_parser.cpp
-  src/mocap_visualizer.cpp
   )
 rosbuild_link_boost(rgbd_sequence system)
 rosbuild_add_compile_flags(rgbd_sequence -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
@@ -71,10 +69,6 @@ rosbuild_add_compile_flags(get_primesense_info -Wno-deprecated -Wno-unused-but-s
 rosbuild_add_executable(visualize_intrinsics src/visualize_intrinsics.cpp)
 rosbuild_add_compile_flags(visualize_intrinsics -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 target_link_libraries(visualize_intrinsics rgbd_sequence)
-
-rosbuild_add_executable(visualize_mocap src/visualize_mocap.cpp)
-rosbuild_add_compile_flags(visualize_mocap -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
-target_link_libraries(visualize_mocap rgbd_sequence)
 
 rosbuild_add_executable(intrinsics_search src/intrinsics_search.cpp)
 rosbuild_add_compile_flags(intrinsics_search -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)

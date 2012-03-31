@@ -1,4 +1,4 @@
-#include <rgbd_sequence/mocap_visualizer.h>
+#include <xpl_calibration/mocap_visualizer.h>
 
 using namespace std;
 using namespace Eigen;
