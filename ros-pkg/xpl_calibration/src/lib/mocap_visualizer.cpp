@@ -32,9 +32,9 @@ MocapVisualizer::MocapVisualizer(const TRCParser& trc,
   }
 }
 
-void MocapVisualizer::getPointTypes(const rgbd::Cloud& frame,
-				    rgbd::Cloud* camera,
-				    rgbd::Cloud* checker) const
+void MocapVisualizer::getTRCPointTypes(const rgbd::Cloud& frame,
+				       rgbd::Cloud* camera,
+				       rgbd::Cloud* checker) const
 {
   // -- Find the camera.
   for(size_t i = 0; i < frame.size(); ++i) {
@@ -71,29 +71,35 @@ void MocapVisualizer::getPointTypes(const rgbd::Cloud& frame,
 void MocapVisualizer::run()
 {
   Cloud::Ptr vis(new Cloud);
+  vw_.vis_.addText("aoeu", 10, 10, 0, 0, 0, "frame_number");
     
   while(true) {
-    cout << "trc_idx_: " << trc_idx_ << ", xpl_idx_: " << xpl_idx_ << endl;
     const Cloud& frame = *trc_.frames_[trc_idx_];
     rgbd::Cloud camera;
     rgbd::Cloud checker;
-    getPointTypes(frame, &camera, &checker);
-    cout << "Got " << camera.size() << " camera points, " << checker.size() << " checker points." << endl;
-      
-    Affine3f transform = Affine3f::Identity();
-    if(camera.size() == 3)
-      transform = getWorldToCameraTransform(camera);
-    else
-      cout << "Failed to find camera." << endl;
-            
-    // -- Visualize.
-    cout << "Showing frame " << trc_idx_ << endl;
-    *vis = camera;
-    *vis += checker;
-    pcl::transformPointCloud(*vis, *vis, transform);
-    *vis += *xpl_[xpl_idx_]; // This should come after the transform call.
+    getTRCPointTypes(frame, &camera, &checker);
 
-    vw_.showCloud(vis);
+    // -- Visualize.
+    Affine3f transform = Affine3f::Identity();
+    if(camera.size() == 3) { 
+      transform = getWorldToCameraTransform(camera);
+      *vis = camera;
+      *vis += checker;
+      pcl::transformPointCloud(*vis, *vis, transform);
+      *vis += *xpl_[xpl_idx_]; // This should come after the transform call.
+
+      vw_.showCloud(vis);
+      ostringstream oss;
+      oss << "XPL frame " << setw(4) << setfill('0') << xpl_idx_;
+      vw_.vis_.removeShape("frame_number");
+      vw_.vis_.addText(oss.str(), 10, 10, 0, 0, 0, "frame_number");
+    }
+    else {
+      vw_.vis_.removeShape("frame_number");
+      vw_.vis_.addText("Failed to find camera in mocap system", 10, 10, 0, 0, 0, "frame_number");
+      vis->clear();
+    }
+    
     char key = vw_.waitKey();
     switch(key) {
     case 27:

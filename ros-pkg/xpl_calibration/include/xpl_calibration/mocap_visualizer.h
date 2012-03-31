@@ -25,9 +25,9 @@ protected:
   Eigen::Affine3f getWorldToCameraTransform(const rgbd::Cloud& camera) const;
   void incrementXPL(int num);
   void incrementSync(double val);
-  void getPointTypes(const rgbd::Cloud& frame,
-		     rgbd::Cloud* camera,
-		     rgbd::Cloud* checker) const;
+  void getTRCPointTypes(const rgbd::Cloud& frame,
+			rgbd::Cloud* camera,
+			rgbd::Cloud* checker) const;
 
 };
 
