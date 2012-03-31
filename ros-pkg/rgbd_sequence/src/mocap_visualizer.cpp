@@ -84,8 +84,16 @@ namespace rgbd
     tfc.add(c0 + x, Vector3f::UnitX());
     tfc.add(c0 + y, Vector3f::UnitY());
     tfc.add(c0 + z, Vector3f::UnitZ());
+   
+    Eigen::Affine3f transform = tfc.getTransformation();
 
-    return tfc.getTransformation();
+    // Measured offset from camera marker 0 to camera center of projection.
+    // Rough.
+    transform(0, 3) += 0.04;
+    transform(1, 3) += -0.02;
+    transform(2, 3) += 0.03;
+
+    return transform;
   }
   
 } // namespace rgbd
