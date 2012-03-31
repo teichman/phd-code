@@ -4,8 +4,20 @@ using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 
+string usageString()
+{
+  ostringstream oss;
+  oss << "Usage: visualize_mocap TRC" << endl;
+  return oss.str();
+}
+
 int main(int argc, char** argv)
 {
+  if(argc != 2) {
+    cout << usageString() << endl;
+    return -1;
+  }
+    
   TRCParser trc;
   trc.load(argv[1]);
 

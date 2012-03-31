@@ -92,9 +92,8 @@ namespace rgbd
       cout << "Showing frame " << trc_idx_ << endl;
       *vis = camera;
       *vis += checker;
-      ROS_WARN_ONCE("Applying transform to fabricated XPL data.");
-      *vis += *xpl_[xpl_idx_]; // This should come after the transform call.
       pcl::transformPointCloud(*vis, *vis, transform);
+      *vis += *xpl_[xpl_idx_]; // This should come after the transform call.
 
       vw_.showCloud(vis);
       char key = vw_.waitKey();
