@@ -45,6 +45,7 @@ namespace rgbd
     void saveAccepted() const;
     void loadAccepted();
     void gridSearch();
+    void printErrors(const Eigen::ArrayXd& x) const;
   };
 
   class LossFunction : public ScalarFunction

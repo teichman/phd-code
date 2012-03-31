@@ -158,7 +158,7 @@ int main(int argc, char** argv)
         update_transform = true;
         break;
       case '=':
-        if(frame+1 < sseq0->size()){
+        if(frame+1 < (int)sseq0->size()){
           frame++;
           update_frame = true;
         }

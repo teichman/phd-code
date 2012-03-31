@@ -1,0 +1,15 @@
+<package>
+  <description brief="sentinel">
+
+     sentinel
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/sentinel</url>
+  <depend package="rgbd_sequence"/>
+
+</package>
+
+

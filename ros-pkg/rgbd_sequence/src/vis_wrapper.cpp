@@ -12,6 +12,7 @@ namespace rgbd {
     key_(0)
   {
     vis_.registerKeyboardCallback(&VisWrapper::keyboardCallback, *this);
+    vis_.addCoordinateSystem();
     
     // -- Set the viewpoint to be sensible for PrimeSense devices.
     vis_.camera_.clip[0] = 0.00387244;

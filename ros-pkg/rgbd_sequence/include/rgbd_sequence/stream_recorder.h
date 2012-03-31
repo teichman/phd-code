@@ -24,10 +24,15 @@ namespace rgbd
     void cloudCallback(const Cloud::ConstPtr& cloud);
     void irCallback(const boost::shared_ptr<openni_wrapper::IRImage>& oni_img);
     void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie);
-    void rgbdCallback(   const boost::shared_ptr<openni_wrapper::Image>& rgb,
-        const boost::shared_ptr<openni_wrapper::DepthImage>& depth, float f_inv );
+    void rgbdCallback(const boost::shared_ptr<openni_wrapper::Image>& rgb,
+		      const boost::shared_ptr<openni_wrapper::DepthImage>& depth,
+		      float f_inv);
     void run();
 
+    static DepthMat oniDepthToEigen(const boost::shared_ptr<openni_wrapper::DepthImage>& oni);
+    static DepthMatPtr oniDepthToEigenPtr(const boost::shared_ptr<openni_wrapper::DepthImage>& oni);
+    static cv::Mat3b oniToCV(const boost::shared_ptr<openni_wrapper::Image>& oni);
+    
   protected:
     std::string device_id_;
     pcl::OpenNIGrabber::Mode mode_;
@@ -41,10 +46,8 @@ namespace rgbd
     float fx_, fy_, cx_, cy_;
     int image_width_, image_height_;
     bool manual_calibration_;
-
-    cv::Mat3b oniToCV(const boost::shared_ptr<openni_wrapper::Image>& oni) const;
+    
     cv::Mat1b irToCV(const boost::shared_ptr<openni_wrapper::IRImage>& ir) const;
-    DepthMat oniDepthToEigen(const boost::shared_ptr<openni_wrapper::DepthImage>& oni) const;
     void initializeGrabber();
     void toggleRecording();
     void initializeCalibration();
