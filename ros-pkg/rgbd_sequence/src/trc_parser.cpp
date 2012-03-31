@@ -41,16 +41,16 @@ namespace rgbd
       frame->header.stamp.fromSec(fields[1]);
       for(size_t i = 2; i < fields.size(); i+=3) {
 	Point pt;
-	pt.x = fields[i];
-	pt.y = fields[i+1];
-	pt.z = fields[i+2];
+	pt.x = fields[i] * 0.001f;
+	pt.y = fields[i+1] * 0.001f;
+	pt.z = fields[i+2] * 0.001f;
 	pt.r = 255;
 	pt.g = 0;
 	pt.b = 0;
 	frame->push_back(pt);
       }
       frames_.push_back(frame);
-      cout << "Added frame " << fields[0] << " at ts = " << frame->header.stamp.toSec() << " with " << frame->size() << " points." << endl;
+      //cout << "Added frame " << fields[0] << " at ts = " << frame->header.stamp.toSec() << " with " << frame->size() << " points." << endl;
     }
   }
 

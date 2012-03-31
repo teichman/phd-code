@@ -1,7 +1,7 @@
-#include <rgbd_sequence/trc_parser.h>
-#include <rgbd_sequence/vis_wrapper.h>
+#include <rgbd_sequence/mocap_visualizer.h>
 
 using namespace std;
+using namespace Eigen;
 using namespace rgbd;
 
 int main(int argc, char** argv)
@@ -9,13 +9,8 @@ int main(int argc, char** argv)
   TRCParser trc;
   trc.load(argv[1]);
 
-  VisWrapper vw;
-  for(size_t i = 0; i < trc.frames_.size(); ++i) {
-    cout << "Showing frame " << i << " with " << trc.frames_[i]->size() << " points." << endl;
-    
-    vw.showCloud(trc.frames_[i]);
-    vw.waitKey();
-  }
+  MocapVisualizer mv(trc, 0.005);
+  mv.run();
   
   return 0;
 }

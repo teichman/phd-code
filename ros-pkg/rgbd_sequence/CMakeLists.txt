@@ -31,6 +31,7 @@ rosbuild_add_library(rgbd_sequence
   src/vis_wrapper.cpp
   src/tube_measurer.cpp
   src/trc_parser.cpp
+  src/mocap_visualizer.cpp
   )
 rosbuild_link_boost(rgbd_sequence system)
 rosbuild_add_compile_flags(rgbd_sequence -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
