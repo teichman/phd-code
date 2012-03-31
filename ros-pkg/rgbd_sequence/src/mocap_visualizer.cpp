@@ -7,65 +7,160 @@ using namespace Eigen;
 namespace rgbd
 {
 
-  MocapVisualizer::MocapVisualizer(const TRCParser& trc, double tol) :
+  MocapVisualizer::MocapVisualizer(const TRCParser& trc,
+				   const std::vector<rgbd::Cloud::Ptr>& xpl,
+				   double tol) :
     trc_(trc),
-    tol_(tol)
+    xpl_(xpl),
+    tol_(tol),
+    trc_idx_(0),
+    xpl_idx_(0),
+    sync_(0)
   {
-  }
+    // -- Make the XPL data start at zero.
+    double offset = xpl_[0]->header.stamp.toSec();
+    for(size_t i = 0; i < xpl_.size(); ++i) {
+      double ts = xpl_[i]->header.stamp.toSec() - offset;
+      xpl_[i]->header.stamp.fromSec(ts);
+    }
 
-  void MocapVisualizer::run()
-  {
-    for(size_t i = 0; i < trc_.frames_.size(); ++i) {
-      const Cloud& frame = *trc_.frames_[i];
-      Cloud::Ptr vis(new Cloud);
-      
-      // -- Find the camera.
-      vector<Point> camera;
-      vector<Point> checker;
-      for(size_t j = 0; j < frame.size(); ++j) {
-	int cam2 = -1;
-	int cam3 = -1;
-	for(size_t k = 0; k < frame.size(); ++k) {
-	  if(fabs(pcl::euclideanDistance(frame[j], frame[k]) - 0.115) < tol_)
-	    cam2 = k;
-	  if(fabs(pcl::euclideanDistance(frame[j], frame[k]) - 0.1325) < tol_)
-	    cam3 = k;
-	}
-	if(cam2 == -1 && cam3 == -1)
-	  checker.push_back(frame[j]);
-	if(cam2 != -1 && cam3 != -1) {
-	  camera.push_back(frame[j]);
-	  camera.push_back(frame[cam2]);
-	  camera.push_back(frame[cam3]);
-	}
+    // -- Make the XPL data red.
+    for(size_t i = 0; i < xpl_.size(); ++i) {
+      for(size_t j = 0; j < xpl_[i]->size(); ++j) {
+	xpl_[i]->at(j).r = 255;
+	xpl_[i]->at(j).g = 0;
+	xpl_[i]->at(j).b = 0;
       }
-
-      // -- Color the camera points.
-      for(size_t j = 0; j < camera.size(); ++j) {
-	camera[j].r = 0;
-	camera[j].g = 255;
-	camera[j].b = 0;
-	vis->push_back(camera[j]);
-      }
-
-      for(size_t j = 0; j < checker.size(); ++j) {
-	checker[j].r = 0;
-	checker[j].g = 0;
-	checker[j].b = 255;
-	vis->push_back(checker[j]);
-      }
-      
-      Affine3f transform = getWorldToCameraTransform(camera);
-      pcl::transformPointCloud(*vis, *vis, transform);
-      
-      // -- Visualize.
-      cout << "Showing frame " << i << endl;
-      vw_.showCloud(vis);
-      vw_.waitKey();
     }
   }
 
-  Eigen::Affine3f MocapVisualizer::getWorldToCameraTransform(const std::vector<rgbd::Point>& camera) const
+  void MocapVisualizer::getPointTypes(const rgbd::Cloud& frame,
+				      rgbd::Cloud* camera,
+				      rgbd::Cloud* checker) const
+  {
+    // -- Find the camera.
+    for(size_t i = 0; i < frame.size(); ++i) {
+      int cam2 = -1;
+      int cam3 = -1;
+      for(size_t j = 0; j < frame.size(); ++j) {
+	if(fabs(pcl::euclideanDistance(frame[i], frame[j]) - 0.115) < tol_)
+	  cam2 = j;
+	if(fabs(pcl::euclideanDistance(frame[i], frame[j]) - 0.1325) < tol_)
+	  cam3 = j;
+      }
+      if(cam2 == -1 && cam3 == -1)
+	checker->push_back(frame[i]);
+      if(cam2 != -1 && cam3 != -1) {
+	camera->push_back(frame[i]);
+	camera->push_back(frame[cam2]);
+	camera->push_back(frame[cam3]);
+      }
+    }
+
+    // -- Color the camera points.
+    for(size_t i = 0; i < camera->size(); ++i) {
+      camera->at(i).r = 0;
+      camera->at(i).g = 255;
+      camera->at(i).b = 0;
+    }
+    for(size_t i = 0; i < checker->size(); ++i) {
+      checker->at(i).r = 0;
+      checker->at(i).g = 0;
+      checker->at(i).b = 255;
+    }
+  }
+  
+  void MocapVisualizer::run()
+  {
+    Cloud::Ptr vis(new Cloud);
+    
+    while(true) {
+      cout << "trc_idx_: " << trc_idx_ << ", xpl_idx_: " << xpl_idx_ << endl;
+      const Cloud& frame = *trc_.frames_[trc_idx_];
+      rgbd::Cloud camera;
+      rgbd::Cloud checker;
+      getPointTypes(frame, &camera, &checker);
+      cout << "Got " << camera.size() << " camera points, " << checker.size() << " checker points." << endl;
+      
+      Affine3f transform = Affine3f::Identity();
+      if(camera.size() == 3)
+	transform = getWorldToCameraTransform(camera);
+      else
+	cout << "Failed to find camera." << endl;
+            
+      // -- Visualize.
+      cout << "Showing frame " << trc_idx_ << endl;
+      *vis = camera;
+      *vis += checker;
+      ROS_WARN_ONCE("Applying transform to fabricated XPL data.");
+      *vis += *xpl_[xpl_idx_]; // This should come after the transform call.
+      pcl::transformPointCloud(*vis, *vis, transform);
+
+      vw_.showCloud(vis);
+      char key = vw_.waitKey();
+      switch(key) {
+      case 27:
+	return;
+	break;
+      case ',':
+	incrementXPL(-1);
+	break;
+      case '.':
+	incrementXPL(1);
+	break;
+      case '<':
+	incrementXPL(-100);
+	break;
+      case '>':
+	incrementXPL(100);
+	break;
+      case '[':
+	incrementSync(-1.0 / 120.0);
+	break;
+      case ']':
+	incrementSync(1.0 / 120.0);
+	break;
+      case '{':
+	incrementSync(100.0 / 120.0);
+	break;
+      case '}':
+	incrementSync(100.0 / 120.0);
+	break;
+      }
+    }
+  }
+
+  void MocapVisualizer::incrementSync(double val)
+  {
+    sync_ += val;
+    cout << "New sync offset: " << sync_ << endl;
+    incrementXPL(0);
+  }
+
+  void MocapVisualizer::incrementXPL(int val)
+  {
+    xpl_idx_ += val;
+    if(xpl_idx_ < 0)
+      xpl_idx_ = 0;
+    if(xpl_idx_ >= (int)xpl_.size())
+      xpl_idx_ = xpl_.size() - 1;
+
+    // -- Seek for the closest trc_idx_.
+    double min = numeric_limits<double>::max();
+    double ts = xpl_[xpl_idx_]->header.stamp.toSec() + sync_;
+    int best = -1;
+    for(size_t i = 0; i < trc_.frames_.size(); ++i) {
+      double dt = fabs(ts - trc_.frames_[i]->header.stamp.toSec());
+      if(dt < min) {
+	min = dt;
+	best = i;
+      }
+    }
+
+    trc_idx_ = best;
+  }
+
+  Eigen::Affine3f MocapVisualizer::getWorldToCameraTransform(const rgbd::Cloud& camera) const
   {
     ROS_ASSERT(camera.size() == 3);
 
