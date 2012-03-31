@@ -66,6 +66,9 @@ namespace rgbd
       case 's':
 	saveAccepted();
 	break;
+      case 'c':
+	clearSelection();
+	break;
       case 'l':
 	loadAccepted();
 	break;
@@ -73,9 +76,6 @@ namespace rgbd
 	cout << "Accepted points: " << endl;
 	cout << accepted_;
 	break;
-      case 'c':
-	accepted_.clear();
-	cout << "Cleared accepted points." << endl;
       case 'a':
 	acceptVisible();
 	break;
