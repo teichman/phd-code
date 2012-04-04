@@ -6,6 +6,8 @@
 #include <xpl_calibration/trc_parser.h>
 #include <xpl_calibration/mocap_detector.h>
 
+// XPL has 3-ball marker on it with distances of 11.5 cm and 13.25 cm from one ball to the two others.
+
 class MocapVisualizer
 {
 public:
