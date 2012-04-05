@@ -64,7 +64,8 @@ namespace rgbd {
 
     if(!vis_.updatePointCloud(pcd, "default"))
       vis_.addPointCloud(pcd, "default");
-
+    vis_.spinOnce();
+    
     unlock();
   }
 
