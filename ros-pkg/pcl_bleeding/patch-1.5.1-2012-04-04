@@ -1,10 +1,10 @@
 Index: common/include/pcl/point_cloud.h
 ===================================================================
---- common/include/pcl/point_cloud.h	(revision 3516)
+--- common/include/pcl/point_cloud.h	(revision 5513)
 +++ common/include/pcl/point_cloud.h	(working copy)
-@@ -49,6 +49,21 @@
- #include <pcl/console/print.h>
- #include <boost/shared_ptr.hpp>
+@@ -54,6 +54,21 @@
+ #include <map>
+ #include <boost/mpl/size.hpp>
  
 +namespace ros
 +{
@@ -24,11 +24,20 @@ Index: common/include/pcl/point_cloud.h
  namespace pcl
  {
    namespace detail
+@@ -637,7 +652,7 @@
+         width (pc.width), height (pc.height), is_dense (pc.is_dense)
+       {
+         // Copy the obvious
+-        properties.acquisition_time   = pc.header.stamp;
++        properties.acquisition_time   = pc.header.stamp.toSec();
+         properties.sensor_origin      = pc.sensor_origin_;//.head<3> ();
+         properties.sensor_orientation = pc.sensor_orientation_;
+ 
 Index: io/include/pcl/io/openni_camera/openni_depth_image.h
 ===================================================================
---- io/include/pcl/io/openni_camera/openni_depth_image.h	(revision 3516)
+--- io/include/pcl/io/openni_camera/openni_depth_image.h	(revision 5513)
 +++ io/include/pcl/io/openni_camera/openni_depth_image.h	(working copy)
-@@ -70,7 +70,7 @@
+@@ -71,7 +71,7 @@
       * @param[in] no_sample_value defines which values in the depth data are indicating that no depth (disparity) could be determined .
       * @attention The focal length may change, depending whether the depth stream is registered/mapped to the RGB stream or not.
       */
@@ -37,7 +46,7 @@ Index: io/include/pcl/io/openni_camera/openni_depth_image.h
  
      /**
       * @author Suat Gedikli
-@@ -172,20 +172,24 @@
+@@ -173,20 +173,24 @@
       *            But definitely synchronized with other streams
       */
      inline unsigned long getTimeStamp () const throw ();
@@ -66,9 +75,9 @@ Index: io/include/pcl/io/openni_camera/openni_depth_image.h
  
 Index: io/src/openni_camera/openni_device.cpp
 ===================================================================
---- io/src/openni_camera/openni_device.cpp	(revision 3516)
+--- io/src/openni_camera/openni_device.cpp	(revision 5513)
 +++ io/src/openni_camera/openni_device.cpp	(working copy)
-@@ -595,7 +595,7 @@
+@@ -648,7 +648,7 @@
  
      image_lock.unlock ();
  
@@ -77,7 +86,7 @@ Index: io/src/openni_camera/openni_device.cpp
      for (map< OpenNIDevice::CallbackHandle, ActualImageCallbackFunction >::iterator callbackIt = image_callback_.begin (); callbackIt != image_callback_.end (); ++callbackIt)
      {
        callbackIt->second.operator()(image);
-@@ -616,12 +616,17 @@
+@@ -671,12 +671,17 @@
        return;
  
      depth_generator_.WaitAndUpdateData ();
@@ -99,9 +108,9 @@ Index: io/src/openni_camera/openni_device.cpp
      {
 Index: io/src/openni_grabber.cpp
 ===================================================================
---- io/src/openni_grabber.cpp	(revision 3516)
+--- io/src/openni_grabber.cpp	(revision 5513)
 +++ io/src/openni_grabber.cpp	(working copy)
-@@ -48,6 +48,45 @@
+@@ -49,6 +49,45 @@
  #include <boost/filesystem.hpp>
  #include <iostream>
  
@@ -147,15 +156,11 @@ Index: io/src/openni_grabber.cpp
  namespace pcl
  {
    typedef union
-@@ -591,9 +630,8 @@
- 
+@@ -614,6 +653,7 @@
    boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB> > cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
  
--#ifndef USE_ROS
--  cloud->header.stamp = depth_image->getTimeStamp ();
--#endif
-+  cloud->header.stamp.fromNSec(1000 * depth_image->getTimeStamp ());
-+  //cloud->header.stamp.fromSec(depth_image->getSystemTimeStamp ());
    cloud->header.frame_id = rgb_frame_id_;
++  cloud->header.stamp.fromNSec(1000 * depth_image->getTimeStamp());
    cloud->height = depth_height_;
    cloud->width = depth_width_;
+   cloud->is_dense = false;
