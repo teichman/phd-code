@@ -104,7 +104,7 @@ void AsusVsVeloVisualizer::run()
     case 'A':
       align();
       break;
-    case 'C':
+    case 'c':
       calibrate();
       break;
     case ',':
@@ -274,7 +274,7 @@ LossFunction::Ptr AsusVsVeloVisualizer::getLossFunction() const
 void AsusVsVeloVisualizer::calibrate()
 {
   // -- Choose Velodyne keyframes.
-  int num_keyframes = 5;
+  int num_keyframes = 3;
   int spacing = 300;
   int buffer = 50;
   vector<rgbd::Cloud::Ptr> velo_keyframes;
@@ -288,7 +288,13 @@ void AsusVsVeloVisualizer::calibrate()
       break;
   }
 
+  int iter = 0;
   while(true) {
+    cout << "============================================================" << endl;
+    cout << "Iteration " << iter << endl;
+    cout << "============================================================" << endl;
+    ++iter;
+    
     // -- Load Asus frames in the vicinity of the Velodyne keyframes.
     //    Uses offset_ to find which frames to load, and applies offset_ to those frames.
     vector<Cloud::ConstPtr> pcds0;
@@ -325,22 +331,27 @@ void AsusVsVeloVisualizer::calibrate()
     // LossFunction adds dt to velo_keyframes timestamps.
     // Here, we want to subtract it.
     offset_ -= dt;
-    // Apply the offset to the asus data before running grid search over transforms.
-    for(size_t i = 0; i < pcds0.size(); ++i) {
-      Cloud::Ptr updated(new Cloud(*pcds0[i]));
-      double ts = pcds0[i]->header.stamp.toSec() + offset_;
-      updated->header.stamp.fromSec(ts);
-      pcds0[i] = updated;
+    // Apply the offset to the velo data before running grid search over transforms.
+    for(size_t i = 0; i < velo_keyframes.size(); ++i) {
+      double ts = velo_keyframes[i]->header.stamp.toSec() + dt;
+      velo_keyframes[i]->header.stamp.fromSec(ts);
     }
     
     // -- Search over transform incremental update.
     Affine3f incremental_transform = gridSearchTransform(lf);
     cout << "Found transform " << endl << incremental_transform.matrix() << endl;
     asus_to_velo_ = incremental_transform * asus_to_velo_;
-
+      
     // -- Update display.
     sync();
     updateDisplay();
+
+    // -- Determine if we're done.
+    cout << incremental_transform.matrix() << endl;
+    double fro = (incremental_transform.matrix() - Affine3f::Identity().matrix()).norm();
+    cout << "frobenius norm of (T - I): " << fro << endl;
+    if(fro < 1e-3)
+      break;
   }
 }
 
@@ -348,6 +359,7 @@ Eigen::Affine3f AsusVsVeloVisualizer::gridSearchTransform(ScalarFunction::Ptr lf
 {
   cout << "Starting grid search over transform." << endl;
   GridSearch gs(6);
+  gs.verbose_ = false;
   gs.objective_ = lf;
   gs.num_scalings_ = 5;
   double maxrr = 2.0 * M_PI / 180.0;
@@ -367,8 +379,9 @@ Eigen::Affine3f AsusVsVeloVisualizer::gridSearchTransform(ScalarFunction::Ptr lf
 double AsusVsVeloVisualizer::gridSearchSync(ScalarFunction::Ptr lf) const
 {
   GridSearch gs(1);
+  gs.verbose_ = false;
   gs.objective_ = lf;
-  gs.max_resolutions_ << 0.5;
+  gs.max_resolutions_ << 0.1;
   gs.grid_radii_ << 2;
   gs.scale_factors_ << 0.5;
   gs.num_scalings_ = 4;

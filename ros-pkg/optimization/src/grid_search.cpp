@@ -92,8 +92,10 @@ Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
       ArrayXd vals(xs.size());
       omp_set_num_threads(NUM_THREADS);
       #pragma omp parallel for
-      for(size_t j = 0; j < xs.size(); ++j)
+      for(size_t j = 0; j < xs.size(); ++j) { 
 	vals(j) = objective_->eval(xs[j]);
+	assert(!isnan(vals(j)));
+      }
 
       // -- Look for improvement.
       for(int j = 0; j < vals.rows(); ++j) {

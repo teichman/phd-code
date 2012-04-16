@@ -38,7 +38,6 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/trc_parser.cpp
   src/lib/mocap_visualizer.cpp
   src/lib/mocap_detector.cpp
-  src/lib/asus_vs_velo_visualizer.cpp
   )
 
 rosbuild_link_boost(${PROJECT_NAME} system)
@@ -74,7 +73,7 @@ rosbuild_add_executable(visualize_mocap src/prog/visualize_mocap.cpp)
 rosbuild_add_compile_flags(visualize_mocap -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 target_link_libraries(visualize_mocap ${PROJECT_NAME})
 
-rosbuild_add_executable(asus_vs_velo src/prog/asus_vs_velo.cpp)
+rosbuild_add_executable(asus_vs_velo src/prog/asus_vs_velo.cpp src/lib/asus_vs_velo_visualizer.cpp)
 rosbuild_add_compile_flags(asus_vs_velo -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 target_link_libraries(asus_vs_velo ${PROJECT_NAME})
 
