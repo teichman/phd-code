@@ -11,7 +11,8 @@ GridSearch::GridSearch(int num_variables) :
   max_resolutions_(num_variables),
   grid_radii_(num_variables),
   scale_factors_(num_variables),
-  couplings_(num_variables)
+  couplings_(num_variables),
+  view_handler_(NULL)
 {
   for(int i = 0; i < num_variables; ++i)
     couplings_[i] = i;
@@ -105,6 +106,9 @@ Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
 	  x_ = xs[j];
 	  if(verbose_)
 	    cout << "*** ";
+	  if(view_handler_)
+	    view_handler_->handleGridSearchUpdate(xs[j], vals(j));
+	  
 	  history_.push_back(x_);
 	}
 

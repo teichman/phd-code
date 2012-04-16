@@ -3,6 +3,12 @@
 
 #include <optimization/optimization.h>
 
+class GridSearchViewHandler
+{
+public:
+  virtual void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective) = 0;
+};
+
 class GridSearch
 {
 public:
@@ -22,7 +28,8 @@ public:
   //! Each variable gets a coupling ids.  They must start with zero
   //! and not be larger than num_vars - 1.
   Eigen::ArrayXd couplings_;
-
+  GridSearchViewHandler* view_handler_;
+  
   std::vector<Eigen::ArrayXd> history_;
 
   GridSearch(int num_variables);
@@ -40,6 +47,5 @@ protected:
 		std::vector<Eigen::ArrayXd>* xs) const;
   
 };
-
 
 #endif // GRID_SEARCH_H
