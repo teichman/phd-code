@@ -82,3 +82,7 @@ rosbuild_add_executable(test_mocap src/prog/test_mocap.cpp)
 rosbuild_add_compile_flags(test_mocap -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 target_link_libraries(test_mocap ${PROJECT_NAME})
 
+rosbuild_add_executable(inspect_depth_image src/prog/inspect_depth_image.cpp)
+rosbuild_add_compile_flags(inspect_depth_image -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+target_link_libraries(inspect_depth_image ${PROJECT_NAME})
+

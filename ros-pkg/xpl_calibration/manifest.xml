@@ -15,6 +15,7 @@
   <depend package="multi_sequence"/>
   <depend package="optimization"/>
   <depend package="google-perftools"/>
+  <depend package="image_labeler"/>
 
   <export>
     <cpp cflags="-I${prefix}/include"
