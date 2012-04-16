@@ -32,7 +32,35 @@ TEST(ScopedTimer, ScopedTimer)
   cout << hrt.report() << endl;
 }
 
-int main(int argc, char** argv) {
+TEST(HighResTimer, AllocationTime)
+{
+  int num = 640 * 480;
+  int reps = 100;
+  HighResTimer hrt;
+  hrt.start();
+  for(int i = 0; i < reps; ++i) {
+    double stack[num];
+    stack[13] = 1.13;  // Make sure that the compiler doesn't optimize this out?
+  }
+  hrt.stop();
+  cout << "Time to allocate " << num << " doubles on the stack: " << hrt.getMicroseconds() / (double)reps << " us." << endl;
+
+  hrt.reset();
+  hrt.start();
+  vector<double*> vd(reps);
+  for(int i = 0; i < reps; ++i) {
+    vd[i] = new double[num];
+    vd[i][13] = 1.14;
+  }
+  hrt.stop();
+  cout << "Time to allocate " << num << " doubles on the heap: " << hrt.getMicroseconds() / (double)reps << " us." << endl;
+
+  for(int i = 0; i < reps; ++i)
+    delete vd[i];
+}
+
+int main(int argc, char** argv)
+{
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
