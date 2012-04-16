@@ -104,6 +104,9 @@ void AsusVsVeloVisualizer::run()
     case 'A':
       align();
       break;
+    case 'C':
+      calibrate();
+      break;
     case ',':
       incrementVeloIdx(-1);
       break;
@@ -188,19 +191,28 @@ void AsusVsVeloVisualizer::incrementOffset(double dt)
   sync();
 }
 
-void AsusVsVeloVisualizer::sync()
+int AsusVsVeloVisualizer::findAsusIdx(double ts, double* dt_out) const
 {
+  int idx = -1;
   double min_dt = numeric_limits<double>::max();
-  asus_idx_ = -1;
   for(size_t i = 0; i < sseq_->timestamps_.size(); ++i) {
-    double dt = fabs(velo_->header.stamp.toSec() - offset_ - (sseq_->timestamps_[i] - sseq_start_));
-    //double dt = fabs(velo_idx_ * 0.1 - offset_ - (sseq_->timestamps_[i] - sseq_start_));
+    double dt = fabs(ts - offset_ - (sseq_->timestamps_[i] - sseq_start_));
     if(dt < min_dt) {
       min_dt = dt;
-      asus_idx_ = i;
+      idx = i;
     }
   }
+  if(dt_out)
+    *dt_out = min_dt;
+  
+  return idx;
+}
 
+void AsusVsVeloVisualizer::sync()
+{
+  double min_dt;
+  asus_idx_ = findAsusIdx(velo_->header.stamp.toSec(), &min_dt);
+  
   cout << setprecision(16) << velo_->header.stamp.toSec() << " " << min_dt << " " << sseq_->timestamps_[asus_idx_] - sseq_start_ << endl;
   velo_ = vseq_->getCloud(velo_idx_);
   asus_ = sseq_->getCloud(asus_idx_);
@@ -259,13 +271,84 @@ LossFunction::Ptr AsusVsVeloVisualizer::getLossFunction() const
   return lf;
 }
 
-void AsusVsVeloVisualizer::align()
+void AsusVsVeloVisualizer::calibrate()
 {
-  double before = getLossFunction()->eval(ArrayXd::Zero(1));
+  // -- Choose Velodyne keyframes.
+  int num_keyframes = 5;
+  int spacing = 300;
+  int buffer = 50;
+  vector<rgbd::Cloud::Ptr> velo_keyframes;
+  int idx = buffer;
+  while(true) {
+    velo_keyframes.push_back(filter(vseq_->getCloud(idx)));
+    idx += spacing;
+    if((int)velo_keyframes.size() >= num_keyframes)
+      break;
+    if(idx > ((int)vseq_->size() - buffer))
+      break;
+  }
 
-  // -- Set up grid search.
+  while(true) {
+    // -- Load Asus frames in the vicinity of the Velodyne keyframes.
+    //    Uses offset_ to find which frames to load, and applies offset_ to those frames.
+    vector<Cloud::ConstPtr> pcds0;
+    vector<KdTree::Ptr> trees0;
+    int window = 30;  // ~one second in either direction. 
+    for(size_t i = 0; i < velo_keyframes.size(); ++i) { 
+      int idx = findAsusIdx(velo_keyframes[i]->header.stamp.toSec());
+      for(int j = max(0, idx - window); j <= min(idx + window, (int)sseq_->size()); ++j) {
+	Cloud::Ptr asus = sseq_->getCloud(j);
+	Cloud::Ptr transformed(new Cloud);
+	pcl::transformPointCloud(*asus, *transformed, asus_to_velo_);
+	transformed->header.stamp.fromSec(asus->header.stamp.toSec() - sseq_start_);
+	pcds0.push_back(transformed);
+	
+	KdTree::Ptr tree(new KdTree);
+	tree->setInputCloud(pcds0.back());
+	trees0.push_back(tree);
+      }
+    }
+
+    // -- Set up loss function.
+    pipeline::Params params;
+    params.set<double>("TimeCorrespondenceThreshold", 0.1);
+    params.set<double>("DistanceThreshold", 0.1);
+    params.set<double>("Seq0Fx", 525);
+    params.set<double>("Seq0Fy", 525);
+    params.set<double>("Seq0Cx", 320);
+    params.set<double>("Seq0Cy", 240);
+    LossFunction::Ptr lf(new LossFunction(trees0, pcds0, velo_keyframes, params));
+    
+    // -- Search over sync offset incremental update.
+    double dt = gridSearchSync(lf);
+    cout << "Found dt = " << dt << endl;
+    // LossFunction adds dt to velo_keyframes timestamps.
+    // Here, we want to subtract it.
+    offset_ -= dt;
+    // Apply the offset to the asus data before running grid search over transforms.
+    for(size_t i = 0; i < pcds0.size(); ++i) {
+      Cloud::Ptr updated(new Cloud(*pcds0[i]));
+      double ts = pcds0[i]->header.stamp.toSec() + offset_;
+      updated->header.stamp.fromSec(ts);
+      pcds0[i] = updated;
+    }
+    
+    // -- Search over transform incremental update.
+    Affine3f incremental_transform = gridSearchTransform(lf);
+    cout << "Found transform " << endl << incremental_transform.matrix() << endl;
+    asus_to_velo_ = incremental_transform * asus_to_velo_;
+
+    // -- Update display.
+    sync();
+    updateDisplay();
+  }
+}
+
+Eigen::Affine3f AsusVsVeloVisualizer::gridSearchTransform(ScalarFunction::Ptr lf) const
+{
+  cout << "Starting grid search over transform." << endl;
   GridSearch gs(6);
-  gs.objective_ = getLossFunction();
+  gs.objective_ = lf;
   gs.num_scalings_ = 5;
   double maxrr = 2.0 * M_PI / 180.0;
   double maxrt = 0.2;
@@ -275,11 +358,30 @@ void AsusVsVeloVisualizer::align()
   double sf = 0.5;
   gs.scale_factors_ << sf, sf, sf, sf, sf, sf;
   gs.couplings_ << 0, 1, 2, 1, 0, 3;  // Search over (pitch, y) and (yaw, x) jointly.
-
-  // -- Run.
+  
   ArrayXd x = gs.search(ArrayXd::Zero(6));
   cout << "GridSearch solution: " << x.transpose() << endl;
-  asus_to_velo_ = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).inverse() * asus_to_velo_;
+  return generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).inverse();
+}
+
+double AsusVsVeloVisualizer::gridSearchSync(ScalarFunction::Ptr lf) const
+{
+  GridSearch gs(1);
+  gs.objective_ = lf;
+  gs.max_resolutions_ << 0.5;
+  gs.grid_radii_ << 2;
+  gs.scale_factors_ << 0.5;
+  gs.num_scalings_ = 4;
+
+  cout << "Starting grid search over offset." << endl;
+  ArrayXd x = gs.search(ArrayXd::Zero(1));
+  return x(0);
+}
+
+void AsusVsVeloVisualizer::align()
+{
+  double before = getLossFunction()->eval(ArrayXd::Zero(1));
+  asus_to_velo_ = gridSearchTransform(getLossFunction()) * asus_to_velo_;
 
   cout << "Loss before alignment: " << before << endl;
   cout << "Loss after alignment: " << getLossFunction()->eval(ArrayXd::Zero(1)) << endl;

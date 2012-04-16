@@ -14,6 +14,7 @@ namespace rgbd
     pcl::visualization::PCLVisualizer vis_;
 
     VisWrapper(std::string name = "VisWrapper");
+    //! This may have to be called from the main thread.
     char waitKey(int msec = 0);
     void showCloud(rgbd::Cloud::ConstPtr pcd);
   

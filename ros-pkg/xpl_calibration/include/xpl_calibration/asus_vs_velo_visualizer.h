@@ -47,12 +47,17 @@ protected:
 
   void incrementVeloIdx(int val);
   void incrementOffset(double dt);
+  int findAsusIdx(double ts, double* dt_out = NULL) const;
   void sync();
   void align();
+  //! Find alignment and sync offset.
+  void calibrate();
   void updateDisplay();
   rgbd::Cloud::Ptr filter(rgbd::Cloud::ConstPtr velo) const;
   LossFunction::Ptr getLossFunction() const;
   void pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie);
+  Eigen::Affine3f gridSearchTransform(ScalarFunction::Ptr lf) const;
+  double gridSearchSync(ScalarFunction::Ptr lf) const;
 };
 
 #endif // ASUS_VS_VELO_VISUALIZER_H

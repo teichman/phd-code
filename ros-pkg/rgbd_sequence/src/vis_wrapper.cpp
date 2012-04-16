@@ -14,7 +14,7 @@ namespace rgbd {
     name_(name)
   {
     vis_.registerKeyboardCallback(&VisWrapper::keyboardCallback, *this);
-    vis_.addCoordinateSystem();
+    vis_.addCoordinateSystem(0.1);
     
     // -- Set the viewpoint to be sensible for PrimeSense devices.
     vis_.camera_.clip[0] = 0.00387244;
@@ -62,6 +62,18 @@ namespace rgbd {
   {
     lock();
 
+    // PCLVisualizer spits out awful error messages if you ever show
+    // an empty cloud.
+    if(pcd->empty()) {
+      Point pt;
+      pt.x = 0;
+      pt.y = 0;
+      pt.z = 0;
+      Cloud::Ptr nonempty(new Cloud);
+      nonempty->push_back(pt);
+      pcd = nonempty;
+    }
+    
     if(!vis_.updatePointCloud(pcd, "default"))
       vis_.addPointCloud(pcd, "default");
     vis_.spinOnce();
