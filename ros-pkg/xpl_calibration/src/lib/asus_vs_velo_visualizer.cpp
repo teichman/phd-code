@@ -59,6 +59,8 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, 
   incrementVeloIdx(2);
   cal_.velo_to_asus_ = generateTransform(- M_PI / 2.0, 0, -M_PI / 2.0, 0, 0, 0).inverse();
   vw_.vis_.registerPointPickingCallback(&AsusVsVeloVisualizer::pointPickingCallback, *this);
+
+  mpliBegin();
 }
 
 void AsusVsVeloVisualizer::pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie)
@@ -146,14 +148,20 @@ void AsusVsVeloVisualizer::run()
     case 27:
       return;
       break;
+    case 'p':
+      play(false);
+      break;
     case 'v':
-      makeVideo();
+      play(true);
       break;
     case 'A':
       align();
       break;
     case 'c':
       calibrate();
+      break;
+    case 'P':
+      generateHeatMap();
       break;
     case 'f':
       cout << "-- Frame stats --" << endl;
@@ -344,7 +352,7 @@ LossFunction::Ptr AsusVsVeloVisualizer::getLossFunction() const
 void AsusVsVeloVisualizer::calibrate()
 {
   // -- Choose Velodyne keyframes.
-  int num_keyframes = 20;
+  int num_keyframes = 25;
   int spacing = 50;
   int buffer = 50;
   vector<rgbd::Cloud::Ptr> velo_keyframes;
@@ -500,16 +508,19 @@ void AsusVsVeloVisualizer::handleGridSearchUpdate(const Eigen::ArrayXd& x, doubl
   ++num;
 }
 
-void AsusVsVeloVisualizer::makeVideo()
+void AsusVsVeloVisualizer::play(bool save)
 {
-  for(size_t i = velo_idx_; i < vseq_->size(); ++i) {
-    updateDisplay(i, cal_.velo_to_asus_, cal_.offset_);
-    ostringstream oss;
-    oss << "video" << setw(5) << setfill('0') << i << ".png";
-    vw_.vis_.saveScreenshot(oss.str());
-    char key = vw_.waitKey(2);
-    if(key == 'v')
+  for(; velo_idx_ < (int)vseq_->size(); ++velo_idx_) {
+    updateDisplay(velo_idx_, cal_.velo_to_asus_, cal_.offset_);
+    char key = vw_.waitKey(20);
+    if(key != 0)
       break;
+    
+    if(save) { 
+      ostringstream oss;
+      oss << "video" << setw(5) << setfill('0') << velo_idx_ << ".png";
+      vw_.vis_.saveScreenshot(oss.str());
+    }
   }
 }
 
@@ -525,4 +536,80 @@ void VeloToAsusCalibration::deserialize(std::istream& in)
   Matrix4f mat;
   eigen_extensions::deserialize(in, &mat);
   velo_to_asus_ = mat;
+}
+
+void AsusVsVeloVisualizer::generateHeatMap()
+{
+  vector<double> radii;
+  vector<double> multipliers;
+  radii.reserve(1e8);
+  multipliers.reserve(1e8);
+
+  Projector proj;
+  proj.fx_ = 525;
+  proj.fy_ = 525;
+  proj.cx_ = asus_->width / 2;
+  proj.cy_ = asus_->height / 2;
+  proj.height_ = asus_->height;
+  proj.width_ = asus_->width;
+  
+  int skip = 10;
+  double min_mult = 0.85;
+  double max_mult = 1.15;
+  Cloud::Ptr transformed(new Cloud);
+  for(size_t i = 20; i < vseq_->size(); i += skip) {
+    updateDisplay(i, cal_.velo_to_asus_, cal_.offset_);
+    assert(asus_->isOrganized());
+    pcl::transformPointCloud(*velo_, *transformed, cal_.velo_to_asus_);
+    for(size_t j = 0; j < transformed->size(); ++j) {
+      if(!isFinite(transformed->at(j)))
+	continue;
+
+      ProjectedPoint pp;
+      proj.project(transformed->at(j), &pp);
+      Point asuspt = asus_->at(pp.u_ + pp.v_ * proj.width_);
+      if(!isFinite(asuspt))
+	continue;
+
+      // Only look at far-away points.
+      // if(transformed->at(j).z < 6)
+      // 	continue;
+
+      // Only look at near points.
+      if(transformed->at(j).z > 4)
+      	continue;
+      
+      double mult = transformed->at(j).z / asuspt.z;
+      // If the range is completely off, assume it's due to misalignment and not distortion.
+      if(mult < min_mult || mult > max_mult)
+	continue;
+      
+      radii.push_back(sqrt((double)pow(pp.u_ - proj.cx_, 2) + (double)pow(pp.v_ - proj.cy_, 2)) / 400.0);
+      multipliers.push_back(mult);
+    }
+  }
+  cout << "Got " << radii.size() << " points for the range plot." << endl;
+
+  int num_bins = 100;
+  Eigen::MatrixXd hist(num_bins, num_bins);
+  hist.setZero();
+  for(size_t i = 0; i < radii.size(); ++i) {
+    int ridx = radii[i] * num_bins;
+    if(ridx < 0 || ridx >= num_bins)
+      continue;
+    int midx = (1.0 - (multipliers[i] - min_mult) / (max_mult - min_mult)) * num_bins;
+    if(midx < 0 || midx >= num_bins)
+      continue;
+
+    ++hist(midx, ridx);
+  }
+  for(int i = 0; i < hist.cols(); ++i)
+    if(hist.col(i).sum() > 0)
+      hist.col(i).normalize();
+
+  mpliExport(num_bins);
+  mpliExport(max_mult);
+  mpliExport(min_mult);
+  mpliExport(hist);
+  mpliExecuteFile("plot_multipliers.py");
 }

@@ -6,6 +6,7 @@
 #include <sstream>
 #include <cstdarg>
 #include <iostream>
+#include <vector>
 #include <boost/algorithm/string.hpp>
 
 
@@ -38,17 +39,12 @@ void mpli(const std::string& str);
  * Backend stuff you don't need to care about.
  *********************************************/
 
-//! Helper function for exportVector
 std::string mpliToPython(const std::string& str); 
-//! Helper function for exportVector
 std::string mpliToPython(int val);
-//! Helper function for exportVector
 std::string mpliToPython(size_t val);
-//! Helper function for exportVector
 std::string mpliToPython(double val);
-//! Helper function for exportVector
 std::string mpliToPython(const Eigen::VectorXd& vec);
-//! Helper function for exportVector
+std::string mpliToPython(const std::vector<double>& vec);
 std::string mpliToPython(const Eigen::MatrixXd& mat);
 
 void mpliPrintSize();

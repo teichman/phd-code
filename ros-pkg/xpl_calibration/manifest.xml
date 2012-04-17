@@ -16,6 +16,7 @@
   <depend package="optimization"/>
   <depend package="google-perftools"/>
   <depend package="image_labeler"/>
+  <depend package="matplotlib_interface"/>
 
   <export>
     <cpp cflags="-I${prefix}/include"

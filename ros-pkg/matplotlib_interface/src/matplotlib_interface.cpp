@@ -31,7 +31,8 @@ void mpli(const string& str) {
 
 void mpliBegin() {
   Py_Initialize();
-  PyRun_SimpleString("import numpy");
+  PyRun_SimpleString("import numpy as np");
+  PyRun_SimpleString("import matplotlib.pyplot as plt");
   PyRun_SimpleString("import warnings");
   PyRun_SimpleString("warnings.simplefilter('ignore')"); // waitforbuttonpress causes a warning.  Is there a better function to use?  Warnings should be on..
 }
@@ -64,7 +65,7 @@ string mpliToPython(double val) {
 
 string mpliToPython(const VectorXd& vec) {
   ostringstream oss;
-  oss << "numpy.array( [";
+  oss << "np.array( [";
   for(int i = 0; i < vec.rows(); ++i) {
     oss << vec(i);
     if(i != vec.rows() - 1)
@@ -74,9 +75,22 @@ string mpliToPython(const VectorXd& vec) {
   return oss.str();
 }
 
+string mpliToPython(const std::vector<double>& vec)
+{
+  ostringstream oss;
+  oss << "np.array( [";
+  for(size_t i = 0; i < vec.size(); ++i) {
+    oss << vec[i];
+    if(i != vec.size() - 1)
+      oss << ", ";
+  }
+  oss << "] )";
+  return oss.str();
+}
+
 string mpliToPython(const MatrixXd& mat) {
   ostringstream oss;
-  oss << "numpy.array([";
+  oss << "np.array([";
   for(int i = 0; i < mat.rows(); ++i) {
     oss << "[";
     for(int j = 0; j < mat.cols(); ++j) { 

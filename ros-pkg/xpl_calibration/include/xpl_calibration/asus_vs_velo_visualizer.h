@@ -3,8 +3,10 @@
 
 #include <pcl/common/transforms.h>
 #include <eigen_extensions/eigen_extensions.h>
+#include <matplotlib_interface/matplotlib_interface.h>
 #include <rgbd_sequence/vis_wrapper.h>
 #include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/projector.h>
 #include <xpl_calibration/object_matching_calibrator.h>
 
 typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
@@ -72,8 +74,9 @@ protected:
   void pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie);
   Eigen::Affine3f gridSearchTransform(ScalarFunction::Ptr lf);
   double gridSearchSync(ScalarFunction::Ptr lf);
-  void makeVideo();
+  void play(bool save);
   void colorPoint(rgbd::Point* pt) const;
+  void generateHeatMap();
 };
 
 #endif // ASUS_VS_VELO_VISUALIZER_H
