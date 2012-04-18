@@ -6,11 +6,10 @@
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
 #include <pcl/sample_consensus/ransac.h>
-#include <bag_of_tricks/lockable.h>
 #include <dst/kinect_sequence.h>
+#include <bag_of_tricks/lockable.h>
 #include <dst/segmentation_pipeline.h>
 #include <dst/segmentation_visualizer.h>
-#include <dst/volume_segmenter.h>
 
 namespace dst
 {  
@@ -27,7 +26,7 @@ namespace dst
 
     SequenceSegmentationViewController(KinectSequence::Ptr seq, SegmentationPipeline::Ptr sp);
     ~SequenceSegmentationViewController();
-    void run();
+    void run( const std::string& cmd = "" );
     void setWeights(const Eigen::VectorXd& weights) { sp_->setWeights(weights, true); }
 
   private:
@@ -44,13 +43,13 @@ namespace dst
     float max_range_;
     double cluster_tol_;
     KinectCloud::Ptr background_model_;
+    bool automated_;
 
     KinectCloud::Ptr generateForeground(cv::Mat1b seg, const KinectCloud& cloud) const;
     void increaseSeedWeights();
     void useSegmentationAsSeed();
     void toggleDebug();
     void saveGraphviz() const;
-    void runVolumeSegmentation();
     void saveVisualization();
     void handleKeypress(std::string key);
     void handleKeypress(char key);

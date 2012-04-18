@@ -20,31 +20,38 @@ namespace graphcuts
   {
   }
   
-  Eigen::VectorXd StructuralSVM::train(const std::vector<PotentialsCache::Ptr>& caches,
-				       const std::vector<VecXiPtr>& labels) const
+  Model StructuralSVM::train(const std::vector<PotentialsCache::Ptr>& caches,
+			     const std::vector<VecXiPtr>& labels) const
 						   
   {
     ROS_ASSERT(caches.size() == labels.size());
     ROS_ASSERT(!caches.empty());
-
+    for(size_t i = 1; i < caches.size(); ++i) { 
+      ROS_ASSERT(caches[i]->npot_names_ == caches[i-1]->npot_names_);
+      ROS_ASSERT(caches[i]->epot_names_ == caches[i-1]->epot_names_);
+    }
+    for(size_t i = 0; i < labels.size(); ++i)
+      for(int j = 0; j < labels[i]->rows(); ++j)
+	ROS_ASSERT(labels[i]->coeffRef(j) == 0 || labels[i]->coeffRef(j) == 1);
+    
     // Start slightly away from the boundary.
-    VectorXd weights = 0.001 * VectorXd::Ones(caches[0]->getNumPotentials()); 
+    Model model;
+    model.epot_weights_ = 0.001 * VectorXd::Ones(caches[0]->getNumEdgePotentials());
+    model.npot_weights_ = 0.001 * VectorXd::Ones(caches[0]->getNumNodePotentials());
+    model.epot_names_ = caches[0]->epot_names_;
+    model.npot_names_ = caches[0]->npot_names_;
     double slack = 0.001;
     int iter = 0;
-    int num_edge_weights = caches[0]->getNumEdgePotentials();
-    double best_loss = std::numeric_limits<double>::max();
-    VectorXd best_weights = weights;
     vector<Constraint> constraints;
     
     while(true) {
       ROS_DEBUG_STREAM("==================== Starting iteration " << iter << flush);
-      VectorXd prev_weights = weights;
       double loss = 0;
 
       // -- Compute the most violating labeling for each framecache.
       vector<ComputeNode*> nodes(caches.size(), NULL);
       for(size_t i = 0; i < caches.size(); ++i)
-	nodes[i] = new ConstraintGenerator(weights, caches[i], labels[i]);
+	nodes[i] = new ConstraintGenerator(model, caches[i], labels[i]);
       Pipeline2 pl(num_threads_, nodes);
       HighResTimer hrt("Computing most violating constraints");
       hrt.start();
@@ -54,7 +61,7 @@ namespace graphcuts
       // -- Compute the one new constraint.
       Constraint c;
       c.loss_ = 0;
-      c.dpsi_ = VectorXd::Zero(weights.rows());
+      c.dpsi_ = VectorXd::Zero(model.size());
       for(size_t i = 0; i < nodes.size(); ++i) {
 	ConstraintGenerator& cg = *(ConstraintGenerator*)nodes[i];
 	ROS_ASSERT(cg.hamming_loss_ >= 0);  // Make sure all nodes computed.
@@ -64,14 +71,9 @@ namespace graphcuts
       }
       constraints.push_back(c);
       ROS_DEBUG_STREAM("Mean loss: " << loss);
-      if(loss < best_loss) {
-	ROS_DEBUG_STREAM("Best normalized loss so far (previous best: " << best_loss << ").");
-	best_loss = loss;
-	best_weights = weights;
-      }
       
       // -- Check if we're done.
-      double margin = weights.dot(c.dpsi_);
+      double margin = model.score(c.dpsi_);
       ROS_DEBUG_STREAM("loss - margin: " << c.loss_ - margin);
       ROS_DEBUG_STREAM("Slack: " << slack);
       if(c.loss_ - margin <= slack + 1e-6) {
@@ -83,43 +85,41 @@ namespace graphcuts
       ROS_DEBUG_STREAM("Total constraints: " << constraints.size());
       hrt.reset("Learning new weights");
       hrt.start();
-      updateWeights(constraints,
-		    num_edge_weights,
-		    &weights, &slack);
+      updateModel(constraints, &model, &slack);
+		    
       hrt.stop();
       ROS_DEBUG_STREAM(hrt.report() << flush);
-      cout << weights.transpose() << endl;
+      cout << model << endl;
 
       ++iter;
     }
 
-    return weights;
+    return model;
   }
 
-  double StructuralSVM::updateWeights(const std::vector<Constraint>& constraints,
-				      int num_edge_weights,
-				      Eigen::VectorXd* weights,
-				      double* slack) const
+  double StructuralSVM::updateModel(const std::vector<Constraint>& constraints,
+				    Model* model, double* slack) const
+				      
   {
     // -- Warm start from previous solution.
-    VectorXd x = VectorXd::Zero(weights->rows() + 1);
-    x.head(weights->rows()) = *weights;
+    VectorXd x = VectorXd::Zero(model->size() + 1);
+    x.head(model->size()) = model->concatenate();
     x(x.rows() - 1) = *slack;
 
     // ... but make sure it's a feasible starting point.
     for(size_t i = 0; i < constraints.size(); ++i) {
       const Constraint& c = constraints[i];
-      double& sl = x.coeffRef(weights->rows());
-      if(weights->dot(c.dpsi_) < c.loss_ - sl) { 
+      double& sl = x.coeffRef(model->size());
+      if(model->score(c.dpsi_) < c.loss_ - sl) { 
 	// Strict equality won't work with this solver,
 	// so add a bit to the minimum amount of slack.
-	sl = c.loss_ - weights->dot(c.dpsi_) + 1.0;
+	sl = c.loss_ - model->score(c.dpsi_) + 1.0;
       }
     }
     
     // -- Generate the objective function and gradient.
     SMPtr A(new Eigen::SparseMatrix<double>(x.rows(), x.rows()));
-    for(int i = 0; i < weights->rows(); ++i) {
+    for(int i = 0; i < model->size(); ++i) {
       A->startVec(i);
       A->insertBack(i, i) = 1.0;
     }
@@ -128,7 +128,7 @@ namespace graphcuts
     SVPtr b(new SparseVector<double>(x.rows()));
     b->startVec(0);
     for(int i = 0; i < x.rows(); ++i)
-      if(i >= weights->rows())
+      if(i >= model->size())
 	b->insertBack(i) = c_;
     b->finalize();
 
@@ -154,9 +154,9 @@ namespace graphcuts
 
       SVPtr b(new Eigen::SparseVector<double>(x.rows()));
       b->startVec(0);
-      for(int j = 0; j < weights->rows(); ++j)
+      for(int j = 0; j < model->size(); ++j)
 	b->insertBack(j) = -constraints[i].dpsi_(j);
-      b->insertBack(weights->rows()) = -1;
+      b->insertBack(model->size()) = -1;
 
       SparseQuadraticFunction::Ptr c(new SparseQuadraticFunction(A, b, constraints[i].loss_));
       SparseLinearFunction::Ptr gc(new SparseLinearFunction(A, b));
@@ -166,7 +166,7 @@ namespace graphcuts
     // -- Generate the non-negativity constraints for the edge weights
     //    and the slack variables.
     for(int i = 0; i < x.rows(); ++i) {
-      if(i < num_edge_weights || i >= weights->rows()) { 
+      if(i < model->epot_weights_.rows() || i >= model->size()) { 
 	SMPtr A(new Eigen::SparseMatrix<double>(x.rows(), x.rows()));
 	A->finalize();
 	
@@ -186,17 +186,18 @@ namespace graphcuts
     VectorXd xstar = nips.solve(x, &ns);
     ROS_DEBUG_STREAM("Solving with Nesterov took " << ns << " steps, total.");
     *slack = xstar(xstar.rows() - 1);
-    *weights = xstar.head(weights->rows());
-    
+    model->epot_weights_ = xstar.head(model->epot_weights_.rows());
+    model->npot_weights_ = xstar.segment(model->epot_weights_.rows(), model->npot_weights_.rows());
+
     return objective->eval(xstar);
   }  
   
-  ConstraintGenerator::ConstraintGenerator(const Eigen::VectorXd& weights,
+  ConstraintGenerator::ConstraintGenerator(const Model& model,
 					   PotentialsCache::ConstPtr cache,
 					   VecXiConstPtr labels) :
     ComputeNode(),
     hamming_loss_(-1),
-    weights_(weights),
+    model_(model),
     cache_(cache),
     labels_(labels)
   {
@@ -204,16 +205,17 @@ namespace graphcuts
      
   void ConstraintGenerator::_compute()
   {
-    MaxflowInference mfi(weights_);
+    MaxflowInference mfi(model_);
     VecXi seg;
     mfi.segment(cache_, &seg);
     hamming_loss_ = hammingLoss(*labels_, seg);
     double zero_one_loss = zeroOneLoss(*labels_, seg);
 
     VectorXd psi_gt = cache_->psi(*labels_);
-    double gt_score = weights_.dot(psi_gt);
+
+    double gt_score = model_.score(psi_gt);
     VectorXd psi_pred = cache_->psi(seg);
-    double pred_score = weights_.dot(psi_pred);
+    double pred_score = model_.score(psi_pred);
     VectorXd dpsi = psi_gt - psi_pred;
 
     // The segmentation provided by MaxflowInference should have the

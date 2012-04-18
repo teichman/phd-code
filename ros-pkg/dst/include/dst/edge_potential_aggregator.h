@@ -24,6 +24,7 @@ namespace dst
     Eigen::VectorXd getWeights() const { return weights_; }
     void setWeights(const Eigen::VectorXd& weights, bool verbose = false);
     void cacheUnweightedPotentials(FramePotentialsCache::Ptr framecache) const;
+    NameMapping2 getNameMapping() const;
     
   protected:
     pipeline2::Outlet<Graph3dPtr>* graph_otl_;

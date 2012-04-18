@@ -645,5 +645,11 @@ namespace dst
   {
     return SegmentationPipeline::Ptr(new SegmentationPipeline(num_threads));
   }
+
+  void SegmentationPipeline::getNameMappings(NameMapping2* epot_names, NameMapping2* npot_names) const
+  {
+    *epot_names = edge_aggregator_->getNameMapping();
+    *npot_names = node_aggregator_->getNameMapping();
+  }
   
 } // namespace dst

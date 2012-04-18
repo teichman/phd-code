@@ -18,10 +18,28 @@ namespace graphcuts
     return bytes;
   }
 
-  int PotentialsCache::getNumPotentials() const
+  int PotentialsCache::getNumNodes() const
   {
     ROS_ASSERT(sink_.size() == source_.size());
-    return edge_.size() + source_.size();
+    ROS_ASSERT(!sink_.empty());
+    ROS_ASSERT(sink_[0].rows() == source_[0].rows());
+    for(size_t i = 1; i < sink_.size(); ++i) {
+      ROS_ASSERT(sink_[i].rows() == sink_[i-1].rows());
+      ROS_ASSERT(source_[i].rows() == source_[i-1].rows());
+    }
+
+    return sink_[0].rows();
+  }
+  
+  int PotentialsCache::getNumPotentials() const
+  {
+    return getNumNodePotentials() + getNumEdgePotentials();
+  }
+
+  int PotentialsCache::getNumNodePotentials() const
+  {
+    ROS_ASSERT(sink_.size() == source_.size());
+    return sink_.size();
   }
 
   void PotentialsCache::symmetrizeEdges()
@@ -31,15 +49,17 @@ namespace graphcuts
       edge_[i] = 0.5 * (SparseMat(edge_[i].transpose()) + edge_[i]);
   }
   
-  void PotentialsCache::applyWeights(const Eigen::VectorXd& weights,
+  void PotentialsCache::applyWeights(const Model& model,
+				     SparseMat* edge,
 				     Eigen::VectorXd* src,
-				     Eigen::VectorXd* snk,
-				     SparseMat* edge) const
+				     Eigen::VectorXd* snk) const
+				     
   {
     ROS_ASSERT(src->rows() == snk->rows());
     ROS_ASSERT(src->rows() == edge->rows());
     ROS_ASSERT(src->rows() == edge->cols());
-    ROS_ASSERT(weights.rows() == getNumPotentials());
+    ROS_ASSERT(model.npot_weights_.rows() == getNumNodePotentials());
+    ROS_ASSERT(model.epot_weights_.rows() == getNumEdgePotentials());
     ROS_ASSERT(src->rows() == edge->cols());
     ROS_ASSERT(!edge_.empty());
     ROS_ASSERT(!source_.empty());
@@ -49,12 +69,12 @@ namespace graphcuts
     snk->setZero();
     edge->setZero();
     for(size_t i = 0; i < source_.size(); ++i) { 
-      *src += weights(getNumEdgePotentials() + i) * source_[i];
-      *snk += weights(getNumEdgePotentials() + i) * sink_[i];
+      *src += model.npot_weights_(i) * source_[i];
+      *snk += model.npot_weights_(i) * sink_[i];
     }
 
     for(size_t i = 0; i < edge_.size(); ++i)
-      *edge += weights(i) * edge_[i];
+      *edge += model.epot_weights_(i) * edge_[i];
   }
 
   

@@ -31,7 +31,8 @@ namespace dst
     show_seg_3d_(false),
     max_range_(3.0),
     cluster_tol_(0.02),
-    background_model_(new KinectCloud)
+    background_model_(new KinectCloud),
+    automated_(false)
   {
     img_view_.setDelegate((OpenCVViewDelegate*)this);
     img_view_.message_scale_ = 0.25;
@@ -99,12 +100,29 @@ namespace dst
   {
   }
   
-  void SequenceSegmentationViewController::run()
+  void SequenceSegmentationViewController::run( const std::string& cmd )
   {
     ROS_ASSERT(seq_);
     seed_vis_ = seq_->images_[current_idx_].clone();
     seg_vis_  = cv::Mat3b(seq_->images_[current_idx_].size(), 127);
 
+    // Handle automated startup commands.
+    std::string::const_iterator i = cmd.begin();
+    automated_ = true;
+    while(i != cmd.end()) {
+      vis_.spinOnce(5);
+      if(needs_redraw_)
+        draw();
+
+      handleKeypress(*i);
+
+      if(quitting_)
+        break;
+
+      ++ i;
+    }
+
+    automated_ = false;
     while(true) {
       vis_.spinOnce(5);
       if(needs_redraw_)
@@ -178,36 +196,6 @@ namespace dst
     cout << "Done." << endl;
   }
   
-  void SequenceSegmentationViewController::runVolumeSegmentation()
-  {
-    VectorXd weights;
-    if(!VWEIGHTS) { 
-      cout << "No volumetric weights supplied, using defaults." << endl;
-      int num_intra_edge = sp_->getEdgeWeights().rows();
-      weights = VectorXd::Ones(num_intra_edge + 4);
-      weights.head(num_intra_edge) = sp_->getEdgeWeights();
-      weights(num_intra_edge) = 10.0; // flow edges
-      weights(num_intra_edge + 1) = 10.0; // dense inter-frame
-      weights(num_intra_edge + 2) = 0.000001;  // prior
-      weights(num_intra_edge + 3) = 1000;  // seed
-    }
-    else {
-      cout << "Using weights at " << VWEIGHTS << endl;
-      eigen_extensions::loadASCII(VWEIGHTS, &weights);
-    }
-    cout << weights.transpose() << endl;
-    VolumeSegmenter vs(weights);
-    seq_->segmentations_.clear();
-    vs.segment(seq_, &seq_->segmentations_);
-
-    // Regenerate foreground pointclouds.
-    for(size_t i = 0; i < seq_->segmentations_.size(); ++i)
-      segmented_pcds_[i] = generateForeground(seq_->segmentations_[i], *seq_->pointclouds_[i]);
-    
-    needs_redraw_ = true;
-    cout << "Done." << endl;
-  }
-
   void SequenceSegmentationViewController::handleKeypress(string key)
   {
     ROS_ASSERT(key.size() == 1);
@@ -221,6 +209,9 @@ namespace dst
     // -- Global keys.
     string retval;
     switch(key) {
+    case '!':
+      quitting_ = automated_;
+      break;
     case 'q':
       cout << "Really quit? " << endl;
       cin >> retval;
@@ -255,9 +246,6 @@ namespace dst
       show_seg_3d_ = !show_seg_3d_;
       needs_redraw_ = true;
       break;
-    // case 'V':
-    //   runVolumeSegmentation();
-    //   break;
     case 'V':
       saveVisualization();
       break;

@@ -6,18 +6,19 @@ using namespace std;
 namespace graphcuts
 {
 
-  MaxflowInference::MaxflowInference(const VectorXd& weights) :
-    weights_(weights)
+  MaxflowInference::MaxflowInference(const Model& model) :
+    model_(model)
   {
-    // for(int i = 0; i < weights_.rows(); ++i)
-    //   ROS_ASSERT(weights_(i) > 0);
+    // for(int i = 0; i < model_.weights_.rows(); ++i)
+    //   ROS_ASSERT(model_.weights_(i) > 0);
   }
   
   void MaxflowInference::segment(PotentialsCache::ConstPtr pc,
 				 Eigen::VectorXi* seg) const
   {
     // -- Check for monkey business and allocate.
-    ROS_ASSERT(pc->getNumPotentials() == weights_.rows());
+    ROS_ASSERT(pc->getNumEdgePotentials() == model_.epot_weights_.rows());
+    ROS_ASSERT(pc->getNumNodePotentials() == model_.npot_weights_.rows());
     ROS_ASSERT(pc->source_.size() == pc->sink_.size());
 
     if(seg->rows() == 0)
@@ -41,7 +42,7 @@ namespace graphcuts
     Eigen::VectorXd weighted_source(seg->rows());
     Eigen::VectorXd weighted_sink(seg->rows());
     SparseMat weighted_edge(seg->rows(), seg->rows());
-    pc->applyWeights(weights_, &weighted_source, &weighted_sink, &weighted_edge);
+    pc->applyWeights(model_, &weighted_edge, &weighted_source, &weighted_sink);
     
     // -- Fill the graph with weighted node potentials.
     for(int i = 0; i < weighted_source.rows(); ++i)

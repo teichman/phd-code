@@ -32,6 +32,15 @@ namespace dst
     }
   }
 
+  NameMapping2 EdgePotentialAggregator::getNameMapping() const
+  {
+    NameMapping2 epot_names;
+    for(size_t i = 0; i < generators_.size(); ++i)
+      epot_names.addName(generators_[i]->getShortName());
+
+    return epot_names;
+  }
+  
   std::string EdgePotentialAggregator::weightsStatus() const
   {
     ostringstream oss;

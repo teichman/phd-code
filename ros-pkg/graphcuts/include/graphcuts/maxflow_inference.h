@@ -3,23 +3,20 @@
 
 #include <bag_of_tricks/high_res_timer.h>
 #include <graphcuts/potentials_cache.h>
+#include <graphcuts/model.h>
 
 namespace graphcuts
 {
-
+  
   class MaxflowInference
   {
   public:
-    //! Edge potential weights, then node potential weights.
-    Eigen::VectorXd weights_;
+    Model model_;
     
-    MaxflowInference(const Eigen::VectorXd& weights);
+    MaxflowInference(const Model& model);
     //! seg must be the right size.
     void segment(PotentialsCache::ConstPtr potentials, Eigen::VectorXi* seg) const;
-    
   };
-
-  
   
 }
 

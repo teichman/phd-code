@@ -1,7 +1,6 @@
 #ifndef STRUCTURAL_SVM_H
 #define STRUCTURAL_SVM_H
 
-#define BOOST_FILESYSTEM_VERSION 2
 #include <boost/filesystem.hpp>
 #include <optimization/nips.h>
 #include <optimization/common_functions.h>
@@ -23,14 +22,12 @@ namespace graphcuts
     int debug_level_;
     
     StructuralSVM(double c, double precision, int num_threads, int debug_level);
-    Eigen::VectorXd train(const std::vector<PotentialsCache::Ptr>& caches,
-			  const std::vector<VecXiPtr>& labels) const;
+    Model train(const std::vector<PotentialsCache::Ptr>& caches,
+		const std::vector<VecXiPtr>& labels) const;
 
   protected:
-    double updateWeights(const std::vector<Constraint>& constraints,
-			 int num_edge_weights,
-			 Eigen::VectorXd* weights,
-			 double* slacks) const;
+    double updateModel(const std::vector<Constraint>& constraints,
+		       Model* model, double* slacks) const;
     
     friend class ConstraintGenerator;
   };
@@ -53,7 +50,7 @@ namespace graphcuts
     Constraint con_;
     double hamming_loss_;
     
-    ConstraintGenerator(const Eigen::VectorXd& weights,
+    ConstraintGenerator(const Model& model,
 			PotentialsCache::ConstPtr cache,
 			VecXiConstPtr labels);
 			
@@ -62,7 +59,7 @@ namespace graphcuts
     std::string _getName() const {return "ConstraintGenerator";}
 
   protected:
-    Eigen::VectorXd weights_;
+    Model model_;
     PotentialsCache::ConstPtr cache_;
     VecXiConstPtr labels_;
   };

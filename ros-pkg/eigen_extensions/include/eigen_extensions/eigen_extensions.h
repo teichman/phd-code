@@ -29,6 +29,8 @@ namespace eigen_extensions {
   template<class S, int T, int U>
     void loadASCII(const std::string& filename, Eigen::Matrix<S, T, U>* mat);
 
+  //! Warning: These methods use the number of lines in the file to determine matrix size.
+  //! The format needs to be changed...
   template<class S, int T, int U>
     void serializeASCII(const Eigen::Matrix<S, T, U>& mat, std::ostream& strm);
   
@@ -100,7 +102,10 @@ namespace eigen_extensions {
   template<class S, int T, int U>
     void serializeASCII(const Eigen::Matrix<S, T, U>& mat, std::ostream& strm)
   {
+    int old_precision = strm.precision();
+    strm.precision(16);
     strm << mat << std::endl;
+    strm.precision(old_precision);
   }
     
   template<class S, int T, int U>
@@ -145,6 +150,9 @@ namespace eigen_extensions {
 	iss >> mat->coeffRef(y, x);
       }
     }
+
+    // Eat the final newline.
+    getline(strm, line);
   }
 
   template<class S, int T, int U>

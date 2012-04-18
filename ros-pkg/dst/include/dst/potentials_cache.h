@@ -6,6 +6,7 @@
 #include <opencv2/core/core.hpp>
 #include <boost/shared_ptr.hpp>
 #include <ros/assert.h>
+#include <name_mapping2/name_mapping2.h>
 
 namespace dst
 {

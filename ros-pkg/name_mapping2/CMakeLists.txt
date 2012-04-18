@@ -22,19 +22,12 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
-rosbuild_add_library(graphcuts
-  src/lib/model.cpp
-  src/lib/maxflow_inference.cpp
-  src/lib/potentials_cache.cpp
-  src/lib/structural_svm.cpp
-  )
+rosbuild_add_library(name_mapping2 src/name_mapping2.cpp)
+rosbuild_add_gtest(test_name_mapping src/test_name_mapping.cpp)
+target_link_libraries(test_name_mapping name_mapping2)
+
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
-
+#rosbuild_link_boost(${PROJECT_NAME} thread)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
-
-rosbuild_add_gtest(test_graphcuts src/test/test_graphcuts.cpp)
-rosbuild_add_gtest_build_flags(test_graphcuts)
-target_link_libraries(test_graphcuts graphcuts)
-rosbuild_link_boost(${PROJECT_NAME} system)

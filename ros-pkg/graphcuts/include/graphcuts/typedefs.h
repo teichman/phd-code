@@ -12,11 +12,15 @@ namespace graphcuts
   typedef Graph<double, double, double> Graph3d;
   typedef boost::shared_ptr<Graph3d> Graph3dPtr;
 
-
   typedef Eigen::SparseMatrix<double, Eigen::RowMajor> SparseMat;
-  typedef boost::shared_ptr< Eigen::SparseMatrix<double, Eigen::RowMajor> > SparseMatPtr;
-  typedef boost::shared_ptr< const Eigen::SparseMatrix<double, Eigen::RowMajor> > SparseMatConstPtr;
+  typedef boost::shared_ptr<SparseMat> SparseMatPtr;
+  typedef boost::shared_ptr<const SparseMat> SparseMatConstPtr;
 
+  // Useful for creating SparseMat in a more programmer-friendly way.
+  typedef Eigen::DynamicSparseMatrix<double, Eigen::RowMajor> DynamicSparseMat;
+  typedef boost::shared_ptr<DynamicSparseMat> DynamicSparseMatPtr;
+  typedef boost::shared_ptr<const DynamicSparseMat> DynamicSparseMatConstPtr;
+  
   // Labels are 0 and 1.
   typedef Eigen::VectorXi VecXi;
   typedef boost::shared_ptr<Eigen::VectorXi> VecXiPtr;

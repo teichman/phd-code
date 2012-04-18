@@ -46,13 +46,17 @@ namespace dst
     const pcl::PointXYZRGB& pt0 = pcd[index(y0, x0)];
     const pcl::PointXYZRGB& pt1 = pcd[index(y, x)];
     const pcl::Normal& n = normals[index(y0, x0)];
+
+    Eigen::Vector3f v0 = pt0.getVector3fMap();
+    Eigen::Vector3f v1 = pt1.getVector3fMap();
+    Eigen::Vector3f n0 = n.getNormalVector3fMap();
+    Eigen::Vector3f d = v1 - v0;
+    d[0] *= sqrt(27);
     
-    double dn = fabs((pt1.getVector3fMap() - pt0.getVector3fMap()).dot(n.getNormalVector3fMap()));
+    double de = d.norm();
+    double dn = fabs( d.dot(n0) );
     if(isnan(dn)) dn = 0;  // Not all surface normals get computed.
-    double dx = x - x0;
-    double dy = y - y0;
-    double de = sqrt( dx*dx + 0.333*dy*dy );
-//    double de = pcl::euclideanDistance(pt1, pt0);
+
     return exp(-dn / sigma_norm_ - de / sigma_euc_);
   }
 

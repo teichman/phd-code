@@ -44,6 +44,15 @@ namespace dst
     }
     return oss.str();
   }
+
+  NameMapping2 NodePotentialAggregator::getNameMapping() const
+  {
+    NameMapping2 npot_names;
+    for(size_t i = 0; i < generators_.size(); ++i)
+      npot_names.addName(generators_[i]->getShortName());
+
+    return npot_names;
+  }
   
   void NodePotentialAggregator::setWeights(const Eigen::VectorXd& weights, bool verbose)
   {

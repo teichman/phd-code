@@ -15,7 +15,6 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_library(dst
-  src/lib/volume_segmenter.cpp
   src/lib/realtime_interface.cpp
   src/lib/potentials_cache.cpp
   src/lib/kinect_sequence.cpp
@@ -66,9 +65,11 @@ rosbuild_add_executable(image_cut src/program/image_cut.cpp)
 rosbuild_add_executable(kinect_cut src/program/kinect_cut.cpp)
 target_link_libraries(kinect_cut dst)
 
+
 rosbuild_add_executable(train src/program/train.cpp)
 target_link_libraries(train dst)
 rosbuild_add_compile_flags(train -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
 
 rosbuild_add_executable(generate_houghtrack_input src/program/generate_houghtrack_input.cpp)
 target_link_libraries(generate_houghtrack_input dst)
@@ -81,10 +82,6 @@ rosbuild_add_compile_flags(evaluate_houghtrack -Wno-deprecated -Wno-unused-but-s
 rosbuild_add_executable(sequence_stats src/program/sequence_stats.cpp)
 target_link_libraries(sequence_stats dst)
 rosbuild_add_compile_flags(sequence_stats -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
-
-rosbuild_add_executable(train_volumetric_segmenter src/program/train_volumetric_segmenter.cpp)
-target_link_libraries(train_volumetric_segmenter dst)
-rosbuild_add_compile_flags(train_volumetric_segmenter -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
 rosbuild_add_executable(variance src/program/variance.cpp)
 target_link_libraries(variance dst)
