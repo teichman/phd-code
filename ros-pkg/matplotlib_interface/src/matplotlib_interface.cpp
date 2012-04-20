@@ -32,6 +32,7 @@ void mpli(const string& str) {
 void mpliBegin() {
   Py_Initialize();
   PyRun_SimpleString("import numpy as np");
+  PyRun_SimpleString("import matplotlib");
   PyRun_SimpleString("import matplotlib.pyplot as plt");
   PyRun_SimpleString("import warnings");
   PyRun_SimpleString("warnings.simplefilter('ignore')"); // waitforbuttonpress causes a warning.  Is there a better function to use?  Warnings should be on..

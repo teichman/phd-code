@@ -42,6 +42,19 @@ public:
   void deserialize(std::istream& in);
 };
 
+class PixelStats
+{
+public:
+  void addPoint(double velo, double asus);
+  void stats(double* mean, double* stdev, double* num) const;
+  bool valid() const;
+  void reserve(int num) { velo_.reserve(num); asus_.reserve(num); }
+  
+protected:
+  std::vector<double> velo_;
+  std::vector<double> asus_;
+};
+
 class AsusVsVeloVisualizer : public GridSearchViewHandler
 {
 public:
@@ -61,7 +74,8 @@ protected:
   rgbd::Cloud::Ptr velo_;
   rgbd::Cloud::Ptr asus_;
   rgbd::Cloud::Ptr vis_;
-
+  std::vector< std::vector<PixelStats> > statistics_;
+  
   void incrementVeloIdx(int val);
   void incrementOffset(double dt);
   int findAsusIdx(double ts, double* dt_out = NULL) const;
@@ -78,20 +92,8 @@ protected:
   void play(bool save);
   void colorPoint(rgbd::Point* pt) const;
   void generateHeatMap();
+  void accumulateStatistics();
   void visualizeDistortion();
-};
-
-class PixelStats
-{
-public:
-  void addPoint(double velo, double asus);
-  void stats(double* mean, double* stdev, double* num) const;
-  bool valid() const;
-  void reserve(int num) { velo_.reserve(num); asus_.reserve(num); }
-  
-protected:
-  std::vector<double> velo_;
-  std::vector<double> asus_;
 };
 
 #endif // ASUS_VS_VELO_VISUALIZER_H

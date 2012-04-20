@@ -160,7 +160,7 @@ void AsusVsVeloVisualizer::run()
       visualizeDistortion();
       break;
     case 'A':
-      align();
+      accumulateStatistics();
       break;
     case 'c':
       calibrate();
@@ -358,7 +358,7 @@ void AsusVsVeloVisualizer::calibrate()
 {
   // -- Choose Velodyne keyframes.
   int num_keyframes = 25;
-  int spacing = 50;
+  int spacing = 30;
   int buffer = 50;
   vector<rgbd::Cloud::Ptr> velo_keyframes;
   int idx = buffer;
@@ -543,10 +543,8 @@ void VeloToAsusCalibration::deserialize(std::istream& in)
   velo_to_asus_ = mat;
 }
 
-void AsusVsVeloVisualizer::visualizeDistortion()
+void AsusVsVeloVisualizer::accumulateStatistics()
 {
-  ProfilerStart("visualizeDistortion.prof");
-  
   Projector proj;
   proj.fx_ = 525;
   proj.fy_ = 525;
@@ -556,10 +554,11 @@ void AsusVsVeloVisualizer::visualizeDistortion()
   proj.width_ = asus_->width;
 
   // -- Accumulate statistics.
-  vector< vector<PixelStats> > data(proj.height_, vector<PixelStats>(proj.width_));
-  for(size_t i = 0; i < data.size(); ++i)
-    for(size_t j = 0; j < data[i].size(); ++j)
-      data[i][j].reserve(100);
+  statistics_.clear();
+  statistics_.resize(proj.height_, vector<PixelStats>(proj.width_));
+  for(size_t i = 0; i < statistics_.size(); ++i)
+    for(size_t j = 0; j < statistics_[i].size(); ++j)
+      statistics_[i][j].reserve(100);
   
   double min_mult = 0.85;
   double max_mult = 1.15;
@@ -584,25 +583,33 @@ void AsusVsVeloVisualizer::visualizeDistortion()
       if(mult < min_mult || mult > max_mult)
 	continue;
       
-      data[pp.v_][pp.u_].addPoint(transformed->at(j).z, asuspt.z);
+      statistics_[pp.v_][pp.u_].addPoint(transformed->at(j).z, asuspt.z);
     }
   }
-  ProfilerStop();
+}
+
+void AsusVsVeloVisualizer::visualizeDistortion()
+{
+  if(statistics_.empty()) {
+    cout << "You must accumulate statistics first." << endl;
+    return;
+  }
   
   // -- Generate a heat map.
-  Eigen::MatrixXd mean(proj.height_, proj.width_);
-  Eigen::MatrixXd stdev(proj.height_, proj.width_);
-  Eigen::MatrixXd counts(proj.height_, proj.width_);
+  Eigen::MatrixXd mean(asus_->height, asus_->width);
+  Eigen::MatrixXd stdev(asus_->height, asus_->width);
+  Eigen::MatrixXd counts(asus_->height, asus_->width);
   mean.setZero();
   stdev.setZero();
   counts.setZero();
   for(int y = 0; y < mean.rows(); ++y) 
     for(int x = 0; x < mean.cols(); ++x) 
-      data[y][x].stats(&mean.coeffRef(y, x), &stdev.coeffRef(y, x), &counts.coeffRef(y, x));
+      statistics_[y][x].stats(&mean.coeffRef(y, x), &stdev.coeffRef(y, x), &counts.coeffRef(y, x));
   
   mpliExport(mean);
   mpliExport(stdev);
   mpliExport(counts);
+  mpliPrintSize();
   mpliExecuteFile("plot_multipliers_image.py");
 }
 
