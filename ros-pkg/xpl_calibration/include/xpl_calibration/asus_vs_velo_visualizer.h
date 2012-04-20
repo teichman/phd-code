@@ -1,6 +1,7 @@
 #ifndef ASUS_VS_VELO_VISUALIZER_H
 #define ASUS_VS_VELO_VISUALIZER_H
 
+#include <gperftools/profiler.h>
 #include <pcl/common/transforms.h>
 #include <eigen_extensions/eigen_extensions.h>
 #include <matplotlib_interface/matplotlib_interface.h>
@@ -77,6 +78,20 @@ protected:
   void play(bool save);
   void colorPoint(rgbd::Point* pt) const;
   void generateHeatMap();
+  void visualizeDistortion();
+};
+
+class PixelStats
+{
+public:
+  void addPoint(double velo, double asus);
+  void stats(double* mean, double* stdev, double* num) const;
+  bool valid() const;
+  void reserve(int num) { velo_.reserve(num); asus_.reserve(num); }
+  
+protected:
+  std::vector<double> velo_;
+  std::vector<double> asus_;
 };
 
 #endif // ASUS_VS_VELO_VISUALIZER_H

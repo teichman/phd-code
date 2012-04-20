@@ -5,6 +5,8 @@ using namespace Eigen;
 using namespace rgbd;
 namespace bfs = boost::filesystem;
 
+#define SKIP (getenv("SKIP") ? atoi(getenv("SKIP")) : 20)
+
 VeloSequence::VeloSequence(std::string root_path) :
   root_path_(root_path)
 {
@@ -153,6 +155,9 @@ void AsusVsVeloVisualizer::run()
       break;
     case 'v':
       play(true);
+      break;
+    case 'V':
+      visualizeDistortion();
       break;
     case 'A':
       align();
@@ -538,6 +543,69 @@ void VeloToAsusCalibration::deserialize(std::istream& in)
   velo_to_asus_ = mat;
 }
 
+void AsusVsVeloVisualizer::visualizeDistortion()
+{
+  ProfilerStart("visualizeDistortion.prof");
+  
+  Projector proj;
+  proj.fx_ = 525;
+  proj.fy_ = 525;
+  proj.cx_ = asus_->width / 2;
+  proj.cy_ = asus_->height / 2;
+  proj.height_ = asus_->height;
+  proj.width_ = asus_->width;
+
+  // -- Accumulate statistics.
+  vector< vector<PixelStats> > data(proj.height_, vector<PixelStats>(proj.width_));
+  for(size_t i = 0; i < data.size(); ++i)
+    for(size_t j = 0; j < data[i].size(); ++j)
+      data[i][j].reserve(100);
+  
+  double min_mult = 0.85;
+  double max_mult = 1.15;
+  Cloud::Ptr transformed(new Cloud);
+  for(size_t i = 20; i < vseq_->size(); i += SKIP) {
+    updateDisplay(i, cal_.velo_to_asus_, cal_.offset_);
+    assert(asus_->isOrganized());
+    pcl::transformPointCloud(*velo_, *transformed, cal_.velo_to_asus_);
+    for(size_t j = 0; j < transformed->size(); ++j) {
+      if(!isFinite(transformed->at(j)))
+	continue;
+
+      ProjectedPoint pp;
+      proj.project(transformed->at(j), &pp);
+      Point asuspt = asus_->at(pp.u_ + pp.v_ * proj.width_);
+
+      if(!isFinite(asuspt))
+	continue;
+
+      // If the range is completely off, assume it's due to misalignment and not distortion.
+      double mult = transformed->at(j).z / asuspt.z;
+      if(mult < min_mult || mult > max_mult)
+	continue;
+      
+      data[pp.v_][pp.u_].addPoint(transformed->at(j).z, asuspt.z);
+    }
+  }
+  ProfilerStop();
+  
+  // -- Generate a heat map.
+  Eigen::MatrixXd mean(proj.height_, proj.width_);
+  Eigen::MatrixXd stdev(proj.height_, proj.width_);
+  Eigen::MatrixXd counts(proj.height_, proj.width_);
+  mean.setZero();
+  stdev.setZero();
+  counts.setZero();
+  for(int y = 0; y < mean.rows(); ++y) 
+    for(int x = 0; x < mean.cols(); ++x) 
+      data[y][x].stats(&mean.coeffRef(y, x), &stdev.coeffRef(y, x), &counts.coeffRef(y, x));
+  
+  mpliExport(mean);
+  mpliExport(stdev);
+  mpliExport(counts);
+  mpliExecuteFile("plot_multipliers_image.py");
+}
+
 void AsusVsVeloVisualizer::generateHeatMap()
 {
   vector<double> radii;
@@ -553,11 +621,10 @@ void AsusVsVeloVisualizer::generateHeatMap()
   proj.height_ = asus_->height;
   proj.width_ = asus_->width;
   
-  int skip = 10;
   double min_mult = 0.85;
   double max_mult = 1.15;
   Cloud::Ptr transformed(new Cloud);
-  for(size_t i = 20; i < vseq_->size(); i += skip) {
+  for(size_t i = 20; i < vseq_->size(); i += SKIP) {
     updateDisplay(i, cal_.velo_to_asus_, cal_.offset_);
     assert(asus_->isOrganized());
     pcl::transformPointCloud(*velo_, *transformed, cal_.velo_to_asus_);
@@ -612,4 +679,37 @@ void AsusVsVeloVisualizer::generateHeatMap()
   mpliExport(min_mult);
   mpliExport(hist);
   mpliExecuteFile("plot_multipliers.py");
+}
+
+void PixelStats::addPoint(double velo, double asus)
+{
+  velo_.push_back(velo);
+  asus_.push_back(asus);
+}
+
+void PixelStats::stats(double* mean, double* stdev, double* num) const
+{
+  *num = velo_.size();
+  
+  if(!valid()) {
+    *mean = 1;
+    *stdev = 0;
+    return;
+  }
+  
+  *mean = 0;
+  for(size_t i = 0; i < velo_.size(); ++i)
+    *mean += velo_[i] / asus_[i];
+  *mean /= (double)velo_.size();
+
+  *stdev = 0;
+  for(size_t i = 0; i < velo_.size(); ++i)
+    *stdev += pow(velo_[i] / asus_[i] - *mean, 2);
+  *stdev /= (double)velo_.size();
+  *stdev = sqrt(*stdev);
+}
+
+bool PixelStats::valid() const
+{
+  return velo_.size() > 5;
 }
