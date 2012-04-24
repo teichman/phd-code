@@ -2,5 +2,6 @@
 *bin/
 *.so
 *.png
+*.pdf
 *#*
 *.sw?

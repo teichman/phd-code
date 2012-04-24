@@ -6,6 +6,7 @@ using namespace rgbd;
 namespace bfs = boost::filesystem;
 
 #define SKIP (getenv("SKIP") ? atoi(getenv("SKIP")) : 20)
+#define NUM_PIXEL_PLOTS (getenv("NUM_PIXEL_PLOTS") ? atoi(getenv("NUM_PIXEL_PLOTS")) : 20)
 
 VeloSequence::VeloSequence(std::string root_path) :
   root_path_(root_path)
@@ -55,7 +56,8 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, 
   sseq_start_(0),
   velo_(new Cloud),
   asus_(new Cloud),
-  vis_(new Cloud)
+  vis_(new Cloud),
+  unwarp_(true)
 {
   sseq_start_ = sseq_->timestamps_[0];
   incrementVeloIdx(2);
@@ -63,6 +65,8 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, 
   vw_.vis_.registerPointPickingCallback(&AsusVsVeloVisualizer::pointPickingCallback, *this);
 
   mpliBegin();
+  VectorXd tmp;
+  ROS_ASSERT(tmp.rows() == 0);
 }
 
 void AsusVsVeloVisualizer::pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie)
@@ -121,6 +125,16 @@ void AsusVsVeloVisualizer::colorPoint(rgbd::Point* pt) const
   }
 }
 
+inline VectorXd vectorize(const Eigen::MatrixXd& mat)
+{
+  VectorXd vec(mat.rows() * mat.cols());
+  int idx = 0;
+  for(int y = 0; y < mat.rows(); ++y)
+    for(int x = 0; x < mat.cols(); ++x, ++idx)
+      vec(idx) = mat(y, x);
+  return vec;
+}
+
 void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& transform, double offset)
 {
   // -- Get corresponding clouds.
@@ -128,6 +142,8 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
   double min_dt;
   asus_idx_ = findAsusIdx(velo_->header.stamp.toSec() + offset, &min_dt);
   asus_ = sseq_->getCloud(asus_idx_);
+  if(!asus_)
+    ROS_WARN_STREAM("Bad asus idx " << asus_idx_ << " / " << sseq_->size() << flush);
 
   // -- Draw.
   for(size_t i = 0; i < asus_->size(); ++i)
@@ -135,7 +151,33 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
   vw_.vis_.removeAllShapes();
   vis_->clear();
   pcl::transformPointCloud(*velo_, *vis_, transform);
-  *vis_ += *asus_;
+
+  if(weights_.rows() != 0 && unwarp_) {
+    Cloud unwarped(*asus_);
+    ROS_ASSERT(unwarped.height == 480);
+    VectorXd ms(4);
+    VectorXd us(4);
+    VectorXd vs(4);
+    int idx = 0;
+    for(size_t y = 0; y < unwarped.height; ++y) {
+      for(size_t x = 0; x < unwarped.width; ++x, ++idx) {
+	if(!isFinite(unwarped[idx]))
+	  continue;
+	double m = unwarped[idx].z / 10.0;
+	ms << 1, m, m*m, m*m*m;
+	double u = (double)x / 640.0;
+	us << 1, u, u*u, u*u*u;
+	double v = (double)y / 480.0;
+	vs << 1, v, v*v, v*v*v;
+	//VectorXd x = vectorize(vectorize(us * ms.transpose()) * vs.transpose());
+	VectorXd x = vectorize(us * ms.transpose());
+	unwarped[idx].z = x.dot(weights_);
+      }
+    }
+    *vis_ += unwarped;
+  }
+  else
+    *vis_ += *asus_;
 
   vw_.showCloud(vis_);
 }
@@ -150,6 +192,10 @@ void AsusVsVeloVisualizer::run()
     case 27:
       return;
       break;
+    case 'm':
+      unwarp_ = !unwarp_;
+      cout << "unwarp_: " << unwarp_ << endl;
+      break;
     case 'p':
       play(false);
       break;
@@ -161,6 +207,9 @@ void AsusVsVeloVisualizer::run()
       break;
     case 'A':
       accumulateStatistics();
+      break;
+    case 'M':
+      fitModel();
       break;
     case 'c':
       calibrate();
@@ -179,6 +228,8 @@ void AsusVsVeloVisualizer::run()
     case 'S':
       cal_.save("calibration");
       cout << "Saved calibration to \"calibration\"" << endl;
+      eigen_extensions::saveASCII(weights_, "depth_distortion_model.eig.txt");
+      cout << "Saved depth distortion model to depth_distortion_model.eig.txt" << endl;
       break;
     case ',':
       incrementVeloIdx(-1);
@@ -558,7 +609,7 @@ void AsusVsVeloVisualizer::accumulateStatistics()
   statistics_.resize(proj.height_, vector<PixelStats>(proj.width_));
   for(size_t i = 0; i < statistics_.size(); ++i)
     for(size_t j = 0; j < statistics_[i].size(); ++j)
-      statistics_[i][j].reserve(100);
+      statistics_[i][j].reserve(ceil((double)sseq_->size() / (double)SKIP));
   
   double min_mult = 0.85;
   double max_mult = 1.15;
@@ -588,17 +639,77 @@ void AsusVsVeloVisualizer::accumulateStatistics()
   }
 }
 
+void AsusVsVeloVisualizer::fitModel()
+{
+  if(statistics_.empty()) {
+    cout << "You must accumulate statistics first." << endl;
+    return;
+  }
+  cout << "Fitting model." << endl;
+
+  int num_tr_ex = 0;
+  for(size_t y = 0; y < statistics_.size(); ++y)
+    for(size_t x = 0; x < statistics_[y].size(); ++x)
+      for(size_t i = 0; i < statistics_[y][x].asus_.size(); ++i)
+	++num_tr_ex;
+  cout << num_tr_ex << " training examples." << endl;
+  
+  //int num_features = 4 * 4 * 4;
+  int num_features = 4 * 4;
+  MatrixXd X(num_features, num_tr_ex);
+  VectorXd Y(num_tr_ex);
+  int idx = 0;
+  VectorXd us(4);
+  VectorXd vs(4);
+  VectorXd ms(4);
+  VectorXd measurements(num_tr_ex);
+  for(size_t y = 0; y < statistics_.size(); ++y) {
+    for(size_t x = 0; x < statistics_[y].size(); ++x) {
+      for(size_t i = 0; i < statistics_[y][x].asus_.size(); ++i, ++idx) { 
+	double u = (double)x / 640.0;
+	us << 1, u, u*u, u*u*u;
+	double m = statistics_[y][x].asus_[i] / 10.0;
+	ms << 1, m, m*m, m*m*m;
+	double v = (double)y / 480.0;
+	vs << 1, v, v*v, v*v*v;
+	//X.col(idx) = vectorize(vectorize(us * ms.transpose()) * vs.transpose());
+	X.col(idx) = vectorize(us * ms.transpose());
+	Y(idx) = statistics_[y][x].velo_[i];
+	measurements(idx) = statistics_[y][x].asus_[i];
+      }
+    }
+  }
+
+  MatrixXd xxt = X * X.transpose();
+  ROS_ASSERT(xxt.rows() == 4*4);
+  //ROS_ASSERT(xxt.rows() == 4*4*4);
+  VectorXd b = X*Y;
+  weights_ = xxt.ldlt().solve(b);
+  cout << "Weights: " << weights_.transpose() << endl;
+  
+  VectorXd pre_differences = measurements - Y;
+  double pre_obj = pre_differences.array().pow(2).sum() / (double)Y.rows();
+  cout << "Mean error before fitting model: " << pre_obj << endl;
+
+  VectorXd differences = (weights_.transpose() * X).transpose() - Y;
+  double obj = differences.array().pow(2).sum() / (double)Y.rows();
+  cout << "Mean error after fitting model: " << obj << endl;
+}
+
 void AsusVsVeloVisualizer::visualizeDistortion()
 {
   if(statistics_.empty()) {
     cout << "You must accumulate statistics first." << endl;
     return;
   }
+  cout << "Visualizing distortion." << endl;
   
   // -- Generate a heat map.
-  Eigen::MatrixXd mean(asus_->height, asus_->width);
-  Eigen::MatrixXd stdev(asus_->height, asus_->width);
-  Eigen::MatrixXd counts(asus_->height, asus_->width);
+  int width = asus_->width;
+  int height = asus_->height;
+  Eigen::MatrixXd mean(height, width);
+  Eigen::MatrixXd stdev(height, width);
+  Eigen::MatrixXd counts(height, width);
   mean.setZero();
   stdev.setZero();
   counts.setZero();
@@ -611,6 +722,84 @@ void AsusVsVeloVisualizer::visualizeDistortion()
   mpliExport(counts);
   mpliPrintSize();
   mpliExecuteFile("plot_multipliers_image.py");
+
+  // -- Range vs u image.
+  {
+    double max_range = 13;
+    int num_range_bins = 500;
+    double bin_size = max_range / (double)num_range_bins;
+    
+    Eigen::ArrayXXd mean(num_range_bins, width);
+    Eigen::ArrayXXd counts(num_range_bins, width);
+    mean.setZero();
+    counts.setZero();
+    for(size_t y = 0; y < statistics_.size(); ++y)  {
+      ROS_ASSERT((int)statistics_[y].size() == width);
+      for(size_t x = 0; x < statistics_[y].size(); ++x) {
+	for(size_t i = 0; i < statistics_[y][x].asus_.size(); ++i) { 
+	  double range = statistics_[y][x].velo_[i];
+	  int range_bin = (max_range - range) / bin_size;
+	  if(range_bin >= num_range_bins || range_bin < 0)
+	    continue;
+	  
+	  double mult = range / statistics_[y][x].asus_[i];
+	  counts(range_bin, x) += 1;
+	  mean(range_bin, x) += mult;
+	}
+      }
+    }
+    mean /= counts;
+    for(int y = 0; y < mean.rows(); ++y)
+      for(int x = 0; x < mean.cols(); ++x)
+	if(isnan(mean(y, x)))
+	  mean(y, x) = 1;
+        
+    Eigen::ArrayXXd stdev(num_range_bins, width);
+    stdev.setZero();
+    for(size_t y = 0; y < statistics_.size(); ++y)  { 
+      for(size_t x = 0; x < statistics_[y].size(); ++x) {
+	for(size_t i = 0; i < statistics_[y][x].asus_.size(); ++i) { 
+	  double range = statistics_[y][x].velo_[i];
+	  int range_bin = (max_range - range) / bin_size;
+	  if(range_bin >= num_range_bins || range_bin < 0)
+	    continue;
+	  
+	  double mult = range / statistics_[y][x].asus_[i];
+	  stdev(range_bin, x) += pow(mult - mean(range_bin, x), 2);
+	}
+      }
+    }
+    stdev = (stdev / counts).sqrt();
+    for(int y = 0; y < stdev.rows(); ++y)
+      for(int x = 0; x < stdev.cols(); ++x)
+	if(isnan(stdev(y, x)))
+	  stdev(y, x) = 0;
+
+    mpliExport(max_range);
+    mpliExport(bin_size);
+    mpliNamedExport("mean", mean);
+    mpliNamedExport("stdev", stdev);
+    mpliNamedExport("counts", counts);
+    mpliPrintSize();
+    mpliExecuteFile("plot_u_range_multipliers.py");
+  }
+  
+  // -- For some random pixels, generate a scatter plot of asus range vs velo range.
+  for(int i = 0; i < NUM_PIXEL_PLOTS; ++i) {
+    int u = rand() % width;
+    int v = rand() % height;
+    const PixelStats& ps = statistics_[v][u];
+    if(!ps.valid())
+      continue;
+    
+    mpliNamedExport("velo", ps.velo_);
+    mpliNamedExport("asus", ps.asus_);
+    mpliNamedExport<int>("width", width);
+    mpliNamedExport<int>("height", height);
+    mpliExport(u);
+    mpliExport(v);
+    mpliExecuteFile("plot_beam_scatter.py");
+  }
 }
 
 void AsusVsVeloVisualizer::generateHeatMap()

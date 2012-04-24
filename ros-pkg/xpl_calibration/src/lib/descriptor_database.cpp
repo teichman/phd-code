@@ -163,3 +163,30 @@ int LSHDescriptorDatabase::query(const DescriptorDatabase::PackedDescriptor& d, 
   return best;
 }
 
+
+string convBase(unsigned long v, long base)
+{
+  string digits = "0123456789abcdef";
+  string result;
+  if((base < 2) || (base > 16)) {
+    result = "Error: base out of range.";
+  }
+  else {
+    do {
+      result = digits[v % base] + result;
+      v /= base;
+    }
+    while(v);
+  }
+  return result;
+}
+
+std::string printBitString(const DescriptorDatabase::PackedDescriptor& descr)
+{
+  ostringstream oss;
+  for(int i = 0; i < descr.rows() - 1; ++i)
+    oss << convBase(descr(i), 2) << " ";
+  oss << convBase(descr(descr.rows() - 1), 2);
+  return oss.str();
+}
+

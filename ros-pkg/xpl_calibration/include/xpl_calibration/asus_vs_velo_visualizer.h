@@ -4,6 +4,7 @@
 #include <gperftools/profiler.h>
 #include <pcl/common/transforms.h>
 #include <eigen_extensions/eigen_extensions.h>
+#include <Eigen/Cholesky>
 #include <matplotlib_interface/matplotlib_interface.h>
 #include <rgbd_sequence/vis_wrapper.h>
 #include <rgbd_sequence/stream_sequence.h>
@@ -45,20 +46,20 @@ public:
 class PixelStats
 {
 public:
+  std::vector<double> velo_;
+  std::vector<double> asus_;
+
   void addPoint(double velo, double asus);
   void stats(double* mean, double* stdev, double* num) const;
   bool valid() const;
   void reserve(int num) { velo_.reserve(num); asus_.reserve(num); }
-  
-protected:
-  std::vector<double> velo_;
-  std::vector<double> asus_;
 };
 
 class AsusVsVeloVisualizer : public GridSearchViewHandler
 {
 public:
   VeloToAsusCalibration cal_;
+  Eigen::VectorXd weights_;
   
   AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, VeloSequence::ConstPtr vseq);
   void run();
@@ -75,6 +76,7 @@ protected:
   rgbd::Cloud::Ptr asus_;
   rgbd::Cloud::Ptr vis_;
   std::vector< std::vector<PixelStats> > statistics_;
+  bool unwarp_;
   
   void incrementVeloIdx(int val);
   void incrementOffset(double dt);
@@ -94,6 +96,7 @@ protected:
   void generateHeatMap();
   void accumulateStatistics();
   void visualizeDistortion();
+  void fitModel();
 };
 
 #endif // ASUS_VS_VELO_VISUALIZER_H

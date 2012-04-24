@@ -3,22 +3,6 @@
 using namespace std;
 using namespace Eigen;
 
-void mpliNamedExport(const std::string& name, const std::string& str) {
-  PyRun_SimpleString((name + string(" = ") + mpliToPython(str)).c_str());
-}
-
-void mpliNamedExport(const std::string& name, double dbl) {
-  PyRun_SimpleString((name + string(" = ") + mpliToPython(dbl)).c_str());
-}
-
-void mpliNamedExport(const std::string& name, const Eigen::VectorXd& vec) {
-  PyRun_SimpleString((name + string(" = ") + mpliToPython(vec)).c_str());
-}
-
-void mpliNamedExport(const std::string& name, const Eigen::MatrixXd& mat) {
-  PyRun_SimpleString((name + string(" = ") + mpliToPython(mat)).c_str());
-}
-
 void mpliExecuteFile(const string& filename) {
   FILE *fp = fopen(filename.c_str(), "r");
   PyRun_SimpleFile(fp, filename.c_str());
@@ -105,6 +89,16 @@ string mpliToPython(const MatrixXd& mat) {
   }
   oss << "] )";
   return oss.str();
+}
+
+std::string mpliToPython(const Eigen::ArrayXXd& arr)
+{
+  return mpliToPython((MatrixXd)arr.matrix());
+}
+
+std::string mpliToPython(const Eigen::ArrayXd& arr)
+{
+  return mpliToPython((VectorXd)arr.matrix());
 }
 
 void mpliPrintSize() {

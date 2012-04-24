@@ -30,14 +30,13 @@ public:
 
   void compute();
   void debug() const;
-  
+  //! Returns NULL if there are no keypoints.
+  PackedDescriptorsPtr extractOrb(cv::Mat3b img, std::vector<cv::KeyPoint>* keypoints);
+
 protected:
   boost::shared_ptr<cv::ORB> extractor_;
   std::vector<cv::KeyPoint> keypoints_;
-  
-  //! Returns NULL if there are no keypoints.
-  PackedDescriptorsPtr extractOrb(cv::Mat3b img, std::vector<cv::KeyPoint>* keypoints);
-  
+    
 };
 
 #endif // ORB_EXTRACTOR_H

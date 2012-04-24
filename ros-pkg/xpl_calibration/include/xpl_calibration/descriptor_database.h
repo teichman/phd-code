@@ -18,7 +18,8 @@ public:
   typedef boost::shared_ptr<PackedDescriptors> PackedDescriptorsPtr;
   typedef boost::shared_ptr<const PackedDescriptors> PackedDescriptorsConstPtr;
   typedef Eigen::Matrix<uchar, 32, 1> PackedDescriptor;
-  
+  typedef boost::shared_ptr<DescriptorDatabase> Ptr;
+
   //! descriptor length x num descriptors.
   PackedDescriptorsConstPtr packed_descriptors_;
 
@@ -83,4 +84,6 @@ private:
 };
 
 
+std::string printBitString(const DescriptorDatabase::PackedDescriptor& descr);
+  
 #endif // DESCRIPTOR_DATABASE_H
