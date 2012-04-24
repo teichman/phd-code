@@ -163,7 +163,7 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
       for(size_t x = 0; x < unwarped.width; ++x, ++idx) {
 	if(!isFinite(unwarped[idx]))
 	  continue;
-	double m = unwarped[idx].z / 10.0;
+	double m = unwarped[idx].getVector3fMap().norm() / 10.0;
 	ms << 1, m, m*m, m*m*m;
 	double u = (double)x / 640.0;
 	us << 1, u, u*u, u*u*u;
@@ -171,7 +171,10 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
 	vs << 1, v, v*v, v*v*v;
 	//VectorXd x = vectorize(vectorize(us * ms.transpose()) * vs.transpose());
 	VectorXd x = vectorize(us * ms.transpose());
-	unwarped[idx].z = x.dot(weights_);
+	double estimated_range = x.dot(weights_);
+	Vector3f pt = unwarped[idx].getVector3fMap();
+	pt = pt / pt.norm() * estimated_range;
+	unwarped[idx].getVector3fMap() = pt;
       }
     }
     *vis_ += unwarped;
@@ -630,11 +633,13 @@ void AsusVsVeloVisualizer::accumulateStatistics()
 	continue;
 
       // If the range is completely off, assume it's due to misalignment and not distortion.
-      double mult = transformed->at(j).z / asuspt.z;
+      double measurement = asuspt.getVector3fMap().norm();
+      double range = transformed->at(j).getVector3fMap().norm();
+      double mult = range / measurement;
       if(mult < min_mult || mult > max_mult)
 	continue;
       
-      statistics_[pp.v_][pp.u_].addPoint(transformed->at(j).z, asuspt.z);
+      statistics_[pp.v_][pp.u_].addPoint(range, measurement);
     }
   }
 }
