@@ -615,7 +615,7 @@ void AsusVsVeloVisualizer::accumulateStatistics()
       statistics_[i][j].reserve(ceil((double)sseq_->size() / (double)SKIP));
   
   double min_mult = 0.85;
-  double max_mult = 1.15;
+  double max_mult = 1.25;
   Cloud::Ptr transformed(new Cloud);
   for(size_t i = 20; i < vseq_->size(); i += SKIP) {
     updateDisplay(i, cal_.velo_to_asus_, cal_.offset_);
