@@ -1,0 +1,34 @@
+diff -rupN ./src/make_linux.mk ../qpOASES-3.0beta-orig//src/make_linux.mk
+--- ./src/make_linux.mk	2012-04-24 18:22:04.000000000 -0700
++++ ../qpOASES-3.0beta-orig//src/make_linux.mk	2012-03-13 07:39:18.000000000 -0700
+@@ -39,23 +39,23 @@
+ AR  = ar
+ RM  = rm
+ 
+ OBJEXT = o
++LIBEXT = so
+-LIBEXT = a
+ EXE =
+ DEF_TARGET = -o $@
+ 
++CPPFLAGS = -Wall -pedantic -Wshadow -O3 -finline-functions -DLINUX -D__NO_COPYRIGHT__ -fPIC
+-CPPFLAGS = -Wall -pedantic -Wshadow -O3 -finline-functions -DLINUX -D__NO_COPYRIGHT__
+ #-g -D__DEBUG__ -D__NO_COPYRIGHT__ -D__SUPPRESSANYOUTPUT__
+ 
+ QPOASES_LIB         =  -L${SRCDIR} -lqpOASES
+ QPOASES_EXTRAS_LIB  =  -L${SRCDIR} -lqpOASESextras
+ 
+ ## system BLAS or qpOASES replacement BLAS
++LIB_BLAS = /usr/lib/libblas.so
++#LIB_BLAS = ${SRCDIR}/BLASReplacement.o
+-#LIB_BLAS = /usr/lib/libblas.so
+-LIB_BLAS = ${SRCDIR}/BLASReplacement.o
+ 
+ ## system LAPACK or qpOASES replacement LAPACK
++LIB_LAPACK = /usr/lib/liblapack.so
++#LIB_LAPACK = ${SRCDIR}/LAPACKReplacement.o
+-#LIB_LAPACK = /usr/lib/liblapack.so
+-LIB_LAPACK = ${SRCDIR}/LAPACKReplacement.o
+ 
+ 
+ ##

@@ -1,0 +1,9 @@
+<stack>
+  <description brief="core">core</description>
+  <author>Maintained by teichman</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/core</url>
+  <depend stack="ros" />
+
+</stack>

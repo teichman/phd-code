@@ -1,7 +1,7 @@
 TARBALL = build/qpOASES-3.0beta.tar.gz
 TARBALL_URL = http://www.qpoases.org/download/qpOASES-3.0beta.tar.gz
 SOURCE_DIR = build/qpOASES-3.0beta
-TARBALL_PATCH = patchfile3
+TARBALL_PATCH = patchfile
 
 all: $(SOURCE_DIR)/unpacked
 	cd build/qpOASES-3.0beta/src && make -f Makefile

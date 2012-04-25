@@ -22,16 +22,20 @@ remove_msgs:
 	fi
 
 restore_msgs:
+	@if [ -d svn/common/include ]; then \
 	cd svn/common/include; \
 	if [ -d std_msgs_pcl_do_not_use ]; then \
 	mv std_msgs_pcl_do_not_use std_msgs; \
 	mv sensor_msgs_pcl_do_not_use sensor_msgs; \
+	fi \
 	fi
 
 clean: restore_msgs
-	cd svn/build && make clean
-	-rm built
+	@if [ -d svn/build ]; then \
+	cd svn/build && make clean; \
+	fi
+	rm -f built
 
-wipe:
-	-rm -rf svn
-	-rm built
+wipe: clean
+	rm -rf svn
+
