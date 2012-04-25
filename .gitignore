@@ -5,3 +5,5 @@
 *.pdf
 *#*
 *.sw?
+*.eig.txt
+*.pl

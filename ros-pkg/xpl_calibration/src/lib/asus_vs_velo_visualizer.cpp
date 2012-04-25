@@ -638,7 +638,9 @@ void AsusVsVeloVisualizer::accumulateStatistics()
       double mult = range / measurement;
       if(mult < min_mult || mult > max_mult)
 	continue;
-      
+
+      if(isinf(measurement) || isnan(measurement) || isinf(range) || isnan(range))
+	continue;
       statistics_[pp.v_][pp.u_].addPoint(range, measurement);
     }
   }
@@ -902,7 +904,7 @@ void PixelStats::stats(double* mean, double* stdev, double* num) const
   for(size_t i = 0; i < velo_.size(); ++i)
     *mean += velo_[i] / asus_[i];
   *mean /= (double)velo_.size();
-
+  
   *stdev = 0;
   for(size_t i = 0; i < velo_.size(); ++i)
     *stdev += pow(velo_[i] / asus_[i] - *mean, 2);
