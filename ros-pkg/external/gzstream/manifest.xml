@@ -1,0 +1,14 @@
+<package>
+  <description brief="gzstream">
+
+     gzstream
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/gzstream</url>
+
+</package>
+
+
