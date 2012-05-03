@@ -12,6 +12,10 @@ TEST(EigenExtensions, MatrixXd_serialization) {
   MatrixXd mat2;
   eigen_extensions::load("matxd.eig", &mat2);
   EXPECT_TRUE(mat.isApprox(mat2));
+
+  eigen_extensions::save(mat, "matxd.eig.gz");
+  eigen_extensions::load("matxd.eig.gz", &mat2);
+  EXPECT_TRUE(mat.isApprox(mat2));
 }
 
 TEST(EigenExtensions, MatrixXf_serialization) {
@@ -19,6 +23,10 @@ TEST(EigenExtensions, MatrixXf_serialization) {
   eigen_extensions::save(mat, "matxf.eig");
   MatrixXf mat2;
   eigen_extensions::load("matxf.eig", &mat2);
+  EXPECT_TRUE(mat.isApprox(mat2));
+
+  eigen_extensions::save(mat, "matxf.eig.gz");
+  eigen_extensions::load("matxf.eig.gz", &mat2);
   EXPECT_TRUE(mat.isApprox(mat2));
 }
 
@@ -77,6 +85,18 @@ TEST(EigenExtensions, Vector3i_serialization_ascii) {
   cout << mat2.transpose() << endl;
 }
 
+TEST(EigenExtensions, Compression)
+{
+  MatrixXd mat = MatrixXd::Identity(1000, 1000);
+  eigen_extensions::save(mat, "large.eig");
+  MatrixXd mat2;
+  eigen_extensions::load("large.eig", &mat2);
+  EXPECT_TRUE(mat.isApprox(mat2));
+
+  eigen_extensions::save(mat, "large.eig.gz");
+  eigen_extensions::load("large.eig.gz", &mat2);
+  EXPECT_TRUE(mat.isApprox(mat2));
+}
 
 TEST(EigenExtensions, serialization_multi_ascii) {
   Vector3i vec = Vector3i::Random(3);
