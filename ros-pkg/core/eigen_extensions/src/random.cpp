@@ -1,16 +1,34 @@
 #include <eigen_extensions/random.h>
-#include <boost/random.hpp>
-#include <boost/random/normal_distribution.hpp>
 
 using namespace std;
-using boost::normal_distribution;
-using boost::variate_generator;
-using boost::mt19937;
 using namespace Eigen;
-
 
 namespace eigen_extensions
 {
+
+  UniformSampler::UniformSampler(uint64_t seed) :
+    Sampler(),
+    mersenne_(seed)
+  {
+  }
+
+  double UniformSampler::sample()
+  {
+    return mersenne_();
+  }
+
+  GaussianSampler::GaussianSampler(double mean, double stdev, uint64_t seed) :
+    Sampler(),
+    mersenne_(seed),
+    normal_(mean, stdev),
+    vg_(mersenne_, normal_)
+  {
+  }
+
+  double GaussianSampler::sample()
+  {
+    return vg_();
+  }
 
   void sampleSparseGaussianVector(int rows, int nnz, SparseVector<double>* vec)
   {
@@ -21,13 +39,11 @@ namespace eigen_extensions
       indices[i] = i;
     random_shuffle(indices.begin(), indices.end());
 
-    mt19937 uniform;
-    normal_distribution<> normal(0.0, 1.0);
-    variate_generator<mt19937&, normal_distribution<> > sampler(uniform, normal);
+    GaussianSampler gs;
     *vec = SparseVector<double>(rows);
     vec->reserve(nnz);
     for(int i = 0; i < nnz; ++i)
-      vec->coeffRef(indices[i]) = sampler();
+      vec->coeffRef(indices[i]) = gs.sample();
   }
 
 } // namespace

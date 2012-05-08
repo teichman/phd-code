@@ -5,6 +5,14 @@ using namespace std;
 using namespace Eigen;
 using namespace eigen_extensions;
 
+TEST(EigenExtensions, Random)
+{
+  MatrixXd mat(5, 5);
+  sampleGaussian(&mat);
+  cout << mat << endl;
+  cout << mat.sum() << endl;
+}
+
 TEST(EigenExtensions, SparseRandom)
 {
   SparseVector<double> vec;

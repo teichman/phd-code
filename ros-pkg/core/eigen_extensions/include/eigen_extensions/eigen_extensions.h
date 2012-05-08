@@ -20,7 +20,6 @@ namespace eigen_extensions {
   template<class S, int T, int U>
   void saveASCII(const Eigen::Matrix<S, T, U>& mat, const std::string& filename);
 
-  //! TODO: Requires a newline at the end of the file.  Hand-made files might not have this.
   template<class S, int T, int U>
   void loadASCII(const std::string& filename, Eigen::Matrix<S, T, U>* mat);
   
@@ -30,8 +29,6 @@ namespace eigen_extensions {
   template<class S, int T, int U>
   void deserialize(std::istream& strm, Eigen::Matrix<S, T, U>* mat);
 
-  //! Warning: These methods use the number of lines in the file to determine matrix size.
-  //! The format needs to be changed...
   template<class S, int T, int U>
   void serializeASCII(const Eigen::Matrix<S, T, U>& mat, std::ostream& strm);
   
