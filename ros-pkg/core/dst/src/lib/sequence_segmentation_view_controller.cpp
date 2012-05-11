@@ -31,8 +31,7 @@ namespace dst
     show_seg_3d_(false),
     max_range_(3.0),
     cluster_tol_(0.02),
-    background_model_(new KinectCloud),
-    automated_(false)
+    background_model_(new KinectCloud)
   {
     img_view_.setDelegate((OpenCVViewDelegate*)this);
     img_view_.message_scale_ = 0.25;
@@ -108,13 +107,13 @@ namespace dst
 
     // Handle automated startup commands.
     std::string::const_iterator i = cmd.begin();
-    automated_ = true;
     while(i != cmd.end()) {
-      vis_.spinOnce(5);
+      vis_.spinOnce(50);
       if(needs_redraw_)
         draw();
 
-      handleKeypress(*i);
+      img_view_.cvWaitKey(300);
+      handleKeypress(*i, true);
 
       if(quitting_)
         break;
@@ -122,7 +121,9 @@ namespace dst
       ++ i;
     }
 
-    automated_ = false;
+    if(quitting_) 
+      return;
+
     while(true) {
       vis_.spinOnce(5);
       if(needs_redraw_)
@@ -196,13 +197,13 @@ namespace dst
     cout << "Done." << endl;
   }
   
-  void SequenceSegmentationViewController::handleKeypress(string key)
+  void SequenceSegmentationViewController::handleKeypress(string key, bool automated)
   {
     ROS_ASSERT(key.size() == 1);
-    handleKeypress((char)(key[0]));
+    handleKeypress((char)(key[0]), automated);
   }
   
-  void SequenceSegmentationViewController::handleKeypress(char key)
+  void SequenceSegmentationViewController::handleKeypress(char key, bool automated)
   {
     lock();
     
@@ -210,7 +211,7 @@ namespace dst
     string retval;
     switch(key) {
     case '!':
-      quitting_ = automated_;
+      quitting_ = automated;
       break;
     case 'q':
       cout << "Really quit? " << endl;

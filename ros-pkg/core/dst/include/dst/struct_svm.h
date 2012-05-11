@@ -2,7 +2,6 @@
 #define STRUCT_SVM_H
 
 #include <boost/thread.hpp>
-#include <qpOASES/QProblem.hpp>
 #include <optimization/nips.h>
 #include <optimization/common_functions.h>
 #include <eigen_extensions/eigen_extensions.h>
@@ -67,27 +66,12 @@ namespace dst
     
     static double* eigToQPO(const Eigen::VectorXd& eig);
     static double* eigToQPO(const Eigen::MatrixXd& eig);
-    double updateWeights(const std::vector<Constraint>& constraints,
-			 int num_tr_ex,
-			 int num_edge_weights,
-			 Eigen::VectorXd* weights,
-			 Eigen::VectorXd* slacks,
-			 bool* feas) const;
-
     double updateWeights2(const std::vector<Constraint>& constraints,
 			  int num_tr_ex,
 			  int num_edge_weights,
 			  Eigen::VectorXd* weights,
 			  Eigen::VectorXd* slacks) const;
     
-    double qpOASES(const Eigen::MatrixXd& H,
-		   const Eigen::VectorXd& g,
-		   const Eigen::MatrixXd& A,
-		   const Eigen::VectorXd& lb,
-		   const Eigen::VectorXd& lbA,
-		   Eigen::VectorXd* x,
-		   bool* feas) const;
-
     friend class ConstraintGenerator;
   };
 
