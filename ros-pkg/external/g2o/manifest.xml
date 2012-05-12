@@ -1,0 +1,18 @@
+<package>
+  <description brief="g2o">
+
+     g2o
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+
+  <export>
+    <cpp cflags="-I${prefix}/svn/trunk -I${prefix}/svn/trunk/build -I${prefix}/svn/trunk/EXTERNAL -I${prefix}/svn/trunk/EXTERNAL/csparse" lflags="-L${prefix}/svn/trunk/lib -Wl,-rpath ${prefix}/svn/trunk/lib -lg2o_math_groups -lg2o_example -lg2o_solver_dense -lg2o_solver_pcg -lg2o_interactive -lg2o_solver_cholmod -lg2o_stuff -lg2o_types_icp -lg2o_core -lg2o_types_sim3 -lg2o_types_sba -lg2o_incremental -lg2o_types_slam2d -lg2o_types_slam3d -lg2o_interface -lg2o_parser -lg2o_cli -lg2o_solver_csparse"/>
+  </export>
+
+  
+</package>
+
+
