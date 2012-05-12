@@ -20,7 +20,6 @@ namespace eigen_extensions {
   template<class S, int T, int U>
   void saveASCII(const Eigen::Matrix<S, T, U>& mat, const std::string& filename);
 
-  //! TODO: Requires a newline at the end of the file.  Hand-made files might not have this.
   template<class S, int T, int U>
   void loadASCII(const std::string& filename, Eigen::Matrix<S, T, U>* mat);
   
@@ -36,11 +35,6 @@ namespace eigen_extensions {
   template<class T>
   void deserialize(std::istream& strm, T* data);
   
-  template<class S, int T, int U>
-  void deserialize(std::istream& strm, Eigen::Matrix<S, T, U>* mat);
-  
-  //! Warning: These methods use the number of lines in the file to determine matrix size.
-  //! The format needs to be changed...
   template<class S, int T, int U>
   void serializeASCII(const Eigen::Matrix<S, T, U>& mat, std::ostream& strm);
   
@@ -137,6 +131,7 @@ namespace eigen_extensions {
   {
     int old_precision = strm.precision();
     strm.precision(16);
+    strm << "% " << mat.rows() << " " << mat.cols() << std::endl;
     strm << mat << std::endl;
     strm.precision(old_precision);
   }
@@ -144,37 +139,25 @@ namespace eigen_extensions {
   template<class S, int T, int U>
   void deserializeASCII(std::istream& strm, Eigen::Matrix<S, T, U>* mat)
   {
-    // -- Determine number of rows and number of cols.
-    int start = strm.tellg();
-    int rows = 0;
+    // -- Read the header.
     std::string line;
-    std::vector<std::string> lines;
-    while(getline(strm, line), !strm.eof()) { 
-      ++rows;
-      lines.push_back(line);
-    }
-
-    assert(!lines.empty());
-    std::istringstream iss(lines[0]);
-    int cols = 0;
-    double buf;
-    while(!iss.eof()) {
-      iss >> std::skipws >> buf;
-      ++cols;
-    }
-
+    getline(strm, line);
+    assert(line[0] == '%');
+    std::istringstream iss(line.substr(1));
+    int rows;
+    int cols;
+    iss >> rows;
+    iss >> cols;
+    
     // -- Read in the data.
     *mat = Eigen::Matrix<S, T, U>(rows, cols);
-    strm.seekg(start);
     for(int y = 0; y < rows; ++y) {
-      std::istringstream iss(lines[y]);
+      getline(strm, line);
+      std::istringstream iss(line);
       for(int x = 0; x < cols; ++x) {
 	iss >> mat->coeffRef(y, x);
       }
     }
-
-    // Eat the final newline.
-    getline(strm, line);
   }
 
   template<class S, int T, int U>

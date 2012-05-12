@@ -20,7 +20,6 @@ using namespace std;
 namespace bfs = boost::filesystem;
 namespace bpt = boost::posix_time;
 using namespace Eigen;
-using namespace qpOASES;
 using namespace pipeline2;
 
 namespace dst
@@ -481,15 +480,6 @@ namespace dst
       bpt::ptime now = bpt::second_clock::local_time();
       ROS_DEBUG_STREAM("Starting to learn new weights at " << bpt::to_iso_extended_string(now));
 
-      // -- qpOASES
-      // HighResTimer hrt("Learning new weights (qpOASES)");
-      // hrt.start();
-      // double val = updateWeights(working, caches.size(),
-      // 				 num_edge_weights,
-      // 				 &weights, &slacks, &feas);
-      // hrt.stop();
-      // ROS_DEBUG_STREAM(hrt.report());
-
       // -- Nesterov interior point solver.
       hrt.reset("Learning new weights (NIPS)");
       hrt.start();
@@ -499,37 +489,6 @@ namespace dst
       hrt.stop();
       ROS_DEBUG_STREAM(hrt.report() << flush);
 
-      // -- Test nesterov vs qpOASES.
-      // HighResTimer hrt_nips("Learning new weights (NIPS)");
-      // hrt_nips.start();
-      // VectorXd nips_weights = weights;
-      // VectorXd nips_slacks = slacks; 
-      // double nips_val = updateWeights2(working, caches.size(),
-      // 				       num_edge_weights,
-      // 				       &nips_weights, &nips_slacks);
-      // hrt_nips.stop();
-      
-      // HighResTimer hrt("Learning new weights (qpOASES)");
-      // hrt.start();
-      // double val = updateWeights(working, caches.size(),
-      // 				 num_edge_weights,
-      // 				 &weights, &slacks, &feas);
-      // hrt.stop();
-
-      // cout << "Norm of difference between slacks is " << (nips_slacks - slacks).norm() << endl;
-      // cout << nips_slacks.transpose() << endl;
-      // cout << slacks.transpose() << endl;
-      // ROS_DEBUG_STREAM(hrt.reportMinutes());
-      // ROS_DEBUG_STREAM(hrt_nips.reportMinutes());
-      // cout << "Norm of difference is " << (nips_weights - weights).norm() << endl;
-      // cout << nips_weights.transpose() << endl;
-      // cout << weights.transpose() << endl;
-      // cout << "nips objective: " << nips_val << endl;
-      // cout << "qpoases objective: " << val << endl;
-      // weights = nips_weights;
-      // slacks = nips_slacks;
-
-      
       ROS_ASSERT(fabs(weights.norm() - 1.0) < 1e-6);
       if(iter > 0) { 
 	ROS_ASSERT(fabs(prev_weights.norm() - 1.0) < 1e-6);
@@ -539,8 +498,6 @@ namespace dst
       ROS_DEBUG_STREAM(weights.transpose());
 
       // -- Check if we're done.
-      // TODO: Make the problem never go infeasible.
-      //       This only happens with qpOASES.
       if(!feas) {
 	ROS_WARN_STREAM("Breaking due to infeasibility.");
 	break;
@@ -579,66 +536,6 @@ namespace dst
 
     return qpo;
   }
-  
-  double StructSVM::qpOASES(const Eigen::MatrixXd& H,
-			    const Eigen::VectorXd& g,
-			    const Eigen::MatrixXd& A,
-			    const Eigen::VectorXd& lb,
-			    const Eigen::VectorXd& lbA,
-			    Eigen::VectorXd* x,
-			    bool* feas) const
-  {
-
-    // -- Put matrices into the right format.
-    double* _H = eigToQPO(H);
-    double* _g = eigToQPO(g);
-    double* _A = eigToQPO(A);
-    double* _lb = eigToQPO(lb);
-    double* _lbA = eigToQPO(lbA);
-        
-    // -- Run the solver.
-    QProblem solver(x->rows(), A.rows(), HST_SEMIDEF);
-    Options opts;
-    opts.setToReliable();
-    solver.setOptions(opts);
-    //solver.setPrintLevel(PL_MEDIUM);
-    solver.setPrintLevel(PL_NONE);
-    //int nWSR = 1e8;
-    int nWSR = 1e5;
-    returnValue rv = solver.init(_H, _g, _A, _lb, NULL, _lbA, NULL, nWSR, NULL);
-
-    // -- Handle errors.
-    // Leave x unchanged if infeasible.
-    if(rv == RET_INIT_FAILED_INFEASIBILITY || rv == RET_QP_INFEASIBLE) {
-      ROS_WARN_STREAM("Infeasible!");
-      *feas = false;
-      return 0.5 * x->transpose() * H * (*x) + x->dot(g);
-    }
-    if(rv != SUCCESSFUL_RETURN) {
-      ROS_WARN_STREAM("Bad solve!");
-      ROS_WARN_STREAM("Return value: " << rv);
-      *feas = false;
-      return 0.5 * x->transpose() * H * (*x) + x->dot(g);
-    }
-    ROS_DEBUG_STREAM("qpOASES solved successfully.");
-    
-    // -- Set the output solution.
-    *feas = true;
-    double xopt[x->rows()];
-    solver.getPrimalSolution(xopt);
-    for(int i = 0; i < x->rows(); ++i)
-      x->coeffRef(i) = xopt[i];
-
-    // -- Clean up.
-    delete[] _H;
-    delete[] _g;
-    delete[] _A;
-    delete[] _lb;
-    delete[] _lbA;      
-    
-    return 0.5 * x->transpose() * H * (*x) + x->dot(g);
-  }
-
 
   double StructSVM::updateWeights2(const std::vector<Constraint>& constraints,
 				   int num_tr_ex,
@@ -741,95 +638,6 @@ namespace dst
     weights->normalize();
 
     return objective->eval(xstar);
-  }
-
-  
-  double StructSVM::updateWeights(const std::vector<Constraint>& constraints,
-				  int num_tr_ex,
-				  int num_edge_weights,
-				  Eigen::VectorXd* weights,
-				  Eigen::VectorXd* slacks,
-				  bool* feas) const
-  {
-    VectorXd x = VectorXd::Zero(weights->rows() + num_tr_ex);
-    x.head(weights->rows()) = *weights;
-
-    MatrixXd H = MatrixXd::Zero(x.rows(), x.rows());
-    for(int i = 0; i < weights->rows(); ++i)
-      H(i, i) = 1.0;
-
-    VectorXd g = VectorXd::Zero(x.rows());
-    for(int i = weights->rows(); i < g.rows(); ++i)
-      g(i) = c_ / (double)num_tr_ex;
-
-    MatrixXd A = MatrixXd::Zero(constraints.size(), x.rows());
-    VectorXd lbA = VectorXd::Zero(constraints.size());
-    for(size_t i = 0; i < constraints.size(); ++i) { 
-      A.row(i).head(weights->rows()) = constraints[i].dpsi_;
-      A(i, weights->rows() + constraints[i].tr_ex_id_) = 1.0;
-      lbA(i) = constraints[i].loss_;
-    }
-
-    // -- Apply non-negativity constraint to edge weights and slacks.
-    VectorXd lb = VectorXd::Ones(x.rows()) * -numeric_limits<double>::max();
-    for(int i = 0; i < num_edge_weights; ++i)
-      lb(i) = 0;
-    for(int i = weights->rows(); i < x.rows(); ++i)
-      lb(i) = 0;
-    
-    // // Everything is non-negative.
-    //VectorXd lb = VectorXd::Zero(x.rows());
-    
-    if(PRINT_MATRICES) { 
-      cout << "H" << endl;
-      cout << H << endl;
-      cout << "g" << endl;
-      cout << g.transpose() << endl;
-      cout << "A" << endl;
-      cout << A << endl;
-      cout << "lbA" << endl;
-      cout << lbA.transpose() << endl;
-      cout << "lb" << endl;
-      cout << lb << endl;
-    }
-
-    double val = qpOASES(H, g, A, lb, lbA, &x, feas);
-
-    ROS_DEBUG_STREAM("Slack variables: ");
-    ROS_DEBUG_STREAM(x.tail(num_tr_ex).transpose());
-
-    if(slacks)
-      *slacks = x.tail(num_tr_ex);
-    *weights = x.head(weights->rows());
-
-    for(int i = 0; i < num_edge_weights; ++i)
-      if(weights->coeffRef(i) < 0)
-	weights->coeffRef(i) = 0;
-    weights->normalize();
-
-    // -- Check the value of the objective function.
-    // Generate the objective function and gradient.
-    {
-      SMPtr A(new Eigen::SparseMatrix<double>(x.rows(), x.rows()));
-      for(int i = 0; i < weights->rows(); ++i) {
-	A->startVec(i);
-	A->insertBack(i, i) = 1.0;
-      }
-      A->finalize();
-      
-      SVPtr b(new SparseVector<double>(x.rows()));
-      b->startVec(0);
-      for(int i = 0; i < x.rows(); ++i)
-	if(i >= weights->rows())
-	  b->insertBack(i) = c_ / (double)num_tr_ex;
-      b->finalize();
-
-      SparseQuadraticFunction::Ptr objective(new SparseQuadraticFunction(A, b, 0));
-      cout << "qpOASES objective: " << val << endl;
-      cout << "Checked with my own objective: " << objective->eval(x) << endl;
-      ROS_ASSERT(fabs(objective->eval(x) - val) < 1e-6);
-    }
-    return val;
   }
 
   double StructSVM::fgNormalizedHammingLoss(cv::Mat1b label, cv::Mat1b pred) const

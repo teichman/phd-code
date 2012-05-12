@@ -43,7 +43,6 @@ namespace dst
     float max_range_;
     double cluster_tol_;
     KinectCloud::Ptr background_model_;
-    bool automated_;
 
     KinectCloud::Ptr generateForeground(cv::Mat1b seg, const KinectCloud& cloud) const;
     void increaseSeedWeights();
@@ -51,8 +50,8 @@ namespace dst
     void toggleDebug();
     void saveGraphviz() const;
     void saveVisualization();
-    void handleKeypress(std::string key);
-    void handleKeypress(char key);
+    void handleKeypress(std::string key, bool automated = false);
+    void handleKeypress(char key, bool automated = false);
     void mouseEvent(int event, int x, int y, int flags, void* param);
     void advance(int num);
     void segmentUsingBackgroundModel(pcl::search::KdTree<Point>::Ptr tree = pcl::search::KdTree<Point>::Ptr());

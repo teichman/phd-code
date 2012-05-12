@@ -98,6 +98,36 @@ TEST(EigenExtensions, Compression)
   EXPECT_TRUE(mat.isApprox(mat2));
 }
 
+TEST(EigenExtensions, serialization_multi_ascii) {
+  Vector3i vec = Vector3i::Random(3);
+  MatrixXd mat = MatrixXd::Random(3, 5);
+
+  std::ofstream ofile;
+  ofile.open("multi_serialize_ascii");
+  assert(ofile);
+  eigen_extensions::serializeASCII(vec, ofile);
+  eigen_extensions::serializeASCII(mat, ofile);
+  ofile.close();
+
+  Vector3i vec2;
+  MatrixXd mat2;
+
+  std::ifstream ifile;
+  ifile.open("multi_serialize_ascii");
+  assert(ifile);
+  eigen_extensions::deserializeASCII(ifile, &vec2);
+  eigen_extensions::deserializeASCII(ifile, &mat2);
+  ifile.close();
+
+  EXPECT_TRUE(mat2.isApprox(mat));
+  EXPECT_TRUE(vec2.isApprox(vec));
+}
+
+// TEST(EigenExtensions, bad_load) {
+//   MatrixXd mat;
+//   eigen_extensions::loadASCII("bad.eig.txt", &mat);
+// }
+
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
