@@ -30,6 +30,15 @@ namespace eigen_extensions {
   template<class S, int T, int U>
   void deserialize(std::istream& strm, Eigen::Matrix<S, T, U>* mat);
 
+  template<class T>
+  void serialize(const T& data, std::ostream& strm);
+
+  template<class T>
+  void deserialize(std::istream& strm, T* data);
+  
+  template<class S, int T, int U>
+  void deserialize(std::istream& strm, Eigen::Matrix<S, T, U>* mat);
+  
   //! Warning: These methods use the number of lines in the file to determine matrix size.
   //! The format needs to be changed...
   template<class S, int T, int U>
@@ -42,6 +51,18 @@ namespace eigen_extensions {
   /************************************************************
    * Template implementations
    ************************************************************/
+
+  template<class T>
+  void serialize(const T& data, std::ostream& strm)
+  {
+    strm.write((char*)&data, sizeof(T));
+  }
+
+  template<class T>
+  void deserialize(std::istream& strm, T* data)
+  {
+    strm.read((char*)data, sizeof(T));
+  }
   
   template<class S, int T, int U>
   void serialize(const Eigen::Matrix<S, T, U>& mat, std::ostream& strm)
