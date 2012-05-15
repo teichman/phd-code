@@ -26,7 +26,7 @@ rosbuild_add_library(rgbd_sequence
   src/rgbd_sequence.cpp
   src/stream_sequence.cpp
   src/stream_recorder.cpp
-  src/publisher.cpp
+#  src/publisher.cpp
   src/projector.cpp
   src/vis_wrapper.cpp
   src/tube_measurer.cpp
@@ -43,9 +43,10 @@ rosbuild_add_executable(record_stream src/record_stream.cpp)
 target_link_libraries(record_stream rgbd_sequence)
 rosbuild_add_compile_flags(record_stream -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
-rosbuild_add_executable(publish src/publish.cpp)
-target_link_libraries(publish rgbd_sequence)
-rosbuild_add_compile_flags(publish -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+# OpenCV version conflict because of the bridge.
+#rosbuild_add_executable(publish src/publish.cpp)
+#target_link_libraries(publish rgbd_sequence)
+#rosbuild_add_compile_flags(publish -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
 rosbuild_add_executable(view_stream src/view_stream.cpp)
 target_link_libraries(view_stream rgbd_sequence)
