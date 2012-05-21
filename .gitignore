@@ -2,5 +2,8 @@
 *bin/
 *.so
 *.png
+*.pdf
 *#*
 *.sw?
+*.eig.txt
+*.pl

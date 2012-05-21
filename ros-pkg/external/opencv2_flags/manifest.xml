@@ -1,0 +1,21 @@
+<package>
+  <description brief="opencv2_flags">
+
+     opencv2_flags
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/opencv2_flags</url>
+
+  <depend package="opencv_bleeding"/>
+  
+  <export>
+    <!--cpp cflags="-I/usr/include/opencv-2.3.1 -I/usr/include/opencv-2.3.1/opencv" lflags="-lopencv_calib3d -lopencv_contrib -lopencv_core -lopencv_features2d -lopencv_flann -lopencv_gpu -lopencv_highgui -lopencv_imgproc -lopencv_legacy -lopencv_ml -lopencv_objdetect -lopencv_video"/-->
+  </export>
+
+
+</package>
+
+

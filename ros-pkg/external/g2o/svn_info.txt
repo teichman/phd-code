@@ -1,0 +1,11 @@
+Path: .
+URL: https://code.ros.org/svn/ros-pkg/stacks/vslam/trunk/g2o
+Repository Root: https://code.ros.org/svn/ros-pkg
+Repository UUID: eb33c2ac-9c88-4c90-87e0-44a10359b0c3
+Revision: 39425
+Node Kind: directory
+Schedule: normal
+Last Changed Author: konolige
+Last Changed Rev: 36985
+Last Changed Date: 2011-06-01 14:15:57 -0700 (Wed, 01 Jun 2011)
+
