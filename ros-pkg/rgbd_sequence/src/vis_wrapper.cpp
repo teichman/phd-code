@@ -8,8 +8,10 @@ using namespace rgbd;
 
 namespace rgbd { 
 
-  VisWrapper::VisWrapper() :
-    key_(0)
+  VisWrapper::VisWrapper(std::string name) :
+    Lockable(),
+    key_(0),
+    name_(name)
   {
     vis_.registerKeyboardCallback(&VisWrapper::keyboardCallback, *this);
     vis_.addCoordinateSystem();
@@ -33,11 +35,18 @@ namespace rgbd {
     vis_.updateCamera();    
   }
   
-  char VisWrapper::waitKey()
-  {    
+  char VisWrapper::waitKey(int msec)
+  {
+    lock();
+    
     key_ = 0;
-    while(key_ == 0)
-      vis_.spinOnce(1);
+    if(msec == 0)
+      while(key_ == 0)
+	vis_.spinOnce(1);
+    else
+      vis_.spinOnce(msec);
+
+    unlock();
     return key_;
   }
   
@@ -51,8 +60,13 @@ namespace rgbd {
 
   void VisWrapper::showCloud(rgbd::Cloud::ConstPtr pcd)
   {
+    lock();
+
     if(!vis_.updatePointCloud(pcd, "default"))
       vis_.addPointCloud(pcd, "default");
+    vis_.spinOnce();
+    
+    unlock();
   }
 
 } // namespace rgbd

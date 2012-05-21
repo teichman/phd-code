@@ -19,7 +19,6 @@ rosbuild_add_library(dst
   src/lib/realtime_interface.cpp
   src/lib/potentials_cache.cpp
   src/lib/kinect_sequence.cpp
-  src/lib/lockable.cpp
   src/lib/seed_npg.cpp
   src/lib/color_histogram_npg.cpp
   src/lib/seed_image_distance_npg.cpp

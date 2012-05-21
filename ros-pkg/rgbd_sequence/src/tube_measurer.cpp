@@ -144,7 +144,9 @@ namespace rgbd
       std::stringstream ss;
       ss << selected_[0] << selected_[1];
       vw_.vis_.addArrow<Point, Point>(selected_[0], selected_[1], 0.0, 0.0, 1.0, ss.str());
-
+      vw_.vis_.addSphere<Point>(selected_[0], 0.05, ss.str() + "-point0");
+      vw_.vis_.addSphere<Point>(selected_[1], 0.05, ss.str() + "-point1");
+      
       visible_pairs_.push_back(selected_);
       selected_.clear();
     }

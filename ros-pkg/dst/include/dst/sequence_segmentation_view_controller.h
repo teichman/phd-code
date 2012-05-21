@@ -6,8 +6,8 @@
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
 #include <pcl/sample_consensus/ransac.h>
+#include <bag_of_tricks/lockable.h>
 #include <dst/kinect_sequence.h>
-#include <dst/lockable.h>
 #include <dst/segmentation_pipeline.h>
 #include <dst/segmentation_visualizer.h>
 #include <dst/volume_segmenter.h>

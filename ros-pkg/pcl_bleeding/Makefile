@@ -11,8 +11,8 @@ built: svn
 	touch $@
 
 svn:
-	svn co -r3516 http://svn.pointclouds.org/pcl/trunk $@
-	cd svn && patch -p0 < ../patch-2012-03-13
+	svn co http://svn.pointclouds.org/pcl/tags/pcl-1.5.1 $@
+	cd svn && patch -p0 < ../patch-1.5.1-2012-04-04
 
 remove_msgs:
 	cd svn/common/include; \
