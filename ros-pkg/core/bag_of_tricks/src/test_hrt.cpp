@@ -1,4 +1,5 @@
 #include <bag_of_tricks/high_res_timer.h>
+#include <bag_of_tricks/bag_of_tricks.h>
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -57,6 +58,19 @@ TEST(HighResTimer, AllocationTime)
 
   for(int i = 0; i < reps; ++i)
     delete vd[i];
+}
+
+template<typename S, typename T>
+void accessDictionary(const Dictionary<S, T>& nm)
+{
+  cout << nm["foo"] << endl;
+}
+
+TEST(Dictionary, Dictionary)
+{
+  Dictionary<string, int> nm;
+  nm["foo"] = 1;
+  accessDictionary(nm);
 }
 
 int main(int argc, char** argv)
