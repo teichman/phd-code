@@ -2,6 +2,7 @@
 #define BAG_OF_TRICKS_H
 
 #include <map>
+#include <vector>
 #include <assert.h>
 
 #define SHOW(x) #x << ": " << x
@@ -11,6 +12,8 @@ template<typename T, typename S>
 class Dictionary : public std::map<T, S>
 {
 public:
+  //std::vector<int> leak_;
+
   const S& operator[](const T& key) const
   {
     assert(count(key));
