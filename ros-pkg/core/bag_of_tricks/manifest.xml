@@ -8,11 +8,10 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/bag_of_tricks</url>
-  <!--depend package="opencv2"/-->
   <depend package="opencv_bleeding"/>
   
   <export>
-    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lbag_of_tricks" />
+    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib `rosboost-cfg --lflags thread` -lbag_of_tricks" />
   </export>
 
   

@@ -1,4 +1,5 @@
 #include <bag_of_tricks/high_res_timer.h>
+#include <bag_of_tricks/bag_of_tricks.h>
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -39,8 +40,8 @@ TEST(HighResTimer, AllocationTime)
   HighResTimer hrt;
   hrt.start();
   for(int i = 0; i < reps; ++i) {
-    double stack[num];
-    stack[13] = 1.13;  // Make sure that the compiler doesn't optimize this out?
+    double data[num];
+    data[13] = 1.13;  // Make sure that the compiler doesn't optimize this out?
   }
   hrt.stop();
   cout << "Time to allocate " << num << " doubles on the stack: " << hrt.getMicroseconds() / (double)reps << " us." << endl;
@@ -56,7 +57,27 @@ TEST(HighResTimer, AllocationTime)
   cout << "Time to allocate " << num << " doubles on the heap: " << hrt.getMicroseconds() / (double)reps << " us." << endl;
 
   for(int i = 0; i < reps; ++i)
-    delete vd[i];
+    delete[] vd[i];
+}
+
+template<typename S, typename T>
+void accessDictionary(const Dictionary<S, T>& nm)
+{
+  cout << "The value of \"bar\" is: " << nm["bar"] << endl;
+}
+
+TEST(Dictionary, Dictionary)
+{
+  Dictionary<string, int>* dptr = new Dictionary<string, int>;
+  //dptr->leak_.resize(1e6);
+  (*dptr)["foo"] = 1;
+  map<string, int>* bptr = dptr;
+  (*bptr)["bar"] = 1;
+  accessDictionary(*dptr);
+
+  // This would be a memory leak if Dictionary had members that map did not.
+  // valgrind --leak-check=full --max-stackframe=2457616 bin/test_hrt confirms this is fine.
+  delete bptr;
 }
 
 int main(int argc, char** argv)
