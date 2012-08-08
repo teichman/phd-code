@@ -13,7 +13,8 @@
   <depend package="pipeline2"/>
   <depend package="optimization"/>
   <depend package="maxflow"/>
-  <depend package="cv_bridge"/>
+  <!--depend package="cv_bridge"/-->
+  <depend package="opencv_bleeding"/>
   <depend package="pcl_bleeding"/>
   <depend package="image_labeler"/>
   <depend package="quadprog"/>

@@ -27,19 +27,54 @@ namespace dst
   inline
   double SurfaceNormalEPG::computePotential(int idx0, int idx1, Normals::Ptr normals) const
   {
-    double dot = 0.0;
-    if(!isnan(normals->at(idx0).normal[0]) && !isnan(normals->at(idx1).normal[0]))
-      for(int i = 0; i < 3; ++i)
-	dot += normals->at(idx0).normal[i] * normals->at(idx1).normal[i];
+    ROS_ASSERT(idx0 > 0 && idx0 < (int)normals->size());
+    ROS_ASSERT(idx1 > 0 && idx1 < (int)normals->size());
+    size_t sz_start = normals->size();
 
+    if(isnan(normals->at(idx0).normal[0]) || isnan(normals->at(idx1).normal[0]) ||
+       isnan(normals->at(idx0).normal[1]) || isnan(normals->at(idx1).normal[1]) ||
+       isnan(normals->at(idx0).normal[2]) || isnan(normals->at(idx1).normal[2]) ||
+       isinf(normals->at(idx0).normal[0]) || isinf(normals->at(idx1).normal[0]) ||
+       isinf(normals->at(idx0).normal[1]) || isinf(normals->at(idx1).normal[1]) ||
+       isinf(normals->at(idx0).normal[2]) || isinf(normals->at(idx1).normal[2]))
+    {
+    // if(isnan(normals->at(idx0).normal[0]) || isnan(normals->at(idx1).normal[0]) ||
+    //    isnan(normals->at(idx0).normal[1]) || isnan(normals->at(idx1).normal[1]) ||
+    //    isnan(normals->at(idx0).normal[2]) || isnan(normals->at(idx1).normal[2]))
+    // {
+      return 0;
+    }
+    
+    double dot = 0.0;
+    for(int i = 0; i < 3; ++i) {
+      ROS_ASSERT(!isnan(normals->at(idx0).normal[i]));
+      ROS_ASSERT(!isnan(normals->at(idx1).normal[i]));
+      dot += normals->at(idx0).normal[i] * normals->at(idx1).normal[i];
+      if(isnan(dot)) {
+	ROS_FATAL_STREAM("normals->at(idx0): " << normals->at(idx0));
+	ROS_FATAL_STREAM("normals->at(idx1): " << normals->at(idx1));
+	ROS_FATAL_STREAM("normals->at(idx0).normal[i]: " << normals->at(idx0).normal[i]);
+	ROS_FATAL_STREAM("normals->at(idx1).normal[i]: " << normals->at(idx1).normal[i]);
+	ROS_FATAL_STREAM("normals->at(idx0).normal[i] * normals->at(idx1).normal[i]: " << normals->at(idx0).normal[i] * normals->at(idx1).normal[i]);
+	ROS_FATAL_STREAM("dot: " << dot);
+	ROS_ASSERT(idx0 > 0 && idx0 < (int)normals->size());
+	ROS_ASSERT(idx1 > 0 && idx1 < (int)normals->size());
+	ROS_ASSERT(normals->size() == sz_start);
+
+	ROS_ASSERT(!isnan(dot));
+      }
+    }
+    
     double angle = acos(dot);
     if(fabs(dot - 1e-6) > 1 || fabs(dot + 1e-6) > 1)
       angle = 0; // acos(1) returns NaN.
-
+    
     if(isnan(angle)) {
-      ROS_FATAL_STREAM("NaN: " << dot << " " << acos(dot) << std::flush);
+      ROS_FATAL_STREAM("NaN in SurfaceNormalEPG: " << dot << " " << acos(dot) << std::flush);
       abort();
     }
+
+    ROS_ASSERT(normals->size() == sz_start);
     return exp(-angle / sigma_);
   }
   

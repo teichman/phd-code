@@ -123,10 +123,76 @@ TEST(EigenExtensions, serialization_multi_ascii) {
   EXPECT_TRUE(vec2.isApprox(vec));
 }
 
+TEST(EigenExtensions, SparseSerialization)
+{
+  SparseMatrix<double> mat(5, 3);
+  for(int i = 0; i < mat.outerSize(); ++i) {
+    mat.startVec(i);
+    mat.insertBack(i, i) = 1;
+    if(i == 0)
+      mat.insertBack(i+1, i) = 2;
+    if(i == 2)
+      mat.insertBack(i+2, i) = 3;
+  }
+  mat.finalize();
+  
+  eigen_extensions::save(mat, "sparse.eig");
+  SparseMatrix<double> mat2;
+  eigen_extensions::load("sparse.eig", &mat2);
+  EXPECT_TRUE(mat.isApprox(mat2));
+}
+
+TEST(EigenExtensions, SparseSerializationRowMajor)
+{
+  SparseMatrix<double, RowMajor> mat(3, 5);
+  for(int i = 0; i < mat.outerSize(); ++i) {
+    mat.startVec(i);
+    mat.insertBack(i, i) = 1;
+    if(i == 0)
+      mat.insertBack(i, i+1) = 2;
+    if(i == 2)
+      mat.insertBack(i, i+2) = 3;
+  }
+  mat.finalize();
+  
+  eigen_extensions::save(mat, "sparse.eig");
+  SparseMatrix<double, RowMajor> mat2;
+  eigen_extensions::load("sparse.eig", &mat2);
+  cout << mat << endl;
+  cout << mat2 << endl;
+  
+  EXPECT_TRUE(mat.isApprox(mat2));
+}
+
+// TEST(EigenExtensions, SparseVecSerialization)
+// {
+//   SparseVector<double> vec(5);
+//   vec.coeffRef(2) = 1;
+//   vec.coeffRef(4) = 2;
+  
+//   eigen_extensions::save(vec, "sparse.eig");
+//   SparseVector<double> vec2;
+//   eigen_extensions::load("sparse.eig", &vec2);
+//   EXPECT_TRUE(vec.isApprox(vec2));
+// }
+
 // TEST(EigenExtensions, bad_load) {
 //   MatrixXd mat;
 //   eigen_extensions::loadASCII("bad.eig.txt", &mat);
 // }
+
+TEST(cpp, cpp)
+{
+  double x = 13.13;
+  size_t y = 13;
+  cout << x / y << endl;
+  cout << y / x << endl;
+  cout << x * y << endl;
+  cout << y * x << endl;
+  cout << rand() / RAND_MAX << endl;
+  cout << rand() / (double)RAND_MAX << endl;
+  cout << (double)rand() / RAND_MAX << endl;
+}
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);

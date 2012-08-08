@@ -11,7 +11,7 @@ built: svn
 	touch $@
 
 svn:
-	svn co http://svn.pointclouds.org/pcl/tags/pcl-1.5.1 $@
+	svn co http://svn.pointclouds.org/pcl/tags/pcl-1.6.0 $@
 	cd svn && patch -p0 < ../patch-1.5.1-2012-04-04
 
 remove_msgs:
@@ -22,20 +22,16 @@ remove_msgs:
 	fi
 
 restore_msgs:
-	@if [ -d svn/common/include ]; then \
 	cd svn/common/include; \
 	if [ -d std_msgs_pcl_do_not_use ]; then \
 	mv std_msgs_pcl_do_not_use std_msgs; \
 	mv sensor_msgs_pcl_do_not_use sensor_msgs; \
-	fi \
 	fi
 
 clean: restore_msgs
-	@if [ -d svn/build ]; then \
-	cd svn/build && make clean; \
-	fi
-	rm -f built
+	cd svn/build && make clean
+	-rm built
 
-wipe: clean
-	rm -rf svn
-
+wipe:
+	-rm -rf svn
+	-rm built
