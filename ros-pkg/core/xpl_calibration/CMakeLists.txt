@@ -38,6 +38,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/trc_parser.cpp
   src/lib/mocap_visualizer.cpp
   src/lib/mocap_detector.cpp
+  src/lib/asus_vs_velo_visualizer.cpp
   )
 
 rosbuild_link_boost(${PROJECT_NAME} system)
@@ -84,4 +85,3 @@ target_link_libraries(test_mocap ${PROJECT_NAME})
 rosbuild_add_executable(inspect_depth_image src/prog/inspect_depth_image.cpp)
 rosbuild_add_compile_flags(inspect_depth_image -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 target_link_libraries(inspect_depth_image ${PROJECT_NAME})
-

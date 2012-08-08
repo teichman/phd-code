@@ -73,7 +73,6 @@ namespace rgbd {
       nonempty->push_back(pt);
       pcd = nonempty;
     }
-    
     if(!vis_.updatePointCloud(pcd, "default"))
       vis_.addPointCloud(pcd, "default");
     vis_.spinOnce();

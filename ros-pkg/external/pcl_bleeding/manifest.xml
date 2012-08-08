@@ -11,7 +11,7 @@
 
   <depend package="eigen"/>
   <depend package="sensor_msgs"/>
-  
+  <depend package="roscpp_serialization"/>
     <export>
       <!-- SHOT deprecation error is worked-around with -Wno-deprecated-declarations. -->
       <cpp cflags="-I/usr/include/openni -I/usr/include/vtk-5.4/ -I/usr/include/vtk-5.6/ -I${prefix}/svn/io/include -I${prefix}/svn/kdtree/include -I${prefix}/svn/tracking/include -I${prefix}/svn/common/include -I${prefix}/svn/segmentation/include -I${prefix}/svn/filters/include -I${prefix}/svn/keypoints/include -I${prefix}/svn/range_image/include -I${prefix}/svn/cuda/io/include -I${prefix}/svn/cuda/containers/include -I${prefix}/svn/cuda/common/include -I${prefix}/svn/cuda/segmentation/include -I${prefix}/svn/cuda/filters/include -I${prefix}/svn/cuda/utils/include -I${prefix}/svn/cuda/sample_consensus/include -I${prefix}/svn/cuda/gpu_features/include -I${prefix}/svn/cuda/octree/include -I${prefix}/svn/cuda/features/include -I${prefix}/svn/visualization/include -I${prefix}/svn/svn/include -I${prefix}/svn/apps/include -I${prefix}/svn/search/include -I${prefix}/svn/sample_consensus/include -I${prefix}/svn/surface/include -I${prefix}/svn/octree/include -I${prefix}/svn/features/include -I${prefix}/svn/registration/include -I${prefix}/svn/build/include -I${prefix}/svn/geometry/include -Wno-deprecated-declarations"      
