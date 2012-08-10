@@ -32,9 +32,9 @@ namespace dst
     }
   }
 
-  NameMapping2 EdgePotentialAggregator::getNameMapping() const
+  NameMapping EdgePotentialAggregator::getNameMapping() const
   {
-    NameMapping2 epot_names;
+    NameMapping epot_names;
     for(size_t i = 0; i < generators_.size(); ++i)
       epot_names.addName(generators_[i]->getShortName());
 

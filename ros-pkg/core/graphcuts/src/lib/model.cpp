@@ -12,8 +12,8 @@ namespace graphcuts
 
   Model::Model(const Eigen::VectorXd& epot_weights,
 	       const Eigen::VectorXd& npot_weights,
-	       const NameMapping2& epot_names,
-	       const NameMapping2& npot_names) :
+	       const NameMapping& epot_names,
+	       const NameMapping& npot_names) :
     epot_weights_(epot_weights),
     npot_weights_(npot_weights),
     epot_names_(epot_names),
@@ -24,9 +24,7 @@ namespace graphcuts
   void Model::serialize(std::ostream& out) const
   {
     ROS_ASSERT(npot_weights_.rows() == (int)npot_names_.size());
-    ROS_ASSERT(npot_names_.getOffset() == 0);  // No special labels.
     ROS_ASSERT(epot_weights_.rows() == (int)epot_names_.size());
-    ROS_ASSERT(epot_names_.getOffset() == 0);  // No special labels.
 
     out << "Graphcuts Model v0.1" << endl;
     out << "== " << epot_weights_.rows() << " edge potential weights == " << endl;
@@ -53,7 +51,7 @@ namespace graphcuts
       in >> epot_names[i];
       in >> epot_weights_(i);
     }
-    epot_names_ = NameMapping2();
+    epot_names_ = NameMapping();
     epot_names_.addNames(epot_names);
 
     in >> buf;
@@ -66,7 +64,7 @@ namespace graphcuts
       in >> npot_names[i];
       in >> npot_weights_(i);
     }
-    npot_names_ = NameMapping2();
+    npot_names_ = NameMapping();
     npot_names_.addNames(npot_names);
   }
 

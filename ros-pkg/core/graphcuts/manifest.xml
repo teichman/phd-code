@@ -11,7 +11,7 @@
   <depend package="maxflow"/>
   <depend package="eigen_extensions"/>
   <depend package="serializable"/>
-  <depend package="name_mapping2"/>
+  <depend package="name_mapping"/>
   <depend package="bag_of_tricks"/>
   <depend package="optimization"/>
   <depend package="rosconsole"/>

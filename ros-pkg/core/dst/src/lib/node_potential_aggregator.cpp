@@ -45,9 +45,9 @@ namespace dst
     return oss.str();
   }
 
-  NameMapping2 NodePotentialAggregator::getNameMapping() const
+  NameMapping NodePotentialAggregator::getNameMapping() const
   {
-    NameMapping2 npot_names;
+    NameMapping npot_names;
     for(size_t i = 0; i < generators_.size(); ++i)
       npot_names.addName(generators_[i]->getShortName());
 

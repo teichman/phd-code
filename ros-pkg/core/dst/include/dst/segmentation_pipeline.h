@@ -79,7 +79,7 @@ namespace dst
 
     //! Make a new SegmentationPipeline of this type.
     virtual SegmentationPipeline::Ptr mitosis(int num_threads) const;
-    void getNameMappings(NameMapping2* epot_names, NameMapping2* npot_names) const;
+    void getNameMappings(NameMapping* epot_names, NameMapping* npot_names) const;
     
   protected:
     Graph3dPtr graph_;

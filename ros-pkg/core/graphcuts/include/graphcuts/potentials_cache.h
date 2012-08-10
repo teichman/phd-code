@@ -24,8 +24,8 @@ namespace graphcuts
     //! In order of weights.
     std::vector<Eigen::VectorXd> sink_;
     std::vector<Eigen::VectorXd> source_;
-    NameMapping2 epot_names_;
-    NameMapping2 npot_names_;
+    NameMapping epot_names_;
+    NameMapping npot_names_;
     
     long int bytes() const;
     int getNumNodes() const;
