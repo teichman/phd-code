@@ -3,8 +3,8 @@ all: teichman-ros-pkg
 
 # This Makefile can also be called from teichman_ros_pkg_hook, so we need to set the root dir.
 ROOT_DIR := $(shell rospack find dst)/../../
-TRP_REV := 720ebc3d4931df25299452c9e8493c9d12ea0d87
-#TRP_REV := a32bda52733c4b7a08670c4b15c277da2f03b071
+TRP_REV := 720ebc3d4931df25299452c9e8493c9d12ea0d87  # newer
+#TRP_REV := a32bda52733c4b7a08670c4b15c277da2f03b071  # older
 .PHONY: teichman-ros-pkg
 teichman-ros-pkg:
 	@if [ ! -e $(ROOT_DIR)/.teichman-ros-pkg_rev$(TRP_REV) ]; then \
