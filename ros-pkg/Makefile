@@ -26,6 +26,6 @@ test:
 	rosmake --target=test core external utility machine_learning
 
 wipe:
-	rm -rf teichman-ros-pkg .teichman-ros-pkg-*
+	rm -rf teichman-ros-pkg .teichman-ros-pkg_rev*
 	rosmake --target=wipe core external
 
