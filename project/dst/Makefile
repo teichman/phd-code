@@ -78,10 +78,8 @@ EVALUATE := rosrun dst evaluate
 	env >> $@
 	echo '' >> $@
 	echo '' >> $@
-	-hg tip >> $@
-	-hg di >> $@
-	-git log -n1 >> $@
-	-git di >> $@
+	git log -n1 >> $@
+	git di >> $@
 
 dataset_sizes:
 	@echo Training set size:
