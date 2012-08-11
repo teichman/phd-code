@@ -701,22 +701,22 @@ void AsusVsVeloVisualizer::fitModel()
 }
 
 
-void AsusVsVeloVisualizer::saveExtrinsics(std::string basename) const
+void AsusVsVeloVisualizer::saveExtrinsics(std::string tag) const
 {
-  cal_.save(basename + "-extrinsics");
-  cout << "Saved calibration to \"" << basename << "-extrinsics\"" << endl;
+  cal_.save("extrinsics" + tag);
+  cout << "Saved calibration to \"" << "extrinsics" << tag << "\"" << endl;
 }
 
-void AsusVsVeloVisualizer::saveDistortionModel(std::string basename) const
+void AsusVsVeloVisualizer::saveDistortionModel(std::string tag) const
 {
-  eigen_extensions::saveASCII(weights_, "depth_distortion_model.eig.txt");
-  cout << "Saved depth distortion model to \"" << basename << "-depth_distortion_model.eig.txt\"" << endl;
+  eigen_extensions::saveASCII(weights_, "depth_distortion_model" + tag + ".eig.txt");
+  cout << "Saved depth distortion model to \"" << "depth_distortion_model" + tag + ".eig.txt\"" << endl;
 }
 
-void AsusVsVeloVisualizer::saveAll(std::string basename) const
+void AsusVsVeloVisualizer::saveAll(std::string tag) const
 {
-  saveExtrinsics(basename);
-  saveDistortionModel(basename);
+  saveExtrinsics(tag);
+  saveDistortionModel(tag);
 }
 
 void AsusVsVeloVisualizer::visualizeDistortion()

@@ -64,9 +64,9 @@ public:
   AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, VeloSequence::ConstPtr vseq);
   void run();
   void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
-  void saveAll(std::string basename) const;
-  void saveExtrinsics(std::string basename) const;
-  void saveDistortionModel(std::string basename) const;
+  void saveAll(std::string tag) const;
+  void saveExtrinsics(std::string tag) const;
+  void saveDistortionModel(std::string tag) const;
   //! Find alignment and sync offset.
   void calibrate();
   

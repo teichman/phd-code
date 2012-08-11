@@ -4,7 +4,7 @@
 ############################################################
 export NUM_THREADS	:= 8
 SHELL			:= /bin/bash
-REPO_ROOT		:= $(shell dirname $$(dirname $$(rospack find dst)))
+REPO_ROOT		:= $(shell dirname $$(dirname $$(dirname $$(rospack find dst))))
 MAKE_ROOT		:= $(REPO_ROOT)/project/intrinsics_calibration
 MAKEFILE		:= $(MAKE_ROOT)/Makefile
 
@@ -23,10 +23,19 @@ all:
 
 AVV_RUNS := $(shell ls $(AVV_PATH))
 
-define AVV_RULE_GENERATOR
+all_extrinsics: $(addsuffix /extrinsics, $(addprefix asus_vs_velodyne/, $(AVV_RUNS)))
 
-avv/$(1)/$(1)-extrinsics:
-	rosrun xpl_calibration asus_vs_velo $(1)/asus $(1)/velodyne --compute-extrinsics $(1)
 
-endef
-$(foreach VAL,$(AVV_RUNS),$(eval $(call AVV_RULE_GENERATOR,$(VAL))))
+asus_vs_velodyne/%/extrinsics:
+	mkdir -p $(@D)
+	cd $(@D) && rosrun xpl_calibration asus_vs_velo $(AVV_PATH)/$*/asus $(AVV_PATH)/$*/velodyne --compute-extrinsics
+
+
+# define AVV_RULE_GENERATOR
+
+# avv/$(1)/extrinsics:
+# 	mkdir -p $$(@D)
+# 	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $(1)/asus $(1)/velodyne --compute-extrinsics
+
+# endef
+# $(foreach VAL,$(AVV_RUNS),$(eval $(call AVV_RULE_GENERATOR,$(VAL))))

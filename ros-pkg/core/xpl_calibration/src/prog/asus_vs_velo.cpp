@@ -15,7 +15,7 @@ int main(int argc, char** argv)
     ("vseq", bpo::value<string>(), "VeloSequence")
     ("extrinsics", bpo::value<string>(), "Use pre-computed extrinsics")
     ("distortion", bpo::value<string>(), "Use pre-computed distortion model")
-    ("compute-extrinsics", bpo::value<string>(), "Automatically start extrinsics search and save with this basename")
+    ("compute-extrinsics", "Automatically start extrinsics search")
     ;
 
   bpo::positional_options_description p;

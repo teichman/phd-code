@@ -7,6 +7,9 @@ TRP_REV := 720ebc3d4931df25299452c9e8493c9d12ea0d87  # newer
 all: .teichman-ros-pkg-$(TRP_REV)
 	rosmake utility external core
 
+.PHONY: teichman-ros-pkg
+teichman-ros-pkg: .teichman-ros-pkg-$(TRP_REV)
+
 .teichman-ros-pkg-$(TRP_REV):
 	@echo ========================================
 	@echo Updating teichman-ros-pkg...
