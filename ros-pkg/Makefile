@@ -1,23 +1,21 @@
-all: teichman-ros-pkg
-	rosmake core external
-
 # This Makefile can also be called from teichman_ros_pkg_hook, so we need to set the root dir.
 ROOT_DIR := $(shell dirname $$(dirname $$(rospack find dst)))
 TRP_REV := 720ebc3d4931df25299452c9e8493c9d12ea0d87  # newer
 #TRP_REV := a32bda52733c4b7a08670c4b15c277da2f03b071  # older
-.PHONY: teichman-ros-pkg
-teichman-ros-pkg:
-	@if [ ! -e $(ROOT_DIR)/.teichman-ros-pkg-$(TRP_REV) ]; then \
-	echo Updating teichman-ros-pkg...; \
-	cd $(ROOT_DIR) && rm -rf $@; \
-	cd $(ROOT_DIR) && git clone git://github.com/teichman/teichman-ros-pkg.git; \
-	cd $(ROOT_DIR)/$@ && git checkout $(TRP_REV); \
-	cd $(ROOT_DIR) && rm -rf $@/stacks/utility/teichman_ros_pkg_hook; \
-	cd $(ROOT_DIR) && rm -f .teichman-ros-pkg-*; \
-	cd $(ROOT_DIR) && touch .teichman-ros-pkg-$(TRP_REV); \
-	else \
-	echo No need to update teichman-ros-pkg, doing nothing.; \
-	fi
+
+all: .teichman-ros-pkg-$(TRP_REV)
+	rosmake utility machine_learning external core
+
+.teichman-ros-pkg-$(TRP_REV):
+	@echo ========================================
+	@echo Updating teichman-ros-pkg...
+	@echo ========================================
+	cd $(ROOT_DIR) && rm -rf teichman-ros-pkg
+	cd $(ROOT_DIR) && git clone git://github.com/teichman/teichman-ros-pkg.git
+	cd $(ROOT_DIR)/teichman-ros-pkg && git checkout $(TRP_REV)
+	cd $(ROOT_DIR) && rm -rf teichman-ros-pkg/stacks/utility/teichman_ros_pkg_hook
+	cd $(ROOT_DIR) && rm -f .teichman-ros-pkg-*
+	cd $(ROOT_DIR) && touch $@
 
 clean: 
 	rosmake --target=clean core external utility machine_learning

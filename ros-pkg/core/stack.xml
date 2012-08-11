@@ -5,5 +5,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/core</url>
   <depend stack="ros" />
+  <depend stack="external" />
+  <depend stack="utility" />
 
 </stack>
