@@ -229,10 +229,7 @@ void AsusVsVeloVisualizer::run()
       cout << "Loss for this frame: " << getLossFunction()->eval(ArrayXd::Zero(1)) << endl;
       break;
     case 'S':
-      cal_.save("calibration");
-      cout << "Saved calibration to \"calibration\"" << endl;
-      eigen_extensions::saveASCII(weights_, "depth_distortion_model.eig.txt");
-      cout << "Saved depth distortion model to depth_distortion_model.eig.txt" << endl;
+      saveAll("manual");
       break;
     case ',':
       incrementVeloIdx(-1);
@@ -703,6 +700,25 @@ void AsusVsVeloVisualizer::fitModel()
   cout << "Mean error after fitting model: " << obj << endl;
 }
 
+
+void AsusVsVeloVisualizer::saveExtrinsics(std::string basename) const
+{
+  cal_.save(basename + "-extrinsics");
+  cout << "Saved calibration to \"" << basename << "-extrinsics\"" << endl;
+}
+
+void AsusVsVeloVisualizer::saveDistortionModel(std::string basename) const
+{
+  eigen_extensions::saveASCII(weights_, "depth_distortion_model.eig.txt");
+  cout << "Saved depth distortion model to \"" << basename << "-depth_distortion_model.eig.txt\"" << endl;
+}
+
+void AsusVsVeloVisualizer::saveAll(std::string basename) const
+{
+  saveExtrinsics(basename);
+  saveDistortionModel(basename);
+}
+
 void AsusVsVeloVisualizer::visualizeDistortion()
 {
   if(statistics_.empty()) {
@@ -914,5 +930,6 @@ void PixelStats::stats(double* mean, double* stdev, double* num) const
 
 bool PixelStats::valid() const
 {
+
   return velo_.size() > 5;
 }

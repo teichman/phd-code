@@ -1,0 +1,32 @@
+
+############################################################
+# -- Global settings.
+############################################################
+export NUM_THREADS	:= 8
+SHELL			:= /bin/bash
+REPO_ROOT		:= $(shell dirname $$(dirname $$(rospack find dst)))
+MAKE_ROOT		:= $(REPO_ROOT)/project/intrinsics_calibration
+MAKEFILE		:= $(MAKE_ROOT)/Makefile
+
+# You'll need a symlink in your project dir to the data.
+# This dir has subdirectories of asus_vs_velodyne
+DATA_PATH		:= $(MAKE_ROOT)/data
+AVV_PATH		:= $(DATA_PATH)/asus_vs_velodyne
+
+.SECONDEXPANSION:	# Allows use of automatic vars in prerequisites.
+.SECONDARY:		# Prevents deletion of intermediate targets in a chain of implicit rules.
+
+all:
+	@echo You should probably be more specific.
+
+
+
+AVV_RUNS := $(shell ls $(AVV_PATH))
+
+define AVV_RULE_GENERATOR
+
+avv/$(1)/$(1)-extrinsics:
+	rosrun xpl_calibration asus_vs_velo $(1)/asus $(1)/velodyne --compute-extrinsics $(1)
+
+endef
+$(foreach VAL,$(AVV_RUNS),$(eval $(call AVV_RULE_GENERATOR,$(VAL))))

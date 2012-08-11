@@ -64,6 +64,11 @@ public:
   AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, VeloSequence::ConstPtr vseq);
   void run();
   void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
+  void saveAll(std::string basename) const;
+  void saveExtrinsics(std::string basename) const;
+  void saveDistortionModel(std::string basename) const;
+  //! Find alignment and sync offset.
+  void calibrate();
   
 protected:
   rgbd::StreamSequence::ConstPtr sseq_;
@@ -82,8 +87,6 @@ protected:
   void incrementOffset(double dt);
   int findAsusIdx(double ts, double* dt_out = NULL) const;
   void align();
-  //! Find alignment and sync offset.
-  void calibrate();
   void updateDisplay(int velo_idx, const Eigen::Affine3f& transform, double offset);
   rgbd::Cloud::Ptr filterVelo(rgbd::Cloud::ConstPtr velo) const;
   rgbd::Cloud::Ptr filterAsus(rgbd::Cloud::ConstPtr asus) const;

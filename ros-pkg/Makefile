@@ -15,6 +15,7 @@ all: .teichman-ros-pkg-$(TRP_REV)
 	cd $(ROOT_DIR)/teichman-ros-pkg && git checkout $(TRP_REV)
 	cd $(ROOT_DIR) && rm -rf teichman-ros-pkg/stacks/utility/teichman_ros_pkg_hook
 	cd $(ROOT_DIR) && rm -f .teichman-ros-pkg-*
+	rosmake utility machine_learning  # In theory this should not be necessary.
 	cd $(ROOT_DIR) && touch $@
 
 clean: 

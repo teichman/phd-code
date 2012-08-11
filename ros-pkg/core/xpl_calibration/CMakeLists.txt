@@ -41,7 +41,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/asus_vs_velo_visualizer.cpp
   )
 
-rosbuild_link_boost(${PROJECT_NAME} system)
+rosbuild_link_boost(${PROJECT_NAME} system program_options)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
