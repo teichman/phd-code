@@ -23,12 +23,12 @@ teichman-ros-pkg:
 	cd $(ROOT_DIR)/teichman-ros-pkg && git checkout $(TRP_REV); \
 	cd $(ROOT_DIR) && rm -f .teichman-ros-pkg-*; \
 	cd $(ROOT_DIR) && touch $(TRP_FLAG); \
+	rosmake utility; \
 	else \
 	echo ========================================; \
 	echo teichman-ros-pkg is up to date already; \
 	echo ========================================; \
 	fi
-#	rosmake utility; \
 #	cd $(ROOT_DIR) && rm -rf teichman-ros-pkg/stacks/utility/teichman_ros_pkg_hook; \
 
 clean: 
