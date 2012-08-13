@@ -12,7 +12,7 @@
   <depend package="eigen_extensions"/>
   <depend package="serializable"/>
   <depend package="name_mapping"/>
-  <depend package="bag_of_tricks"/>
+  <depend package="timer"/>
   <depend package="optimization"/>
   <depend package="rosconsole"/>
   <depend package="pipeline2"/>

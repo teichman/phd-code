@@ -14,7 +14,7 @@
 #include <Eigen/Eigen>
 #include <ros/console.h>
 #include <ros/assert.h>
-#include <bag_of_tricks/high_res_timer.h>
+#include <timer/timer.h>
 
 namespace pipeline2 { 
   

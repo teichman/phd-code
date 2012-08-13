@@ -1,5 +1,5 @@
 #include <optimization/common_functions.h>
-#include <bag_of_tricks/high_res_timer.h>
+#include <timer/timer.h>
 
 using namespace Eigen;
 using namespace std;
