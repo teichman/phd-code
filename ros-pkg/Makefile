@@ -1,9 +1,12 @@
 all:
-	rosmake core external
+	rosmake core external utility 
 
 clean: 
-	rosmake --target=clean core external
+	rosmake --target=clean core external utility
 
-wipe: clean
-	rosmake --target=wipe core external
+test:
+	rosmake --target=test core external utility
+
+wipe:
+	rosmake --target=wipe core external utility
 

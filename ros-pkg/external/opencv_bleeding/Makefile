@@ -9,7 +9,7 @@ source:
 	cd $@ && tar xvjf OpenCV-2.4.0.tar.bz2
 
 clean:
-	cd source/OpenCV-2.4.0/release && make clean
+	-cd source/OpenCV-2.4.0/release && make clean
 
 wipe: 
 	-rm -rf source

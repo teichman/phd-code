@@ -5,6 +5,7 @@
 #include <pcl/common/transforms.h>
 #include <eigen_extensions/eigen_extensions.h>
 #include <Eigen/Cholesky>
+#include <ros/package.h>
 #include <matplotlib_interface/matplotlib_interface.h>
 #include <rgbd_sequence/vis_wrapper.h>
 #include <rgbd_sequence/stream_sequence.h>
@@ -58,12 +59,22 @@ public:
 class AsusVsVeloVisualizer : public GridSearchViewHandler
 {
 public:
+  int skip_;
+  int num_pixel_plots_;
   VeloToAsusCalibration cal_;
   Eigen::VectorXd weights_;
   
   AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, VeloSequence::ConstPtr vseq);
   void run();
   void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
+  void saveAll(std::string tag) const;
+  void saveExtrinsics(std::string tag) const;
+  void saveDistortionModel(std::string tag) const;
+  //! Find alignment and sync offset.
+  void calibrate();
+  void accumulateStatistics();
+  void visualizeDistortion();
+  void fitModel();
   
 protected:
   rgbd::StreamSequence::ConstPtr sseq_;
@@ -82,8 +93,6 @@ protected:
   void incrementOffset(double dt);
   int findAsusIdx(double ts, double* dt_out = NULL) const;
   void align();
-  //! Find alignment and sync offset.
-  void calibrate();
   void updateDisplay(int velo_idx, const Eigen::Affine3f& transform, double offset);
   rgbd::Cloud::Ptr filterVelo(rgbd::Cloud::ConstPtr velo) const;
   rgbd::Cloud::Ptr filterAsus(rgbd::Cloud::ConstPtr asus) const;
@@ -94,9 +103,6 @@ protected:
   void play(bool save);
   void colorPoint(rgbd::Point* pt) const;
   void generateHeatMap();
-  void accumulateStatistics();
-  void visualizeDistortion();
-  void fitModel();
 };
 
 #endif // ASUS_VS_VELO_VISUALIZER_H

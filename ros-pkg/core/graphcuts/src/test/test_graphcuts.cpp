@@ -10,13 +10,13 @@ TEST(Model, serialization)
 {
   VectorXd epot_weights(3);
   epot_weights << 0, M_PI, 42.13;
-  NameMapping2 epot_names;
+  NameMapping epot_names;
   epot_names.addName("edge_descriptor0");
   epot_names.addName("edge_descriptor1");
   epot_names.addName("edge_descriptor2");
   VectorXd npot_weights(2);
   npot_weights << M_PI, 42.13;
-  NameMapping2 npot_names;
+  NameMapping npot_names;
   npot_names.addName("node_descriptor0");
   npot_names.addName("node_descriptor1");
 

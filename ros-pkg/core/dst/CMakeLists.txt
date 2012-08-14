@@ -7,7 +7,7 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 #  Release        : w/o debug symbols, w/ optimization
 #  RelWithDebInfo : w/ debug symbols, w/ optimization
 #  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-set(ROS_BUILD_TYPE Release)
+set(ROS_BUILD_TYPE RelWithDebInfo)
 
 rosbuild_init()
 
@@ -51,7 +51,7 @@ rosbuild_add_library(dst
   src/lib/distance_npg.cpp
   src/lib/image_processing_nodes.cpp
   src/lib/cie-xyz-image-node.cpp
-  src/lib/sobel-image-node.cpp
+#  src/lib/sobel-image-node.cpp
   src/lib/boundary_mask_node.cpp
   src/lib/sequence_segmentation_view_controller.cpp
   src/lib/segmentation_pipeline.cpp

@@ -1,7 +1,7 @@
 #ifndef GRAPHCUTS_MAXFLOW_INFERENCE_H
 #define GRAPHCUTS_MAXFLOW_INFERENCE_H
 
-#include <bag_of_tricks/high_res_timer.h>
+#include <timer/timer.h>
 #include <graphcuts/potentials_cache.h>
 #include <graphcuts/model.h>
 

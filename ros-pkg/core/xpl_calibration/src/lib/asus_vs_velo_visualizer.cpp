@@ -5,9 +5,6 @@ using namespace Eigen;
 using namespace rgbd;
 namespace bfs = boost::filesystem;
 
-#define SKIP (getenv("SKIP") ? atoi(getenv("SKIP")) : 20)
-#define NUM_PIXEL_PLOTS (getenv("NUM_PIXEL_PLOTS") ? atoi(getenv("NUM_PIXEL_PLOTS")) : 20)
-
 VeloSequence::VeloSequence(std::string root_path) :
   root_path_(root_path)
 {
@@ -49,6 +46,8 @@ VeloToAsusCalibration::VeloToAsusCalibration() :
 }
 
 AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, VeloSequence::ConstPtr vseq) :
+  skip_(20),
+  num_pixel_plots_(20),
   sseq_(sseq),
   vseq_(vseq),
   velo_idx_(0),
@@ -144,6 +143,7 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
   asus_ = sseq_->getCloud(asus_idx_);
   if(!asus_)
     ROS_WARN_STREAM("Bad asus idx " << asus_idx_ << " / " << sseq_->size() << flush);
+  //cout << asus_idx_ << ": " << asus_->size() << " " << asus_->width << " " << asus_->height << endl;
 
   // -- Draw.
   for(size_t i = 0; i < asus_->size(); ++i)
@@ -229,10 +229,7 @@ void AsusVsVeloVisualizer::run()
       cout << "Loss for this frame: " << getLossFunction()->eval(ArrayXd::Zero(1)) << endl;
       break;
     case 'S':
-      cal_.save("calibration");
-      cout << "Saved calibration to \"calibration\"" << endl;
-      eigen_extensions::saveASCII(weights_, "depth_distortion_model.eig.txt");
-      cout << "Saved depth distortion model to depth_distortion_model.eig.txt" << endl;
+      saveAll("manual");
       break;
     case ',':
       incrementVeloIdx(-1);
@@ -599,6 +596,10 @@ void VeloToAsusCalibration::deserialize(std::istream& in)
 
 void AsusVsVeloVisualizer::accumulateStatistics()
 {
+  updateDisplay(20, cal_.velo_to_asus_, cal_.offset_);
+  //cout << asus_->size() << " " << asus_->width << " " << asus_->height << endl;
+  ROS_ASSERT(asus_);
+  ROS_ASSERT(asus_->height > 0 && asus_->width > 0);
   Projector proj;
   proj.fx_ = 525;
   proj.fy_ = 525;
@@ -612,12 +613,12 @@ void AsusVsVeloVisualizer::accumulateStatistics()
   statistics_.resize(proj.height_, vector<PixelStats>(proj.width_));
   for(size_t i = 0; i < statistics_.size(); ++i)
     for(size_t j = 0; j < statistics_[i].size(); ++j)
-      statistics_[i][j].reserve(ceil((double)sseq_->size() / (double)SKIP));
+      statistics_[i][j].reserve(ceil((double)sseq_->size() / (double)skip_));
   
   double min_mult = 0.85;
   double max_mult = 1.25;
   Cloud::Ptr transformed(new Cloud);
-  for(size_t i = 20; i < vseq_->size(); i += SKIP) {
+  for(size_t i = 20; i < vseq_->size(); i += skip_) {
     updateDisplay(i, cal_.velo_to_asus_, cal_.offset_);
     assert(asus_->isOrganized());
     pcl::transformPointCloud(*velo_, *transformed, cal_.velo_to_asus_);
@@ -703,6 +704,25 @@ void AsusVsVeloVisualizer::fitModel()
   cout << "Mean error after fitting model: " << obj << endl;
 }
 
+
+void AsusVsVeloVisualizer::saveExtrinsics(std::string tag) const
+{
+  cal_.save("extrinsics" + tag);
+  cout << "Saved calibration to \"" << "extrinsics" << tag << "\"" << endl;
+}
+
+void AsusVsVeloVisualizer::saveDistortionModel(std::string tag) const
+{
+  eigen_extensions::saveASCII(weights_, "depth_distortion_model" + tag + ".eig.txt");
+  cout << "Saved depth distortion model to \"" << "depth_distortion_model" + tag + ".eig.txt\"" << endl;
+}
+
+void AsusVsVeloVisualizer::saveAll(std::string tag) const
+{
+  saveExtrinsics(tag);
+  saveDistortionModel(tag);
+}
+
 void AsusVsVeloVisualizer::visualizeDistortion()
 {
   if(statistics_.empty()) {
@@ -728,7 +748,7 @@ void AsusVsVeloVisualizer::visualizeDistortion()
   mpliExport(stdev);
   mpliExport(counts);
   mpliPrintSize();
-  mpliExecuteFile("plot_multipliers_image.py");
+  mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_multipliers_image.py");
 
   // -- Range vs u image.
   {
@@ -788,24 +808,26 @@ void AsusVsVeloVisualizer::visualizeDistortion()
     mpliNamedExport("stdev", stdev);
     mpliNamedExport("counts", counts);
     mpliPrintSize();
-    mpliExecuteFile("plot_u_range_multipliers.py");
+    mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_u_range_multipliers.py");
   }
   
   // -- For some random pixels, generate a scatter plot of asus range vs velo range.
-  for(int i = 0; i < NUM_PIXEL_PLOTS; ++i) {
+  srand(0);  // All runs should produce plots for the same set of pixels.
+  for(int i = 0; i < num_pixel_plots_; ++i) {
     int u = rand() % width;
     int v = rand() % height;
     const PixelStats& ps = statistics_[v][u];
     if(!ps.valid())
       continue;
-    
+
+    cout << "Plotting distortion for pixel " << u << " " << v << endl;
     mpliNamedExport("velo", ps.velo_);
     mpliNamedExport("asus", ps.asus_);
     mpliNamedExport<int>("width", width);
     mpliNamedExport<int>("height", height);
     mpliExport(u);
     mpliExport(v);
-    mpliExecuteFile("plot_beam_scatter.py");
+    mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_beam_scatter.py");
   }
 }
 
@@ -827,7 +849,7 @@ void AsusVsVeloVisualizer::generateHeatMap()
   double min_mult = 0.85;
   double max_mult = 1.15;
   Cloud::Ptr transformed(new Cloud);
-  for(size_t i = 20; i < vseq_->size(); i += SKIP) {
+  for(size_t i = 20; i < vseq_->size(); i += skip_) {
     updateDisplay(i, cal_.velo_to_asus_, cal_.offset_);
     assert(asus_->isOrganized());
     pcl::transformPointCloud(*velo_, *transformed, cal_.velo_to_asus_);
@@ -881,7 +903,7 @@ void AsusVsVeloVisualizer::generateHeatMap()
   mpliExport(max_mult);
   mpliExport(min_mult);
   mpliExport(hist);
-  mpliExecuteFile("plot_multipliers.py");
+  mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_multipliers.py");
 }
 
 void PixelStats::addPoint(double velo, double asus)
@@ -914,5 +936,6 @@ void PixelStats::stats(double* mean, double* stdev, double* num) const
 
 bool PixelStats::valid() const
 {
+
   return velo_.size() > 5;
 }
