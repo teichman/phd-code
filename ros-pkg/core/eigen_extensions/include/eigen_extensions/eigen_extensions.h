@@ -141,7 +141,7 @@ namespace eigen_extensions {
   {
     // -- Read the header.
     std::string line;
-    getline(strm, line);
+    while(line.length() == 0) getline(strm, line);
     assert(line[0] == '%');
     std::istringstream iss(line.substr(1));
     int rows;
