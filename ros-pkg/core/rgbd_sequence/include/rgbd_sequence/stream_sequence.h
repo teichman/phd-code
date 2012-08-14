@@ -22,6 +22,7 @@ namespace rgbd
   typedef boost::shared_ptr<DepthMat> DepthMatPtr;
   typedef boost::shared_ptr<const DepthMat> DepthMatConstPtr;
   using cv::Mat3b;
+  using cv::Mat1w;
 
   class StreamSequence : public Serializable
   {
@@ -56,6 +57,9 @@ namespace rgbd
     Cloud::Ptr getCloud(double timestamp, double* dt) const;
     //! dt is signed.
     Mat3b getImage(double timestamp, double* dt) const;
+    Mat1w getDepthRaw(size_t frame) const;
+    Mat1w getDepthRaw(size_t frame, double &fx, double &fy, double &cx, double &cy) const;
+    void getIntrinsics(size_t frame, double &fx, double &fy, double &cx, double &cy) const;
     void addFrame( const Mat3b &img, const DepthMat &depth, 
         double fx, double fy, double cx, double cy, double timestamp);
     //! Adds dt to all timestamps.

@@ -210,6 +210,38 @@ namespace rgbd
     return getImage(seek(timestamp, dt));
   }
     
+  Mat1w StreamSequence::getDepthRaw(size_t frame) const
+  {
+    double fx, fy, cx, cy;
+    return getDepthRaw(frame, fx, fy, cx, cy);
+  }
+
+  Mat1w StreamSequence::getDepthRaw(size_t frame, double &fx, double &fy, double &cx, double &cy) const
+  {
+    DepthMat depth_mat;
+    double timestamp;
+    loadDepth(save_dir_, frame, depth_mat, fx, fy, cx, cy, timestamp);
+    Mat1w cv_mat(depth_mat.rows(), depth_mat.cols());
+#pragma omp parallel for
+    for(size_t i = 0; i < depth_mat.rows(); i++)
+    {
+#pragma omp parallel for
+      for(size_t j = 0; j < depth_mat.cols(); j++)
+      {
+        cv_mat(i,j) = depth_mat(i,j);
+      }
+    }
+    return cv_mat;
+  }
+    
+  void StreamSequence::getIntrinsics(size_t frame, double &fx, double &fy, double &cx, double &cy) const
+  {
+    DepthMat depth_mat;
+    double timestamp;
+    loadDepth(save_dir_, frame, depth_mat, fx, fy, cx, cy, timestamp);
+  }
+
+
   Cloud::Ptr StreamSequence::getCloud(size_t frame, double f) const
   {
     ROS_ASSERT(frame < dpt_names_.size());
