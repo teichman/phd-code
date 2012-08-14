@@ -20,22 +20,19 @@ all:
 	@echo You should probably be more specific.
 
 
-
 AVV_RUNS := $(shell ls $(AVV_PATH))
 
-all_extrinsics: $(addsuffix /extrinsics, $(addprefix asus_vs_velodyne/, $(AVV_RUNS)))
+avv_imagery: $(addsuffix /imagery, $(addprefix asus_vs_velodyne/, $(AVV_RUNS)))
+avv_extrinsics: $(addsuffix /extrinsics, $(addprefix asus_vs_velodyne/, $(AVV_RUNS)))
 
+asus_vs_velodyne/%/imagery: asus_vs_velodyne/%/extrinsics
+	mkdir -p $@
+	cd $(@D) && rosrun xpl_calibration asus_vs_velo $(AVV_PATH)/$*/asus $(AVV_PATH)/$*/velodyne --extrinsics extrinsics --visualize-distortion
+	cd $(@D) && mv *.png $@/
 
 asus_vs_velodyne/%/extrinsics:
 	mkdir -p $(@D)
 	cd $(@D) && rosrun xpl_calibration asus_vs_velo $(AVV_PATH)/$*/asus $(AVV_PATH)/$*/velodyne --compute-extrinsics
+	mkdir gridsearch
+	mv gridsearch*.png gridsearch/
 
-
-# define AVV_RULE_GENERATOR
-
-# avv/$(1)/extrinsics:
-# 	mkdir -p $$(@D)
-# 	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $(1)/asus $(1)/velodyne --compute-extrinsics
-
-# endef
-# $(foreach VAL,$(AVV_RUNS),$(eval $(call AVV_RULE_GENERATOR,$(VAL))))

@@ -14,8 +14,11 @@ int main(int argc, char** argv)
     ("sseq", bpo::value<string>(), "StreamSequence, i.e. asus data")
     ("vseq", bpo::value<string>(), "VeloSequence")
     ("extrinsics", bpo::value<string>(), "Use pre-computed extrinsics")
-    ("distortion", bpo::value<string>(), "Use pre-computed distortion model")
+    ("distortion-model", bpo::value<string>(), "Use pre-computed distortion model")
     ("compute-extrinsics", "Automatically start extrinsics search")
+    ("visualize-distortion", "Visualize the distortion.  Extrinsics must be provided.")
+    ("skip", bpo::value<int>()->default_value(20), "For use with --visualize-distortion.  Use every kth frame for accumulating statistics.")
+    ("num-pixel-plots", bpo::value<int>()->default_value(20), "For use with --visualize-distortion.  Number of random pixel plots to generate.")
     ;
 
   bpo::positional_options_description p;
@@ -39,26 +42,36 @@ int main(int argc, char** argv)
   AsusVsVeloVisualizer avv(sseq, vseq);
 
   if(opts.count("compute-extrinsics")) {
+    ROS_ASSERT(!opts.count("extrinsics"));
     cout << "Computing extrinsics and saving them with basename " << opts["compute-extrinsics"].as<string>() << endl;
     avv.calibrate();
     avv.saveExtrinsics(opts["compute-extrinsics"].as<string>());
     return 0;
-  }
-
+  }    
   
   if(opts.count("extrinsics")) {
+    ROS_ASSERT(!opts.count("compute-extrinsics"));
     avv.cal_.load(opts["extrinsics"].as<string>());
     cout << "Loaded calibration at " << opts["extrinsics"].as<string>() << "." << endl;
     cout << avv.cal_.offset_ << endl;
     cout << avv.cal_.velo_to_asus_.matrix() << endl;
   }
-  
-  if(opts.count("distortion")) {
-    eigen_extensions::loadASCII(opts["distortion"].as<string>(), &avv.weights_);
-    cout << "Loaded depth distortion model at " << opts["distortion"].as<string>() << endl;
+
+  if(opts.count("distortion-model")) {
+    eigen_extensions::loadASCII(opts["distortion-model"].as<string>(), &avv.weights_);
+    cout << "Loaded depth distortion model at " << opts["distortion-model"].as<string>() << endl;
     cout << "Weights: " << avv.weights_.transpose() << endl;
   }
   
+  if(opts.count("visualize-distortion")) {
+    ROS_ASSERT(opts.count("extrinsics"));
+    avv.skip_ = opts["skip"].as<int>();
+    avv.num_pixel_plots_ = opts["num-pixel-plots"].as<int>();
+    avv.accumulateStatistics();
+    avv.visualizeDistortion();
+    return 0;
+  }
+    
   avv.run();
   
   return 0;
