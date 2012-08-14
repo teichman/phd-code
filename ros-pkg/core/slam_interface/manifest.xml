@@ -11,7 +11,7 @@
   <depend package="rgbd_sequence"/>
   <depend package="pcl_bleeding"/>
   <depend package="sensor_msgs"/>
-  <depend package="cv_bridge_trunk"/>
+  <depend package="cv_bridge_bleeding"/>
   <depend package="eigen"/>
   <depend package="roscpp"/>
 
