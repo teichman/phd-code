@@ -141,7 +141,8 @@ namespace dst
     double numerator = 0;
     double denominator = 0;
     for(size_t i = 0; i < indices_.size(); ++i) {
-      int idx = prev_kdtree.getIndices()->at(indices_[i]);
+      //int idx = prev_kdtree.getIndices()->at(indices_[i]);
+      int idx = indices_[i];
       cv::Point2i prev_img_pt = prev_rindex[idx];
       if(prev_img_pt.x == -1 && prev_img_pt.y == -1)
 	continue;

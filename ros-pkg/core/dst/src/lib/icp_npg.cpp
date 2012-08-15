@@ -82,8 +82,8 @@ namespace dst
 	  continue;
 
 	++score;
-	int idx = curr_kdtree.getIndices()->at(indices[0]);
-	//int idx = indices[0];
+	//int idx = curr_kdtree.getIndices()->at(indices[0]);
+	int idx = indices[0];
 	world_points.push_back(curr_cloud[idx]);
 	model_points.push_back(curr_fg->at(i));
       }
@@ -108,35 +108,6 @@ namespace dst
     return score;
   }
 
-
-  void IcpNPG::addPotentials2(KinectCloud::ConstPtr object,
-			      Eigen::MatrixXd* potentials) const
-  {
-    const vector<int>& pcd_indices = *pcd_indices_otl_->pull();
-    KdTree kdt;
-    kdt.setInputCloud(object);
-
-    const KinectCloud& curr_cloud = *index_otl_->pull().current_pcd_;
-    vector<int> indices(1);
-    vector<float> distances(1);
-    for(size_t i = 0; i < pcd_indices.size(); ++i) {
-      kdt.nearestKSearch(curr_cloud[pcd_indices[i]], 1, indices, distances);
-      
-      int y = pcd_indices[i] / curr_cloud.width;
-      int x = pcd_indices[i] - y * curr_cloud.width;
-
-      const Point& curr_pt = curr_cloud[pcd_indices[i]];
-      const Point& prev_pt = object->at(indices[0]);
-      double dr = curr_pt.r - prev_pt.r;
-      double dg = curr_pt.g - prev_pt.g;
-      double db = curr_pt.b - prev_pt.b;
-      double color_term = sqrt(dr*dr + dg*dg + db*db) / sigma_color_;
-      double distance_term = distances[0] / sigma_dist_;
-      potentials->coeffRef(y, x) = exp(-color_term - distance_term);
-    }
-      
-  }
-  
   void IcpNPG::addPotentials(const KinectCloud& object,
 			     const KinectCloud& curr_cloud,
 			     KdTree& curr_kdtree,
@@ -149,8 +120,8 @@ namespace dst
 	continue;
       
       curr_kdtree.nearestKSearch(object[i], 1, indices, distances);
-      int idx = curr_kdtree.getIndices()->at(indices[0]);
-      //int idx = indices[0];
+      //int idx = curr_kdtree.getIndices()->at(indices[0]);
+      int idx = indices[0];
       int y = idx / curr_cloud.width;
       int x = idx - y * curr_cloud.width;
 
@@ -215,7 +186,6 @@ namespace dst
     
     // Add source potentials.
     addPotentials(*aligned_fg_, curr_cloud, curr_kdtree, &source_potentials_);
-    //addPotentials2(aligned_fg_, &source_potentials_);
 
     // -- Make the older background fringe follow the foreground.
     if(use_prev_bg_) {
@@ -232,7 +202,6 @@ namespace dst
       pcl::transformPointCloud(*curr_bg, *curr_bg, final_transform);
       
       addPotentials(*curr_bg, curr_cloud, curr_kdtree, &sink_potentials_);
-      //addPotentials2(curr_bg, &sink_potentials_);
     }
   }
   
@@ -319,10 +288,11 @@ namespace dst
 	  //   cout << prev_kdtree.getIndices()->size() << endl;
 	  //   cout << j << endl;
 	  //   cout << indices[j] << endl;
-	  //   cout << prev_kdtree.getIndices()->at(indices[j]) << endl;
+	  //   cout << prev_rindex.size() << endl;
 	  // }  
 
-	  int idx = prev_kdtree.getIndices()->at(indices[j]);
+	  ///int idx = prev_kdtree.getIndices()->at(indices[j]);
+	  int idx = indices[j];
 	  if(marked[idx] || prev_seg(prev_rindex[idx]) != 0)
 	    continue;
 

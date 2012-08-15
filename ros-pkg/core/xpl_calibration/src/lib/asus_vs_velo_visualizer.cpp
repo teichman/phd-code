@@ -628,8 +628,10 @@ void AsusVsVeloVisualizer::accumulateStatistics()
 
       ProjectedPoint pp;
       proj.project(transformed->at(j), &pp);
+      if(pp.u_ < 0 || pp.u_ >= proj.width_ || pp.v_ < 0 || pp.v_ >= proj.height_)
+	continue;
+		   
       Point asuspt = asus_->at(pp.u_ + pp.v_ * proj.width_);
-
       if(!isFinite(asuspt))
 	continue;
 

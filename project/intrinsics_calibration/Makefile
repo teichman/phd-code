@@ -27,8 +27,8 @@ avv_extrinsics: $(addsuffix /extrinsics, $(addprefix asus_vs_velodyne/, $(AVV_RU
 
 asus_vs_velodyne/%/imagery: asus_vs_velodyne/%/extrinsics
 	mkdir -p $@
-	cd $(@D) && rosrun xpl_calibration asus_vs_velo $(AVV_PATH)/$*/asus $(AVV_PATH)/$*/velodyne --extrinsics extrinsics --visualize-distortion
-	cd $(@D) && mv *.png $@/
+	cd $(@D) && rosrun xpl_calibration asus_vs_velo $(AVV_PATH)/$*/asus $(AVV_PATH)/$*/velodyne --extrinsics extrinsics --visualize-distortion --skip=1 --num-pixel-plots 100
+	cd $(@D) && mv *.png *.pdf imagery/
 
 asus_vs_velodyne/%/extrinsics:
 	mkdir -p $(@D)
