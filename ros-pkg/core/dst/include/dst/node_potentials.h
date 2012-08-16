@@ -13,5 +13,6 @@
 #include <dst/icp_npg.h>
 #include <dst/prior_npg.h>
 #include <dst/distance_npg.h>
+#include <dst/template_matcher_npg.h>
 
 #endif // NODE_POTENTIALS_H

@@ -49,6 +49,7 @@ rosbuild_add_library(dst
   src/lib/prior_npg.cpp
   src/lib/foreground_kdtree_node.cpp
   src/lib/distance_npg.cpp
+  src/lib/template_matcher_npg.cpp
   src/lib/image_processing_nodes.cpp
   src/lib/cie-xyz-image-node.cpp
 #  src/lib/sobel-image-node.cpp

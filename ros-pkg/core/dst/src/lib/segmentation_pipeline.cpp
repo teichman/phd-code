@@ -51,7 +51,10 @@ namespace dst
 					      &depth_projector_->index_otl_);
     
     
-    // -- Edge potentials
+    // ----------------------------------------
+    // -- Edge potentials.
+    // ----------------------------------------
+
     CannyEPG* canny = new CannyEPG(&image_ep_->outlet_, 75, 100);
     ColorDeltaEPG* color_delta = new ColorDeltaEPG(&image_ep_->outlet_);
     // ROS_DEBUG_STREAM("DEPG_SIGMA_NORM: " << DEPG_SIGMA_NORM);
@@ -110,7 +113,11 @@ namespace dst
 						   true,
 						   NULL);
 
+    // ----------------------------------------
     // -- Node potentials.
+    // ----------------------------------------
+
+    
     // SceneAlignmentNPG* sanpg = new SceneAlignmentNPG(&scene_alignment->transformed_otl_,
     // 						     &kdtree->kdtree_otl_,
     // 						     &previous_segmentation_ep_->outlet_,
@@ -119,6 +126,7 @@ namespace dst
     // SKIP: 1, 3, 5
     // sigma_dist: 0.005, 0.01, 0.05
     // sigma_color: 50.0, 5.0, 100.0
+    
     BilateralNPG* bilateral = new BilateralNPG(&kdtree->kdtree_otl_,
 					       &scene_alignment_node_->transformed_otl_,
 					       &previous_segmentation_ep_->outlet_,
@@ -130,11 +138,7 @@ namespace dst
     SeedDistanceNPG* sd = new SeedDistanceNPG(&seed_ep_->outlet_,
 					      &depth_projector_->index_otl_,
 					      1.0);
-    // ColorHistogramNPG* color = new ColorHistogramNPG(&image_ep_->outlet_,
-    // 						     &seed_ep_->outlet_,
-    // 						     &previous_image_ep_->outlet_,
-    // 						     &previous_segmentation_ep_->outlet_,
-    // 						     3.0, 8);
+
     LabelFlowNPG* label_flow = new LabelFlowNPG(&optflow->optflow_otl_, &previous_segmentation_ep_->outlet_);
 
 
@@ -149,17 +153,12 @@ namespace dst
 								   &boundary_mask_node_->mask_otl_,
 								   7, SKIP); // 1 results in small variance.
 
-    // DepthNPG* depth_npg = new DepthNPG(&depth_projector_->index_otl_,
-    // 				       &previous_segmentation_ep_->outlet_,
-    // 				       0.4, 5);
-
     DistanceNPG* distance_npg = new DistanceNPG(&scene_alignment_node_->transformed_otl_,
 						&fg_kdtree_node->kdtree_otl_,
 						&image_ep_->outlet_,
 						&boundary_mask_node_->pcd_indices_otl_,
 						0.15);
 						    
-    // Try ICP variants.
     IcpNPG* icp_npg0 = new IcpNPG(&depth_projector_->index_otl_,
     				  &kdtree->kdtree_otl_,
     				  &scene_alignment_node_->prev_to_curr_otl_,
@@ -167,46 +166,23 @@ namespace dst
     				  &boundary_mask_node_->pcd_indices_otl_,
     				  0.75, 0.05, 0.05, 0.02, 75, 0.001, true, SKIP);
 
-    // IcpNPG* icp_npg3 = new IcpNPG(&depth_projector_->index_otl_,
-    // 				  &kdtree->kdtree_otl_,
-    // 				  &scene_alignment->prev_to_curr_otl_,
-    // 				  &previous_segmentation_ep_->outlet_,
-    // 				  0.75, 0.05, 0.15, 0.02, 75, 0.001, true);
-
-    //vector<int> lookback(1);
-    // lookback[0] = 3;
-    // IcpNPG* icp_npg1 = new IcpNPG(&depth_projector_->index_otl_,
-    // 				  &kdtree->kdtree_otl_,
-    // 				  &scene_alignment->prev_to_curr_otl_,
-    // 				  &previous_segmentation_ep_->outlet_,
-    // 				  0.75, 0.05, 0.15, 0.02, 50, 0.001, true,
-    // 				  lookback);
-    
-    // lookback[0] = 10;
-    // IcpNPG* icp_npg2 = new IcpNPG(&depth_projector_->index_otl_,
-    // 				  &kdtree->kdtree_otl_,
-    // 				  &scene_alignment->prev_to_curr_otl_,
-    // 				  &previous_segmentation_ep_->outlet_,
-    // 				  0.75, 0.05, 0.15, 0.02, 50, 0.001, false,
-    // 				  lookback);
-
-    
     PriorNPG* prior_npg = new PriorNPG(&image_ep_->outlet_);
+
+    TemplateMatcherNPG* template_matcher = new TemplateMatcherNPG(&depth_projector_->index_otl_,
+								  &image_ep_->outlet_,
+								  &boundary_mask_node_->mask_otl_);
 								  
     vector<NodePotentialGenerator*> node_generators;
     node_generators.push_back(seed);
     node_generators.push_back(bilateral);
     node_generators.push_back(sd);
-//    node_generators.push_back(color);
     node_generators.push_back(label_flow);
     node_generators.push_back(patch_classifier5);
     node_generators.push_back(distance_npg);
     node_generators.push_back(icp_npg0);
-    // node_generators.push_back(icp_npg1);
-    // node_generators.push_back(icp_npg2);
-    // node_generators.push_back(icp_npg3);
     node_generators.push_back(boundary_mask_node_);
     node_generators.push_back(prior_npg);
+    node_generators.push_back(template_matcher);
 
     
     VectorXd nweights = VectorXd::Ones(node_generators.size());
