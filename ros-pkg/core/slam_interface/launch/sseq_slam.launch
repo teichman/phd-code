@@ -1,6 +1,6 @@
 <launch>
   <arg name="sseq"/>
-  <node name="SeqPublisher" pkg="slam_interface" type="run_rgbdslam.sh" args="$(arg sseq)"/>
+  <node name="SeqPublisher" pkg="slam_interface" type="run_rgbdslam.sh" args="$(arg sseq)" required="true"/>
   <include file="$(find slam_interface)/launch/slam.launch"/>
 </launch>
 

@@ -12,6 +12,7 @@ MAKEFILE		:= $(MAKE_ROOT)/Makefile
 # This dir has subdirectories of asus_vs_velodyne
 DATA_PATH		:= $(MAKE_ROOT)/data
 AVV_PATH		:= $(DATA_PATH)/asus_vs_velodyne
+SLAM_PATH		:= $(DATA_PATH)/slam_sequences
 
 .SECONDEXPANSION:	# Allows use of automatic vars in prerequisites.
 .SECONDARY:		# Prevents deletion of intermediate targets in a chain of implicit rules.
@@ -19,6 +20,22 @@ AVV_PATH		:= $(DATA_PATH)/asus_vs_velodyne
 all:
 	@echo You should probably be more specific.
 
+
+############################################################
+# SLAM
+############################################################
+
+SLAM_RUNS := $(shell ls $(SLAM_PATH))
+slam_trajectories: $(addsuffix /trajectory_estimate.txt, $(addprefix slam_sequences/, $(SLAM_RUNS)))
+slam_sequences/%/trajectory_estimate.txt:
+	mkdir -p $(@D)
+	roslaunch slam_interface sseq_slam.launch sseq:=$(SLAM_PATH)/$*
+	mv $(SLAM_PATH)/$*_RGBDSLAM $(@D)
+	cp $(@D)/$*_RGBDSLAM/trajectory_estimate.txt $@
+
+############################################################
+# Asus vs Velodyne
+############################################################
 
 AVV_RUNS := $(shell ls $(AVV_PATH))
 
@@ -35,4 +52,5 @@ asus_vs_velodyne/%/extrinsics:
 	cd $(@D) && rosrun xpl_calibration asus_vs_velo $(AVV_PATH)/$*/asus $(AVV_PATH)/$*/velodyne --compute-extrinsics
 	mkdir gridsearch
 	mv gridsearch*.png gridsearch/
+
 
