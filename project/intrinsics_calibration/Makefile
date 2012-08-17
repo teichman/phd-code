@@ -54,3 +54,5 @@ asus_vs_velodyne/%/extrinsics:
 	mv gridsearch*.png gridsearch/
 
 
+visualize_avv_%:
+	rosrun xpl_calibration asus_vs_velo $(AVV_PATH)/$*/asus $(AVV_PATH)/$*/velodyne

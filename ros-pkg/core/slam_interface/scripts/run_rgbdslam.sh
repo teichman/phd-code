@@ -3,6 +3,7 @@ SEQ_DIR=$1
 PAUSE_TIME=1
 MAX_DISTANCE=2 #meters
 MY_PACKAGE=slam_interface
+sleep 5
 rosservice call /rgbdslam/ros_ui reset
 rosservice call /rgbdslam/ros_ui_b pause false
 sleep 10
