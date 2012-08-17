@@ -75,6 +75,8 @@ public:
   void accumulateStatistics();
   void visualizeDistortion();
   void fitModel();
+  void setColorScheme(std::string name);
+  void toggleColorScheme();
   
 protected:
   rgbd::StreamSequence::ConstPtr sseq_;
@@ -88,6 +90,7 @@ protected:
   rgbd::Cloud::Ptr vis_;
   std::vector< std::vector<PixelStats> > statistics_;
   bool unwarp_;
+  std::string color_scheme_;
   
   void incrementVeloIdx(int val);
   void incrementOffset(double dt);

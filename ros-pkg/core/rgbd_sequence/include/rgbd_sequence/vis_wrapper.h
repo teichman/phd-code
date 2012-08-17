@@ -13,7 +13,7 @@ namespace rgbd
   public:
     pcl::visualization::PCLVisualizer vis_;
 
-    VisWrapper(std::string name = "VisWrapper");
+    VisWrapper(std::string name = "VisWrapper", double coordinate_system_size = 0.1);
     //! This may have to be called from the main thread.
     char waitKey(int msec = 0);
     void showCloud(rgbd::Cloud::ConstPtr pcd);

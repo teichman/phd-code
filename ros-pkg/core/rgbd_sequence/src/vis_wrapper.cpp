@@ -8,13 +8,13 @@ using namespace rgbd;
 
 namespace rgbd { 
 
-  VisWrapper::VisWrapper(std::string name) :
+  VisWrapper::VisWrapper(std::string name, double coordinate_system_size) :
     Lockable(),
     key_(0),
     name_(name)
   {
     vis_.registerKeyboardCallback(&VisWrapper::keyboardCallback, *this);
-    vis_.addCoordinateSystem(0.1);
+    vis_.addCoordinateSystem(coordinate_system_size);
     
     // -- Set the viewpoint to be sensible for PrimeSense devices.
     vis_.camera_.clip[0] = 0.00387244;
