@@ -1,17 +1,8 @@
 #ifndef STREAM_SEQUENCE_H
 #define STREAM_SEQUENCE_H
 
-#define BOOST_FILESYSTEM_VERSION 2
-#include <boost/filesystem.hpp>
-#include <boost/shared_ptr.hpp>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <serializable/serializable.h>
 #include <Eigen/Eigen>
+#include <rgbd_sequence/rgbd_sequence.h>
 
 namespace rgbd
 {

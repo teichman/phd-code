@@ -7,6 +7,8 @@
 #include <rgbd_sequence/stream_sequence.h>
 #include <opencv2/calib3d/calib3d.hpp>
 
+#define MAX_Z (getenv("MAX_Z") ? atof(getenv("MAX_Z")) : 3.5)
+
 enum Mode_t{
   ALL, REF, TARGET, GROUND
 };
@@ -79,7 +81,7 @@ int main(int argc, char** argv)
   sseq1->applyTimeOffset(sync(0));
 
   pcl::visualization::CloudViewer vis("Overlay");
-  double thresh = 0.05;
+  double thresh = 0.017;
   ROS_WARN_STREAM("Showing clouds dt of less than " << thresh << ".");
   Mode_t view_mode = ALL;
   bool pause = false;

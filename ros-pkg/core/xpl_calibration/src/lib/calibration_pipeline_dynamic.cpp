@@ -8,6 +8,7 @@ using namespace pipeline;
 #define ON (getenv("ON") ? atoi(getenv("ON")) : 5)
 #define OFF (getenv("OFF") ? atoi(getenv("OFF")) : 50)
 #define DEBUG (getenv("DEBUG") ? atoi(getenv("DEBUG")) : 0)
+#define MAX_Z (getenv("MAX_Z") ? atof(getenv("MAX_Z")) : 3.5)
 
 CalibrationPipelineDynamic::CalibrationPipelineDynamic(int num_threads, std::string pipeline_file) :
   pl_(num_threads)
@@ -35,7 +36,7 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
   cout << "cx: " << sseq0->cx_ << endl;
   cout << "cy: " << sseq0->cy_ << endl;
   
-  // -- Downsample the sequences.
+  // -- Downsample the sequences and apply z limit.
   double thresh = 0.05;
   Sequence::Ptr seq0(new Sequence);
   Sequence::Ptr seq1(new Sequence);
@@ -151,4 +152,3 @@ void CalibrationPipelineDynamic::registerPods() const
   REGISTER_POD(ObjectExtractor);
   REGISTER_POD(ObjectMatchingCalibrator);
 }
-
