@@ -50,6 +50,7 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, 
   num_pixel_plots_(20),
   sseq_(sseq),
   vseq_(vseq),
+  vw_("Visualizer", 0.3),
   velo_idx_(0),
   asus_idx_(0),
   sseq_start_(0),
@@ -62,10 +63,33 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, 
   incrementVeloIdx(2);
   cal_.velo_to_asus_ = generateTransform(- M_PI / 2.0, 0, -M_PI / 2.0, 0, 0, 0).inverse();
   vw_.vis_.registerPointPickingCallback(&AsusVsVeloVisualizer::pointPickingCallback, *this);
-
+  setColorScheme("monitor");
+  
   mpliBegin();
   VectorXd tmp;
   ROS_ASSERT(tmp.rows() == 0);
+}
+
+void AsusVsVeloVisualizer::setColorScheme(std::string name)
+{
+  ROS_ASSERT(name == "publication" || name == "monitor");
+  
+  if(name == "publication") {
+    vw_.vis_.setBackgroundColor(255, 255, 255);
+  }
+  else if(name == "monitor") {
+    vw_.vis_.setBackgroundColor(0, 0, 0);
+  }
+
+  color_scheme_ = name;
+}
+
+void AsusVsVeloVisualizer::toggleColorScheme()
+{
+  if(color_scheme_ == "publication")
+    setColorScheme("monitor");
+  else if(color_scheme_ == "monitor")
+    setColorScheme("publication");
 }
 
 void AsusVsVeloVisualizer::pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie)
@@ -82,7 +106,12 @@ void AsusVsVeloVisualizer::pointPickingCallback(const pcl::visualization::PointP
   origin.x = 0;
   origin.y = 0;
   origin.z = 0;
-  vw_.vis_.addArrow<Point, Point>(origin, pt, 0.0, 0.0, 1.0, "line");
+  if(color_scheme_ == "publication")
+    vw_.vis_.addArrow<Point, Point>(origin, pt, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, "line");
+  else {
+    ROS_ASSERT(color_scheme_ == "monitor");
+    vw_.vis_.addArrow<Point, Point>(origin, pt, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, "line");
+  }
 }
 
 void AsusVsVeloVisualizer::colorPoint(rgbd::Point* pt) const
@@ -194,6 +223,9 @@ void AsusVsVeloVisualizer::run()
     switch(key) {
     case 27:
       return;
+      break;
+    case 'C':
+      toggleColorScheme();
       break;
     case 'm':
       unwarp_ = !unwarp_;
@@ -628,8 +660,10 @@ void AsusVsVeloVisualizer::accumulateStatistics()
 
       ProjectedPoint pp;
       proj.project(transformed->at(j), &pp);
+      if(pp.u_ < 0 || pp.u_ >= proj.width_ || pp.v_ < 0 || pp.v_ >= proj.height_)
+	continue;
+		   
       Point asuspt = asus_->at(pp.u_ + pp.v_ * proj.width_);
-
       if(!isFinite(asuspt))
 	continue;
 

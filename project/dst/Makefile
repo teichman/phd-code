@@ -5,8 +5,9 @@
 
 SHELL			:= /bin/bash
 RACE_ROOT		:= /earth/driving/track_classification
-export NUM_THREADS	:= 1  # Single threaded comparison with HoughTrack.
-export SKIP		:= 1  # No mask, no skip.
+export NUM_THREADS	:= 40  # No longer comparing with HoughTrack on speed so we can bump up the number of threads.
+export SKIP		:= 1
+export MASK		:= 1
 MAKE_ROOT		:= $(RACE_ROOT)/src/project/dst
 MAKEFILE		:= $(MAKE_ROOT)/Makefile
 
@@ -58,14 +59,6 @@ specificity:
 
 
 ############################################################
-# -- Programs
-############################################################
-
-TRAIN := rosrun dst train
-EVALUATE := rosrun dst evaluate
-
-
-############################################################
 # -- Params
 ############################################################
 
@@ -98,15 +91,15 @@ dataset_sizes:
 ############################################################
 
 weights.eig.txt: $$@-experiment_metadata.txt
-	$(TRAIN) $(TRAINING_PATHS) $@ | tee $@-log.txt
+	rosrun dst train $(TRAINING_PATHS) $@ | tee $@-log.txt
 
 #testing_results.txt: weights.eig.txt $$@-experiment_metadata.txt
-#	$(EVALUATE) weights.eig.txt $(TESTING_PATHS) $@ | tee $@-log.txt
+#	rosrun dst evaluate weights.eig.txt $(TESTING_PATHS) $@ | tee $@-log.txt
 
 define EVALUATION_RULE_GENERATOR
 dst/$(1)/eval.txt: weights.eig.txt $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
-	$(EVALUATE) weights.eig.txt $(SEQUENCE_DIR)/$(1) $$@ | tee $$@-log.txt
+	rosrun dst evaluate weights.eig.txt $(SEQUENCE_DIR)/$(1) $$@ | tee $$@-log.txt
 
 houghtrack/$(1)/conf:
 	mkdir -p $$(@D)

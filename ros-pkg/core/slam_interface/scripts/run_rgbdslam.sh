@@ -3,6 +3,7 @@ SEQ_DIR=$1
 PAUSE_TIME=1
 MAX_DISTANCE=2 #meters
 MY_PACKAGE=slam_interface
+sleep 5
 rosservice call /rgbdslam/ros_ui reset
 rosservice call /rgbdslam/ros_ui_b pause false
 sleep 10
@@ -26,4 +27,4 @@ for f in `ls ${RGBDSLAM_DIR}/bin | grep quicksave.pcd_`; do
   mv ${RGBDSLAM_DIR}/bin/${f} ${PCD_DIR}/${NEWNAME}
 done
 #Filter combined cloud into reasonable size
-rosrun pcl_bleeding_trunk pcl_voxel_grid -leaf 0.02,0.02,0.02 ${PCD_DIR}/all.pcd ${PCD_DIR}/all_filtered.pcd
+rosrun pcl_bleeding pcl_voxel_grid -leaf 0.02,0.02,0.02 ${PCD_DIR}/all.pcd ${PCD_DIR}/all_filtered.pcd
