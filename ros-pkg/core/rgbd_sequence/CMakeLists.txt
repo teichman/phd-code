@@ -31,7 +31,7 @@ rosbuild_add_library(rgbd_sequence
   src/vis_wrapper.cpp
   src/tube_measurer.cpp
   )
-rosbuild_link_boost(rgbd_sequence system)
+rosbuild_link_boost(rgbd_sequence system program_options)
 rosbuild_add_compile_flags(rgbd_sequence -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()

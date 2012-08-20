@@ -1,30 +1,56 @@
+#include <boost/program_options.hpp>
 #include <rgbd_sequence/stream_sequence.h>
 #include <pcl/visualization/cloud_viewer.h>
 #include <opencv2/highgui/highgui.hpp>
 
 using namespace std;
 using namespace rgbd;
-
-string usageString()
-{
-  ostringstream oss;
-  oss << "Usage: view_stream DIR" << endl;
-  oss << "Where DIR is the directory of the stream sequence" << endl;
-  return oss.str();
-}
+namespace bpo = boost::program_options;
 
 int main(int argc, char** argv)
 {
-  if(argc < 2) {
-    cout << usageString() << endl;
-    return 0;
+  string dir;
+  bpo::options_description opts_desc("Allowed options");
+  opts_desc.add_options()
+    ("help,h", "produce help message")
+    ("distortion-model", bpo::value<string>(), "Use pre-computed distortion model")
+    ("seq", bpo::value<string>(&dir), "Sequence directory")
+    ("only-stats", "Only print stats and exit")
+    ;
+
+  bpo::positional_options_description p;
+  p.add("seq", 1);
+  bpo::variables_map opts;
+  bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
+  if(opts.count("help")) {
+    cout << opts_desc << endl;
+    return 1;
   }
-  string dir = argv[1];
-  cout << "Looking at dir: " << dir << endl;
+  bpo::notify(opts);
   
+  cout << "Looking at dir: " << dir << endl;
   StreamSequence seq;
   seq.load(dir);
   cout << "Loaded successfully" << endl;
+
+  double mean_dt = 0;
+  double max_dt = -std::numeric_limits<double>::max();
+  for(size_t i = 1; i < seq.size(); i++) {
+    double dt = seq.timestamps_[i] - seq.timestamps_[i-1];
+    mean_dt += dt;
+    if(dt > max_dt)
+      max_dt = dt;
+  }
+  mean_dt /= (double)seq.size();
+  cout << "--------------------" << endl;
+  cout << "Mean fps: " << (double)seq.size() / (seq.timestamps_.back() - seq.timestamps_.front()) << endl;
+  cout << "Mean dt: " << mean_dt << endl;
+  cout << "Max dt: " << max_dt << endl;
+  cout << "--------------------" << endl;
+
+  if(opts.count("only-stats"))
+    return 0;
+  
   pcl::visualization::CloudViewer cloud_viewer("cloud");
   cv::namedWindow("image");
   for(size_t i = 0; i < seq.size(); i++){
@@ -34,8 +60,8 @@ int main(int argc, char** argv)
     cv::imshow("image", seq.getImage(i));
     if(i < seq.size() ){
       double dt = seq.timestamps_[i+1]-seq.timestamps_[i];
-      cv::waitKey(5);
-      usleep(1e6*dt);
+      cout << "dt: " << dt << endl;
+      cv::waitKey(dt * 1e3);
     }
   }
   
