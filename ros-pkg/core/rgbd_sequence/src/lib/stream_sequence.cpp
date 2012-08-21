@@ -70,31 +70,23 @@ namespace rgbd
     
     // -- Write image
     vector<int> params;
-    if(getenv("PPM")) {
+//    if(getenv("PPM")) {
       oss << "img" << setw(4) << setfill('0') << frame << ".ppm";
-    }
-    else {
-      oss << "img" << setw(4) << setfill('0') << frame << ".png";
-      // http://opencv.willowgarage.com/documentation/cpp/reading_and_writing_images_and_video.html
-      // Small number means fast but bad compression.  0-9.
-      params.push_back(CV_IMWRITE_PNG_COMPRESSION);
-      params.push_back(0);
-    }
+      hrt.reset("Writing opencv image (ppm)");
+//    }
+//    else {
+    //   oss << "img" << setw(4) << setfill('0') << frame << ".png";
+    //   // http://opencv.willowgarage.com/documentation/cpp/reading_and_writing_images_and_video.html
+    //   // Small number means fast but bad compression.  0-9.
+    //   params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+    //   params.push_back(0);
+      //hrt.reset("Writing opencv image (png)");
+    // }
 
-    hrt.reset("Writing opencv image");
     hrt.start();
     cv::imwrite(dir + "/" + oss.str(), img, params);
     hrt.stop();
     cout << hrt.reportMilliseconds() << endl;
-
-    // hrt.reset("Writing EigenImage");
-    // hrt.start();
-    // oss.str("");
-    // oss << "img" << setw(4) << setfill('0') << frame << ".eim";
-    // eigimg_.setData(img);
-    // eigimg_.save(dir + "/" + oss.str());
-    // hrt.stop();
-    // cout << hrt.reportMilliseconds() << endl;
     
     if(img_names_.size() <= frame)
       img_names_.resize(frame+1);
@@ -145,7 +137,7 @@ namespace rgbd
     bfs::recursive_directory_iterator it(dir), eod;
     BOOST_FOREACH(const bfs::path& p, make_pair(it, eod)) {
       ROS_ASSERT(is_regular_file(p));
-      if(p.leaf().substr(0, 3).compare("img") == 0 && bfs::extension(p).compare(".png") == 0)
+      if(p.leaf().substr(0, 3).compare("img") == 0 && (bfs::extension(p).compare(".png") == 0 || bfs::extension(p).compare(".ppm") == 0))
 	img_names_.push_back(p.leaf());
       else if(bfs::extension(p).compare(".dpt") == 0)
 	dpt_names_.push_back(p.leaf());
@@ -181,6 +173,7 @@ namespace rgbd
 
   void StreamSequence::loadImage(const string &dir, size_t frame, Mat3b &img) const
   {
+    ScopedTimer st("Reading image");
     img = cv::imread(dir+"/"+img_names_[frame], 1);
   }
   
@@ -288,11 +281,13 @@ namespace rgbd
     if(f != 0)
       fx = fy = f;
     
-    if(USE_DEFAULT_CALIBRATION){
+    if(USE_DEFAULT_CALIBRATION) {
       fx = fy = 525;
       cx = depth_mat.cols()/2;
       cy = depth_mat.rows()/2;
     }
+    ROS_DEBUG_STREAM("Using intrinsics (fx, fy, cx, cy): " << fx << ", " << fy << ", " << cx << ", " << cy << ".");
+    
     Cloud::Ptr cloud (new Cloud);
     cloud->height = depth_mat.rows();
     cloud->width = depth_mat.cols();
@@ -305,7 +300,7 @@ namespace rgbd
         Point& pt = cloud->points[pt_idx];
         unsigned short z = depth_mat(y,x);
         //Check for invalid measurements
-        if (z == 0 ){ //TODO be sure all invalid are 0
+        if(z == 0) {  // TODO be sure all invalid are 0
           pt.x = pt.y = pt.z = bad_point;
         }
         else{
@@ -318,7 +313,7 @@ namespace rgbd
         }
       }
     }
-    //Finally, get timestamp
+    // Finally, get timestamp
     cloud->header.stamp.fromSec(timestamp);
     return cloud;
   }

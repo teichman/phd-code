@@ -7,10 +7,10 @@ namespace bfs = boost::filesystem;
 namespace rgbd
 {
 
-  OpenNIStreamRecorder::OpenNIStreamRecorder(const std::string& mode) :
+  OpenNIStreamRecorder::OpenNIStreamRecorder(const std::string& mode, bool registered) :
     mode_(mode),
     recording_(false),
-    registered_(false),
+    registered_(registered),
     visualize_(true)
   {
     initializeOpenNI();
@@ -171,6 +171,8 @@ namespace rgbd
     
     width_ = 640;
     height_ = 480;
+    cx_ = width_ / 2;
+    cy_ = height_ / 2;
 
     // -- Set up production chain.
     XnStatus retval = XN_STATUS_OK;

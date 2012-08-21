@@ -17,7 +17,7 @@ namespace rgbd
   {
   public:
     //! mode = {"VGA", "QVGA", "QQVGA"}  Just VGA for now though.
-    OpenNIStreamRecorder(const std::string& mode = "VGA");
+    OpenNIStreamRecorder(const std::string& mode = "VGA", bool registered = false);
     void run();
 
     static DepthMat oniDepthToEigen(const openni_wrapper::DepthImage& oni);

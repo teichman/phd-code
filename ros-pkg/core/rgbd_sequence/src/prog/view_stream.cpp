@@ -23,6 +23,7 @@ int main(int argc, char** argv)
   bpo::variables_map opts;
   bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
   if(opts.count("help")) {
+    cout << "Usage: view_stream SEQ [opts]" << endl << endl;
     cout << opts_desc << endl;
     return 1;
   }
