@@ -77,4 +77,5 @@ target_link_libraries(intrinsics_search rgbd_sequence)
 
 rosbuild_add_executable(raw_openni_test src/prog/raw_openni_test.cpp)
 rosbuild_add_compile_flags(raw_openni_test -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+rosbuild_link_boost(raw_openni_test program_options)
 target_link_libraries(raw_openni_test OpenNI)
