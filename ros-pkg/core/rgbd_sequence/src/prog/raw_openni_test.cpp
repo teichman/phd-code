@@ -85,6 +85,13 @@ int main(int argc, char** argv)
   }
   ROS_ASSERT(retval == XN_STATUS_OK);
 
+  // Recording test.
+  // xn::Recorder recorder;
+  // retval = recorder.Create(context); ROS_ASSERT(retval == XN_STATUS_OK);
+  // retval = recorder.SetDestination(XN_RECORD_MEDIUM_FILE, "recording.oni"); ROS_ASSERT(retval == XN_STATUS_OK);
+  // //retval = recorder.AddNodeToRecording(dgen, XN_CODEC_16Z_EMB_TABLES); ROS_ASSERT(retval == XN_STATUS_OK);  // Fails.
+  // retval = recorder.AddNodeToRecording(igen);
+  
   XnDepthPixel maxdepth = dgen.GetDeviceMaxDepth();
   cout << "Max depth (mm): " << maxdepth << endl;
   cout << "Depth supports XN_CAPABILITY_FRAME_SYNC: " << dgen.IsCapabilitySupported(XN_CAPABILITY_FRAME_SYNC) << endl;

@@ -49,6 +49,7 @@ namespace rgbd
     
     while(true) {
       Cloud::Ptr pcd = sseq_.getCloud(idx_);
+      ROS_DEBUG_STREAM("IntrinsicsVisualizer using intrinsics (fx, fy, cx, cy): " << proj_.fx_ << ", " << proj_.fy_ << ", " << proj_.cx_ << ", " << proj_.cy_ << ".");
       proj_.cloudToFrame(*pcd, &frame_);
       proj_.frameToCloud(frame_, warped_.get());
       
@@ -97,40 +98,12 @@ namespace rgbd
       case ']':
 	incrementIntrinsics(0, 0, 10, 0);
 	break;
-      case 't':
-	findTube(*warped_);
-	break;
       default:
 	break;
       }
     }
   }
   
-  void IntrinsicsVisualizer::findTube(const rgbd::Cloud& pcd)
-  {
-    Cloud::Ptr brown(new Cloud);
-    brown->reserve(pcd.size());
-    Point br;
-    br.r = 165;
-    br.g = 155;
-    br.b = 105;
-    int thresh = 20;
-    
-    for(size_t i = 0; i < pcd.size(); ++i) {
-      if(!isFinite(pcd[i]))
-	continue;
-      if(pcd[i].r < br.r - thresh || pcd[i].r > br.r + thresh ||
-	 pcd[i].g < br.g - thresh || pcd[i].g > br.g + thresh ||
-	 pcd[i].b < br.b - thresh || pcd[i].b > br.b + thresh)
-	continue;
-
-      brown->push_back(pcd[i]);
-    }
-
-    vw_.showCloud(brown);
-    vw_.waitKey();
-  }
-
   void IntrinsicsVisualizer::pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie)
   {
     if(event.getPointIndex() == -1)
