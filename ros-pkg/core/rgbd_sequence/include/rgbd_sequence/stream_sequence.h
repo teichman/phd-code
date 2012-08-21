@@ -2,7 +2,8 @@
 #define STREAM_SEQUENCE_H
 
 #include <Eigen/Eigen>
-#include <rgbd_sequence/rgbd_sequence.h>
+#include <timer/timer.h>
+#include <rgbd_sequence/eigen_image.h>
 
 namespace rgbd
 {
@@ -51,12 +52,15 @@ namespace rgbd
     Mat1w getDepthRaw(size_t frame) const;
     Mat1w getDepthRaw(size_t frame, double &fx, double &fy, double &cx, double &cy) const;
     void getIntrinsics(size_t frame, double &fx, double &fy, double &cx, double &cy) const;
-    void addFrame( const Mat3b &img, const DepthMat &depth, 
-        double fx, double fy, double cx, double cy, double timestamp);
+    void addFrame(const Mat3b &img, const DepthMat &depth, 
+		  double fx, double fy, double cx, double cy,
+		  double timestamp);
     //! Adds dt to all timestamps.
     void applyTimeOffset(double dt);
 
   protected:
+    EigenImage eigimg_;
+
     void saveFrame(const std::string& dir, size_t frame, const Mat3b &img, 
         const DepthMat &depth, double fx, double fy, double cx, double cy, 
         double timestamp);

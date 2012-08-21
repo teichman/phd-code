@@ -1,4 +1,4 @@
-#include <rgbd_sequence/tube_measurer.h>
+#include <rgbd_sequence/intrinsics_visualizer.h>
 
 using namespace std;
 using namespace Eigen;
@@ -26,14 +26,14 @@ namespace rgbd
     }
   }
 
-  TubeMeasurer::TubeMeasurer() :
+  IntrinsicsVisualizer::IntrinsicsVisualizer() :
     idx_(0),
     warped_(new Cloud)
   {
-    vw_.vis_.registerPointPickingCallback(&TubeMeasurer::pointPickingCallback, *this);
+    vw_.vis_.registerPointPickingCallback(&IntrinsicsVisualizer::pointPickingCallback, *this);
   }
   
-  void TubeMeasurer::run(const std::string& path, double actual_distance)
+  void IntrinsicsVisualizer::run(const std::string& path, double actual_distance)
   {
     path_ = path;
     actual_distance_ = actual_distance;
@@ -106,7 +106,7 @@ namespace rgbd
     }
   }
   
-  void TubeMeasurer::findTube(const rgbd::Cloud& pcd)
+  void IntrinsicsVisualizer::findTube(const rgbd::Cloud& pcd)
   {
     Cloud::Ptr brown(new Cloud);
     brown->reserve(pcd.size());
@@ -131,7 +131,7 @@ namespace rgbd
     vw_.waitKey();
   }
 
-  void TubeMeasurer::pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie)
+  void IntrinsicsVisualizer::pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie)
   {
     if(event.getPointIndex() == -1)
       return;
@@ -152,7 +152,7 @@ namespace rgbd
     }
   }
 
-  void TubeMeasurer::incrementIntrinsics(double dfx, double dfy, double dcx, double dcy)
+  void IntrinsicsVisualizer::incrementIntrinsics(double dfx, double dfy, double dcx, double dcy)
   {
     proj_.fx_ += dfx;
     proj_.fy_ += dfy;
@@ -161,7 +161,7 @@ namespace rgbd
     cout << "Intrinsics: fx = " << proj_.fx_ << ", fy = " << proj_.fy_ << ", cx = " << proj_.cx_ << ", cy = " << proj_.cy_ << endl;
   }
 
-  void TubeMeasurer::acceptVisible()
+  void IntrinsicsVisualizer::acceptVisible()
   {
     for(size_t i = 0; i < visible_pairs_.size(); ++i) {
       ROS_ASSERT(visible_pairs_[i].size() == 2);
@@ -175,14 +175,14 @@ namespace rgbd
     clearSelection();
   }
 
-  void TubeMeasurer::clearSelection()
+  void IntrinsicsVisualizer::clearSelection()
   {
     selected_.clear();
     visible_pairs_.clear();
     vw_.vis_.removeAllShapes();
   }
   
-  void TubeMeasurer::increment(int num)
+  void IntrinsicsVisualizer::increment(int num)
   {
     clearSelection();
     
@@ -193,7 +193,7 @@ namespace rgbd
       idx_ = sseq_.size() - 1;
   }
 
-  void TubeMeasurer::saveAccepted() const
+  void IntrinsicsVisualizer::saveAccepted() const
   {
     string p = path_;
     if(p[p.size() - 1] == '/')
@@ -203,7 +203,7 @@ namespace rgbd
     accepted_.save(p);
   }
 
-  void TubeMeasurer::loadAccepted()
+  void IntrinsicsVisualizer::loadAccepted()
   {
     string p = path_;
     if(p[p.size() - 1] == '/')
@@ -216,7 +216,7 @@ namespace rgbd
     cout << accepted_;
   }
 
-  void TubeMeasurer::gridSearch()
+  void IntrinsicsVisualizer::gridSearch()
   {
     if(accepted_.empty()) {
       cout << "You must choose some pairs first." << endl;
@@ -247,7 +247,7 @@ namespace rgbd
     printErrors(xstar);
   }
 
-  void TubeMeasurer::printErrors(const Eigen::ArrayXd& x) const
+  void IntrinsicsVisualizer::printErrors(const Eigen::ArrayXd& x) const
   {
     ROS_ASSERT(x.rows() == 4);
     

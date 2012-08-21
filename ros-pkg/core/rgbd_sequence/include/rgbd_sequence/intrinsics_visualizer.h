@@ -1,5 +1,5 @@
-#ifndef TUBE_MEASURER_H
-#define TUBE_MEASURER_H
+#ifndef INTRINSICS_VISUALIZER_H
+#define INTRINSICS_VISUALIZER_H
 
 #include <rgbd_sequence/vis_wrapper.h>
 #include <rgbd_sequence/stream_sequence.h>
@@ -16,10 +16,10 @@ namespace rgbd
     void deserialize(std::istream& in);
   };
   
-  class TubeMeasurer
+  class IntrinsicsVisualizer
   {
   public:
-    TubeMeasurer();
+    IntrinsicsVisualizer();
     void run(const std::string& path, double actual_distance);
 
   protected:
@@ -65,4 +65,4 @@ namespace rgbd
   
 }
 
-#endif // TUBE_MEASURER_H
+#endif // INTRINSICS_VISUALIZER_H

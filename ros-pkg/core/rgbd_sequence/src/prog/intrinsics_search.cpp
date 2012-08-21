@@ -1,4 +1,4 @@
-#include <rgbd_sequence/tube_measurer.h>
+#include <rgbd_sequence/intrinsics_visualizer.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
 #include <pcl/sample_consensus/ransac.h>
 #include <pcl/segmentation/extract_clusters.h>
@@ -27,7 +27,7 @@ int main(int argc, char** argv)
     return -1;
   }
   
-  TubeMeasurer tm;
+  IntrinsicsVisualizer tm;
   tm.run(argv[1], atof(argv[2]));
 
   return 0;
