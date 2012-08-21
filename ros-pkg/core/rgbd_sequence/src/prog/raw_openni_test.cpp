@@ -4,9 +4,30 @@
 #include <ros/assert.h>
 #include <boost/program_options.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <timer/timer.h>
+#include <rgbd_sequence/CVKinectWrapper.h>
+#include <pcl/io/openni_camera/openni_image_yuv_422.h>
 
 using namespace std;
 namespace bpo = boost::program_options;  
+
+
+cv::Mat3b oniToCV(const openni_wrapper::Image& oni)
+{
+  cv::Mat3b img(oni.getHeight(), oni.getWidth());
+  uchar data[img.rows * img.cols * 3];
+  oni.fillRGB(img.cols, img.rows, data);
+  int i = 0;
+  for(int y = 0; y < img.rows; ++y) {
+    for(int x = 0; x < img.cols; ++x, i+=3) {
+      img(y, x)[0] = data[i+2];
+      img(y, x)[1] = data[i+1];
+      img(y, x)[2] = data[i];
+    }
+  }
+    
+  return img;
+}
 
 int main(int argc, char** argv)
 {
@@ -27,6 +48,16 @@ int main(int argc, char** argv)
   }
   bpo::notify(opts);
 
+  // CVKinectWrapper* cvkw = CVKinectWrapper::getInstance();
+  // cvkw->init("/home/teichman/OpenNI/Data/SamplesConfig.xml");
+  // while(true) {
+  //   cvkw->update();
+  //   cv::Mat rgb;
+  //   cvkw->getRGB(&rgb);
+  //   cv::imshow("rgb", rgb);
+  //   cv::waitKey(10);
+  // }
+  
   // -- Set up production chain.
   XnStatus retval = XN_STATUS_OK;
   xn::Context context;
@@ -42,12 +73,15 @@ int main(int argc, char** argv)
   output_mode.nFPS = 30;
   retval = dgen.SetMapOutputMode(output_mode); ROS_ASSERT(retval == XN_STATUS_OK);
   retval = igen.SetMapOutputMode(output_mode); ROS_ASSERT(retval == XN_STATUS_OK);
+  retval = igen.SetIntProperty("InputFormat", 5);  // Uncompressed YUV?  PCL openni_device_primesense.cpp:62.
+  retval = igen.SetPixelFormat(XN_PIXEL_FORMAT_YUV422); ROS_ASSERT(retval == XN_STATUS_OK);
   // Hardware depth registration.
   // https://groups.google.com/forum/?fromgroups=#!topic/openni-dev/5rP0mdPBeq0
   if(opts.count("register")) {
     cout << "Registering depth and rgb data." << endl;
     retval = dgen.SetIntProperty("RegistrationType", 1); ROS_ASSERT(retval == XN_STATUS_OK);  
     retval = dgen.GetAlternativeViewPointCap().SetViewPoint(igen); ROS_ASSERT(retval == XN_STATUS_OK);
+    //retval = igen.GetAlternativeViewPointCap().SetViewPoint(dgen); ROS_ASSERT(retval == XN_STATUS_OK);  // This fails.
   }
   else
     cout << "Leaving depth and rgb unregistered." << endl;
@@ -55,17 +89,23 @@ int main(int argc, char** argv)
   // Synchronize output.
   retval = dgen.GetFrameSyncCap().FrameSyncWith(igen); ROS_ASSERT(retval == XN_STATUS_OK);
   // Start.
-  retval = context.StartGeneratingAll(); ROS_ASSERT(retval == XN_STATUS_OK);
+  retval = context.StartGeneratingAll();
+  if(retval != XN_STATUS_OK) {
+    printf("OpenNI failed: %s\n", xnGetStatusString(retval));
+  }
+  ROS_ASSERT(retval == XN_STATUS_OK);
 
-  cout << "Depth is synced with image: " << dgen.GetFrameSyncCap().IsFrameSyncedWith(igen) << endl;
-  cout << "Image is synced with depth: " << igen.GetFrameSyncCap().IsFrameSyncedWith(dgen) << endl;
-
-  // -- Read off params.
   XnDepthPixel maxdepth = dgen.GetDeviceMaxDepth();
   cout << "Max depth (mm): " << maxdepth << endl;
-  cout << "Frame sync supported: " << dgen.IsCapabilitySupported("XN_CAPABILITY_FRAME_SYNC") << endl;
+  cout << "Depth supports XN_CAPABILITY_FRAME_SYNC: " << dgen.IsCapabilitySupported(XN_CAPABILITY_FRAME_SYNC) << endl;
+  cout << "Image supports XN_CAPABILITY_FRAME_SYNC: " << igen.IsCapabilitySupported(XN_CAPABILITY_FRAME_SYNC) << endl;
+  cout << "Depth supports AlternativeViewPoint: " << dgen.IsCapabilitySupported(XN_CAPABILITY_ALTERNATIVE_VIEW_POINT) << endl;
+  cout << "Image supports AlternativeViewPoint: " << igen.IsCapabilitySupported(XN_CAPABILITY_ALTERNATIVE_VIEW_POINT) << endl;
+  cout << "Depth is synced with image: " << dgen.GetFrameSyncCap().IsFrameSyncedWith(igen) << endl;
+  cout << "Image is synced with depth: " << igen.GetFrameSyncCap().IsFrameSyncedWith(dgen) << endl;
   cout << endl;
-  
+
+  // -- Read off params.
   XnUInt64 zpd;
   XnDouble zpps;
   XnDouble lddis;
@@ -128,33 +168,62 @@ int main(int argc, char** argv)
   if(!opts.count("visualize"))
     return 0;
 
+
+  HighResTimer hrt;
+  hrt.start();
+  double iters = 0;
+  double prev_ts = 0;
+  double mean_fps = std::numeric_limits<double>::quiet_NaN();
   cv::Mat1f dimg(cv::Size(output_mode.nXRes, output_mode.nYRes), 0);
+  //cv::Mat3b cimg(cv::Size(output_mode.nXRes, output_mode.nYRes), cv::Vec3b(0, 0, 0));
   while(true) {
-    retval = context.WaitOneUpdateAll(dgen);
+    retval = context.WaitOneUpdateAll(igen);
     if(retval != XN_STATUS_OK) {
       printf("Failed updating data: %s\n", xnGetStatusString(retval));
       continue;
     }
 
-    xn::DepthMetaData md;
-    dgen.GetMetaData(md);
-    XnDepthPixel zres = md.ZRes();
-    const XnDepthPixel* depthmap = md.Data();
-    int width = md.GetUnderlying()->pMap->Res.X;
-    int height = md.GetUnderlying()->pMap->Res.Y;
+    xn::DepthMetaData dmd;
+    dgen.GetMetaData(dmd);
+    boost::shared_ptr<xn::ImageMetaData> pimd(new xn::ImageMetaData);
+    xn::ImageMetaData& imd = *pimd;
+    igen.GetMetaData(imd);
+    ROS_ASSERT(imd.PixelFormat() == XN_PIXEL_FORMAT_YUV422);
+    
+    XnDepthPixel zres = dmd.ZRes();
+    int width = dmd.GetUnderlying()->pMap->Res.X;
+    int height = dmd.GetUnderlying()->pMap->Res.Y;
+    ROS_ASSERT(width == (int)imd.GetUnderlying()->pMap->Res.X);
+    ROS_ASSERT(height == (int)imd.GetUnderlying()->pMap->Res.Y);
+    double depth_ts = dmd.Timestamp() * 1e-6;
+    double image_ts = imd.Timestamp() * 1e-6;
+    if(depth_ts == prev_ts)
+      continue;
+
+    prev_ts = depth_ts;
     cout << "Width: " << width << ", height: " << height;
-    cout << ", zres: " << zres << ", depth value: " << md(width/2, height/2) << endl;
+    cout << ", zres: " << zres << ", depth_ts: " << depth_ts;
+    cout << ", depth_ts - image_ts: " << depth_ts - image_ts;
+    cout << ", mean fps: " << mean_fps << ", depth value: " << dmd(width/2, height/2) << endl;
 
     for(int y = 0; y < dimg.rows; ++y) { 
       for(int x = 0; x < dimg.cols; ++x) {
-	dimg(y, x) = md(x, y) / 3000.0;  // md is in meters.
-	if(dimg(y, x) > 1.0)
-	  dimg(y, x) = 0;
+    	dimg(y, x) = dmd(x, y) / 3000.0;  // dmd is in millimeters.
+    	if(dimg(y, x) > 1.0)
+    	  dimg(y, x) = 0;
       }
     }
-
     cv::imshow("Depth Image", dimg);
-    cv::waitKey(2);
+
+    openni_wrapper::ImageYUV422 owimg(pimd);
+    cv::Mat3b cimg = oniToCV(owimg);
+    cv::imshow("Color Image", cimg);
+    
+    char key = cv::waitKey(2);
+    if(key == 'q')
+      break;
+    ++iters;
+    mean_fps = iters / hrt.getSeconds();
   }
 
   context.Shutdown();
