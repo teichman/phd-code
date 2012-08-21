@@ -64,11 +64,15 @@ namespace rgbd
       cout << ", mean fps: " << mean_fps << endl;
       prev_ts = depth_ts;
 
-      openni_wrapper::ImageYUV422 owimg(imd);
       // TODO: Get rid of these unnecessary openni_wrapper classes.
+      HighResTimer hrt2("Dealing with openni_wrapper");
+      hrt2.start();
+      openni_wrapper::ImageYUV422 owimg(imd);
       cv::Mat3b cimg = oniToCV(owimg);
       ROS_ASSERT(fx_ == fy_);
       openni_wrapper::DepthImage owdimg(dmd, 0, fx_, 0, 0);
+      hrt2.stop();
+      cout << hrt2.reportMilliseconds() << endl;
       if(recording_) {
 	ScopedTimer st("Writing new frame");
 	seq_->addFrame(cimg, *oniDepthToEigenPtr(owdimg), fx_, fy_, cx_, cy_, depth_ts);
