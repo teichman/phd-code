@@ -223,10 +223,10 @@ namespace rgbd
     loadDepth(save_dir_, frame, depth_mat, fx, fy, cx, cy, timestamp);
     Mat1w cv_mat(depth_mat.rows(), depth_mat.cols());
 #pragma omp parallel for
-    for(size_t i = 0; i < depth_mat.rows(); i++)
+    for(int i = 0; i < depth_mat.rows(); i++)
     {
 #pragma omp parallel for
-      for(size_t j = 0; j < depth_mat.cols(); j++)
+      for(int j = 0; j < depth_mat.cols(); j++)
       {
         cv_mat(i,j) = depth_mat(i,j);
       }
