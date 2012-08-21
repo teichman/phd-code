@@ -68,16 +68,21 @@ namespace rgbd
     HighResTimer hrt;
     ostringstream oss;    
     
-    // -- Write image  
-    //oss << "img" << setw(4) << setfill('0') << frame << ".ppm";
-    oss << "img" << setw(4) << setfill('0') << frame << ".png";
+    // -- Write image
+    vector<int> params;
+    if(getenv("PPM")) {
+      oss << "img" << setw(4) << setfill('0') << frame << ".ppm";
+    }
+    else {
+      oss << "img" << setw(4) << setfill('0') << frame << ".png";
+      // http://opencv.willowgarage.com/documentation/cpp/reading_and_writing_images_and_video.html
+      // Small number means fast but bad compression.  0-9.
+      params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+      params.push_back(0);
+    }
+
     hrt.reset("Writing opencv image");
     hrt.start();
-    // http://opencv.willowgarage.com/documentation/cpp/reading_and_writing_images_and_video.html
-    // Small number means fast but bad compression.  0-9.
-    vector<int> params;
-    params.push_back(CV_IMWRITE_PNG_COMPRESSION);
-    params.push_back(0);
     cv::imwrite(dir + "/" + oss.str(), img, params);
     hrt.stop();
     cout << hrt.reportMilliseconds() << endl;
