@@ -25,11 +25,11 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 rosbuild_add_library(rgbd_sequence
   src/lib/rgbd_sequence.cpp
   src/lib/stream_sequence.cpp
-  src/lib/stream_recorder.cpp
 #  src/lib/publisher.cpp
   src/lib/projector.cpp
   src/lib/vis_wrapper.cpp
   src/lib/intrinsics_visualizer.cpp
+  src/lib/eigen_image.cpp
   )
 rosbuild_link_boost(rgbd_sequence system program_options)
 rosbuild_add_compile_flags(rgbd_sequence -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
@@ -39,7 +39,7 @@ rosbuild_add_compile_flags(rgbd_sequence -Wno-deprecated -Wno-unused-but-set-var
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_executable(record_stream src/prog/record_stream.cpp)
+rosbuild_add_executable(record_stream src/prog/record_stream.cpp src/lib/stream_recorder.cpp)
 target_link_libraries(record_stream rgbd_sequence)
 rosbuild_add_compile_flags(record_stream -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
@@ -79,3 +79,9 @@ rosbuild_add_executable(raw_openni_test src/prog/raw_openni_test.cpp)
 rosbuild_add_compile_flags(raw_openni_test -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 rosbuild_link_boost(raw_openni_test program_options)
 target_link_libraries(raw_openni_test OpenNI)
+
+rosbuild_add_executable(record_stream_openni src/prog/record_stream_openni.cpp src/lib/openni_stream_recorder.cpp)
+rosbuild_add_compile_flags(record_stream_openni -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+rosbuild_link_boost(record_stream_openni program_options)
+target_link_libraries(record_stream_openni rgbd_sequence OpenNI)
+

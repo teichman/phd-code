@@ -94,7 +94,13 @@ int main(int argc, char** argv)
   cout << "Depth is synced with image: " << dgen.GetFrameSyncCap().IsFrameSyncedWith(igen) << endl;
   cout << "Image is synced with depth: " << igen.GetFrameSyncCap().IsFrameSyncedWith(dgen) << endl;
   cout << endl;
-
+  
+  // xn::DepthPrivateData* pDepthPrivate = (xn::DepthPrivateData*)dgen.pPrivateData;
+  // XnDouble fXToZ = pDepthPrivate->GetRealWorldXtoZ();
+  // XnDouble fYToZ = pDepthPrivate->GetRealWorldYtoZ();
+  // cout << "fXToZ: " << fXToZ << endl;
+  // cout << "fYToZ: " << fYToZ << endl;
+    
   // -- Read off params.
   XnUInt64 zpd;
   XnDouble zpps;
@@ -162,12 +168,14 @@ int main(int argc, char** argv)
   HighResTimer hrt;
   hrt.start();
   double iters = 0;
-  double prev_ts = 0;
   double mean_fps = std::numeric_limits<double>::quiet_NaN();
+  double prev_ts = 0;
   cv::Mat1b dimg(cv::Size(output_mode.nXRes, output_mode.nYRes), 0);
   //cv::Mat3b cimg(cv::Size(output_mode.nXRes, output_mode.nYRes), cv::Vec3b(0, 0, 0));
   while(true) {
-    retval = context.WaitOneUpdateAll(igen);
+    //retval = context.WaitOneUpdateAll(igen);
+    //retval = context.WaitAndUpdateAll();  // FrameSync does not work properly with this....
+    retval = context.WaitNoneUpdateAll();
     if(retval != XN_STATUS_OK) {
       printf("Failed updating data: %s\n", xnGetStatusString(retval));
       continue;
@@ -189,13 +197,19 @@ int main(int argc, char** argv)
     double image_ts = imd.Timestamp() * 1e-6;
     if(depth_ts == prev_ts)
       continue;
+    if(fabs(depth_ts - image_ts) > 0.003)
+      continue;
 
-    prev_ts = depth_ts;
+    if(depth_ts - prev_ts > 0.04)
+      ROS_WARN("Dropping frames!");
+    
     cout << "Width: " << width << ", height: " << height;
     cout << ", zres: " << zres << ", depth_ts: " << depth_ts;
     cout << ", depth_ts - image_ts: " << depth_ts - image_ts;
+    cout << ", ts - prev_ts: " << depth_ts - prev_ts;
     cout << ", mean fps: " << mean_fps << ", depth value: " << dmd(width/2, height/2) << endl;
-
+    prev_ts = depth_ts;
+    
     for(int y = 0; y < dimg.rows; ++y) { 
       for(int x = 0; x < dimg.cols; ++x) {
     	dimg(y, x) = 255.0 * dmd(x, y) / 5000.0;  // dmd is in millimeters.

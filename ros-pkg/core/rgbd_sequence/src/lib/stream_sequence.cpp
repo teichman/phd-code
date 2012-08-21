@@ -61,20 +61,47 @@ namespace rgbd
   }
 
   void StreamSequence::saveFrame(const string &dir, size_t frame, 
-      const Mat3b &img, const DepthMat &depth, 
-      double fx, double fy, double cx, double cy, 
-      double timestamp){
-    //Write image  
-    ostringstream oss;
+				 const Mat3b &img, const DepthMat &depth, 
+				 double fx, double fy, double cx, double cy, 
+				 double timestamp)
+  {
+    HighResTimer hrt;
+    ostringstream oss;    
+    
+    // -- Write image  
+    //oss << "img" << setw(4) << setfill('0') << frame << ".ppm";
     oss << "img" << setw(4) << setfill('0') << frame << ".png";
-    cv::imwrite(dir + "/" + oss.str(), img);
+    hrt.reset("Writing opencv image");
+    hrt.start();
+    // http://opencv.willowgarage.com/documentation/cpp/reading_and_writing_images_and_video.html
+    // Small number means fast but bad compression.  0-9.
+    vector<int> params;
+    params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+    params.push_back(0);
+    cv::imwrite(dir + "/" + oss.str(), img, params);
+    hrt.stop();
+    cout << hrt.reportMilliseconds() << endl;
+
+    // hrt.reset("Writing EigenImage");
+    // hrt.start();
+    // oss.str("");
+    // oss << "img" << setw(4) << setfill('0') << frame << ".eim";
+    // eigimg_.setData(img);
+    // eigimg_.save(dir + "/" + oss.str());
+    // hrt.stop();
+    // cout << hrt.reportMilliseconds() << endl;
+    
     if(img_names_.size() <= frame)
       img_names_.resize(frame+1);
     img_names_[frame] = oss.str();
     //Write depth
     oss.str("");
     oss << "dpt" << setw(4) << setfill('0') << frame << ".dpt";
+
+    hrt.reset("Writing depth image");
+    hrt.start();
     ofstream outfile;
+    //ogzstream outfile;  // 600k -> 75k, but 40ms.
     outfile.open((dir+"/"+oss.str()).c_str());
     eigen_extensions::serialize(depth, outfile);
     outfile.write((char*)&fx, sizeof(double));
@@ -82,6 +109,9 @@ namespace rgbd
     outfile.write((char*)&cx, sizeof(double));
     outfile.write((char*)&cy, sizeof(double));
     outfile.close();
+    hrt.stop();
+    cout << hrt.reportMilliseconds() << endl;
+  
     if(dpt_names_.size() <= frame)
       dpt_names_.resize(frame+1);
     dpt_names_[frame] = oss.str();
@@ -297,8 +327,9 @@ namespace rgbd
   }
 
 
-  void StreamSequence::addFrame( const Mat3b &img, const DepthMat &depth, 
-      double fx, double fy, double cx, double cy, double timestamp)
+  void StreamSequence::addFrame(const Mat3b &img, const DepthMat &depth, 
+				double fx, double fy, double cx, double cy,
+				double timestamp)
   {
     saveFrame(save_dir_, timestamps_.size(), img, depth, fx, fy, cx, cy, timestamp );
   }
