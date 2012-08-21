@@ -5,7 +5,6 @@
 #include <boost/program_options.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <timer/timer.h>
-#include <rgbd_sequence/CVKinectWrapper.h>
 #include <pcl/io/openni_camera/openni_image_yuv_422.h>
 
 using namespace std;
@@ -48,16 +47,6 @@ int main(int argc, char** argv)
     return 1;
   }
   bpo::notify(opts);
-
-  // CVKinectWrapper* cvkw = CVKinectWrapper::getInstance();
-  // cvkw->init("/home/teichman/OpenNI/Data/SamplesConfig.xml");
-  // while(true) {
-  //   cvkw->update();
-  //   cv::Mat rgb;
-  //   cvkw->getRGB(&rgb);
-  //   cv::imshow("rgb", rgb);
-  //   cv::waitKey(10);
-  // }
   
   // -- Set up production chain.
   XnStatus retval = XN_STATUS_OK;
