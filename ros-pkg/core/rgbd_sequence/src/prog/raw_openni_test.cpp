@@ -36,6 +36,7 @@ int main(int argc, char** argv)
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("register", "Register depth to rgb data")
+    ("write", "Save data as pngs")
     ("visualize", "Show depth")
     ;
 
@@ -99,8 +100,8 @@ int main(int argc, char** argv)
   cout << "Max depth (mm): " << maxdepth << endl;
   cout << "Depth supports XN_CAPABILITY_FRAME_SYNC: " << dgen.IsCapabilitySupported(XN_CAPABILITY_FRAME_SYNC) << endl;
   cout << "Image supports XN_CAPABILITY_FRAME_SYNC: " << igen.IsCapabilitySupported(XN_CAPABILITY_FRAME_SYNC) << endl;
-  cout << "Depth supports AlternativeViewPoint: " << dgen.IsCapabilitySupported(XN_CAPABILITY_ALTERNATIVE_VIEW_POINT) << endl;
-  cout << "Image supports AlternativeViewPoint: " << igen.IsCapabilitySupported(XN_CAPABILITY_ALTERNATIVE_VIEW_POINT) << endl;
+  cout << "Depth supports XN_CAPABILITY_ALTERNATIVE_VIEW_POINT: " << dgen.IsCapabilitySupported(XN_CAPABILITY_ALTERNATIVE_VIEW_POINT) << endl;
+  cout << "Image supports XN_CAPABILITY_ALTERNATIVE_VIEW_POINT: " << igen.IsCapabilitySupported(XN_CAPABILITY_ALTERNATIVE_VIEW_POINT) << endl;
   cout << "Depth is synced with image: " << dgen.GetFrameSyncCap().IsFrameSyncedWith(igen) << endl;
   cout << "Image is synced with depth: " << igen.GetFrameSyncCap().IsFrameSyncedWith(dgen) << endl;
   cout << endl;
@@ -174,7 +175,7 @@ int main(int argc, char** argv)
   double iters = 0;
   double prev_ts = 0;
   double mean_fps = std::numeric_limits<double>::quiet_NaN();
-  cv::Mat1f dimg(cv::Size(output_mode.nXRes, output_mode.nYRes), 0);
+  cv::Mat1b dimg(cv::Size(output_mode.nXRes, output_mode.nYRes), 0);
   //cv::Mat3b cimg(cv::Size(output_mode.nXRes, output_mode.nYRes), cv::Vec3b(0, 0, 0));
   while(true) {
     retval = context.WaitOneUpdateAll(igen);
@@ -208,8 +209,8 @@ int main(int argc, char** argv)
 
     for(int y = 0; y < dimg.rows; ++y) { 
       for(int x = 0; x < dimg.cols; ++x) {
-    	dimg(y, x) = dmd(x, y) / 3000.0;  // dmd is in millimeters.
-    	if(dimg(y, x) > 1.0)
+    	dimg(y, x) = 255.0 * dmd(x, y) / 5000.0;  // dmd is in millimeters.
+    	if(dimg(y, x) > 255.0)
     	  dimg(y, x) = 0;
       }
     }
@@ -218,6 +219,19 @@ int main(int argc, char** argv)
     openni_wrapper::ImageYUV422 owimg(pimd);
     cv::Mat3b cimg = oniToCV(owimg);
     cv::imshow("Color Image", cimg);
+
+    if(opts.count("write")) {
+      {
+	ostringstream oss;
+	oss << "depth" << setw(5) << setfill('0') << iters << ".png";
+	cv::imwrite(oss.str(), dimg);
+      }
+      {
+	ostringstream oss;
+	oss << "rgb" << setw(5) << setfill('0') << iters << ".png";
+	cv::imwrite(oss.str(), cimg);
+      }
+    }
     
     char key = cv::waitKey(2);
     if(key == 'q')
