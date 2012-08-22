@@ -20,22 +20,22 @@ namespace rgbd
     in >> b_;
 
     string buf;
-    getline(in, &buf);
+    getline(in, buf);
   }
 
   PrimeSenseModel::PrimeSenseModel() :
+    width_(-1),
+    height_(-1),
     fx_(-1),
     fy_(-1),
     cx_(-1),
-    cy_(-1),
-    width_(-1),
-    height_(-1)
+    cy_(-1)
   {
   }
   
   void PrimeSenseModel::frameToCloud(const Frame& frame, Cloud* pcd) const
   {    
-    const DepthMat& dm = frame.depth_;
+    const DepthMat& dm = *frame.depth_;
     cv::Mat3b img = frame.img_;
 
     ROS_ASSERT(fx_ > 0 && fy_ > 0 && cx_ > 0 && cy_ > 0);
@@ -53,12 +53,12 @@ namespace rgbd
 
     int idx = 0;
     ProjectivePoint ppt;
-    for(int ppt.v_ = 0; ppt.v_ < dm.rows(); ++ppt.v_) {
-      for(int ppt.u_ = 0; ppt.u_ < dm.cols(); ++ppt.u_, ++idx) {
+    for(ppt.v_ = 0; ppt.v_ < dm.rows(); ++ppt.v_) {
+      for(ppt.u_ = 0; ppt.u_ < dm.cols(); ++ppt.u_, ++idx) {
 	ppt.z_ = dm(ppt.v_, ppt.u_);
-	ppt.r_ = img(v, u)[2];
-	ppt.g_ = img(v, u)[1];
-	ppt.b_ = img(v, u)[0];
+	ppt.r_ = img(ppt.v_, ppt.u_)[2];
+	ppt.g_ = img(ppt.v_, ppt.u_)[1];
+	ppt.b_ = img(ppt.v_, ppt.u_)[0];
 	
 	Point& pt = pcd->at(idx);
 	project(ppt, &pt);
@@ -98,4 +98,48 @@ namespace rgbd
     ppt->b_ = pt.b;
   }
   
+  bool PrimeSenseModel::initialized() const
+  {
+    if(cx_ == -1 || cy_ == -1)
+      return false;
+    if(fx_ == -1 || fy_ == -1)
+      return false;
+    if(width_ == -1 || height_ == -1)
+      return false;
+
+    return true;
+  }
+
+  void PrimeSenseModel::serialize(std::ostream& out) const
+  {
+    eigen_extensions::serializeScalar(width_, out);
+    eigen_extensions::serializeScalar(height_, out);
+    eigen_extensions::serializeScalar(fx_, out);
+    eigen_extensions::serializeScalar(fy_, out);
+    eigen_extensions::serializeScalar(cx_, out);
+    eigen_extensions::serializeScalar(cy_, out);
+  }
+
+  void PrimeSenseModel::deserialize(std::istream& in)
+  {
+    eigen_extensions::deserializeScalar(in, &width_);
+    eigen_extensions::deserializeScalar(in, &height_);
+    eigen_extensions::deserializeScalar(in, &fx_);
+    eigen_extensions::deserializeScalar(in, &fy_);
+    eigen_extensions::deserializeScalar(in, &cx_);
+    eigen_extensions::deserializeScalar(in, &cy_);
+  }
+
+  std::string PrimeSenseModel::status(const std::string& prefix) const
+  {
+    ostringstream oss;
+    oss << prefix << "size: " << width_ << " x " << height_ << endl;
+    oss << prefix << "fx: " << fx_ << endl;
+    oss << prefix << "fy: " << fy_ << endl;
+    oss << prefix << "cx: " << cx_ << endl;
+    oss << prefix << "cy: " << cy_ << endl;
+    return oss.str();
+  }
+  
 } // namespace rgbd
+

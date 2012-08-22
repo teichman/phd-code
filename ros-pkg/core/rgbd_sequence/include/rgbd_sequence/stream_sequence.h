@@ -11,22 +11,14 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <serializable/serializable.h>
-#include <Eigen/Eigen>
+#include <eigen_extensions/eigen_extensions.h>
 #include <timer/timer.h>
-#include <rgbd_sequence/eigen_image.h>
+#include <rgbd_sequence/primesense_model.h>
 
 namespace rgbd
 {
 
-  typedef pcl::PointXYZRGB Point;
-  typedef pcl::PointCloud<Point> Cloud;
-  typedef Eigen::Matrix<unsigned short, Eigen::Dynamic, Eigen::Dynamic> DepthMat;
-  typedef boost::shared_ptr<DepthMat> DepthMatPtr;
-  typedef boost::shared_ptr<const DepthMat> DepthMatConstPtr;
-  using cv::Mat3b;
-  using cv::Mat1w;
-
-  class StreamSequence : public Serializable
+  class StreamSequence
   {
   public:
     typedef boost::shared_ptr<StreamSequence> Ptr;
@@ -36,52 +28,34 @@ namespace rgbd
     std::vector<std::string> dpt_names_;
     std::vector<std::string> clk_names_;
     std::vector<double> timestamps_; //Keep these in memory
-    std::string save_dir_;
+    std::string root_path_;
+    PrimeSenseModel model_;
 
-    double fx_;
-    double fy_;
-    double cx_;
-    double cy_;
-
+    //! Does not initialize anything.
     StreamSequence();
-    StreamSequence(const std::string& save_dir);
-    //! Deep-copies.
-    //TODO StreamSequence(const StreamSequence& seq);
-    //! Deep-copies.
-    // TODO StreamSequence& operator=(const StreamSequence& seq);
-    // ! This changes the save_dir and saves everything to it
-    void save(const std::string& filename);
-    void load(const std::string& filename);
-    void serialize(std::ostream& out) const;
-    void deserialize(std::istream& in);
+    //! Creates a new directory at root_path for streaming to.
+    void init(const std::string& root_path);
+    //! Loads existing model and timestamps at root_path_, prepares for streaming from here.
+    void load(const std::string& root_path);
+    //! Saves PrimeSenseModel and timestamps to root_path_.
+    //! Must have an initialized model_.
+    void save() const;
     size_t size() const;
-    Cloud::Ptr getCloud(size_t frame, double f = 0) const;
-    Mat3b getImage(size_t frame) const;
-    //! dt is signed.
-    Cloud::Ptr getCloud(double timestamp, double* dt) const;
-    //! dt is signed.
-    Mat3b getImage(double timestamp, double* dt) const;
-    Mat1w getDepthRaw(size_t frame) const;
-    Mat1w getDepthRaw(size_t frame, double &fx, double &fy, double &cx, double &cy) const;
-    void getIntrinsics(size_t frame, double &fx, double &fy, double &cx, double &cy) const;
-    void addFrame(const Mat3b &img, const DepthMat &depth, 
-		  double fx, double fy, double cx, double cy,
-		  double timestamp);
-    //! Adds dt to all timestamps.
+    void writeFrame(const Frame& frame);
+    //! Loads from disk and fills frame.  Resizes data in frame if necessary.
+    void readFrame(size_t idx, Frame* frame) const;
+    //! Returns the nearest frame, no matter how far away it is in time.
+    void readFrame(double timestamp, double* dt, Frame* frame) const;
+    //! Adds dt to all timestamps.  Does not save.
     void applyTimeOffset(double dt);
 
   protected:
-    EigenImage eigimg_;
-
-    void saveFrame(const std::string& dir, size_t frame, const Mat3b &img, 
-        const DepthMat &depth, double fx, double fy, double cx, double cy, 
-        double timestamp);
-    void loadImage(const std::string& dir, size_t frame, Mat3b &img) const;
-    void loadDepth(const std::string& dir, size_t frame, 
-        DepthMat &depth, double &fx, double &fy, double &cx, double &cy, 
-        double &timestamp) const;
     //! dt is signed.
     size_t seek(double timestamp, double* dt) const;
+
+    // Assignment op & copy constructor would deep copy if they were implemented.
+    StreamSequence(const StreamSequence& seq);
+    StreamSequence& operator=(const StreamSequence& seq);
   };
 
 

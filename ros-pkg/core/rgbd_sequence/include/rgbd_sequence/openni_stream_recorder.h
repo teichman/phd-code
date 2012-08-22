@@ -29,12 +29,7 @@ namespace rgbd
     std::string mode_;
     bool recording_;
     StreamSequence::Ptr seq_;
-    int width_;
-    int height_;
-    double fx_;
-    double fy_;
-    double cx_;
-    double cy_;
+    PrimeSenseModel model_;
     //! Whether registering depth to RGB using OpenNI.
     bool registered_;
     bool visualize_;

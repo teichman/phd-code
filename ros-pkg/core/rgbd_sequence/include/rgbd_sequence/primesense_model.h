@@ -1,11 +1,21 @@
 #ifndef PRIMESENSE_MODEL_H
 #define PRIMESENSE_MODEL_H
 
-#include <rgbd_sequence/stream_sequence.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <opencv2/core/core.hpp>
+#include <serializable/serializable.h>
+#include <eigen_extensions/eigen_extensions.h>
 
 namespace rgbd
 {
 
+  typedef pcl::PointXYZRGB Point;
+  typedef pcl::PointCloud<Point> Cloud;
+  typedef Eigen::Matrix<unsigned short, Eigen::Dynamic, Eigen::Dynamic> DepthMat;
+  typedef boost::shared_ptr<DepthMat> DepthMatPtr;
+  typedef boost::shared_ptr<const DepthMat> DepthMatConstPtr;
+  
   //! "Projective" point comes from the OpenNI terminology, and refers to (u, v, z), i.e.
   //! pixel id and depth value.  Here I've added color, too, so that this represents everything
   //! that is known about a pixel in an RBGD camera.
@@ -27,28 +37,32 @@ namespace rgbd
   class Frame
   {
   public:
-    DepthMat depth_;
+    DepthMatPtr depth_;
     cv::Mat3b img_;
     double timestamp_;
   };
   
-  class PrimeSenseModel
+  class PrimeSenseModel : public Serializable
   {
   public:
+    int width_;
+    int height_;
     double fx_;
     double fy_;
     double cx_;
     double cy_;
-    int width_;
-    int height_;
 
     //! Initializes with a bogus model: all params set to -1.
     PrimeSenseModel();
     void frameToCloud(const Frame& frame, Cloud* pcd) const;
     void project(const ProjectivePoint& ppt, Point* pt) const;
-    // TODO
-    //void project(const Point& pt, ProjectivePoint* ppt) const;
+    void project(const Point& pt, ProjectivePoint* ppt) const;
+    bool initialized() const;
+    void serialize(std::ostream& out) const;
+    void deserialize(std::istream& in);
+    std::string status(const std::string& prefix = "") const;
   };
+  
 
 }
 
