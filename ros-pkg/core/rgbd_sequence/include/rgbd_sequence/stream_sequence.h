@@ -42,9 +42,9 @@ namespace rgbd
     void save() const;
     size_t size() const;
     void writeFrame(const Frame& frame);
-    //! Loads from disk and fills frame.  Resizes data in frame if necessary.
+    //! Loads from disk and fills frame.
     void readFrame(size_t idx, Frame* frame) const;
-    //! Returns the nearest frame, no matter how far away it is in time.
+    //! Returns the nearest frame, no matter how far away it is in time.  Check dt to find out.
     void readFrame(double timestamp, double* dt, Frame* frame) const;
     //! Adds dt to all timestamps.  Does not save.
     void applyTimeOffset(double dt);
