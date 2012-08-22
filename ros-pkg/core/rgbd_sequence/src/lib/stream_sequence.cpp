@@ -31,7 +31,6 @@ namespace rgbd
     ROS_ASSERT(!bfs::exists(root_path));
     root_path_ = root_path;
     bfs::create_directory(root_path_);
-    load(root_path_);
   }
 
   void StreamSequence::load(const std::string& dir)

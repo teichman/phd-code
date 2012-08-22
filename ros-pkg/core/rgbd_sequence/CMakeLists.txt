@@ -62,8 +62,8 @@ rosbuild_add_gtest(test_stream src/test/test_stream.cpp)
 target_link_libraries(test_stream rgbd_sequence)
 rosbuild_add_gtest_build_flags(test_stream)
 
-rosbuild_add_executable(get_primesense_info src/prog/get_primesense_info.cpp)
-rosbuild_add_compile_flags(get_primesense_info -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+#rosbuild_add_executable(get_primesense_info src/prog/get_primesense_info.cpp)
+#rosbuild_add_compile_flags(get_primesense_info -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
 #rosbuild_add_executable(visualize_intrinsics src/prog/visualize_intrinsics.cpp)
 #rosbuild_add_compile_flags(visualize_intrinsics -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
