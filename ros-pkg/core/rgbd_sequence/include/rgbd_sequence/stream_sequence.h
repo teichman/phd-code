@@ -38,8 +38,10 @@ namespace rgbd
     std::vector<double> timestamps_; //Keep these in memory
     std::string save_dir_;
 
-    double fx_,fy_,cx_,cy_; //Calibration parameters
-    bool initialized_calibration_;
+    double fx_;
+    double fy_;
+    double cx_;
+    double cy_;
 
     StreamSequence();
     StreamSequence(const std::string& save_dir);

@@ -10,14 +10,8 @@ namespace rgbd
 
   StreamSequence::StreamSequence() :
     Serializable(),
-    save_dir_("."),
-    initialized_calibration_(false)
+    save_dir_(".")
   {
-    if(USE_DEFAULT_CALIBRATION){
-      cout << "Using default calibration" << endl;
-    } else{
-      cout << "Using saved calibration" << endl;
-    }
   }
   
   StreamSequence::StreamSequence(const string& save_dir) :
@@ -42,20 +36,20 @@ namespace rgbd
 
   void StreamSequence::save(const std::string& dir)
   {
-    if( dir == save_dir_ ){
+    if(dir == save_dir_) {
       return; //No need to do anything at this point
     }
     ROS_ASSERT(!bfs::exists(dir));
     //TODO copy to new directory!
     bfs::create_directory(dir);
-    for(size_t i = 0; i < timestamps_.size(); i++){
+    for(size_t i = 0; i < timestamps_.size(); i++) {
       Mat3b img;
       DepthMat depth;
       double fx, fy, cx, cy, timestamp;
       loadImage(save_dir_, i, img);
       loadDepth(save_dir_, i, depth, fx, fy, cx, cy, timestamp);
       ROS_ASSERT(timestamp == timestamps_[i]);
-      saveFrame(dir, i, img, depth, fx, fy, cx, cy, timestamp );
+      saveFrame(dir, i, img, depth, fx, fy, cx, cy, timestamp);
     }
     //TODO modify save_dir_?
   }
@@ -161,11 +155,9 @@ namespace rgbd
       fs.close();
     }
     // Load one cloud, for calibration parameters
-    cout << "Initializing calibration parameters" << endl;
     DepthMat depth;
     double timestamp;
     loadDepth(dir, 0, depth, fx_, fy_, cx_, cy_, timestamp);
-    initialized_calibration_ = true;
     cout << "Done" << endl;
     //Update save_dir_
     save_dir_ = dir;
@@ -250,15 +242,11 @@ namespace rgbd
     double timestamp;
     loadDepth(save_dir_, frame, depth_mat, fx, fy, cx, cy, timestamp);
     Mat1w cv_mat(depth_mat.rows(), depth_mat.cols());
-#pragma omp parallel for
+
     for(int i = 0; i < depth_mat.rows(); i++)
-    {
-#pragma omp parallel for
       for(int j = 0; j < depth_mat.cols(); j++)
-      {
         cv_mat(i,j) = depth_mat(i,j);
-      }
-    }
+
     return cv_mat;
   }
     

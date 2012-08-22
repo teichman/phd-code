@@ -138,7 +138,7 @@ namespace rgbd
   {
     for(size_t i = 0; i < visible_pairs_.size(); ++i) {
       ROS_ASSERT(visible_pairs_[i].size() == 2);
-      std::pair<ProjectedPoint, ProjectedPoint> ppts;
+      std::pair<ProjectivePoint, ProjectivePoint> ppts;
       proj_.project(visible_pairs_[i][0], &ppts.first);
       proj_.project(visible_pairs_[i][1], &ppts.second);
       accepted_.push_back(ppts);
@@ -227,8 +227,8 @@ namespace rgbd
     for(size_t i = 0; i < accepted_.size(); ++i) {
       Point pt0;
       Point pt1;
-      Projector::project(x(0), x(1), x(2), x(3), accepted_[i].first, &pt0);
-      Projector::project(x(0), x(1), x(2), x(3), accepted_[i].second, &pt1);
+      PrimeSenseModel::project(x(0), x(1), x(2), x(3), accepted_[i].first, &pt0);
+      PrimeSenseModel::project(x(0), x(1), x(2), x(3), accepted_[i].second, &pt1);
       double dist = pcl::euclideanDistance(pt0, pt1);
       cout << "Error " << i << ": " << fabs(dist - actual_distance_) << endl;
     }
@@ -249,8 +249,8 @@ namespace rgbd
     for(size_t i = 0; i < accepted_.size(); ++i) {
       Point pt0;
       Point pt1;
-      Projector::project(x(0), x(1), x(2), x(3), accepted_[i].first, &pt0);
-      Projector::project(x(0), x(1), x(2), x(3), accepted_[i].second, &pt1);
+      PrimeSenseModel::project(x(0), x(1), x(2), x(3), accepted_[i].first, &pt0);
+      PrimeSenseModel::project(x(0), x(1), x(2), x(3), accepted_[i].second, &pt1);
       double dist = pcl::euclideanDistance(pt0, pt1);
       loss += fabs(dist - actual_distance_);
     }

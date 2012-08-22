@@ -3,13 +3,13 @@
 
 #include <rgbd_sequence/vis_wrapper.h>
 #include <rgbd_sequence/stream_sequence.h>
-#include <rgbd_sequence/projector.h>
+#include <rgbd_sequence/primesense_model.h>
 #include <optimization/grid_search.h>
 
 namespace rgbd
 {
 
-  class AcceptedPoints : public std::vector< std::pair<ProjectedPoint, ProjectedPoint> >,
+  class AcceptedPoints : public std::vector< std::pair<ProjectivePoint, ProjectivePoint> >,
 			 public Serializable
   {
     void serialize(std::ostream& out) const;
@@ -30,7 +30,7 @@ namespace rgbd
     std::vector<Point> selected_;
     std::vector< std::vector<Point> > visible_pairs_;
     AcceptedPoints accepted_;
-    Projector proj_;
+    PrimeSenseModel proj_;
     Cloud::Ptr warped_;
     Frame frame_;
     std::string path_;

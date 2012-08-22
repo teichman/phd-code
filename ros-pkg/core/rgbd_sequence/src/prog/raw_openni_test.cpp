@@ -98,6 +98,8 @@ int main(int argc, char** argv)
   cout << "Image supports XN_CAPABILITY_FRAME_SYNC: " << igen.IsCapabilitySupported(XN_CAPABILITY_FRAME_SYNC) << endl;
   cout << "Depth supports XN_CAPABILITY_ALTERNATIVE_VIEW_POINT: " << dgen.IsCapabilitySupported(XN_CAPABILITY_ALTERNATIVE_VIEW_POINT) << endl;
   cout << "Image supports XN_CAPABILITY_ALTERNATIVE_VIEW_POINT: " << igen.IsCapabilitySupported(XN_CAPABILITY_ALTERNATIVE_VIEW_POINT) << endl;
+  cout << "Depth supports XN_CAPABILITY_EXPOSURE: " << dgen.IsCapabilitySupported(XN_CAPABILITY_EXPOSURE) << endl;
+  cout << "Image supports XN_CAPABILITY_EXPOSURE: " << igen.IsCapabilitySupported(XN_CAPABILITY_EXPOSURE) << endl;
   cout << "Depth is synced with image: " << dgen.GetFrameSyncCap().IsFrameSyncedWith(igen) << endl;
   cout << "Image is synced with depth: " << igen.GetFrameSyncCap().IsFrameSyncedWith(dgen) << endl;
   cout << endl;

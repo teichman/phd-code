@@ -1,17 +1,24 @@
-#ifndef PROJECTOR_H
-#define PROJECTOR_H
+#ifndef PRIMESENSE_MODEL_H
+#define PRIMESENSE_MODEL_H
 
 #include <rgbd_sequence/stream_sequence.h>
 
 namespace rgbd
 {
 
-  class ProjectedPoint : public Serializable
+  //! "Projective" point comes from the OpenNI terminology, and refers to (u, v, z), i.e.
+  //! pixel id and depth value.  Here I've added color, too, so that this represents everything
+  //! that is known about a pixel in an RBGD camera.
+  class ProjectivePoint : public Serializable
   {
   public:
     int u_;
     int v_;
+    //! In millimeters, same as the raw depth image from the primesense device.
     unsigned short z_;
+    unsigned char r_;
+    unsigned char g_;
+    unsigned char b_;
 
     void serialize(std::ostream& out) const;
     void deserialize(std::istream& in);
@@ -25,7 +32,7 @@ namespace rgbd
     double timestamp_;
   };
   
-  class Projector
+  class PrimeSenseModel
   {
   public:
     double fx_;
@@ -35,17 +42,14 @@ namespace rgbd
     int width_;
     int height_;
 
-    Projector();
+    //! Initializes with a bogus model: all params set to -1.
+    PrimeSenseModel();
     void frameToCloud(const Frame& frame, Cloud* pcd) const;
-    //! Doesn't project.  Just takes u, v values as they are.
-    //! TODO: This should use the intrinsics.
-    void cloudToFrame(const Cloud& pcd, Frame* frame) const;
-    void project(const ProjectedPoint& ppt, Point* pt) const;
-    void project(const Point& pt, ProjectedPoint* ppt) const;
-    static void project(double fx, double fy, double cx, double cy,
-			const ProjectedPoint& ppt, Point* pt);    
+    void project(const ProjectivePoint& ppt, Point* pt) const;
+    // TODO
+    //void project(const Point& pt, ProjectivePoint* ppt) const;
   };
 
 }
 
-#endif // PROJECTOR_H
+#endif // PRIMESENSE_MODEL_H
