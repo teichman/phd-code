@@ -21,7 +21,7 @@ namespace rgbd
     double iters = 0;
     double mean_fps = std::numeric_limits<double>::quiet_NaN();
     double prev_ts = 0;
-    cv::Mat1b dimg(cv::Size(width_, height_), 0);
+    cv::Mat1b dimg(cv::Size(model_.width_, model_.height_), 0);
     HighResTimer hrt;
     hrt.start();
     while(true) {
@@ -69,13 +69,15 @@ namespace rgbd
       hrt2.start();
       openni_wrapper::ImageYUV422 owimg(imd);
       cv::Mat3b cimg = oniToCV(owimg);
-      ROS_ASSERT(fx_ == fy_);
-      openni_wrapper::DepthImage owdimg(dmd, 0, fx_, 0, 0);
-      hrt2.stop();
-      cout << hrt2.reportMilliseconds() << endl;
+      ROS_ASSERT(model_.fx_ == model_.fy_);
+      openni_wrapper::DepthImage owdimg(dmd, 0, model_.fx_, 0, 0);
       if(recording_) {
 	ScopedTimer st("Writing new frame");
-	seq_->addFrame(cimg, *oniDepthToEigenPtr(owdimg), fx_, fy_, cx_, cy_, depth_ts);
+	Frame frame;
+	frame.img_ = cimg;
+	frame.depth_ = oniDepthToEigenPtr(owdimg);
+	frame.timestamp_ = depth_ts;
+	seq_->writeFrame(frame);
       }
       
       if(visualize_) {
@@ -139,10 +141,14 @@ namespace rgbd
   void OpenNIStreamRecorder::toggleRecording()
   {
     recording_ = !recording_;
+    
     cout << "Recording: " << recording_ << endl;
     if(recording_) {
-      string name = generateFilenameStream("recorded_sequences", "seq", 5);
-      seq_ = StreamSequence::Ptr(new StreamSequence(name));
+      string name = generateFilenameStream("recorded_sequences", "seq", 3);
+      seq_ = StreamSequence::Ptr(new StreamSequence);
+      seq_->init(name);
+      seq_->model_ = model_;
+      seq_->save();
     } 
   }
   
@@ -173,10 +179,10 @@ namespace rgbd
   {
     ROS_ASSERT(mode_ == "VGA");
     
-    width_ = 640;
-    height_ = 480;
-    cx_ = width_ / 2;
-    cy_ = height_ / 2;
+    model_.width_ = 640;
+    model_.height_ = 480;
+    model_.cx_ = model_.width_ / 2;
+    model_.cy_ = model_.height_ / 2;
 
     // -- Set up production chain.
     XnStatus retval = XN_STATUS_OK;
@@ -185,8 +191,8 @@ namespace rgbd
     retval = igen_.Create(context_); ROS_ASSERT(retval == XN_STATUS_OK);
   
     XnMapOutputMode output_mode;
-    output_mode.nXRes = width_;
-    output_mode.nYRes = height_;
+    output_mode.nXRes = model_.width_;
+    output_mode.nYRes = model_.height_;
     output_mode.nFPS = 30;
     retval = dgen_.SetMapOutputMode(output_mode); ROS_ASSERT(retval == XN_STATUS_OK);
     retval = igen_.SetMapOutputMode(output_mode); ROS_ASSERT(retval == XN_STATUS_OK);
@@ -209,17 +215,17 @@ namespace rgbd
     
     // -- Set intrinsics.
     if(registered_) {
-      fx_ = 525;
-      fy_ = 525;
-      ROS_DEBUG_STREAM("In registered mode.  Using hard-coded focal length of " << fx_ << flush);
+      model_.fx_ = 525;
+      model_.fy_ = 525;
+      ROS_DEBUG_STREAM("In registered mode.  Using hard-coded focal length of " << model_.fx_ << flush);
     }
     else {
       XnFieldOfView fov;
       dgen_.GetFieldOfView(fov);
-      fx_ = (double)width_ / (2.0 * tan(fov.fHFOV / 2.0));
-      fy_ = (double)height_ / (2.0 * tan(fov.fVFOV / 2.0));
-      ROS_ASSERT(fabs(fx_ - fy_) < 1e-6);
-      ROS_DEBUG_STREAM("Using focal length from device of " << fx_ << flush); 
+      model_.fx_ = (double)model_.width_ / (2.0 * tan(fov.fHFOV / 2.0));
+      model_.fy_ = (double)model_.height_ / (2.0 * tan(fov.fVFOV / 2.0));
+      ROS_ASSERT(fabs(model_.fx_ - model_.fy_) < 1e-6);
+      ROS_DEBUG_STREAM("Using focal length from device of " << model_.fx_ << flush); 
     }
   }
 }
