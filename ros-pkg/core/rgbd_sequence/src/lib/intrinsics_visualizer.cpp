@@ -28,11 +28,21 @@ namespace rgbd
 
   IntrinsicsVisualizer::IntrinsicsVisualizer() :
     idx_(0),
-    pcd_(new Cloud)
+    pcd_(new Cloud),
+    show_color_(true)
   {
     vw_.vis_.registerPointPickingCallback(&IntrinsicsVisualizer::pointPickingCallback, *this);
   }
   
+  void IntrinsicsVisualizer::decolorize(rgbd::Cloud* pcd) const
+  {
+    for(size_t i = 0; i < pcd->size(); ++i) {
+      pcd->at(i).r = 127;
+      pcd->at(i).g = 127;
+      pcd->at(i).b = 127;
+    }
+  }
+
   void IntrinsicsVisualizer::run(const std::string& path, double actual_distance)
   {
     path_ = path;
@@ -43,10 +53,11 @@ namespace rgbd
     Frame frame;
     while(true) {
       sseq_.readFrame(idx_, &frame);
-      Cloud::Ptr pcd(new Cloud);
       model_.frameToCloud(frame, pcd_.get());
       ROS_DEBUG_STREAM("IntrinsicsVisualizer using model: " << endl << model_.status("  "));
-      
+      if(!show_color_)
+	decolorize(pcd_.get());
+
       vw_.showCloud(pcd_);
       char key = vw_.waitKey();
 
@@ -60,6 +71,9 @@ namespace rgbd
 	break;
       case 's':
 	saveAccepted();
+	break;
+      case 'C':
+	show_color_ = !show_color_;
 	break;
       case 'c':
 	clearSelection();

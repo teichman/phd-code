@@ -35,7 +35,9 @@ namespace rgbd
     std::string path_;
     double actual_distance_;
     PrimeSenseModel model_;
-    
+    bool show_color_;
+
+    void decolorize(rgbd::Cloud* pcd) const;
     void increment(int num);
     void incrementIntrinsics(double dfx, double dfy, double dcx, double dcy);
     void findTube(const rgbd::Cloud& pcd);
