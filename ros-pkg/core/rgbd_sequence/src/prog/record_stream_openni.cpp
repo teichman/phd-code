@@ -13,6 +13,7 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("register", "Register depth to rgb data")
     ("fake-rgb", "Don't actually record rgb data")
+    ("no-frame-sync", "Necessary for recording with the Kinect")
     ;
 
   bpo::positional_options_description p;
@@ -27,7 +28,10 @@ int main(int argc, char** argv)
 
   ROS_ASSERT(!(opts.count("register") && opts.count("fake-rgb")));
   
-  OpenNIStreamRecorder rec("VGA", opts.count("fake-rgb"), opts.count("register"));
+  OpenNIStreamRecorder rec("VGA",
+			   opts.count("fake-rgb"),
+			   opts.count("register"),
+			   !((bool)opts.count("no-frame-sync")));
   rec.run();
 
   return 0;

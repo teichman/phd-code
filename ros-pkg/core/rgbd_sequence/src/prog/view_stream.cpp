@@ -48,7 +48,9 @@ int main(int argc, char** argv)
   cout << "Mean dt: " << mean_dt << endl;
   cout << "Max dt: " << max_dt << endl;
   cout << "--------------------" << endl;
-
+  cout << "Sensor model: " << endl;
+  cout << seq.model_.status("  ");
+  
   if(opts.count("only-stats"))
     return 0;
   

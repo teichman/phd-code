@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include <math.h>
+#include <algorithm>
 #include <deque>
 
 namespace rgbd
@@ -22,6 +23,8 @@ namespace rgbd
     Synchronizer(double max_dt);
     void addT0(T0 data0, double timestamp0);
     void addT1(T1 data1, double timestamp1);
+    double mostRecent0() const;
+    double mostRecent1() const;
   
   protected:
     double max_dt_;
@@ -92,7 +95,33 @@ namespace rgbd
 
     updated_ = true;
   }
-  
+
+  template<typename T0, typename T1>
+  double Synchronizer<T0, T1>::mostRecent0() const
+  {
+    if(timestamps0_.empty())
+      return ts0_;
+    else {
+      if(isnan(ts0_))
+	return timestamps0_.back();
+      else
+	return std::max(ts0_, timestamps0_.back());
+    }
+  }
+
+  template<typename T0, typename T1>
+  double Synchronizer<T0, T1>::mostRecent1() const
+  {
+    if(timestamps1_.empty())
+      return ts1_;
+    else {
+      if(isnan(ts1_))
+	return timestamps1_.back();
+      else
+	return std::max(ts1_, timestamps1_.back());
+    }
+  }
+
 }
 
 #endif // SYNCHRONIZER_H
