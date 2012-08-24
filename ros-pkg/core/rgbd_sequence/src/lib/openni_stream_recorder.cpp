@@ -7,23 +7,27 @@ namespace bfs = boost::filesystem;
 namespace rgbd
 {
 
-  OpenNIStreamRecorder::OpenNIStreamRecorder(const std::string& mode, bool registered) :
+  OpenNIStreamRecorder::OpenNIStreamRecorder(const std::string& mode, bool fake_rgb, bool registered) :
     mode_(mode),
     recording_(false),
+    fake_rgb_(fake_rgb),
     registered_(registered),
-    visualize_(true)
+    visualize_(true),
+    prev_depth_ts_(numeric_limits<double>::quiet_NaN()),
+    mean_fps_(numeric_limits<double>::quiet_NaN()),
+    sync_(1.05 * 2.0 / 30.0)
   {
+    ROS_ASSERT(!(fake_rgb && registered));  // This setting would make no sense.
     initializeOpenNI();
   }
   
   void OpenNIStreamRecorder::run()
   {
     double iters = 0;
-    double mean_fps = std::numeric_limits<double>::quiet_NaN();
-    double prev_ts = 0;
     cv::Mat1b dimg(cv::Size(model_.width_, model_.height_), 0);
     HighResTimer hrt;
     hrt.start();
+    Frame frame;
     while(true) {
       char key = cv::waitKey(2);
       if(key == 'q')
@@ -31,72 +35,166 @@ namespace rgbd
       if(key == ' ')
 	toggleRecording();
 
-      //XnStatus retval = context_.WaitOneUpdateAll(dgen_);  // Apparently frame sync doesn't work when you do this.
-      XnStatus retval = context_.WaitNoneUpdateAll();
-      if(retval != XN_STATUS_OK) {
-	printf("Failed updating data: %s\n", xnGetStatusString(retval));
-	continue;
-      }
+      bool success;
+      if(fake_rgb_) 
+	success = getDepth(&frame);
+      else
+	success = getRGBD(&frame);
 
-      boost::shared_ptr<xn::DepthMetaData> dmd(new xn::DepthMetaData);
-      dgen_.GetMetaData(*dmd);
-      boost::shared_ptr<xn::ImageMetaData> imd(new xn::ImageMetaData);
-      igen_.GetMetaData(*imd);
-      ROS_ASSERT(imd->PixelFormat() == XN_PIXEL_FORMAT_YUV422);
-    
-      int width = dmd->GetUnderlying()->pMap->Res.X;
-      int height = dmd->GetUnderlying()->pMap->Res.Y;
-      ROS_ASSERT(width == (int)imd->GetUnderlying()->pMap->Res.X);
-      ROS_ASSERT(height == (int)imd->GetUnderlying()->pMap->Res.Y);
-      double depth_ts = dmd->Timestamp() * 1e-6;
-      double image_ts = imd->Timestamp() * 1e-6;
-      if(depth_ts == prev_ts)
+      if(!success)
 	continue;
-      if(fabs(depth_ts - image_ts) > 0.003)
-	continue;
-      if(depth_ts - prev_ts > 0.04)
-	ROS_WARN("Dropping frames!");
-
-      cout << "Width: " << width << ", height: " << height;
-      cout << ", depth_ts: " << depth_ts << ", image_ts: " << image_ts;
-      cout << ", depth_ts - image_ts: " << depth_ts - image_ts;
-      cout << ", ts - prev_ts: " << depth_ts - prev_ts;
-      cout << ", mean fps: " << mean_fps << endl;
-      prev_ts = depth_ts;
-
-      // TODO: Get rid of these unnecessary openni_wrapper classes.
-      HighResTimer hrt2("Dealing with openni_wrapper");
-      hrt2.start();
-      openni_wrapper::ImageYUV422 owimg(imd);
-      cv::Mat3b cimg = oniToCV(owimg);
-      ROS_ASSERT(model_.fx_ == model_.fy_);
-      openni_wrapper::DepthImage owdimg(dmd, 0, model_.fx_, 0, 0);
-      if(recording_) {
-	ScopedTimer st("Writing new frame");
-	Frame frame;
-	frame.img_ = cimg;
-	frame.depth_ = oniDepthToEigenPtr(owdimg);
-	frame.timestamp_ = depth_ts;
-	seq_->writeFrame(frame);
-      }
-      
+            
       if(visualize_) {
 	for(int y = 0; y < dimg.rows; ++y) { 
 	  for(int x = 0; x < dimg.cols; ++x) {
-	    dimg(y, x) = 255.0 * (*dmd)(x, y) / 5000.0;  // dmd is in millimeters.
+	    dimg(y, x) = 255.0 * frame.depth_->coeffRef(y, x) / 5000.0;  // depth_ is in mm.
 	    if(dimg(y, x) > 255.0)
 	      dimg(y, x) = 0;
 	  }
 	}
 	cv::imshow("Depth Image", dimg);
-	cv::imshow("Color Image", cimg);
+	cv::imshow("Color Image", frame.img_);
       }
       
       ++iters;
-      mean_fps = iters / hrt.getSeconds();
+      mean_fps_ = iters / hrt.getSeconds();
     }
   }
 
+  bool OpenNIStreamRecorder::getDepth(Frame* frame)
+  {
+    XnStatus retval = context_.WaitNoneUpdateAll();
+    if(retval != XN_STATUS_OK) {
+      printf("Failed updating data: %s\n", xnGetStatusString(retval));
+      return false;
+    }
+    
+    DMDPtr dmd(new xn::DepthMetaData);
+    dgen_.GetMetaData(*dmd);
+    double depth_ts = dmd->Timestamp() * 1e-6;
+
+    // -- Force it to use every frame.
+    if(sync_.ts0_ != depth_ts) {
+      sync_.addT0(dmd, depth_ts);
+      sync_.addT1(IMDPtr(), depth_ts);
+    }
+    processSynchronizedData(frame);
+    
+    return true;
+  }
+
+  bool OpenNIStreamRecorder::getRGBD(Frame* frame)
+  {
+    XnStatus retval = context_.WaitNoneUpdateAll();
+    if(retval != XN_STATUS_OK) {
+      printf("Failed updating data: %s\n", xnGetStatusString(retval));
+      return false;
+    }
+    
+    boost::shared_ptr<xn::DepthMetaData> dmd(new xn::DepthMetaData);
+    dgen_.GetMetaData(*dmd);
+    double depth_ts = dmd->Timestamp() * 1e-6;
+
+    boost::shared_ptr<xn::ImageMetaData> imd(new xn::ImageMetaData);
+    igen_.GetMetaData(*imd);
+    ROS_ASSERT(imd->PixelFormat() == XN_PIXEL_FORMAT_YUV422);
+    double image_ts = imd->Timestamp() * 1e-6;
+    
+    if(sync_.ts0_ != depth_ts)
+      sync_.addT0(dmd, depth_ts);
+    processSynchronizedData(frame);
+    
+    if(sync_.ts1_ != image_ts)
+      sync_.addT1(imd, image_ts);
+    processSynchronizedData(frame);    
+
+    return true;
+  }
+
+  cv::Vec3b OpenNIStreamRecorder::colorize(double depth, double min_range, double max_range) const
+  {
+    if(depth == 0)
+      return cv::Vec3b(0, 0, 0);
+    
+    double increment = (max_range - min_range) / 3;
+    double thresh0 = min_range;
+    double thresh1 = thresh0 + increment;
+    double thresh2 = thresh1 + increment;
+    double thresh3 = thresh2 + increment;
+    
+    if(depth < thresh0) {
+      return cv::Vec3b(0, 0, 255);
+    }
+    if(depth >= thresh0 && depth < thresh1) {
+      int val = (depth - thresh0) / (thresh1 - thresh0) * 255.;
+      return cv::Vec3b(val, val, 255 - val);
+    }
+    else if(depth >= thresh1 && depth < thresh2) {
+      int val = (depth - thresh1) / (thresh2 - thresh1) * 255.;
+      return cv::Vec3b(255, 255 - val, 0);
+    }
+    else if(depth >= thresh2 && depth < thresh3) {
+      int val = (depth - thresh2) / (thresh3 - thresh2) * 255.;
+      return cv::Vec3b(255 - val, val, 0);
+    }
+    
+    return cv::Vec3b(0, 255, 0);
+  }
+  
+  void OpenNIStreamRecorder::processSynchronizedData(Frame* frame)
+  {
+    if(!sync_.updated_)
+      return;
+    sync_.updated_ = false;
+    
+    if(!isnan(sync_.ts0_) && sync_.ts0_ - prev_depth_ts_ > 0.04)
+      ROS_WARN("Dropping frames!");
+
+    // -- Fill the frame with depth data.
+    ROS_ASSERT(model_.fx_ == model_.fy_);
+    openni_wrapper::DepthImage owdimg(sync_.current0_, 0, model_.fx_, 0, 0);
+    frame->depth_ = oniDepthToEigenPtr(owdimg);
+    frame->timestamp_ = sync_.ts0_;
+
+    // -- Print out information.
+    int width = sync_.current0_->GetUnderlying()->pMap->Res.X;
+    int height = sync_.current0_->GetUnderlying()->pMap->Res.Y;
+    
+    cout << "Width: " << width << ", height: " << height;
+    cout << ", depth_ts: " << sync_.ts0_;
+    cout << ", image_ts: " << sync_.ts1_;
+    cout << ", depth_ts - image_ts: " << sync_.ts0_ - sync_.ts1_;
+    cout << ", ts - prev_depth_ts_: " << sync_.ts0_ - prev_depth_ts_;
+    cout << ", mean fps: " << mean_fps_ << endl;
+
+    prev_depth_ts_ = sync_.ts0_;
+
+    // -- Get the rgb data.
+    cv::Mat3b cimg(cv::Size(width, height));
+    double min_depth = 0.1;
+    double max_depth = 10.0;
+    if(fake_rgb_) {
+      for(int y = 0; y < cimg.rows; ++y)
+	for(int x = 0; x < cimg.cols; ++x)
+	  cimg(y, x) = colorize(frame->depth_->coeffRef(y, x) / 1000.0, min_depth, max_depth);
+    }
+    else {
+      ROS_ASSERT(width == (int)sync_.current1_->GetUnderlying()->pMap->Res.X);
+      ROS_ASSERT(height == (int)sync_.current1_->GetUnderlying()->pMap->Res.Y);
+      // TODO: Get rid of these unnecessary openni_wrapper classes.
+      HighResTimer hrt2("Dealing with openni_wrapper");
+      hrt2.start();
+      openni_wrapper::ImageYUV422 owimg(sync_.current1_);
+      cimg = oniToCV(owimg);
+    }
+    frame->img_ = cimg;
+    
+    if(recording_) {
+      ScopedTimer st("Writing new frame");
+      seq_->writeFrame(*frame);
+    }
+  }
+  
   cv::Mat3b OpenNIStreamRecorder::oniToCV(const openni_wrapper::Image& oni)
   {
     cv::Mat3b img(oni.getHeight(), oni.getWidth());
@@ -144,12 +242,15 @@ namespace rgbd
     
     cout << "Recording: " << recording_ << endl;
     if(recording_) {
+      mean_fps_ = numeric_limits<double>::quiet_NaN();
+      prev_depth_ts_ = numeric_limits<double>::quiet_NaN();
+			  
       string name = generateFilenameStream("recorded_sequences", "seq", 3);
       seq_ = StreamSequence::Ptr(new StreamSequence);
       seq_->init(name);
       seq_->model_ = model_;
       seq_->save();
-    } 
+    }
   }
   
   DepthMatPtr OpenNIStreamRecorder::oniDepthToEigenPtr(const openni_wrapper::DepthImage& oni)
@@ -188,29 +289,39 @@ namespace rgbd
     XnStatus retval = XN_STATUS_OK;
     retval = context_.Init(); ROS_ASSERT(retval == XN_STATUS_OK);
     retval = dgen_.Create(context_); ROS_ASSERT(retval == XN_STATUS_OK);
-    retval = igen_.Create(context_); ROS_ASSERT(retval == XN_STATUS_OK);
   
     XnMapOutputMode output_mode;
     output_mode.nXRes = model_.width_;
     output_mode.nYRes = model_.height_;
     output_mode.nFPS = 30;
     retval = dgen_.SetMapOutputMode(output_mode); ROS_ASSERT(retval == XN_STATUS_OK);
-    retval = igen_.SetMapOutputMode(output_mode); ROS_ASSERT(retval == XN_STATUS_OK);
-    retval = igen_.SetIntProperty("InputFormat", 5);  ROS_ASSERT(retval == XN_STATUS_OK);  // Uncompressed YUV?  PCL openni_device_primesense.cpp:62.
-    retval = igen_.SetPixelFormat(XN_PIXEL_FORMAT_YUV422); ROS_ASSERT(retval == XN_STATUS_OK);
-    // Hardware depth registration.
-    // https://groups.google.com/forum/?fromgroups=#!topic/openni-dev/5rP0mdPBeq0
-    if(registered_) {
-      cout << "Registering depth and rgb data." << endl;
-      retval = dgen_.SetIntProperty("RegistrationType", 1); ROS_ASSERT(retval == XN_STATUS_OK);  
-      retval = dgen_.GetAlternativeViewPointCap().SetViewPoint(igen_); ROS_ASSERT(retval == XN_STATUS_OK);
-      //retval = igen_.GetAlternativeViewPointCap().SetViewPoint(dgen_); ROS_ASSERT(retval == XN_STATUS_OK);  // This fails.
+
+    if(fake_rgb_) {
+      ROS_DEBUG_STREAM("Not recording rgb data.");
     }
-    else
-      cout << "Leaving depth and rgb unregistered." << endl;
+    else {
+      retval = igen_.Create(context_); ROS_ASSERT(retval == XN_STATUS_OK);
+      retval = igen_.SetMapOutputMode(output_mode); ROS_ASSERT(retval == XN_STATUS_OK);
+      retval = igen_.SetIntProperty("InputFormat", 5);  ROS_ASSERT(retval == XN_STATUS_OK);  // Uncompressed YUV?  PCL openni_device_primesense.cpp:62.
+      retval = igen_.SetPixelFormat(XN_PIXEL_FORMAT_YUV422); ROS_ASSERT(retval == XN_STATUS_OK);
+
+      // Synchronize output.
+      retval = dgen_.GetFrameSyncCap().FrameSyncWith(igen_); ROS_ASSERT(retval == XN_STATUS_OK);
+      ROS_ASSERT(dgen_.GetFrameSyncCap().IsFrameSyncedWith(igen_));
+      ROS_ASSERT(igen_.GetFrameSyncCap().IsFrameSyncedWith(dgen_));
+
+      // Hardware depth registration.
+      // https://groups.google.com/forum/?fromgroups=#!topic/openni-dev/5rP0mdPBeq0
+      if(registered_) {
+	cout << "Registering depth and rgb data." << endl;
+	retval = dgen_.SetIntProperty("RegistrationType", 1); ROS_ASSERT(retval == XN_STATUS_OK);  
+	retval = dgen_.GetAlternativeViewPointCap().SetViewPoint(igen_); ROS_ASSERT(retval == XN_STATUS_OK);
+	//retval = igen_.GetAlternativeViewPointCap().SetViewPoint(dgen_); ROS_ASSERT(retval == XN_STATUS_OK);  // This fails.
+      }
+      else
+	ROS_DEBUG_STREAM("Leaving depth and rgb unregistered.");
+    }
   
-    // Synchronize output.
-    retval = dgen_.GetFrameSyncCap().FrameSyncWith(igen_); ROS_ASSERT(retval == XN_STATUS_OK);
     retval = context_.StartGeneratingAll(); ROS_ASSERT(retval == XN_STATUS_OK);
     
     // -- Set intrinsics.

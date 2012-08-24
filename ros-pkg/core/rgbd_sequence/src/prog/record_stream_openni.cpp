@@ -12,6 +12,7 @@ int main(int argc, char** argv)
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("register", "Register depth to rgb data")
+    ("fake-rgb", "Don't actually record rgb data")
     ;
 
   bpo::positional_options_description p;
@@ -24,7 +25,9 @@ int main(int argc, char** argv)
   }
   bpo::notify(opts);
 
-  OpenNIStreamRecorder rec("VGA", opts.count("register"));
+  ROS_ASSERT(!(opts.count("register") && opts.count("fake-rgb")));
+  
+  OpenNIStreamRecorder rec("VGA", opts.count("fake-rgb"), opts.count("register"));
   rec.run();
 
   return 0;
