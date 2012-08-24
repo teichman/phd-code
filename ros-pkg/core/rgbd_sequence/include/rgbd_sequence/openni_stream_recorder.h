@@ -8,6 +8,7 @@
 #include <rgbd_sequence/stream_sequence.h>
 #include <Eigen/Eigen>
 #include <pcl/io/openni_camera/openni_image_yuv_422.h>
+#include <pcl/io/openni_camera/openni_image_bayer_grbg.h>
 #include <pcl/io/openni_camera/openni_depth_image.h>
 #include <rgbd_sequence/synchronizer.h>
 #include <gperftools/profiler.h>
@@ -18,11 +19,14 @@ namespace rgbd
   class OpenNIStreamRecorder
   {
   public:
-    //! mode = {"VGA", "QVGA", "QQVGA"}  Just VGA for now though.
-    OpenNIStreamRecorder(const std::string& mode = "VGA",
+    //! mode \in {"VGA", "QVGA", "QQVGA"}  Just VGA for now though.
+    //! type \in {"xpl", "kinect"}
+    //! id is the device number.
+    OpenNIStreamRecorder(const std::string& type,
+			 int id,
+			 const std::string& mode = "VGA",
 			 bool fake_rgb = false,
-			 bool registered = false,
-			 bool frame_sync = true);
+			 bool registered = false);
     void run();
 
     static DepthMat oniDepthToEigen(const openni_wrapper::DepthImage& oni);

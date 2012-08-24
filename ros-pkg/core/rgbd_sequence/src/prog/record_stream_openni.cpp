@@ -11,16 +11,19 @@ int main(int argc, char** argv)
   bpo::options_description opts_desc("Allowed options");
   opts_desc.add_options()
     ("help,h", "produce help message")
+    ("device", bpo::value<string>()->required(), "Device type.  \"xpl\" or \"kinect\"")
+    ("id", bpo::value<int>()->required(), "Device id")
     ("register", "Register depth to rgb data")
     ("fake-rgb", "Don't actually record rgb data")
-    ("no-frame-sync", "Necessary for recording with the Kinect")
     ;
 
   bpo::positional_options_description p;
+  p.add("device", 1);
+  p.add("id", 2);
   bpo::variables_map opts;
   bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
   if(opts.count("help")) {
-    cout << "Usage: record_stream_openni [opts]" << endl;
+    cout << "Usage: record_stream_openni DEVICE ID [OPTS]" << endl;
     cout << opts_desc << endl;
     return 1;
   }
@@ -28,10 +31,12 @@ int main(int argc, char** argv)
 
   ROS_ASSERT(!(opts.count("register") && opts.count("fake-rgb")));
   
-  OpenNIStreamRecorder rec("VGA",
+  OpenNIStreamRecorder rec(opts["device"].as<string>(),
+			   opts["id"].as<int>(),
+			   "VGA",
 			   opts.count("fake-rgb"),
-			   opts.count("register"),
-			   !((bool)opts.count("no-frame-sync")));
+			   opts.count("register"));
+			   
   rec.run();
 
   return 0;

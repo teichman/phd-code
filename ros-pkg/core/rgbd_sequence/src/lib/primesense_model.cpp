@@ -24,6 +24,8 @@ namespace rgbd
   }
 
   PrimeSenseModel::PrimeSenseModel() :
+    type_("unknown"),
+    id_(-1),
     width_(-1),
     height_(-1),
     fx_(-1),
@@ -112,6 +114,17 @@ namespace rgbd
 
   void PrimeSenseModel::serialize(std::ostream& out) const
   {
+    ROS_ASSERT(type_ != "unknown");
+    ROS_ASSERT(id_ != -1);
+    ROS_ASSERT(width_ != -1);
+    ROS_ASSERT(height_ != -1);
+    ROS_ASSERT(fx_ != -1);
+    ROS_ASSERT(fy_ != -1);
+    ROS_ASSERT(cx_ != -1);
+    ROS_ASSERT(cy_ != -1);
+
+    out << type_ << endl;
+    eigen_extensions::serializeScalar(id_, out);
     eigen_extensions::serializeScalar(width_, out);
     eigen_extensions::serializeScalar(height_, out);
     eigen_extensions::serializeScalar(fx_, out);
@@ -122,6 +135,8 @@ namespace rgbd
 
   void PrimeSenseModel::deserialize(std::istream& in)
   {
+    getline(in, type_);
+    eigen_extensions::deserializeScalar(in, &id_);
     eigen_extensions::deserializeScalar(in, &width_);
     eigen_extensions::deserializeScalar(in, &height_);
     eigen_extensions::deserializeScalar(in, &fx_);
@@ -133,6 +148,8 @@ namespace rgbd
   std::string PrimeSenseModel::status(const std::string& prefix) const
   {
     ostringstream oss;
+    oss << prefix << "type: " << type_ << endl;
+    oss << prefix << "id: " << id_ << endl;
     oss << prefix << "size: " << width_ << " x " << height_ << endl;
     oss << prefix << "fx: " << fx_ << endl;
     oss << prefix << "fy: " << fy_ << endl;

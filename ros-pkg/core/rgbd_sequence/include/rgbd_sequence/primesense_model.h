@@ -45,6 +45,10 @@ namespace rgbd
   class PrimeSenseModel : public Serializable
   {
   public:
+    //! "xpl" or "kinect"
+    std::string type_;
+    //! Device identifier.  Would use serial number but Asus didn't bother to provide one.
+    int id_;
     int width_;
     int height_;
     double fx_;

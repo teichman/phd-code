@@ -7,17 +7,22 @@ namespace bfs = boost::filesystem;
 namespace rgbd
 {
 
-  OpenNIStreamRecorder::OpenNIStreamRecorder(const std::string& mode, bool fake_rgb, bool registered, bool frame_sync) :
+  OpenNIStreamRecorder::OpenNIStreamRecorder(const std::string& type,
+					     int id,
+					     const std::string& mode,
+					     bool fake_rgb,
+					     bool registered) :
     mode_(mode),
     recording_(false),
     fake_rgb_(fake_rgb),
     registered_(registered),
-    frame_sync_(frame_sync),
     visualize_(true),
     prev_depth_ts_(numeric_limits<double>::quiet_NaN()),
-    sync_(0.016)
+    sync_(0.02)  // Set for the kinect.
   {
     ROS_ASSERT(!(fake_rgb && registered));  // This setting would make no sense.
+    model_.type_ = type;
+    model_.id_ = id;
     initializeOpenNI();
   }
   
@@ -83,7 +88,8 @@ namespace rgbd
 
     boost::shared_ptr<xn::ImageMetaData> imd(new xn::ImageMetaData);
     igen_.GetMetaData(*imd);
-    ROS_ASSERT(imd->PixelFormat() == XN_PIXEL_FORMAT_YUV422);
+    if(model_.type_ == "xpl")
+      ROS_ASSERT(imd->PixelFormat() == XN_PIXEL_FORMAT_YUV422);
     double image_ts = imd->Timestamp() * 1e-6;
 
     if(sync_.mostRecent0() != depth_ts) {
@@ -176,8 +182,14 @@ namespace rgbd
       // TODO: Get rid of these unnecessary openni_wrapper classes.
       HighResTimer hrt2("Dealing with openni_wrapper");
       hrt2.start();
-      openni_wrapper::ImageYUV422 owimg(sync_.current1_);
-      cimg = oniToCV(owimg);
+      if(model_.type_ == "kinect") {
+	openni_wrapper::ImageBayerGRBG owimg(sync_.current1_, openni_wrapper::ImageBayerGRBG::EdgeAwareWeighted);
+	cimg = oniToCV(owimg);
+      }
+      else {
+	openni_wrapper::ImageYUV422 owimg(sync_.current1_);
+	cimg = oniToCV(owimg);
+      }
     }
     frame.img_ = cimg;
     
@@ -306,11 +318,17 @@ namespace rgbd
     else {
       retval = igen_.Create(context_); handleXnStatus(retval);
       retval = igen_.SetMapOutputMode(output_mode); handleXnStatus(retval);
-      retval = igen_.SetIntProperty("InputFormat", 5);  handleXnStatus(retval);  // Uncompressed YUV?  PCL openni_device_primesense.cpp:62.
-      retval = igen_.SetPixelFormat(XN_PIXEL_FORMAT_YUV422); handleXnStatus(retval);
+      if(model_.type_ == "xpl") {
+	retval = igen_.SetIntProperty("InputFormat", 5);  handleXnStatus(retval);  // Uncompressed YUV?  PCL openni_device_primesense.cpp:62.
+	retval = igen_.SetPixelFormat(XN_PIXEL_FORMAT_YUV422); handleXnStatus(retval);
+      }
+      else if(model_.type_ == "kinect") {
+	retval = igen_.SetIntProperty("InputFormat", 6);  handleXnStatus(retval);  // Some special Kinect image mode?
+	retval = igen_.SetPixelFormat(XN_PIXEL_FORMAT_GRAYSCALE_8_BIT); handleXnStatus(retval);
+      }
 
       // Synchronize output.
-      if(frame_sync_) {
+      if(model_.type_ != "kinect") {
 	retval = dgen_.GetFrameSyncCap().FrameSyncWith(igen_); handleXnStatus(retval);
 	ROS_ASSERT(dgen_.GetFrameSyncCap().IsFrameSyncedWith(igen_));
 	ROS_ASSERT(igen_.GetFrameSyncCap().IsFrameSyncedWith(dgen_));
@@ -323,7 +341,13 @@ namespace rgbd
       // https://groups.google.com/forum/?fromgroups=#!topic/openni-dev/5rP0mdPBeq0
       if(registered_) {
 	cout << "Registering depth and rgb data." << endl;
-	retval = dgen_.SetIntProperty("RegistrationType", 1); handleXnStatus(retval);  
+	if(model_.type_ == "kinect") {
+	  retval = dgen_.SetIntProperty("RegistrationType", 2); handleXnStatus(retval);
+	}
+	else {
+	  retval = dgen_.SetIntProperty("RegistrationType", 1); handleXnStatus(retval);
+	}
+
 	retval = dgen_.GetAlternativeViewPointCap().SetViewPoint(igen_); handleXnStatus(retval);
 	//retval = igen_.GetAlternativeViewPointCap().SetViewPoint(dgen_); handleXnStatus(retval);  // This fails.
       }
