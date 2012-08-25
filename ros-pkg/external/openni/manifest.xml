@@ -1,0 +1,24 @@
+<package>
+  <description brief="openni">
+
+     openni
+
+     See https://github.com/OpenNI/OpenNI for install notes if necessary.
+     
+     You'll need to have at least these packages installed, and possibly more:
+     openjdk-7-jdk
+
+  </description>
+  <author>teichman</author>
+  <license>LGPL</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/openni</url>
+
+  <export>
+      <cpp cflags="-I${prefix}/git/Include" lflags="-Wl,-rpath,${prefix}/git/Platform/Linux/Bin/x64-Release/ -L${prefix}/git/Platform/Linux/Bin/x64-Release/ -lnimCodecs -lnimMockNodes -lnimRecorder -lOpenNI" />
+  </export>
+
+  
+</package>
+
+
