@@ -83,3 +83,8 @@ rosbuild_add_compile_flags(record_stream_openni -Wno-unused-but-set-variable -Wn
 rosbuild_link_boost(record_stream_openni program_options)
 target_link_libraries(record_stream_openni rgbd_sequence OpenNI)
 
+rosbuild_add_executable(record_oni src/prog/record_oni.cpp src/lib/oni_recorder.cpp)
+rosbuild_add_compile_flags(record_oni -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+rosbuild_link_boost(record_oni program_options)
+target_link_libraries(record_oni rgbd_sequence OpenNI)
+

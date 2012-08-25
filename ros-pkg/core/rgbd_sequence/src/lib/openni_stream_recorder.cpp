@@ -93,13 +93,13 @@ namespace rgbd
     double image_ts = imd->Timestamp() * 1e-6;
 
     if(sync_.mostRecent0() != depth_ts) {
-      cout << "=== Adding depth_ts: " << depth_ts << endl;
+      //cout << "=== Adding depth_ts: " << depth_ts << endl;
       sync_.addT0(dmd, depth_ts);
     }
     processSynchronizedData();
     
     if(sync_.mostRecent1() != image_ts) {
-      cout << "=== Adding image_ts: " << image_ts << endl;
+      //cout << "=== Adding image_ts: " << image_ts << endl;
       sync_.addT1(imd, image_ts);
     }
     processSynchronizedData();    
@@ -141,7 +141,7 @@ namespace rgbd
       return;
     sync_.updated_ = false;
 
-    cout << "=== sync_ has updated.  depth_ts: " << sync_.ts0_ << ", image_ts: " << sync_.ts1_ << endl;
+    //cout << "=== sync_ has updated.  depth_ts: " << sync_.ts0_ << ", image_ts: " << sync_.ts1_ << endl;
     
     if(sync_.ts0_ - prev_depth_ts_ > 0.04)
       ROS_WARN("Dropping frames!");
@@ -157,14 +157,16 @@ namespace rgbd
     // -- Print out information.
     int width = sync_.current0_->GetUnderlying()->pMap->Res.X;
     int height = sync_.current0_->GetUnderlying()->pMap->Res.Y;
-    
-    cout << "Width: " << width << ", height: " << height;
-    cout << ", depth_ts: " << sync_.ts0_;
-    cout << ", image_ts: " << sync_.ts1_;
-    cout << ", depth_ts - image_ts: " << sync_.ts0_ - sync_.ts1_;
-    cout << ", ts - prev_depth_ts_: " << sync_.ts0_ - prev_depth_ts_;
-    cout << endl;
 
+    if(recording_) {
+      cout << "Width: " << setw(3) << width << ", height: " << setw(3) << height;
+      cout << ", depth_ts: " << fixed << setw(7) << setprecision(4) << sync_.ts0_;
+      cout << ", image_ts: " << fixed << setw(7) << setprecision(4) << sync_.ts1_;
+      cout << ", depth_ts - image_ts: " << fixed << setw(7) << setprecision(4) << sync_.ts0_ - sync_.ts1_;
+      cout << ", ts - prev_depth_ts_: " << fixed << setw(7) << setprecision(4) << sync_.ts0_ - prev_depth_ts_;
+      cout << endl;
+    }
+    
     prev_depth_ts_ = sync_.ts0_;
 
     // -- Get the rgb data.
@@ -194,7 +196,7 @@ namespace rgbd
     frame.img_ = cimg;
     
     if(recording_) {
-      ScopedTimer st("Writing new frame");
+      //ScopedTimer st("Writing new frame");
       seq_->writeFrame(frame);
     }
 
