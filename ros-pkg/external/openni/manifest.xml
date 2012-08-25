@@ -3,7 +3,11 @@
 
      openni
 
-     See https://github.com/OpenNI/OpenNI for install notes if necessary.
+     See
+     https://github.com/OpenNI/OpenNI
+     and
+     https://github.com/PrimeSense/Sensor
+     for install notes if necessary.
      
      You'll need to have at least these packages installed, and possibly more:
      openjdk-7-jdk
@@ -14,9 +18,15 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/openni</url>
 
+
+
+
+  
+
   <export>
-      <cpp cflags="-I${prefix}/git/Include" lflags="-Wl,-rpath,${prefix}/git/Platform/Linux/Bin/x64-Release/ -L${prefix}/git/Platform/Linux/Bin/x64-Release/ -lnimCodecs -lnimMockNodes -lnimRecorder -lOpenNI" />
+      <cpp cflags="-I${prefix}/git/openni/Include -I${prefix}/git/sensor/Include -I${prefix}/git/sensor/Source/External -I${prefix}/git/sensor/Source/Utils -I${prefix}/git/sensor/Source/XnCommon -I${prefix}/git/sensor/Source/XnCore  -I${prefix}/git/sensor/Source/XnDDK  -I${prefix}/git/sensor/Source/XnDeviceFile  -I${prefix}/git/sensor/Source/XnDeviceSensorV2  -I${prefix}/git/sensor/Source/XnFormats" lflags="-Wl,-rpath,${prefix}/git/openni/Platform/Linux/Bin/x64-Release/ -L${prefix}/git/openni/Platform/Linux/Bin/x64-Release/ -Wl,-rpath,${prefix}/git/sensor/Platform/Linux/Bin/x64-Release/ -L${prefix}/git/sensor/Platform/Linux/Bin/x64-Release/ -lnimCodecs -lnimMockNodes -lnimRecorder -lOpenNI -lOpenNI.jni -lXnCore -lXnFormats -lXnDDK -lXnDeviceFile -lXnDeviceSensorV2" />
   </export>
+
 
   
 </package>

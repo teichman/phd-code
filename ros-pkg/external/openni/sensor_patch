@@ -1,0 +1,34 @@
+[1mdiff --git a/Platform/Linux/Build/EngineLibMakefile b/Platform/Linux/Build/EngineLibMakefile[m
+[1mindex 56b274f..c767822 100644[m
+[1m--- a/Platform/Linux/Build/EngineLibMakefile[m
+[1m+++ b/Platform/Linux/Build/EngineLibMakefile[m
+[36m@@ -17,7 +17,11 @@[m [mINC_DIRS += \[m
+ 	=/usr/include/ni \[m
+ 	../../../../Include \[m
+ 	../../../../Source \[m
+[31m-	../../../../Source/XnCommon[m
+[32m+[m	[32m../../../../Source/XnCommon \[m
+[32m+[m	[32m$(shell rospack find openni)/git/openni/Include[m
+[32m+[m
+[32m+[m[32mLIB_DIRS += $(shell rospack find openni)/git/openni/Platform/Linux/Bin/x64-Release/[m
+[32m+[m[32mCFLAGS += -Wl,-rpath,$(shell rospack find openni)/git/openni/Platform/Linux/Bin/x64-Release/[m
+ [m
+ BIN_DIR = ../../Bin[m
+ [m
+[1mdiff --git a/Platform/Linux/Build/Utils/EngineUtilMakefile b/Platform/Linux/Build/Utils/EngineUtilMakefile[m
+[1mindex 9f57574..3305a79 100644[m
+[1m--- a/Platform/Linux/Build/Utils/EngineUtilMakefile[m
+[1m+++ b/Platform/Linux/Build/Utils/EngineUtilMakefile[m
+[36m@@ -17,7 +17,11 @@[m [mINC_DIRS += \[m
+ 	=/usr/include/ni \[m
+ 	../../../../../Include \[m
+ 	../../../../../Source \[m
+[31m-	../../../../../Source/XnCommon[m
+[32m+[m	[32m../../../../../Source/XnCommon \[m
+[32m+[m	[32m$(shell rospack find openni)/git/openni/Include[m
+[32m+[m
+[32m+[m[32mLIB_DIRS += $(shell rospack find openni)/git/openni/Platform/Linux/Bin/x64-Release/[m
+[32m+[m[32mCFLAGS += -Wl,-rpath,$(shell rospack find openni)/git/openni/Platform/Linux/Bin/x64-Release/[m
+ [m
+ BIN_DIR = ../../../Bin[m
+ [m
