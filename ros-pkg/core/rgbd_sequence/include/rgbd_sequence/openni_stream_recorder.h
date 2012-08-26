@@ -29,10 +29,14 @@ namespace rgbd
 			 bool registered = false);
     void run();
 
-    static DepthMat oniDepthToEigen(const openni_wrapper::DepthImage& oni);
-    static DepthMatPtr oniDepthToEigenPtr(const openni_wrapper::DepthImage& oni);
-    //! Warning: This depends on having the patched version of OpenNI that comes with PCL.
-    static cv::Mat3b oniToCV(const openni_wrapper::Image& oni);
+    static DepthMatPtr oniDepthToEigenPtr(const xn::DepthMetaData& dmd);
+    static cv::Mat3b oniToCV(const xn::ImageMetaData& imd);
+    
+    // static DepthMat oniDepthToEigen(const openni_wrapper::DepthImage& oni);
+    // static DepthMatPtr oniDepthToEigenPtr(const openni_wrapper::DepthImage& oni);
+    // //! Warning: This depends on having the patched version of OpenNI that comes with PCL.
+    // static cv::Mat3b oniToCV(const openni_wrapper::Image& oni);
+
     
   protected:
     std::string mode_;

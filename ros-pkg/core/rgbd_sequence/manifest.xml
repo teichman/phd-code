@@ -20,6 +20,7 @@
   <depend package="eigen_extensions"/>
   <depend package="google-perftools"/>
   <depend package="optimization"/>
+  <depend package="openni"/>
 
   <export>
     <cpp cflags="-I${prefix}/include"
