@@ -1,0 +1,34 @@
+diff --git a/Platform/Linux/Build/EngineLibMakefile b/Platform/Linux/Build/EngineLibMakefile
+index 56b274f..5a52f2a 100644
+--- Platform/Linux/Build/EngineLibMakefile
++++ Platform/Linux/Build/EngineLibMakefile
+@@ -17,7 +17,11 @@ INC_DIRS += \
+ 	=/usr/include/ni \
+ 	../../../../Include \
+ 	../../../../Source \
+-	../../../../Source/XnCommon
++       ../../../../Source/XnCommon \
++       $(shell rospack cflags-only-I openni)
++
++LIB_DIRS += $(shell rospack libs-only-L openni)
++CFLAGS += -Wl,-rpath,$(shell rospack find openni)/git/openni/Platform/Linux/Bin/x64-Release/
+ 
+ BIN_DIR = ../../Bin
+ 
+diff --git Platform/Linux/Build/Utils/EngineUtilMakefile b/Platform/Linux/Build/Utils/EngineUtilMakefile
+index 9f57574..6de4518 100644
+--- Platform/Linux/Build/Utils/EngineUtilMakefile
++++ Platform/Linux/Build/Utils/EngineUtilMakefile
+@@ -17,7 +17,11 @@ INC_DIRS += \
+ 	=/usr/include/ni \
+ 	../../../../../Include \
+ 	../../../../../Source \
+-	../../../../../Source/XnCommon
++       ../../../../Source/XnCommon \
++       $(shell rospack cflags-only-I openni)
++
++LIB_DIRS += $(shell rospack libs-only-L openni)
++CFLAGS += -Wl,-rpath,$(shell rospack find openni)/git/openni/Platform/Linux/Bin/x64-Release/
+ 
+ BIN_DIR = ../../../Bin
+ 

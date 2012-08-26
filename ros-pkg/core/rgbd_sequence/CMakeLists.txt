@@ -21,14 +21,17 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
+set(CMAKE_EXE_LINKER_FLAGS -Wl,--no-as-needed)
+
 #common commands for building c++ executables and libraries
 rosbuild_add_library(rgbd_sequence
-  src/lib/rgbd_sequence.cpp
+  #src/lib/rgbd_sequence.cpp
   src/lib/stream_sequence.cpp
   src/lib/primesense_model.cpp
   src/lib/vis_wrapper.cpp
   src/lib/intrinsics_visualizer.cpp
   )
+target_link_libraries(rgbd_sequence XnCore XnFormats XnDDK XnDeviceFile XnDeviceSensorV2)
 rosbuild_link_boost(rgbd_sequence system program_options)
 rosbuild_add_compile_flags(rgbd_sequence -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 #target_link_libraries(${PROJECT_NAME} another_library)
@@ -73,10 +76,10 @@ rosbuild_add_executable(intrinsics_search src/prog/intrinsics_search.cpp)
 rosbuild_add_compile_flags(intrinsics_search -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 target_link_libraries(intrinsics_search rgbd_sequence)
 
-rosbuild_add_executable(raw_openni_test src/prog/raw_openni_test.cpp)
-rosbuild_add_compile_flags(raw_openni_test -Wno-unused-but-set-variable -Wno-unknown-pragmas)
-rosbuild_link_boost(raw_openni_test program_options)
-target_link_libraries(raw_openni_test OpenNI)
+#rosbuild_add_executable(raw_openni_test src/prog/raw_openni_test.cpp)
+#rosbuild_add_compile_flags(raw_openni_test -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+#rosbuild_link_boost(raw_openni_test program_options)
+#target_link_libraries(raw_openni_test OpenNI)
 
 rosbuild_add_executable(record_stream_openni src/prog/record_stream_openni.cpp src/lib/openni_stream_recorder.cpp)
 rosbuild_add_compile_flags(record_stream_openni -Wno-unused-but-set-variable -Wno-unknown-pragmas)
