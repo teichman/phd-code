@@ -88,10 +88,8 @@ namespace rgbd
 
     boost::shared_ptr<xn::ImageMetaData> imd(new xn::ImageMetaData);
     igen_.GetMetaData(*imd);
-    if(model_.type_ == "xpl") {
-//      ROS_ASSERT(imd->PixelFormat() == XN_PIXEL_FORMAT_YUV422);
-      ROS_ASSERT(imd->PixelFormat() == XN_PIXEL_FORMAT_RGB24);
-    }
+    if(model_.type_ == "xpl")
+      ROS_ASSERT(imd->PixelFormat() == XN_PIXEL_FORMAT_YUV422);
     double image_ts = imd->Timestamp() * 1e-6;
 
     if(sync_.mostRecent0() != depth_ts) {
@@ -152,8 +150,8 @@ namespace rgbd
     Frame frame;
    //ROS_DEBUG_STREAM("fx: " << model_.fx_ << ", fy: " << model_.fy_);
     ROS_ASSERT(fabs(model_.fx_ - model_.fy_) < 1e-6);
-    //openni_wrapper::DepthImage owdimg(sync_.current0_, 0, model_.fx_, 0, 0);
-    frame.depth_ = oniDepthToEigenPtr(*sync_.current0_);
+    openni_wrapper::DepthImage owdimg(sync_.current0_, 0, model_.fx_, 0, 0);
+    frame.depth_ = oniDepthToEigenPtr(owdimg);
     frame.timestamp_ = sync_.ts0_;
 
     // -- Print out information.
@@ -187,14 +185,12 @@ namespace rgbd
       HighResTimer hrt2("Dealing with openni_wrapper");
       hrt2.start();
       if(model_.type_ == "kinect") {
-	// openni_wrapper::ImageBayerGRBG owimg(sync_.current1_, openni_wrapper::ImageBayerGRBG::EdgeAwareWeighted);
-	// cimg = oniToCV(owimg);
-	cimg = oniToCV(*sync_.current1_);
+	openni_wrapper::ImageBayerGRBG owimg(sync_.current1_, openni_wrapper::ImageBayerGRBG::EdgeAwareWeighted);
+	cimg = oniToCV(owimg);
       }
       else {
-	// openni_wrapper::ImageYUV422 owimg(sync_.current1_);
-	// cimg = oniToCV(owimg);
-	cimg = oniToCV(*sync_.current1_);
+	openni_wrapper::ImageYUV422 owimg(sync_.current1_);
+	cimg = oniToCV(owimg);
       }
     }
     frame.img_ = cimg;
@@ -218,36 +214,17 @@ namespace rgbd
     }
   }
   
-  // cv::Mat3b OpenNIStreamRecorder::oniToCV(const openni_wrapper::Image& oni)
-  // {
-  //   cv::Mat3b img(oni.getHeight(), oni.getWidth());
-  //   uchar data[img.rows * img.cols * 3];
-  //   oni.fillRGB(img.cols, img.rows, data);
-  //   int i = 0;
-  //   for(int y = 0; y < img.rows; ++y) {
-  //     for(int x = 0; x < img.cols; ++x, i+=3) {
-  // 	img(y, x)[0] = data[i+2];
-  // 	img(y, x)[1] = data[i+1];
-  // 	img(y, x)[2] = data[i];
-  //     }
-  //   }
-    
-  //   return img;
-  // }
-
-  cv::Mat3b OpenNIStreamRecorder::oniToCV(const xn::ImageMetaData& imd)
+  cv::Mat3b OpenNIStreamRecorder::oniToCV(const openni_wrapper::Image& oni)
   {
-    int width = imd.GetUnderlying()->pMap->Res.X;
-    int height = imd.GetUnderlying()->pMap->Res.Y;
-    const XnRGB24Pixel* data = imd.RGB24Data();
-
+    cv::Mat3b img(oni.getHeight(), oni.getWidth());
+    uchar data[img.rows * img.cols * 3];
+    oni.fillRGB(img.cols, img.rows, data);
     int i = 0;
-    cv::Mat3b img(height, width);
     for(int y = 0; y < img.rows; ++y) {
-      for(int x = 0; x < img.cols; ++x, ++i) {
-	img(y, x)[0] = data[i].nBlue;
-	img(y, x)[1] = data[i].nGreen;
-	img(y, x)[2] = data[i].nRed;
+      for(int x = 0; x < img.cols; ++x, i+=3) {
+	img(y, x)[0] = data[i+2];
+	img(y, x)[1] = data[i+1];
+	img(y, x)[2] = data[i];
       }
     }
     
@@ -293,40 +270,29 @@ namespace rgbd
       seq_->save();
     }
   }
-
-  DepthMatPtr OpenNIStreamRecorder::oniDepthToEigenPtr(const xn::DepthMetaData& dmd)
+  
+  DepthMatPtr OpenNIStreamRecorder::oniDepthToEigenPtr(const openni_wrapper::DepthImage& oni)
   {
-    int width = dmd.GetUnderlying()->pMap->Res.X;
-    int height = dmd.GetUnderlying()->pMap->Res.Y;
-    DepthMatPtr depth(new DepthMat(height, width));
-    for(int y = 0; y < depth->rows(); ++y)
-      for(int x = 0; x < depth->cols(); ++x)
-	depth->coeffRef(y, x) = dmd(x, y);
+    DepthMatPtr depth(new DepthMat(oni.getHeight(), oni.getWidth()));
+    unsigned short data[depth->rows() * depth->cols()];
+    oni.fillDepthImageRaw(depth->cols(), depth->rows(), data);
+    int i = 0;
+    for(int y = 0; y < depth->rows(); ++y){
+      for(int x = 0; x < depth->cols(); ++x, ++i){
+        if(data[i] == oni.getNoSampleValue() || data[i] == oni.getShadowValue()){
+          depth->coeffRef(y,x) = 0;
+        }else{
+          depth->coeffRef(y,x) = data[i];
+        }
+      }
+    }
     return depth;
   }
   
-  // DepthMatPtr OpenNIStreamRecorder::oniDepthToEigenPtr(const openni_wrapper::DepthImage& oni)
-  // {
-  //   DepthMatPtr depth(new DepthMat(oni.getHeight(), oni.getWidth()));
-  //   unsigned short data[depth->rows() * depth->cols()];
-  //   oni.fillDepthImageRaw(depth->cols(), depth->rows(), data);
-  //   int i = 0;
-  //   for(int y = 0; y < depth->rows(); ++y){
-  //     for(int x = 0; x < depth->cols(); ++x, ++i){
-  //       if(data[i] == oni.getNoSampleValue() || data[i] == oni.getShadowValue()){
-  //         depth->coeffRef(y,x) = 0;
-  //       }else{
-  //         depth->coeffRef(y,x) = data[i];
-  //       }
-  //     }
-  //   }
-  //   return depth;
-  // }
-  
-  // DepthMat OpenNIStreamRecorder::oniDepthToEigen(const openni_wrapper::DepthImage& oni)
-  // {
-  //   return *oniDepthToEigenPtr(oni);
-  // }
+  DepthMat OpenNIStreamRecorder::oniDepthToEigen(const openni_wrapper::DepthImage& oni)
+  {
+    return *oniDepthToEigenPtr(oni);
+  }
 
   void OpenNIStreamRecorder::initializeOpenNI()
   {
@@ -355,14 +321,12 @@ namespace rgbd
       retval = igen_.Create(context_); handleXnStatus(retval);
       retval = igen_.SetMapOutputMode(output_mode); handleXnStatus(retval);
       if(model_.type_ == "xpl") {
-	// retval = igen_.SetIntProperty("InputFormat", 5);  handleXnStatus(retval);  // Uncompressed YUV?  PCL openni_device_primesense.cpp:62.
-	// retval = igen_.SetPixelFormat(XN_PIXEL_FORMAT_YUV422); handleXnStatus(retval);
-	retval = igen_.SetPixelFormat(XN_PIXEL_FORMAT_RGB24); handleXnStatus(retval);
+	retval = igen_.SetIntProperty("InputFormat", 5);  handleXnStatus(retval);  // Uncompressed YUV?  PCL openni_device_primesense.cpp:62.
+	retval = igen_.SetPixelFormat(XN_PIXEL_FORMAT_YUV422); handleXnStatus(retval);
       }
       else if(model_.type_ == "kinect") {
-	// retval = igen_.SetIntProperty("InputFormat", 6);  handleXnStatus(retval);  // Some special Kinect image mode?
-	// retval = igen_.SetPixelFormat(XN_PIXEL_FORMAT_GRAYSCALE_8_BIT); handleXnStatus(retval);
-	retval = igen_.SetPixelFormat(XN_PIXEL_FORMAT_RGB24); handleXnStatus(retval);
+	retval = igen_.SetIntProperty("InputFormat", 6);  handleXnStatus(retval);  // Some special Kinect image mode?
+	retval = igen_.SetPixelFormat(XN_PIXEL_FORMAT_GRAYSCALE_8_BIT); handleXnStatus(retval);
       }
 
       // Synchronize output.

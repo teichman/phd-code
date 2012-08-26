@@ -14,7 +14,6 @@
 #include <eigen_extensions/eigen_extensions.h>
 #include <timer/timer.h>
 #include <rgbd_sequence/primesense_model.h>
-#include <XnDevice.h>
 
 namespace rgbd
 {
@@ -31,7 +30,6 @@ namespace rgbd
     std::vector<double> timestamps_; //Keep these in memory
     std::string root_path_;
     PrimeSenseModel model_;
-    XnDeviceDefinition wtf_;
 
     //! Does not initialize anything.
     StreamSequence();
