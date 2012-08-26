@@ -20,6 +20,7 @@ namespace rgbd
     prev_depth_ts_(numeric_limits<double>::quiet_NaN()),
     sync_(0.02)  // Set for the kinect.
   {
+    ROS_ASSERT(type == "kinect" || type == "xpl");
     ROS_ASSERT(!(fake_rgb && registered));  // This setting would make no sense.
     model_.type_ = type;
     model_.id_ = id;
