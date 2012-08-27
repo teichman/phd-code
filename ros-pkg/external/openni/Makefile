@@ -9,12 +9,12 @@ built: git/sensor git/openni
 # You'll need to make install in order to actually use the sensor,
 # but we don't do this by default because that would be rude.
 install: built
-	cd git/openni/Platform/Linux/Redist/OpenNI-Bin-Dev-Linux-x64-v1.5.2.23/ && sudo ./install.sh
-	cd git/sensor/Platform/Linux/Redist/Sensor-Bin-Linux-x64-v5.1.0.41/ && sudo ./install.sh
+	sudo git/openni/Platform/Linux/Redist/OpenNI-Bin-Dev-Linux-x64-v1.5.2.23/install.sh
+	sudo git/sensor/Platform/Linux/Redist/Sensor-Bin-Linux-x64-v5.1.0.41/install.sh
 
 uninstall:
-	cd git/openni/Platform/Linux/CreateRedist && sudo ./install.sh -u
-	cd git/sensor/Platform/Linux/CreateRedist && sudo ./install.sh -u
+	sudo git/openni/Platform/Linux/Redist/OpenNI-Bin-Dev-Linux-x64-v1.5.2.23/install.sh -u
+	sudo git/sensor/Platform/Linux/Redist/Sensor-Bin-Linux-x64-v5.1.0.41/install.sh -u
 
 git/sensor:
 	mkdir -p $(@D)
