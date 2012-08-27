@@ -59,8 +59,8 @@ namespace rgbd
     Eigen::VectorXd weights_;
 
     //! f[1] is measured depth in decameters.
-    static Eigen::VectorXd computeFeatures(const ProjectivePoint& ppt);
-    static int numFeatures();
+    Eigen::VectorXd computeFeatures(const ProjectivePoint& ppt) const;
+    int numFeatures() const;
     
     //! Initializes with a bogus model: all params set to -1.
     PrimeSenseModel();
