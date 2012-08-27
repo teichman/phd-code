@@ -1,5 +1,5 @@
 #include <boost/program_options.hpp>
-#include <rgbd_sequence/openni_stream_recorder.h>
+#include <rgbd_sequence/oni_recorder.h>
 
 using namespace std;
 using namespace rgbd;
@@ -14,7 +14,6 @@ int main(int argc, char** argv)
     ("device", bpo::value<string>()->required(), "Device type.  \"xpl\" or \"kinect\"")
     ("id", bpo::value<int>()->required(), "Device id")
     ("register", "Register depth to rgb data")
-    ("fake-rgb", "Don't actually record rgb data")
     ;
 
   bpo::positional_options_description p;
@@ -23,19 +22,16 @@ int main(int argc, char** argv)
   bpo::variables_map opts;
   bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
   if(opts.count("help")) {
-    cout << "Usage: record_stream_openni DEVICE ID [OPTS]" << endl;
+    cout << "Usage: record_raw_oni DEVICE ID [OPTS]" << endl;
     cout << opts_desc << endl;
     return 1;
   }
   bpo::notify(opts);
 
-  ROS_ASSERT(!(opts.count("register") && opts.count("fake-rgb")));
-  
-  OpenNIStreamRecorder rec(opts["device"].as<string>(),
-			   opts["id"].as<int>(),
-			   "VGA",
-			   opts.count("fake-rgb"),
-			   opts.count("register"));
+  OniRecorder rec(opts["device"].as<string>(),
+		  opts["id"].as<int>(),
+		  "VGA",
+		  opts.count("register"));
 			   
   rec.run();
 

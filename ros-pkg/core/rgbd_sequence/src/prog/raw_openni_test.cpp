@@ -85,12 +85,21 @@ int main(int argc, char** argv)
   }
   ROS_ASSERT(retval == XN_STATUS_OK);
 
+  // Recording test.
+  // xn::Recorder recorder;
+  // retval = recorder.Create(context); ROS_ASSERT(retval == XN_STATUS_OK);
+  // retval = recorder.SetDestination(XN_RECORD_MEDIUM_FILE, "recording.oni"); ROS_ASSERT(retval == XN_STATUS_OK);
+  // //retval = recorder.AddNodeToRecording(dgen, XN_CODEC_16Z_EMB_TABLES); ROS_ASSERT(retval == XN_STATUS_OK);  // Fails.
+  // retval = recorder.AddNodeToRecording(igen);
+  
   XnDepthPixel maxdepth = dgen.GetDeviceMaxDepth();
   cout << "Max depth (mm): " << maxdepth << endl;
   cout << "Depth supports XN_CAPABILITY_FRAME_SYNC: " << dgen.IsCapabilitySupported(XN_CAPABILITY_FRAME_SYNC) << endl;
   cout << "Image supports XN_CAPABILITY_FRAME_SYNC: " << igen.IsCapabilitySupported(XN_CAPABILITY_FRAME_SYNC) << endl;
   cout << "Depth supports XN_CAPABILITY_ALTERNATIVE_VIEW_POINT: " << dgen.IsCapabilitySupported(XN_CAPABILITY_ALTERNATIVE_VIEW_POINT) << endl;
   cout << "Image supports XN_CAPABILITY_ALTERNATIVE_VIEW_POINT: " << igen.IsCapabilitySupported(XN_CAPABILITY_ALTERNATIVE_VIEW_POINT) << endl;
+  cout << "Depth supports XN_CAPABILITY_EXPOSURE: " << dgen.IsCapabilitySupported(XN_CAPABILITY_EXPOSURE) << endl;
+  cout << "Image supports XN_CAPABILITY_EXPOSURE: " << igen.IsCapabilitySupported(XN_CAPABILITY_EXPOSURE) << endl;
   cout << "Depth is synced with image: " << dgen.GetFrameSyncCap().IsFrameSyncedWith(igen) << endl;
   cout << "Image is synced with depth: " << igen.GetFrameSyncCap().IsFrameSyncedWith(dgen) << endl;
   cout << endl;

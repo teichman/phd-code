@@ -3,13 +3,13 @@
 
 #include <rgbd_sequence/vis_wrapper.h>
 #include <rgbd_sequence/stream_sequence.h>
-#include <rgbd_sequence/projector.h>
+#include <rgbd_sequence/primesense_model.h>
 #include <optimization/grid_search.h>
 
 namespace rgbd
 {
 
-  class AcceptedPoints : public std::vector< std::pair<ProjectedPoint, ProjectedPoint> >,
+  class AcceptedPoints : public std::vector< std::pair<ProjectivePoint, ProjectivePoint> >,
 			 public Serializable
   {
     void serialize(std::ostream& out) const;
@@ -30,12 +30,14 @@ namespace rgbd
     std::vector<Point> selected_;
     std::vector< std::vector<Point> > visible_pairs_;
     AcceptedPoints accepted_;
-    Projector proj_;
-    Cloud::Ptr warped_;
+    Cloud::Ptr pcd_;
     Frame frame_;
     std::string path_;
     double actual_distance_;
-    
+    PrimeSenseModel model_;
+    bool show_color_;
+
+    void decolorize(rgbd::Cloud* pcd) const;
     void increment(int num);
     void incrementIntrinsics(double dfx, double dfy, double dcx, double dcy);
     void findTube(const rgbd::Cloud& pcd);
@@ -53,7 +55,7 @@ namespace rgbd
   public:
     typedef boost::shared_ptr<LossFunction> Ptr;
     
-    LossFunction(const AcceptedPoints& accepted, double actual_distance);
+    LossFunction(const AcceptedPoints& accepted, double actual_distance, int width, int height);
     //! fx, fy, cx, cy.
     //! Returns average distance error between points for the given intrinsics.
     double eval(const Eigen::VectorXd& x) const;
@@ -61,6 +63,8 @@ namespace rgbd
   protected:
     AcceptedPoints accepted_;
     double actual_distance_;
+    int width_;
+    int height_;
   };
   
 }

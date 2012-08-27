@@ -1,5 +1,5 @@
 #include <rgbd_sequence/stream_sequence.h>
-#include <rgbd_sequence/projector.h>
+#include <rgbd_sequence/primesense_model.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
 #include <pcl/sample_consensus/ransac.h>
 #include <pcl/visualization/cloud_viewer.h>
@@ -73,27 +73,23 @@ int main(int argc, char** argv)
   // -- Show original cloud.
   StreamSequence sseq;
   sseq.load(argv[1]);
-  Cloud::Ptr pcd = sseq.getCloud(1);
-
-  Projector proj;
-  proj.fx_ = sseq.fx_;
-  proj.fy_ = sseq.fy_;
-  proj.cx_ = sseq.cx_;
-  proj.cy_ = sseq.cy_;
-  proj.width_ = pcd->width;
-  proj.height_ = pcd->height;
   Frame frame;
-  proj.cloudToFrame(*pcd, &frame);
+  sseq.getFrame(1, &frame);
+  // Start with the model saved during recording, but allow it to be changed later.
+  PrimeSenseModel model = sseq.model_;
+  
+  
+  Cloud pcd;
+  sseq.model_.project(frame, &pcd);
   CloudViewer vis("Cloud");
   vis.registerKeyboardCallback(keyboardCallback);
   
   int f_increment = 10;
   int c_increment = 10;
   bool done = false;
-  while(!done) { 
-    cout << "fx: " << proj.fx_ << ", fy: " << proj.fy_
-	 << ", cx: " << proj.cx_ << ", cy: " << proj.cy_ << endl;
-    proj.frameToCloud(frame, pcd.get());
+  while(!done) {
+    cout << "PrimeSenseModel: " << sseq.model_.status("  ") << endl;
+    sseq.frameToCloud(frame, pcd.get());
     vis.showCloud(pcd);
 
     switch(waitKey()) {
