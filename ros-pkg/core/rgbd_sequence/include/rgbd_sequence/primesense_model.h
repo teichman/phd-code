@@ -55,7 +55,13 @@ namespace rgbd
     double fy_;
     double cx_;
     double cy_;
+    //! Depth distortion model.  weights_[0] is a constant offset, weights_[1] is the raw depth measurement.
+    Eigen::VectorXd weights_;
 
+    //! f[1] is measured depth in decameters.
+    static Eigen::VectorXd computeFeatures(const ProjectivePoint& ppt);
+    static int numFeatures();
+    
     //! Initializes with a bogus model: all params set to -1.
     PrimeSenseModel();
     void frameToCloud(const Frame& frame, Cloud* pcd) const;
@@ -65,6 +71,7 @@ namespace rgbd
     void serialize(std::ostream& out) const;
     void deserialize(std::istream& in);
     std::string status(const std::string& prefix = "") const;
+    bool hasDepthDistortionModel() const;
   };
   
 

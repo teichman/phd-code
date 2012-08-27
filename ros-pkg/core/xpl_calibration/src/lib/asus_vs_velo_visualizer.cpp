@@ -57,29 +57,27 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, 
   velo_(new Cloud),
   asus_(new Cloud),
   vis_(new Cloud),
-  unwarp_(true)
+  unwarp_(true),
+  ddl_(sseq->model_)
 {
+  ROS_ASSERT(!sseq_->model_.hasDepthDistortionModel());
+
   sseq_start_ = sseq_->timestamps_[0];
   incrementVeloIdx(2);
   cal_.velo_to_asus_ = generateTransform(- M_PI / 2.0, 0, -M_PI / 2.0, 0, 0, 0).inverse();
   vw_.vis_.registerPointPickingCallback(&AsusVsVeloVisualizer::pointPickingCallback, *this);
   setColorScheme("monitor");
-  
   mpliBegin();
-  VectorXd tmp;
-  ROS_ASSERT(tmp.rows() == 0);
 }
 
 void AsusVsVeloVisualizer::setColorScheme(std::string name)
 {
   ROS_ASSERT(name == "publication" || name == "monitor");
   
-  if(name == "publication") {
+  if(name == "publication")
     vw_.vis_.setBackgroundColor(255, 255, 255);
-  }
-  else if(name == "monitor") {
+  else if(name == "monitor")
     vw_.vis_.setBackgroundColor(0, 0, 0);
-  }
 
   color_scheme_ = name;
 }
@@ -153,26 +151,19 @@ void AsusVsVeloVisualizer::colorPoint(rgbd::Point* pt) const
   }
 }
 
-inline VectorXd vectorize(const Eigen::MatrixXd& mat)
-{
-  VectorXd vec(mat.rows() * mat.cols());
-  int idx = 0;
-  for(int y = 0; y < mat.rows(); ++y)
-    for(int x = 0; x < mat.cols(); ++x, ++idx)
-      vec(idx) = mat(y, x);
-  return vec;
-}
-
 void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& transform, double offset)
 {
   // -- Get corresponding clouds.
   velo_ = filterVelo(vseq_->getCloud(velo_idx));
   double min_dt;
   asus_idx_ = findAsusIdx(velo_->header.stamp.toSec() + offset, &min_dt);
-  asus_ = sseq_->getCloud(asus_idx_);
-  if(!asus_)
-    ROS_WARN_STREAM("Bad asus idx " << asus_idx_ << " / " << sseq_->size() << flush);
-  //cout << asus_idx_ << ": " << asus_->size() << " " << asus_->width << " " << asus_->height << endl;
+  Frame frame;
+  sseq_->readFrame(asus_idx_, &frame);
+
+  if(unwarp_)
+    model_.frameToCloud(frame, asus_.get());
+  else
+    sseq_->model_.frameToCloud(frame, asus_.get());
 
   // -- Draw.
   for(size_t i = 0; i < asus_->size(); ++i)
@@ -181,7 +172,7 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
   vis_->clear();
   pcl::transformPointCloud(*velo_, *vis_, transform);
 
-  if(weights_.rows() != 0 && unwarp_) {
+  if(model_.weights_.rows() != 0 && unwarp_) {
     Cloud unwarped(*asus_);
     ROS_ASSERT(unwarped.height == 480);
     VectorXd ms(4);
@@ -213,7 +204,26 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
 
   vw_.showCloud(vis_);
 }
- 
+
+void AsusVsVeloVisualizer::fitModel()
+{
+  ddl_.clear();
+  
+  for(size_t i = SKIP; i < vseq_->size(); i += SKIP) {
+    double min_dt;
+    int idx = findAsusIdx(vseq_->timestamps_[i] + cal_.offset_, &min_dt);
+    if(min_dt > 1.0 / 60.0)
+      continue;
+
+    Frame frame;
+    sseq_->getFrame(idx, &frame);
+    ddl_.addFrame(frame, filterVelo(vseq_->getCloud(i)), cal_.velo_to_asus_);
+  }
+
+  model_ = ddl_.fitModel();
+  cout << "Learned new depth distortion model." << endl;
+}
+
 void AsusVsVeloVisualizer::run()
 {
   while(true) {
@@ -240,17 +250,11 @@ void AsusVsVeloVisualizer::run()
     case 'V':
       visualizeDistortion();
       break;
-    case 'A':
-      accumulateStatistics();
-      break;
     case 'M':
       fitModel();
       break;
     case 'c':
       calibrate();
-      break;
-    case 'P':
-      generateHeatMap();
       break;
     case 'f':
       cout << "-- Frame stats --" << endl;
@@ -626,119 +630,6 @@ void VeloToAsusCalibration::deserialize(std::istream& in)
   velo_to_asus_ = mat;
 }
 
-void AsusVsVeloVisualizer::accumulateStatistics()
-{
-  updateDisplay(20, cal_.velo_to_asus_, cal_.offset_);
-  //cout << asus_->size() << " " << asus_->width << " " << asus_->height << endl;
-  ROS_ASSERT(asus_);
-  ROS_ASSERT(asus_->height > 0 && asus_->width > 0);
-  Projector proj;
-  proj.fx_ = 525;
-  proj.fy_ = 525;
-  proj.cx_ = asus_->width / 2;
-  proj.cy_ = asus_->height / 2;
-  proj.height_ = asus_->height;
-  proj.width_ = asus_->width;
-
-  // -- Accumulate statistics.
-  statistics_.clear();
-  statistics_.resize(proj.height_, vector<PixelStats>(proj.width_));
-  for(size_t i = 0; i < statistics_.size(); ++i)
-    for(size_t j = 0; j < statistics_[i].size(); ++j)
-      statistics_[i][j].reserve(ceil((double)sseq_->size() / (double)skip_));
-  
-  double min_mult = 0.85;
-  double max_mult = 1.25;
-  Cloud::Ptr transformed(new Cloud);
-  for(size_t i = 20; i < vseq_->size(); i += skip_) {
-    updateDisplay(i, cal_.velo_to_asus_, cal_.offset_);
-    assert(asus_->isOrganized());
-    pcl::transformPointCloud(*velo_, *transformed, cal_.velo_to_asus_);
-    for(size_t j = 0; j < transformed->size(); ++j) {
-      if(!isFinite(transformed->at(j)))
-	continue;
-
-      ProjectedPoint pp;
-      proj.project(transformed->at(j), &pp);
-      if(pp.u_ < 0 || pp.u_ >= proj.width_ || pp.v_ < 0 || pp.v_ >= proj.height_)
-	continue;
-		   
-      Point asuspt = asus_->at(pp.u_ + pp.v_ * proj.width_);
-      if(!isFinite(asuspt))
-	continue;
-
-      // If the range is completely off, assume it's due to misalignment and not distortion.
-      double measurement = asuspt.getVector3fMap().norm();
-      double range = transformed->at(j).getVector3fMap().norm();
-      double mult = range / measurement;
-      if(mult < min_mult || mult > max_mult)
-	continue;
-
-      if(isinf(measurement) || isnan(measurement) || isinf(range) || isnan(range))
-	continue;
-      statistics_[pp.v_][pp.u_].addPoint(range, measurement);
-    }
-  }
-}
-
-void AsusVsVeloVisualizer::fitModel()
-{
-  if(statistics_.empty()) {
-    cout << "You must accumulate statistics first." << endl;
-    return;
-  }
-  cout << "Fitting model." << endl;
-
-  int num_tr_ex = 0;
-  for(size_t y = 0; y < statistics_.size(); ++y)
-    for(size_t x = 0; x < statistics_[y].size(); ++x)
-      for(size_t i = 0; i < statistics_[y][x].asus_.size(); ++i)
-	++num_tr_ex;
-  cout << num_tr_ex << " training examples." << endl;
-  
-  //int num_features = 4 * 4 * 4;
-  int num_features = 4 * 4;
-  MatrixXd X(num_features, num_tr_ex);
-  VectorXd Y(num_tr_ex);
-  int idx = 0;
-  VectorXd us(4);
-  VectorXd vs(4);
-  VectorXd ms(4);
-  VectorXd measurements(num_tr_ex);
-  for(size_t y = 0; y < statistics_.size(); ++y) {
-    for(size_t x = 0; x < statistics_[y].size(); ++x) {
-      for(size_t i = 0; i < statistics_[y][x].asus_.size(); ++i, ++idx) { 
-	double u = (double)x / 640.0;
-	us << 1, u, u*u, u*u*u;
-	double m = statistics_[y][x].asus_[i] / 10.0;
-	ms << 1, m, m*m, m*m*m;
-	double v = (double)y / 480.0;
-	vs << 1, v, v*v, v*v*v;
-	//X.col(idx) = vectorize(vectorize(us * ms.transpose()) * vs.transpose());
-	X.col(idx) = vectorize(us * ms.transpose());
-	Y(idx) = statistics_[y][x].velo_[i];
-	measurements(idx) = statistics_[y][x].asus_[i];
-      }
-    }
-  }
-
-  MatrixXd xxt = X * X.transpose();
-  ROS_ASSERT(xxt.rows() == 4*4);
-  //ROS_ASSERT(xxt.rows() == 4*4*4);
-  VectorXd b = X*Y;
-  weights_ = xxt.ldlt().solve(b);
-  cout << "Weights: " << weights_.transpose() << endl;
-  
-  VectorXd pre_differences = measurements - Y;
-  double pre_obj = pre_differences.array().pow(2).sum() / (double)Y.rows();
-  cout << "Mean error before fitting model: " << pre_obj << endl;
-
-  VectorXd differences = (weights_.transpose() * X).transpose() - Y;
-  double obj = differences.array().pow(2).sum() / (double)Y.rows();
-  cout << "Mean error after fitting model: " << obj << endl;
-}
-
-
 void AsusVsVeloVisualizer::saveExtrinsics(std::string tag) const
 {
   cal_.save("extrinsics" + tag);
@@ -759,7 +650,7 @@ void AsusVsVeloVisualizer::saveAll(std::string tag) const
 
 void AsusVsVeloVisualizer::visualizeDistortion()
 {
-  if(statistics_.empty()) {
+  if(ddl_.statistics_.empty()) {
     cout << "You must accumulate statistics first." << endl;
     return;
   }
@@ -776,7 +667,7 @@ void AsusVsVeloVisualizer::visualizeDistortion()
   counts.setZero();
   for(int y = 0; y < mean.rows(); ++y) 
     for(int x = 0; x < mean.cols(); ++x) 
-      statistics_[y][x].stats(&mean.coeffRef(y, x), &stdev.coeffRef(y, x), &counts.coeffRef(y, x));
+      ddl_.statistics_[y][x].stats(&mean.coeffRef(y, x), &stdev.coeffRef(y, x), &counts.coeffRef(y, x));
   
   mpliExport(mean);
   mpliExport(stdev);
@@ -794,16 +685,16 @@ void AsusVsVeloVisualizer::visualizeDistortion()
     Eigen::ArrayXXd counts(num_range_bins, width);
     mean.setZero();
     counts.setZero();
-    for(size_t y = 0; y < statistics_.size(); ++y)  {
-      ROS_ASSERT((int)statistics_[y].size() == width);
-      for(size_t x = 0; x < statistics_[y].size(); ++x) {
-	for(size_t i = 0; i < statistics_[y][x].asus_.size(); ++i) { 
-	  double range = statistics_[y][x].velo_[i];
+    for(size_t y = 0; y < ddl_.statistics_.size(); ++y)  {
+      ROS_ASSERT((int)ddl_.statistics_[y].size() == width);
+      for(size_t x = 0; x < ddl_.statistics_[y].size(); ++x) {
+	for(size_t i = 0; i < ddl_.statistics_[y][x].asus_.size(); ++i) { 
+	  double range = ddl_.statistics_[y][x].velo_[i];
 	  int range_bin = (max_range - range) / bin_size;
 	  if(range_bin >= num_range_bins || range_bin < 0)
 	    continue;
 	  
-	  double mult = range / statistics_[y][x].asus_[i];
+	  double mult = range / ddl_.statistics_[y][x].asus_[i];
 	  counts(range_bin, x) += 1;
 	  mean(range_bin, x) += mult;
 	}
@@ -817,15 +708,15 @@ void AsusVsVeloVisualizer::visualizeDistortion()
         
     Eigen::ArrayXXd stdev(num_range_bins, width);
     stdev.setZero();
-    for(size_t y = 0; y < statistics_.size(); ++y)  { 
-      for(size_t x = 0; x < statistics_[y].size(); ++x) {
-	for(size_t i = 0; i < statistics_[y][x].asus_.size(); ++i) { 
-	  double range = statistics_[y][x].velo_[i];
+    for(size_t y = 0; y < ddl_.statistics_.size(); ++y)  { 
+      for(size_t x = 0; x < ddl_.statistics_[y].size(); ++x) {
+	for(size_t i = 0; i < ddl_.statistics_[y][x].asus_.size(); ++i) { 
+	  double range = ddl_.statistics_[y][x].velo_[i];
 	  int range_bin = (max_range - range) / bin_size;
 	  if(range_bin >= num_range_bins || range_bin < 0)
 	    continue;
 	  
-	  double mult = range / statistics_[y][x].asus_[i];
+	  double mult = range / ddl_.statistics_[y][x].asus_[i];
 	  stdev(range_bin, x) += pow(mult - mean(range_bin, x), 2);
 	}
       }
@@ -850,7 +741,7 @@ void AsusVsVeloVisualizer::visualizeDistortion()
   for(int i = 0; i < num_pixel_plots_; ++i) {
     int u = rand() % width;
     int v = rand() % height;
-    const PixelStats& ps = statistics_[v][u];
+    const PixelStats& ps = ddl_.statistics_[v][u];
     if(!ps.valid())
       continue;
 
@@ -863,81 +754,6 @@ void AsusVsVeloVisualizer::visualizeDistortion()
     mpliExport(v);
     mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_beam_scatter.py");
   }
-}
-
-void AsusVsVeloVisualizer::generateHeatMap()
-{
-  vector<double> radii;
-  vector<double> multipliers;
-  radii.reserve(1e8);
-  multipliers.reserve(1e8);
-
-  Projector proj;
-  proj.fx_ = 525;
-  proj.fy_ = 525;
-  proj.cx_ = asus_->width / 2;
-  proj.cy_ = asus_->height / 2;
-  proj.height_ = asus_->height;
-  proj.width_ = asus_->width;
-  
-  double min_mult = 0.85;
-  double max_mult = 1.15;
-  Cloud::Ptr transformed(new Cloud);
-  for(size_t i = 20; i < vseq_->size(); i += skip_) {
-    updateDisplay(i, cal_.velo_to_asus_, cal_.offset_);
-    assert(asus_->isOrganized());
-    pcl::transformPointCloud(*velo_, *transformed, cal_.velo_to_asus_);
-    for(size_t j = 0; j < transformed->size(); ++j) {
-      if(!isFinite(transformed->at(j)))
-	continue;
-
-      ProjectedPoint pp;
-      proj.project(transformed->at(j), &pp);
-      Point asuspt = asus_->at(pp.u_ + pp.v_ * proj.width_);
-      if(!isFinite(asuspt))
-	continue;
-
-      // Only look at far-away points.
-      // if(transformed->at(j).z < 6)
-      // 	continue;
-
-      // Only look at near points.
-      if(transformed->at(j).z > 4)
-      	continue;
-      
-      double mult = transformed->at(j).z / asuspt.z;
-      // If the range is completely off, assume it's due to misalignment and not distortion.
-      if(mult < min_mult || mult > max_mult)
-	continue;
-      
-      radii.push_back(sqrt((double)pow(pp.u_ - proj.cx_, 2) + (double)pow(pp.v_ - proj.cy_, 2)) / 400.0);
-      multipliers.push_back(mult);
-    }
-  }
-  cout << "Got " << radii.size() << " points for the range plot." << endl;
-
-  int num_bins = 100;
-  Eigen::MatrixXd hist(num_bins, num_bins);
-  hist.setZero();
-  for(size_t i = 0; i < radii.size(); ++i) {
-    int ridx = radii[i] * num_bins;
-    if(ridx < 0 || ridx >= num_bins)
-      continue;
-    int midx = (1.0 - (multipliers[i] - min_mult) / (max_mult - min_mult)) * num_bins;
-    if(midx < 0 || midx >= num_bins)
-      continue;
-
-    ++hist(midx, ridx);
-  }
-  for(int i = 0; i < hist.cols(); ++i)
-    if(hist.col(i).sum() > 0)
-      hist.col(i).normalize();
-
-  mpliExport(num_bins);
-  mpliExport(max_mult);
-  mpliExport(min_mult);
-  mpliExport(hist);
-  mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_multipliers.py");
 }
 
 void PixelStats::addPoint(double velo, double asus)

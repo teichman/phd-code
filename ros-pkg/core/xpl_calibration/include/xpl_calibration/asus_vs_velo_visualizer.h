@@ -11,6 +11,7 @@
 #include <rgbd_sequence/stream_sequence.h>
 #include <rgbd_sequence/projector.h>
 #include <xpl_calibration/object_matching_calibrator.h>
+#include <xpl_calibration/depth_distortion_learner.h> 
 
 typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
 
@@ -44,25 +45,13 @@ public:
   void deserialize(std::istream& in);
 };
 
-class PixelStats
-{
-public:
-  std::vector<double> velo_;
-  std::vector<double> asus_;
-
-  void addPoint(double velo, double asus);
-  void stats(double* mean, double* stdev, double* num) const;
-  bool valid() const;
-  void reserve(int num) { velo_.reserve(num); asus_.reserve(num); }
-};
-
 class AsusVsVeloVisualizer : public GridSearchViewHandler
 {
 public:
   int skip_;
   int num_pixel_plots_;
   VeloToAsusCalibration cal_;
-  Eigen::VectorXd weights_;
+  PrimeSenseModel model_;
   
   AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, VeloSequence::ConstPtr vseq);
   void run();
@@ -72,9 +61,7 @@ public:
   void saveDistortionModel(std::string tag) const;
   //! Find alignment and sync offset.
   void calibrate();
-  void accumulateStatistics();
   void visualizeDistortion();
-  void fitModel();
   void setColorScheme(std::string name);
   void toggleColorScheme();
   
@@ -88,9 +75,9 @@ protected:
   rgbd::Cloud::Ptr velo_;
   rgbd::Cloud::Ptr asus_;
   rgbd::Cloud::Ptr vis_;
-  std::vector< std::vector<PixelStats> > statistics_;
   bool unwarp_;
   std::string color_scheme_;
+  DepthDistortionLearner ddl_;
   
   void incrementVeloIdx(int val);
   void incrementOffset(double dt);
@@ -105,7 +92,6 @@ protected:
   double gridSearchSync(ScalarFunction::Ptr lf);
   void play(bool save);
   void colorPoint(rgbd::Point* pt) const;
-  void generateHeatMap();
 };
 
 #endif // ASUS_VS_VELO_VISUALIZER_H

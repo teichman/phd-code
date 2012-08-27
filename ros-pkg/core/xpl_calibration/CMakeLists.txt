@@ -38,6 +38,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/trc_parser.cpp
   src/lib/mocap_visualizer.cpp
   src/lib/mocap_detector.cpp
+  src/lib/depth_distortion_learner.cpp
   )
 
 rosbuild_link_boost(${PROJECT_NAME} system program_options)

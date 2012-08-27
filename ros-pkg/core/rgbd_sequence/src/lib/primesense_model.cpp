@@ -1,6 +1,7 @@
 #include <rgbd_sequence/primesense_model.h>
 
 using namespace std;
+using namespace Eigen;
 
 namespace rgbd
 {
@@ -33,6 +34,8 @@ namespace rgbd
     cx_(-1),
     cy_(-1)
   {
+    weights_ = VectorXd::Zero(64);
+    weights_(1) = 0.1;  // feature 1 is measured depth in decameters.
   }
   
   void PrimeSenseModel::frameToCloud(const Frame& frame, Cloud* pcd) const
@@ -67,6 +70,16 @@ namespace rgbd
       }
     }
   }
+
+  inline VectorXd vectorize(const Eigen::MatrixXd& mat)
+  {
+    VectorXd vec(mat.rows() * mat.cols());
+    int idx = 0;
+    for(int x = 0; x < mat.cols(); ++x)
+      for(int y = 0; y < mat.rows(); ++y, ++idx)
+	vec(idx) = mat(y, x);
+    return vec;
+  }
   
   void PrimeSenseModel::project(const ProjectivePoint& ppt, Point* pt) const
   {
@@ -82,12 +95,36 @@ namespace rgbd
       pt->z = std::numeric_limits<float>::quiet_NaN();
     }
     else {
-      pt->z = ppt.z_ * 0.001;
+      VectorXd features = computeFeatures(ppt);
+      pt->z = weights_.dot(features);
       pt->x = pt->z * (ppt.u_ - cx_) / fx_;
       pt->y = pt->z * (ppt.v_ - cy_) / fy_;
     }
   }
 
+  void PrimeSenseModel::computeFeatures(const ProjectivePoint& ppt)
+  {
+    VectorXd ms(4);
+    double m = (ppt.z_ * 0.001) / 10.0;  // z_ is in millimeters, and we want to scale it so that 10 meters is equal to 1.
+    ms << 1, m, m*m, m*m*m;
+    VectorXd us(4);
+    double u = (double)ppt.u_ / (double)width_;
+    us << 1, u, u*u, u*u*u;
+    VectorXd vs(4);
+    double v = (double)ppt.v_ / (double)height_;
+    vs << 1, v, v*v, v*v*v;
+    return vectorize(vectorize(ms * us.transpose()) * vs.transpose());  // f[1] is measured depth in decameters.
+  }
+
+  void PrimeSenseModel::numFeatures()
+  {
+    ProjectivePoint tmp;
+    tmp.u_ = 0;
+    tmp.v_ = 0;
+    tmp.z_ = 0;
+    return computeFeatures(tmp).rows();
+  }
+  
   void PrimeSenseModel::project(const Point& pt, ProjectivePoint* ppt) const
   {
     ROS_ASSERT(isFinite(pt));
@@ -131,6 +168,7 @@ namespace rgbd
     eigen_extensions::serializeScalar(fy_, out);
     eigen_extensions::serializeScalar(cx_, out);
     eigen_extensions::serializeScalar(cy_, out);
+    eigen_extensions::serialize(weights_, out);
   }
 
   void PrimeSenseModel::deserialize(std::istream& in)
@@ -144,8 +182,21 @@ namespace rgbd
     eigen_extensions::deserializeScalar(in, &fy_);
     eigen_extensions::deserializeScalar(in, &cx_);
     eigen_extensions::deserializeScalar(in, &cy_);
+    eigen_extensions::deserialize(in, &weights_);
   }
 
+  bool PrimeSenseModel::hasDepthDistortionModel() const
+  {
+    bool def = true;
+    for(int i = 0; i < initial_model_.weights_.rows(); ++i) {
+      if(i == 1 && initial_model_.weights_(i) != 1)
+	def = false;
+      if(i != 1 && initial_model_.weights_(i) != 0)
+	def = false;
+    }
+    return !def;
+  }
+  
   std::string PrimeSenseModel::status(const std::string& prefix) const
   {
     ostringstream oss;
@@ -156,6 +207,9 @@ namespace rgbd
     oss << prefix << "fy: " << fy_ << endl;
     oss << prefix << "cx: " << cx_ << endl;
     oss << prefix << "cy: " << cy_ << endl;
+
+    oss << prefix << "Has a depth distortion model: " << hasDepthDistortionModel() << endl;
+    
     return oss.str();
   }
   
