@@ -585,8 +585,8 @@ double LossFunction::eval(const VectorXd& x) const
   }
 
   if(count == 0) {
-    return 0;
     ROS_WARN("Number of corresponding pcds is zero.  No objective function terms.  Is this because the sensors don't overlap enough?");
+    return 0;
   }
   else
     return val / count;

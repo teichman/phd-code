@@ -14,7 +14,7 @@ int main(int argc, char** argv)
     ("sseq", bpo::value<string>(), "StreamSequence, i.e. asus data")
     ("vseq", bpo::value<string>(), "VeloSequence")
     ("extrinsics", bpo::value<string>(), "Use pre-computed extrinsics")
-    ("distortion-model", bpo::value<string>(), "Use pre-computed distortion model")
+    ("intrinsics", bpo::value<string>(), "Use pre-computed PrimeSense model")
     ("compute-extrinsics", "Automatically start extrinsics search")
     ("visualize-distortion", "Visualize the distortion.  Extrinsics must be provided.")
     ("skip", bpo::value<int>()->default_value(20), "For use with --visualize-distortion.  Use every kth frame for accumulating statistics.")
@@ -57,17 +57,18 @@ int main(int argc, char** argv)
     cout << avv.cal_.velo_to_asus_.matrix() << endl;
   }
 
-  if(opts.count("distortion-model")) {
-    eigen_extensions::loadASCII(opts["distortion-model"].as<string>(), &avv.weights_);
-    cout << "Loaded depth distortion model at " << opts["distortion-model"].as<string>() << endl;
-    cout << "Weights: " << avv.weights_.transpose() << endl;
+  if(opts.count("intrinsics")) {
+    avv.model_.load(opts["intrinsics"].as<string>());
+    cout << "Loaded depth distortion model at " << opts["intrinsics"].as<string>() << endl;
+    cout << "Model:" << endl;
+    cout << avv.model_.status("  ");
   }
   
   if(opts.count("visualize-distortion")) {
     ROS_ASSERT(opts.count("extrinsics"));
     avv.skip_ = opts["skip"].as<int>();
     avv.num_pixel_plots_ = opts["num-pixel-plots"].as<int>();
-    avv.accumulateStatistics();
+    avv.fitModel();  // We don't need the resulting model.  This accumulates and caches pixel statistics, which we do need.
     avv.visualizeDistortion();
     return 0;
   }

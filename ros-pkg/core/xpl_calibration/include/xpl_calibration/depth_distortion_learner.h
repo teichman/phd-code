@@ -2,6 +2,7 @@
 #define DEPTH_DISTORTION_LEARNER_H
 
 #include <Eigen/StdVector>
+#include <pcl/common/transforms.h>
 #include <rgbd_sequence/primesense_model.h>
 
 class PixelStats
@@ -21,17 +22,17 @@ class DepthDistortionLearner
 public:
   std::vector< std::vector<PixelStats> > statistics_;
   
-  DepthDistortionLearner(const PrimeSenseModel& initial_model);
-  void addFrame(Frame frame,
+  DepthDistortionLearner(const rgbd::PrimeSenseModel& initial_model);
+  void addFrame(rgbd::Frame frame,
 		rgbd::Cloud::ConstPtr pcd,
 		const Eigen::Affine3f& transform);
-  PrimeSenseModel fitModel() const;
+  rgbd::PrimeSenseModel fitModel();
   void clear() { frames_.clear(); pcds_.clear(); transforms_.clear(); }
   
 protected:
   //! Used for 3D -> 2D projection.  Depth distortion params are ignored.
-  PrimeSenseModel initial_model_;
-  std::vector<Frame> frames_;
+  rgbd::PrimeSenseModel initial_model_;
+  std::vector<rgbd::Frame> frames_;
   std::vector<rgbd::Cloud::ConstPtr> pcds_;
   //! transforms_[i] takes pcds_[i] to the coordinate system that frames_[i] is defined in.
   std::vector<Eigen::Affine3f, Eigen::aligned_allocator<Eigen::Affine3f> > transforms_;

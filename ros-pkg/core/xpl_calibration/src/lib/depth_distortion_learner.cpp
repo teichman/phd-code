@@ -21,7 +21,7 @@ void DepthDistortionLearner::addFrame(Frame frame,
   transforms_.push_back(transform);
 }
 
-PrimeSenseModel DepthDistortionLearner::fitModel() const
+PrimeSenseModel DepthDistortionLearner::fitModel()
 {
   // -- Accumulate statistics.
   statistics_.clear();
@@ -42,16 +42,16 @@ PrimeSenseModel DepthDistortionLearner::fitModel() const
 
       ProjectivePoint pp;
       initial_model_.project(transformed->at(j), &pp);
-      if(pp.u_ < 0 || pp.u_ >= proj.width_ || pp.v_ < 0 || pp.v_ >= proj.height_)
+      if(pp.u_ < 0 || pp.u_ >= initial_model_.width_ || pp.v_ < 0 || pp.v_ >= initial_model_.height_)
 	continue;
 
       pp.z_ = (*frames_[i].depth_)(pp.v_, pp.u_);
       if(pp.z_ == 0)
 	continue;
 
-      Point 3dpt;
-      initial_model_.project(pp, &3dpt);
-      double reported_range = 3dpt.getVector3fMap().norm();
+      Point pt3d;
+      initial_model_.project(pp, &pt3d);
+      double reported_range = pt3d.getVector3fMap().norm();
       double ground_truth_range = transformed->at(j).getVector3fMap().norm();
       if(isinf(reported_range) || isnan(reported_range) || isinf(ground_truth_range) || isnan(ground_truth_range)) {
 	ROS_WARN("Something unexpected is happening in DepthDistortionLearner.");
@@ -76,7 +76,7 @@ PrimeSenseModel DepthDistortionLearner::fitModel() const
   cout << "Fitting depth distortion model with " << num_tr_ex << " training examples." << endl;
 
   // -- Assemble dataset.
-  int num_features = PrimeSenseModel::numFeatures();
+  int num_features = initial_model_.numFeatures();
   MatrixXd X(num_features, num_tr_ex);
   VectorXd Y(num_tr_ex);
 
@@ -92,7 +92,7 @@ PrimeSenseModel DepthDistortionLearner::fitModel() const
 	ppt.u_ = x;
 	ppt.v_ = y;
 	ppt.z_ = statistics_[y][x].asus_[i];
-	X.col(idx) = PrimeSenseModel::computeFeatures(ppt);
+	X.col(idx) = initial_model_.computeFeatures(ppt);
 	Y(idx) = statistics_[y][x].velo_[i];
 	measurements(idx) = statistics_[y][x].asus_[i];
       }
@@ -102,7 +102,7 @@ PrimeSenseModel DepthDistortionLearner::fitModel() const
   // -- Fit the model.
   PrimeSenseModel model = initial_model_;
   MatrixXd xxt = X * X.transpose();
-  ROS_ASSERT(xxt.rows() == PrimeSenseModel::numFeatures());
+  ROS_ASSERT(xxt.rows() == initial_model_.numFeatures());
   VectorXd b = X*Y;
   model.weights_ = xxt.ldlt().solve(b);
   cout << "Weights: " << model.weights_.transpose() << endl;
@@ -116,5 +116,38 @@ PrimeSenseModel DepthDistortionLearner::fitModel() const
   cout << "Mean error after fitting model: " << obj << endl;
 
   return model;
+}
+
+void PixelStats::addPoint(double velo, double asus)
+{
+  velo_.push_back(velo);
+  asus_.push_back(asus);
+}
+
+void PixelStats::stats(double* mean, double* stdev, double* num) const
+{
+  *num = velo_.size();
+  
+  if(!valid()) {
+    *mean = 1;
+    *stdev = 0;
+    return;
+  }
+  
+  *mean = 0;
+  for(size_t i = 0; i < velo_.size(); ++i)
+    *mean += velo_[i] / asus_[i];
+  *mean /= (double)velo_.size();
+  
+  *stdev = 0;
+  for(size_t i = 0; i < velo_.size(); ++i)
+    *stdev += pow(velo_[i] / asus_[i] - *mean, 2);
+  *stdev /= (double)velo_.size();
+  *stdev = sqrt(*stdev);
+}
+
+bool PixelStats::valid() const
+{
+  return velo_.size() > 5;
 }
 

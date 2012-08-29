@@ -9,9 +9,8 @@
 #include <matplotlib_interface/matplotlib_interface.h>
 #include <rgbd_sequence/vis_wrapper.h>
 #include <rgbd_sequence/stream_sequence.h>
-#include <rgbd_sequence/projector.h>
-#include <xpl_calibration/object_matching_calibrator.h>
-#include <xpl_calibration/depth_distortion_learner.h> 
+#include <xpl_calibration/depth_distortion_learner.h>
+#include <xpl_calibration/velo_to_asus_calibrator.h>
 
 typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
 
@@ -33,37 +32,26 @@ protected:
   std::vector<std::string> clk_names_;
 };
 
-class VeloToAsusCalibration : public Serializable
-{
-public:
-  //! Added to velodyne timestamps.
-  double offset_;
-  Eigen::Affine3f velo_to_asus_;
-
-  VeloToAsusCalibration();
-  void serialize(std::ostream& out) const;
-  void deserialize(std::istream& in);
-};
-
 class AsusVsVeloVisualizer : public GridSearchViewHandler
 {
 public:
   int skip_;
   int num_pixel_plots_;
   VeloToAsusCalibration cal_;
-  PrimeSenseModel model_;
+  rgbd::PrimeSenseModel model_;
   
   AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, VeloSequence::ConstPtr vseq);
   void run();
   void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
   void saveAll(std::string tag) const;
   void saveExtrinsics(std::string tag) const;
-  void saveDistortionModel(std::string tag) const;
+  void saveIntrinsics(std::string tag) const;
   //! Find alignment and sync offset.
   void calibrate();
   void visualizeDistortion();
   void setColorScheme(std::string name);
   void toggleColorScheme();
+  void fitModel();
   
 protected:
   rgbd::StreamSequence::ConstPtr sseq_;
@@ -82,14 +70,11 @@ protected:
   void incrementVeloIdx(int val);
   void incrementOffset(double dt);
   int findAsusIdx(double ts, double* dt_out = NULL) const;
-  void align();
   void updateDisplay(int velo_idx, const Eigen::Affine3f& transform, double offset);
   rgbd::Cloud::Ptr filterVelo(rgbd::Cloud::ConstPtr velo) const;
   rgbd::Cloud::Ptr filterAsus(rgbd::Cloud::ConstPtr asus) const;
   LossFunction::Ptr getLossFunction() const;
   void pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie);
-  Eigen::Affine3f gridSearchTransform(ScalarFunction::Ptr lf);
-  double gridSearchSync(ScalarFunction::Ptr lf);
   void play(bool save);
   void colorPoint(rgbd::Point* pt) const;
 };

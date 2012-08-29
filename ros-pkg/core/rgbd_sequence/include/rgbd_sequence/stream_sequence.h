@@ -49,6 +49,13 @@ namespace rgbd
     //! Adds dt to all timestamps.  Does not save.
     void applyTimeOffset(double dt);
 
+    //! Inefficient accessors that conceal how the projection is done.
+    //! These shouldn't be used.
+    rgbd::Cloud::Ptr getCloud(size_t idx) const __attribute__ ((__deprecated__));
+    rgbd::Cloud::Ptr getCloud(double timestamp, double* dt) const __attribute__ ((__deprecated__));
+    cv::Mat3b getImage(size_t idx) const __attribute__ ((__deprecated__));
+    cv::Mat3b getImage(double timestamp, double* dt) const __attribute__ ((__deprecated__));
+    
   protected:
     //! dt is signed.
     size_t seek(double timestamp, double* dt) const;

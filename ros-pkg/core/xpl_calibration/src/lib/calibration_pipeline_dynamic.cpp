@@ -25,16 +25,16 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
 					   Eigen::Affine3f* transform,
 					   double* sync)
 {
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fx", sseq0->fx_);
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fy", sseq0->fy_);
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cx", sseq0->cx_);
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cy", sseq0->cy_);
+  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fx", sseq0->model_.fx_);
+  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fy", sseq0->model_.fy_);
+  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cx", sseq0->model_.cx_);
+  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cy", sseq0->model_.cy_);
 
   cout << "Intrinsics: " << endl;
-  cout << "fx: " << sseq0->fx_ << endl;
-  cout << "fy: " << sseq0->fy_ << endl;
-  cout << "cx: " << sseq0->cx_ << endl;
-  cout << "cy: " << sseq0->cy_ << endl;
+  cout << "fx: " << sseq0->model_.fx_ << endl;
+  cout << "fy: " << sseq0->model_.fy_ << endl;
+  cout << "cx: " << sseq0->model_.cx_ << endl;
+  cout << "cy: " << sseq0->model_.cy_ << endl;
   
   // -- Downsample the sequences and apply z limit.
   double thresh = 0.05;
@@ -59,16 +59,25 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
     
     double dt = -1;
     double ts0 = sseq0->timestamps_[i];
-    Cloud::Ptr pcd1 = sseq1->getCloud(ts0, &dt);
+
+    Frame frame;
+    sseq1->readFrame(ts0, &dt, &frame);
     if(fabs(dt) > thresh)
       continue;
-
+    
+    Cloud::Ptr pcd1(new Cloud);
+    sseq1->model_.frameToCloud(frame, pcd1.get());
     vis.showCloud(pcd1);
     usleep(1000 * 30);
-    seq0->pcds_.push_back(sseq0->getCloud(i));
     seq1->pcds_.push_back(pcd1);
-    seq0->imgs_.push_back(sseq0->getImage(i));
-    seq1->imgs_.push_back(sseq1->getImage(ts0, &dt));
+    seq1->imgs_.push_back(frame.img_);
+
+    sseq0->readFrame(i, &frame);
+    seq0->imgs_.push_back(frame.img_);
+    Cloud::Ptr pcd0(new Cloud);
+    sseq0->model_.frameToCloud(frame, pcd0.get());
+    seq0->pcds_.push_back(pcd0);
+    
     cout << "Added clouds with dt = " << dt << endl;
   }
 
