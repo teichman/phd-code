@@ -66,7 +66,12 @@ protected:
   bool unwarp_;
   std::string color_scheme_;
   DepthDistortionLearner ddl_;
-  
+  double theta_lower_;
+  double theta_upper_;
+
+  bool veloYawValid(double yaw) const;
+  void updateVeloBounds();
+  void setInitialExtrinsics();
   void incrementVeloIdx(int val);
   void incrementOffset(double dt);
   int findAsusIdx(double ts, double* dt_out = NULL) const;

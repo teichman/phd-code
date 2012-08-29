@@ -58,8 +58,7 @@ int main(int argc, char** argv)
     ROS_ASSERT(!opts.count("compute-extrinsics"));
     avv.cal_.load(opts["extrinsics"].as<string>());
     cout << "Loaded calibration at " << opts["extrinsics"].as<string>() << "." << endl;
-    cout << avv.cal_.offset_ << endl;
-    cout << avv.cal_.velo_to_asus_.matrix() << endl;
+    cout << avv.cal_.status("  ");
   }
 
   if(opts.count("intrinsics")) {

@@ -60,10 +60,26 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, 
 
   sseq_start_ = sseq_->timestamps_[0];
   incrementVeloIdx(2);
-  cal_.velo_to_asus_ = generateTransform(- M_PI / 2.0, 0, -M_PI / 2.0, 0, 0, 0).inverse();
   vw_.vis_.registerPointPickingCallback(&AsusVsVeloVisualizer::pointPickingCallback, *this);
   setColorScheme("monitor");
   mpliBegin();
+  setInitialExtrinsics();
+}
+
+void AsusVsVeloVisualizer::setInitialExtrinsics()
+{
+  // -- Asus looking forward.
+  cal_.setVeloToAsus(generateTransform(- M_PI / 2.0, 0, -M_PI / 2.0, 0, 0, 0).inverse());
+
+  // -- Building on the above, this is for the asus looking to the right.
+  cal_.setVeloToAsus(generateTransform(M_PI, 0, 0, 0, 0, 0) * cal_.veloToAsus());
+  cal_.setVeloToAsus(generateTransform(0, -0.5 * M_PI, 0, 0, 0, 0) * cal_.veloToAsus());
+}
+
+bool AsusVsVeloVisualizer::veloYawValid(double yaw) const
+{
+  // TODO: This doesn't work for edge cases.
+  return (yaw > theta_lower_ && yaw < theta_upper_);
 }
 
 void AsusVsVeloVisualizer::setColorScheme(std::string name)
@@ -115,7 +131,8 @@ void AsusVsVeloVisualizer::colorPoint(rgbd::Point* pt) const
   double thresh1 = thresh0 + increment;
   double thresh2 = thresh1 + increment;
   double thresh3 = thresh2 + increment;
-  double height = pt->y;
+  
+  double height = -(cal_.asusToVelo() * pt->getVector3fMap())(2);
   
   if(height < thresh0) {
     pt->b = 0;
@@ -184,17 +201,35 @@ void AsusVsVeloVisualizer::fitModel()
 
     Frame frame;
     sseq_->readFrame(idx, &frame);
-    ddl_.addFrame(frame, filterVelo(vseq_->getCloud(i)), cal_.velo_to_asus_);
+    ddl_.addFrame(frame, filterVelo(vseq_->getCloud(i)), cal_.veloToAsus());
   }
 
   model_ = ddl_.fitModel();
   cout << "Learned new depth distortion model." << endl;
 }
 
+void AsusVsVeloVisualizer::updateVeloBounds()
+{
+  Point pt;
+  pt.x = 0;
+  pt.y = 0;
+  pt.z = 10;
+  pt.getVector3fMap() = cal_.asusToVelo() * pt.getVector3fMap();
+
+  //cout << pt.getVector3fMap().transpose() << "  ------ " << -atan2(pt.y, pt.x) << endl;
+  
+  double center = -atan2(pt.y, pt.x);
+  double thresh = 45.0 * M_PI / 180.0;  // This needs to be set extra wide so that grid search is always seeing data.
+
+  theta_lower_ = center - thresh;
+  theta_upper_ = center + thresh;
+}
+
 void AsusVsVeloVisualizer::run()
 {
   while(true) {
-    updateDisplay(velo_idx_, cal_.velo_to_asus_, cal_.offset_);
+    updateVeloBounds();
+    updateDisplay(velo_idx_, cal_.veloToAsus(), cal_.offset_);
 
     char key = vw_.waitKey();
     switch(key) {
@@ -269,40 +304,40 @@ void AsusVsVeloVisualizer::run()
       incrementOffset(10.0 / 30.0);
       break;
     case 'x':
-      cal_.velo_to_asus_ = generateTransform(1.0 * M_PI / 180.0, 0, 0, 0, 0, 0) * cal_.velo_to_asus_;
+      cal_.setVeloToAsus(generateTransform(2.0 * M_PI / 180.0, 0, 0, 0, 0, 0) * cal_.veloToAsus());
       break;
     case 'X':
-      cal_.velo_to_asus_ = generateTransform(-1.0 * M_PI / 180.0, 0, 0, 0, 0, 0) * cal_.velo_to_asus_;
+      cal_.setVeloToAsus(generateTransform(-2.0 * M_PI / 180.0, 0, 0, 0, 0, 0) * cal_.veloToAsus());
       break;
     case 'y':
-      cal_.velo_to_asus_ = generateTransform(0, 1.0 * M_PI / 180.0, 0, 0, 0, 0) * cal_.velo_to_asus_;
+      cal_.setVeloToAsus(generateTransform(0, 2.0 * M_PI / 180.0, 0, 0, 0, 0) * cal_.veloToAsus());
       break;
     case 'Y':
-      cal_.velo_to_asus_ = generateTransform(0, -1.0 * M_PI / 180.0, 0, 0, 0, 0) * cal_.velo_to_asus_;
+      cal_.setVeloToAsus(generateTransform(0, -2.0 * M_PI / 180.0, 0, 0, 0, 0) * cal_.veloToAsus());
       break;
     case 'z':
-      cal_.velo_to_asus_ = generateTransform(0, 0, 1.0 * M_PI / 180.0, 0, 0, 0) * cal_.velo_to_asus_;
+      cal_.setVeloToAsus(generateTransform(0, 0, 2.0 * M_PI / 180.0, 0, 0, 0) * cal_.veloToAsus());
       break;
     case 'Z':
-      cal_.velo_to_asus_ = generateTransform(0, 0, -1.0 * M_PI / 180.0, 0, 0, 0) * cal_.velo_to_asus_;
+      cal_.setVeloToAsus(generateTransform(0, 0, -2.0 * M_PI / 180.0, 0, 0, 0) * cal_.veloToAsus());
       break;
     case 'w':
-      cal_.velo_to_asus_ = generateTransform(0, 0, 0, 0.1, 0, 0) * cal_.velo_to_asus_;
+      cal_.setVeloToAsus(generateTransform(0, 0, 0, 0.1, 0, 0) * cal_.veloToAsus());
       break;
     case 's':
-      cal_.velo_to_asus_ = generateTransform(0, 0, 0, -0.1, 0, 0) * cal_.velo_to_asus_;
+      cal_.setVeloToAsus(generateTransform(0, 0, 0, -0.1, 0, 0) * cal_.veloToAsus());
       break;
     case 'a':
-      cal_.velo_to_asus_ = generateTransform(0, 0, 0, 0, 0.1, 0) * cal_.velo_to_asus_;
+      cal_.setVeloToAsus(generateTransform(0, 0, 0, 0, 0.1, 0) * cal_.veloToAsus());
       break;
     case 'd':
-      cal_.velo_to_asus_ = generateTransform(0, 0, 0, 0, -0.1, 0) * cal_.velo_to_asus_;
+      cal_.setVeloToAsus(generateTransform(0, 0, 0, 0, -0.1, 0) * cal_.veloToAsus());
       break;
     case 'E':
-      cal_.velo_to_asus_ = generateTransform(0, 0, 0, 0, 0, 0.1) * cal_.velo_to_asus_;
+      cal_.setVeloToAsus(generateTransform(0, 0, 0, 0, 0, 0.1) * cal_.veloToAsus());
       break;
     case 'e':
-      cal_.velo_to_asus_ = generateTransform(0, 0, 0, 0, 0, -0.1) * cal_.velo_to_asus_;
+      cal_.setVeloToAsus(generateTransform(0, 0, 0, 0, 0, -0.1) * cal_.veloToAsus());
       break;
     default:
       break;
@@ -358,7 +393,6 @@ rgbd::Cloud::Ptr AsusVsVeloVisualizer::filterAsus(rgbd::Cloud::ConstPtr asus) co
 
 rgbd::Cloud::Ptr AsusVsVeloVisualizer::filterVelo(rgbd::Cloud::ConstPtr velo) const
 {
-  double thresh = 30.0 * M_PI / 180.0;
   rgbd::Cloud::Ptr filtered(new Cloud);
   filtered->height = 1;
   assert(!filtered->isOrganized());
@@ -371,10 +405,11 @@ rgbd::Cloud::Ptr AsusVsVeloVisualizer::filterVelo(rgbd::Cloud::ConstPtr velo) co
     double range = pt.getVector3fMap().norm();
     if(range > 15 || range < 0.5)
       continue;
-    double yaw = atan2(pt.y, pt.x);
-    if(fabs(yaw) > thresh)
+    
+    double yaw = -atan2(pt.y, pt.x);
+    if(!veloYawValid(yaw))
       continue;
-
+    
     filtered->push_back(pt);
   }
 
@@ -392,11 +427,11 @@ void AsusVsVeloVisualizer::calibrate()
   int buffer = 50;
   int idx = buffer;
   while(true) {
-    updateDisplay(idx, cal_.velo_to_asus_, cal_.offset_);
+    updateDisplay(idx, cal_.veloToAsus(), cal_.offset_);
 
     rgbd::Cloud::Ptr pcd = filterVelo(vseq_->getCloud(idx));
     // Apply initial transform.  Grid search will return a transform to apply on top of the initial one.
-    pcl::transformPointCloud(*pcd, *pcd, cal_.velo_to_asus_);  
+    pcl::transformPointCloud(*pcd, *pcd, cal_.veloToAsus());  
     // Apply initial sync offset.  Grid search will return an update to add to cal_.offset_.
     pcd->header.stamp.fromSec(pcd->header.stamp.toSec() + cal_.offset_);  
     calibrator.pcds_.push_back(pcd);
@@ -408,7 +443,7 @@ void AsusVsVeloVisualizer::calibrate()
       break;
   }
   cout << "Loaded " << calibrator.pcds_.size() << " velodyne keyframes." << endl;
-  updateDisplay(velo_idx_, cal_.velo_to_asus_, cal_.offset_);
+  updateDisplay(velo_idx_, cal_.veloToAsus(), cal_.offset_);
   
   // -- Load Asus frames in the vicinity of the Velodyne keyframes.
   int window = 15;
@@ -428,7 +463,7 @@ void AsusVsVeloVisualizer::calibrate()
   cout << "Calibration incremental update: " << endl;
   cout << cal.status("  ");
   cal_.offset_ += cal.offset_;
-  cal_.velo_to_asus_ = cal.velo_to_asus_ * cal_.velo_to_asus_;
+  cal_.setVeloToAsus(cal.veloToAsus() * cal_.veloToAsus());
   cout << "Final extrinsic Velo to Asus calibration: " << endl;
   cout << cal_.status("  ");
 
@@ -443,7 +478,7 @@ void AsusVsVeloVisualizer::handleGridSearchUpdate(const Eigen::ArrayXd& x, doubl
   double dt = x(0);
   Affine3f incremental_transform = generateTransform(x(1), x(2), x(3), x(4), x(5), x(6));
   
-  updateDisplay(velo_idx_, incremental_transform * cal_.velo_to_asus_, cal_.offset_ + dt);
+  updateDisplay(velo_idx_, incremental_transform * cal_.veloToAsus(), cal_.offset_ + dt);
   static int num = 0;
   ostringstream oss;
   oss << "gridsearch" << setw(5) << setfill('0') << num << ".png";
@@ -454,7 +489,7 @@ void AsusVsVeloVisualizer::handleGridSearchUpdate(const Eigen::ArrayXd& x, doubl
 void AsusVsVeloVisualizer::play(bool save)
 {
   for(; velo_idx_ < (int)vseq_->size(); ++velo_idx_) {
-    updateDisplay(velo_idx_, cal_.velo_to_asus_, cal_.offset_);
+    updateDisplay(velo_idx_, cal_.veloToAsus(), cal_.offset_);
     char key = vw_.waitKey(20);
     if(key != 0)
       break;
