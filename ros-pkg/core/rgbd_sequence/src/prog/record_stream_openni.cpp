@@ -3,14 +3,14 @@
 
 using namespace std;
 using namespace rgbd;
-namespace bpo = boost::program_options;  
 
 int main(int argc, char** argv)
 {
   // -- Parse args.
+  namespace bpo = boost::program_options;
   bpo::options_description opts_desc("Allowed options");
   opts_desc.add_options()
-    ("help,h", "produce help message")
+    ("help,h", "")
     ("device", bpo::value<string>()->required(), "Device type.  \"xpl\" or \"kinect\"")
     ("id", bpo::value<int>()->required(), "Device id")
     ("register", "Register depth to rgb data")
@@ -22,9 +22,13 @@ int main(int argc, char** argv)
   p.add("id", 2);
   bpo::variables_map opts;
   bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
-  if(opts.count("help")) {
+  bool badargs = false;
+  try { bpo::notify(opts); }
+  catch(...) { badargs = true; }
+  if(opts.count("help") || badargs) {
+    cout << endl;
     cout << "Usage: record_stream_openni DEVICE ID [OPTS]" << endl;
-    cout << opts_desc << endl;
+    cout << opts_desc << endl << endl;
     return 1;
   }
   bpo::notify(opts);

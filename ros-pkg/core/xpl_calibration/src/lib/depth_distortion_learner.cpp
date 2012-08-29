@@ -9,7 +9,11 @@ DepthDistortionLearner::DepthDistortionLearner(const PrimeSenseModel& initial_mo
 {
   // -- Make sure the initial model is reasonable.
   //    It's going to be used for projection assuming no depth distortion.
-  ROS_ASSERT(!initial_model_.hasDepthDistortionModel());
+  if(initial_model_.hasDepthDistortionModel()) {
+    ROS_FATAL("DepthDistortionLearner should not have an initial_model_ with a depth distortion model already built in to it.");
+    ROS_FATAL_STREAM(initial_model_.weights_);
+    abort();
+  }
 }
 
 void DepthDistortionLearner::addFrame(Frame frame,

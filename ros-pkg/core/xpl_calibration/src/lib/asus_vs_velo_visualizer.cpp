@@ -51,10 +51,12 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, 
   velo_(new Cloud),
   asus_(new Cloud),
   vis_(new Cloud),
-  unwarp_(true),
+  unwarp_(false),
   ddl_(sseq->model_)
 {
   ROS_ASSERT(!sseq_->model_.hasDepthDistortionModel());
+  cout << "StreamSequence PrimeSenseModel: " << endl;
+  cout << sseq_->model_.status("  ");
 
   sseq_start_ = sseq_->timestamps_[0];
   incrementVeloIdx(2);
@@ -154,8 +156,9 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
   Frame frame;
   sseq_->readFrame(asus_idx_, &frame);
 
-  if(unwarp_)
+  if(unwarp_) {
     model_.frameToCloud(frame, asus_.get());
+  }
   else
     sseq_->model_.frameToCloud(frame, asus_.get());
 
@@ -203,6 +206,10 @@ void AsusVsVeloVisualizer::run()
       break;
     case 'm':
       unwarp_ = !unwarp_;
+      if(model_.fx_ == 0 || !model_.hasDepthDistortionModel()) {
+	cout << "Cannot unwarp without a learned depth distortion model." << endl;
+	unwarp_ = false;
+      }
       cout << "unwarp_: " << unwarp_ << endl;
       break;
     case 'p':

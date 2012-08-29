@@ -35,7 +35,7 @@ namespace rgbd
     cy_(-1)
   {
     weights_ = VectorXd::Zero(64);
-    weights_(1) = 0.1;  // feature 1 is measured depth in decameters.
+    weights_(1) = 10;  // feature 1 is measured depth in decameters.
   }
   
   void PrimeSenseModel::frameToCloud(const Frame& frame, Cloud* pcd) const
@@ -187,14 +187,14 @@ namespace rgbd
 
   bool PrimeSenseModel::hasDepthDistortionModel() const
   {
-    bool def = true;
+    bool has = false;
     for(int i = 0; i < weights_.rows(); ++i) {
-      if(i == 1 && weights_(i) != 1)
-	def = false;
+      if(i == 1 && weights_(i) != 10)
+	has = true;
       if(i != 1 && weights_(i) != 0)
-	def = false;
+	has = true;
     }
-    return !def;
+    return has;
   }
   
   std::string PrimeSenseModel::status(const std::string& prefix) const
@@ -209,6 +209,7 @@ namespace rgbd
     oss << prefix << "cy: " << cy_ << endl;
 
     oss << prefix << "Has a depth distortion model: " << hasDepthDistortionModel() << endl;
+    oss << prefix << "weights: " << weights_.transpose() << endl;
     
     return oss.str();
   }
