@@ -34,8 +34,7 @@ namespace rgbd
     cx_(-1),
     cy_(-1)
   {
-    weights_ = VectorXd::Zero(64);
-    weights_(1) = 10;  // feature 1 is measured depth in decameters.
+    resetDepthDistortionModel();
   }
   
   void PrimeSenseModel::frameToCloud(const Frame& frame, Cloud* pcd) const
@@ -212,6 +211,12 @@ namespace rgbd
     oss << prefix << "weights: " << weights_.transpose() << endl;
     
     return oss.str();
+  }
+
+  void PrimeSenseModel::resetDepthDistortionModel()
+  {
+    weights_ = VectorXd::Zero(64);
+    weights_(1) = 10;  // feature 1 is measured depth in decameters.
   }
   
 } // namespace rgbd

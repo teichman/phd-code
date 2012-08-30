@@ -64,6 +64,9 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, 
   setColorScheme("monitor");
   mpliBegin();
   setInitialExtrinsics();
+
+  model_ = sseq->model_;
+  model_.resetDepthDistortionModel();
 }
 
 void AsusVsVeloVisualizer::setInitialExtrinsics()
@@ -168,24 +171,28 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
 {
   // -- Get corresponding clouds.
   velo_ = filterVelo(vseq_->getCloud(velo_idx));
-  double min_dt;
-  asus_idx_ = findAsusIdx(velo_->header.stamp.toSec() + offset, &min_dt);
-  Frame frame;
-  sseq_->readFrame(asus_idx_, &frame);
-
-  if(unwarp_) {
-    model_.frameToCloud(frame, asus_.get());
+  double dt;
+  asus_idx_ = findAsusIdx(velo_->header.stamp.toSec() + offset, &dt);
+  bool draw_asus = (dt < 0.015);
+  if(draw_asus) {
+    Frame frame;
+    sseq_->readFrame(asus_idx_, &frame);
+    if(unwarp_)
+      model_.frameToCloud(frame, asus_.get());
+    else
+      sseq_->model_.frameToCloud(frame, asus_.get());
+    
+    for(size_t i = 0; i < asus_->size(); ++i)
+      colorPoint(&asus_->at(i));
   }
-  else
-    sseq_->model_.frameToCloud(frame, asus_.get());
 
   // -- Draw.
-  for(size_t i = 0; i < asus_->size(); ++i)
-    colorPoint(&asus_->at(i));
   vw_.vis_.removeAllShapes();
   vis_->clear();
   pcl::transformPointCloud(*velo_, *vis_, transform);
-  *vis_ += *asus_;
+  if(draw_asus)
+    *vis_ += *asus_;
+    
   vw_.showCloud(vis_);
 }
 
@@ -230,14 +237,20 @@ void AsusVsVeloVisualizer::run()
   while(true) {
     updateVeloBounds();
     updateDisplay(velo_idx_, cal_.veloToAsus(), cal_.offset_);
-
+    cout << "velo: " << velo_->header.stamp.toSec() << " " << vseq_->timestamps_[velo_idx_]
+	 << ", asus: " << sseq_->timestamps_[asus_idx_] - sseq_start_
+	 << ", velo + offset - asus: " << velo_->header.stamp.toSec() + cal_.offset_ - (sseq_->timestamps_[asus_idx_] - sseq_start_) << endl;
+      
     char key = vw_.waitKey();
     switch(key) {
     case 27:
       return;
       break;
-    case 'C':
+    case 'o':
       toggleColorScheme();
+      break;
+    case 'C':
+      singleFrameExtrinsicsSearch();
       break;
     case 'm':
       unwarp_ = !unwarp_;
@@ -422,9 +435,9 @@ void AsusVsVeloVisualizer::calibrate()
   VeloToAsusCalibrator calibrator(model_, this);
   
   // -- Choose Velodyne keyframes.
-  int num_keyframes = 25;
-  int spacing = 30;
-  int buffer = 50;
+  int num_keyframes = 200;
+  int spacing = 10;
+  int buffer = 300;
   int idx = buffer;
   while(true) {
     updateDisplay(idx, cal_.veloToAsus(), cal_.offset_);
@@ -446,15 +459,19 @@ void AsusVsVeloVisualizer::calibrate()
   updateDisplay(velo_idx_, cal_.veloToAsus(), cal_.offset_);
   
   // -- Load Asus frames in the vicinity of the Velodyne keyframes.
-  int window = 15;
+  int window = 30;
   for(size_t i = 0; i < calibrator.pcds_.size(); ++i) {
     int idx = findAsusIdx(calibrator.pcds_[i]->header.stamp.toSec());
+    cout << "- Loading nearby asus frames for velo keyframe " << i << endl;
+    cout << "  ";
     for(int j = max(0, idx - window); j <= min(idx + window, (int)sseq_->size()); ++j) {
       Frame frame;
       sseq_->readFrame(j, &frame);
+      frame.timestamp_ -= sseq_start_;
       calibrator.frames_.push_back(frame);
+      cout << j << " ";
     }
-    cout << "Loaded nearby asus frames for velo keyframe " << i << endl;
+    cout << endl;
   }
 
   // -- Run grid search over extrinsics and apply updates.
@@ -468,6 +485,30 @@ void AsusVsVeloVisualizer::calibrate()
   cout << cal_.status("  ");
 
   cal_.save("calibration-autosave");
+}
+
+void AsusVsVeloVisualizer::singleFrameExtrinsicsSearch()
+{
+  VeloToAsusCalibrator calibrator(model_, this);
+
+  Cloud::Ptr pcd = filterVelo(vseq_->getCloud(velo_idx_));
+  pcl::transformPointCloud(*pcd, *pcd, cal_.veloToAsus());
+  pcd->header.stamp.fromSec(0);
+  calibrator.pcds_.push_back(pcd);
+  
+  Frame frame;
+  sseq_->readFrame(asus_idx_, &frame);
+  frame.timestamp_ = 0;
+  calibrator.frames_.push_back(frame);
+
+  VeloToAsusCalibration cal = calibrator.search();
+  cout << "Done calibrating." << endl;
+  cout << "Calibration incremental update: " << endl;
+  cout << cal.status("  ");
+  cal_.offset_ += cal.offset_;
+  cal_.setVeloToAsus(cal.veloToAsus() * cal_.veloToAsus());
+  cout << "Final extrinsic Velo to Asus calibration: " << endl;
+  cout << cal_.status("  ");
 }
 
 void AsusVsVeloVisualizer::handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective)

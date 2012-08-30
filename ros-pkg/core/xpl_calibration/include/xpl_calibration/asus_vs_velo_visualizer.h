@@ -69,6 +69,7 @@ protected:
   double theta_lower_;
   double theta_upper_;
 
+  void singleFrameExtrinsicsSearch();
   bool veloYawValid(double yaw) const;
   void updateVeloBounds();
   void setInitialExtrinsics();

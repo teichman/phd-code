@@ -72,6 +72,7 @@ namespace rgbd
     void deserialize(std::istream& in);
     std::string status(const std::string& prefix = "") const;
     bool hasDepthDistortionModel() const;
+    void resetDepthDistortionModel();
   };
   
 
