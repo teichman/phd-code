@@ -86,3 +86,6 @@ target_link_libraries(asus_vs_velo ${PROJECT_NAME})
 rosbuild_add_executable(inspect_depth_image src/prog/inspect_depth_image.cpp)
 rosbuild_add_compile_flags(inspect_depth_image -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 target_link_libraries(inspect_depth_image ${PROJECT_NAME})
+
+rosbuild_add_executable(g2o_hello src/prog/g2o_hello.cpp)
+target_link_libraries(g2o_hello)

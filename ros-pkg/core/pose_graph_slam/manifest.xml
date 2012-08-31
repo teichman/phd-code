@@ -1,0 +1,17 @@
+<package>
+  <description brief="pose_graph_slam">
+
+     pose_graph_slam
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pose_graph_slam</url>
+
+  <depend package="g2o"/>
+  <depend package="rosconsole"/>
+
+</package>
+
+
