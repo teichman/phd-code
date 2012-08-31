@@ -37,10 +37,15 @@ void PoseGraphSLAM::addEdge(int idx0, int idx1,
 
 void PoseGraphSLAM::solve(int num_iters)
 {
-  VertexSE3* p0 = dynamic_cast<VertexSE3*>(optimizer_.vertex(0));
-  ROS_ASSERT(p0);
-  p0->setToOrigin();
-  p0->setFixed(true);
+  VertexSE3* v0 = dynamic_cast<VertexSE3*>(optimizer_.vertex(0));
+  ROS_ASSERT(v0);
+  v0->setToOrigin();
+  v0->setFixed(true);
+
+  // Quaterniond quat;
+  // quat.setIdentity();
+  // SE3Quat se3(quat, Vector3d(0, 0, 0));
+  // v0->setEstimate(se3);
   
   cout << "Optimizing..." << endl;
   optimizer_.setVerbose(true);
@@ -49,19 +54,14 @@ void PoseGraphSLAM::solve(int num_iters)
   cout << "done." << endl;
 }
 
-Eigen::Affine3d PoseGraphSLAM::pose(int idx) const
+Eigen::Affine3d PoseGraphSLAM::transform(int idx) const
 {
   double data[7];
   optimizer_.vertex(idx)->getEstimateData(data);
-  Vector3d translation;
+  Vector3d translation;  // offset
   translation << data[0], data[1], data[2];
-  Quaterniond rotation(data[3], data[4], data[5], data[6]);
-
-  cout << "Pose " << idx << endl;
-  cout << "  " << translation.transpose() << endl;
-  cout << "  " << rotation.vec().transpose() << endl;
-
-  //ROS_WARN("TODO: How to compose final pose estimate?");
-  return Affine3d::Identity();
+  Quaterniond quat(data[6], data[3], data[4], data[5]);  // heading
+  
+  return Translation3d(translation) * Affine3d(quat.toRotationMatrix());
 }
 

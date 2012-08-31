@@ -26,8 +26,11 @@ public:
 	       const Eigen::Matrix3d& rotation,
 	       const Matrix6d& covariance);
   void solve(int num_iters = 10);
-  //! After solving, get the final pose of node idx.
-  Eigen::Affine3d pose(int idx) const;
+  //! Gets the transform that will send points from idx's local coordinate frame
+  //! to the global one which the first node defines.
+  //! global = transform(idx) * local
+  //! transform rotates, then translates.
+  Eigen::Affine3d transform(int idx) const;
   
   size_t numNodes() const { return optimizer_.vertices().size(); }
   size_t numEdges() const { return optimizer_.edges().size(); }
