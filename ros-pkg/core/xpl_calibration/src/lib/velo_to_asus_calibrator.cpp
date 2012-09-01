@@ -64,28 +64,29 @@ void MeanDepthError::incrementLoss(Frame frame, const rgbd::Cloud& pcd, double* 
 {
   ROS_ASSERT(frame.depth_->rows() == model_.height_);
   ROS_ASSERT(frame.depth_->cols() == model_.width_);
-  
+
+  // -- Make the ground truth depth image.
+  Frame gt;
+  model_.cloudToFrame(pcd, &gt);
+
+  // -- Count up mean depth error.
   ProjectivePoint ppt;
   rgbd::Point pt;
-  const DepthMat& depthmat = (*frame.depth_);
-  for(size_t i = 0; i < pcd.size(); ++i) {
-    if(!isFinite(pcd[i]))
-      continue;
-    
-    // Ignore points outside the measurement image.
-    model_.project(pcd[i], &ppt);
-    if(!(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < model_.width_ && ppt.v_ < model_.height_))
-      continue;
-    
-    // Ignore points without measurements.
-    ppt.z_ = depthmat(ppt.v_, ppt.u_);
-    if(ppt.z_ == 0)
-      continue;
+  rgbd::Point gtpt;
+  for(ppt.v_ = 0; ppt.v_ < gt.depth_->rows(); ++ppt.v_) {
+    for(ppt.u_ = 0; ppt.u_ < gt.depth_->cols(); ++ppt.u_) {
+      // Both ground truth and measurement must have data.
+      if(gt.depth_->coeffRef(ppt.v_, ppt.u_) == 0 || frame.depth_->coeffRef(ppt.v_, ppt.u_) == 0)
+      	continue;
+      
+      ppt.z_ = gt.depth_->coeffRef(ppt.v_, ppt.u_);
+      model_.project(ppt, &gtpt);
+      ppt.z_ = frame.depth_->coeffRef(ppt.v_, ppt.u_);
+      model_.project(ppt, &pt);
 
-    // Add to depth error.
-    model_.project(ppt, &pt);
-    *val += (pt.getVector3fMap() - pcd[i].getVector3fMap()).norm();
-    (*count)++;
+      *val += (pt.getVector3fMap() - gtpt.getVector3fMap()).norm();
+      ++(*count);
+    }
   }
 }
 

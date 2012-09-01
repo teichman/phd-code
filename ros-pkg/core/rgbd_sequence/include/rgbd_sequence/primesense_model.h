@@ -65,6 +65,7 @@ namespace rgbd
     //! Initializes with a bogus model: all params set to -1.
     PrimeSenseModel();
     void frameToCloud(const Frame& frame, Cloud* pcd) const;
+    void cloudToFrame(const Cloud& pcd, Frame* frame) const;
     void project(const ProjectivePoint& ppt, Point* pt) const;
     void project(const Point& pt, ProjectivePoint* ppt) const;
     bool initialized() const;
