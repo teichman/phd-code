@@ -9,7 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://openslam.org/g2o.html</url>
 
-  <depend package="eigen"/>
+  <depend package="eigen_flags"/>
   <rosdep name="suitesparse"/>
 
   <export>

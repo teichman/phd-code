@@ -1,6 +1,7 @@
 #ifndef PRIMESENSE_MODEL_H
 #define PRIMESENSE_MODEL_H
 
+#include <ros/assert.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <opencv2/core/core.hpp>
