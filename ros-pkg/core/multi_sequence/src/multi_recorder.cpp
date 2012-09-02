@@ -175,7 +175,7 @@ namespace multi_sequence
       double total_dt = 0;
       while(true) {
         double img_ts = image_timestamps_[i][img_idx];
-        double pcd_ts = clouds_[i][pcd_idx]->header.stamp.toSec();
+        double pcd_ts = clouds_[i][pcd_idx]->header.stamp * 1e-9 ;
         double dt = fabs(img_ts - pcd_ts);
         cout << img_ts << " " << pcd_ts << ", |dt| = " << dt << endl;
         

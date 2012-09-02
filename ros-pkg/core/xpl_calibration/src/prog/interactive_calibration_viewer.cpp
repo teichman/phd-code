@@ -72,7 +72,7 @@ int main(int argc, char** argv)
     yawRight = AngleAxisf(-da, Vector3f(0,1,0));
     if(update_frame){
       cloud0 = sseq0->getCloud(frame);    
-      cloud1 = sseq1->getCloud(cloud0->header.stamp.toSec(), &dt);
+      cloud1 = sseq1->getCloud(cloud0->header.stamp * 1e-9 , &dt);
       cout << "dt = " << dt << endl;
     }
     if(update_frame || update_transform){

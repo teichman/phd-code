@@ -14,7 +14,7 @@ MocapVisualizer::MocapVisualizer(const TRCParser& trc,
   trc_idx_(0),
   xpl_idx_(0),
   sync_(0),
-  sseq_start_(sseq_->getCloud(0)->header.stamp.toSec())
+  sseq_start_(sseq_->getCloud(0)->header.stamp * 1e-9 )
 {
 }
 
@@ -170,7 +170,7 @@ void MocapVisualizer::incrementXPL(int val)
   double ts = sseq_->timestamps_[xpl_idx_] - sseq_start_ + sync_;
   int best = -1;
   for(size_t i = 0; i < trc_.frames_.size(); ++i) {
-    double dt = fabs(ts - trc_.frames_[i]->header.stamp.toSec());
+    double dt = fabs(ts - trc_.frames_[i]->header.stamp * 1e-9 );
     if(dt < min) {
       min = dt;
       best = i;

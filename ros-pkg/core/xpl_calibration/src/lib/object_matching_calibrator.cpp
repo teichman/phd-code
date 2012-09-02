@@ -153,7 +153,7 @@ double ObjectMatchingCalibrator::updateSync(const std::vector<KdTree::Ptr>& tree
   LossFunction::Ptr lf(new LossFunction(trees0, pcds0, pcds1, getParams()));
   double dt = gridSearchSync(lf);
   for(size_t i = 0; i < pcds1.size(); ++i) {
-    double ts = pcds1[i]->header.stamp.toSec();
+    double ts = pcds1[i]->header.stamp * 1e-9 ;
     pcds1[i]->header.stamp.fromSec(ts + dt);
   }
   return dt;
@@ -244,7 +244,7 @@ void ObjectMatchingCalibrator::visualizeResult(const std::string& name, const Ei
 
   double max_dt = 0.3; // More lenient than that used for calibration.
   for(size_t i = 0; i < seq1.size(); i+=100) {
-    int idx = seek(seq0.pcds_, seq1.pcds_[i]->header.stamp.toSec() + sync, max_dt);
+    int idx = seek(seq0.pcds_, seq1.pcds_[i]->header.stamp * 1e-9  + sync, max_dt);
     if(idx == -1)
       continue;
     
@@ -344,8 +344,8 @@ void ObjectMatchingCalibrator::sampleCorrespondence(const rgbd::Sequence& seq0,
     int frame_idx = rand() % seq0.size();
     const Cloud& pcd0 = *seq0.pcds_[frame_idx];
     const Cloud& pcd1 = *seq1.pcds_[frame_idx];
-    double ts0 = pcd0.header.stamp.toSec();
-    double ts1 = pcd1.header.stamp.toSec();
+    double ts0 = pcd0.header.stamp * 1e-9 ;
+    double ts1 = pcd1.header.stamp * 1e-9 ;
     ROS_ASSERT(fabs(ts0 - ts1) < 0.05); // See thresh in CalibrationPipelineDynamic.
     
     const vector<Vector3f>& c0 = centroids0[frame_idx];
@@ -490,7 +490,7 @@ Affine3f ObjectMatchingCalibrator::updateTransformICP(const std::vector<KdTree::
     
     pcl::TransformationFromCorrespondences tfc;
     for(size_t i = 0; i < pcds1.size(); ++i) {
-      int idx = seek(pcds0, pcds1[i]->header.stamp.toSec(),
+      int idx = seek(pcds0, pcds1[i]->header.stamp * 1e-9 ,
 		     param<double>("TimeCorrespondenceThreshold"));
       if(idx == -1)
 	continue;
@@ -567,7 +567,7 @@ double LossFunction::eval(const VectorXd& x) const
   double val = 0;
   Cloud transformed;
   for(size_t i = 0; i < pcds1_.size(); ++i) {
-    int idx = seek(pcds0_, dt + pcds1_[i]->header.stamp.toSec(), dt_thresh_);
+    int idx = seek(pcds0_, dt + pcds1_[i]->header.stamp * 1e-9 , dt_thresh_);
     if(idx == -1)
       continue;
     ++count;
@@ -662,7 +662,7 @@ int seek(const std::vector<Cloud::ConstPtr>& pcds0, double ts1, double dt_thresh
   double min = numeric_limits<double>::max();
   // TODO: This could be faster than linear search.
   for(size_t i = 0; i < pcds0.size(); ++i) {
-    double ts0 = pcds0[i]->header.stamp.toSec();
+    double ts0 = pcds0[i]->header.stamp * 1e-9 ;
     double dt = fabs(ts0 - ts1);
     if(dt < min) {
       min = dt;

@@ -168,7 +168,7 @@ namespace dst
       return;
 
     double its = img_stamp_queue_.back();
-    double pts = pcd_queue_.back()->header.stamp.toSec();
+    double pts = pcd_queue_.back()->header.stamp * 1e-9 ;
     if(fabs(its - pts) < thresh_) {
       cout << "Backs are equal. Adding pair at " << pts << " with delta " << fabs(its - pts) << endl;
       imgs_.push_back(img_queue_.back());
@@ -179,10 +179,10 @@ namespace dst
       segmentLatest();
     }
     else if(its < pts) {
-      double delta = fabs(pcd_queue_.front()->header.stamp.toSec() - its);
+      double delta = fabs(pcd_queue_.front()->header.stamp * 1e-9  - its);
       while(!pcd_queue_.empty()) {
 	if(delta < thresh_) {
-	  cout << "PCD more recent. Adding pair at " << pcd_queue_.front()->header.stamp.toSec() << " with delta " << delta << endl;
+	  cout << "PCD more recent. Adding pair at " << pcd_queue_.front()->header.stamp * 1e-9  << " with delta " << delta << endl;
 	  imgs_.push_back(img_queue_.back());
 	  pcds_.push_back(pcd_queue_.front());
 	  
@@ -193,7 +193,7 @@ namespace dst
 	  segmentLatest();
 	  break;
 	}
-	else if(pcd_queue_.front()->header.stamp.toSec() < its)
+	else if(pcd_queue_.front()->header.stamp * 1e-9  < its)
 	  pcd_queue_.pop_front();
 	else
 	  break;
@@ -229,7 +229,7 @@ namespace dst
   
   void RealTimeInterface::segmentLatest()
   {
-    cout << "Segmenting pair with timestamp " << pcds_.back()->header.stamp.toSec() << endl;
+    cout << "Segmenting pair with timestamp " << pcds_.back()->header.stamp * 1e-9  << endl;
     cout << "Aligned queue sizes: " << pcds_.size() << " " << imgs_.size() << endl;
     ROS_ASSERT(pcds_.size() == imgs_.size());
     ROS_ASSERT(segmentations_.size() == pcd_results_.size());

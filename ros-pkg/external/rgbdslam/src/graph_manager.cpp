@@ -1251,7 +1251,7 @@ void GraphManager::saveTrajectory(QString filebasename){
         tf::StampedTransform base2points = graph_[i]->getBase2PointsTransform();//get pose of base w.r.t current pc at capture time
         tf::Transform world2base = init_base_pose_*base2points*pose*base2points.inverse();
 
-        logTransform(et_out, world2base, graph_[i]->pc_col->header.stamp.toSec()); 
+        logTransform(et_out, world2base, graph_[i]->pc_col->header.stamp * 1e-9 ); 
         //Eigen::Matrix<double, 6,6> uncertainty = v->uncertainty();
         //et_out << uncertainty(0,0) << "\t" << uncertainty(1,1) << "\t" << uncertainty(2,2) << "\t" << uncertainty(3,3) << "\t" << uncertainty(4,4) << "\t" << uncertainty(5,5) <<"\n" ;
         if(!gt.empty()){
@@ -1260,8 +1260,8 @@ void GraphManager::saveTrajectory(QString filebasename){
             ROS_WARN_STREAM("Skipping ground truth: " << gt_world2base.child_frame_id_ << " child/parent " << gt_world2base.frame_id_);
             continue;
           }
-          logTransform(gtt_out, gt_world2base, gt_world2base.stamp_.toSec()); 
-          //logTransform(et_out, world2base, gt_world2base.stamp_.toSec()); 
+          logTransform(gtt_out, gt_world2base, gt_world2base.stamp_ * 1e-9 ); 
+          //logTransform(et_out, world2base, gt_world2base.stamp_ * 1e-9 ); 
         } 
     }
     ROS_INFO_COND(!gt.empty(), "Written logfiles ground_truth_trajectory.txt and estimated_trajectory.txt");

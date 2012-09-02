@@ -48,7 +48,7 @@ void TRCParser::deserialize(std::istream& in)
       frame->push_back(pt);
     }
     frames_.push_back(frame);
-    //cout << "Added frame " << fields[0] << " at ts = " << frame->header.stamp.toSec() << " with " << frame->size() << " points." << endl;
+    //cout << "Added frame " << fields[0] << " at ts = " << frame->header.stamp * 1e-9  << " with " << frame->size() << " points." << endl;
   }
 }
 

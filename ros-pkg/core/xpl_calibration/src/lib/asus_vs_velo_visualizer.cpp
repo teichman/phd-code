@@ -172,7 +172,7 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
   // -- Get corresponding clouds.
   velo_ = filterVelo(vseq_->getCloud(velo_idx));
   double dt;
-  asus_idx_ = findAsusIdx(velo_->header.stamp.toSec() + offset, &dt);
+  asus_idx_ = findAsusIdx(velo_->header.stamp * 1e-9  + offset, &dt);
   bool draw_asus = (dt < 0.015);
   if(draw_asus) {
     Frame frame;
@@ -237,9 +237,9 @@ void AsusVsVeloVisualizer::run()
   while(true) {
     updateVeloBounds();
     updateDisplay(velo_idx_, cal_.veloToAsus(), cal_.offset_);
-    cout << "velo: " << velo_->header.stamp.toSec() << " " << vseq_->timestamps_[velo_idx_]
+    cout << "velo: " << velo_->header.stamp * 1e-9  << " " << vseq_->timestamps_[velo_idx_]
 	 << ", asus: " << sseq_->timestamps_[asus_idx_] - sseq_start_
-	 << ", velo + offset - asus: " << velo_->header.stamp.toSec() + cal_.offset_ - (sseq_->timestamps_[asus_idx_] - sseq_start_) << endl;
+	 << ", velo + offset - asus: " << velo_->header.stamp * 1e-9  + cal_.offset_ - (sseq_->timestamps_[asus_idx_] - sseq_start_) << endl;
       
     char key = vw_.waitKey();
     switch(key) {
@@ -277,10 +277,10 @@ void AsusVsVeloVisualizer::run()
       break;
     case 'f':
       cout << "-- Frame stats --" << endl;
-      cout << "Velo timestamp: " << setprecision(16) << velo_->header.stamp.toSec() << endl;
+      cout << "Velo timestamp: " << setprecision(16) << velo_->header.stamp * 1e-9  << endl;
       cout << "Offset: " << cal_.offset_ << endl;
       cout << "Asus timestamp: " << sseq_->timestamps_[asus_idx_] - sseq_start_ << endl;
-      cout << "velo + offset - asus: " << velo_->header.stamp.toSec() + cal_.offset_ - (sseq_->timestamps_[asus_idx_] - sseq_start_) << endl;
+      cout << "velo + offset - asus: " << velo_->header.stamp * 1e-9  + cal_.offset_ - (sseq_->timestamps_[asus_idx_] - sseq_start_) << endl;
       cout << "Loss for this frame: TODO" << endl;
       break;
     case 'S':
@@ -426,7 +426,7 @@ rgbd::Cloud::Ptr AsusVsVeloVisualizer::filterVelo(rgbd::Cloud::ConstPtr velo) co
     filtered->push_back(pt);
   }
 
-  filtered->header.stamp.fromSec(velo->header.stamp.toSec());
+  filtered->header.stamp.fromSec(velo->header.stamp * 1e-9 );
   return filtered;
 }
 
@@ -446,7 +446,7 @@ void AsusVsVeloVisualizer::calibrate()
     // Apply initial transform.  Grid search will return a transform to apply on top of the initial one.
     pcl::transformPointCloud(*pcd, *pcd, cal_.veloToAsus());  
     // Apply initial sync offset.  Grid search will return an update to add to cal_.offset_.
-    pcd->header.stamp.fromSec(pcd->header.stamp.toSec() + cal_.offset_);  
+    pcd->header.stamp.fromSec(pcd->header.stamp * 1e-9  + cal_.offset_);  
     calibrator.pcds_.push_back(pcd);
 
     idx += spacing;
@@ -461,7 +461,7 @@ void AsusVsVeloVisualizer::calibrate()
   // -- Load Asus frames in the vicinity of the Velodyne keyframes.
   int window = 30;
   for(size_t i = 0; i < calibrator.pcds_.size(); ++i) {
-    int idx = findAsusIdx(calibrator.pcds_[i]->header.stamp.toSec());
+    int idx = findAsusIdx(calibrator.pcds_[i]->header.stamp * 1e-9 );
     cout << "- Loading nearby asus frames for velo keyframe " << i << endl;
     cout << "  ";
     for(int j = max(0, idx - window); j <= min(idx + window, (int)sseq_->size()); ++j) {
