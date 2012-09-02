@@ -8,7 +8,7 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/multi_sequence</url>
-  <depend package="roscpp"/>
+  <!-- depend package="roscpp" /-->
   <depend package="serializable"/>
   <depend package="rgbd_sequence"/>
 

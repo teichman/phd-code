@@ -35,7 +35,7 @@ Cloud::Ptr VeloSequence::getCloud(size_t idx) const
   
   Cloud::Ptr pcd(new Cloud);
   pcl::io::loadPCDFile<pcl::PointXYZRGB>(root_path_ + "/" + pcd_names_[idx], *pcd);
-  pcd->header.stamp.fromSec(timestamps_[idx]);
+  pcd->header.stamp = (timestamps_[idx]) * 1e9;
   return pcd;
 }
 
@@ -426,7 +426,7 @@ rgbd::Cloud::Ptr AsusVsVeloVisualizer::filterVelo(rgbd::Cloud::ConstPtr velo) co
     filtered->push_back(pt);
   }
 
-  filtered->header.stamp.fromSec(velo->header.stamp * 1e-9 );
+  filtered->header.stamp = (velo->header.stamp * 1e-9 ) * 1e9;
   return filtered;
 }
 
@@ -446,7 +446,7 @@ void AsusVsVeloVisualizer::calibrate()
     // Apply initial transform.  Grid search will return a transform to apply on top of the initial one.
     pcl::transformPointCloud(*pcd, *pcd, cal_.veloToAsus());  
     // Apply initial sync offset.  Grid search will return an update to add to cal_.offset_.
-    pcd->header.stamp.fromSec(pcd->header.stamp * 1e-9  + cal_.offset_);  
+    pcd->header.stamp = (pcd->header.stamp * 1e-9  + cal_.offset_) * 1e9;  
     calibrator.pcds_.push_back(pcd);
 
     idx += spacing;
@@ -493,7 +493,7 @@ void AsusVsVeloVisualizer::singleFrameExtrinsicsSearch()
 
   Cloud::Ptr pcd = filterVelo(vseq_->getCloud(velo_idx_));
   pcl::transformPointCloud(*pcd, *pcd, cal_.veloToAsus());
-  pcd->header.stamp.fromSec(0);
+  pcd->header.stamp = (0) * 1e9;
   calibrator.pcds_.push_back(pcd);
   
   Frame frame;

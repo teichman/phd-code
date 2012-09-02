@@ -3,6 +3,8 @@
 
     A general system for graph optimization.
 
+    sudo apt-get install libsuitesparse-dev
+
   </description>
   <author>Rainer Kummerle, Giorgio Grisetti, Cyril Stachniss, Hauke Strasdat, Kurt Konolige</author>
   <license>LGPL</license>

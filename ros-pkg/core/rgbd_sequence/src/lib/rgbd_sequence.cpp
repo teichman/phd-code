@@ -86,7 +86,7 @@ namespace rgbd
       double stamp;
       fs >> stamp;
       fs.close();
-      pcds_[i]->header.stamp.fromSec( stamp );
+      pcds_[i]->header.stamp = ( stamp ) * 1e9;
     }
   }
   

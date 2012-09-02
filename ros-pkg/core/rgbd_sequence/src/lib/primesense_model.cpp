@@ -53,7 +53,7 @@ namespace rgbd
     pcd->width = dm.cols();
     pcd->is_dense = false;
     pcd->resize(dm.rows() * dm.cols());
-    pcd->header.stamp.fromSec(frame.timestamp_);
+    pcd->header.stamp = (frame.timestamp_) * 1e9;
 
     int idx = 0;
     ProjectivePoint ppt;

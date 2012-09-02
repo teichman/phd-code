@@ -36,7 +36,7 @@ void TRCParser::deserialize(std::istream& in)
 
     ROS_ASSERT((size_t)fields[0] == frames_.size() + 1);
     Cloud::Ptr frame(new Cloud);
-    frame->header.stamp.fromSec(fields[1]);
+    frame->header.stamp = (fields[1]) * 1e9;
     for(size_t i = 2; i < fields.size(); i+=3) {
       Point pt;
       pt.x = fields[i] * 0.001f;

@@ -154,7 +154,7 @@ double ObjectMatchingCalibrator::updateSync(const std::vector<KdTree::Ptr>& tree
   double dt = gridSearchSync(lf);
   for(size_t i = 0; i < pcds1.size(); ++i) {
     double ts = pcds1[i]->header.stamp * 1e-9 ;
-    pcds1[i]->header.stamp.fromSec(ts + dt);
+    pcds1[i]->header.stamp = (ts + dt) * 1e9;
   }
   return dt;
 }
