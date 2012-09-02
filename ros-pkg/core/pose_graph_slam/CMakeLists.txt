@@ -7,15 +7,11 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 #  Release        : w/o debug symbols, w/ optimization
 #  RelWithDebInfo : w/ debug symbols, w/ optimization
 #  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-#set(ROS_BUILD_TYPE RelWithDebInfo)
-
+set(ROS_BUILD_TYPE RelWithDebInfo)
 rosbuild_init()
 
-#set the default path for built executables to the "bin" directory
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
-
 
 #set(LIB_COMPILE_FLAGS -fopenmp -w)
 #set(LIB_DEPENDENCIES "")
@@ -25,8 +21,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #set(BIN_DEPENDENCIES "")
 #set(BIN_BOOST_DEPENDENCIES "")
 
-
-#Everything in src/*cpp is a library file
+# -- Everything in src/*cpp is a library file
 FILE(GLOB LIB_CPP "${PROJECT_SOURCE_DIR}/src/lib/*.cpp")
 set(HAS_LIBRARIES ${LIB_CPP})
 IF(HAS_LIBRARIES)
@@ -41,7 +36,8 @@ IF(HAS_LIBRARIES)
     rosbuild_link_boost(${PROJECT_NAME} ${LIB_BOOST_DEPENDENCIES})
   ENDIF()
 ENDIF()
-#Everything in src/prog/*cpp is a binary file
+
+# -- Everything in src/prog/*cpp is a binary file
 FILE(GLOB EXE_CPP "${PROJECT_SOURCE_DIR}/src/prog/*.cpp")
 foreach(exec ${EXE_CPP})
   STRING(REGEX REPLACE "(.*)/src/prog/(.*).cpp" "\\2" basename "${exec}")
@@ -59,12 +55,10 @@ foreach(exec ${EXE_CPP})
   ENDIF()
 endforeach(exec)
 
-#Everything in src/test/*cpp is a gtest file
+# -- Everything in src/test/*cpp is a gtest file
 FILE(GLOB TEST_CPP "${PROJECT_SOURCE_DIR}/src/test/*.cpp")
 foreach(tst ${TEST_CPP})
   STRING(REGEX REPLACE "(.*)/src/test/(.*).cpp" "\\2" basename "${tst}")
   rosbuild_add_gtest(${basename} ${tst})
   target_link_libraries(${basename} ${PROJECT_NAME})
 endforeach(tst)
-
-

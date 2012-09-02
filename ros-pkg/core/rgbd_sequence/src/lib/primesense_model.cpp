@@ -36,6 +36,36 @@ namespace rgbd
   {
     resetDepthDistortionModel();
   }
+
+  void PrimeSenseModel::cloudToFrame(const Cloud& pcd, Frame* frame) const
+  {
+    ROS_ASSERT(frame);
+
+    frame->timestamp_ = pcd.header.stamp.toSec();
+    frame->depth_ = DepthMatPtr(new DepthMat(height_, width_));
+    frame->depth_->setZero();  // 0 indicates a bad point.
+    frame->img_ = cv::Mat3b(height_, width_);
+
+    ProjectivePoint ppt;
+    for(size_t i = 0; i < pcd.size(); ++i) {
+      if(!isFinite(pcd[i]))
+	continue;
+      
+      // Ignore points outside the depth image.
+      project(pcd[i], &ppt);
+      if(!(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
+	continue;
+
+      // Take the closest point in pcd.
+      unsigned short curr_depth = frame->depth_->coeffRef(ppt.v_, ppt.u_);
+      if(curr_depth == 0 || ppt.z_ < curr_depth) { 
+	frame->depth_->coeffRef(ppt.v_, ppt.u_) = ppt.z_;
+	frame->img_(ppt.v_, ppt.u_)[0] = ppt.b_;
+	frame->img_(ppt.v_, ppt.u_)[1] = ppt.g_;
+	frame->img_(ppt.v_, ppt.u_)[2] = ppt.r_;
+      }
+    }
+  }
   
   void PrimeSenseModel::frameToCloud(const Frame& frame, Cloud* pcd) const
   {    
