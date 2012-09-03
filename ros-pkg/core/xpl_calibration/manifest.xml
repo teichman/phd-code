@@ -17,8 +17,8 @@
   <depend package="google-perftools"/>
   <depend package="image_labeler"/>
   <depend package="matplotlib_interface"/>
-  <depend package="g2o"/>
   <depend package="roslib"/>
+  <depend package="pose_graph_slam"/>
 
   <export>
     <cpp cflags="-I${prefix}/include"
