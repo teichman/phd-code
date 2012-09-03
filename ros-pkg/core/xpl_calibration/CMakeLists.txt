@@ -40,6 +40,7 @@ rosbuild_add_library(${PROJECT_NAME}
 #  src/lib/mocap_detector.cpp
   src/lib/depth_distortion_learner.cpp
   src/lib/velo_to_asus_calibrator.cpp
+  src/lib/mean_depth_error.cpp
   )
 rosbuild_add_compile_flags(${PROJECT_NAME} -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 rosbuild_link_boost(${PROJECT_NAME} system program_options)
