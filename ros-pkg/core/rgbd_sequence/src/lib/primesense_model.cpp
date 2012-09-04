@@ -41,7 +41,7 @@ namespace rgbd
   {
     ROS_ASSERT(frame);
 
-    frame->timestamp_ = pcd.header.stamp * 1e-9;
+    frame->timestamp_ = pcd.header.stamp.toSec();
     frame->depth_ = DepthMatPtr(new DepthMat(height_, width_));
     frame->depth_->setZero();  // 0 indicates a bad point.
     frame->img_ = cv::Mat3b(height_, width_);

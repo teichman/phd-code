@@ -7,7 +7,7 @@ class FrameAligner
 {
 public:
   FrameAligner(const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1);
-  //! Returns transform that takes 0 to 1.
+  //! Returns transform that takes 1 to 0.
   Eigen::Affine3f align(rgbd::Frame frame0, rgbd::Frame frame1) const;
 
 protected:
