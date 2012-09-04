@@ -90,3 +90,6 @@ target_link_libraries(inspect_depth_image ${PROJECT_NAME})
 
 rosbuild_add_executable(g2o_hello src/prog/g2o_hello.cpp)
 target_link_libraries(g2o_hello)
+
+rosbuild_add_executable(slam_test src/prog/slam_test.cpp)
+rosbuild_link_boost(slam_test program_options filesystem)

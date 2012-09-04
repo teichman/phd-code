@@ -12,6 +12,11 @@
   <depend package="g2o"/>
   <depend package="rosconsole"/>
 
+  <export>
+    <cpp cflags="-I${prefix}/include"
+	 lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lpose_graph_slam" />
+  </export>
+  
 </package>
 
 
