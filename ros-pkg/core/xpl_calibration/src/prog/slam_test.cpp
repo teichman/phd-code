@@ -1,9 +1,10 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
-#include <pose_graph_slam/pose_graph_slam.h>
+#include <xpl_calibration/slam_visualizer.h>
 
 using namespace std;
 using namespace g2o;
+using namespace rgbd;
 
 int main(int argc, char** argv)
 {
@@ -32,6 +33,10 @@ int main(int argc, char** argv)
   }
 
   cout << "Using " << opts["sseq"].as<string>() << endl;
-    
+  StreamSequence::Ptr sseq(new StreamSequence);
+  sseq->load(opts["sseq"].as<string>());
+  SlamVisualizer vis;
+  vis.run(sseq);
+  
   return 0;
 }

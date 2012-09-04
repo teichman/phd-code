@@ -13,17 +13,18 @@
 
 typedef Eigen::Matrix<double, 6, 6> Matrix6d;
 
-class PoseGraphSLAM
+class PoseGraphSlam
 {
 public:
   //! The first node is assumed to be at the origin with identity rotation.
-  PoseGraphSLAM(int num_nodes);
-  //! Edges encode translation then rotation for idx0 -> idx1.
+  PoseGraphSlam(int num_nodes);
+  //! Assuming idx0 is the origin, transform applied to the origin gives the pose of idx1 in idx0's frame.
+  //! That is, the rotation component is the heading and the translation component is the position
+  //! in the rotated frame.
   //! The covariance matrix orders the variables as translation, then rotation.
   //! covariance must be positive definite.
   void addEdge(int idx0, int idx1,
-	       const Eigen::Vector3d& translation,
-	       const Eigen::Matrix3d& rotation,
+	       const Eigen::Affine3d& transform,
 	       const Matrix6d& covariance);
   void solve(int num_iters = 10);
   //! Gets the transform that will send points from idx's local coordinate frame
@@ -31,6 +32,7 @@ public:
   //! global = transform(idx) * local
   //! transform rotates, then translates.
   Eigen::Affine3d transform(int idx) const;
+  void vertexData(int idx, Eigen::Vector3d* translation, Eigen::Quaterniond* quat) const;
   
   size_t numNodes() const { return optimizer_.vertices().size(); }
   size_t numEdges() const { return optimizer_.edges().size(); }
