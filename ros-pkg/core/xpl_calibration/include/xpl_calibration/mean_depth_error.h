@@ -11,7 +11,7 @@ public:
   typedef boost::shared_ptr<FrameAlignmentMDE> Ptr;
   typedef boost::shared_ptr<const FrameAlignmentMDE> ConstPtr;
   
-  double point_utilization_;
+  double fraction_;
   
   FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
 		    const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1);
@@ -25,8 +25,6 @@ protected:
   rgbd::Frame frame1_;
   rgbd::Cloud pcd0_;
   rgbd::Cloud pcd1_;
-
-  void transformAndDecimate(const rgbd::Cloud& in, const Eigen::Affine3f& transform, rgbd::Cloud* out) const;
 };
 
 //! Computes the asymmetric MDE for a given set of frames assumed to be from the same sensor
@@ -55,5 +53,9 @@ protected:
 void meanDepthError(const rgbd::PrimeSenseModel& model,
 		    rgbd::Frame frame, const rgbd::Cloud& pcd,
 		    double* count, double* val);
+
+void transformAndDecimate(const rgbd::Cloud& in,
+			  const Eigen::Affine3f& transform,
+			  double fraction, rgbd::Cloud* out);
 
 #endif // MEAN_DEPTH_ERROR_H

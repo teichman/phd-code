@@ -17,7 +17,7 @@ Eigen::Affine3d FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1) cons
 {
   ScopedTimer st("FrameAligner::align");
   FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, frame0, model1_, frame1));
-  mde->point_utilization_ = 0.1;
+  mde->fraction_ = 0.1;
   
   GridSearch gs(6);
   gs.verbose_ = false;

@@ -7,7 +7,7 @@ using namespace rgbd;
 
 FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
 				     const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1) :
-  point_utilization_(1.0),
+  fraction_(1.0),
   model0_(model0),
   model1_(model1),
   frame0_(frame0),
@@ -26,11 +26,9 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   double val = 0;  // Total objective.
   Cloud transformed;
 
-  //pcl::transformPointCloud(pcd1_, transformed, f0_to_f1.inverse());
-  transformAndDecimate(pcd1_, f0_to_f1.inverse(), &transformed);
+  transformAndDecimate(pcd1_, f0_to_f1.inverse(), fraction_, &transformed);
   meanDepthError(model0_, frame0_, transformed, &val, &count);
-  //pcl::transformPointCloud(pcd0_, transformed, f0_to_f1);
-  transformAndDecimate(pcd0_, f0_to_f1, &transformed);
+  transformAndDecimate(pcd0_, f0_to_f1, fraction_, &transformed);
   meanDepthError(model1_, frame1_, transformed, &val, &count);
 
   if(count == 0) {
@@ -41,18 +39,21 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
     return val / count;
 }
 
-void FrameAlignmentMDE::transformAndDecimate(const rgbd::Cloud& in, const Eigen::Affine3f& transform, rgbd::Cloud* out) const
+void transformAndDecimate(const rgbd::Cloud& in,
+			  const Eigen::Affine3f& transform,
+			  double fraction, rgbd::Cloud* out)
 {
-  //ScopedTimer st("FrameAlignmentMDE::transformAndDecimate");
   out->clear();
   out->reserve(in.size());
   for(size_t i = 0; i < in.size(); ++i) {
-    if(((double)rand() / (double)RAND_MAX) > point_utilization_)
+    if(((double)rand() / (double)RAND_MAX) > fraction)
       continue;
     
     out->push_back(rgbd::Point());
     out->back().getVector4fMap() = transform * in[i].getVector4fMap();
-    // TODO: Color
+    out->back().r = in[i].r;
+    out->back().g = in[i].g;
+    out->back().b = in[i].b;
   }
 }
 
