@@ -2,6 +2,7 @@
 #define SLAM_VISUALIZER_H
 
 #include <boost/thread.hpp>
+#include <gperftools/profiler.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <bag_of_tricks/lockable.h>
 #include <pose_graph_slam/pose_graph_slam.h>
@@ -23,6 +24,8 @@ protected:
   rgbd::Cloud::Ptr curr_pcd_transformed_;
   size_t incr_;
   bool needs_update_;
+  Eigen::Affine3f tip_transform_;
+  bool quitting_;
   
   void slamThreadFunction();
   void visualizationThreadFunction();

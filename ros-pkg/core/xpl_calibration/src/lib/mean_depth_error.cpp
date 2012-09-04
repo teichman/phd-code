@@ -19,6 +19,7 @@ FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::
 
 double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
 {
+  //ScopedTimer st("FrameAlignmentMDE::eval");
   Eigen::Affine3f f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
 
   double count = 0;  // Total number of points with both ground truth and measurements.
@@ -42,6 +43,7 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
 
 void FrameAlignmentMDE::transformAndDecimate(const rgbd::Cloud& in, const Eigen::Affine3f& transform, rgbd::Cloud* out) const
 {
+  //ScopedTimer st("FrameAlignmentMDE::transformAndDecimate");
   out->clear();
   out->reserve(in.size());
   for(size_t i = 0; i < in.size(); ++i) {
@@ -113,14 +115,19 @@ void meanDepthError(const rgbd::PrimeSenseModel& model,
 		    Frame frame, const rgbd::Cloud& pcd,
 		    double* val, double* count)
 {
+  //ScopedTimer st("meanDepthError total");
   ROS_ASSERT(frame.depth_->rows() == model.height_);
   ROS_ASSERT(frame.depth_->cols() == model.width_);
-
+  //HighResTimer hrt;
+  
   // -- Make the ground truth depth image.
+  //hrt.reset("meanDepthError: cloudToFrame"); hrt.start();
   Frame gt;
   model.cloudToFrame(pcd, &gt);
+  //hrt.stop(); cout << hrt.report() << endl;
 
   // -- Count up mean depth error.
+  //hrt.reset("meanDepthError: counting"); hrt.start();
   ProjectivePoint ppt;
   rgbd::Point pt;
   rgbd::Point gtpt;
@@ -129,7 +136,7 @@ void meanDepthError(const rgbd::PrimeSenseModel& model,
       // Both ground truth and measurement must have data.
       if(gt.depth_->coeffRef(ppt.v_, ppt.u_) == 0 || frame.depth_->coeffRef(ppt.v_, ppt.u_) == 0)
       	continue;
-      
+
       ppt.z_ = gt.depth_->coeffRef(ppt.v_, ppt.u_);
       model.project(ppt, &gtpt);
       ppt.z_ = frame.depth_->coeffRef(ppt.v_, ppt.u_);
@@ -139,4 +146,5 @@ void meanDepthError(const rgbd::PrimeSenseModel& model,
       ++(*count);
     }
   }
+  //hrt.stop(); cout << hrt.report() << endl;
 }

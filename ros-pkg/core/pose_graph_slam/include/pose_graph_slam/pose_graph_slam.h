@@ -10,6 +10,7 @@
 #include <g2o/core/graph_optimizer_sparse.h>
 #include <g2o/core/block_solver.h>
 #include <g2o/solvers/csparse/linear_solver_csparse.h>
+#include <g2o/solvers/cholmod/linear_solver_cholmod.h>
 
 typedef Eigen::Matrix<double, 6, 6> Matrix6d;
 
@@ -21,9 +22,8 @@ public:
   
   //! The first node is assumed to be at the origin with identity rotation.
   PoseGraphSlam(int num_nodes);
-  //! Assuming idx0 is the origin, transform applied to the origin gives the pose of idx1 in idx0's frame.
-  //! That is, the rotation component is the heading and the translation component is the position
-  //! in the rotated frame.
+  //! transform takes points seen by idx1 and puts them in the idx0 frame.
+  //! Applied to (0, 0, 0, 0, 0, 0), this gives the pose of idx1 in the idx0 frame.
   //! The covariance matrix orders the variables as translation, then rotation.
   //! covariance must be positive definite.
   void addEdge(int idx0, int idx1,

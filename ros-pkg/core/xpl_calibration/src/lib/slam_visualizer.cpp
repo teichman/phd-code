@@ -8,8 +8,10 @@ SlamVisualizer::SlamVisualizer() :
   map_(new Cloud),
   curr_pcd_(new Cloud),
   curr_pcd_transformed_(new Cloud),
-  incr_(30),
-  needs_update_(false)
+  incr_(15),
+  needs_update_(false),
+  tip_transform_(Affine3f::Identity()),
+  quitting_(false)
 {
   vis_.registerKeyboardCallback(&SlamVisualizer::keyboardCallback, *this);
   vis_.addCoordinateSystem(1.0);
@@ -49,8 +51,10 @@ void SlamVisualizer::slamThreadFunction()
   lockWrite();
   needs_update_ = true;
   unlockWrite();
-  
-  FrameAligner aligner(sseq_->model_, sseq_->model_, this);
+
+  PrimeSenseModel model = sseq_->model_;
+  model.use_distortion_model_ = false;
+  FrameAligner aligner(model, model, this);
   slam_ = PoseGraphSlam::Ptr(new PoseGraphSlam(sseq_->size()));
   Matrix6d covariance = Matrix6d::Identity() * 1e-3;  
   
@@ -65,29 +69,25 @@ void SlamVisualizer::slamThreadFunction()
     // -- Add the next link.
     sseq_->readFrame(i-incr_, &prev_frame);
     sseq_->readFrame(i, &curr_frame);
-    Affine3d curr_to_prev;
-    if(getenv("NO_ALIGNMENT"))
-      curr_to_prev = Affine3d::Identity();
-    else
-      curr_to_prev = aligner.align(curr_frame, prev_frame);
-    slam_->addEdge(i, i-incr_, curr_to_prev, covariance);
-
+    Affine3d curr_to_prev = aligner.align(curr_frame, prev_frame);
+    
+    cout << "Adding edge with transform: " << endl << curr_to_prev.matrix() << endl;
+    slam_->addEdge(i-incr_, i, curr_to_prev, covariance);
+    cout << "Inverse of that: " << endl << curr_to_prev.inverse().matrix() << endl;
+    
     // -- Solve.
     slam_->solve();
 
     // -- Update the map.
     lockWrite();
-    for(size_t j = 0; j < slam_->numNodes(); ++j) {
-      Affine3f transform = slam_->transform(j).cast<float>();
-      cout << "*** transform " << j << ": " << endl << transform.matrix() << endl;
-    }
     Affine3f transform = slam_->transform(i).cast<float>();
-    cout << "Final transform: " << endl << transform.matrix() << endl;
+    cout << "Final transform from g2o: " << endl << transform.matrix() << endl;
     Cloud::Ptr pcdi = sseq_->getCloud(i);
     pcl::transformPointCloud(*pcdi, *pcdi, transform);
     *map_ += *pcdi;
     curr_pcd_->clear();
     curr_pcd_transformed_->clear();
+    tip_transform_ = transform;
     needs_update_ = true;
     unlockWrite();
   }
@@ -95,7 +95,7 @@ void SlamVisualizer::slamThreadFunction()
 
 void SlamVisualizer::visualizationThreadFunction()
 {
-  while(true) {
+  while(scopeLockRead, !quitting_) {
     lockWrite();
     if(needs_update_) {
       Cloud::Ptr vis(new Cloud);
@@ -120,17 +120,23 @@ void SlamVisualizer::visualizationThreadFunction()
 void SlamVisualizer::keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie)
 {
   if(event.keyDown()) {
-    cout << "Pressed " << event.getKeyCode() << endl;
+    cout << "Pressed " << (int)event.getKeyCode() << endl;
+
+    if(event.getKeyCode() == 'd' || event.getKeyCode() == 32) {
+      scopeLockWrite;
+      quitting_ = true;
+    }
   }
 }
 
 void SlamVisualizer::handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective)
 {
+  ScopedTimer st("SlamVisualizer::handleGridSearchUpdate");
   cout << "Improvement: objective " << objective << " at " << x.transpose() << endl;
   Affine3f transform = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
 
   lockWrite();
-  pcl::transformPointCloud(*curr_pcd_, *curr_pcd_transformed_, transform);
+  pcl::transformPointCloud(*curr_pcd_, *curr_pcd_transformed_, transform * tip_transform_);
   needs_update_ = true;
   unlockWrite();
 }

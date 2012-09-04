@@ -4,8 +4,30 @@
 using namespace std;
 using namespace g2o;
 
+TEST(PoseGraphSlam, SingleLink)
+{
+  PoseGraphSlam pgs(2);
+  Matrix6d covariance = Matrix6d::Identity() * 1e-6;
+  
+  Vector3d axis((double)rand() / RAND_MAX, (double)rand() / RAND_MAX, (double)rand() / RAND_MAX);
+  axis.normalize();
+  double angle = (double)rand() / RAND_MAX;
+  Vector3d translation((double)rand() / RAND_MAX, (double)rand() / RAND_MAX, (double)rand() / RAND_MAX);
+  Affine3d rotation(AngleAxis<double>(angle, axis));
+  EXPECT_TRUE(fabs((rotation * Vector4d(1, 0, 0, 1)).head(3).norm() - 1) < 1e-6);
+  
+  Affine3d transform = Translation3d(translation) * rotation;
+  pgs.addEdge(0, 1, transform, covariance);
+  pgs.solve();
 
-TEST(PoseGraphSlam, Simple)
+  cout << pgs.transform(0).matrix() << endl << endl;
+  cout << transform.matrix() << endl << endl;
+  cout << pgs.transform(1).matrix() << endl << endl;
+  cout << pgs.transform(1).matrix().inverse() << endl << endl;
+  EXPECT_TRUE((pgs.transform(1).matrix() - transform.matrix()).norm() < 1e-3);
+}
+
+TEST(PoseGraphSlam, MultiLinkOdometryOnly)
 {
   PoseGraphSlam pgs(4);
   Matrix6d covariance = Matrix6d::Identity();
@@ -18,8 +40,7 @@ TEST(PoseGraphSlam, Simple)
 	      covariance);
   pgs.addEdge(2, 3,
 	      Translation3d(Vector3d(0, 1, 0)) * Affine3d(AngleAxis<double>(M_PI / 4, Vector3d(1, 0, 0))),
-	      covariance);
-
+	      covariance);  
   pgs.solve();
 
   Vector3d translation;
@@ -47,14 +68,27 @@ TEST(PoseGraphSlam, Simple)
   EXPECT_TRUE((transformed - expected).norm() < 1e-3);
 
   transformed = pgs.transform(2) * Vector4d(0, 1, 0, 1);
-  expected = Vector4d(0, 1 + .70711 * 2, .70711 * 2, 1);
-  EXPECT_TRUE((transformed - expected).norm() < 1e-3);
+  expected = Vector4d(0, 2.70711, .70711, 1);
   cout << "2: " << transformed.transpose() << ", expected " << expected.transpose() << endl;
+  EXPECT_TRUE((transformed - expected).norm() < 1e-3);
 
   transformed = pgs.transform(3) * Vector4d(0, 1, 0, 1);
-  expected = Vector4d(0, 1.70711, 2.70711, 1);
-  EXPECT_TRUE((transformed - expected).norm() < 1e-3);
+  expected = Vector4d(0, 2.70711, 1.70711, 1);
   cout << "3: " << transformed.transpose() << ", expected " << expected.transpose() << endl;
+  EXPECT_TRUE((transformed - expected).norm() < 1e-3);
+
+  Affine3d transform2to0 = (Translation3d(Vector3d(0, 1, 0))
+			    * Translation3d(Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Vector3d(1, 0, 0)));
+  cout << transform2to0.matrix() << endl << endl;
+  cout << pgs.transform(2).matrix() << endl << endl;
+  EXPECT_TRUE((pgs.transform(2).matrix() - transform2to0.matrix()).norm() < 1e-3);
+
+  Affine3d transform3to0 = (Translation3d(Vector3d(0, 1, 0))
+			    * Translation3d(Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Vector3d(1, 0, 0))
+			    * Translation3d(Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Vector3d(1, 0, 0)));
+  cout << transform3to0.matrix() << endl << endl;
+  cout << pgs.transform(3).matrix() << endl << endl;
+  EXPECT_TRUE((pgs.transform(3).matrix() - transform3to0.matrix()).norm() < 1e-3);
 }
 
 TEST(PoseGraphSlam, Covariances)

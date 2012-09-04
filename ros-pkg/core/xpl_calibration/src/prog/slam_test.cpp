@@ -1,5 +1,6 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
+#include <gperftools/profiler.h>
 #include <xpl_calibration/slam_visualizer.h>
 
 using namespace std;
