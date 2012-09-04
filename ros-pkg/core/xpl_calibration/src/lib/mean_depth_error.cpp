@@ -4,6 +4,39 @@ using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 
+
+FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
+				     const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1) :
+  model0_(model0),
+  model1_(model1),
+  frame0_(frame0),
+  frame1_(frame1)
+{
+  model0_.frameToCloud(frame0_, &pcd0_);
+  model1_.frameToCloud(frame1_, &pcd1_);
+}
+
+double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
+{
+  Eigen::Affine3f f1_to_f0 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
+
+  double count = 0;  // Total number of points with both ground truth and measurements.
+  double val = 0;  // Total objective.
+  Cloud transformed;
+
+  pcl::transformPointCloud(pcd1_, transformed, f1_to_f0);
+  meanDepthError(model0_, frame0_, transformed, &val, &count);
+  pcl::transformPointCloud(pcd0_, transformed, f1_to_f0.inverse());
+  meanDepthError(model1_, frame1_, transformed, &val, &count);
+
+  if(count == 0) {
+    ROS_WARN("FrameAlignmentMDE found no overlapping points.");
+    return std::numeric_limits<double>::max();
+  }
+  else
+    return val / count;
+}
+
 MeanDepthError::MeanDepthError(const PrimeSenseModel& model,
 			       const std::vector<Frame>& frames,
 			       const std::vector<Cloud::ConstPtr>& pcds) :
@@ -48,7 +81,7 @@ double MeanDepthError::eval(const Eigen::VectorXd& x) const
       continue;
 
     pcl::transformPointCloud(*pcds_[i], transformed, transform);
-    incrementLoss(frames_[idx], transformed, &val, &count);
+    meanDepthError(model_, frames_[idx], transformed, &val, &count);
   }
 
   if(count == 0) {
@@ -59,14 +92,16 @@ double MeanDepthError::eval(const Eigen::VectorXd& x) const
     return val / count;
 }
 
-void MeanDepthError::incrementLoss(Frame frame, const rgbd::Cloud& pcd, double* val, double* count) const
+void meanDepthError(const rgbd::PrimeSenseModel& model,
+		    Frame frame, const rgbd::Cloud& pcd,
+		    double* val, double* count)
 {
-  ROS_ASSERT(frame.depth_->rows() == model_.height_);
-  ROS_ASSERT(frame.depth_->cols() == model_.width_);
+  ROS_ASSERT(frame.depth_->rows() == model.height_);
+  ROS_ASSERT(frame.depth_->cols() == model.width_);
 
   // -- Make the ground truth depth image.
   Frame gt;
-  model_.cloudToFrame(pcd, &gt);
+  model.cloudToFrame(pcd, &gt);
 
   // -- Count up mean depth error.
   ProjectivePoint ppt;
@@ -79,9 +114,9 @@ void MeanDepthError::incrementLoss(Frame frame, const rgbd::Cloud& pcd, double* 
       	continue;
       
       ppt.z_ = gt.depth_->coeffRef(ppt.v_, ppt.u_);
-      model_.project(ppt, &gtpt);
+      model.project(ppt, &gtpt);
       ppt.z_ = frame.depth_->coeffRef(ppt.v_, ppt.u_);
-      model_.project(ppt, &pt);
+      model.project(ppt, &pt);
 
       *val += (pt.getVector3fMap() - gtpt.getVector3fMap()).norm();
       ++(*count);
