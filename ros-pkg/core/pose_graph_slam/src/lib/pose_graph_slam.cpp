@@ -3,7 +3,7 @@
 using namespace std;
 using namespace g2o;
 
-PoseGraphSLAM::PoseGraphSLAM(int num_nodes)
+PoseGraphSlam::PoseGraphSlam(int num_nodes)
 {
   typedef BlockSolver< BlockSolverTraits<-1, -1> >  SlamBlockSolver;
   typedef LinearSolverCSparse<SlamBlockSolver::PoseMatrixType> SlamLinearSolver;
@@ -20,22 +20,27 @@ PoseGraphSLAM::PoseGraphSLAM(int num_nodes)
   }
 }
 
-void PoseGraphSLAM::addEdge(int idx0, int idx1,
-			    const Eigen::Vector3d& translation,
-			    const Eigen::Matrix3d& rotation,
+void PoseGraphSlam::addEdge(int idx0, int idx1,
+			    const Eigen::Affine3d& transform,
 			    const Matrix6d& covariance)
 {
+  // Apparently I am using g2o incorrectly or they have some weird conventions.
+  Matrix3d rotation = transform.matrix().block(0, 0, 3, 3);
+  Vector3d translation = transform.translation();
+  translation = rotation * translation;
+  SE3Quat se3(rotation, translation);
+  
   EdgeSE3* edge = new EdgeSE3;
   edge->vertices()[0] = optimizer_.vertex(idx0);
   edge->vertices()[1] = optimizer_.vertex(idx1);
-  SE3Quat se3(rotation, translation);
+  
   edge->setMeasurement(se3);
   edge->setInverseMeasurement(se3.inverse());
   edge->setInformation(covariance.inverse());
   optimizer_.addEdge(edge);
 }
 
-void PoseGraphSLAM::solve(int num_iters)
+void PoseGraphSlam::solve(int num_iters)
 {
   VertexSE3* v0 = dynamic_cast<VertexSE3*>(optimizer_.vertex(0));
   ROS_ASSERT(v0);
@@ -54,14 +59,25 @@ void PoseGraphSLAM::solve(int num_iters)
   cout << "done." << endl;
 }
 
-Eigen::Affine3d PoseGraphSLAM::transform(int idx) const
+Eigen::Affine3d PoseGraphSlam::transform(int idx) const
+{
+  // double data[7];
+  // optimizer_.vertex(idx)->getEstimateData(data);
+  // Vector3d translation;  // offset
+  // translation << data[0], data[1], data[2];
+  // Quaterniond quat(data[6], data[3], data[4], data[5]);  // heading
+  // return Translation3d(translation) * Affine3d(quat.toRotationMatrix());
+
+  const VertexSE3* v = dynamic_cast<const VertexSE3*>(optimizer_.vertex(idx));
+  ROS_ASSERT(v);
+  SE3Quat se3 = v->estimate();
+  return Eigen::Affine3d(se3.to_homogenious_matrix());  // awesome.
+}
+
+void PoseGraphSlam::vertexData(int idx, Vector3d* translation, Quaterniond* quat) const
 {
   double data[7];
   optimizer_.vertex(idx)->getEstimateData(data);
-  Vector3d translation;  // offset
-  translation << data[0], data[1], data[2];
-  Quaterniond quat(data[6], data[3], data[4], data[5]);  // heading
-  
-  return Translation3d(translation) * Affine3d(quat.toRotationMatrix());
+  *translation << data[0], data[1], data[2];
+  *quat = Quaterniond(data[6], data[3], data[4], data[5]);
 }
-
