@@ -7,6 +7,7 @@ using namespace rgbd;
 
 FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
 				     const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1) :
+  point_utilization_(1.0),
   model0_(model0),
   model1_(model1),
   frame0_(frame0),
@@ -18,15 +19,17 @@ FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::
 
 double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
 {
-  Eigen::Affine3f f1_to_f0 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
+  Eigen::Affine3f f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
 
   double count = 0;  // Total number of points with both ground truth and measurements.
   double val = 0;  // Total objective.
   Cloud transformed;
 
-  pcl::transformPointCloud(pcd1_, transformed, f1_to_f0);
+  //pcl::transformPointCloud(pcd1_, transformed, f0_to_f1.inverse());
+  transformAndDecimate(pcd1_, f0_to_f1.inverse(), &transformed);
   meanDepthError(model0_, frame0_, transformed, &val, &count);
-  pcl::transformPointCloud(pcd0_, transformed, f1_to_f0.inverse());
+  //pcl::transformPointCloud(pcd0_, transformed, f0_to_f1);
+  transformAndDecimate(pcd0_, f0_to_f1, &transformed);
   meanDepthError(model1_, frame1_, transformed, &val, &count);
 
   if(count == 0) {
@@ -35,6 +38,20 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   }
   else
     return val / count;
+}
+
+void FrameAlignmentMDE::transformAndDecimate(const rgbd::Cloud& in, const Eigen::Affine3f& transform, rgbd::Cloud* out) const
+{
+  out->clear();
+  out->reserve(in.size());
+  for(size_t i = 0; i < in.size(); ++i) {
+    if(((double)rand() / (double)RAND_MAX) > point_utilization_)
+      continue;
+    
+    out->push_back(rgbd::Point());
+    out->back().getVector4fMap() = transform * in[i].getVector4fMap();
+    // TODO: Color
+  }
 }
 
 SequenceAlignmentMDE::SequenceAlignmentMDE(const PrimeSenseModel& model,

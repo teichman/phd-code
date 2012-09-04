@@ -16,6 +16,9 @@ typedef Eigen::Matrix<double, 6, 6> Matrix6d;
 class PoseGraphSlam
 {
 public:
+  typedef boost::shared_ptr<PoseGraphSlam> Ptr;
+  typedef boost::shared_ptr<const PoseGraphSlam> ConstPtr;
+  
   //! The first node is assumed to be at the origin with identity rotation.
   PoseGraphSlam(int num_nodes);
   //! Assuming idx0 is the origin, transform applied to the origin gives the pose of idx1 in idx0's frame.

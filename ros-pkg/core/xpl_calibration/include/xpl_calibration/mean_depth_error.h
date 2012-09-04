@@ -8,6 +8,11 @@
 class FrameAlignmentMDE : public ScalarFunction
 {
 public:
+  typedef boost::shared_ptr<FrameAlignmentMDE> Ptr;
+  typedef boost::shared_ptr<const FrameAlignmentMDE> ConstPtr;
+  
+  double point_utilization_;
+  
   FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
 		    const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1);
   //! x = [x, y, z, roll, pitch, yaw].
@@ -20,6 +25,8 @@ protected:
   rgbd::Frame frame1_;
   rgbd::Cloud pcd0_;
   rgbd::Cloud pcd1_;
+
+  void transformAndDecimate(const rgbd::Cloud& in, const Eigen::Affine3f& transform, rgbd::Cloud* out) const;
 };
 
 //! Computes the asymmetric MDE for a given set of frames assumed to be from the same sensor

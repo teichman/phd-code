@@ -1,13 +1,14 @@
 #ifndef SLAM_VISUALIZER_H
 #define SLAM_VISUALIZER_H
 
+#include <boost/thread.hpp>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <bag_of_tricks/lockable.h>
 #include <pose_graph_slam/pose_graph_slam.h>
 #include <rgbd_sequence/stream_sequence.h>
 #include <xpl_calibration/frame_aligner.h>
 
-class SlamVisualizer : public SharedLockable
+class SlamVisualizer : public SharedLockable, public GridSearchViewHandler
 {
 public:
   SlamVisualizer();
@@ -16,12 +17,17 @@ public:
 protected:
   pcl::visualization::PCLVisualizer vis_;
   rgbd::StreamSequence::ConstPtr sseq_;
-
+  PoseGraphSlam::Ptr slam_;
+  rgbd::Cloud::Ptr map_;
+  rgbd::Cloud::Ptr curr_pcd_;
+  rgbd::Cloud::Ptr curr_pcd_transformed_;
+  size_t incr_;
+  bool needs_update_;
+  
   void slamThreadFunction();
   void visualizationThreadFunction();
-  //! Makes a new aggegate Cloud::Ptr and sends it to the visualizer.
-  void updateVisualizationCloud();
   void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie);
+  void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
 };
 
 #endif // SLAM_VISUALIZER_H

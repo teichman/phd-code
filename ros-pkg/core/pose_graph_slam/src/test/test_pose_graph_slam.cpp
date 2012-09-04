@@ -36,7 +36,9 @@ TEST(PoseGraphSlam, Simple)
   }
 
   EXPECT_TRUE((pgs.transform(0).matrix() - Matrix4d::Identity()).norm() < 1e-6);
-  
+
+  // For each pose, if the sensor sees a point 1 unit ahead (along y), make sure it appears
+  // where we expect it to in global coordinates.
   Vector4d transformed;
   Vector4d expected;
   transformed = pgs.transform(1) * Vector4d(0, 1, 0, 1);

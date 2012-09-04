@@ -24,12 +24,11 @@ void PoseGraphSlam::addEdge(int idx0, int idx1,
 			    const Eigen::Affine3d& transform,
 			    const Matrix6d& covariance)
 {
-  // Apparently I am using g2o incorrectly, or they have some weird conventions.
+  // Apparently I am using g2o incorrectly or they have some weird conventions.
   Matrix3d rotation = transform.matrix().block(0, 0, 3, 3);
   Vector3d translation = transform.translation();
   translation = rotation * translation;
   SE3Quat se3(rotation, translation);
-  //ROS_ASSERT((se3.to_homogenious_matrix() - transform.matrix()).norm() < 1e-6);
   
   EdgeSE3* edge = new EdgeSE3;
   edge->vertices()[0] = optimizer_.vertex(idx0);
