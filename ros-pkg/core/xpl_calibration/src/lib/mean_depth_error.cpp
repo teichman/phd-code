@@ -37,7 +37,7 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
     return val / count;
 }
 
-MeanDepthError::MeanDepthError(const PrimeSenseModel& model,
+SequenceAlignmentMDE::SequenceAlignmentMDE(const PrimeSenseModel& model,
 			       const std::vector<Frame>& frames,
 			       const std::vector<Cloud::ConstPtr>& pcds) :
   model_(model),
@@ -67,7 +67,7 @@ int seek(const std::vector<Frame>& frames, double ts1, double dt_thresh)
     return -1;
 }
 
-double MeanDepthError::eval(const Eigen::VectorXd& x) const
+double SequenceAlignmentMDE::eval(const Eigen::VectorXd& x) const
 {
   double offset = x(0);
   Eigen::Affine3f transform = generateTransform(x(1), x(2), x(3), x(4), x(5), x(6));

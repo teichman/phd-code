@@ -17,7 +17,7 @@ Eigen::Affine3f FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1) cons
   frame0.timestamp_ = 0;
   frame1.timestamp_ = 0;
 
-  MeanDepthError::Ptr mde(new MeanDepthError);
+  SequenceAlignmentMDE::Ptr mde(new SequenceAlignmentMDE);
   
   Cloud::Ptr pcd0(new Cloud);
   model0_.frameToCloud(frame0, pcd0.get());

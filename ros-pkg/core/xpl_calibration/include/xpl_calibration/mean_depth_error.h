@@ -22,14 +22,15 @@ protected:
   rgbd::Cloud pcd1_;
 };
 
-//! Computes the asymmetric MDE for a given set of frames and reference pcds when twiddling
+//! Computes the asymmetric MDE for a given set of frames assumed to be from the same sensor
+//! and reference pcds when twiddling
 //! sync offset and transform between pcds and frames.  It is asymmetric because we do not
 //! assume the presence of a projection model for the reference PCDs.
-class MeanDepthError : public ScalarFunction
+class SequenceAlignmentMDE : public ScalarFunction
 {
 public:
   //! Frames are from the PrimeSense, pcds are from the Velodyne.
-  MeanDepthError(const rgbd::PrimeSenseModel& model,
+  SequenceAlignmentMDE(const rgbd::PrimeSenseModel& model,
 		 const std::vector<rgbd::Frame>& frames,
 		 const std::vector<rgbd::Cloud::ConstPtr>& pcds);
   //! x = [sync, x, y, z, roll, pitch, yaw].

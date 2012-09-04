@@ -42,7 +42,7 @@ VeloToAsusCalibration VeloToAsusCalibrator::search() const
 {
   cout << "Initializing search using PrimeSenseModel: " << endl;
   cout << model_.status("  ");
-  MeanDepthError::Ptr mde(new MeanDepthError(model_, frames_, pcds_));
+  SequenceAlignmentMDE::Ptr mde(new SequenceAlignmentMDE(model_, frames_, pcds_));
   GridSearch gs(7);
   gs.verbose_ = false;
   gs.view_handler_ = vis_;
