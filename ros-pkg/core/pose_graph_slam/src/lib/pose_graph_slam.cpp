@@ -7,8 +7,9 @@ PoseGraphSlam::PoseGraphSlam(int num_nodes)
 {
   typedef BlockSolver< BlockSolverTraits<-1, -1> >  SlamBlockSolver;
   typedef LinearSolverCSparse<SlamBlockSolver::PoseMatrixType> SlamLinearSolver;
-  
-  SlamLinearSolver* linear_solver = new SlamLinearSolver();
+  typedef LinearSolverCholmod<SlamBlockSolver::PoseMatrixType> SlamLinearCholmodSolver;
+   
+  SlamLinearCholmodSolver* linear_solver = new SlamLinearCholmodSolver();
   linear_solver->setBlockOrdering(false);
   SlamBlockSolver* solver = new SlamBlockSolver(&optimizer_, linear_solver);
   optimizer_.setSolver(solver);
@@ -24,11 +25,30 @@ void PoseGraphSlam::addEdge(int idx0, int idx1,
 			    const Eigen::Affine3d& transform,
 			    const Matrix6d& covariance)
 {
-  // Apparently I am using g2o incorrectly or they have some weird conventions.
+  // cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
+  // cout << "Adding edge with transform: " << endl;
+  // cout << transform.matrix() << endl << endl;
+
   Matrix3d rotation = transform.matrix().block(0, 0, 3, 3);
   Vector3d translation = transform.translation();
-  translation = rotation * translation;
   SE3Quat se3(rotation, translation);
+  
+  // Quaterniond quat(rotation);
+  // cout << "--------------------" << endl;
+  // cout << rotation << endl << endl;
+  // cout << quat.toRotationMatrix() << endl << endl;
+  // Vector3d e0(1, 0, 0);
+  // cout << e0.transpose() << "  -----  norm " << e0.norm() << endl;
+  // cout << (rotation * e0).transpose() << "  -----  norm " << (rotation * e0).norm() << endl;
+  // cout << (quat.toRotationMatrix() * e0).transpose() << "  -----  norm " << (quat.toRotationMatrix() * e0).norm() << endl;
+  // ROS_ASSERT(fabs((rotation * e0).norm() - 1) < 1e-6);
+  // ROS_ASSERT(fabs((quat.toRotationMatrix() * e0).norm() - 1) < 1e-6);
+  // ROS_ASSERT((quat.toRotationMatrix() - rotation).norm() < 1e-6);
+  
+  // cout << "####################" << endl;
+  // cout << transform.matrix() << endl << endl;
+  // cout << ((Affine3d)se3.to_homogenious_matrix()).matrix() << endl << endl;
+  // ROS_ASSERT((((Affine3d)se3.to_homogenious_matrix()).matrix() - transform.matrix()).norm() < 1e-6);
   
   EdgeSE3* edge = new EdgeSE3;
   edge->vertices()[0] = optimizer_.vertex(idx0);

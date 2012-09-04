@@ -52,13 +52,19 @@ namespace rgbd
     int id_;
     int width_;
     int height_;
-    double fx_;
-    double fy_;
     double cx_;
     double cy_;
     //! Depth distortion model.  weights_[0] is a constant offset, weights_[1] is the raw depth measurement.
     Eigen::VectorXd weights_;
+    //! It can be slow.  Sometimes you don't want to.
+    bool use_distortion_model_;
+    double fx_;
+    double fy_;
 
+    // void setFocalLength(double f) { fx_ = f; fy_ = f; fx_inv_ = 1 / f; fy_inv_ = 1 / f; }
+    // double fx() const { return fx_; }
+    // double fy() const { return fy_; }
+    
     //! f[1] is measured depth in decameters.
     Eigen::VectorXd computeFeatures(const ProjectivePoint& ppt) const;
     int numFeatures() const;
@@ -75,6 +81,10 @@ namespace rgbd
     std::string status(const std::string& prefix = "") const;
     bool hasDepthDistortionModel() const;
     void resetDepthDistortionModel();
+
+  protected:
+    // double fx_inv_;
+    // double fy_inv_;
   };
   
 

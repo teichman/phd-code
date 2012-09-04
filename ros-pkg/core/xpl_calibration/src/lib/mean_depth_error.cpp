@@ -7,7 +7,7 @@ using namespace rgbd;
 
 FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
 				     const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1) :
-  point_utilization_(1.0),
+  fraction_(1.0),
   model0_(model0),
   model1_(model1),
   frame0_(frame0),
@@ -19,17 +19,16 @@ FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::
 
 double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
 {
+  //ScopedTimer st("FrameAlignmentMDE::eval");
   Eigen::Affine3f f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
 
   double count = 0;  // Total number of points with both ground truth and measurements.
   double val = 0;  // Total objective.
   Cloud transformed;
 
-  //pcl::transformPointCloud(pcd1_, transformed, f0_to_f1.inverse());
-  transformAndDecimate(pcd1_, f0_to_f1.inverse(), &transformed);
+  transformAndDecimate(pcd1_, f0_to_f1.inverse(), fraction_, &transformed);
   meanDepthError(model0_, frame0_, transformed, &val, &count);
-  //pcl::transformPointCloud(pcd0_, transformed, f0_to_f1);
-  transformAndDecimate(pcd0_, f0_to_f1, &transformed);
+  transformAndDecimate(pcd0_, f0_to_f1, fraction_, &transformed);
   meanDepthError(model1_, frame1_, transformed, &val, &count);
 
   if(count == 0) {
@@ -40,17 +39,21 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
     return val / count;
 }
 
-void FrameAlignmentMDE::transformAndDecimate(const rgbd::Cloud& in, const Eigen::Affine3f& transform, rgbd::Cloud* out) const
+void transformAndDecimate(const rgbd::Cloud& in,
+			  const Eigen::Affine3f& transform,
+			  double fraction, rgbd::Cloud* out)
 {
   out->clear();
   out->reserve(in.size());
   for(size_t i = 0; i < in.size(); ++i) {
-    if(((double)rand() / (double)RAND_MAX) > point_utilization_)
+    if(((double)rand() / (double)RAND_MAX) > fraction)
       continue;
     
     out->push_back(rgbd::Point());
     out->back().getVector4fMap() = transform * in[i].getVector4fMap();
-    // TODO: Color
+    out->back().r = in[i].r;
+    out->back().g = in[i].g;
+    out->back().b = in[i].b;
   }
 }
 
@@ -113,14 +116,19 @@ void meanDepthError(const rgbd::PrimeSenseModel& model,
 		    Frame frame, const rgbd::Cloud& pcd,
 		    double* val, double* count)
 {
+  //ScopedTimer st("meanDepthError total");
   ROS_ASSERT(frame.depth_->rows() == model.height_);
   ROS_ASSERT(frame.depth_->cols() == model.width_);
-
+  //HighResTimer hrt;
+  
   // -- Make the ground truth depth image.
+  //hrt.reset("meanDepthError: cloudToFrame"); hrt.start();
   Frame gt;
   model.cloudToFrame(pcd, &gt);
+  //hrt.stop(); cout << hrt.report() << endl;
 
   // -- Count up mean depth error.
+  //hrt.reset("meanDepthError: counting"); hrt.start();
   ProjectivePoint ppt;
   rgbd::Point pt;
   rgbd::Point gtpt;
@@ -129,7 +137,7 @@ void meanDepthError(const rgbd::PrimeSenseModel& model,
       // Both ground truth and measurement must have data.
       if(gt.depth_->coeffRef(ppt.v_, ppt.u_) == 0 || frame.depth_->coeffRef(ppt.v_, ppt.u_) == 0)
       	continue;
-      
+
       ppt.z_ = gt.depth_->coeffRef(ppt.v_, ppt.u_);
       model.project(ppt, &gtpt);
       ppt.z_ = frame.depth_->coeffRef(ppt.v_, ppt.u_);
@@ -139,4 +147,5 @@ void meanDepthError(const rgbd::PrimeSenseModel& model,
       ++(*count);
     }
   }
+  //hrt.stop(); cout << hrt.report() << endl;
 }

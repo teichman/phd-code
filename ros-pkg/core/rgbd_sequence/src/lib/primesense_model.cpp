@@ -29,10 +29,13 @@ namespace rgbd
     id_(-1),
     width_(-1),
     height_(-1),
-    fx_(-1),
-    fy_(-1),
     cx_(-1),
-    cy_(-1)
+    cy_(-1),
+    use_distortion_model_(true),
+    fx_(-1),
+    fy_(-1)
+    // fx_inv_(-1),
+    // fy_inv_(-1)
   {
     resetDepthDistortionModel();
   }
@@ -124,10 +127,17 @@ namespace rgbd
       pt->z = std::numeric_limits<float>::quiet_NaN();
     }
     else {
-      VectorXd features = computeFeatures(ppt);
-      pt->z = weights_.dot(features);
+      if(use_distortion_model_) {
+	VectorXd features = computeFeatures(ppt);
+	pt->z = weights_.dot(features);
+      }
+      else
+	pt->z = ppt.z_ * 0.001;
+      
       pt->x = pt->z * (ppt.u_ - cx_) / fx_;
       pt->y = pt->z * (ppt.v_ - cy_) / fy_;
+      // pt->x = pt->z * (ppt.u_ - cx_) * fx_inv_;
+      // pt->y = pt->z * (ppt.v_ - cy_) * fy_inv_;
     }
   }
 
@@ -212,6 +222,9 @@ namespace rgbd
     eigen_extensions::deserializeScalar(in, &cx_);
     eigen_extensions::deserializeScalar(in, &cy_);
     eigen_extensions::deserialize(in, &weights_);
+
+    // fx_inv_ = 1 / fx_;
+    // fy_inv_ = 1 / fy_;
   }
 
   bool PrimeSenseModel::hasDepthDistortionModel() const
@@ -237,7 +250,8 @@ namespace rgbd
     oss << prefix << "cx: " << cx_ << endl;
     oss << prefix << "cy: " << cy_ << endl;
 
-    oss << prefix << "Has a depth distortion model: " << hasDepthDistortionModel() << endl;
+    oss << prefix << "Has a nontrivial depth distortion model: " << hasDepthDistortionModel() << endl;
+    oss << prefix << "Use depth distortion model: " << use_distortion_model_ << endl;
     oss << prefix << "weights: " << weights_.transpose() << endl;
     
     return oss.str();
