@@ -156,9 +156,10 @@ void SlamVisualizer::handleGridSearchUpdate(const Eigen::ArrayXd& x, double obje
   //ScopedTimer st("SlamVisualizer::handleGridSearchUpdate");
   cout << "Improvement: objective " << objective << " at " << x.transpose() << endl;
 
-  Affine3f transform = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
+  Affine3d transform = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
   lockWrite();
-  pcl::transformPointCloud(*curr_pcd_, *curr_pcd_transformed_, transform * tip_transform_.cast<float>());
+  //pcl::transformPointCloud(*curr_pcd_, *curr_pcd_transformed_, (transform * tip_transform_).cast<float>());
+  pcl::transformPointCloud(*curr_pcd_, *curr_pcd_transformed_, (tip_transform_ * transform).cast<float>());
   needs_update_ = true;
   unlockWrite();
 }
