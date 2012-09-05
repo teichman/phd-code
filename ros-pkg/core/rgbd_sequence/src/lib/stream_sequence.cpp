@@ -7,7 +7,8 @@ namespace bfs = boost::filesystem;
 namespace rgbd
 {
 
-  StreamSequence::StreamSequence()
+  StreamSequence::StreamSequence() :
+    max_depth_(numeric_limits<double>::max())
   {
   }
   
@@ -107,6 +108,13 @@ namespace rgbd
     frame->depth_ = DepthMatPtr(new DepthMat);
     eigen_extensions::load(root_path_ + "/" + dpt_names_[idx], frame->depth_.get());
     frame->timestamp_ = timestamps_[idx];
+    
+    if(max_depth_ != numeric_limits<double>::max())
+      for(int y = 0; y < frame->depth_->rows(); ++y)
+	for(int x = 0; x < frame->depth_->cols(); ++x)
+	  if(frame->depth_->coeffRef(y, x) > max_depth_ * 1000)
+	    frame->depth_->coeffRef(y, x) = 0;
+
   }
 
   void StreamSequence::readFrame(double timestamp, double* dt, Frame* frame) const

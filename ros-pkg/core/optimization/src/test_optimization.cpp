@@ -371,6 +371,7 @@ TEST(GridSearch, Easy)
   ArrayXd x = gs.search(init);
 
   cout << x.transpose() << endl;
+  EXPECT_NEAR(x.matrix().norm(), 0, 1e-3);
 }
 
 TEST(GridSearch, Coupling)
@@ -391,28 +392,29 @@ TEST(GridSearch, Coupling)
   ArrayXd x = gs.search(init);
 
   cout << x.transpose() << endl;
+  EXPECT_NEAR(x.matrix().norm(), 0, 1e-3);
 }
 
 
-TEST(GridSearch, Long)
-{
-  MatrixXd A = MatrixXd::Identity(2, 2);
-  VectorXd b = VectorXd::Zero(2);
-  QuadraticFunction::Ptr obj(new QuadraticFunction(A, b, 0));
+// TEST(GridSearch, Long)
+// {
+//   MatrixXd A = MatrixXd::Identity(2, 2);
+//   VectorXd b = VectorXd::Zero(2);
+//   QuadraticFunction::Ptr obj(new QuadraticFunction(A, b, 0));
 
-  GridSearch gs(2);
-  gs.verbose_ = false;
-  gs.objective_ = obj;
-  gs.max_resolutions_ << 1, 1;
-  gs.grid_radii_ << 1e6, 1e6;
-  gs.scale_factors_ << 0.8, 0.8;
-  gs.num_scalings_ = 1e3;
+//   GridSearch gs(2);
+//   gs.verbose_ = false;
+//   gs.objective_ = obj;
+//   gs.max_resolutions_ << 1, 1;
+//   gs.grid_radii_ << 1e6, 1e6;
+//   gs.scale_factors_ << 0.8, 0.8;
+//   gs.num_scalings_ = 1e2;
   
-  ArrayXd init = ArrayXd::Ones(2) * 9.1;
-  ArrayXd x = gs.search(init);
+//   ArrayXd init = ArrayXd::Ones(2) * 9.1;
+//   ArrayXd x = gs.search(init);
 
-  cout << x.transpose() << endl;
-}
+//   cout << x.transpose() << endl;
+// }
 
 
 int main(int argc, char** argv) {

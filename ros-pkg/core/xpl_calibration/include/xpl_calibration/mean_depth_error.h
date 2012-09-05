@@ -52,7 +52,8 @@ protected:
 
 void meanDepthError(const rgbd::PrimeSenseModel& model,
 		    rgbd::Frame frame, const rgbd::Cloud& pcd,
-		    double* count, double* val);
+		    double* count, double* val,
+		    double max_depth = std::numeric_limits<double>::max());
 
 void transformAndDecimate(const rgbd::Cloud& in,
 			  const Eigen::Affine3f& transform,
