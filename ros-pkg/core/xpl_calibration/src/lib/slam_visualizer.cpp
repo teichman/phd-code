@@ -8,7 +8,7 @@ SlamVisualizer::SlamVisualizer() :
   map_(new Cloud),
   curr_pcd_(new Cloud),
   curr_pcd_transformed_(new Cloud),
-  incr_(10),
+  incr_(5),
   needs_update_(false),
   save_imgs_(false),
   tip_transform_(Affine3d::Identity()),
@@ -155,8 +155,8 @@ void SlamVisualizer::handleGridSearchUpdate(const Eigen::ArrayXd& x, double obje
 {
   //ScopedTimer st("SlamVisualizer::handleGridSearchUpdate");
   cout << "Improvement: objective " << objective << " at " << x.transpose() << endl;
-  Affine3f transform = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
 
+  Affine3f transform = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
   lockWrite();
   pcl::transformPointCloud(*curr_pcd_, *curr_pcd_transformed_, transform * tip_transform_.cast<float>());
   needs_update_ = true;

@@ -10,8 +10,9 @@ class FrameAlignmentMDE : public ScalarFunction
 public:
   typedef boost::shared_ptr<FrameAlignmentMDE> Ptr;
   typedef boost::shared_ptr<const FrameAlignmentMDE> ConstPtr;
-  
-  double fraction_;
+
+  //! Increment to use when sampling points.  1 -> use all, 2 -> use half, etc.
+  size_t incr_;
   
   FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
 		    const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1);
@@ -57,6 +58,7 @@ void meanDepthError(const rgbd::PrimeSenseModel& model,
 
 void transformAndDecimate(const rgbd::Cloud& in,
 			  const Eigen::Affine3f& transform,
-			  double fraction, rgbd::Cloud* out);
+			  size_t incr, rgbd::Cloud* out);
+
 
 #endif // MEAN_DEPTH_ERROR_H

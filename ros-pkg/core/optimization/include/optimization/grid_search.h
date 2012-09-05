@@ -1,6 +1,7 @@
 #ifndef GRID_SEARCH_H
 #define GRID_SEARCH_H
 
+#include <timer/timer.h>
 #include <optimization/optimization.h>
 
 class GridSearchViewHandler
@@ -34,6 +35,11 @@ public:
 
   GridSearch(int num_variables);
   Eigen::ArrayXd search(const Eigen::ArrayXd& x);
+
+  //! Number of eval() calls in the last call of search().
+  int num_evals_;
+  //! Seconds spent in the last call of search().
+  double time_; 
 
 protected:
   Eigen::ArrayXd x_;

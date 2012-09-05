@@ -393,6 +393,9 @@ TEST(GridSearch, Coupling)
 
   cout << x.transpose() << endl;
   EXPECT_NEAR(x.matrix().norm(), 0, 1e-3);
+
+  cout << "Computed " << gs.num_evals_ << " evals in " << gs.time_ << " seconds." << endl;
+  cout << gs.num_evals_ / gs.time_ << " evals / second." << endl;
 }
 
 

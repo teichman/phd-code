@@ -17,7 +17,7 @@ Eigen::Affine3d FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1) cons
 {
   ScopedTimer st("FrameAligner::align");
   FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, frame0, model1_, frame1));
-  mde->fraction_ = 0.2;
+  mde->incr_ = 3;
   
   GridSearch gs(6);
   gs.verbose_ = false;
@@ -35,7 +35,10 @@ Eigen::Affine3d FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1) cons
   
   ArrayXd x = gs.search(ArrayXd::Zero(6));
   cout << "GridSearch solution: " << x.transpose() << endl;
-
+  cout << "Computed " << gs.num_evals_ << " evals in " << gs.time_ << " seconds." << endl;
+  cout << gs.num_evals_ / gs.time_ << " evals / second." << endl;
+  cout << gs.time_ / gs.num_evals_ << " seconds / eval." << endl;
+  
   return generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
 }
 
