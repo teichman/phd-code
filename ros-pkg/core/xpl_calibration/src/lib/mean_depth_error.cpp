@@ -7,7 +7,7 @@ using namespace rgbd;
 
 FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
 				     const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1) :
-  fraction_(1.0),
+  incr_(3),
   model0_(model0),
   model1_(model1),
   frame0_(frame0),
@@ -26,10 +26,10 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   double val = 0;  // Total objective.
   Cloud transformed;
 
-  transformAndDecimate(pcd1_, f0_to_f1.inverse(), fraction_, &transformed);
-  meanDepthError(model0_, frame0_, transformed, &val, &count);
-  transformAndDecimate(pcd0_, f0_to_f1, fraction_, &transformed);
-  meanDepthError(model1_, frame1_, transformed, &val, &count);
+  transformAndDecimate(pcd1_, f0_to_f1.inverse(), incr_, &transformed);
+  meanDepthError(model0_, frame0_, transformed, &val, &count, 4);
+  transformAndDecimate(pcd0_, f0_to_f1, incr_, &transformed);
+  meanDepthError(model1_, frame1_, transformed, &val, &count, 4);
 
   if(count == 0) {
     ROS_WARN("FrameAlignmentMDE found no overlapping points.");
@@ -41,14 +41,12 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
 
 void transformAndDecimate(const rgbd::Cloud& in,
 			  const Eigen::Affine3f& transform,
-			  double fraction, rgbd::Cloud* out)
+			  size_t incr, rgbd::Cloud* out)
 {
+  //ScopedTimer st("transformAndDecimate");
   out->clear();
   out->reserve(in.size());
-  for(size_t i = 0; i < in.size(); ++i) {
-    if(((double)rand() / (double)RAND_MAX) > fraction)
-      continue;
-    
+  for(size_t i = 0; i < in.size(); i += incr) {
     out->push_back(rgbd::Point());
     out->back().getVector4fMap() = transform * in[i].getVector4fMap();
     out->back().r = in[i].r;
@@ -58,8 +56,8 @@ void transformAndDecimate(const rgbd::Cloud& in,
 }
 
 SequenceAlignmentMDE::SequenceAlignmentMDE(const PrimeSenseModel& model,
-			       const std::vector<Frame>& frames,
-			       const std::vector<Cloud::ConstPtr>& pcds) :
+					   const std::vector<Frame>& frames,
+					   const std::vector<Cloud::ConstPtr>& pcds) :
   model_(model),
   frames_(frames),
   pcds_(pcds),
@@ -114,29 +112,38 @@ double SequenceAlignmentMDE::eval(const Eigen::VectorXd& x) const
 
 void meanDepthError(const rgbd::PrimeSenseModel& model,
 		    Frame frame, const rgbd::Cloud& pcd,
-		    double* val, double* count)
+		    double* val, double* count, double max_depth)
 {
   //ScopedTimer st("meanDepthError total");
   ROS_ASSERT(frame.depth_->rows() == model.height_);
   ROS_ASSERT(frame.depth_->cols() == model.width_);
-  //HighResTimer hrt;
+  HighResTimer hrt;
   
   // -- Make the ground truth depth image.
-  //hrt.reset("meanDepthError: cloudToFrame"); hrt.start();
+  hrt.reset("meanDepthError: cloudToFrame"); hrt.start();
   Frame gt;
   model.cloudToFrame(pcd, &gt);
   //hrt.stop(); cout << hrt.report() << endl;
 
   // -- Count up mean depth error.
-  //hrt.reset("meanDepthError: counting"); hrt.start();
+  hrt.reset("meanDepthError: counting"); hrt.start();
   ProjectivePoint ppt;
   rgbd::Point pt;
   rgbd::Point gtpt;
-  for(ppt.v_ = 0; ppt.v_ < gt.depth_->rows(); ++ppt.v_) {
-    for(ppt.u_ = 0; ppt.u_ < gt.depth_->cols(); ++ppt.u_) {
+  for(ppt.u_ = 0; ppt.u_ < gt.depth_->cols(); ++ppt.u_) {
+    for(ppt.v_ = 0; ppt.v_ < gt.depth_->rows(); ++ppt.v_) {
       // Both ground truth and measurement must have data.
-      if(gt.depth_->coeffRef(ppt.v_, ppt.u_) == 0 || frame.depth_->coeffRef(ppt.v_, ppt.u_) == 0)
+      if(gt.depth_->coeffRef(ppt.v_, ppt.u_) == 0 ||
+	 frame.depth_->coeffRef(ppt.v_, ppt.u_) == 0)
+      {
       	continue;
+      }
+
+      if(frame.depth_->coeffRef(ppt.v_, ppt.u_) > max_depth * 1000 &&
+	 gt.depth_->coeffRef(ppt.v_, ppt.u_) > max_depth * 1000)
+      {
+	continue;
+      }
 
       ppt.z_ = gt.depth_->coeffRef(ppt.v_, ppt.u_);
       model.project(ppt, &gtpt);
