@@ -17,6 +17,7 @@ SlamVisualizer::SlamVisualizer() :
   vis_.registerKeyboardCallback(&SlamVisualizer::keyboardCallback, *this);
   //vis_.addCoordinateSystem(1.0);
   vg_.setLeafSize(0.01, 0.01, 0.01);
+  //vis_.setBackgroundColor(1, 1, 1);
   
   // -- Set the viewpoint to be sensible for PrimeSense devices.
   vis_.camera_.clip[0] = 0.00387244;
@@ -68,6 +69,10 @@ void SlamVisualizer::slamThreadFunction()
     lockWrite();
     curr_pcd_ = sseq_->getCloud(i);
     zthresh(curr_pcd_, 3);
+    if(quitting_) {
+      unlockWrite();
+      break;
+    }
     unlockWrite();
     
     // -- Add the next link.
