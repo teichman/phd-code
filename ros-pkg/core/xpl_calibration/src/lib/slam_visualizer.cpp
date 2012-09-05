@@ -8,7 +8,7 @@ SlamVisualizer::SlamVisualizer() :
   map_(new Cloud),
   curr_pcd_(new Cloud),
   curr_pcd_transformed_(new Cloud),
-  incr_(1),
+  incr_(10),
   needs_update_(false),
   save_imgs_(false),
   tip_transform_(Affine3d::Identity()),
@@ -51,6 +51,7 @@ void SlamVisualizer::slamThreadFunction()
 {
   lockWrite();
   *map_ = *sseq_->getCloud(0);
+  zthresh(map_, 3);
   needs_update_ = true;
   unlockWrite();
 
@@ -66,6 +67,7 @@ void SlamVisualizer::slamThreadFunction()
     cout << "---------- Searching for link between " << i - incr_ << " and " << i << endl;
     lockWrite();
     curr_pcd_ = sseq_->getCloud(i);
+    zthresh(curr_pcd_, 3);
     unlockWrite();
     
     // -- Add the next link.
@@ -90,6 +92,7 @@ void SlamVisualizer::slamThreadFunction()
     cout << "Expected g2o result: " << endl << (curr_to_prev * tip_transform_).matrix() << endl;
     cout << "Final transform from g2o: " << endl << transform.matrix() << endl;
     Cloud::Ptr pcdi = sseq_->getCloud(i);
+    zthresh(pcdi, 3);
     pcl::transformPointCloud(*pcdi, *pcdi, transform.cast<float>());
     *map_ += *pcdi;
     curr_pcd_->clear();

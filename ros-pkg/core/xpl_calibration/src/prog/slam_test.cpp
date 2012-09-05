@@ -36,7 +36,7 @@ int main(int argc, char** argv)
   cout << "Using " << opts["sseq"].as<string>() << endl;
   StreamSequence::Ptr sseq(new StreamSequence);
   sseq->load(opts["sseq"].as<string>());
-  sseq->max_depth_ = 3;
+  //sseq->max_depth_ = 3;
   
   SlamVisualizer vis;
   vis.run(sseq);
