@@ -64,7 +64,13 @@ Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
   assert(x.rows() == scale_factors_.rows());
   for(int i = 0; i < scale_factors_.rows(); ++i)
     assert(scale_factors_[i] > 0 && scale_factors_[i] < 1);
+
+  time_ = 0;
+  num_evals_ = 0;
   history_.clear();
+
+  HighResTimer hrt;
+  hrt.start();
 
   vector< vector<int> > couplings;
   for(int i = 0; i < x.rows(); ++i) {
@@ -100,6 +106,7 @@ Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
       vals(j) = objective_->eval(xs[j]);
       assert(!isnan(vals(j)));
     }
+    num_evals_ += xs.size();
     
     // -- Look for improvement.
     for(int j = 0; j < vals.rows(); ++j) {
@@ -128,6 +135,8 @@ Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
     if(verbose_)
       cout << "Using step sizes of " << res_.transpose() << endl;
   }
-  
+
+  hrt.stop();
+  time_ = hrt.getSeconds();
   return x_;
 }
