@@ -30,6 +30,9 @@ namespace rgbd
     std::vector<double> timestamps_; //Keep these in memory
     std::string root_path_;
     PrimeSenseModel model_;
+    //! The maximum depth in meters, used when reading data.
+    //! Anything beyond this is set to 0.
+    double max_depth_;
 
     //! Does not initialize anything.
     StreamSequence();

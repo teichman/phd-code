@@ -8,7 +8,7 @@ SlamVisualizer::SlamVisualizer() :
   map_(new Cloud),
   curr_pcd_(new Cloud),
   curr_pcd_transformed_(new Cloud),
-  incr_(15),
+  incr_(1),
   needs_update_(false),
   save_imgs_(false),
   tip_transform_(Affine3d::Identity()),
@@ -71,7 +71,9 @@ void SlamVisualizer::slamThreadFunction()
     // -- Add the next link.
     sseq_->readFrame(i-incr_, &prev_frame);
     sseq_->readFrame(i, &curr_frame);
+    ProfilerStart("slam_test.prof");
     Affine3d curr_to_prev = aligner.align(curr_frame, prev_frame);
+    ProfilerStop();
     
     cout << "Adding edge with transform: " << endl << curr_to_prev.matrix() << endl;
     slam_->addEdge(i-incr_, i, curr_to_prev, covariance);

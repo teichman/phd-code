@@ -84,37 +84,39 @@ Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
   while(true) {
     bool improved = false;
 
+    vector<ArrayXd> xs;
     for(size_t i = 0; i < couplings.size(); ++i) {
       // -- Get all values of x to try in parallel.
-      vector<ArrayXd> xs;
-      makeGrid(couplings[i], &xs);
+      vector<ArrayXd> xs_this_coupling;
+      makeGrid(couplings[i], &xs_this_coupling);
+      xs.insert(xs.end(), xs_this_coupling.begin(), xs_this_coupling.end());
+    }
 
-      // -- Try them all in parallel.
-      ArrayXd vals(xs.size());
-      omp_set_num_threads(NUM_THREADS);
-      #pragma omp parallel for
-      for(size_t j = 0; j < xs.size(); ++j) { 
-	vals(j) = objective_->eval(xs[j]);
-	assert(!isnan(vals(j)));
-      }
-
-      // -- Look for improvement.
-      for(int j = 0; j < vals.rows(); ++j) {
-	if(vals(j) < best_obj_) {
-	  improved = true;
-	  best_obj_ = vals(j);
-	  x_ = xs[j];
-	  if(verbose_)
-	    cout << "*** ";
-	  if(view_handler_)
-	    view_handler_->handleGridSearchUpdate(xs[j], vals(j));
-	  
-	  history_.push_back(x_);
-	}
-
+    // -- Try them all in parallel.
+    ArrayXd vals(xs.size());
+    omp_set_num_threads(NUM_THREADS);
+#pragma omp parallel for
+    for(size_t j = 0; j < xs.size(); ++j) { 
+      vals(j) = objective_->eval(xs[j]);
+      assert(!isnan(vals(j)));
+    }
+    
+    // -- Look for improvement.
+    for(int j = 0; j < vals.rows(); ++j) {
+      if(vals(j) < best_obj_) {
+	improved = true;
+	best_obj_ = vals(j);
+	x_ = xs[j];
 	if(verbose_)
-	  cout << "obj = " << vals(j) << ", x = " << xs[j].transpose() << endl;
+	  cout << "*** ";
+	if(view_handler_)
+	  view_handler_->handleGridSearchUpdate(xs[j], vals(j));
+	
+	history_.push_back(x_);
       }
+      
+      if(verbose_)
+	cout << "obj = " << vals(j) << ", x = " << xs[j].transpose() << endl;
     }
       
     if(improved)
@@ -126,6 +128,6 @@ Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
     if(verbose_)
       cout << "Using step sizes of " << res_.transpose() << endl;
   }
-    
+  
   return x_;
 }
