@@ -4,7 +4,7 @@
 ############################################################
 export NUM_THREADS	:= 8
 SHELL			:= /bin/bash
-REPO_ROOT		:= $(shell dirname $$(dirname $$(rospack find xpl_calibration)))
+REPO_ROOT		:= $(shell dirname $$(dirname $$(dirname $$(rospack find xpl_calibration))))
 MAKE_ROOT		:= $(REPO_ROOT)/project/calibration
 MAKEFILE		:= $(MAKE_ROOT)/Makefile
 

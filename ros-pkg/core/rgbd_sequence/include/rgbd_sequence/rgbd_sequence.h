@@ -44,7 +44,9 @@ namespace rgbd
   //! sequences does not have to be empty.
   void loadSequences(const std::string& path,
 		     std::vector<Sequence::Ptr>* sequences);
-
+  void zthresh(rgbd::Cloud::Ptr pcd, double max_z);
 }
+
+
 
 #endif // RGBD_SEQUENCE_H

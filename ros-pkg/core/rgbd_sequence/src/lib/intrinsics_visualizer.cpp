@@ -1,4 +1,4 @@
-#include <rgbd_sequence/tube_measurer.h>
+#include <rgbd_sequence/intrinsics_visualizer.h>
 
 using namespace std;
 using namespace Eigen;
@@ -26,33 +26,39 @@ namespace rgbd
     }
   }
 
-  TubeMeasurer::TubeMeasurer() :
+  IntrinsicsVisualizer::IntrinsicsVisualizer() :
     idx_(0),
-    warped_(new Cloud)
+    pcd_(new Cloud),
+    show_color_(true)
   {
-    vw_.vis_.registerPointPickingCallback(&TubeMeasurer::pointPickingCallback, *this);
+    vw_.vis_.registerPointPickingCallback(&IntrinsicsVisualizer::pointPickingCallback, *this);
   }
   
-  void TubeMeasurer::run(const std::string& path, double actual_distance)
+  void IntrinsicsVisualizer::decolorize(rgbd::Cloud* pcd) const
+  {
+    for(size_t i = 0; i < pcd->size(); ++i) {
+      pcd->at(i).r = 127;
+      pcd->at(i).g = 127;
+      pcd->at(i).b = 127;
+    }
+  }
+
+  void IntrinsicsVisualizer::run(const std::string& path, double actual_distance)
   {
     path_ = path;
     actual_distance_ = actual_distance;
     
     sseq_.load(path);
-    proj_.fx_ = sseq_.fx_;
-    proj_.fy_ = sseq_.fy_;
-    proj_.cx_ = sseq_.cx_;
-    proj_.cy_ = sseq_.cy_;
-    Cloud::Ptr pcd = sseq_.getCloud(0);
-    proj_.width_ = pcd->width;
-    proj_.height_ = pcd->height;
-    
+    model_ = sseq_.model_;
+    Frame frame;
     while(true) {
-      Cloud::Ptr pcd = sseq_.getCloud(idx_);
-      proj_.cloudToFrame(*pcd, &frame_);
-      proj_.frameToCloud(frame_, warped_.get());
-      
-      vw_.showCloud(warped_);
+      sseq_.readFrame(idx_, &frame);
+      model_.frameToCloud(frame, pcd_.get());
+      ROS_DEBUG_STREAM("IntrinsicsVisualizer using model: " << endl << model_.status("  "));
+      if(!show_color_)
+	decolorize(pcd_.get());
+
+      vw_.showCloud(pcd_);
       char key = vw_.waitKey();
 
       switch(key) {
@@ -65,6 +71,9 @@ namespace rgbd
 	break;
       case 's':
 	saveAccepted();
+	break;
+      case 'C':
+	show_color_ = !show_color_;
 	break;
       case 'c':
 	clearSelection();
@@ -97,41 +106,13 @@ namespace rgbd
       case ']':
 	incrementIntrinsics(0, 0, 10, 0);
 	break;
-      case 't':
-	findTube(*warped_);
-	break;
       default:
 	break;
       }
     }
   }
   
-  void TubeMeasurer::findTube(const rgbd::Cloud& pcd)
-  {
-    Cloud::Ptr brown(new Cloud);
-    brown->reserve(pcd.size());
-    Point br;
-    br.r = 165;
-    br.g = 155;
-    br.b = 105;
-    int thresh = 20;
-    
-    for(size_t i = 0; i < pcd.size(); ++i) {
-      if(!isFinite(pcd[i]))
-	continue;
-      if(pcd[i].r < br.r - thresh || pcd[i].r > br.r + thresh ||
-	 pcd[i].g < br.g - thresh || pcd[i].g > br.g + thresh ||
-	 pcd[i].b < br.b - thresh || pcd[i].b > br.b + thresh)
-	continue;
-
-      brown->push_back(pcd[i]);
-    }
-
-    vw_.showCloud(brown);
-    vw_.waitKey();
-  }
-
-  void TubeMeasurer::pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie)
+  void IntrinsicsVisualizer::pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie)
   {
     if(event.getPointIndex() == -1)
       return;
@@ -152,22 +133,23 @@ namespace rgbd
     }
   }
 
-  void TubeMeasurer::incrementIntrinsics(double dfx, double dfy, double dcx, double dcy)
+  void IntrinsicsVisualizer::incrementIntrinsics(double dfx, double dfy, double dcx, double dcy)
   {
-    proj_.fx_ += dfx;
-    proj_.fy_ += dfy;
-    proj_.cx_ += dcx;
-    proj_.cy_ += dcy;
-    cout << "Intrinsics: fx = " << proj_.fx_ << ", fy = " << proj_.fy_ << ", cx = " << proj_.cx_ << ", cy = " << proj_.cy_ << endl;
+    model_.fx_ += dfx;
+    model_.fy_ += dfy;
+    model_.cx_ += dcx;
+    model_.cy_ += dcy;
+    cout << "PrimeSenseModel: " << endl;
+    cout << model_.status("  ");
   }
 
-  void TubeMeasurer::acceptVisible()
+  void IntrinsicsVisualizer::acceptVisible()
   {
     for(size_t i = 0; i < visible_pairs_.size(); ++i) {
       ROS_ASSERT(visible_pairs_[i].size() == 2);
-      std::pair<ProjectedPoint, ProjectedPoint> ppts;
-      proj_.project(visible_pairs_[i][0], &ppts.first);
-      proj_.project(visible_pairs_[i][1], &ppts.second);
+      std::pair<ProjectivePoint, ProjectivePoint> ppts;
+      model_.project(visible_pairs_[i][0], &ppts.first);
+      model_.project(visible_pairs_[i][1], &ppts.second);
       accepted_.push_back(ppts);
     }
     cout << "Accepted " << visible_pairs_.size() << " pairs of points." << endl;
@@ -175,14 +157,14 @@ namespace rgbd
     clearSelection();
   }
 
-  void TubeMeasurer::clearSelection()
+  void IntrinsicsVisualizer::clearSelection()
   {
     selected_.clear();
     visible_pairs_.clear();
     vw_.vis_.removeAllShapes();
   }
   
-  void TubeMeasurer::increment(int num)
+  void IntrinsicsVisualizer::increment(int num)
   {
     clearSelection();
     
@@ -193,7 +175,7 @@ namespace rgbd
       idx_ = sseq_.size() - 1;
   }
 
-  void TubeMeasurer::saveAccepted() const
+  void IntrinsicsVisualizer::saveAccepted() const
   {
     string p = path_;
     if(p[p.size() - 1] == '/')
@@ -203,7 +185,7 @@ namespace rgbd
     accepted_.save(p);
   }
 
-  void TubeMeasurer::loadAccepted()
+  void IntrinsicsVisualizer::loadAccepted()
   {
     string p = path_;
     if(p[p.size() - 1] == '/')
@@ -216,7 +198,7 @@ namespace rgbd
     cout << accepted_;
   }
 
-  void TubeMeasurer::gridSearch()
+  void IntrinsicsVisualizer::gridSearch()
   {
     if(accepted_.empty()) {
       cout << "You must choose some pairs first." << endl;
@@ -225,7 +207,7 @@ namespace rgbd
       
     GridSearch gs(4);
     gs.verbose_ = false;
-    gs.objective_ = LossFunction::Ptr(new LossFunction(accepted_, actual_distance_));
+    gs.objective_ = LossFunction::Ptr(new LossFunction(accepted_, actual_distance_, model_.width_, model_.height_));
     gs.num_scalings_ = 7;
     gs.max_resolutions_ << 50, 50, 50, 50;
     gs.grid_radii_ << 4, 4, 4, 4;
@@ -233,51 +215,69 @@ namespace rgbd
     gs.couplings_ << 0, 0, 0, 0;
 
     ArrayXd init(4);
-    init << proj_.fx_, proj_.fy_, proj_.cx_, proj_.cy_;
+    init << model_.fx_, model_.fy_, model_.cx_, model_.cy_;
     cout << "Loss before optimization: " << gs.objective_->eval(init) << endl;
     printErrors(init);
     ArrayXd xstar = gs.search(init);
 
     cout << "Got intrinsics of: " << xstar.transpose() << endl;
-    proj_.fx_ = xstar(0);
-    proj_.fy_ = xstar(1);
-    proj_.cx_ = xstar(2);
-    proj_.cy_ = xstar(3);
+    model_.fx_ = xstar(0);
+    model_.fy_ = xstar(1);
+    model_.cx_ = xstar(2);
+    model_.cy_ = xstar(3);
     cout << "Best loss: " << gs.objective_->eval(xstar) << endl;
     printErrors(xstar);
   }
 
-  void TubeMeasurer::printErrors(const Eigen::ArrayXd& x) const
+  void IntrinsicsVisualizer::printErrors(const Eigen::ArrayXd& x) const
   {
     ROS_ASSERT(x.rows() == 4);
-    
+
+    PrimeSenseModel model;
+    model.width_ = model_.width_;
+    model.height_ = model_.height_;
+    model.fx_ = x(0);
+    model.fy_ = x(1);
+    model.cx_ = x(2);
+    model.cy_ = x(3);
+
     for(size_t i = 0; i < accepted_.size(); ++i) {
       Point pt0;
       Point pt1;
-      Projector::project(x(0), x(1), x(2), x(3), accepted_[i].first, &pt0);
-      Projector::project(x(0), x(1), x(2), x(3), accepted_[i].second, &pt1);
+      model.project(accepted_[i].first, &pt0);
+      model.project(accepted_[i].second, &pt1);
       double dist = pcl::euclideanDistance(pt0, pt1);
       cout << "Error " << i << ": " << fabs(dist - actual_distance_) << endl;
     }
   }
   
   LossFunction::LossFunction(const AcceptedPoints& accepted,
-			     double actual_distance) :
+			     double actual_distance, int width, int height) :
     accepted_(accepted),
-    actual_distance_(actual_distance)
+    actual_distance_(actual_distance),
+    width_(width),
+    height_(height)
   {
   }
   
   double LossFunction::eval(const Eigen::VectorXd& x) const
   {
     ROS_ASSERT(x.rows() == 4);
+
+    PrimeSenseModel model;
+    model.width_ = width_;
+    model.height_ = height_;
+    model.fx_ = x(0);
+    model.fy_ = x(1);
+    model.cx_ = x(2);
+    model.cy_ = x(3);
     
     double loss = 0;
     for(size_t i = 0; i < accepted_.size(); ++i) {
       Point pt0;
       Point pt1;
-      Projector::project(x(0), x(1), x(2), x(3), accepted_[i].first, &pt0);
-      Projector::project(x(0), x(1), x(2), x(3), accepted_[i].second, &pt1);
+      model.project(accepted_[i].first, &pt0);
+      model.project(accepted_[i].second, &pt1);
       double dist = pcl::euclideanDistance(pt0, pt1);
       loss += fabs(dist - actual_distance_);
     }

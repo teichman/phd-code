@@ -144,5 +144,17 @@ namespace rgbd
       sequences->push_back(seq);
     }
   }
+
+  void zthresh(Cloud::Ptr pcd, double max_z)
+  {
+    for(size_t i = 0; i < pcd->size(); ++i) {
+      if(pcd->at(i).z > max_z) {
+	pcd->at(i).x = std::numeric_limits<float>::quiet_NaN();
+	pcd->at(i).y = std::numeric_limits<float>::quiet_NaN();
+	pcd->at(i).z = std::numeric_limits<float>::quiet_NaN();
+      }
+    }
+  }
+
   
 } // namespace rgbd

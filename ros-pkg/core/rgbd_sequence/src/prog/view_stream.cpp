@@ -23,6 +23,7 @@ int main(int argc, char** argv)
   bpo::variables_map opts;
   bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
   if(opts.count("help")) {
+    cout << "Usage: view_stream SEQ [opts]" << endl << endl;
     cout << opts_desc << endl;
     return 1;
   }
@@ -47,18 +48,26 @@ int main(int argc, char** argv)
   cout << "Mean dt: " << mean_dt << endl;
   cout << "Max dt: " << max_dt << endl;
   cout << "--------------------" << endl;
-
+  cout << "Sensor model: " << endl;
+  cout << seq.model_.status("  ");
+  
   if(opts.count("only-stats"))
     return 0;
   
   pcl::visualization::CloudViewer cloud_viewer("cloud");
   cv::namedWindow("image");
+  Frame frame;
   for(size_t i = 0; i < seq.size(); i++){
     cout << "Viewing cloud: " << i << endl;
-    Cloud::Ptr cloud = seq.getCloud(i);
+    seq.readFrame(i, &frame);
+
+    Cloud::Ptr cloud(new Cloud);
+    seq.model_.frameToCloud(frame, cloud.get());
     cloud_viewer.showCloud(cloud);
-    cv::imshow("image", seq.getImage(i));
-    if(i < seq.size() ){
+
+    cv::imshow("image", frame.img_);
+
+    if(i < seq.size()) {
       double dt = seq.timestamps_[i+1]-seq.timestamps_[i];
       cout << "dt: " << dt << endl;
       cv::waitKey(dt * 1e3);

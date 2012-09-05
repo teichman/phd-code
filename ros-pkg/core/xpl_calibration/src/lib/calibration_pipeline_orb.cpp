@@ -27,17 +27,24 @@ Eigen::Affine3f CalibrationPipelineOrb::calibrate(rgbd::StreamSequence::ConstPtr
   seq1->pcds_.reserve(sseq1->size());
   seq0->imgs_.reserve(sseq0->size());
   seq1->imgs_.reserve(sseq1->size());
+  Frame frame;
   for(size_t i = 0; i < sseq0->size(); i += interval) {
     double dt = -1;
     double ts0 = sseq0->timestamps_[i];
-    Cloud::Ptr pcd1 = sseq1->getCloud(ts0, &dt);
+    sseq1->readFrame(ts0, &dt, &frame);
     if(fabs(dt) > thresh)
       continue;
-
-    seq0->pcds_.push_back(sseq0->getCloud(i));
+    Cloud::Ptr pcd1(new Cloud);
+    sseq1->model_.frameToCloud(frame, pcd1.get());
+    seq1->imgs_.push_back(frame.img_);
     seq1->pcds_.push_back(pcd1);
-    seq0->imgs_.push_back(sseq0->getImage(i));
-    seq1->imgs_.push_back(sseq0->getImage(ts0, &dt));
+
+    sseq0->readFrame(i, &frame);
+    Cloud::Ptr pcd0(new Cloud);
+    sseq0->model_.frameToCloud(frame, pcd0.get());
+
+    seq0->pcds_.push_back(pcd0);
+    seq0->imgs_.push_back(frame.img_);
   }
 
   // -- Compute calibration.

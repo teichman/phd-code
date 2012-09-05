@@ -46,32 +46,32 @@ namespace multi_sequence
     }
   }
 
-  void MultiSequence::save(const std::string &dir) const{
-    //ROS_ASSERT(!bfs::exists(dir));
-    if(bfs::exists(dir))
-      bfs::remove_all(dir);
-    bfs::create_directory(dir);
-    //Save my alignments
-    cv::FileStorage fs(dir+"/alignments.yaml", cv::FileStorage::WRITE);
-    fs << "dt" << dt_;
-    fs << "aligned" << aligned_;
-    fs << "num_sequences" << (int)seqs_.size();
-    fs << "alignments" << "[";
-    for(size_t i = 0; i < alignments_.size(); i++){
-      fs << "[";
-        for(size_t j = 0; j < alignments_[i].size(); j++){
-          fs << alignments_[i][j];
-        }
-      fs << "]";
-    }
-    fs << "]";
-    for(size_t i = 0; i < seqs_.size(); i++){
-      std::ostringstream oss;
-      oss << "seq" << std::setw(4) << std::setfill('0') << i;
-      seqs_[i]->save(dir + "/" + oss.str());
-    }
-    fs.release();
-  }
+  // void MultiSequence::save(const std::string &dir) const{
+  //   //ROS_ASSERT(!bfs::exists(dir));
+  //   if(bfs::exists(dir))
+  //     bfs::remove_all(dir);
+  //   bfs::create_directory(dir);
+  //   //Save my alignments
+  //   cv::FileStorage fs(dir+"/alignments.yaml", cv::FileStorage::WRITE);
+  //   fs << "dt" << dt_;
+  //   fs << "aligned" << aligned_;
+  //   fs << "num_sequences" << (int)seqs_.size();
+  //   fs << "alignments" << "[";
+  //   for(size_t i = 0; i < alignments_.size(); i++){
+  //     fs << "[";
+  //       for(size_t j = 0; j < alignments_[i].size(); j++){
+  //         fs << alignments_[i][j];
+  //       }
+  //     fs << "]";
+  //   }
+  //   fs << "]";
+  //   for(size_t i = 0; i < seqs_.size(); i++){
+  //     std::ostringstream oss;
+  //     oss << "seq" << std::setw(4) << std::setfill('0') << i;
+  //     seqs_[i]->save(dir + "/" + oss.str());
+  //   }
+  //   fs.release();
+  // }
 
   void MultiSequence::load(const std::string &dir) {
     cv::FileStorage fs(dir+"/alignments.yaml", cv::FileStorage::READ);

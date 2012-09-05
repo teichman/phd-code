@@ -18,6 +18,7 @@
   <!--depend package="cv_bridge"/-->
   <depend package="eigen"/>
   <depend package="eigen_extensions"/>
+  <depend package="google-perftools"/>
   <depend package="optimization"/>
 
   <export>

@@ -583,7 +583,13 @@ double LossFunction::eval(const VectorXd& x) const
       val += computeLoss(tree0, pcd0, transformed);
     }
   }
-  return val / count;
+
+  if(count == 0) {
+    ROS_WARN("Number of corresponding pcds is zero.  No objective function terms.  Is this because the sensors don't overlap enough?");
+    return 0;
+  }
+  else
+    return val / count;
 }
 
 double LossFunction::computeLoss(KdTree::Ptr tree0, const Cloud& pcd0, const Cloud& pcd1) const
