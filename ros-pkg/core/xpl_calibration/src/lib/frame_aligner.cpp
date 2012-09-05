@@ -16,8 +16,7 @@ FrameAligner::FrameAligner(const rgbd::PrimeSenseModel& model0,
 Eigen::Affine3d FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1) const
 {
   ScopedTimer st("FrameAligner::align");
-  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, frame0, model1_, frame1));
-  mde->incr_ = 3;
+  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, frame0, model1_, frame1, 0.25));
   
   GridSearch gs(6);
   gs.verbose_ = false;
