@@ -33,20 +33,20 @@ view_slam_result-%: slam_results/%.pcd
 	rosrun pcl_bleeding pcd_viewer slam_results/$*.pcd -cam $(CAMERAS_PATH)/$*.cam
 
 slam_videos: $(addprefix slam_videos/, $(addsuffix .avi, $(SLAM_RUNS)))
-slam_videos/%.avi: $(SLAM_DATA_PATH)/$$*
+slam_videos/%.avi: $(SLAM_DATA_PATH)/$$* $(CAMERAS_PATH)/%.cam
 	mkdir -p $(@D)/$*
 	cd $(@D)/$* && rosrun xpl_calibration slam_test $< $*.pcd --cam $(CAMERAS_PATH)/$*.cam --save-imgs
 	cd $(@D)/$* && mkdir png && mv *.png png/
 	mencoder "mf://$(@D)/$*/png/slam*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $@
 
+.PHONY: slam_results
 slam_results: $(addprefix slam_results/, $(addsuffix .pcd, $(SLAM_RUNS)))
-slam_results/%.pcd: $(SLAM_DATA_PATH)/$$*
+slam_results/%.pcd: $(SLAM_DATA_PATH)/$$* $(CAMERAS_PATH)/$$*.cam
 	mkdir -p $(@D)
-	if [ -e $(CAMERAS_PATH)/$*.cam ]; then \
 	rosrun xpl_calibration slam_test $< $@ --cam $(CAMERAS_PATH)/$*.cam; \
-	else \
-	rosrun xpl_calibration slam_test $< $@; \
-	fi
+
+$(CAMERAS_PATH)/%.cam:
+	cp $(CAMERAS_PATH)/default.cam $@
 
 #visualize_slam-%: slam_sequences/%/trajectory_estimate.txt
 #	rosrun slam_interface view_reconstruction $(SLAM_DATA_PATH)/$*/ slam_sequences/$*/$*_RGBDSLAM/trajectory_estimate.txt

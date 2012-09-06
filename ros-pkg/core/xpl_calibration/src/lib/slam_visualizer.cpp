@@ -116,7 +116,7 @@ void SlamVisualizer::slamThreadFunction()
     //ProfilerStop();
 
     // -- For now, terminate at the first broken link.  With loop closure we can do better.
-    if(count < 20000 || final_mde > 0.15) {
+    if(count < 20000 || final_mde > 0.2) {
       cout << "Edge has count " << count << " and final_mde " << final_mde << ".  Terminating." << endl;
       break;
     }
