@@ -5,6 +5,7 @@ using namespace g2o;
 using namespace rgbd;
 
 SlamVisualizer::SlamVisualizer() :
+  min_dt_(0.333),
   map_(new Cloud),
   curr_pcd_(new Cloud),
   curr_pcd_transformed_(new Cloud),
@@ -62,21 +63,48 @@ void SlamVisualizer::slamThreadFunction()
   Matrix6d covariance = Matrix6d::Identity() * 1e-3;  
   
   Frame prev_frame;
+  size_t prev_idx;
   Frame curr_frame;
-  for(size_t i = incr_; i < sseq_->size(); i += incr_) {
-    cout << "---------- Searching for link between " << i - incr_ << " and " << i << endl;
+  sseq_->readFrame(0, &curr_frame);
+  size_t curr_idx = 0;
+  while(true) {
+    // -- Find the next frame to use.
+    prev_frame = curr_frame;
+    prev_idx = curr_idx;
+    double dt = 0;
+    bool done = false;
+    while(dt < min_dt_) {
+      ++curr_idx;
+      if(curr_idx >= sseq_->size()) {
+	done = true;
+	break;
+      }
+      dt = sseq_->timestamps_[curr_idx] - prev_frame.timestamp_;
+      //cout << "Searching: " << curr_idx << " " << prev_idx << " " << dt << endl;
+    }
+    if(done) break;
+    cout << "---------- Searching for link between " << prev_idx << " and " << curr_idx
+	 << " / " << sseq_->size() << endl;
+    cout << "           dt: " << dt << endl;
+    sseq_->readFrame(prev_idx, &prev_frame);
+    sseq_->readFrame(curr_idx, &curr_frame);
+
+    // -- Load the cloud for visualization purposes.
     lockWrite();
-    curr_pcd_ = sseq_->getCloud(i);
+    curr_pcd_ = sseq_->getCloud(curr_idx);
     zthresh(curr_pcd_, 3);
     unlockWrite();
     
     // -- Add the next link.
-    sseq_->readFrame(i-incr_, &prev_frame);
-    sseq_->readFrame(i, &curr_frame);
-    ProfilerStart("slam_test.prof");
-    Affine3d curr_to_prev = aligner.align(curr_frame, prev_frame);
-    ProfilerStop();
-    slam_->addEdge(i-incr_, i, curr_to_prev, covariance);    
+    //ProfilerStart("slam_test.prof");
+    double count, final_mde;
+    Affine3d curr_to_prev = aligner.align(curr_frame, prev_frame, &count, &final_mde);
+    //ProfilerStop();
+
+    if(count < 20000 || final_mde > 0.1)
+      cout << "Edge has count " << count << " and final_mde " << final_mde << ".  Rejecting." << endl;
+    else
+      slam_->addEdge(prev_idx, curr_idx, curr_to_prev, covariance);
     
     // -- Solve.  For now this isn't really doing anything other than showing
     //    that we have the input and output transforms correct.
@@ -84,8 +112,8 @@ void SlamVisualizer::slamThreadFunction()
 
     // -- Update the map.
     lockWrite();
-    Affine3d transform = slam_->transform(i);
-    Cloud::Ptr pcdi = sseq_->getCloud(i);
+    Affine3d transform = slam_->transform(curr_idx);
+    Cloud::Ptr pcdi = sseq_->getCloud(curr_idx);
     zthresh(pcdi, 3);
     pcl::transformPointCloud(*pcdi, *pcdi, transform.cast<float>());
     *map_ += *pcdi;

@@ -8,6 +8,7 @@ using namespace rgbd;
 FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
 				     const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1,
 				     double fraction) :
+  count_(NULL),
   model0_(model0),
   model1_(model1),
   frame0_(frame0),
@@ -39,6 +40,10 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   transformAndDecimate(pcd0_, f0_to_f1, &transformed);
   meanDepthError(model1_, frame1_, transformed, &val, &count, 4);
 
+  // Make count available to other users in single-threaded mode.
+  if(count_)
+    *count_ = count;
+  
   if(count == 0) {
     ROS_WARN("FrameAlignmentMDE found no overlapping points.");
     return std::numeric_limits<double>::max();

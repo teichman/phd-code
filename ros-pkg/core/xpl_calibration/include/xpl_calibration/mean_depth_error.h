@@ -11,15 +11,16 @@ public:
   typedef boost::shared_ptr<FrameAlignmentMDE> Ptr;
   typedef boost::shared_ptr<const FrameAlignmentMDE> ConstPtr;
 
-  //! Increment to use when sampling points.  1 -> use all, 2 -> use half, etc.
-  size_t incr_;
-
   //! fraction is how much of the data to use.
   FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
 		    const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1,
 		    double fraction = 1.0);
   //! x = [rx, ry, rz, tx, ty, tz].
   double eval(const Eigen::VectorXd& x) const;
+
+  //! Number of points in the last eval() which had matches.
+  //! Only valid in a single-threaded context.
+  double *count_;
   
 protected:
   rgbd::PrimeSenseModel model0_;
