@@ -7,7 +7,8 @@ using namespace rgbd;
 
 FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
 				     const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1,
-				     double fraction) :
+				     double max_range, double fraction) :
+  max_range_(max_range),
   count_(NULL),
   model0_(model0),
   model1_(model1),
@@ -36,9 +37,9 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   Cloud transformed;
 
   transformAndDecimate(pcd1_, f0_to_f1.inverse(), &transformed);
-  meanDepthError(model0_, frame0_, transformed, &val, &count, 4);
+  meanDepthError(model0_, frame0_, transformed, &val, &count, max_range_);
   transformAndDecimate(pcd0_, f0_to_f1, &transformed);
-  meanDepthError(model1_, frame1_, transformed, &val, &count, 4);
+  meanDepthError(model1_, frame1_, transformed, &val, &count, max_range_);
 
   // Make count available to other users in single-threaded mode.
   if(count_)
@@ -126,7 +127,7 @@ double SequenceAlignmentMDE::eval(const Eigen::VectorXd& x) const
 
 void meanDepthError(const rgbd::PrimeSenseModel& model,
 		    Frame frame, const rgbd::Cloud& pcd,
-		    double* val, double* count, double max_depth)
+		    double* val, double* count, double max_range)
 {
   //ScopedTimer st("meanDepthError total");
   ROS_ASSERT(frame.depth_->rows() == model.height_);
@@ -153,8 +154,10 @@ void meanDepthError(const rgbd::PrimeSenseModel& model,
       	continue;
       }
 
-      if(frame.depth_->coeffRef(ppt.v_, ppt.u_) > max_depth * 1000 &&
-	 gt.depth_->coeffRef(ppt.v_, ppt.u_) > max_depth * 1000)
+      // If they're both far away, assume the data is no good and ignore it.
+      ROS_WARN_ONCE("Should probably ignore if either is far.");
+      if(frame.depth_->coeffRef(ppt.v_, ppt.u_) > max_range * 1000 &&
+	 gt.depth_->coeffRef(ppt.v_, ppt.u_) > max_range * 1000)
       {
 	continue;
       }

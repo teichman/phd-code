@@ -67,6 +67,8 @@ namespace rgbd
     //! f[1] is measured depth in decameters.
     Eigen::VectorXd computeFeatures(const ProjectivePoint& ppt) const;
     int numFeatures() const;
+    //! Returns type_ and id_ formatted nicely together.
+    std::string name() const;
     
     //! Initializes with a bogus model: all params set to -1.
     PrimeSenseModel();

@@ -11,10 +11,13 @@ public:
   typedef boost::shared_ptr<FrameAlignmentMDE> Ptr;
   typedef boost::shared_ptr<const FrameAlignmentMDE> ConstPtr;
 
+  double max_range_;
+  
   //! fraction is how much of the data to use.
   FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
 		    const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1,
-		    double fraction = 1.0);
+		    double max_range = 3.5, double fraction = 1.0);
+		    
   //! x = [rx, ry, rz, tx, ty, tz].
   double eval(const Eigen::VectorXd& x) const;
 
@@ -62,6 +65,6 @@ protected:
 void meanDepthError(const rgbd::PrimeSenseModel& model,
 		    rgbd::Frame frame, const rgbd::Cloud& pcd,
 		    double* count, double* val,
-		    double max_depth = std::numeric_limits<double>::max());
+		    double max_range = std::numeric_limits<double>::max());
 
 #endif // MEAN_DEPTH_ERROR_H
