@@ -28,9 +28,13 @@ all:
 
 SLAM_RUNS := $(shell ls $(SLAM_DATA_PATH))
 
-# Can get a nice camera angle using 'j'.
-view_slam_result-%: slam_results/%.pcd
-	rosrun pcl_bleeding pcd_viewer slam_results/$*.pcd -cam $(CAMERAS_PATH)/$*.cam
+
+# -- Autocompletion is easier with this syntax.
+define VSR_RULE_GENERATOR
+view_slam_result-$(1): slam_results/$(1).pcd
+	rosrun pcl_bleeding pcd_viewer slam_results/$(1).pcd -cam $(CAMERAS_PATH)/$(1).cam
+endef
+$(foreach VAL,$(SLAM_RUNS),$(eval $(call VSR_RULE_GENERATOR,$(VAL))))
 
 slam_videos: $(addprefix slam_videos/, $(addsuffix .avi, $(SLAM_RUNS)))
 slam_videos/%.avi: $(SLAM_DATA_PATH)/$$* $(CAMERAS_PATH)/%.cam
@@ -43,7 +47,7 @@ slam_videos/%.avi: $(SLAM_DATA_PATH)/$$* $(CAMERAS_PATH)/%.cam
 slam_results: $(addprefix slam_results/, $(addsuffix .pcd, $(SLAM_RUNS)))
 slam_results/%.pcd: $(SLAM_DATA_PATH)/$$* $(CAMERAS_PATH)/$$*.cam
 	mkdir -p $(@D)
-	rosrun xpl_calibration slam_test $< $@ --cam $(CAMERAS_PATH)/$*.cam; \
+	rosrun xpl_calibration slam_test $< $@ --cam $(CAMERAS_PATH)/$*.cam
 
 $(CAMERAS_PATH)/%.cam:
 	cp $(CAMERAS_PATH)/default.cam $@
