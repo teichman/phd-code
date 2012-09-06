@@ -30,8 +30,11 @@ public:
   //! and not be larger than num_vars - 1.
   Eigen::ArrayXd couplings_;
   GridSearchViewHandler* view_handler_;
-  
-  std::vector<Eigen::ArrayXd> history_;
+
+  //! x_history_[i][j] is the jth x evaluated in block i.
+  //! It has objective function value obj_history_[i](j).
+  std::vector< std::vector<Eigen::ArrayXd> > x_history_;
+  std::vector<Eigen::ArrayXd> obj_history_;
 
   GridSearch(int num_variables);
   Eigen::ArrayXd search(const Eigen::ArrayXd& x);
