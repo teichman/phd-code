@@ -12,6 +12,7 @@ namespace rgbd
 					     const std::string& mode,
 					     bool fake_rgb,
 					     bool registered) :
+    sequences_dir_("recorded_sequences"),
     mode_(mode),
     recording_(false),
     fake_rgb_(fake_rgb),
@@ -242,15 +243,27 @@ namespace rgbd
       bfs::create_directory(dir);
 
     // -- Find the next number.
-    int num = 0;
     bfs::directory_iterator end_itr;  // default construction yields past-the-end
-    for(bfs::directory_iterator itr(dir); itr != end_itr; ++itr) { 
-      if(itr->leaf().substr(width+1).compare(basename) == 0)
-	++num;
+    vector<string> dirs;
+    for(bfs::directory_iterator itr(dir); itr != end_itr; ++itr) {
+      if(itr->leaf().substr(0, basename.size()).compare(basename) == 0)
+	dirs.push_back(itr->leaf());
+    }
+
+    sort(dirs.begin(), dirs.end());
+
+    // -- Choose the next number, filling holes.
+    size_t idx;
+    for(idx = 0; idx < dirs.size(); ++idx) {
+      string numstr = dirs[idx].substr(basename.size() + 4, basename.size() + 7);
+      int num = atoi(numstr.c_str());
+      ROS_ASSERT(num >= 0);
+      if(idx < (size_t)num)
+	break;
     }
     
     ostringstream filename;
-    filename << setw(width) << setfill('0') << num << "-" << basename;
+    filename << basename << "-seq" << setw(width) << setfill('0') << idx;
     ostringstream oss;
     oss << dir / filename.str();
     return oss.str();
@@ -264,7 +277,8 @@ namespace rgbd
     if(recording_) {
       prev_depth_ts_ = numeric_limits<double>::quiet_NaN();
 			  
-      string name = generateFilenameStream("recorded_sequences", "seq", 3);
+      string name = generateFilenameStream(sequences_dir_, model_.name(), 3);
+      cout << "Saving to " << name << endl;
       seq_ = StreamSequence::Ptr(new StreamSequence);
       seq_->init(name);
       seq_->model_ = model_;

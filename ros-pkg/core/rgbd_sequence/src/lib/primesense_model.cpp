@@ -262,6 +262,13 @@ namespace rgbd
     weights_ = VectorXd::Zero(64);
     weights_(1) = 10;  // feature 1 is measured depth in decameters.
   }
+
+  std::string PrimeSenseModel::name() const
+  {
+    ostringstream oss;
+    oss << type_ << setw(3) << setfill('0') << id_;
+    return oss.str();
+  }
   
 } // namespace rgbd
 

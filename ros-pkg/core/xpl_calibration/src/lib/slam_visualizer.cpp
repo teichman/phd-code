@@ -5,6 +5,7 @@ using namespace g2o;
 using namespace rgbd;
 
 SlamVisualizer::SlamVisualizer() :
+  max_range_(3.5),
   min_dt_(0.3),
   save_imgs_(false),
   map_(new Cloud),
@@ -67,13 +68,13 @@ void SlamVisualizer::slamThreadFunction()
 {
   lockWrite();
   *map_ = *sseq_->getCloud(0);
-  zthresh(map_, 3);
+  zthresh(map_, max_range_);
   needs_update_ = true;
   unlockWrite();
 
   PrimeSenseModel model = sseq_->model_;
   model.use_distortion_model_ = false;
-  FrameAligner aligner(model, model, this);
+  FrameAligner aligner(model, model, max_range_, this);
   slam_ = PoseGraphSlam::Ptr(new PoseGraphSlam(sseq_->size()));
   Matrix6d covariance = Matrix6d::Identity() * 1e-3;  
   
@@ -107,7 +108,7 @@ void SlamVisualizer::slamThreadFunction()
     // -- Load the cloud for visualization purposes.
     lockWrite();
     curr_pcd_ = sseq_->getCloud(curr_idx);
-    zthresh(curr_pcd_, 3);
+    zthresh(curr_pcd_, max_range_);
     if(quitting_) {
       unlockWrite();
       break;
@@ -136,7 +137,7 @@ void SlamVisualizer::slamThreadFunction()
     lockWrite();
     Affine3d transform = slam_->transform(curr_idx);
     Cloud::Ptr pcdi = sseq_->getCloud(curr_idx);
-    zthresh(pcdi, 3);
+    zthresh(pcdi, max_range_);
     pcl::transformPointCloud(*pcdi, *pcdi, transform.cast<float>());
     *map_ += *pcdi;
     curr_pcd_->clear();

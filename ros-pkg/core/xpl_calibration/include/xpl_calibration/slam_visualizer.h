@@ -13,6 +13,8 @@
 class SlamVisualizer : public SharedLockable, public GridSearchViewHandler
 {
 public:
+  //! Used in generating the map.
+  double max_range_;
   //! When choosing the next frame, advance by at least this much.
   double min_dt_;
   //! If true, after each grid search improvement save a screenshot.

@@ -83,8 +83,10 @@ namespace rgbd
     
     // -- Write image
     vector<int> params;
-    //oss << "img" << setw(5) << setfill('0') << idx << ".ppm";
-    oss << "img" << setw(5) << setfill('0') << idx << ".png";
+    if(getenv("SSEQ_PPM"))
+      oss << "img" << setw(5) << setfill('0') << idx << ".ppm";
+    else
+      oss << "img" << setw(5) << setfill('0') << idx << ".png";
     cv::imwrite(root_path_ + "/" + oss.str(), frame.img_, params);
     img_names_.push_back(oss.str());
 
