@@ -6,7 +6,7 @@ using namespace rgbd;
 
 SlamVisualizer::SlamVisualizer() :
   max_range_(3.5),
-  min_dt_(0.3),
+  min_dt_(0.2),
   save_imgs_(false),
   map_(new Cloud),
   curr_pcd_(new Cloud),
