@@ -5,17 +5,18 @@ using namespace g2o;
 using namespace rgbd;
 
 SlamVisualizer::SlamVisualizer() :
-  min_dt_(0.2),
+  min_dt_(0.3),
+  save_imgs_(false),
   map_(new Cloud),
   curr_pcd_(new Cloud),
   curr_pcd_transformed_(new Cloud),
   incr_(5),
   needs_update_(false),
-  save_imgs_(false),
   tip_transform_(Affine3d::Identity()),
   quitting_(false)
 {
   vis_.registerKeyboardCallback(&SlamVisualizer::keyboardCallback, *this);
+  vis_.setBackgroundColor(1, 1, 1);
   //vis_.addCoordinateSystem(1.0);
   vg_.setLeafSize(0.01, 0.01, 0.01);
   
@@ -38,9 +39,22 @@ SlamVisualizer::SlamVisualizer() :
   vis_.updateCamera();    
 }
 
-void SlamVisualizer::run(StreamSequence::ConstPtr sseq)
+void SlamVisualizer::setCamera(const std::string& camera_path)
+{
+  int argc = 3;
+  char* argv[argc];
+  argv[0] = (char*)string("aoeu").c_str();
+  argv[1] = (char*)string("-cam").c_str();
+  argv[2] = (char*)camera_path.c_str();
+  bool success = vis_.getCameraParameters(argc, argv);
+  ROS_ASSERT(success);
+  vis_.updateCamera();    
+}
+
+void SlamVisualizer::run(StreamSequence::ConstPtr sseq, const std::string& opcd_path)
 {
   sseq_ = sseq;
+  opcd_path_ = opcd_path;
   
   boost::thread thread_slam(boost::bind(&SlamVisualizer::slamThreadFunction, this));
   // Apparently PCLVisualizer needs to run in the main thread.
@@ -101,8 +115,11 @@ void SlamVisualizer::slamThreadFunction()
     Affine3d curr_to_prev = aligner.align(curr_frame, prev_frame, &count, &final_mde);
     //ProfilerStop();
 
-    if(count < 20000 || final_mde > 0.15)
-      cout << "Edge has count " << count << " and final_mde " << final_mde << ".  Rejecting." << endl;
+    // -- For now, terminate at the first broken link.  With loop closure we can do better.
+    if(count < 20000 || final_mde > 0.15) {
+      cout << "Edge has count " << count << " and final_mde " << final_mde << ".  Terminating." << endl;
+      break;
+    }
     else
       slam_->addEdge(prev_idx, curr_idx, curr_to_prev, covariance);
     
@@ -123,6 +140,15 @@ void SlamVisualizer::slamThreadFunction()
     needs_update_ = true;
     unlockWrite();
   }
+
+  // -- Save the output and shut down.
+  usleep(1e6);  // Let the visualizer filter the map.
+  scopeLockWrite;
+  if(opcd_path_ != "") {
+    pcl::io::savePCDFileBinary(opcd_path_, *map_);
+    cout << "Saved final map to " << opcd_path_ << endl;
+  }
+  quitting_ = true;
 }
 
 void SlamVisualizer::visualizationThreadFunction()
