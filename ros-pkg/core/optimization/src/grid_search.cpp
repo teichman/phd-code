@@ -43,7 +43,7 @@ void GridSearch::makeGrid(const std::vector<int>& variables,
     xs->insert(xs->end(), xs2.begin(), xs2.end());
   }
   // We don't actually want to evaluate x_.  It already has been evaluated in the last round.
-  //xs->erase(xs->begin());
+  xs->erase(xs->begin());
 
   if(verbose_) {
     cout << "** Grid ** " << endl;
