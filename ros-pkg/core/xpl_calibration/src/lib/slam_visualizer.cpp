@@ -5,7 +5,7 @@ using namespace g2o;
 using namespace rgbd;
 
 SlamVisualizer::SlamVisualizer() :
-  min_dt_(0.333),
+  min_dt_(0.2),
   map_(new Cloud),
   curr_pcd_(new Cloud),
   curr_pcd_transformed_(new Cloud),
@@ -101,7 +101,7 @@ void SlamVisualizer::slamThreadFunction()
     Affine3d curr_to_prev = aligner.align(curr_frame, prev_frame, &count, &final_mde);
     //ProfilerStop();
 
-    if(count < 20000 || final_mde > 0.1)
+    if(count < 20000 || final_mde > 0.15)
       cout << "Edge has count " << count << " and final_mde " << final_mde << ".  Rejecting." << endl;
     else
       slam_->addEdge(prev_idx, curr_idx, curr_to_prev, covariance);
