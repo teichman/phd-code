@@ -81,21 +81,15 @@ void SlamVisualizer::slamThreadFunction()
     ProfilerStart("slam_test.prof");
     Affine3d curr_to_prev = aligner.align(curr_frame, prev_frame);
     ProfilerStop();
+    slam_->addEdge(i-incr_, i, curr_to_prev, covariance);    
     
-    cout << "Adding edge with transform: " << endl << curr_to_prev.matrix() << endl;
-    slam_->addEdge(i-incr_, i, curr_to_prev, covariance);
-    cout << "Inverse of that: " << endl << curr_to_prev.inverse().matrix() << endl;
-    
-    // -- Solve.
+    // -- Solve.  For now this isn't really doing anything other than showing
+    //    that we have the input and output transforms correct.
     slam_->solve();
 
     // -- Update the map.
     lockWrite();
     Affine3d transform = slam_->transform(i);
-    cout << "tip_transform_: " << endl << tip_transform_.matrix() << endl;
-    cout << "Update from grid search: " << endl << curr_to_prev.matrix() << endl;
-    cout << "Expected g2o result: " << endl << (curr_to_prev * tip_transform_).matrix() << endl;
-    cout << "Final transform from g2o: " << endl << transform.matrix() << endl;
     Cloud::Ptr pcdi = sseq_->getCloud(i);
     zthresh(pcdi, 3);
     pcl::transformPointCloud(*pcdi, *pcdi, transform.cast<float>());
