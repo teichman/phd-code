@@ -30,7 +30,7 @@ namespace rgbd
   
   void OpenNIStreamRecorder::run()
   {
-    ProfilerStart("OpenNIStreamRecorder.prof");
+    //ProfilerStart("OpenNIStreamRecorder.prof");
     
     while(true) {
       char key = cv::waitKey(2);
@@ -45,7 +45,7 @@ namespace rgbd
 	getRGBD();
     }
 
-    ProfilerStop();
+    //ProfilerStop();
   }
 
   void OpenNIStreamRecorder::handleXnStatus(const XnStatus& status) const

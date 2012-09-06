@@ -15,8 +15,11 @@ FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::
   frame0_(frame0),
   frame1_(frame1)
 {
-  model0_.frameToCloud(frame0_, &pcd0_);
-  model1_.frameToCloud(frame1_, &pcd1_);
+  //ScopedTimer st("FrameAlignmentMDE::FrameAlignmentMDE.  frameToClouds.");
+  model0_.frameToCloud(frame0_, &pcd0_, max_range_);
+  model1_.frameToCloud(frame1_, &pcd1_, max_range_);
+  // model0_.frameToCloud(frame0_, &pcd0_);
+  // model1_.frameToCloud(frame1_, &pcd1_);
   ROS_ASSERT(pcd0_.size() == pcd1_.size());
   
   // Set up which random pixels to look at.
@@ -154,13 +157,16 @@ void meanDepthError(const rgbd::PrimeSenseModel& model,
       	continue;
       }
 
-      // If they're both far away, assume the data is no good and ignore it.
-      ROS_WARN_ONCE("Should probably ignore if either is far.");
-      if(frame.depth_->coeffRef(ppt.v_, ppt.u_) > max_range * 1000 &&
-	 gt.depth_->coeffRef(ppt.v_, ppt.u_) > max_range * 1000)
-      {
-	continue;
-      }
+      // Ignore measured points beyond max_range.
+      if(frame.depth_->coeffRef(ppt.v_, ppt.u_) > max_range * 1000)
+      	continue;
+
+      // Ignore points for which both are far away.
+      // if(frame.depth_->coeffRef(ppt.v_, ppt.u_) > max_range * 1000 &&
+      // 	 gt.depth_->coeffRef(ppt.v_, ppt.u_) > max_range * 1000)
+      // {
+      // 	continue;
+      // }
 
       ppt.z_ = gt.depth_->coeffRef(ppt.v_, ppt.u_);
       model.project(ppt, &gtpt);

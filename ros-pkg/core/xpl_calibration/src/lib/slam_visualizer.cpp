@@ -116,10 +116,12 @@ void SlamVisualizer::slamThreadFunction()
     unlockWrite();
     
     // -- Add the next link.
-    //ProfilerStart("slam_test.prof");
+    if(getenv("PROFILE"))
+      ProfilerStart("slam_test.prof");
     double count, final_mde;
     Affine3d curr_to_prev = aligner.align(curr_frame, prev_frame, &count, &final_mde);
-    //ProfilerStop();
+    if(getenv("PROFILE"))
+      ProfilerStop();
 
     // -- For now, terminate at the first broken link.  With loop closure we can do better.
     if(count < 20000 || final_mde > 0.2) {
