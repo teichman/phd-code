@@ -13,6 +13,8 @@
 class SlamVisualizer : public SharedLockable, public GridSearchViewHandler
 {
 public:
+  double min_dt_;
+  
   SlamVisualizer();
   void run(rgbd::StreamSequence::ConstPtr sseq);
   
