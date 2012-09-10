@@ -127,7 +127,7 @@ void SlamVisualizer::slamThreadFunction()
 
     // -- For now, terminate at the first broken link.  With loop closure we can do better.
     // mde of 0.2 for depth-only seems good.
-    if(count < 20000 || final_mde > 100) {
+    if(count < 20000 || final_mde > 0.5) {
       cout << "Edge has count " << count << " and final_mde " << final_mde << ".  Terminating." << endl;
       break;
     }

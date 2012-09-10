@@ -54,7 +54,8 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   //meanDepthError(model1_, frame1_, transformed, &val, &count, max_range_);
   meanDepthAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, max_range_);
 
-  val = depth_error + 10 * 0.0023 * color_error;  // Color error term has a per-pixel max of 441.
+  val = depth_error + 0.0023 * color_error;  // Color error term has a per-pixel max of 441.
+  //cout << "Depth error: " << depth_error << ", adjusted color error: " << 0.0023 * color_error << endl;
   
   // Make count available to other users in single-threaded mode.
   if(count_)
