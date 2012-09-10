@@ -4,6 +4,8 @@ using namespace std;
 using namespace g2o;
 using namespace rgbd;
 
+#define GRIDSEARCH_VIS (getenv("GRIDSEARCH_VIS") ? bool(atoi(getenv("GRIDSEARCH_VIS"))) : false)
+
 SlamVisualizer::SlamVisualizer() :
   max_range_(3.5),
   min_dt_(0.2),
@@ -211,10 +213,9 @@ void SlamVisualizer::handleGridSearchUpdate(const Eigen::ArrayXd& x, double obje
   //ScopedTimer st("SlamVisualizer::handleGridSearchUpdate");
   cout << "Improvement: objective " << objective << " at " << x.transpose() << endl;
 
-  if(!getenv("NO_GRIDSEARCH_VIS")) {
+  if(GRIDSEARCH_VIS) {
     Affine3d transform = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
     lockWrite();
-    //pcl::transformPointCloud(*curr_pcd_, *curr_pcd_transformed_, (transform * tip_transform_).cast<float>());
     pcl::transformPointCloud(*curr_pcd_, *curr_pcd_transformed_, (tip_transform_ * transform).cast<float>());
     needs_update_ = true;
     unlockWrite();
