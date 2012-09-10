@@ -64,7 +64,12 @@ protected:
 
 void meanDepthError(const rgbd::PrimeSenseModel& model,
 		    rgbd::Frame frame, const rgbd::Cloud& pcd,
-		    double* count, double* val,
+		    double* val, double* count,
 		    double max_range = std::numeric_limits<double>::max());
+
+void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
+			    rgbd::Frame frame, const rgbd::Cloud& pcd,
+			    double* depth_error, double* color_error, double* count,
+			    double max_range = std::numeric_limits<double>::max());
 
 #endif // MEAN_DEPTH_ERROR_H

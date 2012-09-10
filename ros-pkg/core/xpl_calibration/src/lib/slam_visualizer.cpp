@@ -5,6 +5,7 @@ using namespace g2o;
 using namespace rgbd;
 
 #define GRIDSEARCH_VIS (getenv("GRIDSEARCH_VIS") ? bool(atoi(getenv("GRIDSEARCH_VIS"))) : false)
+#define MAX_FRAMES (getenv("MAX_FRAMES") ? atoi(getenv("MAX_FRAMES")) : 0)
 
 SlamVisualizer::SlamVisualizer() :
   max_range_(3.5),
@@ -125,7 +126,8 @@ void SlamVisualizer::slamThreadFunction()
       ProfilerStop();
 
     // -- For now, terminate at the first broken link.  With loop closure we can do better.
-    if(count < 20000 || final_mde > 0.2) {
+    // mde of 0.2 for depth-only seems good.
+    if(count < 20000 || final_mde > 100) {
       cout << "Edge has count " << count << " and final_mde " << final_mde << ".  Terminating." << endl;
       break;
     }
@@ -148,6 +150,10 @@ void SlamVisualizer::slamThreadFunction()
     tip_transform_ = transform;
     needs_update_ = true;
     unlockWrite();
+
+    // -- Check for early termination.
+    if(MAX_FRAMES != 0 && curr_idx > MAX_FRAMES)
+      break;
   }
 
   // -- Save the output and shut down.
