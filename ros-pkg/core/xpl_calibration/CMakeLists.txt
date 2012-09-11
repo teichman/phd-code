@@ -44,6 +44,8 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/slam_visualizer.cpp
   src/lib/frame_aligner.cpp
   src/lib/trajectory.cpp
+  src/lib/slam_calibrator.cpp
+  src/lib/slam_calibration_visualizer.cpp
   )
 rosbuild_add_compile_flags(${PROJECT_NAME} -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 rosbuild_link_boost(${PROJECT_NAME} system program_options)
@@ -97,3 +99,7 @@ target_link_libraries(g2o_hello)
 rosbuild_add_executable(slam_test src/prog/slam_test.cpp)
 rosbuild_link_boost(slam_test program_options filesystem)
 target_link_libraries(slam_test ${PROJECT_NAME})
+
+rosbuild_add_executable(calibrate_slam src/prog/calibrate_slam.cpp)
+rosbuild_link_boost(calibrate_slam program_options filesystem)
+target_link_libraries(calibrate_slam ${PROJECT_NAME})

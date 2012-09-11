@@ -23,10 +23,8 @@ int main(int argc, char** argv)
     ("cam", bpo::value<string>(), "Camera file to use.")
     ;
 
-  p.add("sseq", 1);
-  p.add("opcd", 2);
-  p.add("otraj", 3);
-
+  p.add("sseq", 1).add("opcd", 1).add("otraj", 1);
+  
   bpo::variables_map opts;
   bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
   bool badargs = false;
