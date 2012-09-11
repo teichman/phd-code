@@ -22,7 +22,7 @@ SlamVisualizer::SlamVisualizer() :
   vis_.registerKeyboardCallback(&SlamVisualizer::keyboardCallback, *this);
   vis_.setBackgroundColor(1, 1, 1);
   //vis_.addCoordinateSystem(1.0);
-  vg_.setLeafSize(0.01, 0.01, 0.01);
+  vg_.setLeafSize(0.02, 0.02, 0.02);
   
   // -- Set the viewpoint to be sensible for PrimeSense devices.
   vis_.camera_.clip[0] = 0.00387244;
@@ -55,10 +55,13 @@ void SlamVisualizer::setCamera(const std::string& camera_path)
   vis_.updateCamera();    
 }
 
-void SlamVisualizer::run(StreamSequence::ConstPtr sseq, const std::string& opcd_path)
+void SlamVisualizer::run(StreamSequence::ConstPtr sseq,
+			 const std::string& opcd_path,
+			 const std::string& otraj_path)
 {
   sseq_ = sseq;
   opcd_path_ = opcd_path;
+  otraj_path_ = otraj_path;
   
   boost::thread thread_slam(boost::bind(&SlamVisualizer::slamThreadFunction, this));
   // Apparently PCLVisualizer needs to run in the main thread.
@@ -163,6 +166,19 @@ void SlamVisualizer::slamThreadFunction()
     pcl::io::savePCDFileBinary(opcd_path_, *map_);
     cout << "Saved final map to " << opcd_path_ << endl;
   }
+
+  if(otraj_path_ != "") { 
+    Trajectory traj;
+    traj.resize(slam_->numNodes());
+    for(size_t i = 0; i < slam_->numNodes(); ++i) {
+      if(slam_->numEdges(i) == 0)
+	continue;
+      traj.set(i, slam_->transform(i));
+    }
+    traj.save(otraj_path_);
+    cout << "Saved trajectory to " << otraj_path_ << endl;
+  }
+
   quitting_ = true;
 }
 

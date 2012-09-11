@@ -43,6 +43,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/mean_depth_error.cpp
   src/lib/slam_visualizer.cpp
   src/lib/frame_aligner.cpp
+  src/lib/trajectory.cpp
   )
 rosbuild_add_compile_flags(${PROJECT_NAME} -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 rosbuild_link_boost(${PROJECT_NAME} system program_options)
