@@ -109,6 +109,9 @@ void SlamVisualizer::slamThreadFunction()
     cout << "           dt: " << dt << endl;
     sseq_->readFrame(prev_idx, &prev_frame);
     sseq_->readFrame(curr_idx, &curr_frame);
+    cv::imshow("current", curr_frame.depthImage());
+    cv::imshow("previous", prev_frame.depthImage());
+    cv::waitKey(5);
 
     // -- Load the cloud for visualization purposes.
     lockWrite();

@@ -43,6 +43,11 @@ namespace rgbd
     DepthMatPtr depth_;
     cv::Mat3b img_;
     double timestamp_;
+
+    cv::Mat3b depthImage() const;
+
+  protected:
+    cv::Vec3b colorize(double depth, double min_range, double max_range) const;
   };
   
   class PrimeSenseModel : public Serializable
