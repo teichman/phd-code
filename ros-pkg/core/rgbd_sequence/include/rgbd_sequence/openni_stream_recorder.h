@@ -19,6 +19,8 @@ namespace rgbd
   class OpenNIStreamRecorder
   {
   public:
+    std::string sequences_dir_;
+    
     //! mode \in {"VGA", "QVGA", "QQVGA"}  Just VGA for now though.
     //! type \in {"xpl", "kinect"}
     //! id is the device number.

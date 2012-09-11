@@ -47,8 +47,12 @@ namespace rgbd
     bfs::recursive_directory_iterator it(root_path_), eod;
     BOOST_FOREACH(const bfs::path& p, make_pair(it, eod)) {
       ROS_ASSERT(is_regular_file(p));
-      if(p.leaf().substr(0, 3).compare("img") == 0 && bfs::extension(p).compare(".ppm") == 0)
+      if(p.leaf().substr(0, 3).compare("img") == 0 &&
+	 (bfs::extension(p).compare(".ppm") == 0 ||
+	  bfs::extension(p).compare(".png") == 0))
+      {
 	img_names_.push_back(p.leaf());
+      }
       else if(bfs::extension(p).compare(".eig") == 0)
 	dpt_names_.push_back(p.leaf());
       else if(bfs::extension(p).compare(".clk") == 0)
@@ -79,7 +83,10 @@ namespace rgbd
     
     // -- Write image
     vector<int> params;
-    oss << "img" << setw(5) << setfill('0') << idx << ".ppm";
+    if(getenv("SSEQ_PPM"))
+      oss << "img" << setw(5) << setfill('0') << idx << ".ppm";
+    else
+      oss << "img" << setw(5) << setfill('0') << idx << ".png";
     cv::imwrite(root_path_ + "/" + oss.str(), frame.img_, params);
     img_names_.push_back(oss.str());
 
@@ -104,6 +111,7 @@ namespace rgbd
 
   void StreamSequence::readFrame(size_t idx, Frame* frame) const
   {
+    ROS_ASSERT(idx < img_names_.size());
     frame->img_ = cv::imread(root_path_ + "/" + img_names_[idx], 1);
     frame->depth_ = DepthMatPtr(new DepthMat);
     eigen_extensions::load(root_path_ + "/" + dpt_names_[idx], frame->depth_.get());

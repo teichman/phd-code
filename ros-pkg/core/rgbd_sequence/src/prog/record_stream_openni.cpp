@@ -15,6 +15,7 @@ int main(int argc, char** argv)
     ("id", bpo::value<int>()->required(), "Device id")
     ("register", "Register depth to rgb data")
     ("fake-rgb", "Don't actually record rgb data")
+    ("output,o", bpo::value<string>(), "Directory to put new sequences in")
     ;
 
   bpo::positional_options_description p;
@@ -40,6 +41,10 @@ int main(int argc, char** argv)
 			   "VGA",
 			   opts.count("fake-rgb"),
 			   opts.count("register"));
+
+  if(opts.count("output"))
+    rec.sequences_dir_ = opts["output"].as<string>();
+  cout << "Saving new sequences in " << rec.sequences_dir_ << endl;
 			   
   rec.run();
 

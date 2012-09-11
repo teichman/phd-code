@@ -30,26 +30,26 @@ using namespace std;
 LoopCloser::LoopCloser(rgbd::StreamSequence::ConstPtr sseq):
   sseq_(sseq),
   fine_tune_(true),
-  num_samples_(1000),
-  min_inlier_percent_(0.1),
+  num_ransac_samples_(1000),
+  min_ransac_inlier_percent_(0.1),
   min_time_offset_(60),
-  min_keypoint_dist_(0.02), //meters
-  max_orb_dist_(10),
-  distance_thresh_(0.04),
+  min_pairwise_keypoint_dist_(0.02), //meters
+  max_feature_dist_(10),
+  ransac_max_inlier_dist_(0.04),
   k_(5),
   visualize_(false),
   keypoints_per_frame_(100),
-  icp_thresh_(0.05),
+  icp_max_avg_dist_(0.05),
   icp_max_inlier_dist_(0.04),
   icp_inlier_percent_(0.3),
-  mde_thresh_(0.05),
-  min_inliers_(5),
+  max_mde_(0.05),
+  min_ransac_inliers_(5),
   min_bounding_length_(.04),
   fpfh_radius_(0.02),
   harris_thresh_(10),
   harris_margin_(50),
   use_3d_sift_(true),
-  z_thresh_(3)
+  max_z_(3)
 {
   ftype_ = ORB;
   verification_type_ = MDE;
@@ -118,7 +118,7 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
   //Extract keypoints on current frame
   vector<cv::KeyPoint> cur_keypoints;
   FeaturesPtr cur_features = getFeatures(frame, t, cur_keypoints);
-  if(cur_keypoints.size() < min_inliers_)
+  if(cur_keypoints.size() < min_ransac_inliers_)
     return false;
   Cloud::ConstPtr cur_cloud = sseq_->getCloud(t);
   size_t latest_time = t;
@@ -152,12 +152,12 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
     {
       if(matches_all[j].queryIdx < 0 || matches_all[j].trainIdx < 0)
         continue;
-      if(matches_all[j].distance > max_orb_dist_)
+      if(matches_all[j].distance > max_feature_dist_)
         continue;
       matches.push_back(matches_all[j]);
     }
     //Check that enough are matched
-    if(matches.size() < min_inliers_)
+    if(matches.size() < min_ransac_inliers_)
       continue;
     //Visualize
     if(visualize_)
@@ -173,7 +173,7 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
     Cloud::ConstPtr old_cloud = sseq_->getCloud(old_t);
     //From here the logic is more or less copied from orb_matcher
     vector<Eigen::Affine3f> candidates;
-    for(int j = 0; j < num_samples_; ++j)
+    for(int j = 0; j < num_ransac_samples_; ++j)
     {
       //Sample 3 points in ref img and precompute their distances to each other
       const cv::DMatch &match0 = matches[rand() % matches.size()];
@@ -188,11 +188,11 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
       double d01 = pcl::euclideanDistance(r0, r1);
       double d02 = pcl::euclideanDistance(r0, r2);
       double d12 = pcl::euclideanDistance(r1, r2);
-      if(d01 < min_keypoint_dist_)
+      if(d01 < min_pairwise_keypoint_dist_)
         continue;
-      if(d02 < min_keypoint_dist_)
+      if(d02 < min_pairwise_keypoint_dist_)
         continue;
-      if(d12 < min_keypoint_dist_)
+      if(d12 < min_pairwise_keypoint_dist_)
         continue;
       //Get their corresponding matches
       int oidx0 = match0.trainIdx;
@@ -202,11 +202,11 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
       pcl::PointXYZRGB t1 = old_cloud->at(old_keypoints[oidx1].pt.x, old_keypoints[oidx1].pt.y);
       pcl::PointXYZRGB t2 = old_cloud->at(old_keypoints[oidx2].pt.x, old_keypoints[oidx2].pt.y);
       //If the matches are too distant from themselves w.r.t the distance in the current frame, continue
-      if(fabs(pcl::euclideanDistance(t0, t1) - d01) > distance_thresh_)
+      if(fabs(pcl::euclideanDistance(t0, t1) - d01) > ransac_max_inlier_dist_)
           continue;
-      if(fabs(pcl::euclideanDistance(t0, t2) - d02) > distance_thresh_)
+      if(fabs(pcl::euclideanDistance(t0, t2) - d02) > ransac_max_inlier_dist_)
           continue;
-      if(fabs(pcl::euclideanDistance(t1, t2) - d12) > distance_thresh_)
+      if(fabs(pcl::euclideanDistance(t1, t2) - d12) > ransac_max_inlier_dist_)
           continue;
       //Otherwise generate transformation from correspondence
 	    pcl::TransformationFromCorrespondences tfc;
@@ -259,7 +259,7 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
         indices.clear();
         distances.clear();
         kdtree0.nearestKSearch(transformed_keypoint_cloud1.points[k], 1, indices, distances);
-        if(distances.size() != 0 && distances[0] < distance_thresh_)
+        if(distances.size() != 0 && distances[0] < ransac_max_inlier_dist_)
         {
           ++num_inliers;
           inlier_distance += distances[0];
@@ -275,7 +275,7 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
         }
       }
       //Check number of inliers
-      if(num_inliers < min_inlier_percent_ * keypoint_cloud0->size() || num_inliers < min_inliers_)
+      if(num_inliers < min_ransac_inlier_percent_ * keypoint_cloud0->size() || num_inliers < min_ransac_inliers_)
         continue;
       //Check bounding volume
       int has_x = (maxx - minx) > min_bounding_length_;
@@ -335,7 +335,7 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
           float inlier_pct = num_inliers / (float) num_total;
           cout << "Avg icp distance = " << avg_dist << endl;
           cout << "Inlier percent = " << inlier_pct << endl;
-          if(avg_dist > icp_thresh_ || inlier_pct < icp_inlier_percent_)
+          if(avg_dist > icp_max_avg_dist_ || inlier_pct < icp_inlier_percent_)
             invalid = true;
           }
           break;
@@ -350,7 +350,7 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
           Eigen::ArrayXd trans_array(6); trans_array << rx, ry, rz, tx, ty, tz;
           double mean_dist = mde->eval(trans_array);
           cout << "Mean_dist = " << mean_dist << endl;
-          if (mean_dist > mde_thresh_)
+          if (mean_dist > max_mde_)
             invalid = true;
           }
           break;
@@ -387,7 +387,7 @@ LoopCloser::FeaturesPtr LoopCloser::getFeatures(const rgbd::Frame &frame,
   cv::Mat1b img;
   cv::cvtColor(frame.img_, img, CV_BGR2GRAY);
   cv::Mat1b mask = cv::Mat1b::zeros(img.rows, img.cols);
-  // Only look for keypoints in regions where there is a depth reading < z_thresh_
+  // Only look for keypoints in regions where there is a depth reading < max_z_
   //Look up cloud
   Cloud::ConstPtr cloud = sseq_->getCloud(t);
   for(int x = 0; x < mask.cols; x++)
@@ -395,7 +395,7 @@ LoopCloser::FeaturesPtr LoopCloser::getFeatures(const rgbd::Frame &frame,
     for(int y = 0; y < mask.rows; y++)
     {
       const pcl::PointXYZRGB &pt = cloud->at(x, y);
-      if(!isnan(pt.z) && pt.z < z_thresh_)
+      if(!isnan(pt.z) && pt.z < max_z_)
         mask(y,x) = 255;
     }
   }
@@ -484,7 +484,7 @@ LoopCloser::FeaturesPtr LoopCloser::getFeatures(const rgbd::Frame &frame,
   {
     const cv::KeyPoint &kpt = keypoints_all[i];
     const pcl::PointXYZRGB &pt = cloud->at(kpt.pt.x, kpt.pt.y);
-    if(!isnan(pt.z) && pt.z < z_thresh_)
+    if(!isnan(pt.z) && pt.z < max_z_)
       valid.push_back(i);
   }
   keypoints.resize(valid.size());
@@ -511,9 +511,6 @@ LoopCloser::FeaturesPtr LoopCloser::getFeatures(const rgbd::Frame &frame,
 Eigen::Affine3f LoopCloser::alignFrames(const rgbd::Frame &frame0, const rgbd::Frame &frame1, 
     const Eigen::Affine3f &guess)
 {
-  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(sseq_->model_, frame0, 
-        sseq_->model_, frame1));
-  mde->incr_ = 10; //?
   //Convert to clouds, populate trees
   //vector<Cloud::ConstPtr> clouds0;
   //vector<KdTree::Ptr> trees0;
@@ -534,10 +531,12 @@ Eigen::Affine3f LoopCloser::alignFrames(const rgbd::Frame &frame0, const rgbd::F
   //params.set("Seq0Cy", (double)0);
   //boost::shared_ptr<LossFunction> lf(new LossFunction(trees0, clouds0, clouds1, params));
   //lf->use_fsv_ = false;
+  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(sseq_->model_, frame0, 
+        sseq_->model_, frame1, max_z_, 0.25));
 
   GridSearch gs(6);
   gs.verbose_ = true;
-  gs.view_handler_ = visualize_ ? view_handler_ : NULL;
+  gs.view_handler_ = view_handler_;
   gs.objective_ = mde;
   gs.num_scalings_ = 3;
   double max_res_rot = 3* M_PI/180;

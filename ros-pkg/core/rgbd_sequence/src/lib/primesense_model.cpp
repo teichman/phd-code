@@ -70,7 +70,7 @@ namespace rgbd
     }
   }
   
-  void PrimeSenseModel::frameToCloud(const Frame& frame, Cloud* pcd) const
+  void PrimeSenseModel::frameToCloud(const Frame& frame, Cloud* pcd, double max_range) const
   {    
     const DepthMat& dm = *frame.depth_;
     cv::Mat3b img = frame.img_;
@@ -93,12 +93,13 @@ namespace rgbd
     for(ppt.v_ = 0; ppt.v_ < dm.rows(); ++ppt.v_) {
       for(ppt.u_ = 0; ppt.u_ < dm.cols(); ++ppt.u_, ++idx) {
 	ppt.z_ = dm(ppt.v_, ppt.u_);
+	if(ppt.z_ > max_range * 1000)
+	  ppt.z_ = 0;  // bad point.
+
 	ppt.r_ = img(ppt.v_, ppt.u_)[2];
 	ppt.g_ = img(ppt.v_, ppt.u_)[1];
 	ppt.b_ = img(ppt.v_, ppt.u_)[0];
-	
-	Point& pt = pcd->at(idx);
-	project(ppt, &pt);
+	project(ppt, &pcd->at(idx));
       }
     }
   }
@@ -261,6 +262,13 @@ namespace rgbd
   {
     weights_ = VectorXd::Zero(64);
     weights_(1) = 10;  // feature 1 is measured depth in decameters.
+  }
+
+  std::string PrimeSenseModel::name() const
+  {
+    ostringstream oss;
+    oss << type_ << setw(3) << setfill('0') << id_;
+    return oss.str();
   }
   
 } // namespace rgbd

@@ -62,26 +62,26 @@ public:
   FeatureType ftype_;
   int keypoints_per_frame_;
   int k_;
-  float max_orb_dist_;
-  float z_thresh_; //z distance at which we throw out keypoints
+  float max_feature_dist_;
+  float max_z_; //z distance at which we throw out keypoints
   float fpfh_radius_;
   float harris_thresh_;
   size_t harris_margin_; //Amount to crop when finding 3D harris points
   bool use_3d_sift_;
   // RANSAC
-  int num_samples_;
-  float min_inlier_percent_;
-  int min_inliers_;
-  float min_keypoint_dist_;
-  float distance_thresh_;
+  int num_ransac_samples_;
+  float min_ransac_inlier_percent_;
+  int min_ransac_inliers_;
+  float min_pairwise_keypoint_dist_;
+  float ransac_max_inlier_dist_;
   float min_bounding_length_;
   // ICP Verification
   VerificationType verification_type_;
-  float icp_thresh_;
+  float icp_max_avg_dist_;
   float icp_inlier_percent_;
   float icp_max_inlier_dist_;
   // MDE Verification
-  float mde_thresh_;
+  float max_mde_;
   
   //Visualization
   GridSearchViewHandler *view_handler_;

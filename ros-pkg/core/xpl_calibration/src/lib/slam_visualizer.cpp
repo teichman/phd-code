@@ -4,17 +4,23 @@ using namespace std;
 using namespace g2o;
 using namespace rgbd;
 
+#define GRIDSEARCH_VIS (getenv("GRIDSEARCH_VIS") ? bool(atoi(getenv("GRIDSEARCH_VIS"))) : false)
+
 SlamVisualizer::SlamVisualizer() :
+  max_range_(3.5),
+  min_dt_(0.2),
+  save_imgs_(false),
   map_(new Cloud),
   curr_pcd_(new Cloud),
   curr_pcd_transformed_(new Cloud),
   incr_(5),
   needs_update_(false),
-  save_imgs_(false),
   tip_transform_(Affine3d::Identity()),
+  use_loop_closure_(false),
   quitting_(false)
 {
   vis_.registerKeyboardCallback(&SlamVisualizer::keyboardCallback, *this);
+  vis_.setBackgroundColor(1, 1, 1);
   //vis_.addCoordinateSystem(1.0);
   vg_.setLeafSize(0.01, 0.01, 0.01);
   
@@ -38,29 +44,49 @@ SlamVisualizer::SlamVisualizer() :
   
 }
 
-void SlamVisualizer::run(StreamSequence::ConstPtr sseq)
+void SlamVisualizer::setCamera(const std::string& camera_path)
+{
+  int argc = 3;
+  char* argv[argc];
+  argv[0] = (char*)string("aoeu").c_str();
+  argv[1] = (char*)string("-cam").c_str();
+  argv[2] = (char*)camera_path.c_str();
+  bool success = vis_.getCameraParameters(argc, argv);
+  ROS_ASSERT(success);
+  vis_.updateCamera();    
+}
+
+void SlamVisualizer::run(StreamSequence::ConstPtr sseq, const std::string& opcd_path)
 {
   sseq_ = sseq;
   // Initialize loop closure
-  lc_ = LoopCloser::Ptr(new LoopCloser(sseq));
-  lc_->fine_tune_ = true;
-  lc_->visualize_ = false;
-  lc_->max_orb_dist_ = 500;
-  lc_->keypoints_per_frame_ = 500;
-  lc_->min_keypoint_dist_ = 0.04; //cm apart
-  lc_->min_inliers_ = 10; //Need at least this many inliers to be considered a valid
-  lc_->min_inlier_percent_ = 0.1;
-  lc_->distance_thresh_ = 0.03; //Need to be within 3 cm to be considered an inlier
-  lc_->num_samples_ = 10000;
-  lc_->icp_thresh_ = 0.02; //Avg pt-to-pt distance required
-  lc_->icp_max_inlier_dist_ = 0.1; // Highest distance allowed to be considered an inlier
-  lc_->icp_inlier_percent_ = 0.3; // At least this percentage of points must be inliers
-  lc_->ftype_ = ORB;
-  lc_->k_ = 5;
-  lc_->min_time_offset_ = 15;
-  lc_->verification_type_ = ICP;
-  lc_->mde_thresh_ = 0.1;
-  lc_->z_thresh_ = 3.0;
+  if(use_loop_closure_)
+  {
+    lc_ = LoopCloser::Ptr(new LoopCloser(sseq));
+    lc_->fine_tune_ = true;
+    lc_->visualize_ = false;
+    lc_->max_feature_dist_ = 500;
+    lc_->keypoints_per_frame_ = 500;
+    lc_->min_pairwise_keypoint_dist_ = 0.04; //cm apart
+    lc_->min_ransac_inliers_ = 10; //Need at least this many inliers to be considered a valid
+    lc_->min_ransac_inlier_percent_ = 0.1;
+    lc_->ransac_max_inlier_dist_ = 0.02; //Need to be within 2 cm to be considered an inlier
+    lc_->num_ransac_samples_ = 10000;
+    lc_->icp_max_avg_dist_ = 0.03; //Avg pt-to-pt distance required
+    lc_->icp_max_inlier_dist_ = 0.1; // Highest distance allowed to be considered an inlier
+    lc_->icp_inlier_percent_ = 0.3; // At least this percentage of points must be inliers
+    lc_->ftype_ = ORB;
+    lc_->k_ = 5;
+    lc_->min_time_offset_ = 30;
+    lc_->verification_type_ = MDE;
+    lc_->max_mde_ = 0.02;
+    lc_->harris_thresh_ = 0.01;
+    lc_->use_3d_sift_ = true;
+    lc_->fpfh_radius_ = 0.02;
+    lc_->harris_margin_ = 50;
+    lc_->view_handler_ = (GridSearchViewHandler*) this;
+  }
+  opcd_path_ = opcd_path;
   
   boost::thread thread_slam(boost::bind(&SlamVisualizer::slamThreadFunction, this));
   // Apparently PCLVisualizer needs to run in the main thread.
@@ -72,58 +98,89 @@ void SlamVisualizer::slamThreadFunction()
 {
   lockWrite();
   *map_ = *sseq_->getCloud(0);
-  zthresh(map_, 3);
+  zthresh(map_, max_range_);
   needs_update_ = true;
   unlockWrite();
 
   PrimeSenseModel model = sseq_->model_;
   model.use_distortion_model_ = false;
-  FrameAligner aligner(model, model, this);
+  FrameAligner aligner(model, model, max_range_, this);
   slam_ = PoseGraphSlam::Ptr(new PoseGraphSlam(sseq_->size()));
   Matrix6d covariance = Matrix6d::Identity() * 1e-3;  
   
   Frame prev_frame;
+  size_t prev_idx;
   Frame curr_frame;
-  for(size_t i = incr_; i < sseq_->size(); i += incr_) {
-    cout << "---------- Searching for link between " << i - incr_ << " and " << i << endl;
+  sseq_->readFrame(0, &curr_frame);
+  size_t curr_idx = 0;
+  while(true) {
+    // -- Find the next frame to use.
+    prev_frame = curr_frame;
+    prev_idx = curr_idx;
+    double dt = 0;
+    bool done = false;
+    while(dt < min_dt_) {
+      ++curr_idx;
+      if(curr_idx >= sseq_->size()) {
+	done = true;
+	break;
+      }
+      dt = sseq_->timestamps_[curr_idx] - prev_frame.timestamp_;
+      //cout << "Searching: " << curr_idx << " " << prev_idx << " " << dt << endl;
+    }
+    if(done) break;
+    cout << "---------- Searching for link between " << prev_idx << " and " << curr_idx
+	 << " / " << sseq_->size() << endl;
+    cout << "           dt: " << dt << endl;
+    sseq_->readFrame(prev_idx, &prev_frame);
+    sseq_->readFrame(curr_idx, &curr_frame);
+
+    // -- Load the cloud for visualization purposes.
     lockWrite();
-    curr_pcd_ = sseq_->getCloud(i);
-    zthresh(curr_pcd_, 3);
+    curr_pcd_ = sseq_->getCloud(curr_idx);
+    zthresh(curr_pcd_, max_range_);
+    if(quitting_) {
+      unlockWrite();
+      break;
+    }
     unlockWrite();
     
     // -- Add the next link.
-    sseq_->readFrame(i-incr_, &prev_frame);
-    sseq_->readFrame(i, &curr_frame);
-    ProfilerStart("slam_test.prof");
-    Affine3d curr_to_prev = aligner.align(curr_frame, prev_frame);
-    ProfilerStop();
-     
-    cout << "Adding edge with transform: " << endl << curr_to_prev.matrix() << endl;
-    slam_->addEdge(i-incr_, i, curr_to_prev, covariance);
+    if(getenv("PROFILE"))
+      ProfilerStart("slam_test.prof");
+    double count, final_mde;
+    Affine3d curr_to_prev = aligner.align(curr_frame, prev_frame, &count, &final_mde);
+    if(getenv("PROFILE"))
+      ProfilerStop();
+
+    // -- For now, terminate at the first broken link.  With loop closure we can do better.
+    if(count < 20000 || final_mde > 0.2) {
+      cout << "Edge has count " << count << " and final_mde " << final_mde << ".  Terminating." << endl;
+      break;
+    }
+    else
+      slam_->addEdge(prev_idx, curr_idx, curr_to_prev, covariance);
     //Loop closure
     vector<size_t> targets;
     vector<Eigen::Affine3f> transforms;
-    if(lc_->getLinkHypotheses(curr_frame, i, targets, transforms))
+    if(use_loop_closure_ && lc_->getLinkHypotheses(curr_frame, curr_idx, targets, transforms))
     {
       for(size_t j = 0; j < targets.size(); j++)
       {
         cout << "Adding loop edge with transform: " << endl << transforms[j].matrix() << endl;
-        slam_->addEdge(targets[j], i, transforms[j].cast<double>(), covariance);
+        slam_->addEdge(targets[j], curr_idx, transforms[j].cast<double>(), covariance);
       }
     }
-        
-    // -- Solve.
+    
+    // -- Solve.  For now this isn't really doing anything other than showing
+    //    that we have the input and output transforms correct.
     slam_->solve();
 
     // -- Update the map.
     lockWrite();
-    Affine3d transform = slam_->transform(i);
-    cout << "tip_transform_: " << endl << tip_transform_.matrix() << endl;
-    cout << "Update from grid search: " << endl << curr_to_prev.matrix() << endl;
-    cout << "Expected g2o result: " << endl << (curr_to_prev * tip_transform_).matrix() << endl;
-    cout << "Final transform from g2o: " << endl << transform.matrix() << endl;
-    Cloud::Ptr pcdi = sseq_->getCloud(i);
-    zthresh(pcdi, 3);
+    Affine3d transform = slam_->transform(curr_idx);
+    Cloud::Ptr pcdi = sseq_->getCloud(curr_idx);
+    zthresh(pcdi, max_range_);
     pcl::transformPointCloud(*pcdi, *pcdi, transform.cast<float>());
     *map_ += *pcdi;
     curr_pcd_->clear();
@@ -132,6 +189,15 @@ void SlamVisualizer::slamThreadFunction()
     needs_update_ = true;
     unlockWrite();
   }
+
+  // -- Save the output and shut down.
+  usleep(1e6);  // Let the visualizer filter the map.
+  scopeLockWrite;
+  if(opcd_path_ != "") {
+    pcl::io::savePCDFileBinary(opcd_path_, *map_);
+    cout << "Saved final map to " << opcd_path_ << endl;
+  }
+  quitting_ = true;
 }
 
 void SlamVisualizer::visualizationThreadFunction()
@@ -187,10 +253,12 @@ void SlamVisualizer::handleGridSearchUpdate(const Eigen::ArrayXd& x, double obje
   //ScopedTimer st("SlamVisualizer::handleGridSearchUpdate");
   cout << "Improvement: objective " << objective << " at " << x.transpose() << endl;
 
-  Affine3f transform = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
-  lockWrite();
-  pcl::transformPointCloud(*curr_pcd_, *curr_pcd_transformed_, transform * tip_transform_.cast<float>());
-  needs_update_ = true;
-  unlockWrite();
+  if(GRIDSEARCH_VIS) {
+    Affine3d transform = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
+    lockWrite();
+    pcl::transformPointCloud(*curr_pcd_, *curr_pcd_transformed_, (tip_transform_ * transform).cast<float>());
+    needs_update_ = true;
+    unlockWrite();
+  }
 }
 

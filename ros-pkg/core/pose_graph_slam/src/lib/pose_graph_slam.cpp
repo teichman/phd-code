@@ -73,7 +73,7 @@ void PoseGraphSlam::solve(int num_iters)
   // v0->setEstimate(se3);
   
   cout << "Optimizing..." << endl;
-  optimizer_.setVerbose(true);
+  //optimizer_.setVerbose(true);
   optimizer_.initializeOptimization();
   optimizer_.optimize(num_iters);
   cout << "done." << endl;

@@ -11,13 +11,18 @@ public:
   typedef boost::shared_ptr<FrameAlignmentMDE> Ptr;
   typedef boost::shared_ptr<const FrameAlignmentMDE> ConstPtr;
 
-  //! Increment to use when sampling points.  1 -> use all, 2 -> use half, etc.
-  size_t incr_;
+  double max_range_;
   
+  //! fraction is how much of the data to use.
   FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
-		    const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1);
+		    const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1,
+		    double max_range = 3.5, double fraction = 1.0);
   //! x = [rx, ry, rz, tx, ty, tz].
   double eval(const Eigen::VectorXd& x) const;
+
+  //! Number of points in the last eval() which had matches.
+  //! Only valid in a single-threaded context.
+  double *count_;
   
 protected:
   rgbd::PrimeSenseModel model0_;
@@ -26,6 +31,11 @@ protected:
   rgbd::Frame frame1_;
   rgbd::Cloud pcd0_;
   rgbd::Cloud pcd1_;
+  std::vector<size_t> indices_;
+
+  void transformAndDecimate(const rgbd::Cloud& in,
+			    const Eigen::Affine3f& transform,
+			    rgbd::Cloud* out) const;
 };
 
 //! Computes the asymmetric MDE for a given set of frames assumed to be from the same sensor
@@ -39,7 +49,7 @@ public:
   SequenceAlignmentMDE(const rgbd::PrimeSenseModel& model,
 		 const std::vector<rgbd::Frame>& frames,
 		 const std::vector<rgbd::Cloud::ConstPtr>& pcds);
-  //! x = [sync, x, y, z, roll, pitch, yaw].
+  //! x = [sync, rx, ry, rz, tx, ty, tz].
   double eval(const Eigen::VectorXd& x) const;
   
 protected:
@@ -54,11 +64,6 @@ protected:
 void meanDepthError(const rgbd::PrimeSenseModel& model,
 		    rgbd::Frame frame, const rgbd::Cloud& pcd,
 		    double* count, double* val,
-		    double max_depth = std::numeric_limits<double>::max());
-
-void transformAndDecimate(const rgbd::Cloud& in,
-			  const Eigen::Affine3f& transform,
-			  size_t incr, rgbd::Cloud* out);
-
+		    double max_range = std::numeric_limits<double>::max());
 
 #endif // MEAN_DEPTH_ERROR_H

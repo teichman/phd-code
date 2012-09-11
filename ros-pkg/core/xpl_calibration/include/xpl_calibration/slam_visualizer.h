@@ -14,8 +14,20 @@
 class SlamVisualizer : public SharedLockable, public GridSearchViewHandler
 {
 public:
+  //! Used in generating the map.
+  double max_range_;
+  //! When choosing the next frame, advance by at least this much.
+  double min_dt_;
+  //! If true, after each grid search improvement save a screenshot.
+  bool save_imgs_;
+  //! Use loop closure
+  bool use_loop_closure_;
+  //! Camera pose to use.
+  // TODO
+  
   SlamVisualizer();
-  void run(rgbd::StreamSequence::ConstPtr sseq);
+  void run(rgbd::StreamSequence::ConstPtr sseq, const std::string& opcd_path);
+  void setCamera(const std::string& camera_path);
   
 protected:
   pcl::visualization::PCLVisualizer vis_;
@@ -26,10 +38,10 @@ protected:
   rgbd::Cloud::Ptr curr_pcd_transformed_;
   size_t incr_;
   bool needs_update_;
-  bool save_imgs_;
   Eigen::Affine3d tip_transform_;
   bool quitting_;
   pcl::VoxelGrid<rgbd::Point> vg_;
+  std::string opcd_path_;
   
   void slamThreadFunction();
   void visualizationThreadFunction();
