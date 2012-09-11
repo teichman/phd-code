@@ -43,6 +43,8 @@ protected:
   pcl::VoxelGrid<rgbd::Point> vg_;
   std::string opcd_path_;
   std::string otraj_path_;
+  rgbd::Frame curr_frame_;
+  rgbd::Frame prev_frame_;
   
   void slamThreadFunction();
   void visualizationThreadFunction();

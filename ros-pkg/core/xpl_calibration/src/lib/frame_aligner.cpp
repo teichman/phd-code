@@ -26,8 +26,8 @@ Eigen::Affine3d FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
   gs.view_handler_ = view_handler_;
   gs.objective_ = mde;
   gs.num_scalings_ = 5;
-  double max_res_rot = 3 * M_PI / 180.0;
-  double max_res_trans = 0.1;
+  double max_res_rot = 1.5 * M_PI / 180.0;
+  double max_res_trans = 0.05;
   gs.max_resolutions_ << max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;
   int gr = 2;
   gs.grid_radii_ << gr, gr, gr, gr, gr, gr;
