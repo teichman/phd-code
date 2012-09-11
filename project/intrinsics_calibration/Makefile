@@ -55,7 +55,7 @@ slam_videos/$(1).avi: $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
 	cd $$(@D)/$(1) && mkdir png && mv *.png png/
 	mencoder "mf://$$(@D)/$(1)/png/slam*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $$@
 
-slam_results/$(1).traj: $(SLAM_DATA_PATH)/$(1)
+slam_results/$(1).traj: $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
 	mkdir -p $$(@D)
 	rosrun xpl_calibration slam_test $$< slam_results/$(1).pcd $$@ --cam $(CAMERAS_PATH)/$(1).cam
 
