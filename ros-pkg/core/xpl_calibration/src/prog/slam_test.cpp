@@ -18,20 +18,20 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("sseq", bpo::value<string>()->required(), "StreamSequence, i.e. asus data.")
     ("opcd", bpo::value<string>()->required(), "Output path for the final pointcloud.")
+    ("otraj", bpo::value<string>()->required(), "Output path for the final trajectory.")
     ("save-imgs", "Saves slam*.png to the current directory.  Slows things down considerably.")
     ("cam", bpo::value<string>(), "Camera file to use.")
     ;
 
-  p.add("sseq", 1);
-  p.add("opcd", 2);
-
+  p.add("sseq", 1).add("opcd", 1).add("otraj", 1);
+  
   bpo::variables_map opts;
   bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
   bool badargs = false;
   try { bpo::notify(opts); }
   catch(...) { badargs = true; }
   if(opts.count("help") || badargs) {
-    cout << "Usage: " << bfs::basename(argv[0]) << " SSEQ OPCD [OPTS]" << endl;
+    cout << "Usage: " << bfs::basename(argv[0]) << " SSEQ OPCD OTRAJ [OPTS]" << endl;
     cout << endl;
     cout << opts_desc << endl;
     return 1;
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
   if(opts.count("cam"))
     vis.setCamera(opts["cam"].as<string>());
 
-  vis.run(sseq, opts["opcd"].as<string>());
+  vis.run(sseq, opts["opcd"].as<string>(), opts["otraj"].as<string>());
   
   return 0;
 }

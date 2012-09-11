@@ -36,18 +36,28 @@ slam_results: $(addprefix slam_results/, $(addsuffix .pcd, $(SLAM_RUNS)))
 # -- Autocompletion is easier with this syntax.
 define SLAM_RULE_GENERATOR
 
-view_slam_result-$(1): slam_results/$(1).pcd
+# TODO: Reorganize by sensor.
+#calibration_results/$(1).psm: slam_results/$(1).traj #$(CAMERAS_PATH)/$(1).cam
+#	rosrun xpl_calibration calibrate_slam 
+
+# Press j to take a screenshot from the angle you want.
+user_defined_camera-$(1): $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam slam_results/$(1).traj
+	rosrun pcl_bleeding pcd_viewer slam_results/$(1).pcd -cam $(CAMERAS_PATH)/$(1).cam
+	mv `ls screenshot*.cam -tr | tail -n1` $(CAMERAS_PATH)/$(1).cam
+	rm `ls screenshot*.png -tr | tail -n1`
+
+view_slam_result-$(1): slam_results/$(1).traj $(CAMERAS_PATH)/$(1).cam
 	rosrun pcl_bleeding pcd_viewer slam_results/$(1).pcd -cam $(CAMERAS_PATH)/$(1).cam
 
 slam_videos/$(1).avi: $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
 	mkdir -p $$(@D)/$(1)
-	cd $$(@D)/$(1) && rosrun xpl_calibration slam_test $$< $(1).pcd --cam $(CAMERAS_PATH)/$(1).cam --save-imgs
+	cd $$(@D)/$(1) && GRIDSEARCH_VIS=1 rosrun xpl_calibration slam_test $$< $(1).pcd --cam $(CAMERAS_PATH)/$(1).cam --save-imgs
 	cd $$(@D)/$(1) && mkdir png && mv *.png png/
 	mencoder "mf://$$(@D)/$(1)/png/slam*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $$@
 
-slam_results/$(1).pcd: $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
+slam_results/$(1).traj: $(SLAM_DATA_PATH)/$(1)
 	mkdir -p $$(@D)
-	rosrun xpl_calibration slam_test $$< $$@ --cam $(CAMERAS_PATH)/$(1).cam
+	rosrun xpl_calibration slam_test $$< slam_results/$(1).pcd $$@ --cam $(CAMERAS_PATH)/$(1).cam
 
 $(CAMERAS_PATH)/$(1).cam:
 	cp $(CAMERAS_PATH)/default.cam $$@

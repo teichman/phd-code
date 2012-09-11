@@ -59,6 +59,11 @@ namespace rgbd
       if(!(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
 	continue;
 
+      // Eigen is column-major by default: http://eigen.tuxfamily.org/dox/TopicStorageOrders.html
+      // opencv is row-major
+      // pcl is row-major:
+      //cout << "u, v: " << ppt.u_ << " " << ppt.v_ << endl;
+      
       // Take the closest point in pcd.
       unsigned short curr_depth = frame->depth_->coeffRef(ppt.v_, ppt.u_);
       if(curr_depth == 0 || ppt.z_ < curr_depth) { 

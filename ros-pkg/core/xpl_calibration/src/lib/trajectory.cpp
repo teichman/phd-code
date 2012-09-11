@@ -1,0 +1,72 @@
+#include <xpl_calibration/trajectory.h>
+
+using namespace std;
+using namespace Eigen;
+
+Trajectory::~Trajectory()
+{
+  for(size_t i = 0; i < transforms_.size(); ++i)
+    if(transforms_[i])
+      delete transforms_[i];
+}
+
+void Trajectory::resize(size_t num)
+{
+  transforms_.resize(num, NULL);
+}
+
+void Trajectory::set(size_t idx, const Eigen::Affine3d& transform)
+{
+  if(transforms_[idx])
+    *transforms_[idx] = transform;
+  else
+    transforms_[idx] = new Affine3d(transform);
+}
+
+const Eigen::Affine3d& Trajectory::get(size_t idx) const
+{
+  ROS_ASSERT(transforms_[idx]);
+  return *transforms_[idx];
+}
+
+bool Trajectory::exists(size_t idx) const
+{
+  return transforms_[idx];
+}
+
+void Trajectory::remove(size_t idx)
+{
+  if(transforms_[idx])
+    delete transforms_[idx];
+
+  transforms_[idx] = NULL;
+}
+
+void Trajectory::serialize(std::ostream& out) const
+{
+  eigen_extensions::serializeScalar(transforms_.size(), out);
+  for(size_t i = 0; i < transforms_.size(); ++i) {
+    bool ex = transforms_[i];
+    eigen_extensions::serializeScalar(ex, out);
+    if(ex)
+      eigen_extensions::serialize(transforms_[i]->matrix(), out);
+  }
+}
+
+void Trajectory::deserialize(std::istream& in)
+{
+  size_t num_transforms;
+  eigen_extensions::deserializeScalar(in, &num_transforms);
+  resize(num_transforms);
+  
+  for(size_t i = 0; i < transforms_.size(); ++i) {
+    bool ex;
+    eigen_extensions::deserializeScalar(in, &ex);
+    if(ex) {
+      Matrix4d tmp;
+      eigen_extensions::deserialize(in, &tmp);
+      set(i, Affine3d(tmp));
+    }
+  }
+}
+

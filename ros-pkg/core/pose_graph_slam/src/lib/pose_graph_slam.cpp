@@ -73,7 +73,7 @@ void PoseGraphSlam::solve(int num_iters)
   // v0->setEstimate(se3);
   
   cout << "Optimizing..." << endl;
-  optimizer_.setVerbose(true);
+  //optimizer_.setVerbose(true);
   optimizer_.initializeOptimization();
   optimizer_.optimize(num_iters);
   cout << "done." << endl;
@@ -101,3 +101,11 @@ void PoseGraphSlam::vertexData(int idx, Vector3d* translation, Quaterniond* quat
   *translation << data[0], data[1], data[2];
   *quat = Quaterniond(data[6], data[3], data[4], data[5]);
 }
+
+size_t PoseGraphSlam::numEdges(size_t idx) const
+{
+  const VertexSE3* v = dynamic_cast<const VertexSE3*>(optimizer_.vertex(idx));
+  ROS_ASSERT(v);
+  return v->edges().size();
+}
+

@@ -5,6 +5,7 @@ using namespace g2o;
 using namespace rgbd;
 
 #define GRIDSEARCH_VIS (getenv("GRIDSEARCH_VIS") ? bool(atoi(getenv("GRIDSEARCH_VIS"))) : false)
+#define MAX_FRAMES (getenv("MAX_FRAMES") ? atoi(getenv("MAX_FRAMES")) : 0)
 
 SlamVisualizer::SlamVisualizer() :
   max_range_(3.5),
@@ -21,8 +22,7 @@ SlamVisualizer::SlamVisualizer() :
   vis_.registerKeyboardCallback(&SlamVisualizer::keyboardCallback, *this);
   vis_.setBackgroundColor(1, 1, 1);
   //vis_.addCoordinateSystem(1.0);
-  vg_.setLeafSize(0.01, 0.01, 0.01);
-  //vis_.setBackgroundColor(1, 1, 1);
+  vg_.setLeafSize(0.02, 0.02, 0.02);
   
   // -- Set the viewpoint to be sensible for PrimeSense devices.
   vis_.camera_.clip[0] = 0.00387244;
@@ -55,10 +55,13 @@ void SlamVisualizer::setCamera(const std::string& camera_path)
   vis_.updateCamera();    
 }
 
-void SlamVisualizer::run(StreamSequence::ConstPtr sseq, const std::string& opcd_path)
+void SlamVisualizer::run(StreamSequence::ConstPtr sseq,
+			 const std::string& opcd_path,
+			 const std::string& otraj_path)
 {
   sseq_ = sseq;
   opcd_path_ = opcd_path;
+  otraj_path_ = otraj_path;
   
   boost::thread thread_slam(boost::bind(&SlamVisualizer::slamThreadFunction, this));
   // Apparently PCLVisualizer needs to run in the main thread.
@@ -126,7 +129,8 @@ void SlamVisualizer::slamThreadFunction()
       ProfilerStop();
 
     // -- For now, terminate at the first broken link.  With loop closure we can do better.
-    if(count < 20000 || final_mde > 0.2) {
+    // mde of 0.2 for depth-only seems good.
+    if(count < 20000 || final_mde > 0.5) {
       cout << "Edge has count " << count << " and final_mde " << final_mde << ".  Terminating." << endl;
       break;
     }
@@ -149,6 +153,10 @@ void SlamVisualizer::slamThreadFunction()
     tip_transform_ = transform;
     needs_update_ = true;
     unlockWrite();
+
+    // -- Check for early termination.
+    if(MAX_FRAMES != 0 && curr_idx > MAX_FRAMES)
+      break;
   }
 
   // -- Save the output and shut down.
@@ -158,6 +166,19 @@ void SlamVisualizer::slamThreadFunction()
     pcl::io::savePCDFileBinary(opcd_path_, *map_);
     cout << "Saved final map to " << opcd_path_ << endl;
   }
+
+  if(otraj_path_ != "") { 
+    Trajectory traj;
+    traj.resize(slam_->numNodes());
+    for(size_t i = 0; i < slam_->numNodes(); ++i) {
+      if(slam_->numEdges(i) == 0)
+	continue;
+      traj.set(i, slam_->transform(i));
+    }
+    traj.save(otraj_path_);
+    cout << "Saved trajectory to " << otraj_path_ << endl;
+  }
+
   quitting_ = true;
 }
 
