@@ -29,7 +29,7 @@ all:
 SLAM_RUNS := $(shell ls $(SLAM_DATA_PATH))
 
 .PHONY: slam_videos
-slam_videos: $(addprefix slam_videos/, $(addsuffix .avi, $(SLAM_RUNS)))
+slam_videos: $(addprefix slam_videos/, $(SLAM_RUNS))
 .PHONY: slam_results
 slam_results: $(addprefix slam_results/, $(addsuffix .traj, $(SLAM_RUNS)))
 
