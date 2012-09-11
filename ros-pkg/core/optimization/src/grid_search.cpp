@@ -57,6 +57,21 @@ void GridSearch::makeGrid(const std::vector<int>& variables,
   }
 }
 
+class ArrayXdCompare
+{
+public:
+  bool operator()(const Eigen::ArrayXd& a, const Eigen::ArrayXd& b) const {
+    assert(a.rows() == b.rows());
+    for(int i = 0; i < a.rows(); ++i) {
+      if(a.coeffRef(i) < b.coeffRef(i))
+	return true;
+      if(a.coeffRef(i) > b.coeffRef(i))
+	return false;
+    }
+    return false;
+  }
+};
+
 Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
 {
   assert(num_scalings_ >= 0);
@@ -90,6 +105,7 @@ Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
   res_ = max_resolutions_;
 
   int ns = 0;
+  set<ArrayXd, ArrayXdCompare> checked;
   while(true) {
     bool improved = false;
 
@@ -100,7 +116,10 @@ Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
 	// -- Get all values of x to try in parallel.
 	vector<ArrayXd> xs_this_coupling;
 	makeGrid(couplings[i], &xs_this_coupling);
-	xs.insert(xs.end(), xs_this_coupling.begin(), xs_this_coupling.end());
+	//	xs.insert(xs.end(), xs_this_coupling.begin(), xs_this_coupling.end());
+	for(size_t j = 0; j < xs_this_coupling.size(); ++j)
+	  if(checked.count(xs_this_coupling[j]) == 0)
+	    xs.push_back(xs_this_coupling[j]);
       }
     }
 
@@ -118,6 +137,7 @@ Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
 
     // -- Look for improvement.
     for(int j = 0; j < vals.rows(); ++j) {
+      checked.insert(xs[j]);
       if(vals(j) < best_obj_) {
 	improved = true;
 	best_obj_ = vals(j);
