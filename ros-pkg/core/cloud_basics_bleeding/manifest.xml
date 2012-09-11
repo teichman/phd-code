@@ -1,0 +1,19 @@
+<package>
+  <description brief="cloud_basics_bleeding">
+
+     cloud_basics
+
+  </description>
+  <author>Stephen</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/cloud_basics</url>
+  <depend package="pcl_bleeding"/>
+  <depend package="utility_functions"/>
+  <export>
+    <cpp cflags="-I`rospack find cloud_basics`/include" lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -lcloud_basics_bleeding" />
+  </export>
+
+</package>
+
+

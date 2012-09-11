@@ -16,7 +16,7 @@ public:
   
   FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
 		    const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1);
-  //! x = [x, y, z, roll, pitch, yaw].
+  //! x = [rx, ry, rz, tx, ty, tz].
   double eval(const Eigen::VectorXd& x) const;
   
 protected:

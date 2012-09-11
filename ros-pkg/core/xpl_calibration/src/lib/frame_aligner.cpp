@@ -13,7 +13,8 @@ FrameAligner::FrameAligner(const rgbd::PrimeSenseModel& model0,
 {
 }
 
-Eigen::Affine3d FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1) const
+Eigen::Affine3d FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
+    const Eigen::Affine3d &guess) const
 {
   ScopedTimer st("FrameAligner::align");
   FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, frame0, model1_, frame1));
@@ -32,10 +33,12 @@ Eigen::Affine3d FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1) cons
   double sf = 0.5;
   gs.scale_factors_ << sf, sf, sf, sf, sf, sf;
   gs.couplings_ << 0, 1, 2, 1, 0, 3;  // Search over (pitch, y) and (yaw, x) jointly.
-  
-  ArrayXd x = gs.search(ArrayXd::Zero(6));
-  cout << "GridSearch solution: " << x.transpose() << endl;
-  cout << "Computed " << gs.num_evals_ << " evals in " << gs.time_ << " seconds." << endl;
+  //Convert guess to XYZRPY
+  double rx, ry, rz, tx, ty, tz;
+  generateXYZYPR(guess.cast<float>(), rx, ry, rz, tx, ty, tz);
+  //Now search with that initialization
+  ArrayXd init(6); init << rx, ry, rz, tx, ty, tz;
+  ArrayXd x = gs.search(init);
   cout << gs.num_evals_ / gs.time_ << " evals / second." << endl;
   cout << gs.time_ / gs.num_evals_ << " seconds / eval." << endl;
   

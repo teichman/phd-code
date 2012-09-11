@@ -9,6 +9,7 @@
 #include <pose_graph_slam/pose_graph_slam.h>
 #include <rgbd_sequence/stream_sequence.h>
 #include <xpl_calibration/frame_aligner.h>
+#include <xpl_calibration/loop_closer.h>
 
 class SlamVisualizer : public SharedLockable, public GridSearchViewHandler
 {
@@ -34,6 +35,8 @@ protected:
   void visualizationThreadFunction();
   void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie);
   void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
+  //SDM added: loop closure
+  LoopCloser::Ptr lc_;
 };
 
 #endif // SLAM_VISUALIZER_H

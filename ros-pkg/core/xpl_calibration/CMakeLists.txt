@@ -43,8 +43,9 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/mean_depth_error.cpp
   src/lib/slam_visualizer.cpp
   src/lib/frame_aligner.cpp
+  src/lib/loop_closer.cpp
   )
-rosbuild_add_compile_flags(${PROJECT_NAME} -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+rosbuild_add_compile_flags(${PROJECT_NAME} -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas -w)
 rosbuild_link_boost(${PROJECT_NAME} system program_options)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
@@ -96,3 +97,11 @@ target_link_libraries(g2o_hello)
 rosbuild_add_executable(slam_test src/prog/slam_test.cpp)
 rosbuild_link_boost(slam_test program_options filesystem)
 target_link_libraries(slam_test ${PROJECT_NAME})
+
+rosbuild_add_executable(test_transforms src/prog/test_transforms.cpp)
+rosbuild_link_boost(test_transforms program_options filesystem)
+target_link_libraries(test_transforms ${PROJECT_NAME})
+
+rosbuild_add_executable(test_loop_closure src/prog/test_loop_closure.cpp)
+rosbuild_link_boost(test_loop_closure program_options filesystem)
+target_link_libraries(test_loop_closure ${PROJECT_NAME})

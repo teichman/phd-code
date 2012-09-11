@@ -21,6 +21,7 @@ public:
   double eval(const Eigen::VectorXd& x) const;
   double computeLoss(KdTree::Ptr tree0, const rgbd::Cloud& pcd0, const rgbd::Cloud& pcd1) const;
 
+  bool use_fsv_; //SDM Unprotected so this could be set to false
 protected:
   std::vector<KdTree::Ptr> trees0_;
   std::vector<rgbd::Cloud::ConstPtr> pcds0_;
@@ -31,7 +32,6 @@ protected:
   double fy_;
   double cx_;
   double cy_;
-  bool use_fsv_;
 
   int projectPoint(const rgbd::Cloud& pcd, const rgbd::Point& pt,
 		   int* u, int* v) const;
@@ -149,6 +149,9 @@ int seek(const std::vector<rgbd::Cloud::Ptr>& pcds0,
 //! Rotations are in radians.
 Eigen::Affine3f generateTransform(double rx, double ry, double rz,
 				  double tx, double ty, double tz);
+//! Inverse of generateTransform
+void generateXYZYPR(const Eigen::Affine3f &trans, 
+    double &rx, double &ry, double &rz, double &tx, double &ty, double &tz);
 
 #endif // OBJECT_MATCHING_CALIBRATOR_H
 

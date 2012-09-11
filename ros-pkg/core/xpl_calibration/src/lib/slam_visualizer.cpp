@@ -35,11 +35,32 @@ SlamVisualizer::SlamVisualizer() :
   vis_.camera_.window_pos[0] = 2;
   vis_.camera_.window_pos[1] = 82;
   vis_.updateCamera();    
+  
 }
 
 void SlamVisualizer::run(StreamSequence::ConstPtr sseq)
 {
   sseq_ = sseq;
+  // Initialize loop closure
+  lc_ = LoopCloser::Ptr(new LoopCloser(sseq));
+  lc_->fine_tune_ = true;
+  lc_->visualize_ = false;
+  lc_->max_orb_dist_ = 500;
+  lc_->keypoints_per_frame_ = 500;
+  lc_->min_keypoint_dist_ = 0.04; //cm apart
+  lc_->min_inliers_ = 10; //Need at least this many inliers to be considered a valid
+  lc_->min_inlier_percent_ = 0.1;
+  lc_->distance_thresh_ = 0.03; //Need to be within 3 cm to be considered an inlier
+  lc_->num_samples_ = 10000;
+  lc_->icp_thresh_ = 0.02; //Avg pt-to-pt distance required
+  lc_->icp_max_inlier_dist_ = 0.1; // Highest distance allowed to be considered an inlier
+  lc_->icp_inlier_percent_ = 0.3; // At least this percentage of points must be inliers
+  lc_->ftype_ = ORB;
+  lc_->k_ = 5;
+  lc_->min_time_offset_ = 15;
+  lc_->verification_type_ = ICP;
+  lc_->mde_thresh_ = 0.1;
+  lc_->z_thresh_ = 3.0;
   
   boost::thread thread_slam(boost::bind(&SlamVisualizer::slamThreadFunction, this));
   // Apparently PCLVisualizer needs to run in the main thread.
@@ -76,11 +97,21 @@ void SlamVisualizer::slamThreadFunction()
     ProfilerStart("slam_test.prof");
     Affine3d curr_to_prev = aligner.align(curr_frame, prev_frame);
     ProfilerStop();
-    
+     
     cout << "Adding edge with transform: " << endl << curr_to_prev.matrix() << endl;
     slam_->addEdge(i-incr_, i, curr_to_prev, covariance);
-    cout << "Inverse of that: " << endl << curr_to_prev.inverse().matrix() << endl;
-    
+    //Loop closure
+    vector<size_t> targets;
+    vector<Eigen::Affine3f> transforms;
+    if(lc_->getLinkHypotheses(curr_frame, i, targets, transforms))
+    {
+      for(size_t j = 0; j < targets.size(); j++)
+      {
+        cout << "Adding loop edge with transform: " << endl << transforms[j].matrix() << endl;
+        slam_->addEdge(targets[j], i, transforms[j].cast<double>(), covariance);
+      }
+    }
+        
     // -- Solve.
     slam_->solve();
 
