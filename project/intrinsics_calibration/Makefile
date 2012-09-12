@@ -17,6 +17,19 @@ SLAM_DATA_PATH	:= $(DATA_PATH)/slam_sequences
 CAMERAS_PATH	:= $(MAKE_ROOT)/camera_angles
 SENSORS		:= $(shell ls $(SLAM_DATA_PATH))
 
+#2a_open_space_01
+#office_01
+SLAM_RUNS_xpl03 := 	1a_open_space_01 \
+			1b_lobby_01 \
+			2a_open_space_02 \
+			2a_open_space_03 \
+			2a_open_space_04 \
+			hallway_01 \
+			hallway_02 \
+			hallway_03 \
+			office_02
+
+
 .SECONDEXPANSION:	# Allows use of automatic vars in prerequisites.
 .SECONDARY:		# Prevents deletion of intermediate targets in a chain of implicit rules.
 
@@ -57,7 +70,7 @@ $(1)/asus_vs_velodyne/extrinsics:
 	cd $$(@D) && mkdir gridsearch
 	cd $$(@D) && mv gridsearch*.png gridsearch/
 
-SLAM_RUNS_$(1) := $$(shell ls $(SLAM_DATA_PATH)/$(1))
+#SLAM_RUNS_$(1) := $$(shell ls $(SLAM_DATA_PATH)/$(1))
 TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
 
 $(1)/learned_model.psm: $(1)/slam_results
@@ -88,7 +101,7 @@ $(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/
 	mv `ls screenshot*.cam -tr | tail -n1` $(CAMERAS_PATH)/$(1)/$(2).cam
 	rm `ls screenshot*.png -tr | tail -n1`
 
-$(1)/view_slam_result-$(2): slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
+$(1)-visualize-slam-result-$(2): slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
 	rosrun pcl_bleeding pcd_viewer slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
 
 $(1)/slam_videos/$(2).avi: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
