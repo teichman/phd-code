@@ -54,6 +54,9 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
 	if(mapdepth(ppt.v_, ppt.u_) == 0 || depth(ppt.v_, ppt.u_) == 0)
 	  continue;
 
+	if(rand() % 5 != 0)
+	  continue;
+	
 	// ppt.z_ = mapdepth(ppt.v_, ppt.u_);
 	// initial_model_.project(ppt, &pt);
 	// double mapdist = pt.getVector3fMap().norm();
@@ -143,3 +146,9 @@ bool PixelStats::valid() const
   return velo_.size() > 5;
 }
 
+size_t DepthDistortionLearner::size() const
+{
+  ROS_ASSERT(frames_.size() == pcds_.size());
+  ROS_ASSERT(frames_.size() == transforms_.size());
+  return frames_.size();
+}

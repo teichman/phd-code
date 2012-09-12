@@ -20,12 +20,15 @@ public:
 class DepthDistortionLearner
 {
 public:
+  //int max_tr_ex_;
+  
   DepthDistortionLearner(const rgbd::PrimeSenseModel& initial_model);
   void addFrame(rgbd::Frame frame,
 		rgbd::Cloud::ConstPtr pcd,
 		const Eigen::Affine3f& transform);
   rgbd::PrimeSenseModel fitModel();
   void clear() { frames_.clear(); pcds_.clear(); transforms_.clear(); }
+  size_t size() const;
   
 protected:
   //! Used for 3D -> 2D projection.  Depth distortion params are ignored.

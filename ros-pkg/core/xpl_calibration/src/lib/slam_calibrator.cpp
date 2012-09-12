@@ -83,6 +83,7 @@ PrimeSenseModel SlamCalibrator::calibrate() const
     }
   }
 
+  cout << "Fitting model using " << learner.size() << " frames." << endl;
   PrimeSenseModel model = learner.fitModel();
   cout << "== Initial model: " << endl;
   cout << sseqs_[0]->model_.status();
