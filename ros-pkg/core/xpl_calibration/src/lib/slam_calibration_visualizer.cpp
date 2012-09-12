@@ -8,7 +8,9 @@ SlamCalibrationVisualizer::SlamCalibrationVisualizer(SlamCalibrator::Ptr calibra
   calibrator_(calibrator),
   map_(new Cloud),
   quitting_(false),
-  needs_update_(false)
+  needs_update_(false),
+  seq_idx_(0),
+  frame_idx_(0)
 {
   vis_.registerKeyboardCallback(&SlamCalibrationVisualizer::keyboardCallback, *this);
   vis_.setBackgroundColor(1, 1, 1);
@@ -36,11 +38,9 @@ void SlamCalibrationVisualizer::run()
 {
   //boost::thread thread_slam(boost::bind(&SlamVisualizer::slamThreadFunction, this));
   // Apparently PCLVisualizer needs to run in the main thread.
-  Cloud::Ptr map = calibrator_->buildMap(0);
-  *map_ = *map;
-  needs_update_ = true;
-  cout << "Done building map." << endl;
-  
+
+  setSequenceIdx(0);
+  incrementFrameIdx(1);
   visualizationThreadFunction();
 
   //thread_slam.join();
@@ -64,18 +64,90 @@ void SlamCalibrationVisualizer::visualizationThreadFunction()
     usleep(5e3);
     
     lockWrite();
-    if(needs_update_)
-      if(!vis_.updatePointCloud(map_, "default"))
-	vis_.addPointCloud(map_, "default");
+    if(needs_update_) {
+      cout << "updating" << endl;
+      Cloud::Ptr pcd(new Cloud);
+      *pcd = *map_;
+      if(!vis_.updatePointCloud(pcd, "default"))
+	vis_.addPointCloud(pcd, "default");
+      needs_update_ = false;
+    }
+
+    vis_.removeCoordinateSystem();
+    vis_.addCoordinateSystem(0.3, calibrator_->trajectories_[seq_idx_].get(frame_idx_).cast<float>());
+    
     vis_.spinOnce(3);
-    needs_update_ = false;
     unlockWrite();
   }
 }
 
 void SlamCalibrationVisualizer::keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie)
 {
-
+  if(event.keyDown()) {
+    char key = event.getKeyCode();
+    if(key == 27) {
+      scopeLockWrite;
+      quitting_ = true;
+    }
+    else if(key == '>')
+      incrementSequenceIdx(1);
+    else if(key == '<')
+      incrementSequenceIdx(-1);
+    else if(key == '.')
+      incrementFrameIdx(1);
+    else if(key == ',')
+      incrementFrameIdx(-1);
+  }
 }
 
 
+void SlamCalibrationVisualizer::setSequenceIdx(size_t idx)
+{
+  Cloud::Ptr map = calibrator_->buildMap(idx);
+  cout << "Done building map." << endl;
+  cout << map->size() << " points." << endl;
+
+  scopeLockWrite;
+  seq_idx_ = idx;
+  map_ = map;
+  needs_update_ = true;
+}
+
+void SlamCalibrationVisualizer::incrementSequenceIdx(int num)
+{
+  int idx = (int)seq_idx_ + num;
+  if(idx < 0)
+    idx = 0;
+  if((size_t)idx > calibrator_->size())
+    idx = calibrator_->size();
+
+  setSequenceIdx((size_t)idx);
+}
+
+void SlamCalibrationVisualizer::incrementFrameIdx(int num)
+{
+  int idx = (int)frame_idx_;
+  int incr = 1;
+  if(num < 0)
+    incr = -1;
+
+  const Trajectory& traj = calibrator_->trajectories_[seq_idx_];
+  while(num != 0) {
+    // Find the next valid transform.
+    while(true) {
+      idx += incr;
+      if(idx < 0)
+	idx = traj.size() - 1;
+      if(idx >= (int)traj.size())
+	idx = 0;
+
+      if(traj.exists(idx)) {
+	break;
+      }
+    }
+    num -= incr;
+  }
+  
+  scopeLockWrite;
+  frame_idx_ = (size_t)idx;
+}

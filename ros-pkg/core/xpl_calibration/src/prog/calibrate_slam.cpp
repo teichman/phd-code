@@ -19,6 +19,8 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("sseq", bpo::value< vector<string> >(&sequence_paths)->required(), "StreamSequences, i.e. asus data.")
     ("traj", bpo::value< vector<string> >(&trajectory_paths)->required(), "Trajectories from slam.")
+    ("batch", "Don't visualize.")
+    ("omodel", bpo::value<string>()->default_value("model.psm"), "Output path for learned model.")
     ;
 
   bpo::variables_map opts;
@@ -27,7 +29,7 @@ int main(int argc, char** argv)
   try { bpo::notify(opts); }
   catch(...) { badargs = true; }
   if(opts.count("help") || badargs) {
-    cout << "Usage: " << bfs::basename(argv[0]) << " --sseq SSEQ --traj TRAJ [ --sseq SSEQ --traj TRAJ ... ]" << endl;
+    cout << "Usage: " << bfs::basename(argv[0]) << " OPTS  --sseq SSEQ --traj TRAJ [ --sseq SSEQ --traj TRAJ ... ]" << endl;
     cout << endl;
     cout << opts_desc << endl;
     return 1;
@@ -40,13 +42,22 @@ int main(int argc, char** argv)
   for(size_t i = 0; i < sequence_paths.size(); ++i) {
     cout << "  " << sequence_paths[i] << " ----- " << trajectory_paths[i] << endl;
 
-    calibrator->trajectories_.back().load(trajectory_paths[i]);
+    calibrator->trajectories_[i].load(trajectory_paths[i]);
+    // cout << "Trajectory: " << endl;
+    // cout << calibrator->trajectories_[i].status("  ");
 
     StreamSequence::Ptr sseq(new StreamSequence);
     sseq->load(sequence_paths[i]);
     calibrator->sseqs_.push_back(sseq);
   }
 
+  if(opts.count("batch")) {
+    PrimeSenseModel model = calibrator->calibrate();
+    model.save(opts["omodel"].as<string>());
+    cout << "Saved model to " << opts["omodel"].as<string>() << endl;
+    return 0;
+  }
+  
   SlamCalibrationVisualizer vis(calibrator);
   vis.run();
   

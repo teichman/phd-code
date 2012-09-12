@@ -12,6 +12,7 @@ MAKEFILE		:= $(MAKE_ROOT)/Makefile
 # This dir has subdirectories of asus_vs_velodyne
 DATA_PATH	:= $(MAKE_ROOT)/data
 AVV_PATH	:= $(DATA_PATH)/asus_vs_velodyne
+AVV_PATH_xpl03  := $(AVV_PATH)/2012-08-29_xpl_vs_velo/xpl03_take2-08-29-2012_19-25-48
 SLAM_DATA_PATH	:= $(DATA_PATH)/slam_sequences
 CAMERAS_PATH	:= $(MAKE_ROOT)/camera_angles
 SENSORS		:= $(shell ls $(SLAM_DATA_PATH))
@@ -31,6 +32,19 @@ all:
 # -- Enumeration of targets for each sensor.
 define SENSOR_RULE_GENERATOR
 
+$(1)/asus_vs_velodyne/intrinsics: $(1)/asus_vs_velodyne/extrinsics
+	mkdir -p $$(@D)
+	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence --extrinsics extrinsics --compute-intrinsics
+
+$(1)-visualize-avv-extrinsics: $(1)/asus_vs_velodyne/extrinsics
+	rosrun xpl_calibration asus_vs_velo $$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence --extrinsics $$<
+
+$(1)/asus_vs_velodyne/extrinsics:
+	mkdir -p $$(@D)
+	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence --compute-extrinsics
+	cd $$(@D) && mkdir gridsearch
+	cd $$(@D) && mv gridsearch*.png gridsearch/
+
 SLAM_RUNS_$(1) := $$(shell ls $(SLAM_DATA_PATH)/$(1))
 TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
 
@@ -40,8 +54,11 @@ $(1)/slam_results: $$(TRAJECTORIES_$(1))
 .PHONY: $(1)/slam_videos
 $(1)/slam_videos: $$(addprefix $(1)/slam_videos/, $$(addsuffix .avi, $$(SLAM_RUNS_$(1))))
 
-$(1)/learned_model.psm: $(1)/slam_results
+$(1)-visualize-calibration: $(1)/slam_results
 	rosrun xpl_calibration calibrate_slam $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
+
+$(1)/learned_model.psm: $(1)/slam_results
+	rosrun xpl_calibration calibrate_slam --batch $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
 
 endef
 $(foreach SENSOR,$(SENSORS),$(eval $(call SENSOR_RULE_GENERATOR,$(SENSOR))))
@@ -92,12 +109,6 @@ asus_vs_velodyne/%/imagery: asus_vs_velodyne/%/extrinsics
 	mkdir -p $@
 	cd $(@D) && rosrun xpl_calibration asus_vs_velo $(AVV_PATH)/$*/asus $(AVV_PATH)/$*/velodyne --extrinsics extrinsics --visualize-distortion --skip=1 --num-pixel-plots 100
 	cd $(@D) && mv *.png *.pdf imagery/
-
-asus_vs_velodyne/%/extrinsics:
-	mkdir -p $(@D)
-	cd $(@D) && rosrun xpl_calibration asus_vs_velo $(AVV_PATH)/$*/asus $(AVV_PATH)/$*/velodyne --compute-extrinsics
-	mkdir gridsearch
-	mv gridsearch*.png gridsearch/
 
 
 visualize_avv-%: asus_vs_velodyne/%/extrinsics

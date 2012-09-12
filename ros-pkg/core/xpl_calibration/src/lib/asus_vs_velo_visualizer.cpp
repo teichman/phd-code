@@ -67,6 +67,7 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, 
 
   model_ = sseq->model_;
   model_.resetDepthDistortionModel();
+  updateVeloBounds();
 }
 
 void AsusVsVeloVisualizer::setInitialExtrinsics()
@@ -551,7 +552,7 @@ void AsusVsVeloVisualizer::saveExtrinsics(std::string tag) const
 
 void AsusVsVeloVisualizer::saveIntrinsics(std::string tag) const
 {
-  string filename = "learned_primesense_model" + tag;
+  string filename = "intrinsics" + tag;
   model_.save(filename);
   cout << "Saved depth distortion model to \"" << filename << "\"" << endl;
 }

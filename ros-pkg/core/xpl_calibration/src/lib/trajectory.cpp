@@ -70,3 +70,26 @@ void Trajectory::deserialize(std::istream& in)
   }
 }
 
+size_t Trajectory::numValid() const
+{
+  size_t num = 0;
+  for(size_t i = 0; i < transforms_.size(); ++i)
+    if(transforms_[i])
+      ++num;
+  return num;
+}
+
+std::string Trajectory::status(const std::string& prefix) const
+{
+  ostringstream oss;
+  oss << prefix << "Num valid: " << numValid() << " / " << size() << endl;
+  // for(size_t i = 0; i < transforms_.size(); ++i) {
+  //   if(transforms_[i]) {
+  //     oss << prefix << "Transform " << i << endl;
+  //     for(int j = 0; j < 4; ++j)
+  // 	oss << prefix << "  " << transforms_[i]->matrix().row(j) << endl;
+  //   }
+  // }
+
+  return oss.str();
+}

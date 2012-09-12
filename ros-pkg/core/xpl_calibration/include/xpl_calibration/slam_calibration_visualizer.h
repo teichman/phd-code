@@ -21,9 +21,14 @@ protected:
   rgbd::Cloud::Ptr map_;
   bool quitting_;
   bool needs_update_;
+  size_t seq_idx_;
+  size_t frame_idx_;
 
   void visualizationThreadFunction();
   void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie);
+  void setSequenceIdx(size_t idx);
+  void incrementSequenceIdx(int num);
+  void incrementFrameIdx(int num);
 };
 
 #endif // SLAM_CALIBRATION_VISUALIZER_H
