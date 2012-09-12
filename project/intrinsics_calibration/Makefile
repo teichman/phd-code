@@ -12,7 +12,8 @@ MAKEFILE		:= $(MAKE_ROOT)/Makefile
 # This dir has subdirectories of asus_vs_velodyne
 DATA_PATH	:= $(MAKE_ROOT)/data
 AVV_PATH	:= $(DATA_PATH)/asus_vs_velodyne
-AVV_PATH_xpl03  := $(AVV_PATH)/2012-08-29_xpl_vs_velo/xpl03_take2-08-29-2012_19-25-48
+#AVV_PATH_xpl03  := $(AVV_PATH)/2012-08-29_xpl_vs_velo/xpl03_take2-08-29-2012_19-25-48
+AVV_PATH_xpl03  := $(AVV_PATH)/2012-08-29_xpl_vs_velo/xpl03-08-29-2012_19-16-26
 SLAM_DATA_PATH	:= $(DATA_PATH)/slam_sequences
 CAMERAS_PATH	:= $(MAKE_ROOT)/camera_angles
 SENSORS		:= $(shell ls $(SLAM_DATA_PATH))

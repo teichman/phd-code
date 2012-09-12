@@ -64,6 +64,7 @@ namespace rgbd
     //! Depth distortion model.  weights_[0] is a constant offset, weights_[1] is the raw depth measurement.
     Eigen::VectorXd weights_;
     //! It can be slow.  Sometimes you don't want to.
+    //! This is not serialized, and is always set to false by default.  If you want it, turn it on yourself.
     bool use_distortion_model_;
     double fx_;
     double fy_;

@@ -57,25 +57,21 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
 	if(rand() % 5 != 0)
 	  continue;
 	
-	// ppt.z_ = mapdepth(ppt.v_, ppt.u_);
-	// initial_model_.project(ppt, &pt);
-	// double mapdist = pt.getVector3fMap().norm();
-	// ppt.z_ = depth(ppt.v_, ppt.u_);
-	// initial_model_.project(ppt, &pt);
-	// double measdist = pt.getVector3fMap().norm();
-
-	double mapz = mapdepth(ppt.v_, ppt.u_) * 0.001;
-	double measz = depth(ppt.v_, ppt.u_) * 0.001;
+	ppt.z_ = mapdepth(ppt.v_, ppt.u_);
+	initial_model_.project(ppt, &pt);
+	double mapdist = pt.getVector3fMap().norm();
+	ppt.z_ = depth(ppt.v_, ppt.u_);
+	initial_model_.project(ppt, &pt);
+	double measdist = pt.getVector3fMap().norm();
 		
 	// If the range is completely off, assume it's due to misalignment and not distortion.
-	double mult = mapz / measz;
+	double mult = mapdist / measdist;
 	if(mult > max_mult || mult < min_mult)
 	  continue;
 
-	ppt.z_ = depth(ppt.v_, ppt.u_);
 	xvec.push_back(initial_model_.computeFeatures(ppt));
-	yvec.push_back(mapz);
-	mvec.push_back(measz);
+	yvec.push_back(mult);
+	mvec.push_back(measdist);
       }
     }
   }	

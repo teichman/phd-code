@@ -133,17 +133,15 @@ namespace rgbd
       pt->z = std::numeric_limits<float>::quiet_NaN();
     }
     else {
-      if(use_distortion_model_) {
-	VectorXd features = computeFeatures(ppt);
-	pt->z = weights_.dot(features);
-      }
-      else
-	pt->z = ppt.z_ * 0.001;
-      
+      pt->z = ppt.z_ * 0.001;
       pt->x = pt->z * (ppt.u_ - cx_) / fx_;
       pt->y = pt->z * (ppt.v_ - cy_) / fy_;
-      // pt->x = pt->z * (ppt.u_ - cx_) * fx_inv_;
-      // pt->y = pt->z * (ppt.v_ - cy_) * fy_inv_;
+
+      if(use_distortion_model_) { 
+	VectorXd features = computeFeatures(ppt);
+	double mult = weights_.dot(features);
+	pt->getVector3fMap() *= mult;
+      }
     }
   }
 
@@ -251,11 +249,18 @@ namespace rgbd
 
   bool PrimeSenseModel::hasDepthDistortionModel() const
   {
+    // bool has = false;
+    // for(int i = 0; i < weights_.rows(); ++i) {
+    //   if(i == 1 && weights_(i) != 10)
+    // 	has = true;
+    //   if(i != 1 && weights_(i) != 0)
+    // 	has = true;
+    // }
     bool has = false;
     for(int i = 0; i < weights_.rows(); ++i) {
-      if(i == 1 && weights_(i) != 10)
+      if(i == 0 && weights_(i) != 1)
 	has = true;
-      if(i != 1 && weights_(i) != 0)
+      if(i != 0 && weights_(i) != 0)
 	has = true;
     }
     return has;
@@ -282,7 +287,8 @@ namespace rgbd
   void PrimeSenseModel::resetDepthDistortionModel()
   {
     weights_ = VectorXd::Zero(numFeatures());
-    weights_(1) = 10;  // feature 1 is measured depth in decameters.
+    //weights_(1) = 10;  // feature 1 is measured depth in decameters.
+    weights_(0) = 1;  // Multiplier version: use a multiplier of 1 by default.
   }
 
   std::string PrimeSenseModel::name() const

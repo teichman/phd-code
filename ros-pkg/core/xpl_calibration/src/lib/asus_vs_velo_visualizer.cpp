@@ -39,7 +39,7 @@ Cloud::Ptr VeloSequence::getCloud(size_t idx) const
   return pcd;
 }
 
-AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, VeloSequence::ConstPtr vseq) :
+AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::Ptr sseq, VeloSequence::ConstPtr vseq) :
   skip_(5),
   num_pixel_plots_(20),
   sseq_(sseq),
@@ -51,10 +51,13 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, 
   velo_(new Cloud),
   asus_(new Cloud),
   vis_(new Cloud),
-  unwarp_(false),
-  ddl_(sseq->model_)
+  unwarp_(false)
 {
-  ROS_ASSERT(!sseq_->model_.hasDepthDistortionModel());
+  // Some older sequences have the old type of model which predicted z rather than distance multiplier.
+  // We'll just assume that all stream sequences have a default distortion model and that custom
+  // models are stored separetely.
+  sseq_->model_.resetDepthDistortionModel();
+  //ROS_ASSERT(!sseq_->model_.hasDepthDistortionModel());
   cout << "StreamSequence PrimeSenseModel: " << endl;
   cout << sseq_->model_.status("  ");
 
@@ -178,8 +181,10 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
   if(draw_asus) {
     Frame frame;
     sseq_->readFrame(asus_idx_, &frame);
-    if(unwarp_)
+    if(unwarp_) {
+      model_.use_distortion_model_ = true;
       model_.frameToCloud(frame, asus_.get());
+    }
     else
       sseq_->model_.frameToCloud(frame, asus_.get());
     
@@ -199,7 +204,9 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
 
 void AsusVsVeloVisualizer::fitModel()
 {
-  ddl_.clear();
+  PrimeSenseModel initial_model = sseq_->model_;
+  initial_model.resetDepthDistortionModel();
+  DepthDistortionLearner ddl(initial_model);
   
   for(size_t i = skip_; i < vseq_->size(); i += skip_) {
     double min_dt;
@@ -210,10 +217,10 @@ void AsusVsVeloVisualizer::fitModel()
     cout << "Adding frame " << i << endl;
     Frame frame;
     sseq_->readFrame(idx, &frame);
-    ddl_.addFrame(frame, filterVelo(vseq_->getCloud(i)), cal_.veloToAsus());
+    ddl.addFrame(frame, filterVelo(vseq_->getCloud(i)), cal_.veloToAsus());
   }
 
-  model_ = ddl_.fitModel();
+  model_ = ddl.fitModel();
   cout << "Learned new depth distortion model." << endl;
 }
 
@@ -556,6 +563,7 @@ void AsusVsVeloVisualizer::saveIntrinsics(std::string tag) const
   string filename = "intrinsics" + tag;
   model_.save(filename);
   cout << "Saved depth distortion model to \"" << filename << "\"" << endl;
+  cout << model_.status("  ");
 }
 
 void AsusVsVeloVisualizer::saveAll(std::string tag) const

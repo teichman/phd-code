@@ -46,14 +46,6 @@ int main(int argc, char** argv)
   VeloSequence::Ptr vseq(new VeloSequence(opts["vseq"].as<string>()));
   AsusVsVeloVisualizer avv(sseq, vseq);
 
-  if(opts.count("compute-extrinsics")) {
-    ROS_ASSERT(!opts.count("extrinsics"));
-    cout << "Computing extrinsics." << endl;
-    avv.calibrate();
-    avv.saveExtrinsics();  // "extrinsics"
-    return 0;
-  }    
-
   if(opts.count("extrinsics")) {
     ROS_ASSERT(!opts.count("compute-extrinsics"));
     avv.cal_.load(opts["extrinsics"].as<string>());
@@ -68,8 +60,17 @@ int main(int argc, char** argv)
     cout << avv.model_.status("  ");
   }
 
+  if(opts.count("compute-extrinsics")) {
+    ROS_ASSERT(!opts.count("extrinsics"));
+    cout << "Computing extrinsics." << endl;
+    avv.calibrate();
+    avv.saveExtrinsics();  // "extrinsics"
+    return 0;
+  }    
+
   if(opts.count("compute-intrinsics")) {
     ROS_ASSERT(opts.count("extrinsics"));
+    ROS_ASSERT(!opts.count("intrinsics"));
     cout << "Computing depth distortion model." << endl;
     avv.fitModel();
     avv.saveIntrinsics();  // "intrinsics"

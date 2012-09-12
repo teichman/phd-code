@@ -40,7 +40,7 @@ public:
   VeloToAsusCalibration cal_;
   rgbd::PrimeSenseModel model_;
   
-  AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, VeloSequence::ConstPtr vseq);
+  AsusVsVeloVisualizer(rgbd::StreamSequence::Ptr sseq, VeloSequence::ConstPtr vseq);
   void run();
   void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
   void saveAll(std::string tag = "") const;
@@ -54,7 +54,7 @@ public:
   void fitModel();
   
 protected:
-  rgbd::StreamSequence::ConstPtr sseq_;
+  rgbd::StreamSequence::Ptr sseq_;
   VeloSequence::ConstPtr vseq_;
   rgbd::VisWrapper vw_;
   int velo_idx_;
@@ -65,7 +65,6 @@ protected:
   rgbd::Cloud::Ptr vis_;
   bool unwarp_;
   std::string color_scheme_;
-  DepthDistortionLearner ddl_;
   double theta_lower_;
   double theta_upper_;
 

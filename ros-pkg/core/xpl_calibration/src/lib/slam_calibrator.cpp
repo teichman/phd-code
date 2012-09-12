@@ -55,6 +55,7 @@ size_t SlamCalibrator::size() const
 PrimeSenseModel SlamCalibrator::calibrate() const
 {
   PrimeSenseModel initial_model = sseqs_[0]->model_;
+  initial_model.resetDepthDistortionModel();
   DepthDistortionLearner learner(initial_model);
   
   for(size_t i = 0; i < size(); ++i) {
