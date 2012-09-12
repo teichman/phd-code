@@ -83,14 +83,12 @@ void SlamVisualizer::slamThreadFunction()
   slam_ = PoseGraphSlam::Ptr(new PoseGraphSlam(sseq_->size()));
   Matrix6d covariance = Matrix6d::Identity() * 1e-3;  
   
-  Frame prev_frame;
   size_t prev_idx;
-  Frame curr_frame;
-  sseq_->readFrame(0, &curr_frame);
+  sseq_->readFrame(0, &curr_frame_);
   size_t curr_idx = 0;
   while(true) {
     // -- Find the next frame to use.
-    prev_frame = curr_frame;
+    prev_frame_ = curr_frame_;
     prev_idx = curr_idx;
     double dt = 0;
     bool done = false;
@@ -100,15 +98,18 @@ void SlamVisualizer::slamThreadFunction()
 	done = true;
 	break;
       }
-      dt = sseq_->timestamps_[curr_idx] - prev_frame.timestamp_;
+      dt = sseq_->timestamps_[curr_idx] - prev_frame_.timestamp_;
       //cout << "Searching: " << curr_idx << " " << prev_idx << " " << dt << endl;
     }
     if(done) break;
     cout << "---------- Searching for link between " << prev_idx << " and " << curr_idx
 	 << " / " << sseq_->size() << endl;
     cout << "           dt: " << dt << endl;
-    sseq_->readFrame(prev_idx, &prev_frame);
-    sseq_->readFrame(curr_idx, &curr_frame);
+    sseq_->readFrame(prev_idx, &prev_frame_);
+    sseq_->readFrame(curr_idx, &curr_frame_);
+    cv::imshow("current", curr_frame_.depthImage());
+    cv::imshow("previous", prev_frame_.depthImage());
+    cv::waitKey(5);
 
     // -- Load the cloud for visualization purposes.
     lockWrite();
@@ -124,7 +125,7 @@ void SlamVisualizer::slamThreadFunction()
     if(getenv("PROFILE"))
       ProfilerStart("slam_test.prof");
     double count, final_mde;
-    Affine3d curr_to_prev = aligner.align(curr_frame, prev_frame, &count, &final_mde);
+    Affine3d curr_to_prev = aligner.align(curr_frame_, prev_frame_, &count, &final_mde);
     if(getenv("PROFILE"))
       ProfilerStop();
 
@@ -204,11 +205,50 @@ void SlamVisualizer::visualizationThreadFunction()
 
     if(needs_update_ && save_imgs_) {
       static int num = 0;
+
+      // -- Save just the alignment output.
       ostringstream oss;
       oss << "slam" << setw(5) << setfill('0') << num << ".png";
       vis_.saveScreenshot(oss.str());
+
+      // -- Get depth images too.
+      cv::Mat3b slam = cv::imread(oss.str(), 1);
+      cv::Mat3b prev_depthimage = prev_frame_.depthImage();
+      cv::Mat3b curr_depthimage = curr_frame_.depthImage();
+
+      // -- Scale down the images.
+      double scale = slam.rows / ((double)prev_depthimage.rows * 2);
+      cv::Size sz;
+      sz.width = prev_depthimage.cols * scale;
+      sz.height = prev_depthimage.rows * scale;
+      cv::Mat3b prev_depthimage_scaled;
+      cv::resize(prev_depthimage, prev_depthimage_scaled, sz);
+      cv::Mat3b curr_depthimage_scaled;
+      cv::resize(curr_depthimage, curr_depthimage_scaled, sz);
+      ROS_ASSERT(prev_depthimage_scaled.rows + curr_depthimage_scaled.rows == slam.rows);
+      ROS_ASSERT(prev_depthimage_scaled.cols == curr_depthimage_scaled.cols);
+
+      // -- Assemble the montage.
+      cv::Mat3b montage(slam.rows, slam.cols + prev_depthimage_scaled.cols);
+      for(int y = 0; y < slam.rows; ++y)
+	for(int x = 0; x < slam.cols; ++x)
+	  montage(y, x) = slam(y, x);
+      for(int y = 0; y < prev_depthimage_scaled.rows; ++y)
+	for(int x = 0; x < prev_depthimage_scaled.cols; ++x)
+	  montage(y, x + slam.cols) = prev_depthimage_scaled(y, x);
+      for(int y = 0; y < curr_depthimage_scaled.rows; ++y)
+	for(int x = 0; x < curr_depthimage_scaled.cols; ++x)
+	  montage(y + prev_depthimage_scaled.rows, x + slam.cols) = curr_depthimage_scaled(y, x);
+
+      // -- Save.
+      oss.clear();
+      oss.str("");
+      oss << "montage" << setw(5) << setfill('0') << num << ".png";
+      cv::imwrite(oss.str(), montage);
+
       ++num;
     }
+    
     needs_update_ = false;
     unlockWrite();
   }

@@ -1,6 +1,7 @@
 #ifndef GRID_SEARCH_H
 #define GRID_SEARCH_H
 
+#include <set>
 #include <timer/timer.h>
 #include <optimization/optimization.h>
 
