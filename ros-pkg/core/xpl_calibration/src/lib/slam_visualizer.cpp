@@ -5,6 +5,7 @@ using namespace g2o;
 using namespace rgbd;
 
 #define GRIDSEARCH_VIS (getenv("GRIDSEARCH_VIS") ? bool(atoi(getenv("GRIDSEARCH_VIS"))) : false)
+#define MAX_FRAMES (getenv("MAX_FRAMES") ? atoi(getenv("MAX_FRAMES")) : 0)
 
 SlamVisualizer::SlamVisualizer() :
   max_range_(3.5),
@@ -22,7 +23,7 @@ SlamVisualizer::SlamVisualizer() :
   vis_.registerKeyboardCallback(&SlamVisualizer::keyboardCallback, *this);
   vis_.setBackgroundColor(1, 1, 1);
   //vis_.addCoordinateSystem(1.0);
-  vg_.setLeafSize(0.01, 0.01, 0.01);
+  vg_.setLeafSize(0.02, 0.02, 0.02);
   
   // -- Set the viewpoint to be sensible for PrimeSense devices.
   vis_.camera_.clip[0] = 0.00387244;
@@ -56,7 +57,9 @@ void SlamVisualizer::setCamera(const std::string& camera_path)
   vis_.updateCamera();    
 }
 
-void SlamVisualizer::run(StreamSequence::ConstPtr sseq, const std::string& opcd_path)
+void SlamVisualizer::run(StreamSequence::ConstPtr sseq,
+			 const std::string& opcd_path,
+			 const std::string& otraj_path)
 {
   sseq_ = sseq;
   // Initialize loop closure
@@ -87,6 +90,7 @@ void SlamVisualizer::run(StreamSequence::ConstPtr sseq, const std::string& opcd_
     lc_->view_handler_ = (GridSearchViewHandler*) this;
   }
   opcd_path_ = opcd_path;
+  otraj_path_ = otraj_path;
   
   boost::thread thread_slam(boost::bind(&SlamVisualizer::slamThreadFunction, this));
   // Apparently PCLVisualizer needs to run in the main thread.
@@ -108,14 +112,12 @@ void SlamVisualizer::slamThreadFunction()
   slam_ = PoseGraphSlam::Ptr(new PoseGraphSlam(sseq_->size()));
   Matrix6d covariance = Matrix6d::Identity() * 1e-3;  
   
-  Frame prev_frame;
   size_t prev_idx;
-  Frame curr_frame;
-  sseq_->readFrame(0, &curr_frame);
+  sseq_->readFrame(0, &curr_frame_);
   size_t curr_idx = 0;
   while(true) {
     // -- Find the next frame to use.
-    prev_frame = curr_frame;
+    prev_frame_ = curr_frame_;
     prev_idx = curr_idx;
     double dt = 0;
     bool done = false;
@@ -125,15 +127,18 @@ void SlamVisualizer::slamThreadFunction()
 	done = true;
 	break;
       }
-      dt = sseq_->timestamps_[curr_idx] - prev_frame.timestamp_;
+      dt = sseq_->timestamps_[curr_idx] - prev_frame_.timestamp_;
       //cout << "Searching: " << curr_idx << " " << prev_idx << " " << dt << endl;
     }
     if(done) break;
     cout << "---------- Searching for link between " << prev_idx << " and " << curr_idx
 	 << " / " << sseq_->size() << endl;
     cout << "           dt: " << dt << endl;
-    sseq_->readFrame(prev_idx, &prev_frame);
-    sseq_->readFrame(curr_idx, &curr_frame);
+    sseq_->readFrame(prev_idx, &prev_frame_);
+    sseq_->readFrame(curr_idx, &curr_frame_);
+    cv::imshow("current", curr_frame_.depthImage());
+    cv::imshow("previous", prev_frame_.depthImage());
+    cv::waitKey(5);
 
     // -- Load the cloud for visualization purposes.
     lockWrite();
@@ -149,12 +154,13 @@ void SlamVisualizer::slamThreadFunction()
     if(getenv("PROFILE"))
       ProfilerStart("slam_test.prof");
     double count, final_mde;
-    Affine3d curr_to_prev = aligner.align(curr_frame, prev_frame, &count, &final_mde);
+    Affine3d curr_to_prev = aligner.align(curr_frame_, prev_frame_, &count, &final_mde);
     if(getenv("PROFILE"))
       ProfilerStop();
 
     // -- For now, terminate at the first broken link.  With loop closure we can do better.
-    if(count < 20000 || final_mde > 0.2) {
+    // mde of 0.2 for depth-only seems good.
+    if(count < 20000 || final_mde > 0.5) {
       cout << "Edge has count " << count << " and final_mde " << final_mde << ".  Terminating." << endl;
       break;
     }
@@ -163,7 +169,7 @@ void SlamVisualizer::slamThreadFunction()
     //Loop closure
     vector<size_t> targets;
     vector<Eigen::Affine3f> transforms;
-    if(use_loop_closure_ && lc_->getLinkHypotheses(curr_frame, curr_idx, targets, transforms))
+    if(use_loop_closure_ && lc_->getLinkHypotheses(curr_frame_, curr_idx, targets, transforms))
     {
       for(size_t j = 0; j < targets.size(); j++)
       {
@@ -188,6 +194,10 @@ void SlamVisualizer::slamThreadFunction()
     tip_transform_ = transform;
     needs_update_ = true;
     unlockWrite();
+
+    // -- Check for early termination.
+    if(MAX_FRAMES != 0 && curr_idx > MAX_FRAMES)
+      break;
   }
 
   // -- Save the output and shut down.
@@ -197,6 +207,19 @@ void SlamVisualizer::slamThreadFunction()
     pcl::io::savePCDFileBinary(opcd_path_, *map_);
     cout << "Saved final map to " << opcd_path_ << endl;
   }
+
+  if(otraj_path_ != "") { 
+    Trajectory traj;
+    traj.resize(slam_->numNodes());
+    for(size_t i = 0; i < slam_->numNodes(); ++i) {
+      if(slam_->numEdges(i) == 0)
+	continue;
+      traj.set(i, slam_->transform(i));
+    }
+    traj.save(otraj_path_);
+    cout << "Saved trajectory to " << otraj_path_ << endl;
+  }
+
   quitting_ = true;
 }
 
@@ -222,11 +245,50 @@ void SlamVisualizer::visualizationThreadFunction()
 
     if(needs_update_ && save_imgs_) {
       static int num = 0;
+
+      // -- Save just the alignment output.
       ostringstream oss;
       oss << "slam" << setw(5) << setfill('0') << num << ".png";
       vis_.saveScreenshot(oss.str());
+
+      // -- Get depth images too.
+      cv::Mat3b slam = cv::imread(oss.str(), 1);
+      cv::Mat3b prev_depthimage = prev_frame_.depthImage();
+      cv::Mat3b curr_depthimage = curr_frame_.depthImage();
+
+      // -- Scale down the images.
+      double scale = slam.rows / ((double)prev_depthimage.rows * 2);
+      cv::Size sz;
+      sz.width = prev_depthimage.cols * scale;
+      sz.height = prev_depthimage.rows * scale;
+      cv::Mat3b prev_depthimage_scaled;
+      cv::resize(prev_depthimage, prev_depthimage_scaled, sz);
+      cv::Mat3b curr_depthimage_scaled;
+      cv::resize(curr_depthimage, curr_depthimage_scaled, sz);
+      ROS_ASSERT(prev_depthimage_scaled.rows + curr_depthimage_scaled.rows == slam.rows);
+      ROS_ASSERT(prev_depthimage_scaled.cols == curr_depthimage_scaled.cols);
+
+      // -- Assemble the montage.
+      cv::Mat3b montage(slam.rows, slam.cols + prev_depthimage_scaled.cols);
+      for(int y = 0; y < slam.rows; ++y)
+	for(int x = 0; x < slam.cols; ++x)
+	  montage(y, x) = slam(y, x);
+      for(int y = 0; y < prev_depthimage_scaled.rows; ++y)
+	for(int x = 0; x < prev_depthimage_scaled.cols; ++x)
+	  montage(y, x + slam.cols) = prev_depthimage_scaled(y, x);
+      for(int y = 0; y < curr_depthimage_scaled.rows; ++y)
+	for(int x = 0; x < curr_depthimage_scaled.cols; ++x)
+	  montage(y + prev_depthimage_scaled.rows, x + slam.cols) = curr_depthimage_scaled(y, x);
+
+      // -- Save.
+      oss.clear();
+      oss.str("");
+      oss << "montage" << setw(5) << setfill('0') << num << ".png";
+      cv::imwrite(oss.str(), montage);
+
       ++num;
     }
+    
     needs_update_ = false;
     unlockWrite();
   }

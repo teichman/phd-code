@@ -59,6 +59,11 @@ namespace rgbd
       if(!(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
 	continue;
 
+      // Eigen is column-major by default: http://eigen.tuxfamily.org/dox/TopicStorageOrders.html
+      // opencv is row-major
+      // pcl is row-major:
+      //cout << "u, v: " << ppt.u_ << " " << ppt.v_ << endl;
+      
       // Take the closest point in pcd.
       unsigned short curr_depth = frame->depth_->coeffRef(ppt.v_, ppt.u_);
       if(curr_depth == 0 || ppt.z_ < curr_depth) { 
@@ -269,6 +274,46 @@ namespace rgbd
     ostringstream oss;
     oss << type_ << setw(3) << setfill('0') << id_;
     return oss.str();
+  }
+
+  cv::Vec3b Frame::colorize(double depth, double min_range, double max_range) const
+  {
+    if(depth == 0)
+      return cv::Vec3b(0, 0, 0);
+    
+    double increment = (max_range - min_range) / 3;
+    double thresh0 = min_range;
+    double thresh1 = thresh0 + increment;
+    double thresh2 = thresh1 + increment;
+    double thresh3 = thresh2 + increment;
+    
+    if(depth < thresh0) {
+      return cv::Vec3b(0, 0, 255);
+    }
+    if(depth >= thresh0 && depth < thresh1) {
+      int val = (depth - thresh0) / (thresh1 - thresh0) * 255.;
+      return cv::Vec3b(val, val, 255 - val);
+    }
+    else if(depth >= thresh1 && depth < thresh2) {
+      int val = (depth - thresh1) / (thresh2 - thresh1) * 255.;
+      return cv::Vec3b(255, 255 - val, 0);
+    }
+    else if(depth >= thresh2 && depth < thresh3) {
+      int val = (depth - thresh2) / (thresh3 - thresh2) * 255.;
+      return cv::Vec3b(255 - val, val, 0);
+    }
+    
+    return cv::Vec3b(0, 255, 0);
+  }
+  
+  cv::Mat3b Frame::depthImage() const
+  {
+    cv::Mat3b depth(depth_->rows(), depth_->cols());
+    depth = cv::Vec3b(0, 0, 0);
+    for(int y = 0; y < depth.rows; ++y)
+      for(int x = 0; x < depth.cols; ++x)
+	depth(y, x) = colorize(depth_->coeffRef(y, x) * 0.001, 0.3, 8);
+    return depth;
   }
   
 } // namespace rgbd

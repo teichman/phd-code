@@ -10,6 +10,7 @@
 #include <rgbd_sequence/stream_sequence.h>
 #include <xpl_calibration/frame_aligner.h>
 #include <xpl_calibration/loop_closer.h>
+#include <xpl_calibration/trajectory.h>
 
 class SlamVisualizer : public SharedLockable, public GridSearchViewHandler
 {
@@ -26,7 +27,9 @@ public:
   // TODO
   
   SlamVisualizer();
-  void run(rgbd::StreamSequence::ConstPtr sseq, const std::string& opcd_path);
+  void run(rgbd::StreamSequence::ConstPtr sseq,
+	   const std::string& opcd_path = "",
+	   const std::string& otraj_path = "");
   void setCamera(const std::string& camera_path);
   
 protected:
@@ -42,6 +45,9 @@ protected:
   bool quitting_;
   pcl::VoxelGrid<rgbd::Point> vg_;
   std::string opcd_path_;
+  std::string otraj_path_;
+  rgbd::Frame curr_frame_;
+  rgbd::Frame prev_frame_;
   
   void slamThreadFunction();
   void visualizationThreadFunction();

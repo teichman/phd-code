@@ -12,7 +12,10 @@ namespace rgbd
 
   typedef pcl::PointXYZRGB Point;
   typedef pcl::PointCloud<Point> Cloud;
-  typedef Eigen::Matrix<unsigned short, Eigen::Dynamic, Eigen::Dynamic> DepthMat;
+  // PCL and OpenCV are row-major, but lots of work is required to make this change.
+  // eigen_extensions serialization and re-collection of data, probably.
+  //typedef Eigen::Matrix<unsigned short, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> DepthMat;
+  typedef Eigen::Matrix<unsigned short, Eigen::Dynamic, Eigen::Dynamic> DepthMat;  
   typedef boost::shared_ptr<DepthMat> DepthMatPtr;
   typedef boost::shared_ptr<const DepthMat> DepthMatConstPtr;
   
@@ -40,6 +43,11 @@ namespace rgbd
     DepthMatPtr depth_;
     cv::Mat3b img_;
     double timestamp_;
+
+    cv::Mat3b depthImage() const;
+
+  protected:
+    cv::Vec3b colorize(double depth, double min_range, double max_range) const;
   };
   
   class PrimeSenseModel : public Serializable

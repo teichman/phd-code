@@ -39,6 +39,8 @@ public:
   
   size_t numNodes() const { return optimizer_.vertices().size(); }
   size_t numEdges() const { return optimizer_.edges().size(); }
+  //! Number of edges for vertex idx.
+  size_t numEdges(size_t idx) const;
   
 protected:
   g2o::SparseOptimizer optimizer_;
