@@ -51,7 +51,7 @@ view_slam_result-$(1): slam_results/$(1).traj $(CAMERAS_PATH)/$(1).cam
 
 slam_videos/$(1): $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
 	mkdir -p $$(@D)/$(1)
-	cd $$(@D)/$(1) && GRIDSEARCH_VIS=1 rosrun xpl_calibration slam_test $$< $(1).traj $(1).pcd --cam $(CAMERAS_PATH)/$(1).cam --save-imgs
+	cd $$(@D)/$(1) && GRIDSEARCH_VIS=1 rosrun xpl_calibration slam_test $$< $(1).pcd $(1).traj --cam $(CAMERAS_PATH)/$(1).cam --save-imgs
 	cd $$(@D)/$(1) && mkdir slam-png && mv slam*.png slam-png/
 	cd $$(@D)/$(1) && mkdir montage-png && mv montage*.png montage-png/	
 	cd $$(@D)/$(1) && mencoder "mf://slam-png/slam*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(1)-alignment.avi
