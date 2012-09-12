@@ -149,6 +149,11 @@ namespace rgbd
 
   Eigen::VectorXd PrimeSenseModel::computeFeatures(const ProjectivePoint& ppt) const
   {
+    return computeFeaturesMUV(ppt);
+  }
+
+  Eigen::VectorXd PrimeSenseModel::computeFeaturesMUV(const ProjectivePoint& ppt) const
+  {
     VectorXd ms(4);
     double m = (ppt.z_ * 0.001) / 10.0;  // z_ is in millimeters, and we want to scale it so that 10 meters is equal to 1.
     ms << 1, m, m*m, m*m*m;
@@ -159,6 +164,17 @@ namespace rgbd
     double v = (double)ppt.v_ / (double)height_;
     vs << 1, v, v*v, v*v*v;
     return vectorize(vectorize(ms * us.transpose()) * vs.transpose());  // f[1] is measured depth in decameters.
+  }
+
+  Eigen::VectorXd PrimeSenseModel::computeFeaturesMU(const ProjectivePoint& ppt) const
+  {
+    VectorXd ms(4);
+    double m = (ppt.z_ * 0.001) / 10.0;  // z_ is in millimeters, and we want to scale it so that 10 meters is equal to 1.
+    ms << 1, m, m*m, m*m*m;
+    VectorXd us(4);
+    double u = (double)ppt.u_ / (double)width_;
+    us << 1, u, u*u, u*u*u;
+    return vectorize(ms * us.transpose());
   }
 
   int PrimeSenseModel::numFeatures() const
@@ -265,7 +281,7 @@ namespace rgbd
 
   void PrimeSenseModel::resetDepthDistortionModel()
   {
-    weights_ = VectorXd::Zero(64);
+    weights_ = VectorXd::Zero(numFeatures());
     weights_(1) = 10;  // feature 1 is measured depth in decameters.
   }
 

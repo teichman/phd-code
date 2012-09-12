@@ -96,6 +96,9 @@ namespace rgbd
   protected:
     // double fx_inv_;
     // double fy_inv_;
+
+    Eigen::VectorXd computeFeaturesMU(const ProjectivePoint& ppt) const;
+    Eigen::VectorXd computeFeaturesMUV(const ProjectivePoint& ppt) const;
   };
   
 

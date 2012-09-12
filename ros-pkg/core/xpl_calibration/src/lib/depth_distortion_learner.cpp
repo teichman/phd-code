@@ -85,9 +85,6 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
   VectorXd Y(num_tr_ex);
 
   int idx = 0;
-  VectorXd us(4);
-  VectorXd vs(4);
-  VectorXd ms(4);
   VectorXd measurements(num_tr_ex);
   ProjectivePoint ppt;
   for(size_t y = 0; y < statistics_.size(); ++y) {
