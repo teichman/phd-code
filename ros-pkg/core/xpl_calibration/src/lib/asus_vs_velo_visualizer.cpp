@@ -40,7 +40,7 @@ Cloud::Ptr VeloSequence::getCloud(size_t idx) const
 }
 
 AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, VeloSequence::ConstPtr vseq) :
-  skip_(20),
+  skip_(5),
   num_pixel_plots_(20),
   sseq_(sseq),
   vseq_(vseq),
@@ -207,6 +207,7 @@ void AsusVsVeloVisualizer::fitModel()
     if(min_dt > 1.0 / 60.0)
       continue;
 
+    cout << "Adding frame " << i << endl;
     Frame frame;
     sseq_->readFrame(idx, &frame);
     ddl_.addFrame(frame, filterVelo(vseq_->getCloud(i)), cal_.veloToAsus());
@@ -267,9 +268,9 @@ void AsusVsVeloVisualizer::run()
     case 'v':
       play(true);
       break;
-    case 'V':
-      visualizeDistortion();
-      break;
+    // case 'V':
+    //   visualizeDistortion();
+    //   break;
     case 'M':
       fitModel();
       break;
@@ -563,110 +564,110 @@ void AsusVsVeloVisualizer::saveAll(std::string tag) const
   saveIntrinsics(tag);
 }
 
-void AsusVsVeloVisualizer::visualizeDistortion()
-{
-  if(ddl_.statistics_.empty()) {
-    cout << "You must accumulate statistics first." << endl;
-    return;
-  }
-  cout << "Visualizing distortion." << endl;
+// void AsusVsVeloVisualizer::visualizeDistortion()
+// {
+//   if(ddl_.statistics_.empty()) {
+//     cout << "You must accumulate statistics first." << endl;
+//     return;
+//   }
+//   cout << "Visualizing distortion." << endl;
   
-  // -- Generate a heat map.
-  int width = asus_->width;
-  int height = asus_->height;
-  Eigen::MatrixXd mean(height, width);
-  Eigen::MatrixXd stdev(height, width);
-  Eigen::MatrixXd counts(height, width);
-  mean.setZero();
-  stdev.setZero();
-  counts.setZero();
-  for(int y = 0; y < mean.rows(); ++y) 
-    for(int x = 0; x < mean.cols(); ++x) 
-      ddl_.statistics_[y][x].stats(&mean.coeffRef(y, x), &stdev.coeffRef(y, x), &counts.coeffRef(y, x));
+//   // -- Generate a heat map.
+//   int width = asus_->width;
+//   int height = asus_->height;
+//   Eigen::MatrixXd mean(height, width);
+//   Eigen::MatrixXd stdev(height, width);
+//   Eigen::MatrixXd counts(height, width);
+//   mean.setZero();
+//   stdev.setZero();
+//   counts.setZero();
+//   for(int y = 0; y < mean.rows(); ++y) 
+//     for(int x = 0; x < mean.cols(); ++x) 
+//       ddl_.statistics_[y][x].stats(&mean.coeffRef(y, x), &stdev.coeffRef(y, x), &counts.coeffRef(y, x));
   
-  mpliExport(mean);
-  mpliExport(stdev);
-  mpliExport(counts);
-  mpliPrintSize();
-  mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_multipliers_image.py");
+//   mpliExport(mean);
+//   mpliExport(stdev);
+//   mpliExport(counts);
+//   mpliPrintSize();
+//   mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_multipliers_image.py");
 
-  // -- Range vs u image.
-  {
-    double max_range = 13;
-    int num_range_bins = 500;
-    double bin_size = max_range / (double)num_range_bins;
+//   // -- Range vs u image.
+//   {
+//     double max_range = 13;
+//     int num_range_bins = 500;
+//     double bin_size = max_range / (double)num_range_bins;
     
-    Eigen::ArrayXXd mean(num_range_bins, width);
-    Eigen::ArrayXXd counts(num_range_bins, width);
-    mean.setZero();
-    counts.setZero();
-    for(size_t y = 0; y < ddl_.statistics_.size(); ++y)  {
-      ROS_ASSERT((int)ddl_.statistics_[y].size() == width);
-      for(size_t x = 0; x < ddl_.statistics_[y].size(); ++x) {
-	for(size_t i = 0; i < ddl_.statistics_[y][x].asus_.size(); ++i) { 
-	  double range = ddl_.statistics_[y][x].velo_[i];
-	  int range_bin = (max_range - range) / bin_size;
-	  if(range_bin >= num_range_bins || range_bin < 0)
-	    continue;
+//     Eigen::ArrayXXd mean(num_range_bins, width);
+//     Eigen::ArrayXXd counts(num_range_bins, width);
+//     mean.setZero();
+//     counts.setZero();
+//     for(size_t y = 0; y < ddl_.statistics_.size(); ++y)  {
+//       ROS_ASSERT((int)ddl_.statistics_[y].size() == width);
+//       for(size_t x = 0; x < ddl_.statistics_[y].size(); ++x) {
+// 	for(size_t i = 0; i < ddl_.statistics_[y][x].asus_.size(); ++i) { 
+// 	  double range = ddl_.statistics_[y][x].velo_[i];
+// 	  int range_bin = (max_range - range) / bin_size;
+// 	  if(range_bin >= num_range_bins || range_bin < 0)
+// 	    continue;
 	  
-	  double mult = range / ddl_.statistics_[y][x].asus_[i];
-	  counts(range_bin, x) += 1;
-	  mean(range_bin, x) += mult;
-	}
-      }
-    }
-    mean /= counts;
-    for(int y = 0; y < mean.rows(); ++y)
-      for(int x = 0; x < mean.cols(); ++x)
-	if(isnan(mean(y, x)))
-	  mean(y, x) = 1;
+// 	  double mult = range / ddl_.statistics_[y][x].asus_[i];
+// 	  counts(range_bin, x) += 1;
+// 	  mean(range_bin, x) += mult;
+// 	}
+//       }
+//     }
+//     mean /= counts;
+//     for(int y = 0; y < mean.rows(); ++y)
+//       for(int x = 0; x < mean.cols(); ++x)
+// 	if(isnan(mean(y, x)))
+// 	  mean(y, x) = 1;
         
-    Eigen::ArrayXXd stdev(num_range_bins, width);
-    stdev.setZero();
-    for(size_t y = 0; y < ddl_.statistics_.size(); ++y)  { 
-      for(size_t x = 0; x < ddl_.statistics_[y].size(); ++x) {
-	for(size_t i = 0; i < ddl_.statistics_[y][x].asus_.size(); ++i) { 
-	  double range = ddl_.statistics_[y][x].velo_[i];
-	  int range_bin = (max_range - range) / bin_size;
-	  if(range_bin >= num_range_bins || range_bin < 0)
-	    continue;
+//     Eigen::ArrayXXd stdev(num_range_bins, width);
+//     stdev.setZero();
+//     for(size_t y = 0; y < ddl_.statistics_.size(); ++y)  { 
+//       for(size_t x = 0; x < ddl_.statistics_[y].size(); ++x) {
+// 	for(size_t i = 0; i < ddl_.statistics_[y][x].asus_.size(); ++i) { 
+// 	  double range = ddl_.statistics_[y][x].velo_[i];
+// 	  int range_bin = (max_range - range) / bin_size;
+// 	  if(range_bin >= num_range_bins || range_bin < 0)
+// 	    continue;
 	  
-	  double mult = range / ddl_.statistics_[y][x].asus_[i];
-	  stdev(range_bin, x) += pow(mult - mean(range_bin, x), 2);
-	}
-      }
-    }
-    stdev = (stdev / counts).sqrt();
-    for(int y = 0; y < stdev.rows(); ++y)
-      for(int x = 0; x < stdev.cols(); ++x)
-	if(isnan(stdev(y, x)))
-	  stdev(y, x) = 0;
+// 	  double mult = range / ddl_.statistics_[y][x].asus_[i];
+// 	  stdev(range_bin, x) += pow(mult - mean(range_bin, x), 2);
+// 	}
+//       }
+//     }
+//     stdev = (stdev / counts).sqrt();
+//     for(int y = 0; y < stdev.rows(); ++y)
+//       for(int x = 0; x < stdev.cols(); ++x)
+// 	if(isnan(stdev(y, x)))
+// 	  stdev(y, x) = 0;
 
-    mpliExport(max_range);
-    mpliExport(bin_size);
-    mpliNamedExport("mean", mean);
-    mpliNamedExport("stdev", stdev);
-    mpliNamedExport("counts", counts);
-    mpliPrintSize();
-    mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_u_range_multipliers.py");
-  }
+//     mpliExport(max_range);
+//     mpliExport(bin_size);
+//     mpliNamedExport("mean", mean);
+//     mpliNamedExport("stdev", stdev);
+//     mpliNamedExport("counts", counts);
+//     mpliPrintSize();
+//     mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_u_range_multipliers.py");
+//   }
   
-  // -- For some random pixels, generate a scatter plot of asus range vs velo range.
-  srand(0);  // All runs should produce plots for the same set of pixels.
-  for(int i = 0; i < num_pixel_plots_; ++i) {
-    int u = rand() % width;
-    int v = rand() % height;
-    const PixelStats& ps = ddl_.statistics_[v][u];
-    if(!ps.valid())
-      continue;
+//   // -- For some random pixels, generate a scatter plot of asus range vs velo range.
+//   srand(0);  // All runs should produce plots for the same set of pixels.
+//   for(int i = 0; i < num_pixel_plots_; ++i) {
+//     int u = rand() % width;
+//     int v = rand() % height;
+//     const PixelStats& ps = ddl_.statistics_[v][u];
+//     if(!ps.valid())
+//       continue;
 
-    cout << "Plotting distortion for pixel " << u << " " << v << endl;
-    mpliNamedExport("velo", ps.velo_);
-    mpliNamedExport("asus", ps.asus_);
-    mpliNamedExport<int>("width", width);
-    mpliNamedExport<int>("height", height);
-    mpliExport(u);
-    mpliExport(v);
-    mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_beam_scatter.py");
-  }
-}
+//     cout << "Plotting distortion for pixel " << u << " " << v << endl;
+//     mpliNamedExport("velo", ps.velo_);
+//     mpliNamedExport("asus", ps.asus_);
+//     mpliNamedExport<int>("width", width);
+//     mpliNamedExport<int>("height", height);
+//     mpliExport(u);
+//     mpliExport(v);
+//     mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_beam_scatter.py");
+//   }
+// }

@@ -72,14 +72,14 @@ PrimeSenseModel SlamCalibrator::calibrate() const
       learner.addFrame(frame, map, transform);
 
       // -- Visualize.
-      cout << "Visualizing " << j << " / " << traj.size() << endl;
-      cv::imshow("measurement", frame.depthImage());
-      rgbd::Cloud transformed;
-      pcl::transformPointCloud(*map, transformed, transform);
-      Frame mapframe;
-      initial_model.cloudToFrame(transformed, &mapframe);
-      cv::imshow("map", mapframe.depthImage());
-      cv::waitKey(300);
+      // cout << "Visualizing " << j << " / " << traj.size() << endl;
+      // cv::imshow("measurement", frame.depthImage());
+      // rgbd::Cloud transformed;
+      // pcl::transformPointCloud(*map, transformed, transform);
+      // Frame mapframe;
+      // initial_model.cloudToFrame(transformed, &mapframe);
+      // cv::imshow("map", mapframe.depthImage());
+      // cv::waitKey(300);
     }
   }
 

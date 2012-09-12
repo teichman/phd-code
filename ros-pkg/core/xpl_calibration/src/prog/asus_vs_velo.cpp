@@ -17,7 +17,7 @@ int main(int argc, char** argv)
     ("intrinsics", bpo::value<string>(), "Use pre-computed PrimeSense model")
     ("compute-extrinsics", "Automatically start extrinsics search")
     ("compute-intrinsics", "Automatically start intrinsics search")
-    ("visualize-distortion", "Visualize the distortion.  Extrinsics must be provided.")
+//    ("visualize-distortion", "Visualize the distortion.  Extrinsics must be provided.")
     ("skip", bpo::value<int>()->default_value(20), "For use with --visualize-distortion.  Use every kth frame for accumulating statistics.")
     ("num-pixel-plots", bpo::value<int>()->default_value(20), "For use with --visualize-distortion.  Number of random pixel plots to generate.")
     ;
@@ -76,14 +76,14 @@ int main(int argc, char** argv)
     return 0;
   }    
   
-  if(opts.count("visualize-distortion")) {
-    ROS_ASSERT(opts.count("extrinsics"));
-    avv.skip_ = opts["skip"].as<int>();
-    avv.num_pixel_plots_ = opts["num-pixel-plots"].as<int>();
-    avv.fitModel();  // We don't need the resulting model.  This accumulates and caches pixel statistics, which we do need.
-    avv.visualizeDistortion();
-    return 0;
-  }
+  // if(opts.count("visualize-distortion")) {
+  //   ROS_ASSERT(opts.count("extrinsics"));
+  //   avv.skip_ = opts["skip"].as<int>();
+  //   avv.num_pixel_plots_ = opts["num-pixel-plots"].as<int>();
+  //   avv.fitModel();  // We don't need the resulting model.  This accumulates and caches pixel statistics, which we do need.
+  //   avv.visualizeDistortion();
+  //   return 0;
+//}
     
   avv.run();
   

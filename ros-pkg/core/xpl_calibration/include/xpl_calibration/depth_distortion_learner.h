@@ -20,8 +20,6 @@ public:
 class DepthDistortionLearner
 {
 public:
-  std::vector< std::vector<PixelStats> > statistics_;
-  
   DepthDistortionLearner(const rgbd::PrimeSenseModel& initial_model);
   void addFrame(rgbd::Frame frame,
 		rgbd::Cloud::ConstPtr pcd,

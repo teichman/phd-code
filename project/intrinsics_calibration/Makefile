@@ -32,6 +32,18 @@ all:
 # -- Enumeration of targets for each sensor.
 define SENSOR_RULE_GENERATOR
 
+$(1)-visualize-slam-intrinsics: $(1)/asus_vs_velodyne/extrinsics $(1)/learned_model.psm
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--extrinsics $(1)/asus_vs_velodyne/extrinsics \
+	--intrinsics $(1)/learned_model.psm
+
+$(1)-visualize-avv-intrinsics: $(1)/asus_vs_velodyne/extrinsics $(1)/asus_vs_velodyne/intrinsics
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--extrinsics $(1)/asus_vs_velodyne/extrinsics \
+	--intrinsics $(1)/asus_vs_velodyne/intrinsics
+
 $(1)/asus_vs_velodyne/intrinsics: $(1)/asus_vs_velodyne/extrinsics
 	mkdir -p $$(@D)
 	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence --extrinsics extrinsics --compute-intrinsics
@@ -48,17 +60,20 @@ $(1)/asus_vs_velodyne/extrinsics:
 SLAM_RUNS_$(1) := $$(shell ls $(SLAM_DATA_PATH)/$(1))
 TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
 
+$(1)/learned_model.psm: $(1)/slam_results
+	rosrun xpl_calibration calibrate_slam \
+	--batch --omodel $$@ \
+	$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
+	$$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
+
+$(1)-visualize-slam: $(1)/slam_results
+	rosrun xpl_calibration calibrate_slam $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
+
 .PHONY: $(1)/slam_results
 $(1)/slam_results: $$(TRAJECTORIES_$(1))
 
 .PHONY: $(1)/slam_videos
 $(1)/slam_videos: $$(addprefix $(1)/slam_videos/, $$(addsuffix .avi, $$(SLAM_RUNS_$(1))))
-
-$(1)-visualize-calibration: $(1)/slam_results
-	rosrun xpl_calibration calibrate_slam $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
-
-$(1)/learned_model.psm: $(1)/slam_results
-	rosrun xpl_calibration calibrate_slam --batch $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
 
 endef
 $(foreach SENSOR,$(SENSORS),$(eval $(call SENSOR_RULE_GENERATOR,$(SENSOR))))
