@@ -32,21 +32,21 @@ LoopCloser::LoopCloser(rgbd::StreamSequence::ConstPtr sseq):
   fine_tune_(true),
   num_ransac_samples_(1000),
   min_ransac_inlier_percent_(0.1),
-  min_time_offset_(60),
-  min_pairwise_keypoint_dist_(0.02), //meters
-  max_feature_dist_(10),
-  ransac_max_inlier_dist_(0.04),
+  min_time_offset_(15),
+  min_pairwise_keypoint_dist_(0.04), //meters
+  max_feature_dist_(500),
+  ransac_max_inlier_dist_(0.02),
   k_(5),
   visualize_(false),
   keypoints_per_frame_(100),
   icp_max_avg_dist_(0.05),
   icp_max_inlier_dist_(0.04),
   icp_inlier_percent_(0.3),
-  max_mde_(0.05),
+  max_mde_(0.1),
   min_ransac_inliers_(5),
   min_bounding_length_(.04),
   fpfh_radius_(0.02),
-  harris_thresh_(10),
+  harris_thresh_(0.01),
   harris_margin_(50),
   use_3d_sift_(true),
   max_z_(3)
@@ -139,6 +139,7 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
     vector<cv::DMatch> matches_all;
     //matcher_.match(*cur_features, *old_features, matches_all);
     vector<vector<cv::DMatch> > matches_each;
+    if(old_features->rows < k_ || cur_features->rows < k_) continue;
     matcher_.knnMatch(*cur_features, *old_features, matches_each, k_);
     for(size_t j = 0; j < matches_each.size(); j++)
     {
@@ -344,7 +345,7 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
           {
           Frame frame_prev; sseq_->readFrame(old_t, &frame_prev);
           FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(sseq_->model_, frame, 
-            sseq_->model_, frame_prev));
+            sseq_->model_, frame_prev, max_z_, 0.25));
           double rx, ry, rz, tx, ty, tz;
           generateXYZYPR(trans_refined.inverse(), rx, ry, rz, tx, ty, tz);
           Eigen::ArrayXd trans_array(6); trans_array << rx, ry, rz, tx, ty, tz;
@@ -535,11 +536,11 @@ Eigen::Affine3f LoopCloser::alignFrames(const rgbd::Frame &frame0, const rgbd::F
         sseq_->model_, frame1, max_z_, 0.25));
 
   GridSearch gs(6);
-  gs.verbose_ = true;
+  gs.verbose_ = false;
   gs.view_handler_ = view_handler_;
   gs.objective_ = mde;
   gs.num_scalings_ = 3;
-  double max_res_rot = 3* M_PI/180;
+  double max_res_rot = 1.5* M_PI/180;
   double max_res_trans = 0.02;
   gs.max_resolutions_ << max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;
   int gr = 1;

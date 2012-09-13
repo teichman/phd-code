@@ -73,7 +73,7 @@ int main(int argc, char** argv)
   lc.k_ = 5;
   lc.min_time_offset_ = 30;
   lc.verification_type_ = MDE;
-  lc.max_mde_ = 0.02;
+  lc.max_mde_ = 0.1; //Without color was 0.02
   lc.harris_thresh_ = 0.01;
   lc.use_3d_sift_ = true;
   lc.fpfh_radius_ = 0.02;

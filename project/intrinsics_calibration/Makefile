@@ -32,6 +32,10 @@ SLAM_RUNS := $(shell ls $(SLAM_DATA_PATH))
 slam_videos: $(addprefix slam_videos/, $(SLAM_RUNS))
 .PHONY: slam_results
 slam_results: $(addprefix slam_results/, $(addsuffix .traj, $(SLAM_RUNS)))
+.PHONY: loop_closure_videos
+loop_closure_videos: $(addprefix loop_closure_videos/, $(SLAM_RUNS))
+.PHONY: loop_closure_results
+loop_closure_results: $(addprefix loop_closure_results/, $(addsuffix .traj, $(SLAM_RUNS)))
 
 # -- Autocompletion is easier with this syntax.
 define SLAM_RULE_GENERATOR
@@ -49,6 +53,13 @@ user_defined_camera-$(1): $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam slam_r
 view_slam_result-$(1): slam_results/$(1).traj $(CAMERAS_PATH)/$(1).cam
 	rosrun pcl_bleeding pcd_viewer slam_results/$(1).pcd -cam $(CAMERAS_PATH)/$(1).cam
 
+view_loop_closure_result-$(1): loop_closure_results/$(1).traj $(CAMERAS_PATH)/$(1).cam
+	rosrun pcl_bleeding pcd_viewer loop_closure_results/$(1).pcd -cam $(CAMERAS_PATH)/$(1).cam
+
+test_loop_closure-$(1): $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
+	rosrun xpl_calibration test_loop_closure $$< 
+.PHONY: test_loop_closure-$(1)
+
 slam_videos/$(1): $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
 	mkdir -p $$(@D)/$(1)
 	cd $$(@D)/$(1) && GRIDSEARCH_VIS=1 rosrun xpl_calibration slam_test $$< $(1).traj $(1).pcd --cam $(CAMERAS_PATH)/$(1).cam --save-imgs
@@ -57,9 +68,27 @@ slam_videos/$(1): $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
 	cd $$(@D)/$(1) && mencoder "mf://slam-png/slam*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(1)-alignment.avi
 	cd $$(@D)/$(1) && mencoder "mf://montage-png/montage*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(1)-montage.avi
 
+slam_videos-$(1): slam_videos/$(1)
+.PHONY: slam_videos-$(1)
+
+loop_closure_videos/$(1): $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
+	mkdir -p $$(@D)/$(1)
+	cd $$(@D)/$(1) && GRIDSEARCH_VIS=1 rosrun xpl_calibration slam_test $$< $(1).traj $(1).pcd --cam $(CAMERAS_PATH)/$(1).cam --save-imgs --loop-closure
+	cd $$(@D)/$(1) && mkdir slam-png && mv slam*.png slam-png/
+	cd $$(@D)/$(1) && mkdir montage-png && mv montage*.png montage-png/	
+	cd $$(@D)/$(1) && mencoder "mf://slam-png/slam*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(1)-alignment.avi
+	cd $$(@D)/$(1) && mencoder "mf://montage-png/montage*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(1)-montage.avi
+
+loop_closure_videos-$(1): loop_closure_videos/$(1)
+.PHONY: loop_closure_videos-$(1)
+
 slam_results/$(1).traj: $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
 	mkdir -p $$(@D)
 	rosrun xpl_calibration slam_test $$< slam_results/$(1).pcd $$@ --cam $(CAMERAS_PATH)/$(1).cam
+
+loop_closure_results/$(1).traj: $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
+	mkdir -p $$(@D)
+	GRIDSEARCH_VIS=1 rosrun xpl_calibration slam_test $$< loop_closure_results/$(1).pcd $$@ --cam $(CAMERAS_PATH)/$(1).cam --loop-closure
 
 $(CAMERAS_PATH)/$(1).cam:
 	cp $(CAMERAS_PATH)/default.cam $$@

@@ -52,6 +52,9 @@ public:
   bool getLinkHypotheses(const rgbd::Frame &frame, size_t t, vector<size_t> &targets, 
       vector<Eigen::Affine3f> &transforms);
   void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
+  //! Fine tune a hypothesis
+  virtual Eigen::Affine3f fineTuneHypothesis(const rgbd::Frame &frame_cur, 
+      const rgbd::Frame &frame_prev, const Eigen::Affine3f &hypothesis);
 
   //! Flags
   bool fine_tune_;
@@ -94,9 +97,6 @@ protected:
   //! If true, returns a set of target frame indices and transforms (cur -> prev), before fine tuning
   virtual bool getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<size_t> &targets, 
       vector<Eigen::Affine3f> &transforms);
-  //! Fine tune a hypothesis
-  virtual Eigen::Affine3f fineTuneHypothesis(const rgbd::Frame &frame_cur, 
-      const rgbd::Frame &frame_prev, const Eigen::Affine3f &hypothesis);
   //! Align frames
   virtual Eigen::Affine3f alignFrames(const rgbd::Frame &frame0, const rgbd::Frame &frame1, 
       const Eigen::Affine3f &guess);

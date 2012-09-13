@@ -31,6 +31,8 @@ public:
 	   const std::string& opcd_path = "",
 	   const std::string& otraj_path = "");
   void setCamera(const std::string& camera_path);
+
+  void rebuild_map();
   
 protected:
   pcl::visualization::PCLVisualizer vis_;
@@ -48,6 +50,7 @@ protected:
   std::string otraj_path_;
   rgbd::Frame curr_frame_;
   rgbd::Frame prev_frame_;
+  std::vector<size_t> nodes_;
   
   void slamThreadFunction();
   void visualizationThreadFunction();
@@ -55,6 +58,8 @@ protected:
   void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
   //SDM added: loop closure
   LoopCloser::Ptr lc_;
+  string frame_text_;
+  bool needs_map_rebuild_;
 };
 
 #endif // SLAM_VISUALIZER_H
