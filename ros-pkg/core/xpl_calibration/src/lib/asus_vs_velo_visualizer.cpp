@@ -39,8 +39,8 @@ Cloud::Ptr VeloSequence::getCloud(size_t idx) const
   return pcd;
 }
 
-AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, VeloSequence::ConstPtr vseq) :
-  skip_(20),
+AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::Ptr sseq, VeloSequence::ConstPtr vseq) :
+  skip_(5),
   num_pixel_plots_(20),
   sseq_(sseq),
   vseq_(vseq),
@@ -51,10 +51,13 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, 
   velo_(new Cloud),
   asus_(new Cloud),
   vis_(new Cloud),
-  unwarp_(false),
-  ddl_(sseq->model_)
+  unwarp_(false)
 {
-  ROS_ASSERT(!sseq_->model_.hasDepthDistortionModel());
+  // Some older sequences have the old type of model which predicted z rather than distance multiplier.
+  // We'll just assume that all stream sequences have a default distortion model and that custom
+  // models are stored separetely.
+  sseq_->model_.resetDepthDistortionModel();
+  //ROS_ASSERT(!sseq_->model_.hasDepthDistortionModel());
   cout << "StreamSequence PrimeSenseModel: " << endl;
   cout << sseq_->model_.status("  ");
 
@@ -67,6 +70,7 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::ConstPtr sseq, 
 
   model_ = sseq->model_;
   model_.resetDepthDistortionModel();
+  updateVeloBounds();
 }
 
 void AsusVsVeloVisualizer::setInitialExtrinsics()
@@ -177,8 +181,10 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
   if(draw_asus) {
     Frame frame;
     sseq_->readFrame(asus_idx_, &frame);
-    if(unwarp_)
+    if(unwarp_) {
+      model_.use_distortion_model_ = true;
       model_.frameToCloud(frame, asus_.get());
+    }
     else
       sseq_->model_.frameToCloud(frame, asus_.get());
     
@@ -198,7 +204,9 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
 
 void AsusVsVeloVisualizer::fitModel()
 {
-  ddl_.clear();
+  PrimeSenseModel initial_model = sseq_->model_;
+  initial_model.resetDepthDistortionModel();
+  DepthDistortionLearner ddl(initial_model);
   
   for(size_t i = skip_; i < vseq_->size(); i += skip_) {
     double min_dt;
@@ -206,12 +214,13 @@ void AsusVsVeloVisualizer::fitModel()
     if(min_dt > 1.0 / 60.0)
       continue;
 
+    cout << "Adding frame " << i << endl;
     Frame frame;
     sseq_->readFrame(idx, &frame);
-    ddl_.addFrame(frame, filterVelo(vseq_->getCloud(i)), cal_.veloToAsus());
+    ddl.addFrame(frame, filterVelo(vseq_->getCloud(i)), cal_.veloToAsus());
   }
 
-  model_ = ddl_.fitModel();
+  model_ = ddl.fitModel();
   cout << "Learned new depth distortion model." << endl;
 }
 
@@ -266,22 +275,28 @@ void AsusVsVeloVisualizer::run()
     case 'v':
       play(true);
       break;
-    case 'V':
-      visualizeDistortion();
-      break;
+    // case 'V':
+    //   visualizeDistortion();
+    //   break;
     case 'M':
       fitModel();
       break;
     case 'c':
       calibrate();
       break;
+    // case 'f':
+    //   cout << "-- Frame stats --" << endl;
+    //   cout << "Velo timestamp: " << setprecision(16) << velo_->header.stamp.toSec() << endl;
+    //   cout << "Offset: " << cal_.offset_ << endl;
+    //   cout << "Asus timestamp: " << sseq_->timestamps_[asus_idx_] - sseq_start_ << endl;
+    //   cout << "velo + offset - asus: " << velo_->header.stamp.toSec() + cal_.offset_ - (sseq_->timestamps_[asus_idx_] - sseq_start_) << endl;
+    //   cout << "Loss for this frame: TODO" << endl;
+    //   break;
     case 'f':
-      cout << "-- Frame stats --" << endl;
-      cout << "Velo timestamp: " << setprecision(16) << velo_->header.stamp.toSec() << endl;
-      cout << "Offset: " << cal_.offset_ << endl;
-      cout << "Asus timestamp: " << sseq_->timestamps_[asus_idx_] - sseq_start_ << endl;
-      cout << "velo + offset - asus: " << velo_->header.stamp.toSec() + cal_.offset_ - (sseq_->timestamps_[asus_idx_] - sseq_start_) << endl;
-      cout << "Loss for this frame: TODO" << endl;
+      incrementFocalLength(10);
+      break;
+    case 'F':
+      incrementFocalLength(-10);
       break;
     case 'S':
       saveAll("manual");
@@ -373,6 +388,14 @@ void AsusVsVeloVisualizer::incrementOffset(double dt)
   cout << "Using offset: " << cal_.offset_ << endl;
 }
 
+void AsusVsVeloVisualizer::incrementFocalLength(double df)
+{
+  scopeLockWrite;
+  model_.fx_ += df;
+  model_.fy_ += df;
+  cout << "Focal length: " << model_.fx_ << " " << model_.fx_ << endl;
+}
+
 int AsusVsVeloVisualizer::findAsusIdx(double ts, double* dt_out) const
 {
   int idx = -1;
@@ -435,9 +458,9 @@ void AsusVsVeloVisualizer::calibrate()
   VeloToAsusCalibrator calibrator(model_, this);
   
   // -- Choose Velodyne keyframes.
-  int num_keyframes = 200;
-  int spacing = 10;
-  int buffer = 300;
+  int num_keyframes = 3000;
+  int buffer = 100;
+  int spacing = 5;
   int idx = buffer;
   while(true) {
     updateDisplay(idx, cal_.veloToAsus(), cal_.offset_);
@@ -551,9 +574,10 @@ void AsusVsVeloVisualizer::saveExtrinsics(std::string tag) const
 
 void AsusVsVeloVisualizer::saveIntrinsics(std::string tag) const
 {
-  string filename = "learned_primesense_model" + tag;
+  string filename = "intrinsics" + tag;
   model_.save(filename);
   cout << "Saved depth distortion model to \"" << filename << "\"" << endl;
+  cout << model_.status("  ");
 }
 
 void AsusVsVeloVisualizer::saveAll(std::string tag) const
@@ -562,110 +586,110 @@ void AsusVsVeloVisualizer::saveAll(std::string tag) const
   saveIntrinsics(tag);
 }
 
-void AsusVsVeloVisualizer::visualizeDistortion()
-{
-  if(ddl_.statistics_.empty()) {
-    cout << "You must accumulate statistics first." << endl;
-    return;
-  }
-  cout << "Visualizing distortion." << endl;
+// void AsusVsVeloVisualizer::visualizeDistortion()
+// {
+//   if(ddl_.statistics_.empty()) {
+//     cout << "You must accumulate statistics first." << endl;
+//     return;
+//   }
+//   cout << "Visualizing distortion." << endl;
   
-  // -- Generate a heat map.
-  int width = asus_->width;
-  int height = asus_->height;
-  Eigen::MatrixXd mean(height, width);
-  Eigen::MatrixXd stdev(height, width);
-  Eigen::MatrixXd counts(height, width);
-  mean.setZero();
-  stdev.setZero();
-  counts.setZero();
-  for(int y = 0; y < mean.rows(); ++y) 
-    for(int x = 0; x < mean.cols(); ++x) 
-      ddl_.statistics_[y][x].stats(&mean.coeffRef(y, x), &stdev.coeffRef(y, x), &counts.coeffRef(y, x));
+//   // -- Generate a heat map.
+//   int width = asus_->width;
+//   int height = asus_->height;
+//   Eigen::MatrixXd mean(height, width);
+//   Eigen::MatrixXd stdev(height, width);
+//   Eigen::MatrixXd counts(height, width);
+//   mean.setZero();
+//   stdev.setZero();
+//   counts.setZero();
+//   for(int y = 0; y < mean.rows(); ++y) 
+//     for(int x = 0; x < mean.cols(); ++x) 
+//       ddl_.statistics_[y][x].stats(&mean.coeffRef(y, x), &stdev.coeffRef(y, x), &counts.coeffRef(y, x));
   
-  mpliExport(mean);
-  mpliExport(stdev);
-  mpliExport(counts);
-  mpliPrintSize();
-  mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_multipliers_image.py");
+//   mpliExport(mean);
+//   mpliExport(stdev);
+//   mpliExport(counts);
+//   mpliPrintSize();
+//   mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_multipliers_image.py");
 
-  // -- Range vs u image.
-  {
-    double max_range = 13;
-    int num_range_bins = 500;
-    double bin_size = max_range / (double)num_range_bins;
+//   // -- Range vs u image.
+//   {
+//     double max_range = 13;
+//     int num_range_bins = 500;
+//     double bin_size = max_range / (double)num_range_bins;
     
-    Eigen::ArrayXXd mean(num_range_bins, width);
-    Eigen::ArrayXXd counts(num_range_bins, width);
-    mean.setZero();
-    counts.setZero();
-    for(size_t y = 0; y < ddl_.statistics_.size(); ++y)  {
-      ROS_ASSERT((int)ddl_.statistics_[y].size() == width);
-      for(size_t x = 0; x < ddl_.statistics_[y].size(); ++x) {
-	for(size_t i = 0; i < ddl_.statistics_[y][x].asus_.size(); ++i) { 
-	  double range = ddl_.statistics_[y][x].velo_[i];
-	  int range_bin = (max_range - range) / bin_size;
-	  if(range_bin >= num_range_bins || range_bin < 0)
-	    continue;
+//     Eigen::ArrayXXd mean(num_range_bins, width);
+//     Eigen::ArrayXXd counts(num_range_bins, width);
+//     mean.setZero();
+//     counts.setZero();
+//     for(size_t y = 0; y < ddl_.statistics_.size(); ++y)  {
+//       ROS_ASSERT((int)ddl_.statistics_[y].size() == width);
+//       for(size_t x = 0; x < ddl_.statistics_[y].size(); ++x) {
+// 	for(size_t i = 0; i < ddl_.statistics_[y][x].asus_.size(); ++i) { 
+// 	  double range = ddl_.statistics_[y][x].velo_[i];
+// 	  int range_bin = (max_range - range) / bin_size;
+// 	  if(range_bin >= num_range_bins || range_bin < 0)
+// 	    continue;
 	  
-	  double mult = range / ddl_.statistics_[y][x].asus_[i];
-	  counts(range_bin, x) += 1;
-	  mean(range_bin, x) += mult;
-	}
-      }
-    }
-    mean /= counts;
-    for(int y = 0; y < mean.rows(); ++y)
-      for(int x = 0; x < mean.cols(); ++x)
-	if(isnan(mean(y, x)))
-	  mean(y, x) = 1;
+// 	  double mult = range / ddl_.statistics_[y][x].asus_[i];
+// 	  counts(range_bin, x) += 1;
+// 	  mean(range_bin, x) += mult;
+// 	}
+//       }
+//     }
+//     mean /= counts;
+//     for(int y = 0; y < mean.rows(); ++y)
+//       for(int x = 0; x < mean.cols(); ++x)
+// 	if(isnan(mean(y, x)))
+// 	  mean(y, x) = 1;
         
-    Eigen::ArrayXXd stdev(num_range_bins, width);
-    stdev.setZero();
-    for(size_t y = 0; y < ddl_.statistics_.size(); ++y)  { 
-      for(size_t x = 0; x < ddl_.statistics_[y].size(); ++x) {
-	for(size_t i = 0; i < ddl_.statistics_[y][x].asus_.size(); ++i) { 
-	  double range = ddl_.statistics_[y][x].velo_[i];
-	  int range_bin = (max_range - range) / bin_size;
-	  if(range_bin >= num_range_bins || range_bin < 0)
-	    continue;
+//     Eigen::ArrayXXd stdev(num_range_bins, width);
+//     stdev.setZero();
+//     for(size_t y = 0; y < ddl_.statistics_.size(); ++y)  { 
+//       for(size_t x = 0; x < ddl_.statistics_[y].size(); ++x) {
+// 	for(size_t i = 0; i < ddl_.statistics_[y][x].asus_.size(); ++i) { 
+// 	  double range = ddl_.statistics_[y][x].velo_[i];
+// 	  int range_bin = (max_range - range) / bin_size;
+// 	  if(range_bin >= num_range_bins || range_bin < 0)
+// 	    continue;
 	  
-	  double mult = range / ddl_.statistics_[y][x].asus_[i];
-	  stdev(range_bin, x) += pow(mult - mean(range_bin, x), 2);
-	}
-      }
-    }
-    stdev = (stdev / counts).sqrt();
-    for(int y = 0; y < stdev.rows(); ++y)
-      for(int x = 0; x < stdev.cols(); ++x)
-	if(isnan(stdev(y, x)))
-	  stdev(y, x) = 0;
+// 	  double mult = range / ddl_.statistics_[y][x].asus_[i];
+// 	  stdev(range_bin, x) += pow(mult - mean(range_bin, x), 2);
+// 	}
+//       }
+//     }
+//     stdev = (stdev / counts).sqrt();
+//     for(int y = 0; y < stdev.rows(); ++y)
+//       for(int x = 0; x < stdev.cols(); ++x)
+// 	if(isnan(stdev(y, x)))
+// 	  stdev(y, x) = 0;
 
-    mpliExport(max_range);
-    mpliExport(bin_size);
-    mpliNamedExport("mean", mean);
-    mpliNamedExport("stdev", stdev);
-    mpliNamedExport("counts", counts);
-    mpliPrintSize();
-    mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_u_range_multipliers.py");
-  }
+//     mpliExport(max_range);
+//     mpliExport(bin_size);
+//     mpliNamedExport("mean", mean);
+//     mpliNamedExport("stdev", stdev);
+//     mpliNamedExport("counts", counts);
+//     mpliPrintSize();
+//     mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_u_range_multipliers.py");
+//   }
   
-  // -- For some random pixels, generate a scatter plot of asus range vs velo range.
-  srand(0);  // All runs should produce plots for the same set of pixels.
-  for(int i = 0; i < num_pixel_plots_; ++i) {
-    int u = rand() % width;
-    int v = rand() % height;
-    const PixelStats& ps = ddl_.statistics_[v][u];
-    if(!ps.valid())
-      continue;
+//   // -- For some random pixels, generate a scatter plot of asus range vs velo range.
+//   srand(0);  // All runs should produce plots for the same set of pixels.
+//   for(int i = 0; i < num_pixel_plots_; ++i) {
+//     int u = rand() % width;
+//     int v = rand() % height;
+//     const PixelStats& ps = ddl_.statistics_[v][u];
+//     if(!ps.valid())
+//       continue;
 
-    cout << "Plotting distortion for pixel " << u << " " << v << endl;
-    mpliNamedExport("velo", ps.velo_);
-    mpliNamedExport("asus", ps.asus_);
-    mpliNamedExport<int>("width", width);
-    mpliNamedExport<int>("height", height);
-    mpliExport(u);
-    mpliExport(v);
-    mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_beam_scatter.py");
-  }
-}
+//     cout << "Plotting distortion for pixel " << u << " " << v << endl;
+//     mpliNamedExport("velo", ps.velo_);
+//     mpliNamedExport("asus", ps.asus_);
+//     mpliNamedExport<int>("width", width);
+//     mpliNamedExport<int>("height", height);
+//     mpliExport(u);
+//     mpliExport(v);
+//     mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_beam_scatter.py");
+//   }
+// }

@@ -15,6 +15,8 @@ public:
   bool exists(size_t idx) const;
   void remove(size_t idx);
   size_t size() const { return transforms_.size(); }
+  size_t numValid() const;
+  std::string status(const std::string& prefix) const;
   
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);

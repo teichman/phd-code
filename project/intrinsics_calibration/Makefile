@@ -2,6 +2,10 @@
 ############################################################
 # -- Global settings.
 ############################################################
+
+.SECONDEXPANSION:	# Allows use of automatic vars in prerequisites.
+.SECONDARY:		# Prevents deletion of intermediate targets in a chain of implicit rules.
+
 export NUM_THREADS	:= 40
 SHELL			:= /bin/bash
 REPO_ROOT		:= $(shell dirname $$(dirname $$(dirname $$(rospack find dst))))
@@ -11,100 +15,109 @@ MAKEFILE		:= $(MAKE_ROOT)/Makefile
 # You'll need a symlink in your project dir to the data.
 # This dir has subdirectories of asus_vs_velodyne
 DATA_PATH		:= $(MAKE_ROOT)/data
-AVV_PATH		:= $(DATA_PATH)/asus_vs_velodyne
+
 SLAM_DATA_PATH		:= $(DATA_PATH)/slam_sequences
 CAMERAS_PATH		:= $(MAKE_ROOT)/camera_angles
+SENSORS			:= $(shell ls $(SLAM_DATA_PATH))
+AVV_PATH		:= $(DATA_PATH)/asus_vs_velodyne
+AVV_PATH_xpl01		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_01_taketwo-09-13-2012_00-09-54
+AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-09-12-2012_23-35-53
+AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
+AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
-.SECONDEXPANSION:	# Allows use of automatic vars in prerequisites.
-.SECONDARY:		# Prevents deletion of intermediate targets in a chain of implicit rules.
+SLAM_RUNS_xpl01 :=	xpl001-seq004 \
+			xpl001-seq005 
 
 all:
 	@echo You should probably be more specific.
 
 
 ############################################################
-# SLAM
+# Experiments
 ############################################################
 
-SLAM_RUNS := $(shell ls $(SLAM_DATA_PATH))
 
-.PHONY: slam_videos
-slam_videos: $(addprefix slam_videos/, $(SLAM_RUNS))
-.PHONY: slam_results
-slam_results: $(addprefix slam_results/, $(addsuffix .traj, $(SLAM_RUNS)))
-.PHONY: loop_closure_videos
-loop_closure_videos: $(addprefix loop_closure_videos/, $(SLAM_RUNS))
-.PHONY: loop_closure_results
-loop_closure_results: $(addprefix loop_closure_results/, $(addsuffix .traj, $(SLAM_RUNS)))
+# -- Enumeration of targets for each sensor.
+define SENSOR_RULE_GENERATOR
 
-# -- Autocompletion is easier with this syntax.
-define SLAM_RULE_GENERATOR
+$(1)-visualize-slam-intrinsics: $(1)/asus_vs_velodyne/extrinsics $(1)/learned_model.psm
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--extrinsics $(1)/asus_vs_velodyne/extrinsics \
+	--intrinsics $(1)/learned_model.psm
 
-# TODO: Reorganize by sensor.
-#calibration_results/$(1).psm: slam_results/$(1).traj #$(CAMERAS_PATH)/$(1).cam
-#	rosrun xpl_calibration calibrate_slam 
+$(1)-visualize-avv-intrinsics: $(1)/asus_vs_velodyne/extrinsics $(1)/asus_vs_velodyne/intrinsics
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--extrinsics $(1)/asus_vs_velodyne/extrinsics \
+	--intrinsics $(1)/asus_vs_velodyne/intrinsics
+
+$(1)/asus_vs_velodyne/intrinsics: $(1)/asus_vs_velodyne/extrinsics
+	mkdir -p $$(@D)
+	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence --extrinsics extrinsics --compute-intrinsics
+
+$(1)-visualize-avv-extrinsics: $(1)/asus_vs_velodyne/extrinsics
+	rosrun xpl_calibration asus_vs_velo $$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence --extrinsics $$<
+
+$(1)/asus_vs_velodyne/extrinsics:
+	mkdir -p $$(@D)
+	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence --compute-extrinsics
+	cd $$(@D) && mkdir gridsearch
+	cd $$(@D) && mv gridsearch*.png gridsearch/
+
+#SLAM_RUNS_$(1) := $$(shell ls $(SLAM_DATA_PATH)/$(1))
+TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
+
+$(1)/learned_model.psm: $$(TRAJECTORIES_$(1))
+	rosrun xpl_calibration calibrate_slam \
+	--batch --omodel $$@ \
+	$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
+	$$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
+
+$(1)-visualize-slam: $$(TRAJECTORIES_$(1))
+	rosrun xpl_calibration calibrate_slam $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
+
+.PHONY: $(1)/slam_results
+$(1)/slam_results: $$(TRAJECTORIES_$(1))
+
+.PHONY: $(1)/slam_videos
+$(1)/slam_videos: $$(addprefix $(1)/slam_videos/, $$(addsuffix .avi, $$(SLAM_RUNS_$(1))))
+
+endef
+$(foreach SENSOR,$(SENSORS),$(eval $(call SENSOR_RULE_GENERATOR,$(SENSOR))))
+
+
+# -- Enumeration of targets for each run of each sensor.
+define SENSOR_RUN_RULE_GENERATOR
 
 # Press j to take a screenshot from the angle you want.
-user_defined_camera-$(1): $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam slam_results/$(1).traj
-	rosrun pcl_bleeding pcd_viewer slam_results/$(1).pcd -cam $(CAMERAS_PATH)/$(1).cam
-	mv `ls screenshot*.cam -tr | tail -n1` $(CAMERAS_PATH)/$(1).cam
+$(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam slam_results/$(2).traj
+	rosrun pcl_bleeding pcd_viewer slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
+	mv `ls screenshot*.cam -tr | tail -n1` $(CAMERAS_PATH)/$(1)/$(2).cam
 	rm `ls screenshot*.png -tr | tail -n1`
 
-view_slam_result-$(1): slam_results/$(1).traj $(CAMERAS_PATH)/$(1).cam
-	rosrun pcl_bleeding pcd_viewer slam_results/$(1).pcd -cam $(CAMERAS_PATH)/$(1).cam
+$(1)-visualize-slam-result-$(2): slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
+	rosrun pcl_bleeding pcd_viewer slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
 
-view_loop_closure_result-$(1): loop_closure_results/$(1).traj $(CAMERAS_PATH)/$(1).cam
-	rosrun pcl_bleeding pcd_viewer loop_closure_results/$(1).pcd -cam $(CAMERAS_PATH)/$(1).cam
+$(1)/slam_videos/$(2).avi: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
+	mkdir -p $$(@D)/$(2)
+	cd $$(@D)/$(2) && GRIDSEARCH_VIS=1 rosrun xpl_calibration slam_test $$< $(2).pcd $(2).traj --cam $(CAMERAS_PATH)/$(1)/$(2).cam --save-imgs --loop-closure
+	cd $$(@D)/$(2) && mkdir slam-png && mv slam*.png slam-png/
+	cd $$(@D)/$(2) && mkdir montage-png && mv montage*.png montage-png/	
+	cd $$(@D)/$(2) && mencoder "mf://slam-png/slam*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(2)-alignment.avi
+	cd $$(@D)/$(2) && mencoder "mf://montage-png/montage*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(2)-montage.avi
 
-test_loop_closure-$(1): $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
-	rosrun xpl_calibration test_loop_closure $$< 
-.PHONY: test_loop_closure-$(1)
-
-slam_videos/$(1): $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
-	mkdir -p $$(@D)/$(1)
-	cd $$(@D)/$(1) && GRIDSEARCH_VIS=1 rosrun xpl_calibration slam_test $$< $(1).traj $(1).pcd --cam $(CAMERAS_PATH)/$(1).cam --save-imgs
-	cd $$(@D)/$(1) && mkdir slam-png && mv slam*.png slam-png/
-	cd $$(@D)/$(1) && mkdir montage-png && mv montage*.png montage-png/	
-	cd $$(@D)/$(1) && mencoder "mf://slam-png/slam*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(1)-alignment.avi
-	cd $$(@D)/$(1) && mencoder "mf://montage-png/montage*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(1)-montage.avi
-
-slam_videos-$(1): slam_videos/$(1)
-.PHONY: slam_videos-$(1)
-
-loop_closure_videos/$(1): $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
-	mkdir -p $$(@D)/$(1)
-	cd $$(@D)/$(1) && GRIDSEARCH_VIS=1 rosrun xpl_calibration slam_test $$< $(1).traj $(1).pcd --cam $(CAMERAS_PATH)/$(1).cam --save-imgs --loop-closure
-	cd $$(@D)/$(1) && mkdir slam-png && mv slam*.png slam-png/
-	cd $$(@D)/$(1) && mkdir montage-png && mv montage*.png montage-png/	
-	cd $$(@D)/$(1) && mencoder "mf://slam-png/slam*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(1)-alignment.avi
-	cd $$(@D)/$(1) && mencoder "mf://montage-png/montage*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(1)-montage.avi
-
-loop_closure_videos-$(1): loop_closure_videos/$(1)
-.PHONY: loop_closure_videos-$(1)
-
-slam_results/$(1).traj: $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
+$(1)/slam_results/$(2).traj: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
 	mkdir -p $$(@D)
-	rosrun xpl_calibration slam_test $$< slam_results/$(1).pcd $$@ --cam $(CAMERAS_PATH)/$(1).cam
+	rosrun xpl_calibration slam_test $$< $$(@D)/$(2).pcd $$@ --cam $(CAMERAS_PATH)/$(1)/$(2).cam --loop-closure
 
-loop_closure_results/$(1).traj: $(SLAM_DATA_PATH)/$(1) $(CAMERAS_PATH)/$(1).cam
+$(CAMERAS_PATH)/$(1)/$(2).cam:
 	mkdir -p $$(@D)
-	GRIDSEARCH_VIS=1 rosrun xpl_calibration slam_test $$< loop_closure_results/$(1).pcd $$@ --cam $(CAMERAS_PATH)/$(1).cam --loop-closure
-
-$(CAMERAS_PATH)/$(1).cam:
 	cp $(CAMERAS_PATH)/default.cam $$@
 
 endef
-$(foreach VAL,$(SLAM_RUNS),$(eval $(call SLAM_RULE_GENERATOR,$(VAL))))
+$(foreach SENSOR,$(SENSORS),$(foreach RUN,$(shell ls $(SLAM_DATA_PATH)/$(SENSOR)),$(eval $(call SENSOR_RUN_RULE_GENERATOR,$(SENSOR),$(RUN)))))
 
-#visualize_slam-%: slam_sequences/%/trajectory_estimate.txt
-#	rosrun slam_interface view_reconstruction $(SLAM_DATA_PATH)/$*/ slam_sequences/$*/$*_RGBDSLAM/trajectory_estimate.txt
-
-#slam_trajectories: $(addsuffix /trajectory_estimate.txt, $(addprefix slam_sequences/, $(SLAM_RUNS)))
-#slam_sequences/%/trajectory_estimate.txt:
-#	mkdir -p $(@D)
-#	roslaunch slam_interface sseq_slam.launch sseq:=$(SLAM_DATA_PATH)/$*
-#	mv $(SLAM_DATA_PATH)/$*_RGBDSLAM $(@D)
-#	cp $(@D)/$*_RGBDSLAM/trajectory_estimate.txt $@
 
 ############################################################
 # Asus vs Velodyne
@@ -119,12 +132,6 @@ asus_vs_velodyne/%/imagery: asus_vs_velodyne/%/extrinsics
 	mkdir -p $@
 	cd $(@D) && rosrun xpl_calibration asus_vs_velo $(AVV_PATH)/$*/asus $(AVV_PATH)/$*/velodyne --extrinsics extrinsics --visualize-distortion --skip=1 --num-pixel-plots 100
 	cd $(@D) && mv *.png *.pdf imagery/
-
-asus_vs_velodyne/%/extrinsics:
-	mkdir -p $(@D)
-	cd $(@D) && rosrun xpl_calibration asus_vs_velo $(AVV_PATH)/$*/asus $(AVV_PATH)/$*/velodyne --compute-extrinsics
-	mkdir gridsearch
-	mv gridsearch*.png gridsearch/
 
 
 visualize_avv-%: asus_vs_velodyne/%/extrinsics

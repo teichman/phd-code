@@ -133,21 +133,24 @@ namespace rgbd
       pt->z = std::numeric_limits<float>::quiet_NaN();
     }
     else {
-      if(use_distortion_model_) {
-	VectorXd features = computeFeatures(ppt);
-	pt->z = weights_.dot(features);
-      }
-      else
-	pt->z = ppt.z_ * 0.001;
-      
+      pt->z = ppt.z_ * 0.001;
       pt->x = pt->z * (ppt.u_ - cx_) / fx_;
       pt->y = pt->z * (ppt.v_ - cy_) / fy_;
-      // pt->x = pt->z * (ppt.u_ - cx_) * fx_inv_;
-      // pt->y = pt->z * (ppt.v_ - cy_) * fy_inv_;
+
+      if(use_distortion_model_) { 
+	VectorXd features = computeFeatures(ppt);
+	double mult = weights_.dot(features);
+	pt->getVector3fMap() *= mult;
+      }
     }
   }
 
   Eigen::VectorXd PrimeSenseModel::computeFeatures(const ProjectivePoint& ppt) const
+  {
+    return computeFeaturesMUV(ppt);
+  }
+
+  Eigen::VectorXd PrimeSenseModel::computeFeaturesMUV(const ProjectivePoint& ppt) const
   {
     VectorXd ms(4);
     double m = (ppt.z_ * 0.001) / 10.0;  // z_ is in millimeters, and we want to scale it so that 10 meters is equal to 1.
@@ -159,6 +162,17 @@ namespace rgbd
     double v = (double)ppt.v_ / (double)height_;
     vs << 1, v, v*v, v*v*v;
     return vectorize(vectorize(ms * us.transpose()) * vs.transpose());  // f[1] is measured depth in decameters.
+  }
+
+  Eigen::VectorXd PrimeSenseModel::computeFeaturesMU(const ProjectivePoint& ppt) const
+  {
+    VectorXd ms(4);
+    double m = (ppt.z_ * 0.001) / 10.0;  // z_ is in millimeters, and we want to scale it so that 10 meters is equal to 1.
+    ms << 1, m, m*m, m*m*m;
+    VectorXd us(4);
+    double u = (double)ppt.u_ / (double)width_;
+    us << 1, u, u*u, u*u*u;
+    return vectorize(ms * us.transpose());
   }
 
   int PrimeSenseModel::numFeatures() const
@@ -235,11 +249,18 @@ namespace rgbd
 
   bool PrimeSenseModel::hasDepthDistortionModel() const
   {
+    // bool has = false;
+    // for(int i = 0; i < weights_.rows(); ++i) {
+    //   if(i == 1 && weights_(i) != 10)
+    // 	has = true;
+    //   if(i != 1 && weights_(i) != 0)
+    // 	has = true;
+    // }
     bool has = false;
     for(int i = 0; i < weights_.rows(); ++i) {
-      if(i == 1 && weights_(i) != 10)
+      if(i == 0 && weights_(i) != 1)
 	has = true;
-      if(i != 1 && weights_(i) != 0)
+      if(i != 0 && weights_(i) != 0)
 	has = true;
     }
     return has;
@@ -265,8 +286,9 @@ namespace rgbd
 
   void PrimeSenseModel::resetDepthDistortionModel()
   {
-    weights_ = VectorXd::Zero(64);
-    weights_(1) = 10;  // feature 1 is measured depth in decameters.
+    weights_ = VectorXd::Zero(numFeatures());
+    //weights_(1) = 10;  // feature 1 is measured depth in decameters.
+    weights_(0) = 1;  // Multiplier version: use a multiplier of 1 by default.
   }
 
   std::string PrimeSenseModel::name() const

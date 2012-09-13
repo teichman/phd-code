@@ -5,7 +5,8 @@ using namespace Eigen;
 using namespace rgbd;
 
 DepthDistortionLearner::DepthDistortionLearner(const PrimeSenseModel& initial_model) :
-  initial_model_(initial_model)
+  initial_model_(initial_model),
+  coverage_map_(0.1, initial_model.height_, initial_model.width_)
 {
   // -- Make sure the initial model is reasonable.
   //    It's going to be used for projection assuming no depth distortion.
@@ -20,6 +21,7 @@ void DepthDistortionLearner::addFrame(Frame frame,
 				      rgbd::Cloud::ConstPtr pcd,
 				      const Eigen::Affine3f& transform)
 {
+  coverage_map_.addFrame(frame);
   frames_.push_back(frame);
   pcds_.push_back(pcd);
   transforms_.push_back(transform);
@@ -27,80 +29,67 @@ void DepthDistortionLearner::addFrame(Frame frame,
 
 PrimeSenseModel DepthDistortionLearner::fitModel()
 {
-  // -- Accumulate statistics.
-  statistics_.clear();
-  statistics_.resize(initial_model_.height_, vector<PixelStats>(initial_model_.width_));
-  for(size_t i = 0; i < statistics_.size(); ++i)
-    for(size_t j = 0; j < statistics_[i].size(); ++j)
-      statistics_[i][j].reserve(frames_.size());
-  
+  ROS_ASSERT(frames_.size() == pcds_.size());
+  ROS_ASSERT(frames_.size() == transforms_.size());
+
   double min_mult = 0.85;
   double max_mult = 1.25;
-  Cloud::Ptr transformed(new Cloud);
-  ROS_WARN("Model fitting currently assumes that both clouds are sparse.  This is not the case for SLAM.  It needs to reason about occlusion for that to work.");
+  vector<VectorXd> xvec;
+  vector<double> yvec;
+  vector<double> mvec;
+  xvec.reserve(1e6);
+  yvec.reserve(1e6);
+  mvec.reserve(1e6);
+  
+  Cloud transformed;
   for(size_t i = 0; i < frames_.size(); ++i) {
-    pcl::transformPointCloud(*pcds_[i], *transformed, transforms_[i]);
-    for(size_t j = 0; j < transformed->size(); ++j) {
-      if(!isFinite(transformed->at(j)))
-	continue;
+    pcl::transformPointCloud(*pcds_[i], transformed, transforms_[i]);
+    Frame mapframe;
+    initial_model_.cloudToFrame(transformed, &mapframe);
+    const DepthMat& depth = *frames_[i].depth_;
+    const DepthMat& mapdepth = *mapframe.depth_;
 
-      ProjectivePoint pp;
-      initial_model_.project(transformed->at(j), &pp);
-      if(pp.u_ < 0 || pp.u_ >= initial_model_.width_ || pp.v_ < 0 || pp.v_ >= initial_model_.height_)
-	continue;
+    ProjectivePoint ppt;
+    Point pt;
+    for(ppt.v_ = 0; ppt.v_ < depth.rows(); ++ppt.v_) {
+      for(ppt.u_ = 0; ppt.u_ < depth.cols(); ++ppt.u_) {
+	if(mapdepth(ppt.v_, ppt.u_) == 0 || depth(ppt.v_, ppt.u_) == 0)
+	  continue;
 
-      pp.z_ = (*frames_[i].depth_)(pp.v_, pp.u_);
-      if(pp.z_ == 0)
-	continue;
+	if(rand() % 5 != 0)
+	  continue;
+	
+	ppt.z_ = mapdepth(ppt.v_, ppt.u_);
+	initial_model_.project(ppt, &pt);
+	double mapdist = pt.getVector3fMap().norm();
+	ppt.z_ = depth(ppt.v_, ppt.u_);
+	initial_model_.project(ppt, &pt);
+	double measdist = pt.getVector3fMap().norm();
+		
+	// If the range is completely off, assume it's due to misalignment and not distortion.
+	double mult = mapdist / measdist;
+	if(mult > max_mult || mult < min_mult)
+	  continue;
 
-      Point pt3d;
-      initial_model_.project(pp, &pt3d);
-      double reported_range = pt3d.getVector3fMap().norm();
-      double ground_truth_range = transformed->at(j).getVector3fMap().norm();
-      if(isinf(reported_range) || isnan(reported_range) || isinf(ground_truth_range) || isnan(ground_truth_range)) {
-	ROS_WARN("Something unexpected is happening in DepthDistortionLearner.");
-	continue;
+	xvec.push_back(initial_model_.computeFeatures(ppt));
+	yvec.push_back(mult);
+	mvec.push_back(measdist);
       }
-      
-      // If the range is completely off, assume it's due to misalignment and not distortion.
-      double mult = ground_truth_range / reported_range;
-      if(mult < min_mult || mult > max_mult)
-	continue;
-
-      // Finally, if we passed all the tests, add this as a training example for this pixel.
-      statistics_[pp.v_][pp.u_].addPoint(ground_truth_range, reported_range);
     }
-  }
+  }	
 
-  int num_tr_ex = 0;
-  for(size_t y = 0; y < statistics_.size(); ++y)
-    for(size_t x = 0; x < statistics_[y].size(); ++x)
-      for(size_t i = 0; i < statistics_[y][x].asus_.size(); ++i)
-	++num_tr_ex;
-  cout << "Fitting depth distortion model with " << num_tr_ex << " training examples." << endl;
+  cout << "Fitting depth distortion model with " << xvec.size() << " training examples." << endl;
 
   // -- Assemble dataset.
   int num_features = initial_model_.numFeatures();
-  MatrixXd X(num_features, num_tr_ex);
-  VectorXd Y(num_tr_ex);
-
-  int idx = 0;
-  VectorXd us(4);
-  VectorXd vs(4);
-  VectorXd ms(4);
-  VectorXd measurements(num_tr_ex);
-  ProjectivePoint ppt;
-  for(size_t y = 0; y < statistics_.size(); ++y) {
-    for(size_t x = 0; x < statistics_[y].size(); ++x) {
-      for(size_t i = 0; i < statistics_[y][x].asus_.size(); ++i, ++idx) { 
-	ppt.u_ = x;
-	ppt.v_ = y;
-	ppt.z_ = statistics_[y][x].asus_[i];
-	X.col(idx) = initial_model_.computeFeatures(ppt);
-	Y(idx) = statistics_[y][x].velo_[i];
-	measurements(idx) = statistics_[y][x].asus_[i];
-      }
-    }
+  MatrixXd X(num_features, xvec.size());
+  VectorXd Y(xvec.size());
+  VectorXd measurements(xvec.size());
+  
+  for(size_t i = 0; i < xvec.size(); ++i) {
+    X.col(i) = xvec[i];
+    Y(i) = yvec[i];
+    measurements(i) = mvec[i];
   }
 
   // -- Fit the model.
@@ -115,7 +104,7 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
   double pre_obj = pre_differences.array().pow(2).sum() / (double)Y.rows();
   cout << "Mean error before fitting model: " << pre_obj << endl;
 
-  VectorXd differences = (model.weights_.transpose() * X).transpose() - Y;
+  VectorXd differences = X.transpose() * model.weights_ - Y;
   double obj = differences.array().pow(2).sum() / (double)Y.rows();
   cout << "Mean error after fitting model: " << obj << endl;
 
@@ -155,3 +144,95 @@ bool PixelStats::valid() const
   return velo_.size() > 5;
 }
 
+size_t DepthDistortionLearner::size() const
+{
+  ROS_ASSERT(frames_.size() == pcds_.size());
+  ROS_ASSERT(frames_.size() == transforms_.size());
+  return frames_.size();
+}
+
+CoverageMap::CoverageMap(double scale, int rows, int cols) :
+  min_dist_(0.8),
+  max_dist_(10),
+  scale_(scale),
+  rows_(rows),
+  cols_(cols)
+{
+  bins_.resize(rows * scale);
+  for(size_t y = 0; y < bins_.size(); ++y) {
+    bins_[y].resize(cols * scale);
+    for(size_t x = 0; x < bins_[y].size(); ++x) {
+      bins_[y][x].reserve(100);
+    }
+  }
+}
+
+void CoverageMap::addFrame(rgbd::Frame frame)
+{
+  const DepthMat& depth = *frame.depth_;
+  for(int y = 0; y < depth.rows(); ++y) {
+    for(int x = 0; x < depth.cols(); ++x) {
+      int v = ((double)y / depth.rows()) * rows();
+      int u = ((double)x / depth.cols()) * cols();
+      if(u < 0)
+	u = 0;
+      if(u >= (int)cols())
+	u = cols();
+      if(v < 0)
+	v = 0;
+      if(v >= (int)rows())
+	v = rows();
+      bins_[v][u].push_back(depth(y, x) * 0.001);
+    }
+  }
+}
+
+cv::Mat3b CoverageMap::computeImage() const
+{
+  cv::Mat3b small(rows(), cols());
+  for(size_t y = 0; y < rows(); ++y) {
+    for(size_t x = 0; x < cols(); ++x) {
+      small(y, x) = colorizeBin(bins_[y][x]);
+    }
+  }
+
+  cv::Mat3b img;
+  cv::resize(small, img, cv::Size(cols_, rows_), cv::INTER_NEAREST);
+  return img;
+}
+
+cv::Vec3b CoverageMap::colorizeBin(const vector<double>& bin) const
+{
+  int num_bins = 10;
+
+  VectorXd counts = VectorXd::Zero(num_bins);
+  double range = max_dist_ - min_dist_;
+  double width = range / num_bins;
+  for(size_t i = 0; i < bin.size(); ++i) {
+    int idx = floor((bin[i] - min_dist_) / width);
+    if(idx < 0)
+      idx = 0;
+    if(idx >= num_bins)
+      idx = num_bins;
+    ++counts(idx);
+  }
+
+  int filled_criterion = 100;
+  int num_filled = 0;
+  for(int i = 0; i < counts.rows(); ++i)
+    if(counts(i) > filled_criterion)
+      ++num_filled;
+
+  double frac_filled = (double)num_filled / num_bins;
+  return cv::Vec3b(0, 255 * frac_filled, 255 * (1.0 - frac_filled));
+}
+
+void CoverageMap::clear()
+{
+  for(size_t y = 0; y < rows(); ++y) 
+    for(size_t x = 0; x < cols(); ++x)
+      bins_[y][x].clear();
+}
+
+
+  
