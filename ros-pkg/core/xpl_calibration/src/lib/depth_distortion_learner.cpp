@@ -5,7 +5,8 @@ using namespace Eigen;
 using namespace rgbd;
 
 DepthDistortionLearner::DepthDistortionLearner(const PrimeSenseModel& initial_model) :
-  initial_model_(initial_model)
+  initial_model_(initial_model),
+  coverage_map_(0.1, initial_model.height_, initial_model.width_)
 {
   // -- Make sure the initial model is reasonable.
   //    It's going to be used for projection assuming no depth distortion.
@@ -20,6 +21,7 @@ void DepthDistortionLearner::addFrame(Frame frame,
 				      rgbd::Cloud::ConstPtr pcd,
 				      const Eigen::Affine3f& transform)
 {
+  coverage_map_.addFrame(frame);
   frames_.push_back(frame);
   pcds_.push_back(pcd);
   transforms_.push_back(transform);
@@ -148,3 +150,89 @@ size_t DepthDistortionLearner::size() const
   ROS_ASSERT(frames_.size() == transforms_.size());
   return frames_.size();
 }
+
+CoverageMap::CoverageMap(double scale, int rows, int cols) :
+  min_dist_(0.8),
+  max_dist_(10),
+  scale_(scale),
+  rows_(rows),
+  cols_(cols)
+{
+  bins_.resize(rows * scale);
+  for(size_t y = 0; y < bins_.size(); ++y) {
+    bins_[y].resize(cols * scale);
+    for(size_t x = 0; x < bins_[y].size(); ++x) {
+      bins_[y][x].reserve(100);
+    }
+  }
+}
+
+void CoverageMap::addFrame(rgbd::Frame frame)
+{
+  const DepthMat& depth = *frame.depth_;
+  for(int y = 0; y < depth.rows(); ++y) {
+    for(int x = 0; x < depth.cols(); ++x) {
+      int v = ((double)y / depth.rows()) * rows();
+      int u = ((double)x / depth.cols()) * cols();
+      if(u < 0)
+	u = 0;
+      if(u >= (int)cols())
+	u = cols();
+      if(v < 0)
+	v = 0;
+      if(v >= (int)rows())
+	v = rows();
+      bins_[v][u].push_back(depth(y, x) * 0.001);
+    }
+  }
+}
+
+cv::Mat3b CoverageMap::computeImage() const
+{
+  cv::Mat3b small(rows(), cols());
+  for(size_t y = 0; y < rows(); ++y) {
+    for(size_t x = 0; x < cols(); ++x) {
+      small(y, x) = colorizeBin(bins_[y][x]);
+    }
+  }
+
+  cv::Mat3b img;
+  cv::resize(small, img, cv::Size(cols_, rows_), cv::INTER_NEAREST);
+  return img;
+}
+
+cv::Vec3b CoverageMap::colorizeBin(const vector<double>& bin) const
+{
+  int num_bins = 10;
+
+  VectorXd counts = VectorXd::Zero(num_bins);
+  double range = max_dist_ - min_dist_;
+  double width = range / num_bins;
+  for(size_t i = 0; i < bin.size(); ++i) {
+    int idx = floor((bin[i] - min_dist_) / width);
+    if(idx < 0)
+      idx = 0;
+    if(idx >= num_bins)
+      idx = num_bins;
+    ++counts(idx);
+  }
+
+  int filled_criterion = 100;
+  int num_filled = 0;
+  for(int i = 0; i < counts.rows(); ++i)
+    if(counts(i) > filled_criterion)
+      ++num_filled;
+
+  double frac_filled = (double)num_filled / num_bins;
+  return cv::Vec3b(0, 255 * frac_filled, 255 * (1.0 - frac_filled));
+}
+
+void CoverageMap::clear()
+{
+  for(size_t y = 0; y < rows(); ++y) 
+    for(size_t x = 0; x < cols(); ++x)
+      bins_[y][x].clear();
+}
+
+
+  

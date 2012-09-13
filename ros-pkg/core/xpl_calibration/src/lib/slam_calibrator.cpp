@@ -84,6 +84,10 @@ PrimeSenseModel SlamCalibrator::calibrate() const
     }
   }
 
+  cv::Mat3b cmap = learner.coverageMap();
+  cv::imshow("coverage", cmap);
+  cv::waitKey();
+  
   cout << "Fitting model using " << learner.size() << " frames." << endl;
   PrimeSenseModel model = learner.fitModel();
   cout << "== Initial model: " << endl;

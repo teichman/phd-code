@@ -20,6 +20,7 @@ SENSORS		:= $(shell ls $(SLAM_DATA_PATH))
 
 #2a_open_space_01
 #office_01
+
 SLAM_RUNS_xpl03 := 	1a_open_space_01 \
 			1b_lobby_01 \
 			2a_open_space_02 \
@@ -29,6 +30,9 @@ SLAM_RUNS_xpl03 := 	1a_open_space_01 \
 			hallway_02 \
 			hallway_03 \
 			office_02
+
+# SLAM_RUNS_xpl03 := 	office_01 \
+# 			very_short
 
 
 .SECONDEXPANSION:	# Allows use of automatic vars in prerequisites.
