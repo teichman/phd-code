@@ -444,9 +444,9 @@ void AsusVsVeloVisualizer::calibrate()
   VeloToAsusCalibrator calibrator(model_, this);
   
   // -- Choose Velodyne keyframes.
-  int num_keyframes = 200;
-  int spacing = 10;
-  int buffer = 300;
+  int num_keyframes = 3000;
+  int buffer = 100;
+  int spacing = 5;
   int idx = buffer;
   while(true) {
     updateDisplay(idx, cal_.veloToAsus(), cal_.offset_);

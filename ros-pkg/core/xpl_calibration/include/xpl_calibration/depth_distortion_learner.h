@@ -17,6 +17,17 @@ public:
   void reserve(int num) { velo_.reserve(num); asus_.reserve(num); }
 };
 
+class CoverageMap
+{
+public:
+  CoverageMap(int rows, int cols);
+  void addFrame(rgbd::Frame frame);
+  cv::Mat3b computeImage() const;
+
+protected:
+  std::vector< std::vector< std::vector<double> > > bins_;
+};
+
 class DepthDistortionLearner
 {
 public:
