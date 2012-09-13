@@ -284,13 +284,19 @@ void AsusVsVeloVisualizer::run()
     case 'c':
       calibrate();
       break;
+    // case 'f':
+    //   cout << "-- Frame stats --" << endl;
+    //   cout << "Velo timestamp: " << setprecision(16) << velo_->header.stamp.toSec() << endl;
+    //   cout << "Offset: " << cal_.offset_ << endl;
+    //   cout << "Asus timestamp: " << sseq_->timestamps_[asus_idx_] - sseq_start_ << endl;
+    //   cout << "velo + offset - asus: " << velo_->header.stamp.toSec() + cal_.offset_ - (sseq_->timestamps_[asus_idx_] - sseq_start_) << endl;
+    //   cout << "Loss for this frame: TODO" << endl;
+    //   break;
     case 'f':
-      cout << "-- Frame stats --" << endl;
-      cout << "Velo timestamp: " << setprecision(16) << velo_->header.stamp.toSec() << endl;
-      cout << "Offset: " << cal_.offset_ << endl;
-      cout << "Asus timestamp: " << sseq_->timestamps_[asus_idx_] - sseq_start_ << endl;
-      cout << "velo + offset - asus: " << velo_->header.stamp.toSec() + cal_.offset_ - (sseq_->timestamps_[asus_idx_] - sseq_start_) << endl;
-      cout << "Loss for this frame: TODO" << endl;
+      incrementFocalLength(10);
+      break;
+    case 'F':
+      incrementFocalLength(-10);
       break;
     case 'S':
       saveAll("manual");
@@ -380,6 +386,14 @@ void AsusVsVeloVisualizer::incrementOffset(double dt)
 {
   cal_.offset_ += dt;
   cout << "Using offset: " << cal_.offset_ << endl;
+}
+
+void AsusVsVeloVisualizer::incrementFocalLength(double df)
+{
+  scopeLockWrite;
+  model_.fx_ += df;
+  model_.fy_ += df;
+  cout << "Focal length: " << model_.fx_ << " " << model_.fx_ << endl;
 }
 
 int AsusVsVeloVisualizer::findAsusIdx(double ts, double* dt_out) const

@@ -2,6 +2,10 @@
 ############################################################
 # -- Global settings.
 ############################################################
+
+.SECONDEXPANSION:	# Allows use of automatic vars in prerequisites.
+.SECONDARY:		# Prevents deletion of intermediate targets in a chain of implicit rules.
+
 export NUM_THREADS	:= 40
 SHELL			:= /bin/bash
 REPO_ROOT		:= $(shell dirname $$(dirname $$(dirname $$(rospack find dst))))
@@ -10,33 +14,19 @@ MAKEFILE		:= $(MAKE_ROOT)/Makefile
 
 # You'll need a symlink in your project dir to the data.
 # This dir has subdirectories of asus_vs_velodyne
-DATA_PATH	:= $(MAKE_ROOT)/data
-AVV_PATH	:= $(DATA_PATH)/asus_vs_velodyne
-AVV_PATH_xpl03  := $(AVV_PATH)/2012-08-29_xpl_vs_velo/xpl03_take2-08-29-2012_19-25-48
-#AVV_PATH_xpl03  := $(AVV_PATH)/2012-08-29_xpl_vs_velo/xpl03-08-29-2012_19-16-26
-SLAM_DATA_PATH	:= $(DATA_PATH)/slam_sequences
-CAMERAS_PATH	:= $(MAKE_ROOT)/camera_angles
-SENSORS		:= $(shell ls $(SLAM_DATA_PATH))
+DATA_PATH		:= $(MAKE_ROOT)/data
 
-#2a_open_space_01
-#office_01
+SLAM_DATA_PATH		:= $(DATA_PATH)/slam_sequences
+CAMERAS_PATH		:= $(MAKE_ROOT)/camera_angles
+SENSORS			:= $(shell ls $(SLAM_DATA_PATH))
+AVV_PATH		:= $(DATA_PATH)/asus_vs_velodyne
+AVV_PATH_xpl01		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_01_taketwo-09-13-2012_00-09-54
+AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-09-12-2012_23-35-53
+AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
+AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
-SLAM_RUNS_xpl03 := 	1a_open_space_01 \
-			1b_lobby_01 \
-			2a_open_space_02 \
-			2a_open_space_03 \
-			2a_open_space_04 \
-			hallway_01 \
-			hallway_02 \
-			hallway_03 \
-			office_02
-
-# SLAM_RUNS_xpl03 := 	office_01 \
-# 			very_short
-
-
-.SECONDEXPANSION:	# Allows use of automatic vars in prerequisites.
-.SECONDARY:		# Prevents deletion of intermediate targets in a chain of implicit rules.
+SLAM_RUNS_xpl01 :=	xpl001-seq004 \
+			xpl001-seq005 
 
 all:
 	@echo You should probably be more specific.
@@ -78,13 +68,13 @@ $(1)/asus_vs_velodyne/extrinsics:
 #SLAM_RUNS_$(1) := $$(shell ls $(SLAM_DATA_PATH)/$(1))
 TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
 
-$(1)/learned_model.psm: $(1)/slam_results
+$(1)/learned_model.psm: $$(TRAJECTORIES_$(1))
 	rosrun xpl_calibration calibrate_slam \
 	--batch --omodel $$@ \
 	$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
 	$$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
 
-$(1)-visualize-slam: $(1)/slam_results
+$(1)-visualize-slam: $$(TRAJECTORIES_$(1))
 	rosrun xpl_calibration calibrate_slam $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
 
 .PHONY: $(1)/slam_results

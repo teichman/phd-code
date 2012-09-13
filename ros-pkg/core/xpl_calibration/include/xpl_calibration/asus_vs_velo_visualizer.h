@@ -73,6 +73,7 @@ protected:
   void updateVeloBounds();
   void setInitialExtrinsics();
   void incrementVeloIdx(int val);
+  void incrementFocalLength(double df);
   void incrementOffset(double dt);
   int findAsusIdx(double ts, double* dt_out = NULL) const;
   void updateDisplay(int velo_idx, const Eigen::Affine3f& transform, double offset);
