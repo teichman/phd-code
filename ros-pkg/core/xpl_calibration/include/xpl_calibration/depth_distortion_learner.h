@@ -109,18 +109,20 @@ public:
   rgbd::PrimeSenseModel initial_model_;
 
   DepthDistortionLearner(const rgbd::PrimeSenseModel& initial_model);
-  //! pcd is assumed to be in the same coordinate system as frame, i.e.
-  //! model.frameToCloud(frame) should in theory produce pcd.
-  void addFrame(rgbd::Frame frame, rgbd::Cloud::ConstPtr pcd);
+  //! pcl::transformPointCloud(*pcd, *pcd, transform) should put pcd into frame's coordinate system.
+  //! For slam calibration, pcds are just pointers to the map.
+  //! For velo calibration, each pcd is a separate velo pointcloud.
+  void addFrame(rgbd::Frame frame, rgbd::Cloud::ConstPtr pcd, const Eigen::Affine3d& transform);
   rgbd::PrimeSenseModel fitModel();
   rgbd::PrimeSenseModel fitFocalLength();
-  void clear() { frames_.clear(); pcds_.clear(); coverage_map_.clear(); }
+  void clear() { frames_.clear(); pcds_.clear(); transforms_.clear(); coverage_map_.clear(); }
   size_t size() const;
   cv::Mat3b coverageMap() const { return coverage_map_.computeImage(); }
   
 protected:
   std::vector<rgbd::Frame> frames_;
   std::vector<rgbd::Cloud::ConstPtr> pcds_;
+  std::vector<Eigen::Affine3d> transforms_;
   CoverageMap coverage_map_;
 
   Eigen::VectorXd regress(const Eigen::MatrixXd& X, const Eigen::VectorXd& Y) const;

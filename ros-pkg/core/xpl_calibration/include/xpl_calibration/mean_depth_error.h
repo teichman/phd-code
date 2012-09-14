@@ -66,13 +66,15 @@ public:
   //! pcds are assumed to be in the coordinate system of their corresponding frames.
   FocalLengthMDE(const rgbd::PrimeSenseModel& model,
 		 const std::vector<rgbd::Frame>& frames,
-		 const std::vector<rgbd::Cloud::ConstPtr>& pcds);
+		 const std::vector<rgbd::Cloud::ConstPtr>& pcds,
+		 const std::vector<Eigen::Affine3d>& transforms);
   double eval(const Eigen::VectorXd& x) const;
 
 protected:
   rgbd::PrimeSenseModel model_;
   std::vector<rgbd::Frame> frames_;
   std::vector<rgbd::Cloud::ConstPtr> pcds_;
+  std::vector<Eigen::Affine3d> transforms_;
 };
 
 void meanDepthError(const rgbd::PrimeSenseModel& model,

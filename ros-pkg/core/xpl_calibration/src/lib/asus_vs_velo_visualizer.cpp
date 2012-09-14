@@ -218,9 +218,9 @@ void AsusVsVeloVisualizer::fitModel()
     Frame frame;
     sseq_->readFrame(idx, &frame);
     Cloud::Ptr filtered = filterVelo(vseq_->getCloud(i));
-    Cloud::Ptr transformed(new Cloud);
-    pcl::transformPointCloud(*filtered, *transformed, cal_.veloToAsus());
-    ddl.addFrame(frame, transformed);
+    // Cloud::Ptr transformed(new Cloud);
+    // pcl::transformPointCloud(*filtered, *transformed, cal_.veloToAsus());
+    ddl.addFrame(frame, filtered, cal_.veloToAsus().cast<double>());
   }
 
   model_ = ddl.fitModel();
@@ -615,9 +615,9 @@ void AsusVsVeloVisualizer::fitFocalLength()
     Frame frame;
     sseq_->readFrame(idx, &frame);
     Cloud::Ptr filtered = filterVelo(vseq_->getCloud(i));
-    Cloud::Ptr transformed(new Cloud);
-    pcl::transformPointCloud(*filtered, *transformed, cal_.veloToAsus());
-    ddl.addFrame(frame, transformed);
+    // Cloud::Ptr transformed(new Cloud);
+    // pcl::transformPointCloud(*filtered, *transformed, cal_.veloToAsus());
+    ddl.addFrame(frame, filtered, cal_.veloToAsus().cast<double>());
   }
 
   model_ = ddl.fitFocalLength();
