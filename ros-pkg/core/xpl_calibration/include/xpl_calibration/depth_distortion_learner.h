@@ -102,7 +102,7 @@ protected:
   cv::Vec3b colorizeBin(const std::vector<double>& bin) const;
 };
 
-class DepthDistortionLearner : public SharedLockable
+class DepthDistortionLearner
 {
 public:
   //! Used for 3D -> 2D projection.

@@ -61,19 +61,18 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
 
   double min_mult = 0.8;
   double max_mult = 1.2;
-  // vector<VectorXd> xvec;
-  // vector<double> yvec;
-  // vector<double> mvec;
-  // xvec.reserve(1e6);
-  // yvec.reserve(1e6);
-  // mvec.reserve(1e6);
 
   int num_features = initial_model_.numFeatures();
-  int num_tr_ex = 0;
-  MatrixXd xxt = MatrixXd::Zero(num_features, num_features);
-  VectorXd b = VectorXd::Zero(num_features);
+  vector<MatrixXd> xxts(frames_.size(), MatrixXd::Zero(num_features, num_features));
+  vector<VectorXd> bs(frames_.size(), VectorXd::Zero(num_features));
+  VectorXi num_tr_ex_frame = VectorXi::Zero(frames_.size());
   #pragma omp parallel for
   for(size_t i = 0; i < frames_.size(); ++i) {
+    MatrixXd& xxt = xxts[i];
+    VectorXd& b = bs[i];
+
+    ScopedTimer st("total for frame");
+    PrimeSenseModel localmodel = initial_model_;
     HighResTimer hrt;
     
     cout << "Accumulating training set for depth distortion model fit, frame " << i << " / " << frames_.size() << endl;
@@ -84,7 +83,7 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
     hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 
     hrt.reset("projecting"); hrt.start();
-    initial_model_.cloudToFrame(transformed, &mapframe);
+    localmodel.cloudToFrame(transformed, &mapframe);
     hrt.stop(); cout << hrt.reportMilliseconds() << endl;
     
     const DepthMat& depth = *frames_[i].depth_;
@@ -98,10 +97,10 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
 	  continue;
 	
 	ppt.z_ = mapdepth(ppt.v_, ppt.u_);
-	initial_model_.project(ppt, &pt);
+	localmodel.project(ppt, &pt);
 	double mapdist = pt.getVector3fMap().norm();
 	ppt.z_ = depth(ppt.v_, ppt.u_);
-	initial_model_.project(ppt, &pt);
+	localmodel.project(ppt, &pt);
 	double measdist = pt.getVector3fMap().norm();
 		
 	// If the range is completely off, assume it's due to misalignment and not distortion.
@@ -109,14 +108,21 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
 	if(mult > max_mult || mult < min_mult)
 	  continue;
 
-	VectorXd f = initial_model_.computeFeatures(ppt);
-	scopeLockWrite;
+	VectorXd f = localmodel.computeFeatures(ppt);
 	xxt += f * f.transpose();
 	b += f * mult;
-	++num_tr_ex;
+	++num_tr_ex_frame(i);
       }
     }
   }	
+
+  MatrixXd xxt = MatrixXd::Zero(num_features, num_features);
+  VectorXd b = VectorXd::Zero(num_features);
+  int num_tr_ex = num_tr_ex_frame.sum();
+  for(size_t i = 0; i < frames_.size(); ++i) {
+    xxt += xxts[i];
+    b += bs[i];
+  }
 
   cout << "Running polynomial regression with " << num_tr_ex << " training examples." << endl;
   xxt /= (double)num_tr_ex;
@@ -124,19 +130,9 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
   cout << "xxt: " << endl << xxt << endl;
   cout << "b: " << b.transpose() << endl;
 
-  // -- Assemble dataset.
-  // int num_features = initial_model_.numFeatures();
-  // MatrixXd X(num_features, xvec.size());
-  // VectorXd Y(xvec.size());
-  
-  // for(size_t i = 0; i < xvec.size(); ++i) {
-  //   X.col(i) = xvec[i];
-  //   Y(i) = yvec[i];
-  // }
-
   // -- Fit the model.
   PrimeSenseModel model = initial_model_;
-  xxt += MatrixXd::Identity(xxt.rows(), xxt.cols()) * 0.1;  // Regularization.
+  //xxt += MatrixXd::Identity(xxt.rows(), xxt.cols()) * 0.001;  // Regularization.
   model.weights_ = xxt.ldlt().solve(b);
   return model;
 }
