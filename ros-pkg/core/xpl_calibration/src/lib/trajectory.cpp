@@ -25,7 +25,10 @@ void Trajectory::set(size_t idx, const Eigen::Affine3d& transform)
 
 const Eigen::Affine3d& Trajectory::get(size_t idx) const
 {
-  ROS_ASSERT(transforms_[idx]);
+  if(idx > transforms_.size()) {
+    ROS_FATAL_STREAM("Tried to get transform " << idx << " / " << transforms_.size());
+    abort();
+  }
   return *transforms_[idx];
 }
 
