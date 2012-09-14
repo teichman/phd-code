@@ -38,7 +38,7 @@ VeloToAsusCalibrator::VeloToAsusCalibrator(const rgbd::PrimeSenseModel& model, G
 {
 }
 
-VeloToAsusCalibration VeloToAsusCalibrator::search() const
+VeloToAsusCalibration VeloToAsusCalibrator::search(double* final_value) const
 {
   cout << "Initializing search using PrimeSenseModel: " << endl;
   cout << model_.status("  ");
@@ -62,7 +62,11 @@ VeloToAsusCalibration VeloToAsusCalibrator::search() const
   
   ArrayXd x = gs.search(ArrayXd::Zero(7));
   cout << "GridSearch solution: " << x.transpose() << endl;
-
+  if(final_value) {
+    *final_value = mde->eval(x);
+    cout << "Final objective function value: " << *final_value << endl;
+  }
+  
   VeloToAsusCalibration cal;
   cal.setVeloToAsus(generateTransform(x(1), x(2), x(3), x(4), x(5), x(6)));
   cal.offset_ = x(0);

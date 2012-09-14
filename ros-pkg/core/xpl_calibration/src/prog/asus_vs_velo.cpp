@@ -17,6 +17,7 @@ int main(int argc, char** argv)
     ("intrinsics", bpo::value<string>(), "Use pre-computed PrimeSense model")
     ("compute-extrinsics", "Automatically start extrinsics search")
     ("compute-intrinsics", "Automatically start intrinsics search")
+    ("evaluate", "Runs evaluation of the given extrinsics and intrinsics.  It is assumed that the extrinsics are the best for the given intrinsics.")
 //    ("visualize-distortion", "Visualize the distortion.  Extrinsics must be provided.")
     ("skip", bpo::value<int>()->default_value(20), "For use with --visualize-distortion.  Use every kth frame for accumulating statistics.")
     ("num-pixel-plots", bpo::value<int>()->default_value(20), "For use with --visualize-distortion.  Number of random pixel plots to generate.")
@@ -75,7 +76,12 @@ int main(int argc, char** argv)
     avv.fitModel();
     avv.saveIntrinsics();  // "intrinsics"
     return 0;
-  }    
+  }
+
+  if(opts.count("evaluate")) {
+    ROS_ASSERT(opts.count("extrinsics") && opts.count("intrinsics"));
+    avv.calibrate(opts["evaluate"].as<string>());
+  }
   
   // if(opts.count("visualize-distortion")) {
   //   ROS_ASSERT(opts.count("extrinsics"));

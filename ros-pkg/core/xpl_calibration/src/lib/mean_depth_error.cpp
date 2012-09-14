@@ -149,10 +149,12 @@ double SequenceAlignmentMDE::eval(const Eigen::VectorXd& x) const
 
 FocalLengthMDE::FocalLengthMDE(const PrimeSenseModel& model,
 			       const std::vector<Frame>& frames,
-			       const std::vector<Cloud::ConstPtr>& pcds) :
+			       const std::vector<Cloud::ConstPtr>& pcds,
+			       const std::vector<Eigen::Affine3d>& transforms) :
   model_(model),
   frames_(frames),
-  pcds_(pcds)
+  pcds_(pcds),
+  transforms_(transforms)
 {
 }
 
@@ -164,8 +166,11 @@ double FocalLengthMDE::eval(const Eigen::VectorXd& x) const
 
   double count = 0;  // Total number of points with both ground truth and measurements.
   double val = 0;  // Total objective.
-  for(size_t i = 0; i < pcds_.size(); ++i)
-    meanDepthError(model, frames_[i], *pcds_[i], &val, &count);
+  Cloud transformed;
+  for(size_t i = 0; i < pcds_.size(); ++i) {
+    pcl::transformPointCloud(*pcds_[i], transformed, transforms_[i].cast<float>());
+    meanDepthError(model, frames_[i], transformed, &val, &count);
+  }
 
   double min_count = 100 * pcds_.size();
   if(count < min_count) {
