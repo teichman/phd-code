@@ -72,7 +72,7 @@ void SlamVisualizer::run(StreamSequence::ConstPtr sseq,
     lc_->fine_tune_ = false; //Doing this by hand for visualization
     lc_->visualize_ = false;
     lc_->min_time_offset_ = 30;
-    lc_->step_ = 2;
+    lc_->step_ = 3;
     lc_->max_feature_dist_ = 500;
     lc_->keypoints_per_frame_ = 250;
     lc_->min_pairwise_keypoint_dist_ = 0.1; //cm apart
@@ -84,7 +84,7 @@ void SlamVisualizer::run(StreamSequence::ConstPtr sseq,
     lc_->icp_max_inlier_dist_ = 0.1; // Highest distance allowed to be considered an inlier
     lc_->icp_inlier_percent_ = 0.3; // At least this percentage of points must be inliers
     lc_->ftype_ = ORB;
-    lc_->k_ = 5;
+    lc_->k_ = 2;
     lc_->verification_type_ = MDE;
     lc_->max_mde_ = 0.1;
     lc_->harris_thresh_ = 0.01;
@@ -170,7 +170,7 @@ void SlamVisualizer::slamThreadFunction()
       ProfilerStop();
 
     // -- For now, terminate at the first broken link.  With loop closure we can do better.
-    // mde of 0.2 for depth-only seems good.
+    // mde of 0.2 for depth-only seems good. //COUNT WAS 20000
     if(count < 20000 || final_mde > 0.5) {
       cout << "Edge has count " << count << " and final_mde " << final_mde << ".  Terminating." << endl;
       break;

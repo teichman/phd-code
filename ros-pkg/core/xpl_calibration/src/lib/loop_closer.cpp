@@ -123,6 +123,9 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
     return false;
   Cloud::ConstPtr cur_cloud = sseq_->getCloud(t);
   size_t latest_time = t;
+  vector<bool> has_transform(cached_frames_.size(), false);
+  vector<Eigen::Affine3f> all_transforms(cached_frames_.size());
+#pragma omp parallel for
   for(int i = cached_frames_.size()-1; i >= 0; i-=step_)
   {
     //Lookup cached keypoints from past frames
@@ -140,7 +143,11 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
     //matcher_.match(*cur_features, *old_features, matches_all);
     vector<vector<cv::DMatch> > matches_each;
     if(old_features->rows < k_ || cur_features->rows < k_) continue;
+    try
+    {
     matcher_.knnMatch(*cur_features, *old_features, matches_each, k_);
+    }
+    catch(...) {continue;}
     for(size_t j = 0; j < matches_each.size(); j++)
     {
       const vector<cv::DMatch> &matches = matches_each[j];
@@ -363,11 +370,19 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
         continue;
       }
       cout << "Passed Verification" << endl;
-      targets.push_back(old_t);
-      transforms.push_back(trans_refined.inverse());
-      cout << "Best distance is " << best_distance << endl;
-      cout << "Best num inliers is " << best_num_inliers << endl;
-      latest_time = old_t; //Don't look til another N steps
+      //targets.push_back(old_t);
+      //transforms.push_back(trans_refined.inverse());
+
+      all_transforms[i] = trans_refined.inverse();      
+      has_transform[i] = true;
+      //latest_time = old_t; //Don't look til another N steps
+    }
+  }
+  for(size_t i = 0; i < has_transform.size(); i++)
+  {
+    if(has_transform[i]){
+      targets.push_back(cached_frames_[i]);
+      transforms.push_back(all_transforms[i]);
     }
   }
   return targets.size() > 0;

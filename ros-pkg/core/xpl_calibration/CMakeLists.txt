@@ -47,6 +47,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/trajectory.cpp
   src/lib/slam_calibrator.cpp
   src/lib/slam_calibration_visualizer.cpp
+  src/lib/slam_lightweight.cpp
   )
 rosbuild_add_compile_flags(${PROJECT_NAME} -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas -w)
 rosbuild_link_boost(${PROJECT_NAME} system program_options)
@@ -112,3 +113,7 @@ target_link_libraries(slam_test ${PROJECT_NAME})
 rosbuild_add_executable(calibrate_slam src/prog/calibrate_slam.cpp)
 rosbuild_link_boost(calibrate_slam program_options filesystem)
 target_link_libraries(calibrate_slam ${PROJECT_NAME})
+
+rosbuild_add_executable(slam_run_lightweight src/prog/slam_run_lightweight.cpp)
+rosbuild_link_boost(slam_run_lightweight program_options filesystem)
+target_link_libraries(slam_run_lightweight ${PROJECT_NAME})
