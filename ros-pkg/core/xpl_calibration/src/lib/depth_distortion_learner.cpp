@@ -32,8 +32,8 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
   ROS_ASSERT(frames_.size() == pcds_.size());
   ROS_ASSERT(frames_.size() == transforms_.size());
 
-  double min_mult = 0.85;
-  double max_mult = 1.25;
+  double min_mult = 0.8;
+  double max_mult = 1.2;
   vector<VectorXd> xvec;
   vector<double> yvec;
   vector<double> mvec;
@@ -94,21 +94,52 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
 
   // -- Fit the model.
   PrimeSenseModel model = initial_model_;
-  MatrixXd xxt = X * X.transpose();
-  ROS_ASSERT(xxt.rows() == initial_model_.numFeatures());
-  VectorXd b = X*Y;
-  model.weights_ = xxt.ldlt().solve(b);
-  cout << "Weights: " << model.weights_.transpose() << endl;
-  
-  VectorXd pre_differences = measurements - Y;
-  double pre_obj = pre_differences.array().pow(2).sum() / (double)Y.rows();
-  cout << "Mean error before fitting model: " << pre_obj << endl;
 
-  VectorXd differences = X.transpose() * model.weights_ - Y;
-  double obj = differences.array().pow(2).sum() / (double)Y.rows();
-  cout << "Mean error after fitting model: " << obj << endl;
+  model.weights_ = regressRegularized(X, Y); 
+  //model.weights_ = regress(X, Y);
+  //VectorXd rweights = regressRegularized(X, Y); 
+  // cout << "Weights: " << model.weights_.transpose() << endl;
+  // cout << "reg weights: " << rweights.transpose() << endl;
+  
+  // VectorXd pre_differences = measurements - Y;
+  // double pre_obj = pre_differences.array().pow(2).sum() / (double)Y.rows();
+  // cout << "Mean error before fitting model: " << pre_obj << endl;
+
+  // VectorXd differences = X.transpose() * model.weights_ - Y;
+  // double obj = differences.array().pow(2).sum() / (double)Y.rows();
+  // cout << "Mean error after fitting model: " << obj << endl;
 
   return model;
+}
+
+Eigen::VectorXd DepthDistortionLearner::regress(const Eigen::MatrixXd& X, const Eigen::VectorXd& Y) const
+{
+  MatrixXd xxt = X * X.transpose();
+  VectorXd b = X*Y;
+  return xxt.ldlt().solve(b);
+}
+
+Eigen::VectorXd DepthDistortionLearner::regressRegularized(const Eigen::MatrixXd& X, const Eigen::VectorXd& Y) const
+{
+  double gamma = 0.1;
+  MatrixXd xxtr = X * X.transpose() + MatrixXd::Identity(X.rows(), X.rows()) * gamma;
+  VectorXd b = X*Y;
+  return xxtr.ldlt().solve(b);
+
+
+  // double gamma = 0;
+  // RegularizedRegressionObjective objective(gamma, &X, &Y);
+  // RegularizedRegressionGradient gradient(gamma, &X, &Y);
+  // double tol = 1e-6;
+  // double alpha = 0.15;
+  // double beta = 0.5;
+  // int max_num_iters = 0;
+  // double initial_stepsize = 1;
+  // bool debug = true;
+  // NesterovGradientSolver ngs(&objective, &gradient, tol, alpha, beta, max_num_iters, initial_stepsize, debug);
+  // PrimeSenseModel model;
+  // model.resetDepthDistortionModel();
+  // return ngs.solve(model.weights_);
 }
 
 void PixelStats::addPoint(double velo, double asus)
@@ -234,5 +265,28 @@ void CoverageMap::clear()
       bins_[y][x].clear();
 }
 
+RegularizedRegressionObjective::RegularizedRegressionObjective(double gamma, const Eigen::MatrixXd* X, const Eigen::VectorXd* Y) :
+  gamma_(gamma),
+  X_(X),
+  Y_(Y)
+{
+}
 
+double RegularizedRegressionObjective::eval(const Eigen::VectorXd& x) const
+{
+  VectorXd foo = X_->transpose() * x - *Y_;
+  return 0.5 * foo.dot(foo) + 0.5 * gamma_ * x.dot(x);
+}
+  
+RegularizedRegressionGradient::RegularizedRegressionGradient(double gamma, const Eigen::MatrixXd* X, const Eigen::VectorXd* Y) :
+  gamma_(gamma),
+  X_(X),
+  Y_(Y)
+{
+}
+
+VectorXd RegularizedRegressionGradient::eval(const Eigen::VectorXd& x) const
+{
+  return gamma_ * x + (*X_) * (X_->transpose() * x - *Y_);
+}
   

@@ -91,13 +91,13 @@ $(foreach SENSOR,$(SENSORS),$(eval $(call SENSOR_RULE_GENERATOR,$(SENSOR))))
 define SENSOR_RUN_RULE_GENERATOR
 
 # Press j to take a screenshot from the angle you want.
-$(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam slam_results/$(2).traj
-	rosrun pcl_bleeding pcd_viewer slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
+$(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam $(1)/slam_results/$(2).traj
+	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
 	mv `ls screenshot*.cam -tr | tail -n1` $(CAMERAS_PATH)/$(1)/$(2).cam
 	rm `ls screenshot*.png -tr | tail -n1`
 
-$(1)-visualize-slam-result-$(2): slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
-	rosrun pcl_bleeding pcd_viewer slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
+$(1)-visualize-slam-result-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
+	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
 
 $(1)/slam_videos/$(2).avi: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
 	mkdir -p $$(@D)/$(2)
