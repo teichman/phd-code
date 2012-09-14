@@ -9,6 +9,7 @@
 #include <pose_graph_slam/pose_graph_slam.h>
 #include <rgbd_sequence/stream_sequence.h>
 #include <xpl_calibration/frame_aligner.h>
+#include <xpl_calibration/loop_closer.h>
 #include <xpl_calibration/trajectory.h>
 
 class SlamVisualizer : public SharedLockable, public GridSearchViewHandler
@@ -20,6 +21,8 @@ public:
   double min_dt_;
   //! If true, after each grid search improvement save a screenshot.
   bool save_imgs_;
+  //! Use loop closure
+  bool use_loop_closure_;
   //! Camera pose to use.
   // TODO
   
@@ -28,6 +31,8 @@ public:
 	   const std::string& opcd_path = "",
 	   const std::string& otraj_path = "");
   void setCamera(const std::string& camera_path);
+
+  void rebuild_map();
   
 protected:
   pcl::visualization::PCLVisualizer vis_;
@@ -45,11 +50,16 @@ protected:
   std::string otraj_path_;
   rgbd::Frame curr_frame_;
   rgbd::Frame prev_frame_;
+  std::vector<size_t> nodes_;
   
   void slamThreadFunction();
   void visualizationThreadFunction();
   void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie);
   void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
+  //SDM added: loop closure
+  LoopCloser::Ptr lc_;
+  string frame_text_;
+  bool needs_map_rebuild_;
 };
 
 #endif // SLAM_VISUALIZER_H

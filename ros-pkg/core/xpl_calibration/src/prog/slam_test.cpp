@@ -20,6 +20,7 @@ int main(int argc, char** argv)
     ("opcd", bpo::value<string>()->required(), "Output path for the final pointcloud.")
     ("otraj", bpo::value<string>()->required(), "Output path for the final trajectory.")
     ("save-imgs", "Saves slam*.png to the current directory.  Slows things down considerably.")
+    ("loop-closure", "Adds loop closure.")
     ("cam", bpo::value<string>(), "Camera file to use.")
     ;
 
@@ -45,6 +46,7 @@ int main(int argc, char** argv)
   
   SlamVisualizer vis;
   vis.save_imgs_ = opts.count("save-imgs");
+  vis.use_loop_closure_ = opts.count("loop-closure");
   if(opts.count("cam"))
     vis.setCamera(opts["cam"].as<string>());
 

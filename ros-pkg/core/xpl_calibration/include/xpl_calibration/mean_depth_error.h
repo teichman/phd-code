@@ -17,7 +17,6 @@ public:
   FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
 		    const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1,
 		    double max_range = 3.5, double fraction = 1.0);
-		    
   //! x = [rx, ry, rz, tx, ty, tz].
   double eval(const Eigen::VectorXd& x) const;
 

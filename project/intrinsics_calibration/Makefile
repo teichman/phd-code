@@ -27,7 +27,10 @@ AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect
 
 SLAM_RUNS_xpl01 :=	xpl001-seq004 \
 			xpl001-seq005 
-
+# Convenient to turn on if you want to watch it run, but not save images
+DEFAULT_GRID_VIS := 0
+# Turn off loop closure with this
+LOOP_CLOSURE_FLAG := --loop-closure
 all:
 	@echo You should probably be more specific.
 
@@ -101,7 +104,7 @@ $(1)-visualize-slam-result-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1
 
 $(1)/slam_videos/$(2).avi: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
 	mkdir -p $$(@D)/$(2)
-	cd $$(@D)/$(2) && GRIDSEARCH_VIS=1 rosrun xpl_calibration slam_test $$< $(2).pcd $(2).traj --cam $(CAMERAS_PATH)/$(1)/$(2).cam --save-imgs
+	cd $$(@D)/$(2) && GRIDSEARCH_VIS=1 rosrun xpl_calibration slam_test $$< $(2).pcd $(2).traj --cam $(CAMERAS_PATH)/$(1)/$(2).cam --save-imgs ${LOOP_CLOSURE_FLAG}
 	cd $$(@D)/$(2) && mkdir slam-png && mv slam*.png slam-png/
 	cd $$(@D)/$(2) && mkdir montage-png && mv montage*.png montage-png/	
 	cd $$(@D)/$(2) && mencoder "mf://slam-png/slam*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(2)-alignment.avi
@@ -109,7 +112,7 @@ $(1)/slam_videos/$(2).avi: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2)
 
 $(1)/slam_results/$(2).traj: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
 	mkdir -p $$(@D)
-	rosrun xpl_calibration slam_test $$< $$(@D)/$(2).pcd $$@ --cam $(CAMERAS_PATH)/$(1)/$(2).cam
+	GRIDSEARCH_VIS=${DEFAULT_GRID_VIS} rosrun xpl_calibration slam_test $$< $$(@D)/$(2).pcd $$@ --cam $(CAMERAS_PATH)/$(1)/$(2).cam ${LOOP_CLOSURE_FLAG}
 
 $(CAMERAS_PATH)/$(1)/$(2).cam:
 	mkdir -p $$(@D)

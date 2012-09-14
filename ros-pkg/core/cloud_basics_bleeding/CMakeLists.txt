@@ -17,16 +17,16 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 
-set(LIB_COMPILE_FLAGS -fopenmp -w)
+set(LIB_COMPILE_FLAGS -fopenmp -w -DLEGACY_PCL)
 set(LIB_DEPENDENCIES "")
 set(LIB_BOOST_DEPENDENCIES "")
 
-set(BIN_COMPILE_FLAGS -fopenmp -w)
+set(BIN_COMPILE_FLAGS -fopenmp -w -DLEGACY_PCL)
 set(BIN_DEPENDENCIES "")
 set(BIN_BOOST_DEPENDENCIES "")
 
 
-#Everything in src/lib/*cpp is a library file
+#Everything in src/*cpp is a library file
 FILE(GLOB LIB_CPP "${PROJECT_SOURCE_DIR}/src/lib/*.cpp")
 set(HAS_LIBRARIES ${LIB_CPP})
 IF(HAS_LIBRARIES)
