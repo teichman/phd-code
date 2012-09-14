@@ -15,6 +15,7 @@ class GridSearch
 {
 public:
   bool verbose_;
+  //! This should probably be a const * rather than ::Ptr.
   ScalarFunction::Ptr objective_;
   //! Number of times to scale down the search.
   int num_scalings_;

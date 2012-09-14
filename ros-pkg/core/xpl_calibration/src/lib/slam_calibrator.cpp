@@ -56,7 +56,7 @@ PrimeSenseModel SlamCalibrator::calibrate() const
 {
   PrimeSenseModel initial_model = sseqs_[0]->model_;
   initial_model.resetDepthDistortionModel();
-  DepthDistortionLearner learner(initial_model);
+  DepthDistortionLearner ddl(initial_model);
   
   for(size_t i = 0; i < size(); ++i) {
     const Trajectory& traj = trajectories_[i];
@@ -70,7 +70,9 @@ PrimeSenseModel SlamCalibrator::calibrate() const
       Affine3f transform = traj.get(j).inverse().cast<float>();
       Frame frame;
       sseq.readFrame(j, &frame);
-      learner.addFrame(frame, map, transform);
+      Cloud::Ptr transformed(new Cloud);
+      pcl::transformPointCloud(*map, *transformed, transform);
+      ddl.addFrame(frame, transformed);
 
       // -- Visualize.
       // cout << "Visualizing " << j << " / " << traj.size() << endl;
@@ -84,12 +86,14 @@ PrimeSenseModel SlamCalibrator::calibrate() const
     }
   }
 
-  cv::Mat3b cmap = learner.coverageMap();
+  cv::Mat3b cmap = ddl.coverageMap();
   cv::imshow("coverage", cmap);
   cv::waitKey();
   
-  cout << "Fitting model using " << learner.size() << " frames." << endl;
-  PrimeSenseModel model = learner.fitModel();
+  cout << "Fitting model using " << ddl.size() << " frames." << endl;
+  PrimeSenseModel model = ddl.fitFocalLength();
+  ddl.initial_model_ = model;
+  model = ddl.fitModel();
   cout << "== Initial model: " << endl;
   cout << sseqs_[0]->model_.status();
   cout << "== Final model: " << endl;

@@ -5,6 +5,8 @@
 #include <Eigen/StdVector>
 #include <pcl/common/transforms.h>
 #include <rgbd_sequence/primesense_model.h>
+#include <optimization/optimization.h>
+#include <xpl_calibration/mean_depth_error.h>
 
 class PixelStats
 {
@@ -46,25 +48,54 @@ protected:
 class DepthDistortionLearner
 {
 public:
-  //int max_tr_ex_;
-  
+  //! Used for 3D -> 2D projection.
+  rgbd::PrimeSenseModel initial_model_;
+
   DepthDistortionLearner(const rgbd::PrimeSenseModel& initial_model);
-  void addFrame(rgbd::Frame frame,
-		rgbd::Cloud::ConstPtr pcd,
-		const Eigen::Affine3f& transform);
+  //! pcd is assumed to be in the same coordinate system as frame, i.e.
+  //! model.frameToCloud(frame) should in theory produce pcd.
+  void addFrame(rgbd::Frame frame, rgbd::Cloud::ConstPtr pcd);
   rgbd::PrimeSenseModel fitModel();
-  void clear() { frames_.clear(); pcds_.clear(); transforms_.clear(); coverage_map_.clear(); }
+  rgbd::PrimeSenseModel fitFocalLength();
+  void clear() { frames_.clear(); pcds_.clear(); coverage_map_.clear(); }
   size_t size() const;
   cv::Mat3b coverageMap() const { return coverage_map_.computeImage(); }
   
 protected:
-  //! Used for 3D -> 2D projection.  Depth distortion params are ignored.
-  rgbd::PrimeSenseModel initial_model_;
   std::vector<rgbd::Frame> frames_;
   std::vector<rgbd::Cloud::ConstPtr> pcds_;
-  //! transforms_[i] takes pcds_[i] to the coordinate system that frames_[i] is defined in.
-  std::vector<Eigen::Affine3f, Eigen::aligned_allocator<Eigen::Affine3f> > transforms_;
   CoverageMap coverage_map_;
+
+  Eigen::VectorXd regress(const Eigen::MatrixXd& X, const Eigen::VectorXd& Y) const;
+  Eigen::VectorXd regressRegularized(const Eigen::MatrixXd& X, const Eigen::VectorXd& Y) const;
 };
+
+
+//! 1/2 (X^T w - Y)^T (X^T w - Y) + 1/2 \gamma w^T w
+class RegularizedRegressionObjective : public ScalarFunction
+{
+public:
+  RegularizedRegressionObjective(double gamma, const Eigen::MatrixXd* X, const Eigen::VectorXd* Y);
+  double eval(const Eigen::VectorXd& x) const;
+  
+protected:
+  double gamma_;
+  const Eigen::MatrixXd* X_;
+  const Eigen::VectorXd* Y_;
+};
+
+//! \gamma w + X (X^T w - Y)
+class RegularizedRegressionGradient : public VectorFunction
+{
+public:
+  RegularizedRegressionGradient(double gamma, const Eigen::MatrixXd* X, const Eigen::VectorXd* Y);
+  Eigen::VectorXd eval(const Eigen::VectorXd& x) const;
+  
+protected:
+  double gamma_;
+  const Eigen::MatrixXd* X_;
+  const Eigen::VectorXd* Y_;
+};
+
 
 #endif // DEPTH_DISTORTION_LEARNER_H
