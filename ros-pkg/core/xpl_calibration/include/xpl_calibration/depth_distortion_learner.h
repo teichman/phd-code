@@ -6,6 +6,7 @@
 #include <pcl/common/transforms.h>
 #include <rgbd_sequence/primesense_model.h>
 #include <optimization/optimization.h>
+#include <bag_of_tricks/lockable.h>
 #include <xpl_calibration/mean_depth_error.h>
 
 class PixelStats
@@ -19,6 +20,62 @@ public:
   bool valid() const;
   void reserve(int num) { velo_.reserve(num); asus_.reserve(num); }
 };
+
+// //! Represents one small region of the image.
+// class DescriptorAccumulatorCell
+// {
+// public:
+//   DescriptorAccumulatorCell(double min_dist, double max_dist, int num_bins, size_t max_per_bin);
+//   void addDescriptor(double distance, const VectorXd& descriptor, double multiplier);
+//   cv::Vec3b color() const;
+  
+//   //! descriptors_[i][j] is the jth descriptor in the ith distance bin.
+//   std::vector< std::vector<Eigen::VectorXd> > descriptors_;
+//   std::vector< std::vector<Eigen::VectorXd> > multipliers_;
+
+// protected:
+//   double min_dist_;
+//   double max_dist_;
+//   int num_bins_;
+//   size_t max_per_bin_;
+//   double width_;
+// };
+
+// class DescriptorAccumulator
+// {
+// public:
+//   //! rows and cols in the original.
+//   //! scale is how much to scale down the original image when creating bins.
+//   //! Each cell is a small subwindow in the original image.
+//   //! Each cell has a set of bins over possible distances.
+//   DescriptorAccumulator(int rows, int cols, double scale, int bins_per_cell,
+// 			double min_dist, double max_dist, uint64_t max_bytes);
+//   void addFrame(rgbd::Frame measurement, rgbd::Frame map);
+//   cv::Mat3b computeCoverageImage() const;
+//   Eigen::MatrixXd assembleX() const;
+//   Eigen::VectorXd assembleY() const;
+  
+//   size_t rows() const { return bins_.size(); }
+//   size_t cols() const { return bins_[0].size(); }
+//   void clear();
+  
+// protected:
+//   //! In the original, not scaled down.
+//   int rows_;
+//   //! In the original, not scaled down.
+//   int cols_;
+//   //! What to multiply the original by.
+//   double scale_;
+//   double min_dist_;
+//   double max_dist_;
+//   size_t max_per_bin_;
+//   //! bins_[y][x][i] is the ith bin in the row y, col x.
+//   std::vector< std::vector<DescriptorAccumulatorCell> > cells_;
+//   //! Map distance values aligned with descriptors in bins_.
+//   std::vector< std::vector< std::vector<double> > > ys_;
+  
+//   cv::Vec3b colorizeBin(const std::vector<double>& bin) const;
+// };
 
 class CoverageMap
 {
@@ -45,7 +102,7 @@ protected:
   cv::Vec3b colorizeBin(const std::vector<double>& bin) const;
 };
 
-class DepthDistortionLearner
+class DepthDistortionLearner : public SharedLockable
 {
 public:
   //! Used for 3D -> 2D projection.

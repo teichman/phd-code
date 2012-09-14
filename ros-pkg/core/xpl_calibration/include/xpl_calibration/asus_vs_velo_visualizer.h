@@ -47,7 +47,7 @@ public:
   void saveExtrinsics(std::string tag = "") const;
   void saveIntrinsics(std::string tag = "") const;
   //! Find alignment and sync offset.
-  void calibrate();
+  void calibrate(std::string eval_path = "");
   void visualizeDistortion();
   void setColorScheme(std::string name);
   void toggleColorScheme();

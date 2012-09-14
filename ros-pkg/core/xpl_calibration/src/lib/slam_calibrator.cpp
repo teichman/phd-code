@@ -115,14 +115,12 @@ PrimeSenseModel SlamCalibrator::calibrate() const
       ddl.addFrame(frame, filtered);
 
       // -- Visualize.
-      if(i == 0) {
-	cout << "Visualizing " << j << " / " << traj.size() << endl;
-	cv::imshow("measurement", frame.depthImage());
-	Frame mapframe;
-	initial_model.cloudToFrame(*filtered, &mapframe);
-	cv::imshow("map", mapframe.depthImage());
-	cv::waitKey(10);
-      }
+      cout << "Visualizing " << j << " / " << traj.size() << endl;
+      cv::imshow("measurement", frame.depthImage());
+      Frame mapframe;
+      initial_model.cloudToFrame(*filtered, &mapframe);
+      cv::imshow("map", mapframe.depthImage());
+      cv::waitKey(10);
     }
   }
 
@@ -133,12 +131,13 @@ PrimeSenseModel SlamCalibrator::calibrate() const
   cout << hrt.reportMilliseconds() << endl;
   cv::imshow("coverage", cmap);
   cv::imwrite("coverage.png", cmap);
-  cv::waitKey();
+  cv::waitKey(100);
   
   cout << "Fitting models using " << ddl.size() << " frames." << endl;
-  cout << "Fitting focal length." << endl;
-  PrimeSenseModel model = ddl.fitFocalLength();
-  ddl.initial_model_ = model;
+  PrimeSenseModel model;
+  // cout << "Fitting focal length." << endl;
+  // model = ddl.fitFocalLength();
+  // ddl.initial_model_ = model;
   cout << "Fitting depth distortion model." << endl;
   model = ddl.fitModel();
   cout << "== Initial model: " << endl;
