@@ -6,7 +6,7 @@ using namespace rgbd;
 
 DepthDistortionLearner::DepthDistortionLearner(const PrimeSenseModel& initial_model) :
   initial_model_(initial_model),
-  coverage_map_(0.1, initial_model.height_, initial_model.width_)
+  coverage_map_(0.05, initial_model.height_, initial_model.width_)
 {
 }
 
@@ -22,7 +22,7 @@ PrimeSenseModel DepthDistortionLearner::fitFocalLength()
 {
   FocalLengthMDE::Ptr objective(new FocalLengthMDE(initial_model_, frames_, pcds_));
   GridSearch gs(1);
-  gs.verbose_ = false;
+  gs.verbose_ = true;
   gs.objective_ = objective;
   gs.num_scalings_ = 6;
   gs.max_resolutions_ << 10;
@@ -78,8 +78,8 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
 	if(mapdepth(ppt.v_, ppt.u_) == 0 || depth(ppt.v_, ppt.u_) == 0)
 	  continue;
 
-	// if(rand() % 5 != 0)
-	//   continue;
+	if(rand() % 5 != 0)
+	  continue;
 	
 	ppt.z_ = mapdepth(ppt.v_, ppt.u_);
 	initial_model_.project(ppt, &pt);
@@ -186,7 +186,7 @@ CoverageMap::CoverageMap(double scale, int rows, int cols) :
   for(size_t y = 0; y < bins_.size(); ++y) {
     bins_[y].resize(cols * scale);
     for(size_t x = 0; x < bins_[y].size(); ++x) {
-      bins_[y][x].reserve(100);
+      bins_[y][x].reserve(1e5);
     }
   }
 }
@@ -213,6 +213,16 @@ void CoverageMap::addFrame(rgbd::Frame frame)
 
 cv::Mat3b CoverageMap::computeImage() const
 {
+  // cv::Mat3b vis(cv::Size(cols_, rows_));
+  // for(int y = 0; y < rows_; ++y) {
+  //   for(int x = 0; x < cols_; ++x) {
+  //     int u = x * scale_;
+  //     int v = y * scale_;
+  //     vis(y, x) = colorizeBin(bins_[v][u]);
+  //   }
+  // }
+  // return vis;
+  
   cv::Mat3b small(rows(), cols());
   for(size_t y = 0; y < rows(); ++y) {
     for(size_t x = 0; x < cols(); ++x) {
@@ -241,7 +251,7 @@ cv::Vec3b CoverageMap::colorizeBin(const vector<double>& bin) const
     ++counts(idx);
   }
 
-  int filled_criterion = 100;
+  int filled_criterion = 20;
   int num_filled = 0;
   for(int i = 0; i < counts.rows(); ++i)
     if(counts(i) > filled_criterion)

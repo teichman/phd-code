@@ -25,9 +25,8 @@ AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-0
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
-SLAM_RUNS_xpl01 :=	xpl001-seq004 \
-			xpl001-seq005 \
-			hard
+SLAM_RUNS_xpl01 :=	kitchen \
+			hallway
 
 # Convenient to turn on if you want to watch it run, but not save images
 DEFAULT_GRID_VIS := 1
@@ -104,7 +103,10 @@ $(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/
 	mv `ls screenshot*.cam -tr | tail -n1` $(CAMERAS_PATH)/$(1)/$(2).cam
 	rm `ls screenshot*.png -tr | tail -n1`
 
-$(1)-visualize-slam-result-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
+$(1)-visualize-slam-trajectory-$(2): $$(TRAJECTORIES_$(1))
+	rosrun xpl_calibration calibrate_slam --sseq $(SLAM_DATA_PATH)/$(1)/$(2) --traj $(1)/slam_results/$(2).traj
+
+$(1)-visualize-slam-pcd-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
 	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
 
 $(1)/slam_videos/$(2).avi: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam

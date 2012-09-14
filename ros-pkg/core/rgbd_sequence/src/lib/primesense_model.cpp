@@ -43,6 +43,7 @@ namespace rgbd
   void PrimeSenseModel::cloudToFrame(const Cloud& pcd, Frame* frame) const
   {
     ROS_ASSERT(frame);
+    ROS_ASSERT(width_ != -1 && height_ != -1 && cx_ != -1 && cy_ != -1 && fx_ != -1 && fy_ != -1);
 
     frame->timestamp_ = pcd.header.stamp.toSec();
     frame->depth_ = DepthMatPtr(new DepthMat(height_, width_));
@@ -54,9 +55,9 @@ namespace rgbd
       if(!isFinite(pcd[i]))
 	continue;
       
-      // Ignore points outside the depth image.
+      // Ignore points outside the depth image or behind the sensor.
       project(pcd[i], &ppt);
-      if(!(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
+      if(ppt.z_ == 0 || !(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
 	continue;
 
       // Eigen is column-major by default: http://eigen.tuxfamily.org/dox/TopicStorageOrders.html
@@ -187,13 +188,16 @@ namespace rgbd
   void PrimeSenseModel::project(const Point& pt, ProjectivePoint* ppt) const
   {
     ROS_ASSERT(isFinite(pt));
-
+    
     ppt->u_ = pt.x * fx_ / pt.z + cx_;
     ppt->v_ = pt.y * fy_ / pt.z + cy_;
     ppt->z_ = pt.z * 1000;
     ppt->r_ = pt.r;
     ppt->g_ = pt.g;
     ppt->b_ = pt.b;
+
+    if(pt.z < 0)
+      ppt->z_ = 0;
   }
   
   bool PrimeSenseModel::initialized() const
@@ -334,7 +338,7 @@ namespace rgbd
     depth = cv::Vec3b(0, 0, 0);
     for(int y = 0; y < depth.rows; ++y)
       for(int x = 0; x < depth.cols; ++x)
-	depth(y, x) = colorize(depth_->coeffRef(y, x) * 0.001, 0.3, 8);
+	depth(y, x) = colorize(depth_->coeffRef(y, x) * 0.001, 0, 8);
     return depth;
   }
   
