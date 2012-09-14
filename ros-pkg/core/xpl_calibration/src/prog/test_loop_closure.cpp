@@ -60,17 +60,17 @@ int main(int argc, char** argv)
   lc.fine_tune_ = false;
   lc.visualize_ = true;
   lc.max_feature_dist_ = 500;
-  lc.keypoints_per_frame_ = 500;
+  lc.keypoints_per_frame_ = 250;
   lc.min_pairwise_keypoint_dist_ = 0.04; //cm apart
   lc.min_ransac_inliers_ = 10; //Need at least this many inliers to be considered a valid
   lc.min_ransac_inlier_percent_ = 0.1;
   lc.ransac_max_inlier_dist_ = 0.02; //Need to be within 2 cm to be considered an inlier
-  lc.num_ransac_samples_ = 10000;
+  lc.num_ransac_samples_ = 1000;
   lc.icp_max_avg_dist_ = 0.03; //Avg pt-to-pt distance required
   lc.icp_max_inlier_dist_ = 0.1; // Highest distance allowed to be considered an inlier
   lc.icp_inlier_percent_ = 0.3; // At least this percentage of points must be inliers
   lc.ftype_ = ORB;
-  lc.k_ = 5;
+  lc.k_ = 2;
   lc.min_time_offset_ = 30;
   lc.verification_type_ = MDE;
   lc.max_mde_ = 0.1; //Without color was 0.02
@@ -78,6 +78,7 @@ int main(int argc, char** argv)
   lc.use_3d_sift_ = true;
   lc.fpfh_radius_ = 0.02;
   lc.harris_margin_ = 50;
+  lc.step_ = 2;
   size_t step = 15;
   cloud_basics::VisWrapper vis;
   for(size_t i = 0; i < sseq->size(); i+= step)
