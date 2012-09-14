@@ -48,6 +48,9 @@ protected:
 class DepthDistortionLearner
 {
 public:
+  //! Used for 3D -> 2D projection.
+  rgbd::PrimeSenseModel initial_model_;
+
   DepthDistortionLearner(const rgbd::PrimeSenseModel& initial_model);
   //! pcd is assumed to be in the same coordinate system as frame, i.e.
   //! model.frameToCloud(frame) should in theory produce pcd.
@@ -59,8 +62,6 @@ public:
   cv::Mat3b coverageMap() const { return coverage_map_.computeImage(); }
   
 protected:
-  //! Used for 3D -> 2D projection.  Depth distortion params are ignored.
-  rgbd::PrimeSenseModel initial_model_;
   std::vector<rgbd::Frame> frames_;
   std::vector<rgbd::Cloud::ConstPtr> pcds_;
   CoverageMap coverage_map_;

@@ -31,7 +31,7 @@ PrimeSenseModel DepthDistortionLearner::fitFocalLength()
 
 
   ArrayXd init(1);
-  init(0) = initial_model_.fx_ - 34.54365;
+  init(0) = initial_model_.fx_;
 
   cout << "Initial f: " << init(0) << endl;
   cout << "Initial objective: " << objective->eval(init) << endl;

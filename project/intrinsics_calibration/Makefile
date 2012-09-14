@@ -26,11 +26,13 @@ AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
 SLAM_RUNS_xpl01 :=	xpl001-seq004 \
-			xpl001-seq005 
+			xpl001-seq005
+
 # Convenient to turn on if you want to watch it run, but not save images
 DEFAULT_GRID_VIS := 0
 # Turn off loop closure with this
 LOOP_CLOSURE_FLAG := --loop-closure
+
 all:
 	@echo You should probably be more specific.
 

@@ -48,7 +48,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/slam_calibrator.cpp
   src/lib/slam_calibration_visualizer.cpp
   )
-rosbuild_add_compile_flags(${PROJECT_NAME} -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas -w)
+rosbuild_add_compile_flags(${PROJECT_NAME} -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 rosbuild_link_boost(${PROJECT_NAME} system program_options)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()

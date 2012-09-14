@@ -91,7 +91,9 @@ PrimeSenseModel SlamCalibrator::calibrate() const
   cv::waitKey();
   
   cout << "Fitting model using " << ddl.size() << " frames." << endl;
-  PrimeSenseModel model = ddl.fitModel();
+  PrimeSenseModel model = ddl.fitFocalLength();
+  ddl.initial_model_ = model;
+  model = ddl.fitModel();
   cout << "== Initial model: " << endl;
   cout << sseqs_[0]->model_.status();
   cout << "== Final model: " << endl;
