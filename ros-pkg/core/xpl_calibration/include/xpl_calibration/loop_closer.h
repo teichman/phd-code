@@ -61,6 +61,7 @@ public:
   bool visualize_;
   //! Loop closures must be at least this far apart in time
   int min_time_offset_;
+  int step_; //Only even check every step_ cached frames
   // Matching
   FeatureType ftype_;
   int keypoints_per_frame_;

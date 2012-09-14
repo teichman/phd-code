@@ -28,6 +28,8 @@ AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect
 SLAM_RUNS_xpl01 :=	xpl001-seq004 \
 			xpl001-seq005 
 
+DEFAULT_GRID_VIS := 0
+
 all:
 	@echo You should probably be more specific.
 
@@ -91,13 +93,13 @@ $(foreach SENSOR,$(SENSORS),$(eval $(call SENSOR_RULE_GENERATOR,$(SENSOR))))
 define SENSOR_RUN_RULE_GENERATOR
 
 # Press j to take a screenshot from the angle you want.
-$(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam slam_results/$(2).traj
-	rosrun pcl_bleeding pcd_viewer slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
+$(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam $(1)/slam_results/$(2).traj
+	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
 	mv `ls screenshot*.cam -tr | tail -n1` $(CAMERAS_PATH)/$(1)/$(2).cam
 	rm `ls screenshot*.png -tr | tail -n1`
 
-$(1)-visualize-slam-result-$(2): slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
-	rosrun pcl_bleeding pcd_viewer slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
+$(1)-visualize-slam-result-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
+	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
 
 $(1)/slam_videos/$(2).avi: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
 	mkdir -p $$(@D)/$(2)
@@ -109,7 +111,7 @@ $(1)/slam_videos/$(2).avi: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2)
 
 $(1)/slam_results/$(2).traj: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
 	mkdir -p $$(@D)
-	rosrun xpl_calibration slam_test $$< $$(@D)/$(2).pcd $$@ --cam $(CAMERAS_PATH)/$(1)/$(2).cam --loop-closure
+	GRIDSEARCH_VIS=${DEFAULT_GRID_VIS} rosrun xpl_calibration slam_test $$< $$(@D)/$(2).pcd $$@ --cam $(CAMERAS_PATH)/$(1)/$(2).cam --loop-closure
 
 $(CAMERAS_PATH)/$(1)/$(2).cam:
 	mkdir -p $$(@D)

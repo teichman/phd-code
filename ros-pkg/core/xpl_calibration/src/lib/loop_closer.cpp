@@ -49,6 +49,7 @@ LoopCloser::LoopCloser(rgbd::StreamSequence::ConstPtr sseq):
   harris_thresh_(0.01),
   harris_margin_(50),
   use_3d_sift_(true),
+  step_(1),
   max_z_(3)
 {
   ftype_ = ORB;
@@ -122,12 +123,11 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
     return false;
   Cloud::ConstPtr cur_cloud = sseq_->getCloud(t);
   size_t latest_time = t;
-  for(int i = cached_frames_.size()-1; i >= 0; i--)
+  for(int i = cached_frames_.size()-1; i >= 0; i-=step_)
   {
     //Lookup cached keypoints from past frames
     //ALL keypoints must exist in the cloud (z != nan) already
     size_t old_t = cached_frames_[i];
-    cout << "Latest_time = " << latest_time << endl;
     cout << "Old_t = " << old_t << endl;
     cout << "i = " << i << endl;
     if( latest_time - old_t < min_time_offset_)
@@ -277,14 +277,15 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
       }
       //Check number of inliers
       if(num_inliers < min_ransac_inlier_percent_ * keypoint_cloud0->size() || num_inliers < min_ransac_inliers_)
+      {
         continue;
+      }
       //Check bounding volume
       int has_x = (maxx - minx) > min_bounding_length_;
       int has_y = (maxy - miny) > min_bounding_length_;
       int has_z = (maxz - minz) > min_bounding_length_;
       if(has_x + has_y + has_z < 2)
       {
-        cout << "Didn't pass minimum bounding test" << endl;
         continue;
       }
 

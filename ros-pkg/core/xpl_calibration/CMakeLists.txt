@@ -101,13 +101,13 @@ rosbuild_add_executable(slam_test src/prog/slam_test.cpp)
 rosbuild_link_boost(slam_test program_options filesystem)
 target_link_libraries(slam_test ${PROJECT_NAME})
 
-rosbuild_add_executable(test_transforms src/prog/test_transforms.cpp)
-rosbuild_link_boost(test_transforms program_options filesystem)
-target_link_libraries(test_transforms ${PROJECT_NAME})
-
-rosbuild_add_executable(test_loop_closure src/prog/test_loop_closure.cpp)
-rosbuild_link_boost(test_loop_closure program_options filesystem)
-target_link_libraries(test_loop_closure ${PROJECT_NAME})
+#rosbuild_add_executable(test_transforms src/prog/test_transforms.cpp)
+#rosbuild_link_boost(test_transforms program_options filesystem)
+#target_link_libraries(test_transforms ${PROJECT_NAME})
+#
+#rosbuild_add_executable(test_loop_closure src/prog/test_loop_closure.cpp)
+#rosbuild_link_boost(test_loop_closure program_options filesystem)
+#target_link_libraries(test_loop_closure ${PROJECT_NAME})
 
 rosbuild_add_executable(calibrate_slam src/prog/calibrate_slam.cpp)
 rosbuild_link_boost(calibrate_slam program_options filesystem)

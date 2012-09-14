@@ -71,6 +71,8 @@ void SlamVisualizer::run(StreamSequence::ConstPtr sseq,
     lc_ = LoopCloser::Ptr(new LoopCloser(sseq));
     lc_->fine_tune_ = false; //Doing this by hand for visualization
     lc_->visualize_ = false;
+    lc_->min_time_offset_ = 30;
+    lc_->step_ = 2;
     lc_->max_feature_dist_ = 500;
     lc_->keypoints_per_frame_ = 250;
     lc_->min_pairwise_keypoint_dist_ = 0.1; //cm apart
@@ -83,7 +85,6 @@ void SlamVisualizer::run(StreamSequence::ConstPtr sseq,
     lc_->icp_inlier_percent_ = 0.3; // At least this percentage of points must be inliers
     lc_->ftype_ = ORB;
     lc_->k_ = 5;
-    lc_->min_time_offset_ = 30;
     lc_->verification_type_ = MDE;
     lc_->max_mde_ = 0.1;
     lc_->harris_thresh_ = 0.01;
@@ -206,7 +207,8 @@ void SlamVisualizer::slamThreadFunction()
         cout << "Adding loop edge with transform: " << endl << transforms[j].matrix() << endl;
         slam_->addEdge(targets[j], curr_idx, transforms[j].cast<double>(), covariance);
       }
-      needs_map_rebuild_ = true; //I'll need to rebuild the map
+      if(GRIDSEARCH_VIS)
+        needs_map_rebuild_ = true; //Only bother rebuilding the map if we're visualizing gridsearch
     }
     
     // -- Solve.  For now this isn't really doing anything other than showing
@@ -231,7 +233,7 @@ void SlamVisualizer::slamThreadFunction()
     if(MAX_FRAMES != 0 && curr_idx > MAX_FRAMES)
       break;
   }
-
+  rebuild_map();
   // -- Save the output and shut down.
   usleep(1e6);  // Let the visualizer filter the map.
   scopeLockWrite;
@@ -309,7 +311,9 @@ void SlamVisualizer::visualizationThreadFunction()
       if(!vis_.updatePointCloud(vis, "default"))
 	vis_.addPointCloud(vis, "default");
       int xpos = 20; int ypos = 10; int fontsize = 25;
-      if(!vis_.updateText(frame_text_, xpos, ypos, fontsize, 0, 0, 0, "label"))
+      string toshow = frame_text_;
+      if(!GRIDSEARCH_VIS) toshow += " (WARNING: MAP NOT BEING REBUILT. MAY BE SIGNIFICANTLY OFF IN VIS)";
+      if(!vis_.updateText(toshow, xpos, ypos, fontsize, 0, 0, 0, "label"))
   vis_.addText(frame_text_, xpos, ypos, fontsize, 0, 0, 0, "label");
     }
 
