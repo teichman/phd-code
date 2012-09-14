@@ -52,31 +52,6 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx, const rgbd::PrimeSenseMode
   cout << "Filtered map has " << map->size() << " points." << endl;
 
   return map;
-
-  // This version is slower but requires less memory.
-
-  // pcl::VoxelGrid<rgbd::Point> vg;
-  // vg.setLeafSize(vgsize, vgsize, vgsize);
-
-  // Cloud::Ptr map(new Cloud);
-  // for(size_t i = 0; i < traj.size(); ++i) {
-  //   if(!traj.exists(i))
-  //     continue;
-
-  //   cout << "Using frame " << i << " / " << traj.size() << endl;
-  //   Frame frame;
-  //   sseq.readFrame(i, &frame);
-  //   Cloud::Ptr tmp(new Cloud);
-  //   model.frameToCloud(frame, tmp.get(), max_range_);
-  //   pcl::transformPointCloud(*tmp, *tmp, traj.get(i).cast<float>());
-
-  //   *map += *tmp;
-  //   vg.setInputCloud(map);
-  //   vg.filter(*tmp);
-  //   *map = *tmp;
-  // }
-
-  // return map;
 }
 
 size_t SlamCalibrator::size() const
