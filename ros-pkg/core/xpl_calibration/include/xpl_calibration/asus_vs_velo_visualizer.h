@@ -52,6 +52,7 @@ public:
   void setColorScheme(std::string name);
   void toggleColorScheme();
   void fitModel();
+  void fitFocalLength();
   
 protected:
   rgbd::StreamSequence::Ptr sseq_;

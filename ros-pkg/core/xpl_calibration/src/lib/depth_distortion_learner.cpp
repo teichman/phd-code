@@ -8,6 +8,46 @@ DepthDistortionLearner::DepthDistortionLearner(const PrimeSenseModel& initial_mo
   initial_model_(initial_model),
   coverage_map_(0.1, initial_model.height_, initial_model.width_)
 {
+}
+
+void DepthDistortionLearner::addFrame(Frame frame,
+				      rgbd::Cloud::ConstPtr pcd)
+{
+  coverage_map_.addFrame(frame);
+  frames_.push_back(frame);
+  pcds_.push_back(pcd);
+}
+
+PrimeSenseModel DepthDistortionLearner::fitFocalLength()
+{
+  FocalLengthMDE::Ptr objective(new FocalLengthMDE(initial_model_, frames_, pcds_));
+  GridSearch gs(1);
+  gs.verbose_ = false;
+  gs.objective_ = objective;
+  gs.num_scalings_ = 6;
+  gs.max_resolutions_ << 10;
+  gs.grid_radii_ << 5;
+  gs.scale_factors_ << 0.5;
+
+
+  ArrayXd init(1);
+  init(0) = initial_model_.fx_ - 34.54365;
+
+  cout << "Initial f: " << init(0) << endl;
+  cout << "Initial objective: " << objective->eval(init) << endl;
+  ArrayXd x = gs.search(init);
+  cout << "GridSearch solution: " << x.transpose() << endl;
+  cout << "Final objective: " << objective->eval(x) << endl;
+
+  PrimeSenseModel model = initial_model_;
+  model.fx_ = x(0);
+  model.fy_ = x(0);
+  return model;
+}
+
+PrimeSenseModel DepthDistortionLearner::fitModel()
+{
+  ROS_ASSERT(frames_.size() == pcds_.size());
   // -- Make sure the initial model is reasonable.
   //    It's going to be used for projection assuming no depth distortion.
   if(initial_model_.hasDepthDistortionModel()) {
@@ -15,22 +55,6 @@ DepthDistortionLearner::DepthDistortionLearner(const PrimeSenseModel& initial_mo
     ROS_FATAL_STREAM(initial_model_.weights_);
     abort();
   }
-}
-
-void DepthDistortionLearner::addFrame(Frame frame,
-				      rgbd::Cloud::ConstPtr pcd,
-				      const Eigen::Affine3f& transform)
-{
-  coverage_map_.addFrame(frame);
-  frames_.push_back(frame);
-  pcds_.push_back(pcd);
-  transforms_.push_back(transform);
-}
-
-PrimeSenseModel DepthDistortionLearner::fitModel()
-{
-  ROS_ASSERT(frames_.size() == pcds_.size());
-  ROS_ASSERT(frames_.size() == transforms_.size());
 
   double min_mult = 0.8;
   double max_mult = 1.2;
@@ -41,11 +65,9 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
   yvec.reserve(1e6);
   mvec.reserve(1e6);
   
-  Cloud transformed;
   for(size_t i = 0; i < frames_.size(); ++i) {
-    pcl::transformPointCloud(*pcds_[i], transformed, transforms_[i]);
     Frame mapframe;
-    initial_model_.cloudToFrame(transformed, &mapframe);
+    initial_model_.cloudToFrame(*pcds_[i], &mapframe);
     const DepthMat& depth = *frames_[i].depth_;
     const DepthMat& mapdepth = *mapframe.depth_;
 
@@ -56,8 +78,8 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
 	if(mapdepth(ppt.v_, ppt.u_) == 0 || depth(ppt.v_, ppt.u_) == 0)
 	  continue;
 
-	if(rand() % 5 != 0)
-	  continue;
+	// if(rand() % 5 != 0)
+	//   continue;
 	
 	ppt.z_ = mapdepth(ppt.v_, ppt.u_);
 	initial_model_.project(ppt, &pt);
@@ -94,20 +116,7 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
 
   // -- Fit the model.
   PrimeSenseModel model = initial_model_;
-
   model.weights_ = regressRegularized(X, Y); 
-  //model.weights_ = regress(X, Y);
-  //VectorXd rweights = regressRegularized(X, Y); 
-  // cout << "Weights: " << model.weights_.transpose() << endl;
-  // cout << "reg weights: " << rweights.transpose() << endl;
-  
-  // VectorXd pre_differences = measurements - Y;
-  // double pre_obj = pre_differences.array().pow(2).sum() / (double)Y.rows();
-  // cout << "Mean error before fitting model: " << pre_obj << endl;
-
-  // VectorXd differences = X.transpose() * model.weights_ - Y;
-  // double obj = differences.array().pow(2).sum() / (double)Y.rows();
-  // cout << "Mean error after fitting model: " << obj << endl;
 
   return model;
 }
@@ -125,21 +134,6 @@ Eigen::VectorXd DepthDistortionLearner::regressRegularized(const Eigen::MatrixXd
   MatrixXd xxtr = X * X.transpose() + MatrixXd::Identity(X.rows(), X.rows()) * gamma;
   VectorXd b = X*Y;
   return xxtr.ldlt().solve(b);
-
-
-  // double gamma = 0;
-  // RegularizedRegressionObjective objective(gamma, &X, &Y);
-  // RegularizedRegressionGradient gradient(gamma, &X, &Y);
-  // double tol = 1e-6;
-  // double alpha = 0.15;
-  // double beta = 0.5;
-  // int max_num_iters = 0;
-  // double initial_stepsize = 1;
-  // bool debug = true;
-  // NesterovGradientSolver ngs(&objective, &gradient, tol, alpha, beta, max_num_iters, initial_stepsize, debug);
-  // PrimeSenseModel model;
-  // model.resetDepthDistortionModel();
-  // return ngs.solve(model.weights_);
 }
 
 void PixelStats::addPoint(double velo, double asus)
@@ -178,7 +172,6 @@ bool PixelStats::valid() const
 size_t DepthDistortionLearner::size() const
 {
   ROS_ASSERT(frames_.size() == pcds_.size());
-  ROS_ASSERT(frames_.size() == transforms_.size());
   return frames_.size();
 }
 
@@ -265,28 +258,3 @@ void CoverageMap::clear()
       bins_[y][x].clear();
 }
 
-RegularizedRegressionObjective::RegularizedRegressionObjective(double gamma, const Eigen::MatrixXd* X, const Eigen::VectorXd* Y) :
-  gamma_(gamma),
-  X_(X),
-  Y_(Y)
-{
-}
-
-double RegularizedRegressionObjective::eval(const Eigen::VectorXd& x) const
-{
-  VectorXd foo = X_->transpose() * x - *Y_;
-  return 0.5 * foo.dot(foo) + 0.5 * gamma_ * x.dot(x);
-}
-  
-RegularizedRegressionGradient::RegularizedRegressionGradient(double gamma, const Eigen::MatrixXd* X, const Eigen::VectorXd* Y) :
-  gamma_(gamma),
-  X_(X),
-  Y_(Y)
-{
-}
-
-VectorXd RegularizedRegressionGradient::eval(const Eigen::VectorXd& x) const
-{
-  return gamma_ * x + (*X_) * (X_->transpose() * x - *Y_);
-}
-  

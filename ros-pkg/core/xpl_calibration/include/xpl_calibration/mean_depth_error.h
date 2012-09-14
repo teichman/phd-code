@@ -61,6 +61,20 @@ protected:
   double dt_thresh_;
 };
 
+class FocalLengthMDE : public ScalarFunction
+{
+public:
+  //! pcds are assumed to be in the coordinate system of their corresponding frames.
+  FocalLengthMDE(const rgbd::PrimeSenseModel& model,
+		 const std::vector<rgbd::Frame>& frames,
+		 const std::vector<rgbd::Cloud::ConstPtr>& pcds);
+  double eval(const Eigen::VectorXd& x) const;
+
+protected:
+  rgbd::PrimeSenseModel model_;
+  std::vector<rgbd::Frame> frames_;
+  std::vector<rgbd::Cloud::ConstPtr> pcds_;
+};
 
 void meanDepthError(const rgbd::PrimeSenseModel& model,
 		    rgbd::Frame frame, const rgbd::Cloud& pcd,

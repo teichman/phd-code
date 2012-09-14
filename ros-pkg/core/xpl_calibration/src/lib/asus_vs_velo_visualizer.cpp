@@ -209,15 +209,18 @@ void AsusVsVeloVisualizer::fitModel()
   DepthDistortionLearner ddl(initial_model);
   
   for(size_t i = skip_; i < vseq_->size(); i += skip_) {
-    double min_dt;
-    int idx = findAsusIdx(vseq_->timestamps_[i] + cal_.offset_, &min_dt);
-    if(min_dt > 1.0 / 60.0)
+    double dt;
+    int idx = findAsusIdx(vseq_->timestamps_[i] + cal_.offset_, &dt);
+    if(dt > 0.01)
       continue;
 
     cout << "Adding frame " << i << endl;
     Frame frame;
     sseq_->readFrame(idx, &frame);
-    ddl.addFrame(frame, filterVelo(vseq_->getCloud(i)), cal_.veloToAsus());
+    Cloud::Ptr filtered = filterVelo(vseq_->getCloud(i));
+    Cloud::Ptr transformed(new Cloud);
+    pcl::transformPointCloud(*filtered, *transformed, cal_.veloToAsus());
+    ddl.addFrame(frame, transformed);
   }
 
   model_ = ddl.fitModel();
@@ -280,6 +283,9 @@ void AsusVsVeloVisualizer::run()
     //   break;
     case 'M':
       fitModel();
+      break;
+    case 'O':
+      fitFocalLength();
       break;
     case 'c':
       calibrate();
@@ -584,6 +590,29 @@ void AsusVsVeloVisualizer::saveAll(std::string tag) const
 {
   saveExtrinsics(tag);
   saveIntrinsics(tag);
+}
+
+void AsusVsVeloVisualizer::fitFocalLength()
+{
+  DepthDistortionLearner ddl(model_);
+  
+  for(size_t i = skip_; i < vseq_->size(); i += skip_) {
+    double dt;
+    int idx = findAsusIdx(vseq_->timestamps_[i] + cal_.offset_, &dt);
+    if(dt > 0.01)
+      continue;
+
+    cout << "Adding frame " << i << endl;
+    Frame frame;
+    sseq_->readFrame(idx, &frame);
+    Cloud::Ptr filtered = filterVelo(vseq_->getCloud(i));
+    Cloud::Ptr transformed(new Cloud);
+    pcl::transformPointCloud(*filtered, *transformed, cal_.veloToAsus());
+    ddl.addFrame(frame, transformed);
+  }
+
+  model_ = ddl.fitFocalLength();
+  cout << "Learned new focal length." << endl;
 }
 
 // void AsusVsVeloVisualizer::visualizeDistortion()
