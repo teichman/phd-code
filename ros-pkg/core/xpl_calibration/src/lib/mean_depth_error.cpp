@@ -95,7 +95,7 @@ SequenceAlignmentMDE::SequenceAlignmentMDE(const PrimeSenseModel& model,
   model_(model),
   frames_(frames),
   pcds_(pcds),
-  dt_thresh_(0.015)
+  dt_thresh_(0.005)
 {
 }
 
@@ -127,6 +127,7 @@ double SequenceAlignmentMDE::eval(const Eigen::VectorXd& x) const
   double count = 0;  // Total number of points with both ground truth and measurements.
   double val = 0;  // Total objective.
   Cloud transformed;
+  int num_pcds = 0;
   for(size_t i = 0; i < pcds_.size(); ++i) {
     int idx = seek(frames_, offset + pcds_[i]->header.stamp * 1e-9, dt_thresh_);
     if(idx == -1)
@@ -134,10 +135,46 @@ double SequenceAlignmentMDE::eval(const Eigen::VectorXd& x) const
 
     pcl::transformPointCloud(*pcds_[i], transformed, transform);
     meanDepthError(model_, frames_[idx], transformed, &val, &count);
+    ++num_pcds;
   }
 
-  if(count == 0) {
-    //ROS_WARN("Number of corresponding pcds is zero.  No objective function terms.  Initial time offset is way off?");
+  double min_count = 100 * num_pcds;
+  if(count < min_count) {
+    ROS_WARN_STREAM("Number of corresponding pcds is less than the threshold of " << min_count);
+    return std::numeric_limits<double>::max();
+  }
+  else
+    return val / count;
+}
+
+FocalLengthMDE::FocalLengthMDE(const PrimeSenseModel& model,
+			       const std::vector<Frame>& frames,
+			       const std::vector<Cloud::ConstPtr>& pcds,
+			       const std::vector<Eigen::Affine3d>& transforms) :
+  model_(model),
+  frames_(frames),
+  pcds_(pcds),
+  transforms_(transforms)
+{
+}
+
+double FocalLengthMDE::eval(const Eigen::VectorXd& x) const
+{
+  PrimeSenseModel model = model_;
+  model.fx_ = x(0);
+  model.fy_ = x(0);
+
+  double count = 0;  // Total number of points with both ground truth and measurements.
+  double val = 0;  // Total objective.
+  Cloud transformed;
+  for(size_t i = 0; i < pcds_.size(); ++i) {
+    pcl::transformPointCloud(*pcds_[i], transformed, transforms_[i].cast<float>());
+    meanDepthError(model, frames_[i], transformed, &val, &count);
+  }
+
+  double min_count = 100 * pcds_.size();
+  if(count < min_count) {
+    ROS_WARN_STREAM("Number of corresponding pcds is less than the threshold of " << min_count);
     return std::numeric_limits<double>::max();
   }
   else

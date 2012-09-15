@@ -26,7 +26,7 @@ set(BIN_DEPENDENCIES "")
 set(BIN_BOOST_DEPENDENCIES "")
 
 
-#Everything in src/*cpp is a library file
+#Everything in src/lib/*cpp is a library file
 FILE(GLOB LIB_CPP "${PROJECT_SOURCE_DIR}/src/lib/*.cpp")
 set(HAS_LIBRARIES ${LIB_CPP})
 IF(HAS_LIBRARIES)

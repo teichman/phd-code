@@ -1,6 +1,12 @@
 #!/bin/bash
 SEQ_DIR=$1
-PAUSE_TIME=1
+if [ -z "$2" ]
+then
+  SUBSAMPLE=1
+else
+  SUBSAMPLE=$2
+fi
+PAUSE_TIME=2
 MAX_DISTANCE=2 #meters
 MY_PACKAGE=slam_interface
 sleep 5
@@ -8,7 +14,7 @@ rosservice call /rgbdslam/ros_ui reset
 rosservice call /rgbdslam/ros_ui_b pause false
 sleep 10
 rosrun ${MY_PACKAGE} publish_sequence.sh \
-  ${SEQ_DIR} ${PAUSE_TIME} ${MAX_DISTANCE}
+  ${SEQ_DIR} ${PAUSE_TIME} ${MAX_DISTANCE} ${SUBSAMPLE}
 rosservice call /rgbdslam/ros_ui_b pause true
 #sleep 5
 rosservice call /rgbdslam/ros_ui save_all

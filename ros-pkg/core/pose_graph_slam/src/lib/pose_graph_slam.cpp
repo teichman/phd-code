@@ -109,3 +109,20 @@ size_t PoseGraphSlam::numEdges(size_t idx) const
   return v->edges().size();
 }
 
+void PGSEdge::serialize(std::ostream& out) const
+{
+  eigen_extensions::serializeScalar(idx0_, out);
+  eigen_extensions::serializeScalar(idx1_, out);
+  eigen_extensions::serialize(transform_.matrix(), out);
+  eigen_extensions::serialize(covariance_, out);
+}
+
+void PGSEdge::deserialize(std::istream& in)
+{
+  eigen_extensions::deserializeScalar(in, &idx0_);
+  eigen_extensions::deserializeScalar(in, &idx1_);
+  Matrix4d tmp;
+  eigen_extensions::deserialize(in, &tmp);
+  transform_ = Affine3d(tmp);
+  eigen_extensions::deserialize(in, &covariance_);
+}

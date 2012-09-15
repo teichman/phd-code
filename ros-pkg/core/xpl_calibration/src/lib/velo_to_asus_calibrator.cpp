@@ -38,7 +38,7 @@ VeloToAsusCalibrator::VeloToAsusCalibrator(const rgbd::PrimeSenseModel& model, G
 {
 }
 
-VeloToAsusCalibration VeloToAsusCalibrator::search() const
+VeloToAsusCalibration VeloToAsusCalibrator::search(double* final_value) const
 {
   cout << "Initializing search using PrimeSenseModel: " << endl;
   cout << model_.status("  ");
@@ -47,20 +47,26 @@ VeloToAsusCalibration VeloToAsusCalibrator::search() const
   gs.verbose_ = false;
   gs.view_handler_ = vis_;
   gs.objective_ = mde;
-  gs.num_scalings_ = 7;
+  //gs.num_scalings_ = 9;
+  gs.num_scalings_ = 22;
   double max_res_time = 0.25;
-  double max_res_rot = 5.0 * M_PI / 180.0;
-  double max_res_trans = 0.5;
+  double max_res_rot = 2.5 * M_PI / 180.0;
+  double max_res_trans = 0.1;
   gs.max_resolutions_ << max_res_time, max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;
   int gr = 3;
   gs.grid_radii_ << gr, gr, gr, gr, gr, gr, gr;
-  double sf = 0.5;
+  //double sf = 0.5;
+  double sf = 0.75;
   gs.scale_factors_ << sf, sf, sf, sf, sf, sf, sf;
   gs.couplings_ << 4, 0, 1, 2, 1, 0, 3;  // Search over (pitch, y) and (yaw, x) jointly.
   
   ArrayXd x = gs.search(ArrayXd::Zero(7));
   cout << "GridSearch solution: " << x.transpose() << endl;
-
+  if(final_value) {
+    *final_value = mde->eval(x);
+    cout << "Final objective function value: " << *final_value << endl;
+  }
+  
   VeloToAsusCalibration cal;
   cal.setVeloToAsus(generateTransform(x(1), x(2), x(3), x(4), x(5), x(6)));
   cal.offset_ = x(0);

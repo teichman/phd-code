@@ -17,9 +17,10 @@ public:
   std::vector<rgbd::StreamSequence::ConstPtr> sseqs_;
 
   SlamCalibrator();
-  void calibrate();
-  rgbd::Cloud::Ptr buildMap(size_t idx, const rgbd::PrimeSenseModel& model) const;
+  rgbd::Cloud::Ptr buildMap(size_t idx, const rgbd::PrimeSenseModel& model, double vgsize = 0.01) const;
   rgbd::Cloud::Ptr buildMap(size_t idx) const;
+  size_t size() const;
+  rgbd::PrimeSenseModel calibrate() const;
   
 protected:
 };

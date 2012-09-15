@@ -43,6 +43,7 @@ namespace rgbd
   void PrimeSenseModel::cloudToFrame(const Cloud& pcd, Frame* frame) const
   {
     ROS_ASSERT(frame);
+    ROS_ASSERT(width_ != -1 && height_ != -1 && cx_ != -1 && cy_ != -1 && fx_ != -1 && fy_ != -1);
 
     frame->timestamp_ = pcd.header.stamp * 1e-9;
     frame->depth_ = DepthMatPtr(new DepthMat(height_, width_));
@@ -54,9 +55,9 @@ namespace rgbd
       if(!isFinite(pcd[i]))
 	continue;
       
-      // Ignore points outside the depth image.
+      // Ignore points outside the depth image or behind the sensor.
       project(pcd[i], &ppt);
-      if(!(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
+      if(ppt.z_ == 0 || !(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
 	continue;
 
       // Eigen is column-major by default: http://eigen.tuxfamily.org/dox/TopicStorageOrders.html
@@ -133,21 +134,24 @@ namespace rgbd
       pt->z = std::numeric_limits<float>::quiet_NaN();
     }
     else {
-      if(use_distortion_model_) {
-	VectorXd features = computeFeatures(ppt);
-	pt->z = weights_.dot(features);
-      }
-      else
-	pt->z = ppt.z_ * 0.001;
-      
+      pt->z = ppt.z_ * 0.001;
       pt->x = pt->z * (ppt.u_ - cx_) / fx_;
       pt->y = pt->z * (ppt.v_ - cy_) / fy_;
-      // pt->x = pt->z * (ppt.u_ - cx_) * fx_inv_;
-      // pt->y = pt->z * (ppt.v_ - cy_) * fy_inv_;
+
+      if(use_distortion_model_) { 
+	VectorXd features = computeFeatures(ppt);
+	double mult = weights_.dot(features);
+	pt->getVector3fMap() *= mult;
+      }
     }
   }
 
   Eigen::VectorXd PrimeSenseModel::computeFeatures(const ProjectivePoint& ppt) const
+  {
+    return computeFeaturesMUV(ppt);
+  }
+
+  Eigen::VectorXd PrimeSenseModel::computeFeaturesMUV(const ProjectivePoint& ppt) const
   {
     VectorXd ms(4);
     double m = (ppt.z_ * 0.001) / 10.0;  // z_ is in millimeters, and we want to scale it so that 10 meters is equal to 1.
@@ -159,6 +163,17 @@ namespace rgbd
     double v = (double)ppt.v_ / (double)height_;
     vs << 1, v, v*v, v*v*v;
     return vectorize(vectorize(ms * us.transpose()) * vs.transpose());  // f[1] is measured depth in decameters.
+  }
+
+  Eigen::VectorXd PrimeSenseModel::computeFeaturesMU(const ProjectivePoint& ppt) const
+  {
+    VectorXd ms(4);
+    double m = (ppt.z_ * 0.001) / 10.0;  // z_ is in millimeters, and we want to scale it so that 10 meters is equal to 1.
+    ms << 1, m, m*m, m*m*m;
+    VectorXd us(4);
+    double u = (double)ppt.u_ / (double)width_;
+    us << 1, u, u*u, u*u*u;
+    return vectorize(ms * us.transpose());
   }
 
   int PrimeSenseModel::numFeatures() const
@@ -173,13 +188,16 @@ namespace rgbd
   void PrimeSenseModel::project(const Point& pt, ProjectivePoint* ppt) const
   {
     ROS_ASSERT(isFinite(pt));
-
+    
     ppt->u_ = pt.x * fx_ / pt.z + cx_;
     ppt->v_ = pt.y * fy_ / pt.z + cy_;
     ppt->z_ = pt.z * 1000;
     ppt->r_ = pt.r;
     ppt->g_ = pt.g;
     ppt->b_ = pt.b;
+
+    if(pt.z < 0)
+      ppt->z_ = 0;
   }
   
   bool PrimeSenseModel::initialized() const
@@ -235,11 +253,18 @@ namespace rgbd
 
   bool PrimeSenseModel::hasDepthDistortionModel() const
   {
+    // bool has = false;
+    // for(int i = 0; i < weights_.rows(); ++i) {
+    //   if(i == 1 && weights_(i) != 10)
+    // 	has = true;
+    //   if(i != 1 && weights_(i) != 0)
+    // 	has = true;
+    // }
     bool has = false;
     for(int i = 0; i < weights_.rows(); ++i) {
-      if(i == 1 && weights_(i) != 10)
+      if(i == 0 && weights_(i) != 1)
 	has = true;
-      if(i != 1 && weights_(i) != 0)
+      if(i != 0 && weights_(i) != 0)
 	has = true;
     }
     return has;
@@ -265,8 +290,9 @@ namespace rgbd
 
   void PrimeSenseModel::resetDepthDistortionModel()
   {
-    weights_ = VectorXd::Zero(64);
-    weights_(1) = 10;  // feature 1 is measured depth in decameters.
+    weights_ = VectorXd::Zero(numFeatures());
+    //weights_(1) = 10;  // feature 1 is measured depth in decameters.
+    weights_(0) = 1;  // Multiplier version: use a multiplier of 1 by default.
   }
 
   std::string PrimeSenseModel::name() const
@@ -312,7 +338,7 @@ namespace rgbd
     depth = cv::Vec3b(0, 0, 0);
     for(int y = 0; y < depth.rows; ++y)
       for(int x = 0; x < depth.cols; ++x)
-	depth(y, x) = colorize(depth_->coeffRef(y, x) * 0.001, 0.3, 8);
+	depth(y, x) = colorize(depth_->coeffRef(y, x) * 0.001, 0, 8);
     return depth;
   }
   

@@ -39,8 +39,8 @@ void ParameterServer::defaultConfig() {
     config["topic_image_mono"]              = std::string("/camera/rgb/image_color");        // color or grayscale image ros topic
     config["topic_image_depth"]             = std::string("/camera/depth/image");            // depth image ros topic
     config["topic_points"]                  = std::string("");             // If omitted, xyz will be computed from depth image. 
-    config["wide_topic"]                    = std::string("/wide_stereo/left/image_mono");   // topics for stereo cam
-    config["wide_cloud_topic"]              = std::string("/wide_stereo/points2");           // topics for stereo cam
+    config["wide_topic"]                    = std::string("");   // topics for stereo cam
+    config["wide_cloud_topic"]              = std::string("");           // topics for stereo cam
     config["camera_info_topic"]             = std::string("/camera/rgb/camera_info");        // required for backprojection
     config["subscriber_queue_size"]         = static_cast<int> (2);                          // cache incoming data (carefully, RGB-D Clouds are 10MB each)
     config["drop_async_frames"]             = static_cast<bool> (false);                     // Check timestamps of depth and visual image, reject if not in sync 

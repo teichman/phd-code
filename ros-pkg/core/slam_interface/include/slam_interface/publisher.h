@@ -23,6 +23,8 @@ namespace slam_interface
     float pausetime_;
     //! Distance after which readings will be ignored
     float maxdist_;
+    //! Amount to subsample frames by. N where we want to view 1/N of the frames.
+    int subsample_;
   protected:
     //ROS things below
     ros::NodeHandle nh_;

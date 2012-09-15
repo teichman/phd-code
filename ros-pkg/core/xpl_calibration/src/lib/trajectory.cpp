@@ -25,7 +25,10 @@ void Trajectory::set(size_t idx, const Eigen::Affine3d& transform)
 
 const Eigen::Affine3d& Trajectory::get(size_t idx) const
 {
-  ROS_ASSERT(transforms_[idx]);
+  if(idx > transforms_.size()) {
+    ROS_FATAL_STREAM("Tried to get transform " << idx << " / " << transforms_.size());
+    abort();
+  }
   return *transforms_[idx];
 }
 
@@ -70,3 +73,26 @@ void Trajectory::deserialize(std::istream& in)
   }
 }
 
+size_t Trajectory::numValid() const
+{
+  size_t num = 0;
+  for(size_t i = 0; i < transforms_.size(); ++i)
+    if(transforms_[i])
+      ++num;
+  return num;
+}
+
+std::string Trajectory::status(const std::string& prefix) const
+{
+  ostringstream oss;
+  oss << prefix << "Num valid: " << numValid() << " / " << size() << endl;
+  // for(size_t i = 0; i < transforms_.size(); ++i) {
+  //   if(transforms_[i]) {
+  //     oss << prefix << "Transform " << i << endl;
+  //     for(int j = 0; j < 4; ++j)
+  // 	oss << prefix << "  " << transforms_[i]->matrix().row(j) << endl;
+  //   }
+  // }
+
+  return oss.str();
+}

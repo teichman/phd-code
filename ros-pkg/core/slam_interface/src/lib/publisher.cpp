@@ -18,7 +18,8 @@ namespace slam_interface
 
   Publisher::Publisher() :
     pausetime_(1.0),
-    maxdist_(2.55)
+    maxdist_(2.55),
+    subsample_(1)
   {
     image_pub_ = nh_.advertise<sensor_msgs::Image>("image_out",1);
     depth_pub_ = nh_.advertise<sensor_msgs::Image>("depth_out",1);
@@ -36,6 +37,7 @@ namespace slam_interface
     for(size_t i = 0; i < seq->size(); i++)
     {
       cout << "Publishing image " << i+1 << " of " << seq->size() << endl;
+      if(i % subsample_ != 0) continue; //Only publish at given rate
       //Publish RGB
       cv_bridge::CvImage im;
       im.encoding = sensor_msgs::image_encodings::RGB8;

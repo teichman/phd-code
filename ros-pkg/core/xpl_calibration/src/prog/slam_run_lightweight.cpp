@@ -1,7 +1,8 @@
+
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 #include <gperftools/profiler.h>
-#include <xpl_calibration/slam_visualizer.h>
+#include <xpl_calibration/slam_lightweight.h>
 
 using namespace std;
 using namespace g2o;
@@ -44,11 +45,11 @@ int main(int argc, char** argv)
   StreamSequence::Ptr sseq(new StreamSequence);
   sseq->load(opts["sseq"].as<string>());
   
-  SlamVisualizer vis;
+  SlamLightweight vis;
   vis.save_imgs_ = opts.count("save-imgs");
   vis.use_loop_closure_ = opts.count("loop-closure");
-  if(opts.count("cam"))
-    vis.setCamera(opts["cam"].as<string>());
+  //if(opts.count("cam"))
+  //  vis.setCamera(opts["cam"].as<string>());
 
   vis.run(sseq, opts["opcd"].as<string>(), opts["otraj"].as<string>());
   

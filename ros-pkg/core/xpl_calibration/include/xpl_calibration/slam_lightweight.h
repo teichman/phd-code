@@ -1,5 +1,6 @@
-#ifndef SLAM_VISUALIZER_H
-#define SLAM_VISUALIZER_H
+
+#ifndef SLAM_LIGHTWEIGHT_H
+#define SLAM_LIGHTWEIGHT_H
 
 #include <boost/thread.hpp>
 #include <gperftools/profiler.h>
@@ -12,7 +13,7 @@
 #include <xpl_calibration/loop_closer.h>
 #include <xpl_calibration/trajectory.h>
 
-class SlamVisualizer : public SharedLockable, public GridSearchViewHandler
+class SlamLightweight : public SharedLockable, public GridSearchViewHandler
 {
 public:
   //! Used in generating the map.
@@ -26,16 +27,14 @@ public:
   //! Camera pose to use.
   // TODO
   
-  SlamVisualizer();
+  SlamLightweight();
   void run(rgbd::StreamSequence::ConstPtr sseq,
 	   const std::string& opcd_path = "",
 	   const std::string& otraj_path = "");
-  void setCamera(const std::string& camera_path);
 
   void rebuild_map();
   
 protected:
-  pcl::visualization::PCLVisualizer vis_;
   rgbd::StreamSequence::ConstPtr sseq_;
   PoseGraphSlam::Ptr slam_;
   rgbd::Cloud::Ptr map_;
@@ -53,8 +52,6 @@ protected:
   std::vector<size_t> nodes_;
   
   void slamThreadFunction();
-  void visualizationThreadFunction();
-  void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie);
   void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
   //SDM added: loop closure
   LoopCloser::Ptr lc_;
@@ -62,4 +59,4 @@ protected:
   bool needs_map_rebuild_;
 };
 
-#endif // SLAM_VISUALIZER_H
+#endif // SLAM_LIGHTWEIGHT_H

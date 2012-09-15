@@ -542,8 +542,9 @@ LossFunction::LossFunction(const std::vector<KdTree::Ptr>& trees0,
   ROS_ASSERT(trees0_.size() == pcds0_.size());
   for(size_t i = 0; i < pcds0_.size(); ++i)
     ROS_ASSERT(pcds0_[i]->isOrganized());
-  for(size_t i = 0; i < pcds1_.size(); ++i)
-    ROS_ASSERT(!pcds1_[i]->isOrganized());
+  //for(size_t i = 0; i < pcds1_.size(); ++i)
+  //  ROS_ASSERT(!pcds1_[i]->isOrganized());
+  //  SDM why was this assertion in there?
 
   dt_thresh_ = params.get<double>("TimeCorrespondenceThreshold");
   max_dist_ = params.get<double>("DistanceThreshold");
@@ -685,4 +686,14 @@ Eigen::Affine3f generateTransform(double rx, double ry, double rz,
   Rz = Eigen::AngleAxisf(rz, Vector3f(0, 0, 1));
   T = Eigen::Translation3f(tx, ty, tz);
   return T * Rz * Ry * Rx;
+}
+void generateXYZYPR(const Eigen::Affine3f &trans, 
+    double &rx, double &ry, double &rz, double &tx, double &ty, double &tz)
+{
+  Eigen::Vector3f xyz = trans.translation();
+  tx = xyz(0); ty = xyz(1); tz = xyz(2);
+  Eigen::Matrix3f R = trans.rotation();
+  rx = atan2(R(2,1),R(2,2));
+  ry = atan2( -R(2,0), sqrt(pow(R(2,1),2)+pow(R(2,2),2)) );
+  rz = atan2( R(1,0), R(0,0) );
 }

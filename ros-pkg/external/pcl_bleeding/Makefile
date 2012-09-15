@@ -1,7 +1,7 @@
 
 built: svn
 	cd svn && mkdir -p build
-	cd svn/build && cmake ../ -DUSE_ROS=true
+	cd svn/build && cmake ../ -DUSE_ROS=true -DBUILD_TESTS:BOOL=OFF -DBUILD_apps:BOOL=OFF
 	cd svn/build && make -j`cat /proc/cpuinfo  | grep processor | wc -l`
 	touch $@
 #	cd svn/common/include; \
