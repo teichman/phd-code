@@ -5,7 +5,7 @@ using namespace Eigen;
 using namespace rgbd;
 
 SlamCalibrator::SlamCalibrator() :
-  max_range_(3.5)
+  max_range_(2.0)
 {
 }
 
@@ -18,7 +18,8 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx, const rgbd::PrimeSenseMode
 {
   ROS_ASSERT(idx < trajectories_.size());
   ROS_ASSERT(trajectories_.size() == sseqs_.size());
-
+  ROS_DEBUG_STREAM("Building slam calibration map using max_range_ of " << max_range_);
+  
   const Trajectory& traj = trajectories_[idx];
   const StreamSequence& sseq = *sseqs_[idx];
 
@@ -114,19 +115,19 @@ PrimeSenseModel SlamCalibrator::calibrate() const
       ddl.addFrame(frame, map, traj.get(j).inverse());
 
       // -- Visualize.
-      static int num = 0;
-      if(num % 10 == 0) {
-	cout << "Visualizing " << j << " / " << traj.size() << endl;
-	cv::imshow("measurement", frame.depthImage());
-	Frame mapframe;
-	Affine3f transform = traj.get(j).inverse().cast<float>();
-	Cloud transformed;
-	pcl::transformPointCloud(*map, transformed, transform);
-	initial_model.cloudToFrame(transformed, &mapframe);
-	cv::imshow("map", mapframe.depthImage());
-	cv::waitKey(10);
-      }
-      ++num;
+      // static int num = 0;
+      // if(num % 10 == 0) {
+      // 	cout << "Visualizing " << j << " / " << traj.size() << endl;
+      // 	cv::imshow("measurement", frame.depthImage());
+      // 	Frame mapframe;
+      // 	Affine3f transform = traj.get(j).inverse().cast<float>();
+      // 	Cloud transformed;
+      // 	pcl::transformPointCloud(*map, transformed, transform);
+      // 	initial_model.cloudToFrame(transformed, &mapframe);
+      // 	cv::imshow("map", mapframe.depthImage());
+      // 	cv::waitKey(10);
+      // }
+      // ++num;
     }
   }
 

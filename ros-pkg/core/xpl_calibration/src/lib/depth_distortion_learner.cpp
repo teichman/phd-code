@@ -46,6 +46,72 @@ PrimeSenseModel DepthDistortionLearner::fitFocalLength()
   return model;
 }
 
+void computeMultiplierMap(const PrimeSenseModel& model, const DepthMat& depth, const DepthMat& mapdepth,
+			  Eigen::MatrixXd* multipliers)
+{
+  ROS_ASSERT(multipliers->rows() == depth.rows());
+  ROS_ASSERT(multipliers->cols() == depth.cols());
+  multipliers->setZero();
+
+  double min_mult = 0.85;
+  double max_mult = 1.15;
+  
+  ProjectivePoint ppt;
+  Point pt;
+  for(ppt.v_ = 0; ppt.v_ < depth.rows(); ++ppt.v_) {
+    for(ppt.u_ = 0; ppt.u_ < depth.cols(); ++ppt.u_) {
+      if(mapdepth(ppt.v_, ppt.u_) == 0 || depth(ppt.v_, ppt.u_) == 0)
+	continue;
+	
+      ppt.z_ = mapdepth(ppt.v_, ppt.u_);
+      model.project(ppt, &pt);
+      double mapdist = pt.getVector3fMap().norm();
+      ppt.z_ = depth(ppt.v_, ppt.u_);
+      model.project(ppt, &pt);
+      double measdist = pt.getVector3fMap().norm();
+		
+      // If the range is completely off, assume it's due to misalignment and not distortion.
+      double mult = mapdist / measdist;
+      if(mult > max_mult || mult < min_mult)
+	continue;
+
+      multipliers->coeffRef(ppt.v_, ppt.u_) = mult;
+    }
+  }
+}
+
+cv::Mat3b visualizeMultipliers(const MatrixXd& multipliers)
+{
+  double min_mult = 0.85;
+  double max_mult = 1.15;
+  
+  cv::Mat3b vis(cv::Size(multipliers.cols(), multipliers.rows()), cv::Vec3b(0, 0, 0));
+  for(int y = 0; y < multipliers.rows(); ++y) {
+    for(int x = 0; x < multipliers.cols(); ++x) {
+      double m = multipliers(y, x);
+      if(m == 0)
+	continue;
+
+      if(m < min_mult) {
+	ROS_WARN_STREAM("Low multiplier of " << m);
+	vis(y, x) = cv::Vec3b(0, 0, 255);
+      }
+      else if(m > max_mult) {
+	ROS_WARN_STREAM("High multiplier of " << m);
+	vis(y, x) = cv::Vec3b(255, 0, 0);
+      }
+      else {
+	if(m < 1)
+	  vis(y, x)[2] = (1.0 - (m - min_mult) / (1.0 - min_mult)) * 255;
+	else
+	  vis(y, x)[0] = (m - 1.0) / (max_mult - 1.0) * 255;
+      }
+    }
+  }
+
+  return vis;
+}
+
 PrimeSenseModel DepthDistortionLearner::fitModel()
 {
   ROS_ASSERT(frames_.size() == pcds_.size());
@@ -59,14 +125,11 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
     abort();
   }
 
-  double min_mult = 0.8;
-  double max_mult = 1.2;
-
   int num_features = initial_model_.numFeatures();
   vector<MatrixXd> xxts(frames_.size(), MatrixXd::Zero(num_features, num_features));
   vector<VectorXd> bs(frames_.size(), VectorXd::Zero(num_features));
   VectorXi num_tr_ex_frame = VectorXi::Zero(frames_.size());
-  #pragma omp parallel for
+//  #pragma omp parallel for
   for(size_t i = 0; i < frames_.size(); ++i) {
     MatrixXd& xxt = xxts[i];
     VectorXd& b = bs[i];
@@ -88,29 +151,21 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
     
     const DepthMat& depth = *frames_[i].depth_;
     const DepthMat& mapdepth = *mapframe.depth_;
+    MatrixXd multipliers(depth.rows(), depth.cols());
+    computeMultiplierMap(localmodel, depth, mapdepth, &multipliers);
 
+    cv::imshow("multipliers", visualizeMultipliers(multipliers));
+    cv::imshow("depth", frames_[i].depthImage());
+    cv::imshow("mapdepth", mapframe.depthImage());
+    cv::waitKey(10);
+    
     ProjectivePoint ppt;
-    Point pt;
-    for(ppt.v_ = 0; ppt.v_ < depth.rows(); ++ppt.v_) {
-      for(ppt.u_ = 0; ppt.u_ < depth.cols(); ++ppt.u_) {
-	if(mapdepth(ppt.v_, ppt.u_) == 0 || depth(ppt.v_, ppt.u_) == 0)
-	  continue;
-	
-	ppt.z_ = mapdepth(ppt.v_, ppt.u_);
-	localmodel.project(ppt, &pt);
-	double mapdist = pt.getVector3fMap().norm();
+    for(ppt.v_ = 0; ppt.v_ < multipliers.rows(); ++ppt.v_) {
+      for(ppt.u_ = 0; ppt.u_ < multipliers.cols(); ++ppt.u_) {
 	ppt.z_ = depth(ppt.v_, ppt.u_);
-	localmodel.project(ppt, &pt);
-	double measdist = pt.getVector3fMap().norm();
-		
-	// If the range is completely off, assume it's due to misalignment and not distortion.
-	double mult = mapdist / measdist;
-	if(mult > max_mult || mult < min_mult)
-	  continue;
-
 	VectorXd f = localmodel.computeFeatures(ppt);
 	xxt += f * f.transpose();
-	b += f * mult;
+	b += f * multipliers(ppt.v_, ppt.u_);
 	++num_tr_ex_frame(i);
       }
     }

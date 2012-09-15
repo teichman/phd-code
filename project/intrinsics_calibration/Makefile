@@ -7,6 +7,7 @@
 .SECONDARY:		# Prevents deletion of intermediate targets in a chain of implicit rules.
 
 export NUM_THREADS	:= 40
+#SHELL = $(warning ---------- Making $@$(if $?,. Newer prereqs: $?)) /bin/bash -x
 SHELL			:= /bin/bash
 REPO_ROOT		:= $(shell dirname $$(dirname $$(dirname $$(rospack find dst))))
 MAKE_ROOT		:= $(REPO_ROOT)/project/intrinsics_calibration
@@ -56,18 +57,18 @@ $(1)/evaluation/evaluation.txt:
 	--intrinsics learned_model.psm --extrinsics extrinsics \
 	--evaluate evaluation.txt
 
+$(1)-visualize-slam-intrinsics: $(1)/evaluation/extrinsics $(1)/evaluation/learned_model.psm
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--extrinsics $(1)/evaluation/extrinsics \
+	--intrinsics $(1)/evaluation/learned_model.psm
+
 $(1)/evaluation/extrinsics: $(1)/evaluation/learned_model.psm
 	cd $$(@D) && \
 	rosrun xpl_calibration asus_vs_velo \
 	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
 	--intrinsics learned_model.psm \
 	--compute-extrinsics
-
-$(1)-visualize-slam-intrinsics: $(1)/asus_vs_velodyne/extrinsics $(1)/evaluation/learned_model.psm
-	rosrun xpl_calibration asus_vs_velo \
-	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
-	--extrinsics $(1)/asus_vs_velodyne/extrinsics \
-	--intrinsics $(1)/evaluation/learned_model.psm
 
 $(1)/evaluation/learned_model.psm: $$(TRAJECTORIES_$(1))
 	mkdir -p $$(@D)
