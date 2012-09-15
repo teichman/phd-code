@@ -203,14 +203,13 @@ namespace rgbd
     }
 
     if(visualize_) {
-      cv::Mat1b dimg(cv::Size(model_.width_, model_.height_), 0);
-      for(int y = 0; y < dimg.rows; ++y) { 
-	for(int x = 0; x < dimg.cols; ++x) {
-	  dimg(y, x) = 255.0 * frame.depth_->coeffRef(y, x) / 5000.0;  // depth_ is in mm.
-	  if(dimg(y, x) > 255.0)
-	    dimg(y, x) = 0;
-	}
-      }
+      cv::Mat3b dimg(cv::Size(width, height));
+      double min_depth = 0.1;
+      double max_depth = 12.0;
+      for(int y = 0; y < dimg.rows; ++y)
+	for(int x = 0; x < dimg.cols; ++x)
+	  dimg(y, x) = colorize(frame.depth_->coeffRef(y, x) * 0.001, min_depth, max_depth);
+      
       cv::imshow("Depth Image", dimg);
       cv::imshow("Color Image", frame.img_);
     }
