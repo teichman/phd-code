@@ -5,9 +5,12 @@ using namespace Eigen;
 using namespace rgbd;
 
 #define DDL_INCR (getenv("DDL_INCR") ? atoi(getenv("DDL_INCR")) : 1)
+#define REGULARIZATION (getenv("REGULARIZATION") ? atof(getenv("REGULARIZATION")) : 0.0)
+//#define VISUALIZE
 
 DepthDistortionLearner::DepthDistortionLearner(const PrimeSenseModel& initial_model) :
   initial_model_(initial_model),
+  use_filters_(true),
   coverage_map_(0.05, initial_model.height_, initial_model.width_)
 {
 }
@@ -106,7 +109,6 @@ bool normalTest(const PrimeSenseModel& model, const DepthMat& mapdepth, int uc, 
     return false;
   }
 
-  float curvature = normal.curvature;
   Vector3f eignormal;
   eignormal(0) = normal.normal[0];
   eignormal(1) = normal.normal[1];
@@ -175,8 +177,11 @@ cv::Mat3b visualizeMultipliers(const MatrixXd& multipliers)
   return vis;
 }
 
-void computeMultiplierMap(const PrimeSenseModel& model, const DepthMat& depth, const DepthMat& mapdepth,
-			  Eigen::MatrixXd* multipliers, cv::Mat3b* visualization)
+void DepthDistortionLearner::computeMultiplierMap(const PrimeSenseModel& model,
+						  const DepthMat& depth,
+						  const DepthMat& mapdepth,
+						  Eigen::MatrixXd* multipliers,
+						  cv::Mat3b* visualization) const
 {
   ROS_ASSERT(multipliers->rows() == depth.rows());
   ROS_ASSERT(multipliers->cols() == depth.cols());
@@ -187,21 +192,20 @@ void computeMultiplierMap(const PrimeSenseModel& model, const DepthMat& depth, c
 
   cv::Mat1b mask(depth.rows(), mapdepth.cols());
   mask = 0;
-  for(int y = 0; y < mask.rows; ++y)
-    for(int x = 0; x < mask.cols; ++x)
-      if(mapdepth(y, x) != 0)
-	mask(y, x) = 255;
-  cv::dilate(mask, mask, cv::Mat(), cv::Point(-1, -1), 4);
-  cv::erode(mask, mask, cv::Mat(), cv::Point(-1, -1), 15);
-  cv::imshow("mask", mask);
-  cv::waitKey(10);
+  if(use_filters_) {
+    for(int y = 0; y < mask.rows; ++y)
+      for(int x = 0; x < mask.cols; ++x)
+	if(mapdepth(y, x) != 0)
+	  mask(y, x) = 255;
+    cv::dilate(mask, mask, cv::Mat(), cv::Point(-1, -1), 4);
+    cv::erode(mask, mask, cv::Mat(), cv::Point(-1, -1), 15);
+  }
             
   double min_mult = 0.85;
   double max_mult = 1.15;
 
   ProjectivePoint ppt;
   Point pt;
-  bool use_normal_test = true;
   for(ppt.v_ = 0; ppt.v_ < depth.rows(); ++ppt.v_) {
     for(ppt.u_ = 0; ppt.u_ < depth.cols(); ++ppt.u_) {
       // Reject points with no data.
@@ -211,14 +215,14 @@ void computeMultiplierMap(const PrimeSenseModel& model, const DepthMat& depth, c
       }
 
       // Reject points on the edge of the map.
-      if(mask(ppt.v_, ppt.u_) == 0) {
+      if(use_filters_ && mask(ppt.v_, ppt.u_) == 0) {
 	(*visualization)(ppt.v_, ppt.u_) = cv::Vec3b(255, 255, 0);
 	continue;
       }
 
       // Reject points that have unstable surface normals or which we are viewing from
       // an oblique angle.
-      if(use_normal_test && !normalTest(model, mapdepth, ppt.u_, ppt.v_, 15, visualization))
+      if(use_filters_ && !normalTest(model, mapdepth, ppt.u_, ppt.v_, 15, visualization))
 	continue;
       
       ppt.z_ = mapdepth(ppt.v_, ppt.u_);
@@ -229,6 +233,7 @@ void computeMultiplierMap(const PrimeSenseModel& model, const DepthMat& depth, c
       double measdist = pt.getVector3fMap().norm();
 		
       // If the range is completely off, assume it's due to misalignment and not distortion.
+      // This is the only filter that should be on for the Velodyne data.
       double mult = mapdist / measdist;
       if(mult > max_mult || mult < min_mult) {
 	//ROS_WARN_STREAM("Multiplier out of acceptable range: " << mult);
@@ -274,7 +279,9 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
   vector<MatrixXd> xxts(frames_.size(), MatrixXd::Zero(num_features, num_features));
   vector<VectorXd> bs(frames_.size(), VectorXd::Zero(num_features));
   VectorXi num_tr_ex_frame = VectorXi::Zero(frames_.size());
-//  #pragma omp parallel for
+#ifndef VISUALIZE
+#pragma omp parallel for
+#endif 
   for(size_t i = 0; i < frames_.size(); i += DDL_INCR) {
     MatrixXd& xxt = xxts[i];
     VectorXd& b = bs[i];
@@ -293,13 +300,16 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
     hrt.reset("projecting"); hrt.start();
     localmodel.cloudToFrame(transformed, &mapframe);
     hrt.stop(); cout << hrt.reportMilliseconds() << endl;
-    
+
+    hrt.reset("Computing multiplier map"); hrt.start();
     const DepthMat& depth = *frames_[i].depth_;
     const DepthMat& mapdepth = *mapframe.depth_;
     MatrixXd multipliers(depth.rows(), depth.cols());
     cv::Mat3b visualization(depth.rows(), depth.cols());
     computeMultiplierMap(localmodel, depth, mapdepth, &multipliers, &visualization);
-
+    hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+    
+    #ifdef VISUALIZE
     cv::imshow("multipliers and filters", visualization);
     cv::imshow("multipliers", visualizeMultipliers(multipliers));
     cv::imshow("depth", frames_[i].depthImage());
@@ -307,17 +317,25 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
     cv::waitKey(10);
     if(DDL_INCR != 1)
       cv::waitKey();
-    
+    #endif
+
+    hrt.reset("Accumulating xxt"); hrt.start();
     ProjectivePoint ppt;
     for(ppt.v_ = 0; ppt.v_ < multipliers.rows(); ++ppt.v_) {
       for(ppt.u_ = 0; ppt.u_ < multipliers.cols(); ++ppt.u_) {
 	ppt.z_ = depth(ppt.v_, ppt.u_);
 	VectorXd f = localmodel.computeFeatures(ppt);
-	xxt += f * f.transpose();
+
+	xxt += f * f.transpose();  // This is the slow part, but apparently eigen does a good job.
+	// for(int j = 0; j < xxt.cols(); ++j)
+	//   for(int k = 0; k < xxt.rows(); ++k)
+	//     xxt.coeffRef(k, j) += f.coeffRef(j) * f.coeffRef(k);
+		
 	b += f * multipliers(ppt.v_, ppt.u_);
 	++num_tr_ex_frame(i);
       }
     }
+    hrt.stop(); cout << hrt.reportMilliseconds() << endl;
   }	
 
   MatrixXd xxt = MatrixXd::Zero(num_features, num_features);
@@ -336,7 +354,7 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
 
   // -- Fit the model.
   PrimeSenseModel model = initial_model_;
-  //xxt += MatrixXd::Identity(xxt.rows(), xxt.cols()) * 0.001;  // Regularization.
+  xxt += MatrixXd::Identity(xxt.rows(), xxt.cols()) * REGULARIZATION;
   model.weights_ = xxt.ldlt().solve(b);
   return model;
 }

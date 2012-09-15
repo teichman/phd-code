@@ -107,6 +107,9 @@ class DepthDistortionLearner
 public:
   //! Used for 3D -> 2D projection.
   rgbd::PrimeSenseModel initial_model_;
+  //! With velodyne data, this should be false.
+  //! This is for dirty slam data.
+  bool use_filters_;
 
   DepthDistortionLearner(const rgbd::PrimeSenseModel& initial_model);
   //! pcl::transformPointCloud(*pcd, *pcd, transform) should put pcd into frame's coordinate system.
@@ -127,6 +130,11 @@ protected:
 
   Eigen::VectorXd regress(const Eigen::MatrixXd& X, const Eigen::VectorXd& Y) const;
   Eigen::VectorXd regressRegularized(const Eigen::MatrixXd& X, const Eigen::VectorXd& Y) const;
+  void computeMultiplierMap(const rgbd::PrimeSenseModel& model,
+			    const rgbd::DepthMat& depth,
+			    const rgbd::DepthMat& mapdepth,
+			    Eigen::MatrixXd* multipliers,
+			    cv::Mat3b* visualization) const;
 };
 
 

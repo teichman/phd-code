@@ -207,7 +207,8 @@ void AsusVsVeloVisualizer::fitModel()
   PrimeSenseModel initial_model = sseq_->model_;
   initial_model.resetDepthDistortionModel();
   DepthDistortionLearner ddl(initial_model);
-  
+  ddl.use_filters_ = false;
+    
   for(size_t i = skip_; i < vseq_->size(); i += skip_) {
     double dt;
     int idx = findAsusIdx(vseq_->timestamps_[i] + cal_.offset_, &dt);
