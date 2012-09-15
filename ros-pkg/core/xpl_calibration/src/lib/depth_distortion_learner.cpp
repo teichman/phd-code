@@ -323,6 +323,9 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
     ProjectivePoint ppt;
     for(ppt.v_ = 0; ppt.v_ < multipliers.rows(); ++ppt.v_) {
       for(ppt.u_ = 0; ppt.u_ < multipliers.cols(); ++ppt.u_) {
+	if(multipliers(ppt.v_, ppt.u_) == 0)
+	  continue;
+	
 	ppt.z_ = depth(ppt.v_, ppt.u_);
 	VectorXd f = localmodel.computeFeatures(ppt);
 
