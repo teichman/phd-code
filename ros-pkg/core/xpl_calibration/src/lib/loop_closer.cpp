@@ -352,6 +352,7 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
         case MDE:
           {
           Frame frame_prev; sseq_->readFrame(old_t, &frame_prev);
+	  ROS_WARN("LoopCloser::getInitHypotheses using default rather than learned model.");
           FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(sseq_->model_, frame, 
             sseq_->model_, frame_prev, max_z_, 0.25));
           double rx, ry, rz, tx, ty, tz;
@@ -548,6 +549,7 @@ Eigen::Affine3f LoopCloser::alignFrames(const rgbd::Frame &frame0, const rgbd::F
   //params.set("Seq0Cy", (double)0);
   //boost::shared_ptr<LossFunction> lf(new LossFunction(trees0, clouds0, clouds1, params));
   //lf->use_fsv_ = false;
+  ROS_WARN_ONCE("LoopCloser does not use learned model.");
   FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(sseq_->model_, frame0, 
         sseq_->model_, frame1, max_z_, 0.25));
 

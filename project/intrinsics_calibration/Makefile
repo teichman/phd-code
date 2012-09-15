@@ -50,7 +50,7 @@ define SENSOR_RULE_GENERATOR
 #SLAM_RUNS_$(1) := $$(shell ls $(SLAM_DATA_PATH)/$(1))
 TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
 
-$(1)/evaluation/evaluation.txt: 
+$(1)/evaluation/evaluation.txt: $(1)/evaluation/extrinsics $(1)/evaluation/learned_model.psm
 	cd $$(@D) && \
 	rosrun xpl_calibration asus_vs_velo \
 	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \

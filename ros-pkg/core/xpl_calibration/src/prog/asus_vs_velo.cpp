@@ -17,7 +17,7 @@ int main(int argc, char** argv)
     ("intrinsics", bpo::value<string>(), "Use pre-computed PrimeSense model")
     ("compute-extrinsics", "Automatically start extrinsics search")
     ("compute-intrinsics", "Automatically start intrinsics search")
-    ("evaluate", "Runs evaluation of the given extrinsics and intrinsics.  It is assumed that the extrinsics are the best for the given intrinsics.")
+    ("evaluate", bpo::value<string>(), "Runs evaluation of the given extrinsics and intrinsics and saves the result here.  It is assumed that the extrinsics are the best for the given intrinsics.")
 //    ("visualize-distortion", "Visualize the distortion.  Extrinsics must be provided.")
     ("skip", bpo::value<int>()->default_value(20), "For use with --visualize-distortion.  Use every kth frame for accumulating statistics.")
     ("num-pixel-plots", bpo::value<int>()->default_value(20), "For use with --visualize-distortion.  Number of random pixel plots to generate.")
@@ -26,9 +26,11 @@ int main(int argc, char** argv)
   bpo::positional_options_description p;
   p.add("sseq", 1).add("vseq", 1);
   bpo::variables_map opts;
-  bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
   bool badargs = false;
-  try { bpo::notify(opts); }
+  try {
+    bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
+    bpo::notify(opts);
+  }
   catch(...) { badargs = true; }
   if(opts.count("help") || badargs) {
     cout << "Usage: asus_vs_velo SSEQ VSEQ [OPTS]" << endl;

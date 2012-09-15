@@ -18,11 +18,11 @@ FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::
 {
 #ifdef TIMING
   ScopedTimer st("FrameAlignmentMDE::FrameAlignmentMDE.  frameToClouds.");
-#endif 
+#endif
+  model0_.undistort(&frame0_);
   model0_.frameToCloud(frame0_, &pcd0_, max_range_);
+  model1_.undistort(&frame1_);
   model1_.frameToCloud(frame1_, &pcd1_, max_range_);
-  // model0_.frameToCloud(frame0_, &pcd0_);
-  // model1_.frameToCloud(frame1_, &pcd1_);
   ROS_ASSERT(pcd0_.size() == pcd1_.size());
   
   // Set up which random pixels to look at.

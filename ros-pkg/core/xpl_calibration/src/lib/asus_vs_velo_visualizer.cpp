@@ -57,6 +57,7 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::Ptr sseq, VeloS
   // We'll just assume that all stream sequences have a default distortion model and that custom
   // models are stored separetely.
   sseq_->model_.resetDepthDistortionModel();
+  model_ = sseq->model_;
   //ROS_ASSERT(!sseq_->model_.hasDepthDistortionModel());
   cout << "StreamSequence PrimeSenseModel: " << endl;
   cout << sseq_->model_.status("  ");
@@ -68,8 +69,6 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::Ptr sseq, VeloS
   mpliBegin();
   setInitialExtrinsics();
 
-  model_ = sseq->model_;
-  model_.resetDepthDistortionModel();
   updateVeloBounds();
 }
 
@@ -182,7 +181,7 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
     Frame frame;
     sseq_->readFrame(asus_idx_, &frame);
     if(unwarp_) {
-      model_.use_distortion_model_ = true;
+      model_.undistort(&frame);
       model_.frameToCloud(frame, asus_.get());
     }
     else
@@ -497,6 +496,7 @@ void AsusVsVeloVisualizer::calibrate(std::string eval_path)
     for(int j = max(0, idx - window); j <= min(idx + window, (int)sseq_->size()); ++j) {
       Frame frame;
       sseq_->readFrame(j, &frame);
+      model_.undistort(&frame);  // Very important: get the best extrinsics using the given depth distortion model.
       frame.timestamp_ -= sseq_start_;
       calibrator.frames_.push_back(frame);
       cout << j << " ";
@@ -560,9 +560,9 @@ void AsusVsVeloVisualizer::handleGridSearchUpdate(const Eigen::ArrayXd& x, doubl
   
   updateDisplay(velo_idx_, incremental_transform * cal_.veloToAsus(), cal_.offset_ + dt);
   static int num = 0;
-  ostringstream oss;
-  oss << "gridsearch" << setw(5) << setfill('0') << num << ".png";
-  vw_.vis_.saveScreenshot(oss.str());
+  // ostringstream oss;
+  // oss << "gridsearch" << setw(5) << setfill('0') << num << ".png";
+  // vw_.vis_.saveScreenshot(oss.str());
   ++num;
 }
 

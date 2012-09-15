@@ -39,7 +39,6 @@ namespace rgbd
     root_path_ = dir;
     model_.load(root_path_ + "/primesense_model");
     ROS_WARN("StreamSequence::load is disabling use_distortion_model_.");
-    model_.use_distortion_model_ = false;
     ROS_ASSERT(model_.initialized());
     
     // -- Build filename index.
