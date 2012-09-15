@@ -4,6 +4,8 @@ using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 
+#define DDL_INCR (getenv("DDL_INCR") ? atoi(getenv("DDL_INCR")) : 1)
+
 DepthDistortionLearner::DepthDistortionLearner(const PrimeSenseModel& initial_model) :
   initial_model_(initial_model),
   coverage_map_(0.05, initial_model.height_, initial_model.width_)
@@ -46,38 +48,97 @@ PrimeSenseModel DepthDistortionLearner::fitFocalLength()
   return model;
 }
 
-void computeMultiplierMap(const PrimeSenseModel& model, const DepthMat& depth, const DepthMat& mapdepth,
-			  Eigen::MatrixXd* multipliers)
+bool normalTest(const PrimeSenseModel& model, const DepthMat& mapdepth, int uc, int vc, int size, cv::Mat3b* visualization)
 {
-  ROS_ASSERT(multipliers->rows() == depth.rows());
-  ROS_ASSERT(multipliers->cols() == depth.cols());
-  multipliers->setZero();
+  ROS_ASSERT(mapdepth(vc, uc) != 0);
 
-  double min_mult = 0.85;
-  double max_mult = 1.15;
-  
+  Point pt_center;
   ProjectivePoint ppt;
-  Point pt;
-  for(ppt.v_ = 0; ppt.v_ < depth.rows(); ++ppt.v_) {
-    for(ppt.u_ = 0; ppt.u_ < depth.cols(); ++ppt.u_) {
-      if(mapdepth(ppt.v_, ppt.u_) == 0 || depth(ppt.v_, ppt.u_) == 0)
+  ppt.u_ = uc;
+  ppt.v_ = vc;
+  ppt.z_ = mapdepth(vc, uc);
+  model.project(ppt, &pt_center);
+
+  int min_u = max(0, uc - size);
+  int max_u = min((int)mapdepth.cols(), uc + size);
+  int min_v = max(0, vc - size);
+  int max_v = min((int)mapdepth.rows(), vc + size);
+  
+  vector<Vector3f> vecs;
+  vecs.reserve((max_u - min_u) * (max_v - min_v));
+  Matrix3f X = Matrix3f::Zero();
+  for(ppt.u_ = min_u; ppt.u_ < max_u; ++ppt.u_) {
+    for(ppt.v_ = min_v; ppt.v_ < max_v; ++ppt.v_) {
+      if(mapdepth(ppt.v_, ppt.u_) == 0)
 	continue;
-	
+
+      Point pt;
       ppt.z_ = mapdepth(ppt.v_, ppt.u_);
       model.project(ppt, &pt);
-      double mapdist = pt.getVector3fMap().norm();
-      ppt.z_ = depth(ppt.v_, ppt.u_);
-      model.project(ppt, &pt);
-      double measdist = pt.getVector3fMap().norm();
-		
-      // If the range is completely off, assume it's due to misalignment and not distortion.
-      double mult = mapdist / measdist;
-      if(mult > max_mult || mult < min_mult)
-	continue;
-
-      multipliers->coeffRef(ppt.v_, ppt.u_) = mult;
+      Vector3f vec = pt.getVector3fMap() - pt_center.getVector3fMap();
+      X += vec * vec.transpose();
+      vecs.push_back(vec);
     }
   }
+
+  if(vecs.size() < 5)
+    return false;
+  
+  X /= (float)vecs.size();
+  pcl::Normal normal;
+  pcl::solvePlaneParameters(X, 
+			    normal.normal[0],
+			    normal.normal[1],
+			    normal.normal[2],
+			    normal.curvature);
+    
+  pcl::flipNormalTowardsViewpoint(pt_center, 0, 0, 0,
+				  normal.normal[0],
+				  normal.normal[1],
+				  normal.normal[2]);
+
+  // -- If we don't have a very stable surface normal in this region, then
+  //    we don't want to use it.
+  if(!isfinite(normal.normal[0]) || !isfinite(normal.normal[1]) || !isfinite(normal.normal[2]) ||
+     isnan(normal.normal[0]) || isnan(normal.normal[1]) || isnan(normal.normal[2]))
+  {
+    (*visualization)(vc, uc) = cv::Vec3b(255, 0, 255);
+    return false;
+  }
+
+  float curvature = normal.curvature;
+  Vector3f eignormal;
+  eignormal(0) = normal.normal[0];
+  eignormal(1) = normal.normal[1];
+  eignormal(2) = normal.normal[2];
+  ROS_ASSERT(fabs(eignormal.norm() - 1.0) < 1e-6);
+  int num_inliers = 0;
+  float thresh = 0.04;
+  for(size_t i = 0; i < vecs.size(); ++i)
+    if(fabs(eignormal.dot(vecs[i])) < thresh)
+      ++num_inliers;
+
+  float frac_inliers = (double)num_inliers / vecs.size();
+  //cout << "curvature: " << curvature << ", num_inliers: " << num_inliers << ", frac_inliers: " << frac_inliers << endl;
+  if(frac_inliers < 0.9) {
+    (*visualization)(vc, uc) = cv::Vec3b(255, 0, 255);
+    return false;
+  }
+
+  // if(curvature > 0.001)
+  //   return false;
+  
+  // -- If we are seeing this point from an oblique angle, then we don't
+  //    want to use it.
+  Vector3f zaxis;
+  zaxis << 0, 0, -1;  // Normal is pointed towards us.
+  double theta = acos(eignormal.dot(zaxis));
+  if(theta > 45.0 * M_PI / 180.0) {
+    (*visualization)(vc, uc) = cv::Vec3b(0, 255, 255);
+    return false;
+  }
+    
+  return true;
 }
 
 cv::Mat3b visualizeMultipliers(const MatrixXd& multipliers)
@@ -89,9 +150,11 @@ cv::Mat3b visualizeMultipliers(const MatrixXd& multipliers)
   for(int y = 0; y < multipliers.rows(); ++y) {
     for(int x = 0; x < multipliers.cols(); ++x) {
       double m = multipliers(y, x);
-      if(m == 0)
+      if(m == 0) {
+	vis(y, x) = cv::Vec3b(255, 255, 255);
 	continue;
-
+      }
+      
       if(m < min_mult) {
 	ROS_WARN_STREAM("Low multiplier of " << m);
 	vis(y, x) = cv::Vec3b(0, 0, 255);
@@ -108,8 +171,90 @@ cv::Mat3b visualizeMultipliers(const MatrixXd& multipliers)
       }
     }
   }
-
+  
   return vis;
+}
+
+void computeMultiplierMap(const PrimeSenseModel& model, const DepthMat& depth, const DepthMat& mapdepth,
+			  Eigen::MatrixXd* multipliers, cv::Mat3b* visualization)
+{
+  ROS_ASSERT(multipliers->rows() == depth.rows());
+  ROS_ASSERT(multipliers->cols() == depth.cols());
+  ROS_ASSERT(visualization->rows == depth.rows());
+  ROS_ASSERT(visualization->cols == depth.cols());
+  multipliers->setZero();
+  *visualization = cv::Vec3b(0, 0, 0);
+
+  cv::Mat1b mask(depth.rows(), mapdepth.cols());
+  mask = 0;
+  for(int y = 0; y < mask.rows; ++y)
+    for(int x = 0; x < mask.cols; ++x)
+      if(mapdepth(y, x) != 0)
+	mask(y, x) = 255;
+  cv::dilate(mask, mask, cv::Mat(), cv::Point(-1, -1), 4);
+  cv::erode(mask, mask, cv::Mat(), cv::Point(-1, -1), 15);
+  cv::imshow("mask", mask);
+  cv::waitKey(10);
+            
+  double min_mult = 0.85;
+  double max_mult = 1.15;
+
+  ProjectivePoint ppt;
+  Point pt;
+  bool use_normal_test = true;
+  for(ppt.v_ = 0; ppt.v_ < depth.rows(); ++ppt.v_) {
+    for(ppt.u_ = 0; ppt.u_ < depth.cols(); ++ppt.u_) {
+      // Reject points with no data.
+      if(mapdepth(ppt.v_, ppt.u_) == 0 || depth(ppt.v_, ppt.u_) == 0) {
+	(*visualization)(ppt.v_, ppt.u_) = cv::Vec3b(255, 255, 255);
+	continue;
+      }
+
+      // Reject points on the edge of the map.
+      if(mask(ppt.v_, ppt.u_) == 0) {
+	(*visualization)(ppt.v_, ppt.u_) = cv::Vec3b(255, 255, 0);
+	continue;
+      }
+
+      // Reject points that have unstable surface normals or which we are viewing from
+      // an oblique angle.
+      if(use_normal_test && !normalTest(model, mapdepth, ppt.u_, ppt.v_, 15, visualization))
+	continue;
+      
+      ppt.z_ = mapdepth(ppt.v_, ppt.u_);
+      model.project(ppt, &pt);
+      double mapdist = pt.getVector3fMap().norm();
+      ppt.z_ = depth(ppt.v_, ppt.u_);
+      model.project(ppt, &pt);
+      double measdist = pt.getVector3fMap().norm();
+		
+      // If the range is completely off, assume it's due to misalignment and not distortion.
+      double mult = mapdist / measdist;
+      if(mult > max_mult || mult < min_mult) {
+	//ROS_WARN_STREAM("Multiplier out of acceptable range: " << mult);
+	(*visualization)(ppt.v_, ppt.u_) = cv::Vec3b(127, 127, 127);
+	continue;
+      }
+
+      multipliers->coeffRef(ppt.v_, ppt.u_) = mult;
+
+      // Color the multiplier.
+      if(mult < min_mult) {
+	ROS_WARN_STREAM("Low multiplier of " << mult);
+	(*visualization)(ppt.v_, ppt.u_) = cv::Vec3b(0, 0, 255);
+      }
+      else if(mult > max_mult) {
+	ROS_WARN_STREAM("High multiplier of " << mult);
+	(*visualization)(ppt.v_, ppt.u_) = cv::Vec3b(255, 0, 0);
+      }
+      else {
+	if(mult < 1)
+	  (*visualization)(ppt.v_, ppt.u_)[2] = (1.0 - (mult - min_mult) / (1.0 - min_mult)) * 255;
+	else
+	  (*visualization)(ppt.v_, ppt.u_)[0] = (mult - 1.0) / (max_mult - 1.0) * 255;
+      }
+    }
+  }
 }
 
 PrimeSenseModel DepthDistortionLearner::fitModel()
@@ -130,7 +275,7 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
   vector<VectorXd> bs(frames_.size(), VectorXd::Zero(num_features));
   VectorXi num_tr_ex_frame = VectorXi::Zero(frames_.size());
 //  #pragma omp parallel for
-  for(size_t i = 0; i < frames_.size(); ++i) {
+  for(size_t i = 0; i < frames_.size(); i += DDL_INCR) {
     MatrixXd& xxt = xxts[i];
     VectorXd& b = bs[i];
 
@@ -152,12 +297,16 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
     const DepthMat& depth = *frames_[i].depth_;
     const DepthMat& mapdepth = *mapframe.depth_;
     MatrixXd multipliers(depth.rows(), depth.cols());
-    computeMultiplierMap(localmodel, depth, mapdepth, &multipliers);
+    cv::Mat3b visualization(depth.rows(), depth.cols());
+    computeMultiplierMap(localmodel, depth, mapdepth, &multipliers, &visualization);
 
+    cv::imshow("multipliers and filters", visualization);
     cv::imshow("multipliers", visualizeMultipliers(multipliers));
     cv::imshow("depth", frames_[i].depthImage());
     cv::imshow("mapdepth", mapframe.depthImage());
     cv::waitKey(10);
+    if(DDL_INCR != 1)
+      cv::waitKey();
     
     ProjectivePoint ppt;
     for(ppt.v_ = 0; ppt.v_ < multipliers.rows(); ++ppt.v_) {
