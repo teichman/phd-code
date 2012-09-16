@@ -117,3 +117,7 @@ target_link_libraries(calibrate_slam ${PROJECT_NAME})
 rosbuild_add_executable(slam_run_lightweight src/prog/slam_run_lightweight.cpp)
 rosbuild_link_boost(slam_run_lightweight program_options filesystem)
 target_link_libraries(slam_run_lightweight ${PROJECT_NAME})
+
+rosbuild_add_executable(inspect_pose_graph src/prog/inspect_pose_graph.cpp)
+rosbuild_link_boost(inspect_pose_graph program_options filesystem)
+target_link_libraries(inspect_pose_graph ${PROJECT_NAME})

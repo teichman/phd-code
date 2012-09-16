@@ -555,7 +555,7 @@ Eigen::Affine3f LoopCloser::alignFrames(const rgbd::Frame &frame0, const rgbd::F
   gs.verbose_ = false;
   gs.view_handler_ = view_handler_;
   gs.objective_ = mde;
-  gs.num_scalings_ = 3;
+  gs.num_scalings_ = 5; //Was 3
   double max_res_rot = 1.5* M_PI/180;
   double max_res_trans = 0.02;
   gs.max_resolutions_ << max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;

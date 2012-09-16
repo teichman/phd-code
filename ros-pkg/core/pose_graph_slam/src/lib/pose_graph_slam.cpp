@@ -1,7 +1,9 @@
 #include <pose_graph_slam/pose_graph_slam.h>
+#include <eigen_extensions/eigen_extensions.h>
 
 using namespace std;
 using namespace g2o;
+
 
 PoseGraphSlam::PoseGraphSlam(int num_nodes)
 {
@@ -49,7 +51,13 @@ void PoseGraphSlam::addEdge(int idx0, int idx1,
   // cout << transform.matrix() << endl << endl;
   // cout << ((Affine3d)se3.to_homogenious_matrix()).matrix() << endl << endl;
   // ROS_ASSERT((((Affine3d)se3.to_homogenious_matrix()).matrix() - transform.matrix()).norm() < 1e-6);
-  
+  EdgeStruct edge_struct;
+  edge_struct.idx0 = idx0;
+  edge_struct.idx1 = idx1;
+  edge_struct.transform = transform;
+  edge_struct.covariance = covariance;
+  edges_.push_back(edge_struct); 
+
   EdgeSE3* edge = new EdgeSE3;
   edge->vertices()[0] = optimizer_.vertex(idx0);
   edge->vertices()[1] = optimizer_.vertex(idx1);
@@ -58,10 +66,24 @@ void PoseGraphSlam::addEdge(int idx0, int idx1,
   edge->setInverseMeasurement(se3.inverse());
   edge->setInformation(covariance.inverse());
   optimizer_.addEdge(edge);
+  edge_ptrs_.push_back(edge);
+}
+  
+void PoseGraphSlam::removeEdge(size_t idx)
+{
+  //Remove from g2o
+  optimizer_.removeEdge(edge_ptrs_[idx]);
+  //Remove from my own lists
+  edges_.erase(edges_.begin()+idx);
+  edge_ptrs_.erase(edge_ptrs_.begin()+idx);
 }
 
 void PoseGraphSlam::solve(int num_iters)
 {
+  //for(size_t i = 0; i < vertices_.size(); i++)
+  //  optimizer_.addVertex(vertices_[i]);
+  //for(size_t i = 0; i < edges_.size(); i++)
+  //  optimizer_.addEdge(edges_[i]);
   VertexSE3* v0 = dynamic_cast<VertexSE3*>(optimizer_.vertex(0));
   ROS_ASSERT(v0);
   v0->setToOrigin();
@@ -109,3 +131,39 @@ size_t PoseGraphSlam::numEdges(size_t idx) const
   return v->edges().size();
 }
 
+void PoseGraphSlam::serialize(std::ostream& out) const
+{
+  //Output num vertices
+  out << numNodes() << endl;
+  //Output num edges
+  out << edges_.size() << endl;
+  for(size_t i = 0; i < edges_.size(); i++)
+  {
+    out << edges_[i].idx0 << " " << edges_[i].idx1 << endl;
+    eigen_extensions::serializeASCII(edges_[i].transform.matrix(), out);
+    eigen_extensions::serializeASCII(edges_[i].covariance, out);
+  }
+}
+void PoseGraphSlam::deserialize(std::istream& in)
+{
+  size_t n_vert; in >> n_vert;
+  if(numNodes() != n_vert)
+  {
+    ROS_ASSERT(numNodes() == 0);
+    for(int i = 0; i < n_vert; ++i) { 
+      VertexSE3* v = new VertexSE3;
+      v->setId(i);
+      optimizer_.addVertex(v);
+    }
+  }
+  size_t n_edges; in >> n_edges;
+  for(size_t i = 0; i < n_edges; i++)
+  {
+    int idx0; in >> idx0;
+    int idx1; in >> idx1;
+    Eigen::Matrix4d m; eigen_extensions::deserializeASCII(in, &m);
+    Eigen::Affine3d transform; transform.matrix() = m;
+    Matrix6d covariance; eigen_extensions::deserializeASCII(in, &covariance);
+    addEdge(idx0, idx1, transform, covariance);
+  }
+}

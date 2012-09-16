@@ -25,8 +25,8 @@ AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-0
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
-SLAM_RUNS_xpl01 :=	xpl001-seq004 \
-			xpl001-seq005
+#SLAM_RUNS_xpl01 :=	xpl001-seq004 \
+#			xpl001-seq005
 
 # Convenient to turn on if you want to watch it run, but not save images
 DEFAULT_GRID_VIS := 1
@@ -72,7 +72,7 @@ $(1)/asus_vs_velodyne/extrinsics:
 	cd $$(@D) && mkdir gridsearch
 	cd $$(@D) && mv gridsearch*.png gridsearch/
 
-#SLAM_RUNS_$(1) := $$(shell ls $(SLAM_DATA_PATH)/$(1))
+SLAM_RUNS_$(1) := $$(shell ls $(SLAM_DATA_PATH)/$(1))
 TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
 
 $(1)/learned_model.psm: $$(TRAJECTORIES_$(1))
@@ -106,6 +106,14 @@ $(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/
 $(1)-visualize-slam-result-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
 	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
 
+.PHONY: $(1)-inspect-posegraph-$(2)
+$(1)-inspect-posegraph-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_graph.log
+	rosrun xpl_calibration inspect_pose_graph $$< $(1)/slam_results/$(2)_graph.log --visualize
+
+.PHONY: $(1)-tune-posegraph-$(2)
+$(1)-tune-posegraph-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_graph.log
+	rosrun xpl_calibration inspect_pose_graph $$< $(1)/slam_results/$(2)_graph.log --otraj $(1)/slam_results/$(2)_tuned.traj --opcd $(1)/slam_results/$(2)_tuned.pcd
+
 $(1)/slam_videos/$(2).avi: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
 	mkdir -p $$(@D)/$(2)
 	cd $$(@D)/$(2) && GRIDSEARCH_VIS=1 rosrun xpl_calibration slam_test $$< $(2).pcd $(2).traj --cam $(CAMERAS_PATH)/$(1)/$(2).cam --save-imgs ${LOOP_CLOSURE_FLAG}
@@ -116,7 +124,7 @@ $(1)/slam_videos/$(2).avi: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2)
 
 $(1)/slam_results/$(2).traj: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
 	mkdir -p $$(@D)
-	GRIDSEARCH_VIS=${DEFAULT_GRID_VIS} rosrun xpl_calibration ${SLAM_PROGRAM} $$< $$(@D)/$(2).pcd $$@ --cam $(CAMERAS_PATH)/$(1)/$(2).cam ${LOOP_CLOSURE_FLAG}
+	GRIDSEARCH_VIS=${DEFAULT_GRID_VIS} rosrun xpl_calibration ${SLAM_PROGRAM} $$< $$(@D)/$(2).pcd  $$@ $$(@D)/$(2)_graph.log --cam $(CAMERAS_PATH)/$(1)/$(2).cam ${LOOP_CLOSURE_FLAG}
 
 $(CAMERAS_PATH)/$(1)/$(2).cam:
 	mkdir -p $$(@D)

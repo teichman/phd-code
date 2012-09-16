@@ -11,6 +11,8 @@
 
   <depend package="g2o"/>
   <depend package="rosconsole"/>
+  <depend package="serializable"/>
+  <depend package="eigen_extensions"/>
 
   <export>
     <cpp cflags="-I${prefix}/include"
