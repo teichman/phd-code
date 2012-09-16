@@ -19,9 +19,12 @@ FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::
 #ifdef TIMING
   ScopedTimer st("FrameAlignmentMDE::FrameAlignmentMDE.  frameToClouds.");
 #endif
-  model0_.undistort(&frame0_);
+
+  ROS_ASSERT(!model0_.hasDepthDistortionModel());
+  ROS_ASSERT(!model1_.hasDepthDistortionModel());
+  // model0_.undistort(&frame0_);
+  // model1_.undistort(&frame1_);
   model0_.frameToCloud(frame0_, &pcd0_, max_range_);
-  model1_.undistort(&frame1_);
   model1_.frameToCloud(frame1_, &pcd1_, max_range_);
   ROS_ASSERT(pcd0_.size() == pcd1_.size());
   
@@ -46,11 +49,11 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   double color_error = 0;
   Cloud transformed;
 
-  transformAndDecimate(pcd1_, f0_to_f1.inverse(), &transformed);
+  transformAndDecimate(pcd1_, f0_to_f1.inverse(), indices_, &transformed);
   //meanDepthError(model0_, frame0_, transformed, &val, &count, max_range_);
   meanDepthAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, max_range_);
   
-  transformAndDecimate(pcd0_, f0_to_f1, &transformed);
+  transformAndDecimate(pcd0_, f0_to_f1, indices_, &transformed);
   //meanDepthError(model1_, frame1_, transformed, &val, &count, max_range_);
   meanDepthAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, max_range_);
 
@@ -69,18 +72,19 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
     return val / count;
 }
 
-void FrameAlignmentMDE::transformAndDecimate(const rgbd::Cloud& in,
-					     const Eigen::Affine3f& transform,
-					     rgbd::Cloud* out) const
+void transformAndDecimate(const rgbd::Cloud& in,
+			  const Eigen::Affine3f& transform,
+			  const std::vector<size_t>& indices,
+			  rgbd::Cloud* out)
 {
 #ifdef TIMING
   ScopedTimer st("transformAndDecimate");
 #endif
   out->clear();
   // reserve and push_back is significantly faster than resize.  Not sure why this would be.
-  out->reserve(indices_.size());  
-  for(size_t i = 0; i < indices_.size(); ++i) {
-    size_t idx = indices_[i];
+  out->reserve(indices.size());  
+  for(size_t i = 0; i < indices.size(); ++i) {
+    size_t idx = indices[i];
     out->push_back(rgbd::Point());
     out->back().getVector4fMap() = transform * in[idx].getVector4fMap();
     out->back().r = in[idx].r;

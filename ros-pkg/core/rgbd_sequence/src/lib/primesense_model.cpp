@@ -313,8 +313,10 @@ namespace rgbd
 
   void PrimeSenseModel::undistort(Frame* frame) const
   {
-    if(!hasDepthDistortionModel())
+    if(!hasDepthDistortionModel()) {
+      ROS_DEBUG("No model; skipping undistortion.");
       return;
+    }
 
     ROS_DEBUG("Undistorting.");
     ProjectivePoint ppt;

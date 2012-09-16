@@ -32,11 +32,13 @@ protected:
   rgbd::Cloud pcd0_;
   rgbd::Cloud pcd1_;
   std::vector<size_t> indices_;
-
-  void transformAndDecimate(const rgbd::Cloud& in,
-			    const Eigen::Affine3f& transform,
-			    rgbd::Cloud* out) const;
 };
+
+void transformAndDecimate(const rgbd::Cloud& in,
+			  const Eigen::Affine3f& transform,
+			  const std::vector<size_t>& indices,
+			  rgbd::Cloud* out);
+
 
 //! Computes the asymmetric MDE for a given set of frames assumed to be from the same sensor
 //! and reference pcds when twiddling

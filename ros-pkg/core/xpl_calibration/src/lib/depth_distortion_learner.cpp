@@ -7,7 +7,7 @@ namespace bfs = boost::filesystem;
 
 #define DDL_INCR (getenv("DDL_INCR") ? atoi(getenv("DDL_INCR")) : 1)
 #define REGULARIZATION (getenv("REGULARIZATION") ? atof(getenv("REGULARIZATION")) : 0.0)
-//#define VISUALIZE
+#define VISUALIZE
 
 DepthDistortionLearner::DepthDistortionLearner(const PrimeSenseModel& initial_model) :
   initial_model_(initial_model),
@@ -262,7 +262,7 @@ void DepthDistortionLearner::computeMultiplierMap(const PrimeSenseModel& model,
       }
     }
   }
-}
+ }
 
 PrimeSenseModel DepthDistortionLearner::fitModel()
 {
@@ -459,8 +459,9 @@ cv::Mat3b CoverageMap2::visualizeSlice(const Eigen::MatrixXi& counts) const
   cv::Mat3b vis(cv::Size(counts.cols(), counts.rows()));
   for(int y = 0; y < vis.rows; ++y) {
     for(int x = 0; x < vis.cols; ++x) {
-      uchar g = ((double)counts(y, x) / min_counts_) * 255;
-      uchar r = (1.0 - (double)counts(y, x) / min_counts_) * 255;
+      double val = min(1.0, ((double)counts(y, x) / min_counts_));
+      uchar g = val * 255;
+      uchar r = (1.0 - val) * 255;
       vis(y, x) = cv::Vec3b(0, g, r);
     }
   }
