@@ -459,7 +459,7 @@ rgbd::Cloud::Ptr AsusVsVeloVisualizer::filterVelo(rgbd::Cloud::ConstPtr velo) co
   return filtered;
 }
 
-void AsusVsVeloVisualizer::calibrate(std::string eval_path)
+VeloToAsusCalibrator AsusVsVeloVisualizer::setupCalibrator()
 {
   VeloToAsusCalibrator calibrator(model_, this);
   
@@ -504,6 +504,13 @@ void AsusVsVeloVisualizer::calibrate(std::string eval_path)
     cout << endl;
   }
 
+  return calibrator;
+}
+
+void AsusVsVeloVisualizer::calibrate()
+{
+  VeloToAsusCalibrator calibrator = setupCalibrator();
+  
   // -- Run grid search over extrinsics and apply updates.
   double final_mde;
   VeloToAsusCalibration cal = calibrator.search(&final_mde);
@@ -517,14 +524,19 @@ void AsusVsVeloVisualizer::calibrate(std::string eval_path)
   cout << cal_.status("  ");
 
   cal_.save("calibration-autosave");
-
-  if(eval_path != "") { 
-    ofstream fs(eval_path.c_str());
-    fs << final_mde << endl;
-    fs.close();
-    cout << "Save final mde to " << eval_path << endl;
-  }
 }
+
+void AsusVsVeloVisualizer::evaluate(std::string eval_path)
+{
+  VeloToAsusCalibrator calibrator = setupCalibrator();
+  double final_mde = calibrator.eval(cal_);
+  
+  ofstream fs(eval_path.c_str());
+  fs << final_mde << endl;
+  fs.close();
+  cout << "Saved final mde of " << final_mde << " to " << eval_path << endl;
+}
+  
 
 void AsusVsVeloVisualizer::singleFrameExtrinsicsSearch()
 {

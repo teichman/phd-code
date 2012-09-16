@@ -50,12 +50,27 @@ define SENSOR_RULE_GENERATOR
 #SLAM_RUNS_$(1) := $$(shell ls $(SLAM_DATA_PATH)/$(1))
 TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
 
-$(1)/evaluation/evaluation.txt: $(1)/evaluation/extrinsics $(1)/evaluation/learned_model.psm
-	cd $$(@D) && \
+$(1)-quantitative-evaluation: 	$(1)/evaluation/results-baseline.txt \
+				$(1)/evaluation/results-distortion_model_and_recalib.txt \
+				$(1)/evaluation/results-distortion_model_no_recalib.txt
+
+$(1)/evaluation/results-distortion_model_and_recalib.txt: $(1)/evaluation/learned_model.psm $(1)/evaluation/extrinsics 
 	rosrun xpl_calibration asus_vs_velo \
 	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
-	--intrinsics learned_model.psm --extrinsics extrinsics \
-	--evaluate evaluation.txt
+	--intrinsics $$< --extrinsics $$(@D)/extrinsics \
+	--evaluate $$@
+
+$(1)/evaluation/results-distortion_model_no_recalib.txt: $(1)/evaluation/learned_model.psm
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--intrinsics $$< --extrinsics $(1)/asus_vs_velodyne/extrinsics \
+	--evaluate $$@
+
+$(1)/evaluation/results-baseline.txt: $(1)/asus_vs_velodyne/extrinsics
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--extrinsics $(1)/asus_vs_velodyne/extrinsics \
+	--evaluate $$@
 
 $(1)-visualize-slam-intrinsics: $(1)/evaluation/extrinsics $(1)/evaluation/learned_model.psm
 	rosrun xpl_calibration asus_vs_velo \
