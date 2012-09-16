@@ -53,7 +53,7 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   //meanDepthError(model0_, frame0_, transformed, &val, &count, max_range_);
   meanDepthAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, max_range_);
   
-  transformAndDecimate(pcd0_, f0_to_f1, indices_, &transformed);
+  transformAndDecimate(pcd0_, f0_to_f1, indices_, &transformed); 
   //meanDepthError(model1_, frame1_, transformed, &val, &count, max_range_);
   meanDepthAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, max_range_);
 
@@ -81,10 +81,11 @@ void transformAndDecimate(const rgbd::Cloud& in,
   ScopedTimer st("transformAndDecimate");
 #endif
   out->clear();
-  // reserve and push_back is significantly faster than resize.  Not sure why this would be.
   out->reserve(indices.size());  
   for(size_t i = 0; i < indices.size(); ++i) {
     size_t idx = indices[i];
+    if(idx >= in.size())
+      break;
     out->push_back(rgbd::Point());
     out->back().getVector4fMap() = transform * in[idx].getVector4fMap();
     out->back().r = in[idx].r;
@@ -154,12 +155,23 @@ double SequenceAlignmentMDE::eval(const Eigen::VectorXd& x) const
 FocalLengthMDE::FocalLengthMDE(const PrimeSenseModel& model,
 			       const std::vector<Frame>& frames,
 			       const std::vector<Cloud::ConstPtr>& pcds,
-			       const std::vector<Eigen::Affine3d>& transforms) :
+			       const std::vector<Eigen::Affine3d>& transforms,
+			       double fraction) :
   model_(model),
   frames_(frames),
   pcds_(pcds),
   transforms_(transforms)
 {
+  // Set up which random pixels to look at.
+  // (Calling rand from multiple execution threads is a disaster)
+  size_t max_num_pts = 0;
+  for(size_t i = 0; i < pcds.size(); ++i)
+    max_num_pts = max(max_num_pts, pcds[i]->size());
+  
+  indices_.reserve(max_num_pts);
+  for(size_t i = 0; i < max_num_pts; ++i)
+    if((double)rand() / RAND_MAX <= fraction)
+      indices_.push_back(i);
 }
 
 double FocalLengthMDE::eval(const Eigen::VectorXd& x) const
@@ -172,7 +184,8 @@ double FocalLengthMDE::eval(const Eigen::VectorXd& x) const
   double val = 0;  // Total objective.
   Cloud transformed;
   for(size_t i = 0; i < pcds_.size(); ++i) {
-    pcl::transformPointCloud(*pcds_[i], transformed, transforms_[i].cast<float>());
+    transformAndDecimate(*pcds_[i], transforms_[i].cast<float>(), indices_, &transformed);
+    //pcl::transformPointCloud(*pcds_[i], transformed, transforms_[i].cast<float>());
     meanDepthError(model, frames_[i], transformed, &val, &count);
   }
 

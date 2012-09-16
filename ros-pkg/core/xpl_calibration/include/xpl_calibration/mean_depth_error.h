@@ -69,7 +69,8 @@ public:
   FocalLengthMDE(const rgbd::PrimeSenseModel& model,
 		 const std::vector<rgbd::Frame>& frames,
 		 const std::vector<rgbd::Cloud::ConstPtr>& pcds,
-		 const std::vector<Eigen::Affine3d>& transforms);
+		 const std::vector<Eigen::Affine3d>& transforms,
+		 double fraction);
   double eval(const Eigen::VectorXd& x) const;
 
 protected:
@@ -77,6 +78,7 @@ protected:
   std::vector<rgbd::Frame> frames_;
   std::vector<rgbd::Cloud::ConstPtr> pcds_;
   std::vector<Eigen::Affine3d> transforms_;
+  std::vector<size_t> indices_;
 };
 
 void meanDepthError(const rgbd::PrimeSenseModel& model,

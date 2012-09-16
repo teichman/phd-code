@@ -29,7 +29,7 @@ void DepthDistortionLearner::addFrame(Frame frame,
 PrimeSenseModel DepthDistortionLearner::fitFocalLength()
 {
   ROS_WARN("DepthDistortionLearner::fitFocalLength currently does not use depth distortion model correction on frames_.");
-  FocalLengthMDE::Ptr objective(new FocalLengthMDE(initial_model_, frames_, pcds_, transforms_));
+  FocalLengthMDE::Ptr objective(new FocalLengthMDE(initial_model_, frames_, pcds_, transforms_, 0.1));
   GridSearch gs(1);
   gs.verbose_ = true;
   gs.objective_ = objective;
