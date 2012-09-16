@@ -246,6 +246,12 @@ namespace rgbd
     eigen_extensions::deserializeScalar(in, &cy_);
     eigen_extensions::deserialize(in, &weights_);
 
+    if(hasOldDefaultDepthDistortionModel()) {
+      ROS_WARN("Loaded PrimeSenseModel with old default depth distortion model. Resetting.");
+      resetDepthDistortionModel();
+      ROS_ASSERT(!hasDepthDistortionModel());
+    }
+    
     // fx_inv_ = 1 / fx_;
     // fy_inv_ = 1 / fy_;
   }
@@ -258,6 +264,18 @@ namespace rgbd
 	has = true;
       if(i != 0 && weights_(i) != 0)
 	has = true;
+    }
+    return has;
+  }
+
+  bool PrimeSenseModel::hasOldDefaultDepthDistortionModel() const
+  {
+    bool has = true;
+    for(int i = 0; i < weights_.rows(); ++i) {
+      if(i == 1 && weights_(i) != 10)
+	has = false;
+      if(i != 1 && weights_(i) != 0)
+	has = false;
     }
     return has;
   }
@@ -297,7 +315,8 @@ namespace rgbd
   {
     if(!hasDepthDistortionModel())
       return;
-    
+
+    ROS_DEBUG("Undistorting.");
     ProjectivePoint ppt;
     DepthMat& depth = *frame->depth_;
     for(ppt.v_ = 0; ppt.v_ < depth.rows(); ++ppt.v_) {

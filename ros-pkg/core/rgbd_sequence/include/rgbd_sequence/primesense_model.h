@@ -89,6 +89,7 @@ namespace rgbd
     void deserialize(std::istream& in);
     std::string status(const std::string& prefix = "") const;
     bool hasDepthDistortionModel() const;
+    bool hasOldDefaultDepthDistortionModel() const;
     void resetDepthDistortionModel();
     //! Returns type_ and id_ formatted nicely together.
     std::string name() const;
