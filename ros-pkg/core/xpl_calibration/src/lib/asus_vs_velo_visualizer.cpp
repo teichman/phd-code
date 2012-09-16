@@ -207,7 +207,8 @@ void AsusVsVeloVisualizer::fitModel()
   PrimeSenseModel initial_model = sseq_->model_;
   initial_model.resetDepthDistortionModel();
   DepthDistortionLearner ddl(initial_model);
-  
+  ddl.use_filters_ = false;
+    
   for(size_t i = skip_; i < vseq_->size(); i += skip_) {
     double dt;
     int idx = findAsusIdx(vseq_->timestamps_[i] + cal_.offset_, &dt);
@@ -218,9 +219,9 @@ void AsusVsVeloVisualizer::fitModel()
     Frame frame;
     sseq_->readFrame(idx, &frame);
     Cloud::Ptr filtered = filterVelo(vseq_->getCloud(i));
-    Cloud::Ptr transformed(new Cloud);
-    pcl::transformPointCloud(*filtered, *transformed, cal_.veloToAsus());
-    ddl.addFrame(frame, transformed);
+    // Cloud::Ptr transformed(new Cloud);
+    // pcl::transformPointCloud(*filtered, *transformed, cal_.veloToAsus());
+    ddl.addFrame(frame, filtered, cal_.veloToAsus().cast<double>());
   }
 
   model_ = ddl.fitModel();
@@ -459,7 +460,7 @@ rgbd::Cloud::Ptr AsusVsVeloVisualizer::filterVelo(rgbd::Cloud::ConstPtr velo) co
   return filtered;
 }
 
-void AsusVsVeloVisualizer::calibrate()
+void AsusVsVeloVisualizer::calibrate(std::string eval_path)
 {
   VeloToAsusCalibrator calibrator(model_, this);
   
@@ -504,8 +505,10 @@ void AsusVsVeloVisualizer::calibrate()
   }
 
   // -- Run grid search over extrinsics and apply updates.
-  VeloToAsusCalibration cal = calibrator.search();
+  double final_mde;
+  VeloToAsusCalibration cal = calibrator.search(&final_mde);
   cout << "Done calibrating." << endl;
+  cout << "Final mde: " << final_mde << endl;
   cout << "Calibration incremental update: " << endl;
   cout << cal.status("  ");
   cal_.offset_ += cal.offset_;
@@ -514,6 +517,13 @@ void AsusVsVeloVisualizer::calibrate()
   cout << cal_.status("  ");
 
   cal_.save("calibration-autosave");
+
+  if(eval_path != "") { 
+    ofstream fs(eval_path.c_str());
+    fs << final_mde << endl;
+    fs.close();
+    cout << "Save final mde to " << eval_path << endl;
+  }
 }
 
 void AsusVsVeloVisualizer::singleFrameExtrinsicsSearch()
@@ -606,9 +616,9 @@ void AsusVsVeloVisualizer::fitFocalLength()
     Frame frame;
     sseq_->readFrame(idx, &frame);
     Cloud::Ptr filtered = filterVelo(vseq_->getCloud(i));
-    Cloud::Ptr transformed(new Cloud);
-    pcl::transformPointCloud(*filtered, *transformed, cal_.veloToAsus());
-    ddl.addFrame(frame, transformed);
+    // Cloud::Ptr transformed(new Cloud);
+    // pcl::transformPointCloud(*filtered, *transformed, cal_.veloToAsus());
+    ddl.addFrame(frame, filtered, cal_.veloToAsus().cast<double>());
   }
 
   model_ = ddl.fitFocalLength();
@@ -722,3 +732,4 @@ void AsusVsVeloVisualizer::fitFocalLength()
 //     mpliExecuteFile(ros::package::getPath("xpl_calibration") + "/plot_beam_scatter.py");
 //   }
 // }
+

@@ -7,6 +7,7 @@
 .SECONDARY:		# Prevents deletion of intermediate targets in a chain of implicit rules.
 
 export NUM_THREADS	:= 40
+#SHELL = $(warning ---------- Making $@$(if $?,. Newer prereqs: $?)) /bin/bash -x
 SHELL			:= /bin/bash
 REPO_ROOT		:= $(shell dirname $$(dirname $$(dirname $$(rospack find dst))))
 MAKE_ROOT		:= $(REPO_ROOT)/project/intrinsics_calibration
@@ -25,8 +26,7 @@ AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-0
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
-#SLAM_RUNS_xpl01 :=	xpl001-seq004 \
-#			xpl001-seq005
+SLAM_RUNS_xpl01 :=	$(shell ls $(SLAM_DATA_PATH)/xpl01)
 
 # Convenient to turn on if you want to watch it run, but not save images
 DEFAULT_GRID_VIS := 1
@@ -47,11 +47,35 @@ all:
 # -- Enumeration of targets for each sensor.
 define SENSOR_RULE_GENERATOR
 
-$(1)-visualize-slam-intrinsics: $(1)/asus_vs_velodyne/extrinsics $(1)/learned_model.psm
+#SLAM_RUNS_$(1) := $$(shell ls $(SLAM_DATA_PATH)/$(1))
+TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
+
+$(1)/evaluation/evaluation.txt: 
+	cd $$(@D) && \
 	rosrun xpl_calibration asus_vs_velo \
 	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
-	--extrinsics $(1)/asus_vs_velodyne/extrinsics \
-	--intrinsics $(1)/learned_model.psm
+	--intrinsics learned_model.psm --extrinsics extrinsics \
+	--evaluate evaluation.txt
+
+$(1)-visualize-slam-intrinsics: $(1)/evaluation/extrinsics $(1)/evaluation/learned_model.psm
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--extrinsics $(1)/evaluation/extrinsics \
+	--intrinsics $(1)/evaluation/learned_model.psm
+
+$(1)/evaluation/extrinsics: $(1)/evaluation/learned_model.psm
+	cd $$(@D) && \
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--intrinsics learned_model.psm \
+	--compute-extrinsics
+
+$(1)/evaluation/learned_model.psm: $$(TRAJECTORIES_$(1))
+	mkdir -p $$(@D)
+	rosrun xpl_calibration calibrate_slam \
+	--batch --omodel $$@ \
+	$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
+	$$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
 
 $(1)-visualize-avv-intrinsics: $(1)/asus_vs_velodyne/extrinsics $(1)/asus_vs_velodyne/intrinsics
 	rosrun xpl_calibration asus_vs_velo \
@@ -71,9 +95,6 @@ $(1)/asus_vs_velodyne/extrinsics:
 	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence --compute-extrinsics
 	cd $$(@D) && mkdir gridsearch
 	cd $$(@D) && mv gridsearch*.png gridsearch/
-
-SLAM_RUNS_$(1) := $$(shell ls $(SLAM_DATA_PATH)/$(1))
-TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
 
 $(1)/learned_model.psm: $$(TRAJECTORIES_$(1))
 	rosrun xpl_calibration calibrate_slam \
@@ -103,7 +124,10 @@ $(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/
 	mv `ls screenshot*.cam -tr | tail -n1` $(CAMERAS_PATH)/$(1)/$(2).cam
 	rm `ls screenshot*.png -tr | tail -n1`
 
-$(1)-visualize-slam-result-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
+$(1)-visualize-slam-trajectory-$(2): $(1)/slam_results/$(2).traj
+	rosrun xpl_calibration calibrate_slam --sseq $(SLAM_DATA_PATH)/$(1)/$(2) --traj $(1)/slam_results/$(2).traj
+
+$(1)-visualize-slam-pcd-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
 	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
 
 .PHONY: $(1)-inspect-posegraph-$(2)

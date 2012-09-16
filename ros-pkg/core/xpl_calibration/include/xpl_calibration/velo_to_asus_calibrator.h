@@ -32,7 +32,7 @@ public:
   GridSearchViewHandler* vis_;
   
   VeloToAsusCalibrator(const rgbd::PrimeSenseModel& model, GridSearchViewHandler* vis = NULL);
-  VeloToAsusCalibration search() const;
+  VeloToAsusCalibration search(double* final_value = NULL) const;
   
 protected:
   

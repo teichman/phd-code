@@ -12,6 +12,7 @@
 #include <g2o/core/block_solver.h>
 #include <g2o/solvers/csparse/linear_solver_csparse.h>
 #include <g2o/solvers/cholmod/linear_solver_cholmod.h>
+#include <eigen_extensions/eigen_extensions.h>
 #include <serializable/serializable.h>
 
 typedef Eigen::Matrix<double, 6, 6> Matrix6d;
