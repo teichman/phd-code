@@ -60,11 +60,11 @@ VeloToAsusCalibration VeloToAsusCalibrator::search(double* final_value) const
   gs.objective_ = mde;
   //gs.num_scalings_ = 9;
   gs.num_scalings_ = 22;
-  double max_res_time = 0.25;
-  double max_res_rot = 2.5 * M_PI / 180.0;
-  double max_res_trans = 0.1;
+  double max_res_time = 0.125;
+  double max_res_rot = 1.25 * M_PI / 180.0;
+  double max_res_trans = 0.05;
   gs.max_resolutions_ << max_res_time, max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;
-  int gr = 3;
+  int gr = 6;
   gs.grid_radii_ << gr, gr, gr, gr, gr, gr, gr;
   //double sf = 0.5;
   double sf = 0.75;
