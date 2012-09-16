@@ -38,6 +38,17 @@ VeloToAsusCalibrator::VeloToAsusCalibrator(const rgbd::PrimeSenseModel& model, G
 {
 }
 
+double VeloToAsusCalibrator::eval(const VeloToAsusCalibration& cal) const
+{
+  SequenceAlignmentMDE mde(model_, frames_, pcds_);
+  double rx, ry, rz, tx, ty, tz;
+  generateXYZYPR(cal.veloToAsus(), rx, ry, rz, tx, ty, tz);
+
+  ArrayXd x(7);
+  x << cal.offset_, rx, ry, rz, tx, ty, tz;
+  return mde.eval(x);
+}
+
 VeloToAsusCalibration VeloToAsusCalibrator::search(double* final_value) const
 {
   cout << "Initializing search using PrimeSenseModel: " << endl;
@@ -49,11 +60,11 @@ VeloToAsusCalibration VeloToAsusCalibrator::search(double* final_value) const
   gs.objective_ = mde;
   //gs.num_scalings_ = 9;
   gs.num_scalings_ = 22;
-  double max_res_time = 0.25;
-  double max_res_rot = 2.5 * M_PI / 180.0;
-  double max_res_trans = 0.1;
+  double max_res_time = 0.125;
+  double max_res_rot = 1.25 * M_PI / 180.0;
+  double max_res_trans = 0.05;
   gs.max_resolutions_ << max_res_time, max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;
-  int gr = 3;
+  int gr = 6;
   gs.grid_radii_ << gr, gr, gr, gr, gr, gr, gr;
   //double sf = 0.5;
   double sf = 0.75;
@@ -70,5 +81,7 @@ VeloToAsusCalibration VeloToAsusCalibrator::search(double* final_value) const
   VeloToAsusCalibration cal;
   cal.setVeloToAsus(generateTransform(x(1), x(2), x(3), x(4), x(5), x(6)));
   cal.offset_ = x(0);
+  cout << "Final objective function value: " << eval(cal) << endl;
+  
   return cal;
 }

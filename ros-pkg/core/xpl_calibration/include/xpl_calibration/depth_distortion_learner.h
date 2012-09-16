@@ -102,6 +102,27 @@ protected:
   cv::Vec3b colorizeBin(const std::vector<double>& bin) const;
 };
 
+class CoverageMap2 : public Lockable
+{
+public:
+  //! Min number to be considered filled.
+  int min_counts_;
+  
+  CoverageMap2(int rows, int cols, double min_dist, double max_dist, int num_bins);
+  void increment(int v, int u, double dist);
+  void saveVisualizations(const std::string& dir) const;
+  int rows() const { return counts_[0].rows(); }
+  int cols() const { return counts_[0].cols(); }
+  
+protected:
+  double min_dist_;
+  double max_dist_;
+  std::vector<Eigen::MatrixXi> counts_;
+  double width_;
+
+  cv::Mat3b visualizeSlice(const Eigen::MatrixXi& counts) const;
+};
+
 class DepthDistortionLearner
 {
 public:

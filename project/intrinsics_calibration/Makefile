@@ -29,7 +29,7 @@ AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect
 SLAM_RUNS_xpl01 :=	$(shell ls $(SLAM_DATA_PATH)/xpl01)
 
 # Convenient to turn on if you want to watch it run, but not save images
-DEFAULT_GRID_VIS := 1
+DEFAULT_GRID_VIS := 0
 # Turn off loop closure with this
 LOOP_CLOSURE_FLAG := --loop-closure
 # Switch to get live visuals again
@@ -48,15 +48,30 @@ all:
 # -- Enumeration of targets for each sensor.
 define SENSOR_RULE_GENERATOR
 
-#SLAM_RUNS_$(1) := $$(shell ls $(SLAM_DATA_PATH)/$(1))
 TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
 
-$(1)/evaluation/evaluation.txt: 
-	cd $$(@D) && \
+$(1)-quantitative-evaluation: 	$(1)/evaluation/results-baseline.txt \
+				$(1)/evaluation/results-distortion_model_and_recalib.txt \
+				$(1)/evaluation/results-distortion_model_no_recalib.txt
+	@grep '^' $$^
+
+$(1)/evaluation/results-distortion_model_and_recalib.txt: $(1)/evaluation/learned_model.psm $(1)/evaluation/extrinsics 
 	rosrun xpl_calibration asus_vs_velo \
 	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
-	--intrinsics learned_model.psm --extrinsics extrinsics \
-	--evaluate evaluation.txt
+	--intrinsics $$< --extrinsics $$(@D)/extrinsics \
+	--evaluate $$@
+
+$(1)/evaluation/results-distortion_model_no_recalib.txt: $(1)/evaluation/learned_model.psm
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--intrinsics $$< --extrinsics $(1)/asus_vs_velodyne/extrinsics \
+	--evaluate $$@
+
+$(1)/evaluation/results-baseline.txt: $(1)/asus_vs_velodyne/extrinsics
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--extrinsics $(1)/asus_vs_velodyne/extrinsics \
+	--evaluate $$@
 
 $(1)-visualize-slam-intrinsics: $(1)/evaluation/extrinsics $(1)/evaluation/learned_model.psm
 	rosrun xpl_calibration asus_vs_velo \
@@ -97,6 +112,12 @@ $(1)/asus_vs_velodyne/extrinsics:
 	cd $$(@D) && mkdir gridsearch
 	cd $$(@D) && mv gridsearch*.png gridsearch/
 
+$(1)/learned_model.psm: $$(TRAJECTORIES_$(1))
+	rosrun xpl_calibration calibrate_slam \
+	--batch --omodel $$@ \
+	$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
+	$$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
+
 $(1)-visualize-slam: $$(TRAJECTORIES_$(1))
 	rosrun xpl_calibration calibrate_slam $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
 
@@ -127,6 +148,13 @@ $(1)-visualize-slam-trajectory-$(2): $(1)/slam_results/$(2).traj
 $(1)-visualize-slam-pcd-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
 	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
 
+.PHONY: $(1)-inspect-posegraph-$(2)
+$(1)-inspect-posegraph-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_graph.log
+	rosrun xpl_calibration inspect_pose_graph $$< $(1)/slam_results/$(2)_graph.log --visualize
+
+$(1)/slam_results/$(2).traj: $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_unrefined.traj
+	rosrun xpl_calibration inspect_pose_graph $$< $(1)/slam_results/$(2)_graph.log --otraj $(1)/slam_results/$(2).traj --opcd $(1)/slam_results/$(2).pcd
+
 $(1)/slam_videos/$(2).avi: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
 	mkdir -p $$(@D)/$(2)
 	cd $$(@D)/$(2) && GRIDSEARCH_VIS=1 rosrun xpl_calibration slam_test $$< $(2).pcd $(2).traj --cam $(CAMERAS_PATH)/$(1)/$(2).cam --save-imgs ${LOOP_CLOSURE_FLAG}
@@ -136,9 +164,9 @@ cd $$(@D)/$(2) && mkdir slam-png && mv slam*.png slam-png/
 	cd $$(@D)/$(2) && mencoder "mf://slam-png/slam*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(2)-alignment.avi
 	cd $$(@D)/$(2) && mencoder "mf://montage-png/montage*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(2)-montage.avi
 
-$(1)/slam_results/$(2).traj: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
+$(1)/slam_results/$(2)_unrefined.traj: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
 	mkdir -p $$(@D)
-	GRIDSEARCH_VIS=${DEFAULT_GRID_VIS} rosrun xpl_calibration ${SLAM_PROGRAM} $$< $$(@D)/$(2).pcd $$@ --cam $(CAMERAS_PATH)/$(1)/$(2).cam ${LOOP_CLOSURE_FLAG}
+	GRIDSEARCH_VIS=${DEFAULT_GRID_VIS} rosrun xpl_calibration ${SLAM_PROGRAM} $$< $$(@D)/$(2)_unrefined.pcd  $$@ $$(@D)/$(2)_graph.log --cam $(CAMERAS_PATH)/$(1)/$(2).cam ${LOOP_CLOSURE_FLAG}
 
 $(CAMERAS_PATH)/$(1)/$(2).cam:
 	mkdir -p $$(@D)

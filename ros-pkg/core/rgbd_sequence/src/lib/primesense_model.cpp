@@ -31,7 +31,6 @@ namespace rgbd
     height_(-1),
     cx_(-1),
     cy_(-1),
-    use_distortion_model_(true),
     fx_(-1),
     fy_(-1)
     // fx_inv_(-1),
@@ -138,11 +137,11 @@ namespace rgbd
       pt->x = pt->z * (ppt.u_ - cx_) / fx_;
       pt->y = pt->z * (ppt.v_ - cy_) / fy_;
 
-      if(use_distortion_model_) { 
-	VectorXd features = computeFeatures(ppt);
-	double mult = weights_.dot(features);
-	pt->getVector3fMap() *= mult;
-      }
+      // if(use_distortion_model_) { 
+      // 	VectorXd features = computeFeatures(ppt);
+      // 	double mult = weights_.dot(features);
+      // 	pt->getVector3fMap() *= mult;
+      // }
     }
   }
 
@@ -247,25 +246,36 @@ namespace rgbd
     eigen_extensions::deserializeScalar(in, &cy_);
     eigen_extensions::deserialize(in, &weights_);
 
+    if(hasOldDefaultDepthDistortionModel()) {
+      ROS_WARN("Loaded PrimeSenseModel with old default depth distortion model. Resetting.");
+      resetDepthDistortionModel();
+      ROS_ASSERT(!hasDepthDistortionModel());
+    }
+    
     // fx_inv_ = 1 / fx_;
     // fy_inv_ = 1 / fy_;
   }
 
   bool PrimeSenseModel::hasDepthDistortionModel() const
   {
-    // bool has = false;
-    // for(int i = 0; i < weights_.rows(); ++i) {
-    //   if(i == 1 && weights_(i) != 10)
-    // 	has = true;
-    //   if(i != 1 && weights_(i) != 0)
-    // 	has = true;
-    // }
     bool has = false;
     for(int i = 0; i < weights_.rows(); ++i) {
       if(i == 0 && weights_(i) != 1)
 	has = true;
       if(i != 0 && weights_(i) != 0)
 	has = true;
+    }
+    return has;
+  }
+
+  bool PrimeSenseModel::hasOldDefaultDepthDistortionModel() const
+  {
+    bool has = true;
+    for(int i = 0; i < weights_.rows(); ++i) {
+      if(i == 1 && weights_(i) != 10)
+	has = false;
+      if(i != 1 && weights_(i) != 0)
+	has = false;
     }
     return has;
   }
@@ -282,7 +292,6 @@ namespace rgbd
     oss << prefix << "cy: " << cy_ << endl;
 
     oss << prefix << "Has a nontrivial depth distortion model: " << hasDepthDistortionModel() << endl;
-    oss << prefix << "Use depth distortion model: " << use_distortion_model_ << endl;
     oss << prefix << "weights: " << weights_.transpose() << endl;
     
     return oss.str();
@@ -300,6 +309,25 @@ namespace rgbd
     ostringstream oss;
     oss << type_ << setw(3) << setfill('0') << id_;
     return oss.str();
+  }
+
+  void PrimeSenseModel::undistort(Frame* frame) const
+  {
+    if(!hasDepthDistortionModel()) {
+      ROS_DEBUG("No model; skipping undistortion.");
+      return;
+    }
+
+    ROS_DEBUG("Undistorting.");
+    ProjectivePoint ppt;
+    DepthMat& depth = *frame->depth_;
+    for(ppt.v_ = 0; ppt.v_ < depth.rows(); ++ppt.v_) {
+      for(ppt.u_ = 0; ppt.u_ < depth.cols(); ++ppt.u_) {
+	ppt.z_ = depth.coeffRef(ppt.v_, ppt.u_);
+	if(ppt.z_ != 0)
+	  depth.coeffRef(ppt.v_, ppt.u_) *= weights_.dot(computeFeatures(ppt));
+      }
+    }
   }
 
   cv::Vec3b Frame::colorize(double depth, double min_range, double max_range) const

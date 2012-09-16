@@ -26,7 +26,8 @@ SlamLightweight::SlamLightweight() :
 
 void SlamLightweight::run(StreamSequence::ConstPtr sseq,
 			 const std::string& opcd_path,
-			 const std::string& otraj_path)
+			 const std::string& otraj_path,
+       const std::string& ograph_path)
 {
   sseq_ = sseq;
   // Initialize loop closure
@@ -35,8 +36,8 @@ void SlamLightweight::run(StreamSequence::ConstPtr sseq,
     lc_ = LoopCloser::Ptr(new LoopCloser(sseq));
     lc_->fine_tune_ = false; //Doing this by hand for visualization
     lc_->visualize_ = false;
-    lc_->min_time_offset_ = 18;
-    lc_->step_ = 4;
+    lc_->min_time_offset_ = 12; // Was 18
+    lc_->step_ = 2;  // Was 4
     lc_->max_feature_dist_ = 500;
     lc_->keypoints_per_frame_ = 250;
     lc_->min_pairwise_keypoint_dist_ = 0.1; //cm apart
@@ -59,6 +60,7 @@ void SlamLightweight::run(StreamSequence::ConstPtr sseq,
   }
   opcd_path_ = opcd_path;
   otraj_path_ = otraj_path;
+  ograph_path_ = ograph_path;
   slamThreadFunction();  
 }
 
@@ -71,7 +73,7 @@ void SlamLightweight::slamThreadFunction()
   unlockWrite();
 
   PrimeSenseModel model = sseq_->model_;
-  model.use_distortion_model_ = false;
+  ROS_WARN("SlamLightweight does not use learned model.");
   FrameAligner aligner(model, model, max_range_, this);
   slam_ = PoseGraphSlam::Ptr(new PoseGraphSlam(sseq_->size()));
   Matrix6d covariance = Matrix6d::Identity() * 1e-3;  
@@ -173,6 +175,11 @@ void SlamLightweight::slamThreadFunction()
     }
     traj.save(otraj_path_);
     cout << "Saved trajectory to " << otraj_path_ << endl;
+  }
+
+  if(ograph_path_ != "") {
+    slam_->save(ograph_path_);
+    cout << "Saved graph to " << ograph_path_ << endl;
   }
 
   quitting_ = true;

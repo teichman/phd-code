@@ -43,8 +43,8 @@ int main(int argc, char** argv)
     cout << "  " << sequence_paths[i] << " ----- " << trajectory_paths[i] << endl;
 
     calibrator->trajectories_[i].load(trajectory_paths[i]);
-    // cout << "Trajectory: " << endl;
-    // cout << calibrator->trajectories_[i].status("  ");
+    cout << "Trajectory: " << endl;
+    cout << calibrator->trajectories_[i].status("  ");
 
     StreamSequence::Ptr sseq(new StreamSequence);
     sseq->load(sequence_paths[i]);

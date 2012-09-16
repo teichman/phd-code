@@ -64,36 +64,40 @@ namespace rgbd
     double cy_;
     //! Depth distortion model.  weights_[0] is a constant offset, weights_[1] is the raw depth measurement.
     Eigen::VectorXd weights_;
-    //! It can be slow.  Sometimes you don't want to.
-    //! This is not serialized, and is always set to false by default.  If you want it, turn it on yourself.
-    bool use_distortion_model_;
     double fx_;
     double fy_;
 
     // void setFocalLength(double f) { fx_ = f; fy_ = f; fx_inv_ = 1 / f; fy_inv_ = 1 / f; }
     // double fx() const { return fx_; }
     // double fy() const { return fy_; }
-    
-    //! f[1] is measured depth in decameters.
-    Eigen::VectorXd computeFeatures(const ProjectivePoint& ppt) const;
-    int numFeatures() const;
-    //! Returns type_ and id_ formatted nicely together.
-    std::string name() const;
-    
+        
     //! Initializes with a bogus model: all params set to -1.
     PrimeSenseModel();
     //! max_range in meters
+    //! Does *not* apply the depth distortion model.
+    //! The only way to apply the depth distortion model is to call undistort.
     void frameToCloud(const Frame& frame, Cloud* pcd,
 		      double max_range = std::numeric_limits<double>::max()) const;
     void cloudToFrame(const Cloud& pcd, Frame* frame) const;
+    //! Applies depth distortion model to the depth data in frame.
+    void undistort(Frame* frame) const;
+    
     void project(const ProjectivePoint& ppt, Point* pt) const;
     void project(const Point& pt, ProjectivePoint* ppt) const;
+
     bool initialized() const;
     void serialize(std::ostream& out) const;
     void deserialize(std::istream& in);
     std::string status(const std::string& prefix = "") const;
     bool hasDepthDistortionModel() const;
+    bool hasOldDefaultDepthDistortionModel() const;
     void resetDepthDistortionModel();
+    //! Returns type_ and id_ formatted nicely together.
+    std::string name() const;
+
+    //! f[1] is measured depth in decameters.
+    Eigen::VectorXd computeFeatures(const ProjectivePoint& ppt) const;
+    int numFeatures() const;
 
   protected:
     // double fx_inv_;

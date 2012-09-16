@@ -30,7 +30,8 @@ public:
   SlamLightweight();
   void run(rgbd::StreamSequence::ConstPtr sseq,
 	   const std::string& opcd_path = "",
-	   const std::string& otraj_path = "");
+	   const std::string& otraj_path = "",
+     const std::string& ograph_path = "");
 
   void rebuild_map();
   
@@ -47,6 +48,7 @@ protected:
   pcl::VoxelGrid<rgbd::Point> vg_;
   std::string opcd_path_;
   std::string otraj_path_;
+  std::string ograph_path_;
   rgbd::Frame curr_frame_;
   rgbd::Frame prev_frame_;
   std::vector<size_t> nodes_;

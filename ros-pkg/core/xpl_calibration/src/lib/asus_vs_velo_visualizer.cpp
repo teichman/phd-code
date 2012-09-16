@@ -57,6 +57,7 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::Ptr sseq, VeloS
   // We'll just assume that all stream sequences have a default distortion model and that custom
   // models are stored separetely.
   sseq_->model_.resetDepthDistortionModel();
+  model_ = sseq->model_;
   //ROS_ASSERT(!sseq_->model_.hasDepthDistortionModel());
   cout << "StreamSequence PrimeSenseModel: " << endl;
   cout << sseq_->model_.status("  ");
@@ -68,8 +69,6 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::Ptr sseq, VeloS
   mpliBegin();
   setInitialExtrinsics();
 
-  model_ = sseq->model_;
-  model_.resetDepthDistortionModel();
   updateVeloBounds();
 }
 
@@ -182,7 +181,7 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
     Frame frame;
     sseq_->readFrame(asus_idx_, &frame);
     if(unwarp_) {
-      model_.use_distortion_model_ = true;
+      model_.undistort(&frame);
       model_.frameToCloud(frame, asus_.get());
     }
     else
@@ -460,7 +459,7 @@ rgbd::Cloud::Ptr AsusVsVeloVisualizer::filterVelo(rgbd::Cloud::ConstPtr velo) co
   return filtered;
 }
 
-void AsusVsVeloVisualizer::calibrate(std::string eval_path)
+VeloToAsusCalibrator AsusVsVeloVisualizer::setupCalibrator()
 {
   VeloToAsusCalibrator calibrator(model_, this);
   
@@ -492,18 +491,39 @@ void AsusVsVeloVisualizer::calibrate(std::string eval_path)
   int window = 30;
   for(size_t i = 0; i < calibrator.pcds_.size(); ++i) {
     int idx = findAsusIdx(calibrator.pcds_[i]->header.stamp * 1e-9 );
-    cout << "- Loading nearby asus frames for velo keyframe " << i << endl;
-    cout << "  ";
-    for(int j = max(0, idx - window); j <= min(idx + window, (int)sseq_->size()); ++j) {
-      Frame frame;
-      sseq_->readFrame(j, &frame);
-      frame.timestamp_ -= sseq_start_;
-      calibrator.frames_.push_back(frame);
-      cout << j << " ";
+    cout << "- Loading nearby asus frames for velo keyframe " << i << " / " << calibrator.pcds_.size() << endl;
+
+    vector<size_t> indices;
+    for(int j = max(0, idx - window); j <= min(idx + window, (int)sseq_->size()); ++j)
+      indices.push_back(j);
+    
+    vector<Frame> frames(indices.size());
+    #pragma omp parallel for
+    for(size_t j = 0; j < indices.size(); ++j) { 
+      sseq_->readFrame(indices[j], &frames[j]);
+      model_.undistort(&frames[j]);  // Very important: get the best extrinsics using the given depth distortion model.
+      frames[j].timestamp_ -= sseq_start_;
     }
+    calibrator.frames_.insert(calibrator.frames_.end(), frames.begin(), frames.end());
+    
+    // for(int j = max(0, idx - window); j <= min(idx + window, (int)sseq_->size()); ++j) {
+    //   Frame frame;
+    //   sseq_->readFrame(j, &frame);
+    //   model_.undistort(&frame);  // Very important: get the best extrinsics using the given depth distortion model.
+    //   frame.timestamp_ -= sseq_start_;
+    //   calibrator.frames_.push_back(frame);
+    //   cout << j << " ";
+    // }
     cout << endl;
   }
 
+  return calibrator;
+}
+
+void AsusVsVeloVisualizer::calibrate()
+{
+  VeloToAsusCalibrator calibrator = setupCalibrator();
+  
   // -- Run grid search over extrinsics and apply updates.
   double final_mde;
   VeloToAsusCalibration cal = calibrator.search(&final_mde);
@@ -517,14 +537,24 @@ void AsusVsVeloVisualizer::calibrate(std::string eval_path)
   cout << cal_.status("  ");
 
   cal_.save("calibration-autosave");
-
-  if(eval_path != "") { 
-    ofstream fs(eval_path.c_str());
-    fs << final_mde << endl;
-    fs.close();
-    cout << "Save final mde to " << eval_path << endl;
-  }
 }
+
+void AsusVsVeloVisualizer::evaluate(std::string eval_path)
+{
+  VeloToAsusCalibrator calibrator = setupCalibrator();
+
+  // eval measures the value of an incremental calibration
+  VeloToAsusCalibration nochange;
+  nochange.offset_ = 0;
+  nochange.setVeloToAsus(Affine3f::Identity());
+  double final_mde = calibrator.eval(nochange);
+  
+  ofstream fs(eval_path.c_str());
+  fs << final_mde << endl;
+  fs.close();
+  cout << "Saved final mde of " << final_mde << " to " << eval_path << endl;
+}
+  
 
 void AsusVsVeloVisualizer::singleFrameExtrinsicsSearch()
 {
@@ -560,9 +590,9 @@ void AsusVsVeloVisualizer::handleGridSearchUpdate(const Eigen::ArrayXd& x, doubl
   
   updateDisplay(velo_idx_, incremental_transform * cal_.veloToAsus(), cal_.offset_ + dt);
   static int num = 0;
-  ostringstream oss;
-  oss << "gridsearch" << setw(5) << setfill('0') << num << ".png";
-  vw_.vis_.saveScreenshot(oss.str());
+  // ostringstream oss;
+  // oss << "gridsearch" << setw(5) << setfill('0') << num << ".png";
+  // vw_.vis_.saveScreenshot(oss.str());
   ++num;
 }
 
