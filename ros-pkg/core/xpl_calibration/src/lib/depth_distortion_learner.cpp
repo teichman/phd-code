@@ -3,6 +3,7 @@
 using namespace std;
 using namespace Eigen;
 using namespace rgbd;
+namespace bfs = boost::filesystem;
 
 #define DDL_INCR (getenv("DDL_INCR") ? atoi(getenv("DDL_INCR")) : 1)
 #define REGULARIZATION (getenv("REGULARIZATION") ? atof(getenv("REGULARIZATION")) : 0.0)
@@ -267,7 +268,8 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
 {
   ROS_ASSERT(frames_.size() == pcds_.size());
   ROS_ASSERT(frames_.size() == transforms_.size());
-  
+
+  CoverageMap2 cmap2(frames_[0].depth_->rows(), frames_[0].depth_->cols(), 0, 12, 12);
   int num_features = initial_model_.numFeatures();
   vector<MatrixXd> xxts(frames_.size(), MatrixXd::Zero(num_features, num_features));
   vector<VectorXd> bs(frames_.size(), VectorXd::Zero(num_features));
@@ -329,11 +331,20 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
 		
 	b += f * multipliers(ppt.v_, ppt.u_);
 	++num_tr_ex_frame(i);
+	cmap2.increment(ppt.v_, ppt.u_, (double)ppt.z_ * 0.001);
       }
     }
     hrt.stop(); cout << hrt.reportMilliseconds() << endl;
   }	
 
+  string dir = ".ddl";
+  if(!bfs::exists(dir))
+    bfs::create_directory(dir);
+  else
+    ROS_ASSERT(bfs::is_directory(dir));
+  cmap2.saveVisualizations(dir);
+  cout << "Saved coverage visualization to " << dir << endl;
+  
   MatrixXd xxt = MatrixXd::Zero(num_features, num_features);
   VectorXd b = VectorXd::Zero(num_features);
   int num_tr_ex = num_tr_ex_frame.sum();
@@ -408,6 +419,55 @@ size_t DepthDistortionLearner::size() const
   ROS_ASSERT(frames_.size() == pcds_.size());
   return frames_.size();
 }
+
+
+
+CoverageMap2::CoverageMap2(int rows, int cols, double min_dist, double max_dist, int num_bins) :
+  min_counts_(20),
+  min_dist_(min_dist),
+  max_dist_(max_dist),
+  counts_(num_bins, MatrixXi::Zero(rows, cols)),
+  width_((max_dist_ - min_dist_) / num_bins)
+{
+}
+
+void CoverageMap2::increment(int v, int u, double dist)
+{
+  int idx = floor((dist - min_dist_) / width_);
+  if(idx < 0 || idx >= (int)counts_.size())
+    return;
+
+  lock();
+  ++counts_[idx](v, u);
+  unlock();
+}
+
+void CoverageMap2::saveVisualizations(const std::string& dir) const
+{
+  ROS_ASSERT(bfs::is_directory(dir));
+
+  for(size_t i = 0; i < counts_.size(); ++i) {
+    cv::Mat3b vis = visualizeSlice(counts_[i]);
+    ostringstream oss;
+    oss << dir << "/coverage_" << setw(2) << setfill('0') << i << ".png";
+    cv::imwrite(oss.str(), vis);
+  }
+}
+
+cv::Mat3b CoverageMap2::visualizeSlice(const Eigen::MatrixXi& counts) const
+{
+  cv::Mat3b vis(cv::Size(counts.cols(), counts.rows()));
+  for(int y = 0; y < vis.rows; ++y) {
+    for(int x = 0; x < vis.cols; ++x) {
+      uchar g = ((double)counts(y, x) / min_counts_) * 255;
+      uchar r = (1.0 - (double)counts(y, x) / min_counts_) * 255;
+      vis(y, x) = cv::Vec3b(0, g, r);
+    }
+  }
+  return vis;
+}
+ 
+
 
 CoverageMap::CoverageMap(double scale, int rows, int cols) :
   min_dist_(0.8),
