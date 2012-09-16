@@ -111,9 +111,9 @@ PrimeSenseModel SlamCalibrator::calibrate() const
   
   cout << "Fitting models using " << ddl.size() << " frames." << endl;
   PrimeSenseModel model;
-  cout << "Fitting focal length." << endl;
-  model = ddl.fitFocalLength();
-  ddl.initial_model_ = model;
+  // cout << "Fitting focal length." << endl;
+  // model = ddl.fitFocalLength();
+  // ddl.initial_model_ = model;
   cout << "Fitting depth distortion model." << endl;
   model = ddl.fitModel();
   cout << "== Initial model: " << endl;
