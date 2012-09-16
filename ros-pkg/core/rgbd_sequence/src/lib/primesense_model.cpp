@@ -303,10 +303,8 @@ namespace rgbd
     for(ppt.v_ = 0; ppt.v_ < depth.rows(); ++ppt.v_) {
       for(ppt.u_ = 0; ppt.u_ < depth.cols(); ++ppt.u_) {
 	ppt.z_ = depth.coeffRef(ppt.v_, ppt.u_);
-	if(ppt.z_ == 0)
-	  continue;
-	VectorXd features = computeFeatures(ppt);
-	ppt.z_ *= weights_.dot(features);
+	if(ppt.z_ != 0)
+	  depth.coeffRef(ppt.v_, ppt.u_) *= weights_.dot(computeFeatures(ppt));
       }
     }
   }
