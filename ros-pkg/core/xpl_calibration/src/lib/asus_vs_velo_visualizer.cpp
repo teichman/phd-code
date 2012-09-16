@@ -491,16 +491,29 @@ VeloToAsusCalibrator AsusVsVeloVisualizer::setupCalibrator()
   int window = 30;
   for(size_t i = 0; i < calibrator.pcds_.size(); ++i) {
     int idx = findAsusIdx(calibrator.pcds_[i]->header.stamp.toSec());
-    cout << "- Loading nearby asus frames for velo keyframe " << i << endl;
-    cout << "  ";
-    for(int j = max(0, idx - window); j <= min(idx + window, (int)sseq_->size()); ++j) {
-      Frame frame;
-      sseq_->readFrame(j, &frame);
-      model_.undistort(&frame);  // Very important: get the best extrinsics using the given depth distortion model.
-      frame.timestamp_ -= sseq_start_;
-      calibrator.frames_.push_back(frame);
-      cout << j << " ";
+    cout << "- Loading nearby asus frames for velo keyframe " << i << " / " << calibrator.pcds_.size() << endl;
+
+    vector<size_t> indices;
+    for(int j = max(0, idx - window); j <= min(idx + window, (int)sseq_->size()); ++j)
+      indices.push_back(j);
+    
+    vector<Frame> frames(indices.size());
+    #pragma omp parallel for
+    for(size_t j = 0; j < indices.size(); ++j) { 
+      sseq_->readFrame(indices[j], &frames[j]);
+      model_.undistort(&frames[j]);  // Very important: get the best extrinsics using the given depth distortion model.
+      frames[j].timestamp_ -= sseq_start_;
     }
+    calibrator.frames_.insert(calibrator.frames_.end(), frames.begin(), frames.end());
+    
+    // for(int j = max(0, idx - window); j <= min(idx + window, (int)sseq_->size()); ++j) {
+    //   Frame frame;
+    //   sseq_->readFrame(j, &frame);
+    //   model_.undistort(&frame);  // Very important: get the best extrinsics using the given depth distortion model.
+    //   frame.timestamp_ -= sseq_start_;
+    //   calibrator.frames_.push_back(frame);
+    //   cout << j << " ";
+    // }
     cout << endl;
   }
 

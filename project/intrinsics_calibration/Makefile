@@ -29,7 +29,7 @@ AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect
 SLAM_RUNS_xpl01 :=	$(shell ls $(SLAM_DATA_PATH)/xpl01)
 
 # Convenient to turn on if you want to watch it run, but not save images
-DEFAULT_GRID_VIS := 1
+DEFAULT_GRID_VIS := 0
 # Turn off loop closure with this
 LOOP_CLOSURE_FLAG := --loop-closure
 # Switch to get live visuals again
