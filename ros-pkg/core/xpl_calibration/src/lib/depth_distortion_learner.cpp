@@ -124,7 +124,7 @@ bool normalTest(const PrimeSenseModel& model, const DepthMat& mapdepth, int uc, 
 
   float frac_inliers = (double)num_inliers / vecs.size();
   //cout << "curvature: " << curvature << ", num_inliers: " << num_inliers << ", frac_inliers: " << frac_inliers << endl;
-  if(frac_inliers < 0.9) {
+  if(frac_inliers < 0.8) {
     (*visualization)(vc, uc) = cv::Vec3b(255, 0, 255);
     return false;
   }
@@ -224,7 +224,7 @@ void DepthDistortionLearner::computeMultiplierMap(const PrimeSenseModel& model,
 
       // Reject points that have unstable surface normals or which we are viewing from
       // an oblique angle.
-      if(use_filters_ && !normalTest(model, mapdepth, ppt.u_, ppt.v_, 15, visualization))
+      if(use_filters_ && !normalTest(model, mapdepth, ppt.u_, ppt.v_, 10, visualization))
 	continue;
       
       ppt.z_ = mapdepth(ppt.v_, ppt.u_);
