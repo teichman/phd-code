@@ -111,6 +111,12 @@ $(1)/asus_vs_velodyne/extrinsics:
 	cd $$(@D) && mkdir gridsearch
 	cd $$(@D) && mv gridsearch*.png gridsearch/
 
+$(1)/learned_model.psm: $$(TRAJECTORIES_$(1))
+	rosrun xpl_calibration calibrate_slam \
+	--batch --omodel $$@ \
+	$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
+	$$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
+
 $(1)-visualize-slam: $$(TRAJECTORIES_$(1))
 	rosrun xpl_calibration calibrate_slam $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
 
@@ -139,6 +145,14 @@ $(1)-visualize-slam-trajectory-$(2): $(1)/slam_results/$(2).traj
 $(1)-visualize-slam-pcd-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
 	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
 
+.PHONY: $(1)-inspect-posegraph-$(2)
+$(1)-inspect-posegraph-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_graph.log
+	rosrun xpl_calibration inspect_pose_graph $$< $(1)/slam_results/$(2)_graph.log --visualize
+
+.PHONY: $(1)-tune-posegraph-$(2)
+$(1)-tune-posegraph-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_graph.log
+	rosrun xpl_calibration inspect_pose_graph $$< $(1)/slam_results/$(2)_graph.log --otraj $(1)/slam_results/$(2)_tuned.traj --opcd $(1)/slam_results/$(2)_tuned.pcd
+
 $(1)/slam_videos/$(2).avi: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
 	mkdir -p $$(@D)/$(2)
 	cd $$(@D)/$(2) && GRIDSEARCH_VIS=1 rosrun xpl_calibration slam_test $$< $(2).pcd $(2).traj --cam $(CAMERAS_PATH)/$(1)/$(2).cam --save-imgs ${LOOP_CLOSURE_FLAG}
@@ -149,7 +163,7 @@ $(1)/slam_videos/$(2).avi: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2)
 
 $(1)/slam_results/$(2).traj: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
 	mkdir -p $$(@D)
-	GRIDSEARCH_VIS=${DEFAULT_GRID_VIS} rosrun xpl_calibration ${SLAM_PROGRAM} $$< $$(@D)/$(2).pcd $$@ --cam $(CAMERAS_PATH)/$(1)/$(2).cam ${LOOP_CLOSURE_FLAG}
+	GRIDSEARCH_VIS=${DEFAULT_GRID_VIS} rosrun xpl_calibration ${SLAM_PROGRAM} $$< $$(@D)/$(2).pcd  $$@ $$(@D)/$(2)_graph.log --cam $(CAMERAS_PATH)/$(1)/$(2).cam ${LOOP_CLOSURE_FLAG}
 
 $(CAMERAS_PATH)/$(1)/$(2).cam:
 	mkdir -p $$(@D)
