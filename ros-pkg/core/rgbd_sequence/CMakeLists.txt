@@ -88,3 +88,7 @@ rosbuild_add_compile_flags(record_oni -Wno-unused-but-set-variable -Wno-unknown-
 rosbuild_link_boost(record_oni program_options)
 target_link_libraries(record_oni rgbd_sequence OpenNI)
 
+rosbuild_add_executable(stat_model src/prog/stat_model.cpp)
+rosbuild_add_compile_flags(stat_model -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+target_link_libraries(stat_model rgbd_sequence OpenNI)
+
