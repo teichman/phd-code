@@ -81,8 +81,9 @@ int main(int argc, char** argv)
   }
 
   if(opts.count("evaluate")) {
-    ROS_ASSERT(opts.count("extrinsics") && opts.count("intrinsics"));
+    ROS_ASSERT(opts.count("extrinsics"));
     avv.evaluate(opts["evaluate"].as<string>());
+    return 0;
   }
   
   // if(opts.count("visualize-distortion")) {

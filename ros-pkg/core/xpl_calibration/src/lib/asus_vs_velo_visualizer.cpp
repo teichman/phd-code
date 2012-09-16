@@ -529,7 +529,12 @@ void AsusVsVeloVisualizer::calibrate()
 void AsusVsVeloVisualizer::evaluate(std::string eval_path)
 {
   VeloToAsusCalibrator calibrator = setupCalibrator();
-  double final_mde = calibrator.eval(cal_);
+
+  // eval measures the value of an incremental calibration
+  VeloToAsusCalibration nochange;
+  nochange.offset_ = 0;
+  nochange.setVeloToAsus(Affine3f::Identity());
+  double final_mde = calibrator.eval(nochange);
   
   ofstream fs(eval_path.c_str());
   fs << final_mde << endl;
