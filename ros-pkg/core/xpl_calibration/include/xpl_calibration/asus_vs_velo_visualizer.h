@@ -47,7 +47,8 @@ public:
   void saveExtrinsics(std::string tag = "") const;
   void saveIntrinsics(std::string tag = "") const;
   //! Find alignment and sync offset.
-  void calibrate(std::string eval_path = "");
+  void calibrate();
+  void evaluate(std::string eval_path);
   void visualizeDistortion();
   void setColorScheme(std::string name);
   void toggleColorScheme();
@@ -84,6 +85,7 @@ protected:
   void pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie);
   void play(bool save);
   void colorPoint(rgbd::Point* pt) const;
+  VeloToAsusCalibrator setupCalibrator();
 };
 
 #endif // ASUS_VS_VELO_VISUALIZER_H

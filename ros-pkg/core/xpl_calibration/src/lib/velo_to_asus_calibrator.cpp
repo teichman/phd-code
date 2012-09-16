@@ -38,6 +38,17 @@ VeloToAsusCalibrator::VeloToAsusCalibrator(const rgbd::PrimeSenseModel& model, G
 {
 }
 
+double VeloToAsusCalibrator::eval(const VeloToAsusCalibration& cal) const
+{
+  SequenceAlignmentMDE mde(model_, frames_, pcds_);
+  double rx, ry, rz, tx, ty, tz;
+  generateXYZYPR(cal.veloToAsus(), rx, ry, rz, tx, ty, tz);
+
+  ArrayXd x(7);
+  x << cal.offset_, rx, ry, rz, tx, ty, tz;
+  return mde.eval(x);
+}
+
 VeloToAsusCalibration VeloToAsusCalibrator::search(double* final_value) const
 {
   cout << "Initializing search using PrimeSenseModel: " << endl;
@@ -70,5 +81,7 @@ VeloToAsusCalibration VeloToAsusCalibrator::search(double* final_value) const
   VeloToAsusCalibration cal;
   cal.setVeloToAsus(generateTransform(x(1), x(2), x(3), x(4), x(5), x(6)));
   cal.offset_ = x(0);
+  cout << "Final objective function value: " << eval(cal) << endl;
+  
   return cal;
 }

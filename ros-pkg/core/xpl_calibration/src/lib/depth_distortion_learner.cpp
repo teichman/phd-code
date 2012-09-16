@@ -27,6 +27,7 @@ void DepthDistortionLearner::addFrame(Frame frame,
 
 PrimeSenseModel DepthDistortionLearner::fitFocalLength()
 {
+  ROS_WARN("DepthDistortionLearner::fitFocalLength currently does not use depth distortion model correction on frames_.");
   FocalLengthMDE::Ptr objective(new FocalLengthMDE(initial_model_, frames_, pcds_, transforms_));
   GridSearch gs(1);
   gs.verbose_ = true;
@@ -267,14 +268,6 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
   ROS_ASSERT(frames_.size() == pcds_.size());
   ROS_ASSERT(frames_.size() == transforms_.size());
   
-  // -- Make sure the initial model is reasonable.
-  //    It's going to be used for projection assuming no depth distortion.
-  if(initial_model_.hasDepthDistortionModel()) {
-    ROS_FATAL("DepthDistortionLearner should not have an initial_model_ with a depth distortion model already built in to it.");
-    ROS_FATAL_STREAM(initial_model_.weights_);
-    abort();
-  }
-
   int num_features = initial_model_.numFeatures();
   vector<MatrixXd> xxts(frames_.size(), MatrixXd::Zero(num_features, num_features));
   vector<VectorXd> bs(frames_.size(), VectorXd::Zero(num_features));

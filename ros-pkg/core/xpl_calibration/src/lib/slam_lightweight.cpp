@@ -73,7 +73,7 @@ void SlamLightweight::slamThreadFunction()
   unlockWrite();
 
   PrimeSenseModel model = sseq_->model_;
-  model.use_distortion_model_ = false;
+  ROS_WARN("SlamLightweight does not use learned model.");
   FrameAligner aligner(model, model, max_range_, this);
   slam_ = PoseGraphSlam::Ptr(new PoseGraphSlam(sseq_->size()));
   Matrix6d covariance = Matrix6d::Identity() * 1e-3;  
