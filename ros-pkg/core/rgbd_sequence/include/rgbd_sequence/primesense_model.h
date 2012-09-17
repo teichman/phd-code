@@ -18,6 +18,7 @@ namespace rgbd
   typedef Eigen::Matrix<unsigned short, Eigen::Dynamic, Eigen::Dynamic> DepthMat;  
   typedef boost::shared_ptr<DepthMat> DepthMatPtr;
   typedef boost::shared_ptr<const DepthMat> DepthMatConstPtr;
+  typedef std::vector< std::vector< std::vector<double> > > DepthIndex;
   
   //! "Projective" point comes from the OpenNI terminology, and refers to (u, v, z), i.e.
   //! pixel id and depth value.  Here I've added color, too, so that this represents everything
@@ -78,6 +79,7 @@ namespace rgbd
     void frameToCloud(const Frame& frame, Cloud* pcd,
 		      double max_range = std::numeric_limits<double>::max()) const;
     void cloudToFrame(const Cloud& pcd, Frame* frame) const;
+    void cloudToDepthIndex(const Cloud& pcd, DepthIndex* dindex) const;
     //! Applies depth distortion model to the depth data in frame.
     void undistort(Frame* frame) const;
     
@@ -105,8 +107,7 @@ namespace rgbd
     //Eigen::VectorXd computeFeaturesMU(const ProjectivePoint& ppt) const;
     void computeFeaturesMUV(const ProjectivePoint& ppt, Eigen::VectorXd* features) const;
   };
-  
-
+    
 }
 
 #endif // PRIMESENSE_MODEL_H

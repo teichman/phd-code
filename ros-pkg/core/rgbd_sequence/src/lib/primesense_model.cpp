@@ -39,6 +39,32 @@ namespace rgbd
     resetDepthDistortionModel();
   }
 
+  void PrimeSenseModel::cloudToDepthIndex(const Cloud& pcd, DepthIndex* dindex) const
+  {
+    DepthIndex& ind = *dindex;
+    if((int)ind.size() != height_)
+      ind.resize(height_);
+    for(size_t y = 0; y < ind.size(); ++y)
+      if((int)ind[y].size() != width_)
+	ind[y].resize(width_);
+    for(size_t y = 0; y < ind.size(); ++y) {
+      for(size_t x = 0; x < ind[y].size(); ++x) { 
+	ind[y][x].clear();
+	ind[y][x].reserve(10);
+      }
+    }
+
+    ProjectivePoint ppt;
+    for(size_t i = 0; i < pcd.size(); ++i) {
+      if(!isFinite(pcd[i]))
+	continue;
+      project(pcd[i], &ppt);
+      if(ppt.z_ == 0 || !(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
+	continue;
+      ind[ppt.v_][ppt.u_].push_back(pcd[i].getVector3fMap().norm());
+    }
+  }
+  
   void PrimeSenseModel::cloudToFrame(const Cloud& pcd, Frame* frame) const
   {
     ROS_ASSERT(frame);
@@ -387,7 +413,7 @@ namespace rgbd
     depth = cv::Vec3b(0, 0, 0);
     for(int y = 0; y < depth.rows; ++y)
       for(int x = 0; x < depth.cols; ++x)
-	depth(y, x) = colorize(depth_->coeffRef(y, x) * 0.001, 0, 8);
+	depth(y, x) = colorize(depth_->coeffRef(y, x) * 0.001, 0, 10);
     return depth;
   }
   

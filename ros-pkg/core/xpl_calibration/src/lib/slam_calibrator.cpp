@@ -72,7 +72,7 @@ PrimeSenseModel SlamCalibrator::calibrate() const
 
     const Trajectory& traj = trajectories_[i];
     const StreamSequence& sseq = *sseqs_[i];
-    rgbd::Cloud::Ptr map = buildMap(i);
+    rgbd::Cloud::Ptr map = buildMap(i, 0.01);
 
     for(size_t j = 0; j < traj.size(); ++j) {
       if(!traj.exists(j))
