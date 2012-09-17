@@ -28,9 +28,9 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx, double vgsize) const
     Frame frame;
     sseq.readFrame(i, &frame);
 
-    HighResTimer hrt("undistort"); hrt.start();
+    //HighResTimer hrt("undistort"); hrt.start();
     model_.undistort(&frame);
-    hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+    //hrt.stop(); cout << hrt.reportMilliseconds() << endl;
     
     Cloud::Ptr tmp(new Cloud);
     model_.frameToCloud(frame, tmp.get(), max_range_);

@@ -164,10 +164,12 @@ namespace rgbd
     vs << 1, v, v*v, v*v*v;
     
     int idx = 0;
+    double uv;
     for(int vexp = 0; vexp < 4; ++vexp) {
       for(int uexp = 0; uexp < 4; ++uexp) {
+	uv = us.coeffRef(uexp) * vs.coeffRef(vexp);
 	for(int mexp = 0; mexp < 4; ++mexp, ++idx) {
-	  features->coeffRef(idx) = ms(mexp) * us(uexp) * vs(vexp);
+	  features->coeffRef(idx) = ms.coeffRef(mexp) * uv;
 	}
       }
     }
