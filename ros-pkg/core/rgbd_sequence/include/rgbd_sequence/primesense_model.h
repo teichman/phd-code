@@ -95,15 +95,15 @@ namespace rgbd
     std::string name() const;
 
     //! f[1] is measured depth in decameters.
-    Eigen::VectorXd computeFeatures(const ProjectivePoint& ppt) const;
+    void computeFeatures(const ProjectivePoint& ppt, Eigen::VectorXd* features) const;
     int numFeatures() const;
 
   protected:
     // double fx_inv_;
     // double fy_inv_;
 
-    Eigen::VectorXd computeFeaturesMU(const ProjectivePoint& ppt) const;
-    Eigen::VectorXd computeFeaturesMUV(const ProjectivePoint& ppt) const;
+    //Eigen::VectorXd computeFeaturesMU(const ProjectivePoint& ppt) const;
+    void computeFeaturesMUV(const ProjectivePoint& ppt, Eigen::VectorXd* features) const;
   };
   
 

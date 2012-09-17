@@ -316,13 +316,14 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
 
     hrt.reset("Accumulating xxt"); hrt.start();
     ProjectivePoint ppt;
+    VectorXd f(localmodel.numFeatures());
     for(ppt.v_ = 0; ppt.v_ < multipliers.rows(); ++ppt.v_) {
       for(ppt.u_ = 0; ppt.u_ < multipliers.cols(); ++ppt.u_) {
 	if(multipliers(ppt.v_, ppt.u_) == 0)
 	  continue;
 	
 	ppt.z_ = depth(ppt.v_, ppt.u_);
-	VectorXd f = localmodel.computeFeatures(ppt);
+	localmodel.computeFeatures(ppt, &f);
 
 	xxt += f * f.transpose();  // This is the slow part, but apparently eigen does a good job.
 	// for(int j = 0; j < xxt.cols(); ++j)
