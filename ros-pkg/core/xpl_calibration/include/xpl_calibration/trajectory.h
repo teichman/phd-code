@@ -8,7 +8,13 @@
 class Trajectory : public Serializable
 {
 public:
+  Trajectory() {}
+  //! Deep copy
+  Trajectory(const Trajectory& other);
+  //! Deep copy
+  Trajectory& operator=(const Trajectory& other);
   ~Trajectory();
+  
   void resize(size_t num);
   void set(size_t idx, const Eigen::Affine3d& transform);
   const Eigen::Affine3d& get(size_t idx) const;

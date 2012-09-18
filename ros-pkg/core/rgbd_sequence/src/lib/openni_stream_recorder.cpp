@@ -205,7 +205,7 @@ namespace rgbd
     if(visualize_) {
       cv::Mat3b dimg(cv::Size(width, height));
       double min_depth = 0.1;
-      double max_depth = 12.0;
+      double max_depth = 10.0;
       for(int y = 0; y < dimg.rows; ++y)
 	for(int x = 0; x < dimg.cols; ++x)
 	  dimg(y, x) = colorize(frame.depth_->coeffRef(y, x) * 0.001, min_depth, max_depth);

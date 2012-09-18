@@ -103,7 +103,7 @@ void SlamCalibrationVisualizer::keyboardCallback(const pcl::visualization::Keybo
 
 void SlamCalibrationVisualizer::setSequenceIdx(size_t idx)
 {
-  Cloud::Ptr map = calibrator_->buildMap(idx, calibrator_->sseqs_[idx]->model_, 0.03);
+  Cloud::Ptr map = calibrator_->buildMap(idx, 0.03);
   cout << "Done building map." << endl;
   cout << map->size() << " points." << endl;
 

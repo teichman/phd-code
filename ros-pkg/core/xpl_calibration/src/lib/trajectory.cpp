@@ -3,6 +3,19 @@
 using namespace std;
 using namespace Eigen;
 
+Trajectory::Trajectory(const Trajectory& other)
+{
+  *this = other;
+}
+
+Trajectory& Trajectory::operator=(const Trajectory& other)
+{
+  transforms_.resize(other.size(), NULL);
+  for(size_t i = 0; i < transforms_.size(); ++i)
+    if(other.exists(i))
+      transforms_[i] = new Affine3d(other.get(i));
+}
+
 Trajectory::~Trajectory()
 {
   for(size_t i = 0; i < transforms_.size(); ++i)
