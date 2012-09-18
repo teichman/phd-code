@@ -139,7 +139,7 @@ double SequenceAlignmentMDE::eval(const Eigen::VectorXd& x) const
       continue;
 
     pcl::transformPointCloud(*pcds_[i], transformed, transform);
-    meanDepthError(model_, frames_[idx], transformed, &val, &count, 6.0);
+    meanDepthError(model_, frames_[idx], transformed, &val, &count);
     ++num_pcds;
   }
 
