@@ -15,6 +15,7 @@ public:
 	       GridSearchViewHandler* view_handler = NULL);
   //! Returns transform that takes points in 0 to points in 1.
   Eigen::Affine3d align(rgbd::Frame frame0, rgbd::Frame frame1,
+			const std::vector<cv::Point2d>& keypoints0, const std::vector<cv::Point2d>& keypoints1,
 			double* count, double* final_mde) const;
   
 protected:

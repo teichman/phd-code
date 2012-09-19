@@ -6,15 +6,78 @@ using namespace rgbd;
 
 //#define TIMING
 
-FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
-				     const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1,
+
+
+// Takes points from frame0, turns them in to lines in the coordinate system of frame1, then finds how far keypoints in frame1 are
+// from the lines they should lie on.
+void keypointError(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, const std::vector<cv::Point2d> keypoints0,
+		   const Eigen::Affine3f& f0_to_f1,
+		   const rgbd::PrimeSenseModel& model1, const std::vector<cv::Point2d>& keypoints1,
+		   double* keypoint_error, double* keypoint_error_count)
+{
+  ROS_ASSERT(keypoints0.size() == keypoints1.size());
+  
+  // -- Find the location of the origin of frame0 in the image of frame1.
+  Point originpt;
+  originpt.getVector3fMap() = f0_to_f1.translation();
+  ProjectivePoint originppt;
+  model1.project(originpt, &originppt);
+  
+  ProjectivePoint ppt;
+  Point pt;
+  for(size_t i = 0; i < keypoints0.size(); ++i) {
+    
+    // -- Get a 3D test point along the ray.
+    ppt.u_ = keypoints0[i].x;
+    ppt.v_ = keypoints0[i].y;
+    ppt.z_ = 5000;
+
+    Point testpt;
+    model0.project(ppt, &testpt);
+    testpt.getVector3fMap() = f0_to_f1 * testpt.getVector3fMap();
+    
+    // -- Project the test point and origin point into frame1.
+    ProjectivePoint testppt;
+    model1.project(testpt, &testppt);
+    
+    // -- Get the error for this keypoint.
+    Vector2d origin;
+    origin(0) = originppt.u_;
+    origin(1) = originppt.v_;
+    Vector2d test;
+    test(0) = testppt.u_;
+    test(1) = testppt.v_;
+    Vector2d v = test - origin;
+    Vector2d normal;
+    normal(0) = -v(1);
+    normal(1) = v(0);
+    normal.normalize();
+    double b = normal.dot(origin);
+    ROS_ASSERT(fabs(b - normal.dot(test)) < 1e-6);
+    Vector2d p;
+    p(0) = keypoints1[i].x;
+    p(1) = keypoints1[i].y;
+    Vector2d pp;  // p projected onto line defined by test and origin.
+    pp = p + ((normal.dot(p) + b) / (normal.dot(normal))) * normal;
+    ROS_ASSERT(fabs(normal.dot(pp) - b) < 1e-6);
+
+    *keypoint_error += fabs(normal.dot(p - pp));
+    ++(*keypoint_error_count);
+  }
+}
+
+FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
+				     rgbd::Frame frame0, rgbd::Frame frame1,
+				     const std::vector<cv::Point2d>& keypoints0, const std::vector<cv::Point2d>& keypoints1,
 				     double max_range, double fraction) :
   max_range_(max_range),
   count_(NULL),
   model0_(model0),
   model1_(model1),
   frame0_(frame0),
-  frame1_(frame1)
+  frame1_(frame1),
+  keypoints0_(keypoints0),
+  keypoints1_(keypoints1)
 {
 #ifdef TIMING
   ScopedTimer st("FrameAlignmentMDE::FrameAlignmentMDE.  frameToClouds.");
@@ -22,11 +85,12 @@ FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::
 
   ROS_ASSERT(!model0_.hasDepthDistortionModel());
   ROS_ASSERT(!model1_.hasDepthDistortionModel());
-  // model0_.undistort(&frame0_);
-  // model1_.undistort(&frame1_);
+  ROS_ASSERT(keypoints0_.size() == keypoints1_.size());
+
   model0_.frameToCloud(frame0_, &pcd0_, max_range_);
   model1_.frameToCloud(frame1_, &pcd1_, max_range_);
   ROS_ASSERT(pcd0_.size() == pcd1_.size());
+
   
   // Set up which random pixels to look at.
   // (Calling rand from multiple execution threads is a disaster)
@@ -47,17 +111,22 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   double val = 0;  // Total objective.
   double depth_error = 0;
   double color_error = 0;
+  double keypoint_error = 0;
+  double keypoint_error_count = 0;
   Cloud transformed;
 
   transformAndDecimate(pcd1_, f0_to_f1.inverse(), indices_, &transformed);
-  //meanDepthError(model0_, frame0_, transformed, &val, &count, max_range_);
   meanDepthAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, max_range_);
+  keypointError(model0_, frame0_, keypoints0_, f0_to_f1, model1_, keypoints1_, &keypoint_error, &keypoint_error_count);
   
   transformAndDecimate(pcd0_, f0_to_f1, indices_, &transformed); 
-  //meanDepthError(model1_, frame1_, transformed, &val, &count, max_range_);
   meanDepthAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, max_range_);
+  keypointError(model1_, frame1_, keypoints1_, f0_to_f1.inverse(), model0_, keypoints0_, &keypoint_error, &keypoint_error_count);
 
-  val = depth_error + 0.0023 * color_error;  // Color error term has a per-pixel max of 441.
+  keypoint_error /= keypoints0_.size();
+  cout << "Keypoint error is " << keypoint_error << endl;
+  
+  val = depth_error + 0.0023 * color_error + 0.01 * keypoint_error / keypoint_error_count;  // Color error term has a per-pixel max of 441.
   //cout << "Depth error: " << depth_error << ", adjusted color error: " << 0.0023 * color_error << endl;
   
   // Make count available to other users in single-threaded mode.

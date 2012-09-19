@@ -16,11 +16,12 @@ FrameAligner::FrameAligner(const rgbd::PrimeSenseModel& model0,
 }
 
 Eigen::Affine3d FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
+				    const std::vector<cv::Point2d>& keypoints0, const std::vector<cv::Point2d>& keypoints1,
 				    double* count, double* final_mde) const
 {
   // -- Run grid search.
   ScopedTimer st("FrameAligner::align");
-  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, frame0, model1_, frame1, max_range_, 0.25));
+  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, keypoints0, keypoints1, max_range_, 0.25));
   GridSearch gs(6);
   gs.verbose_ = false;
   gs.view_handler_ = view_handler_;

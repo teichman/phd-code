@@ -165,7 +165,8 @@ void SlamVisualizer::slamThreadFunction()
     if(getenv("PROFILE"))
       ProfilerStart("slam_test.prof");
     double count, final_mde;
-    Affine3d curr_to_prev = aligner.align(curr_frame_, prev_frame_, &count, &final_mde);
+    vector<cv::Point2d> curr_keypoints, prev_keypoints;  // None for now.
+    Affine3d curr_to_prev = aligner.align(curr_frame_, prev_frame_, curr_keypoints, prev_keypoints, &count, &final_mde);
     if(getenv("PROFILE"))
       ProfilerStop();
 
