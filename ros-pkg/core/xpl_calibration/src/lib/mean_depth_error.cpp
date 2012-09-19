@@ -57,10 +57,10 @@ void keypointError(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, cons
     Vector2d p;
     p(0) = keypoints1[i].x;
     p(1) = keypoints1[i].y;
-    Vector2d pp;  // p projected onto line defined by test and origin.
-    pp = p + ((normal.dot(p) + b) / (normal.dot(normal))) * normal;
-    ROS_ASSERT(fabs(normal.dot(pp) - b) < 1e-6);
 
+    Vector2d pp = p - (normal.dot(p) - b) / (normal.dot(normal)) * normal;
+    //    cout << "fabs(normal.dot(pp) - b): " << fabs(normal.dot(pp) - b) << endl;
+    ROS_ASSERT(fabs(normal.dot(pp) - b) < 1e-6);
     *keypoint_error += fabs(normal.dot(p - pp));
     ++(*keypoint_error_count);
   }
@@ -123,22 +123,38 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   meanDepthAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, max_range_);
   keypointError(model1_, frame1_, keypoints1_, f0_to_f1.inverse(), model0_, keypoints0_, &keypoint_error, &keypoint_error_count);
 
-  keypoint_error /= keypoints0_.size();
-  cout << "Keypoint error is " << keypoint_error << endl;
-  
-  val = depth_error + 0.0023 * color_error + 0.01 * keypoint_error / keypoint_error_count;  // Color error term has a per-pixel max of 441.
-  //cout << "Depth error: " << depth_error << ", adjusted color error: " << 0.0023 * color_error << endl;
-  
   // Make count available to other users in single-threaded mode.
   if(count_)
     *count_ = count;
-  
-  if(count == 0) {
-    ROS_WARN("FrameAlignmentMDE found no overlapping points.");
-    return std::numeric_limits<double>::max();
+
+  double min_keypoints = 7;
+  double min_points = 100;
+  if(keypoint_error_count < min_keypoints) {
+    //ROS_WARN("FrameAlignmentMDE had < min_keypoints keypoints.");
+    keypoint_error = 0;
   }
   else
-    return val / count;
+    keypoint_error /= keypoint_error_count;
+
+  if(count < min_points) {
+    ROS_WARN("FrameAlignmentMDE had < min_points overlapping 3d points.");
+    depth_error = 0;
+    color_error = 0;
+  }
+  else {
+    depth_error /= count;
+    color_error /= count;
+  }
+
+  if(count < min_points && keypoint_error_count < min_keypoints) {
+    ROS_WARN("FrameAlignmentMDE found no overlapping 3d points and too few keypoint correspondences.");
+    return std::numeric_limits<double>::max();
+  }
+  
+  val = depth_error + 0.0023 * color_error + 0.01 * keypoint_error;  // Color error term has a per-pixel max of 441.
+  //val = depth_error + 0.0023 * color_error + 1e9 * keypoint_error;  // Color error term has a per-pixel max of 441.
+
+  return val;
 }
 
 void transformAndDecimate(const rgbd::Cloud& in,
