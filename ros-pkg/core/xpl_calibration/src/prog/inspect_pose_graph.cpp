@@ -71,29 +71,30 @@ int main(int argc, char** argv)
   vg.setLeafSize(0.02, 0.02, 0.02);
   if(visualize)
   {
-    for(size_t i = 0; i < slam.numNodes(); i++)
-    {
-      if(slam.numEdges(i)==0) continue;
-      //Get the cloud
-      Cloud::Ptr curr_pcd = sseq->getCloud(i);
-      zthresh(curr_pcd, 2.0);
-      Cloud::Ptr curr_pcd_transformed(new Cloud);
-      //Transform it
-      Eigen::Affine3d trans = slam.transform(i);
-      pcl::transformPointCloud(*curr_pcd, *curr_pcd_transformed, trans.cast<float>());
-      *map += *curr_pcd_transformed;
-      //Filter it
-      Cloud::Ptr vis(new Cloud);
-      vg.setInputCloud(map);
-      vg.filter(*vis);
-      *map = *vis;
-    }
-    
-    map_vis.addPointCloud(map, "map");
-    cout << "Showing map" << endl;
-    map_vis.spin();
-    map_vis.removeAllPointClouds();
+  //  for(size_t i = 0; i < slam.numNodes(); i++)
+  //  {
+  //    if(slam.numEdges(i)==0) continue;
+  //    //Get the cloud
+  //    Cloud::Ptr curr_pcd = sseq->getCloud(i);
+  //    zthresh(curr_pcd, 2.0);
+  //    Cloud::Ptr curr_pcd_transformed(new Cloud);
+  //    //Transform it
+  //    Eigen::Affine3d trans = slam.transform(i);
+  //    pcl::transformPointCloud(*curr_pcd, *curr_pcd_transformed, trans.cast<float>());
+  //    *map += *curr_pcd_transformed;
+  //    //Filter it
+  //    Cloud::Ptr vis(new Cloud);
+  //    vg.setInputCloud(map);
+  //    vg.filter(*vis);
+  //    *map = *vis;
+  //  }
+  //  
+  //  map_vis.addPointCloud(map, "map");
+  //  cout << "Showing map" << endl;
+  //  map_vis.spin();
+  //  map_vis.removeAllPointClouds();
   }
+  // Prune disconnected components
   while(true)
   {
     if(visualize)

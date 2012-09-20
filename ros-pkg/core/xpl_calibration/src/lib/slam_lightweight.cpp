@@ -45,6 +45,7 @@ void SlamLightweight::run(StreamSequence::ConstPtr sseq,
     lc_->min_ransac_inlier_percent_ = 0.1;
     lc_->ransac_max_inlier_dist_ = 0.02; //Need to be within 2 cm to be considered an inlier
     lc_->num_ransac_samples_ = 1000;
+    lc_->max_z_ = 5; //Was 3
     //lc_->icp_max_avg_dist_ = 0.03; //Avg pt-to-pt distance required
     //lc_->icp_max_inlier_dist_ = 0.1; // Highest distance allowed to be considered an inlier
     //lc_->icp_inlier_percent_ = 0.3; // At least this percentage of points must be inliers
