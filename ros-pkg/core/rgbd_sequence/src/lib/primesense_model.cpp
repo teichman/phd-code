@@ -39,6 +39,32 @@ namespace rgbd
     resetDepthDistortionModel();
   }
 
+  void PrimeSenseModel::cloudToDepthIndex(const Cloud& pcd, DepthIndex* dindex) const
+  {
+    DepthIndex& ind = *dindex;
+    if((int)ind.size() != height_)
+      ind.resize(height_);
+    for(size_t y = 0; y < ind.size(); ++y)
+      if((int)ind[y].size() != width_)
+	ind[y].resize(width_);
+    for(size_t y = 0; y < ind.size(); ++y) {
+      for(size_t x = 0; x < ind[y].size(); ++x) { 
+	ind[y][x].clear();
+	ind[y][x].reserve(10);
+      }
+    }
+
+    ProjectivePoint ppt;
+    for(size_t i = 0; i < pcd.size(); ++i) {
+      if(!isFinite(pcd[i]))
+	continue;
+      project(pcd[i], &ppt);
+      if(ppt.z_ == 0 || !(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
+	continue;
+      ind[ppt.v_][ppt.u_].push_back(pcd[i].getVector3fMap().norm());
+    }
+  }
+  
   void PrimeSenseModel::cloudToFrame(const Cloud& pcd, Frame* frame) const
   {
     ROS_ASSERT(frame);
@@ -145,43 +171,61 @@ namespace rgbd
     }
   }
 
-  Eigen::VectorXd PrimeSenseModel::computeFeatures(const ProjectivePoint& ppt) const
+  void PrimeSenseModel::computeFeatures(const ProjectivePoint& ppt, Eigen::VectorXd* features) const
   {
-    return computeFeaturesMUV(ppt);
+    computeFeaturesMUV(ppt, features);
   }
 
-  Eigen::VectorXd PrimeSenseModel::computeFeaturesMUV(const ProjectivePoint& ppt) const
+  void PrimeSenseModel::computeFeaturesMUV(const ProjectivePoint& ppt, Eigen::VectorXd* features) const
   {
+    double m = ppt.z_ * 0.0001;  // z_ is in millimeters, and we want to scale it so that 10 meters is equal to 1.
+    double u = (double)ppt.u_ / (double)width_;
+    double v = (double)ppt.v_ / (double)height_;
+
     VectorXd ms(4);
-    double m = (ppt.z_ * 0.001) / 10.0;  // z_ is in millimeters, and we want to scale it so that 10 meters is equal to 1.
     ms << 1, m, m*m, m*m*m;
     VectorXd us(4);
-    double u = (double)ppt.u_ / (double)width_;
     us << 1, u, u*u, u*u*u;
     VectorXd vs(4);
-    double v = (double)ppt.v_ / (double)height_;
     vs << 1, v, v*v, v*v*v;
-    return vectorize(vectorize(ms * us.transpose()) * vs.transpose());  // f[1] is measured depth in decameters.
+    
+    int idx = 0;
+    double uv;
+    for(int vexp = 0; vexp < 4; ++vexp) {
+      for(int uexp = 0; uexp < 4; ++uexp) {
+	uv = us.coeffRef(uexp) * vs.coeffRef(vexp);
+	for(int mexp = 0; mexp < 4; ++mexp, ++idx) {
+	  features->coeffRef(idx) = ms.coeffRef(mexp) * uv;
+	}
+      }
+    }
+	      
+    // VectorXd ms(4);
+    // double m = (ppt.z_ * 0.001) / 10.0;  // z_ is in millimeters, and we want to scale it so that 10 meters is equal to 1.
+    // ms << 1, m, m*m, m*m*m;
+    // VectorXd us(4);
+    // double u = (double)ppt.u_ / (double)width_;
+    // us << 1, u, u*u, u*u*u;
+    // VectorXd vs(4);
+    // double v = (double)ppt.v_ / (double)height_;
+    // vs << 1, v, v*v, v*v*v;
+    // return vectorize(vectorize(ms * us.transpose()) * vs.transpose());  // f[1] is measured depth in decameters.
   }
 
-  Eigen::VectorXd PrimeSenseModel::computeFeaturesMU(const ProjectivePoint& ppt) const
-  {
-    VectorXd ms(4);
-    double m = (ppt.z_ * 0.001) / 10.0;  // z_ is in millimeters, and we want to scale it so that 10 meters is equal to 1.
-    ms << 1, m, m*m, m*m*m;
-    VectorXd us(4);
-    double u = (double)ppt.u_ / (double)width_;
-    us << 1, u, u*u, u*u*u;
-    return vectorize(ms * us.transpose());
-  }
+  // Eigen::VectorXd PrimeSenseModel::computeFeaturesMU(const ProjectivePoint& ppt) const
+  // {
+  //   VectorXd ms(4);
+  //   double m = (ppt.z_ * 0.001) / 10.0;  // z_ is in millimeters, and we want to scale it so that 10 meters is equal to 1.
+  //   ms << 1, m, m*m, m*m*m;
+  //   VectorXd us(4);
+  //   double u = (double)ppt.u_ / (double)width_;
+  //   us << 1, u, u*u, u*u*u;
+  //   return vectorize(ms * us.transpose());
+  // }
 
   int PrimeSenseModel::numFeatures() const
   {
-    ProjectivePoint tmp;
-    tmp.u_ = 0;
-    tmp.v_ = 0;
-    tmp.z_ = 0;
-    return computeFeatures(tmp).rows();
+    return 64;
   }
   
   void PrimeSenseModel::project(const Point& pt, ProjectivePoint* ppt) const
@@ -321,11 +365,14 @@ namespace rgbd
     ROS_DEBUG("Undistorting.");
     ProjectivePoint ppt;
     DepthMat& depth = *frame->depth_;
+    VectorXd f(numFeatures());
     for(ppt.v_ = 0; ppt.v_ < depth.rows(); ++ppt.v_) {
       for(ppt.u_ = 0; ppt.u_ < depth.cols(); ++ppt.u_) {
 	ppt.z_ = depth.coeffRef(ppt.v_, ppt.u_);
-	if(ppt.z_ != 0)
-	  depth.coeffRef(ppt.v_, ppt.u_) *= weights_.dot(computeFeatures(ppt));
+	if(ppt.z_ != 0) {
+	  computeFeatures(ppt, &f);
+	  depth.coeffRef(ppt.v_, ppt.u_) *= weights_.dot(f);
+	}
       }
     }
   }
@@ -366,7 +413,7 @@ namespace rgbd
     depth = cv::Vec3b(0, 0, 0);
     for(int y = 0; y < depth.rows; ++y)
       for(int x = 0; x < depth.cols; ++x)
-	depth(y, x) = colorize(depth_->coeffRef(y, x) * 0.001, 0, 8);
+	depth(y, x) = colorize(depth_->coeffRef(y, x) * 0.001, 0, 10);
     return depth;
   }
   

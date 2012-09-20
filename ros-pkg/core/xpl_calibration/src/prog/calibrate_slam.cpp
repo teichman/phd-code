@@ -19,14 +19,18 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("sseq", bpo::value< vector<string> >(&sequence_paths)->required(), "StreamSequences, i.e. asus data.")
     ("traj", bpo::value< vector<string> >(&trajectory_paths)->required(), "Trajectories from slam.")
-    ("batch", "Don't visualize.")
+    ("only-visualize", "Don't calibrate; just visualize the map you would have used to calibrate from.")
+    ("imodel", bpo::value<string>(), "Use this model when projecting the frames.")
     ("omodel", bpo::value<string>()->default_value("model.psm"), "Output path for learned model.")
+    ("max-range", bpo::value<double>()->default_value(2.5), "Maximum range to use when building the map from the given trajectory.")
     ;
 
   bpo::variables_map opts;
-  bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
   bool badargs = false;
-  try { bpo::notify(opts); }
+  try {
+    bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
+    bpo::notify(opts);
+  }
   catch(...) { badargs = true; }
   if(opts.count("help") || badargs) {
     cout << "Usage: " << bfs::basename(argv[0]) << " OPTS  --sseq SSEQ --traj TRAJ [ --sseq SSEQ --traj TRAJ ... ]" << endl;
@@ -35,31 +39,43 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  ROS_ASSERT(sequence_paths.size() == trajectory_paths.size());
-  SlamCalibrator::Ptr calibrator(new SlamCalibrator);
-  calibrator->trajectories_.resize(trajectory_paths.size());
   cout << "Using sequence / trajectory pairs: " << endl;
+  vector<Trajectory> trajectories(trajectory_paths.size());
+  vector<StreamSequence::ConstPtr> sseqs;
   for(size_t i = 0; i < sequence_paths.size(); ++i) {
     cout << "  " << sequence_paths[i] << " ----- " << trajectory_paths[i] << endl;
 
-    calibrator->trajectories_[i].load(trajectory_paths[i]);
+    trajectories[i].load(trajectory_paths[i]);
     cout << "Trajectory: " << endl;
-    cout << calibrator->trajectories_[i].status("  ");
+    cout << trajectories[i].status("  ");
 
     StreamSequence::Ptr sseq(new StreamSequence);
     sseq->load(sequence_paths[i]);
-    calibrator->sseqs_.push_back(sseq);
+    sseqs.push_back(sseq);
   }
 
-  if(opts.count("batch")) {
+  SlamCalibrator::Ptr calibrator(new SlamCalibrator(sseqs[0]->model_, opts["max-range"].as<double>()));
+  cout << "Using " << calibrator->max_range_ << " as max range." << endl;
+  calibrator->trajectories_ = trajectories;
+  calibrator->sseqs_ = sseqs;
+
+  if(opts.count("imodel")) {
+    cout << "Using custom primesense model at " << opts["imodel"].as<string>() << endl;
+    calibrator->model_.load(opts["imodel"].as<string>());
+    cout << calibrator->model_.status("  ");
+  }
+  
+  if(opts.count("only-visualize")) {
+    SlamCalibrationVisualizer vis(calibrator);
+    vis.run();
+    return 0;
+  }
+  else {
     PrimeSenseModel model = calibrator->calibrate();
     model.save(opts["omodel"].as<string>());
     cout << "Saved model to " << opts["omodel"].as<string>() << endl;
     return 0;
   }
-  
-  SlamCalibrationVisualizer vis(calibrator);
-  vis.run();
-  
+    
   return 0;
 }

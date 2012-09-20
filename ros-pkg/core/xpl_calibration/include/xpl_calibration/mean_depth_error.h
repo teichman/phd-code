@@ -13,9 +13,11 @@ public:
 
   double max_range_;
   
-  //! fraction is how much of the data to use.
-  FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, 
-		    const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1,
+  //! fraction is how much of the depth data to use.
+  FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
+		    rgbd::Frame frame0, rgbd::Frame frame1,
+		    const std::vector<cv::Point2d>& keypoints0 = std::vector<cv::Point2d>(),
+		    const std::vector<cv::Point2d>& keypoints1 = std::vector<cv::Point2d>(),
 		    double max_range = 3.5, double fraction = 1.0);
   //! x = [rx, ry, rz, tx, ty, tz].
   double eval(const Eigen::VectorXd& x) const;
@@ -29,6 +31,8 @@ protected:
   rgbd::PrimeSenseModel model1_;
   rgbd::Frame frame0_;
   rgbd::Frame frame1_;
+  std::vector<cv::Point2d> keypoints0_;
+  std::vector<cv::Point2d> keypoints1_;
   rgbd::Cloud pcd0_;
   rgbd::Cloud pcd1_;
   std::vector<size_t> indices_;
@@ -69,7 +73,8 @@ public:
   FocalLengthMDE(const rgbd::PrimeSenseModel& model,
 		 const std::vector<rgbd::Frame>& frames,
 		 const std::vector<rgbd::Cloud::ConstPtr>& pcds,
-		 const std::vector<Eigen::Affine3d>& transforms);
+		 const std::vector<Eigen::Affine3d>& transforms,
+		 double fraction);
   double eval(const Eigen::VectorXd& x) const;
 
 protected:
@@ -77,6 +82,7 @@ protected:
   std::vector<rgbd::Frame> frames_;
   std::vector<rgbd::Cloud::ConstPtr> pcds_;
   std::vector<Eigen::Affine3d> transforms_;
+  std::vector<size_t> indices_;
 };
 
 void meanDepthError(const rgbd::PrimeSenseModel& model,
@@ -88,5 +94,10 @@ void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
 			    rgbd::Frame frame, const rgbd::Cloud& pcd,
 			    double* depth_error, double* color_error, double* count,
 			    double max_range = std::numeric_limits<double>::max());
+
+void keypointError(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, const std::vector<cv::Point2d> keypoints0,
+		   const Eigen::Affine3f& f0_to_f1,
+		   const rgbd::PrimeSenseModel& model1, const std::vector<cv::Point2d>& keypoints1,
+		   double* keypoint_error, double* keypoint_error_count);
 
 #endif // MEAN_DEPTH_ERROR_H

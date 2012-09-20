@@ -353,8 +353,9 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
           {
           Frame frame_prev; sseq_->readFrame(old_t, &frame_prev);
 	  ROS_WARN("LoopCloser::getInitHypotheses using default rather than learned model.");
-          FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(sseq_->model_, frame, 
-            sseq_->model_, frame_prev, max_z_, 0.25));
+	  vector<cv::Point2d> keypoints, keypoints_prev;  // TODO
+          FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(sseq_->model_, sseq_->model_, frame, 
+							   frame_prev, keypoints, keypoints_prev, max_z_, 0.25));
           double rx, ry, rz, tx, ty, tz;
           generateXYZYPR(trans_refined.inverse(), rx, ry, rz, tx, ty, tz);
           Eigen::ArrayXd trans_array(6); trans_array << rx, ry, rz, tx, ty, tz;
@@ -550,8 +551,9 @@ Eigen::Affine3f LoopCloser::alignFrames(const rgbd::Frame &frame0, const rgbd::F
   //boost::shared_ptr<LossFunction> lf(new LossFunction(trees0, clouds0, clouds1, params));
   //lf->use_fsv_ = false;
   ROS_WARN_ONCE("LoopCloser does not use learned model.");
-  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(sseq_->model_, frame0, 
-        sseq_->model_, frame1, max_z_, 0.25));
+  vector<cv::Point2d> keypoints0, keypoints1;  // TODO
+  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(sseq_->model_, sseq_->model_, frame0, frame1,
+						   keypoints0, keypoints1, max_z_, 0.25));
 
   GridSearch gs(6);
   gs.verbose_ = false;

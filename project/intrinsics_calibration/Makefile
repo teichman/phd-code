@@ -47,12 +47,12 @@ all:
 # -- Enumeration of targets for each sensor.
 define SENSOR_RULE_GENERATOR
 
-#SLAM_RUNS_$(1) := $$(shell ls $(SLAM_DATA_PATH)/$(1))
 TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
 
 $(1)-quantitative-evaluation: 	$(1)/evaluation/results-baseline.txt \
 				$(1)/evaluation/results-distortion_model_and_recalib.txt \
 				$(1)/evaluation/results-distortion_model_no_recalib.txt
+	@grep '^' $$^
 
 $(1)/evaluation/results-distortion_model_and_recalib.txt: $(1)/evaluation/learned_model.psm $(1)/evaluation/extrinsics 
 	rosrun xpl_calibration asus_vs_velo \
@@ -88,7 +88,7 @@ $(1)/evaluation/extrinsics: $(1)/evaluation/learned_model.psm
 $(1)/evaluation/learned_model.psm: $$(TRAJECTORIES_$(1))
 	mkdir -p $$(@D)
 	rosrun xpl_calibration calibrate_slam \
-	--batch --omodel $$@ \
+	--omodel $$@ \
 	$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
 	$$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
 
@@ -111,14 +111,8 @@ $(1)/asus_vs_velodyne/extrinsics:
 	cd $$(@D) && mkdir gridsearch
 	cd $$(@D) && mv gridsearch*.png gridsearch/
 
-$(1)/learned_model.psm: $$(TRAJECTORIES_$(1))
-	rosrun xpl_calibration calibrate_slam \
-	--batch --omodel $$@ \
-	$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
-	$$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
-
 $(1)-visualize-slam: $$(TRAJECTORIES_$(1))
-	rosrun xpl_calibration calibrate_slam $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
+	rosrun xpl_calibration calibrate_slam --only-visualize $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
 
 .PHONY: $(1)/slam_results
 $(1)/slam_results: $$(TRAJECTORIES_$(1))
@@ -139,8 +133,11 @@ $(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/
 	mv `ls screenshot*.cam -tr | tail -n1` $(CAMERAS_PATH)/$(1)/$(2).cam
 	rm `ls screenshot*.png -tr | tail -n1`
 
+#$(1)-visualize-slam-trajectory-with-learned-model-$(2): $(1)/slam_results/$(2).traj
+#	rosrun xpl_calibration calibrate_slam --only-visualize --sseq $(SLAM_DATA_PATH)/$(1)/$(2) --traj $(1)/slam_results/$(2).traj
+
 $(1)-visualize-slam-trajectory-$(2): $(1)/slam_results/$(2).traj
-	rosrun xpl_calibration calibrate_slam --sseq $(SLAM_DATA_PATH)/$(1)/$(2) --traj $(1)/slam_results/$(2).traj
+	rosrun xpl_calibration calibrate_slam --only-visualize --sseq $(SLAM_DATA_PATH)/$(1)/$(2) --traj $(1)/slam_results/$(2).traj
 
 $(1)-visualize-slam-pcd-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
 	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam

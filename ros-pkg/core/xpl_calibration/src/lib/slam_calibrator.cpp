@@ -4,17 +4,13 @@ using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 
-SlamCalibrator::SlamCalibrator() :
-  max_range_(2.0)
+SlamCalibrator::SlamCalibrator(const PrimeSenseModel& model, double max_range) :
+  model_(model),
+  max_range_(max_range)
 {
 }
 
-rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx) const
-{
-  return buildMap(idx, sseqs_[idx]->model_);
-}
-
-rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx, const rgbd::PrimeSenseModel& model, double vgsize) const
+rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx, double vgsize) const
 {
   ROS_ASSERT(idx < trajectories_.size());
   ROS_ASSERT(trajectories_.size() == sseqs_.size());
@@ -31,9 +27,13 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx, const rgbd::PrimeSenseMode
     cout << "Using frame " << i << " / " << traj.size() << endl;
     Frame frame;
     sseq.readFrame(i, &frame);
-    model.undistort(&frame);
+
+    //HighResTimer hrt("undistort"); hrt.start();
+    model_.undistort(&frame);
+    //hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+    
     Cloud::Ptr tmp(new Cloud);
-    model.frameToCloud(frame, tmp.get(), max_range_);
+    model_.frameToCloud(frame, tmp.get(), max_range_);
     pcl::transformPointCloud(*tmp, *tmp, traj.get(i).cast<float>());
 
     *map += *tmp;
@@ -72,7 +72,7 @@ PrimeSenseModel SlamCalibrator::calibrate() const
 
     const Trajectory& traj = trajectories_[i];
     const StreamSequence& sseq = *sseqs_[i];
-    rgbd::Cloud::Ptr map = buildMap(i);
+    rgbd::Cloud::Ptr map = buildMap(i, 0.01);
 
     for(size_t j = 0; j < traj.size(); ++j) {
       if(!traj.exists(j))
