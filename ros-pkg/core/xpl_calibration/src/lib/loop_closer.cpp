@@ -102,7 +102,7 @@ bool LoopCloser::getLinkHypotheses(const rgbd::Frame &frame, size_t t, vector<si
       if(visualize_)
         sseq_->model_.frameToCloud(frame_target, prev_pcd_.get());
       cout << "Fine tuning" << endl;
-      transforms[i] = fineTuneHypothesis(frame, frame_target, untuned[i]);
+      transforms[i] = fineTuneHypothesis(frame, frame_target, t, targets[i], untuned[i]);
     }
   }
   else
@@ -135,8 +135,8 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
     cout << "i = " << i << endl;
     if( latest_time - old_t < min_time_offset_)
       continue;
-    const vector<cv::KeyPoint> &old_keypoints = keypoint_cache_[old_t];
-    FeaturesPtr old_features = feature_cache_[old_t];
+    const vector<cv::KeyPoint> &old_keypoints = close_keypoint_cache_[old_t];
+    FeaturesPtr old_features = close_feature_cache_[old_t];
     //Match them
     cv::FlannBasedMatcher matcher_;
     vector<cv::DMatch> matches_all;
@@ -391,11 +391,33 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
 }
 //! Fine tune a hypothesis
 Eigen::Affine3f LoopCloser::fineTuneHypothesis(const rgbd::Frame &frame_cur, 
-    const rgbd::Frame &frame_prev, const Eigen::Affine3f &hypothesis)
+    const rgbd::Frame &frame_prev, size_t cur_t, size_t prev_t, const Eigen::Affine3f &hypothesis)
 {
-  //FrameAligner aligner(sseq_->model_, sseq_->model_);
-  //return aligner.align(frame_cur, frame_prev, hypothesis.cast<double>()).cast<float>();
-  return alignFrames(frame_cur, frame_prev, hypothesis);
+  //return alignFrames(frame_cur, frame_prev, hypothesis);
+  FrameAligner fa(sseq_->model_, sseq_->model_, max_z_, view_handler_);
+  // For now, getting dense 1-to-1 matches between ALL points is separate from the initial computation
+  vector<cv::Point2d> keypoints_cur, keypoints_prev;
+  const vector<cv::KeyPoint> &keypoints_all_cur = all_keypoint_cache_[cur_t];
+  FeaturesPtr features_cur = all_feature_cache_[cur_t];
+  const vector<cv::KeyPoint> &keypoints_all_prev = all_keypoint_cache_[prev_t];
+  FeaturesPtr features_prev = all_feature_cache_[prev_t];
+  cv::FlannBasedMatcher matcher;
+  vector<cv::DMatch> matches_all;
+  matcher.match(*features_cur, *features_prev, matches_all);
+  for(size_t j = 0; j < matches_all.size(); j++)
+  {
+    if(matches_all[j].queryIdx < 0 || matches_all[j].trainIdx < 0)
+      continue;
+    if(matches_all[j].distance > max_feature_dist_)
+      continue;
+    keypoints_cur.push_back(keypoints_all_cur[matches_all[j].queryIdx].pt);
+    keypoints_prev.push_back(keypoints_all_prev[matches_all[j].trainIdx].pt);
+  }
+
+  double* count = new double;
+  double* final_mde = new double;
+  fa.confidentAlign(frame_cur, frame_prev, keypoints_cur, keypoints_prev, 
+      hypothesis.cast<double>(), count, final_mde);
 }
   
 //! Get features from orb and cache them
@@ -517,11 +539,24 @@ LoopCloser::FeaturesPtr LoopCloser::getFeatures(const rgbd::Frame &frame,
       if(ftype_ == ORB || ftype_ == SIFT)
         (*feat_valid)(i,j) = feat.at<uint8_t>(idx,j);
       else
-        (*feat_valid)(i,j) = feat.at<float>(i,j);
+        (*feat_valid)(i,j) = feat.at<float>(idx,j);
     }
   }
-  keypoint_cache_[t] = keypoints;
-  feature_cache_[t] = feat_valid;
+  FeaturesPtr feat_all(new cv::Mat1f(keypoints_all.size(), feat.cols));
+  for(size_t i = 0; i < keypoints_all.size(); i++)
+  {
+    for(int j  = 0; j < feat.cols; j++)
+    {
+      if(ftype_ == ORB || ftype_ == SIFT)
+        (*feat_all)(i,j) = feat.at<uint8_t>(i,j);
+      else
+        (*feat_all)(i,j) = feat.at<float>(i,j);
+    }
+  }
+  close_keypoint_cache_[t] = keypoints;
+  close_feature_cache_[t] = feat_valid;
+  all_keypoint_cache_[t] = keypoints_all;
+  all_feature_cache_[t] = feat_all;
   cached_frames_.push_back(t);
   return feat_valid;
 }

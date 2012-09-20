@@ -13,9 +13,14 @@ public:
 	       const rgbd::PrimeSenseModel& model1,
 	       double max_range,
 	       GridSearchViewHandler* view_handler = NULL);
-  //! Returns transform that takes points in 0 to points in 1.
+  //! Returns transform that takes points in 0 to points in 1. No confidence in pose, starts at origin
   Eigen::Affine3d align(rgbd::Frame frame0, rgbd::Frame frame1,
 			const std::vector<cv::Point2d>& keypoints0, const std::vector<cv::Point2d>& keypoints1,
+			double* count, double* final_mde) const;
+  //! Returns transform that takes points in 0 to points in 1. No confidence in pose, starts at origin
+  Eigen::Affine3d confidentAlign(rgbd::Frame frame0, rgbd::Frame frame1,
+			const std::vector<cv::Point2d>& keypoints0, const std::vector<cv::Point2d>& keypoints1, 
+      const Eigen::Affine3d &guess,
 			double* count, double* final_mde) const;
   
 protected:
