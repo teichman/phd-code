@@ -150,7 +150,8 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
     ROS_WARN("FrameAlignmentMDE found no overlapping 3d points and too few keypoint correspondences.");
     return std::numeric_limits<double>::max();
   }
-  
+
+  cout << "Num keypoints used for keypoint error: " << keypoint_error_count << ", Keypoint error: " << keypoint_error << endl;
   val = depth_error + 0.0023 * color_error + 0.01 * keypoint_error;  // Color error term has a per-pixel max of 441.
   //val = depth_error + 0.0023 * color_error + 1e9 * keypoint_error;  // Color error term has a per-pixel max of 441.
 

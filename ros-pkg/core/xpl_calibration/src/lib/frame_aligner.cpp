@@ -15,9 +15,26 @@ FrameAligner::FrameAligner(const rgbd::PrimeSenseModel& model0,
 {
 }
 
-Eigen::Affine3d FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
+bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
+			 const std::vector<cv::Point2d>& keypoints0, const std::vector<cv::Point2d>& keypoints1,
+			 bool consider_wide_search, Eigen::Affine3d* f0_to_f1) const
+{
+  // -- Try to get rough transform between the two based on the corresponding keypoints.
+  bool found_rough_transform = false;
+  Affine3d guess = Affine3d::Identity();
+
+  // -- Run grid search as desired.
+  if(found_rough_transform)
+    return confidentAlign(frame0, frame1, keypoints0, keypoints1, guess, f0_to_f1);
+  else if(consider_wide_search)
+    return unconfidentAlign(frame0, frame1, keypoints0, keypoints1, f0_to_f1);
+  else
+    return false;
+}
+
+bool FrameAligner::unconfidentAlign(rgbd::Frame frame0, rgbd::Frame frame1,
 				    const std::vector<cv::Point2d>& keypoints0, const std::vector<cv::Point2d>& keypoints1,
-				    double* count, double* final_mde) const
+				    Eigen::Affine3d* f0_to_f1) const
 {
   // -- Run grid search.
   ScopedTimer st("FrameAligner::align");
@@ -44,21 +61,27 @@ Eigen::Affine3d FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
   cout << gs.num_evals_ / gs.time_ << " evals / second." << endl;
   cout << gs.time_ / gs.num_evals_ << " seconds / eval." << endl;
 
-  mde->count_ = count;
-  *final_mde = mde->eval(x);
+  double count;
+  mde->count_ = &count;
+  double final_mde = mde->eval(x);
   
   cout << " -- Single-number statistics" << endl;
-  cout << "Final MDE: " << *final_mde << endl;
-  cout << "Count: " << *count << endl;
+  cout << "Final MDE: " << final_mde << endl;
+  cout << "Count: " << count << endl;
   cout << "==============================" << endl;
-  
-  return generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
+
+  // TODO: Add better conditions for alignment success.
+  if(count < 20000 || final_mde > 0.5)
+    return false;
+
+  *f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
+  return true;
 }
 
-Eigen::Affine3d FrameAligner::confidentAlign(rgbd::Frame frame0, rgbd::Frame frame1,
-		const std::vector<cv::Point2d>& keypoints0, const std::vector<cv::Point2d>& keypoints1, 
-    const Eigen::Affine3d &guess,
-		double* count, double* final_mde) const
+bool FrameAligner::confidentAlign(rgbd::Frame frame0, rgbd::Frame frame1,
+				  const std::vector<cv::Point2d>& keypoints0, const std::vector<cv::Point2d>& keypoints1, 
+				  const Eigen::Affine3d& guess,
+				  Eigen::Affine3d* f0_to_f1) const
 {
   // -- Run grid search.
   ScopedTimer st("FrameAligner::align");
@@ -90,14 +113,20 @@ Eigen::Affine3d FrameAligner::confidentAlign(rgbd::Frame frame0, rgbd::Frame fra
   cout << gs.num_evals_ / gs.time_ << " evals / second." << endl;
   cout << gs.time_ / gs.num_evals_ << " seconds / eval." << endl;
 
-  mde->count_ = count;
-  *final_mde = mde->eval(x);
+  double count;
+  mde->count_ = &count;
+  double final_mde = mde->eval(x);
   
   cout << " -- Single-number statistics" << endl;
-  cout << "Final MDE: " << *final_mde << endl;
-  cout << "Count: " << *count << endl;
+  cout << "Final MDE: " << final_mde << endl;
+  cout << "Count: " << count << endl;
   cout << "==============================" << endl;
+
+  // TODO: Add better conditions for alignment success.
+  if(count < 20000 || final_mde > 0.5)
+    return false;
   
-  return generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
+  *f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
+  return true;
 }
 

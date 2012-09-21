@@ -111,11 +111,8 @@ protected:
   boost::shared_ptr<cv::ORB> orb_;
   boost::shared_ptr<cv::SIFT> sift_;
 
-  std::map< size_t, vector<cv::KeyPoint> > close_keypoint_cache_;
-  std::map< size_t, vector<cv::KeyPoint> > all_keypoint_cache_;
-  //std::map< size_t, OrbExtractor::PackedDescriptorsConstPtr > close_feature_cache_;
-  std::map< size_t, FeaturesPtr > close_feature_cache_;
-  std::map< size_t, FeaturesPtr > all_feature_cache_;
+  std::map< size_t, vector<cv::KeyPoint> > keypoint_cache_;
+  std::map< size_t, FeaturesPtr > feature_cache_;
   std::vector<size_t> cached_frames_;
 };
 
