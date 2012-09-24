@@ -16,8 +16,8 @@ public:
   //! fraction is how much of the depth data to use.
   FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
 		    rgbd::Frame frame0, rgbd::Frame frame1,
-		    const std::vector<cv::Point2d>& keypoints0 = std::vector<cv::Point2d>(),
-		    const std::vector<cv::Point2d>& keypoints1 = std::vector<cv::Point2d>(),
+		    const std::vector<cv::Point2d>& correspondences0 = std::vector<cv::Point2d>(),
+		    const std::vector<cv::Point2d>& correspondences1 = std::vector<cv::Point2d>(),
 		    double max_range = 3.5, double fraction = 1.0);
   //! x = [rx, ry, rz, tx, ty, tz].
   double eval(const Eigen::VectorXd& x) const;
@@ -31,8 +31,8 @@ protected:
   rgbd::PrimeSenseModel model1_;
   rgbd::Frame frame0_;
   rgbd::Frame frame1_;
-  std::vector<cv::Point2d> keypoints0_;
-  std::vector<cv::Point2d> keypoints1_;
+  std::vector<cv::Point2d> correspondences0_;
+  std::vector<cv::Point2d> correspondences1_;
   rgbd::Cloud pcd0_;
   rgbd::Cloud pcd1_;
   std::vector<size_t> indices_;
@@ -95,9 +95,9 @@ void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
 			    double* depth_error, double* color_error, double* count,
 			    double max_range = std::numeric_limits<double>::max());
 
-void keypointError(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, const std::vector<cv::Point2d> keypoints0,
+void keypointError(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, const std::vector<cv::Point2d> correspondences0,
 		   const Eigen::Affine3f& f0_to_f1,
-		   const rgbd::PrimeSenseModel& model1, const std::vector<cv::Point2d>& keypoints1,
+		   const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1, const std::vector<cv::Point2d>& correspondences1,
 		   double* keypoint_error, double* keypoint_error_count);
 
 #endif // MEAN_DEPTH_ERROR_H

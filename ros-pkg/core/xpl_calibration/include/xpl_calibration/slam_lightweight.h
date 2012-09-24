@@ -24,6 +24,7 @@ public:
   bool save_imgs_;
   //! Use loop closure
   bool use_loop_closure_;
+  int keypoints_per_frame_;
   //! Camera pose to use.
   // TODO
   

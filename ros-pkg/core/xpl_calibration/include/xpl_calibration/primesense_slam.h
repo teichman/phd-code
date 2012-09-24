@@ -22,21 +22,23 @@ public:
   double min_dt_;
   //! Used in generating the final saved map and in frame alignment.
   double max_range_;
+  size_t loopclosure_step_;
+  int keypoints_per_frame_;
   
   // -- Outputs
   Trajectory traj_;
   //! Just for visualization.
-  rgbd::Cloud map_;
+  rgbd::Cloud::Ptr map_;
+  //! For saving the graph.
+  PoseGraphSlam::Ptr pgs_;
   
   // -- Methods
   PrimeSenseSlam();
   void _run();
 
 protected:
-  std::map< size_t, std::vector<cv::KeyPoint> > close_keypoint_cache_;
-  std::map< size_t, std::vector<cv::KeyPoint> > all_keypoint_cache_;
-  std::map< size_t, FeaturesPtr > close_feature_cache_;
-  std::map< size_t, FeaturesPtr > all_feature_cache_;
+  std::map< size_t, std::vector<cv::KeyPoint> > keypoint_cache_;
+  std::map< size_t, FeaturesPtr > feature_cache_;
   std::vector<size_t> cached_frames_;
 
   void buildMap(const Trajectory& traj);

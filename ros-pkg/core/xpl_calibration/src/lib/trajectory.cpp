@@ -14,6 +14,8 @@ Trajectory& Trajectory::operator=(const Trajectory& other)
   for(size_t i = 0; i < transforms_.size(); ++i)
     if(other.exists(i))
       transforms_[i] = new Affine3d(other.get(i));
+
+  return *this;
 }
 
 Trajectory::~Trajectory()
