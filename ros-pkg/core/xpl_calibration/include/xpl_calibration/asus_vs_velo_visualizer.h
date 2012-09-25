@@ -32,7 +32,7 @@ protected:
   std::vector<std::string> clk_names_;
 };
 
-class AsusVsVeloVisualizer : public GridSearchViewHandler
+class AsusVsVeloVisualizer : public GridSearchViewHandler, public SharedLockable
 {
 public:
   int skip_;

@@ -45,6 +45,7 @@ void SlamLightweight::run(StreamSequence::ConstPtr sseq,
     lc_->min_ransac_inlier_percent_ = 0.1;
     lc_->ransac_max_inlier_dist_ = 0.02; //Need to be within 2 cm to be considered an inlier
     lc_->num_ransac_samples_ = 1000;
+    lc_->max_z_ = 5; //Was 3
     //lc_->icp_max_avg_dist_ = 0.03; //Avg pt-to-pt distance required
     //lc_->icp_max_inlier_dist_ = 0.1; // Highest distance allowed to be considered an inlier
     //lc_->icp_inlier_percent_ = 0.3; // At least this percentage of points must be inliers
@@ -115,7 +116,8 @@ void SlamLightweight::slamThreadFunction()
     if(getenv("PROFILE"))
       ProfilerStart("slam_test.prof");
     double count, final_mde;
-    Affine3d curr_to_prev = aligner.align(curr_frame_, prev_frame_, &count, &final_mde);
+    vector<cv::Point2d> curr_keypoints, prev_keypoints;  // TODO
+    Affine3d curr_to_prev = aligner.align(curr_frame_, prev_frame_, curr_keypoints, prev_keypoints, &count, &final_mde);
     if(getenv("PROFILE"))
       ProfilerStop();
 
@@ -142,7 +144,8 @@ void SlamLightweight::slamThreadFunction()
           frame_text_ = oss.str();
           rgbd::Frame frame_target;
           sseq_->readFrame(targets[j], &frame_target);
-          transforms[j] = lc_->fineTuneHypothesis(curr_frame_, frame_target, transforms[j]);
+          transforms[j] = lc_->fineTuneHypothesis(curr_frame_, frame_target, curr_idx, targets[j], 
+              transforms[j]);
         }
         cout << "Adding loop edge from " << curr_idx << " -> " << targets[j] << endl;
         slam_->addEdge(targets[j], curr_idx, transforms[j].cast<double>(), covariance);

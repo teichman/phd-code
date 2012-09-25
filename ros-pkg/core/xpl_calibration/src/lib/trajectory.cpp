@@ -10,21 +10,30 @@ Trajectory::Trajectory(const Trajectory& other)
 
 Trajectory& Trajectory::operator=(const Trajectory& other)
 {
-  transforms_.resize(other.size(), NULL);
+  resize(other.size());
   for(size_t i = 0; i < transforms_.size(); ++i)
     if(other.exists(i))
       transforms_[i] = new Affine3d(other.get(i));
+
+  return *this;
 }
 
 Trajectory::~Trajectory()
 {
+  clear();
+}
+
+void Trajectory::clear()
+{
   for(size_t i = 0; i < transforms_.size(); ++i)
     if(transforms_[i])
       delete transforms_[i];
+  transforms_.clear();
 }
 
 void Trajectory::resize(size_t num)
 {
+  clear();
   transforms_.resize(num, NULL);
 }
 

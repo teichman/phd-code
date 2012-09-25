@@ -41,13 +41,14 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/depth_distortion_learner.cpp
   src/lib/velo_to_asus_calibrator.cpp
   src/lib/mean_depth_error.cpp
-  src/lib/slam_visualizer.cpp
+#  src/lib/slam_visualizer.cpp
   src/lib/frame_aligner.cpp
-  src/lib/loop_closer.cpp
+#  src/lib/loop_closer.cpp
   src/lib/trajectory.cpp
   src/lib/slam_calibrator.cpp
   src/lib/slam_calibration_visualizer.cpp
-  src/lib/slam_lightweight.cpp
+#  src/lib/slam_lightweight.cpp
+  src/lib/primesense_slam.cpp
   )
 rosbuild_add_compile_flags(${PROJECT_NAME} -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 rosbuild_link_boost(${PROJECT_NAME} system program_options)
@@ -98,9 +99,9 @@ target_link_libraries(inspect_depth_image ${PROJECT_NAME})
 rosbuild_add_executable(g2o_hello src/prog/g2o_hello.cpp)
 target_link_libraries(g2o_hello)
 
-rosbuild_add_executable(slam_test src/prog/slam_test.cpp)
-rosbuild_link_boost(slam_test program_options filesystem)
-target_link_libraries(slam_test ${PROJECT_NAME})
+#rosbuild_add_executable(slam_test src/prog/slam_test.cpp)
+#rosbuild_link_boost(slam_test program_options filesystem)
+#target_link_libraries(slam_test ${PROJECT_NAME})
 
 #rosbuild_add_executable(test_transforms src/prog/test_transforms.cpp)
 #rosbuild_link_boost(test_transforms program_options filesystem)
@@ -114,9 +115,13 @@ rosbuild_add_executable(calibrate_slam src/prog/calibrate_slam.cpp)
 rosbuild_link_boost(calibrate_slam program_options filesystem)
 target_link_libraries(calibrate_slam ${PROJECT_NAME})
 
-rosbuild_add_executable(slam_run_lightweight src/prog/slam_run_lightweight.cpp)
-rosbuild_link_boost(slam_run_lightweight program_options filesystem)
-target_link_libraries(slam_run_lightweight ${PROJECT_NAME})
+rosbuild_add_executable(primesense_slam src/prog/primesense_slam.cpp)
+rosbuild_link_boost(primesense_slam program_options filesystem)
+target_link_libraries(primesense_slam ${PROJECT_NAME})
+
+#rosbuild_add_executable(slam_run_lightweight src/prog/slam_run_lightweight.cpp)
+#rosbuild_link_boost(slam_run_lightweight program_options filesystem)
+#target_link_libraries(slam_run_lightweight ${PROJECT_NAME})
 
 rosbuild_add_executable(inspect_pose_graph src/prog/inspect_pose_graph.cpp)
 rosbuild_link_boost(inspect_pose_graph program_options filesystem)

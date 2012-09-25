@@ -6,8 +6,8 @@
 #include <boost/thread/shared_mutex.hpp>
 #include <boost/thread/locks.hpp>
 
-#define scopeLockRead boost::shared_lock<boost::shared_mutex>(shared_mutex_)
-#define scopeLockWrite boost::unique_lock<boost::shared_mutex>(shared_mutex_)
+#define scopeLockRead boost::shared_lock<boost::shared_mutex> lockable_shared_lock(shared_mutex_)
+#define scopeLockWrite boost::unique_lock<boost::shared_mutex> lockable_unique_lock(shared_mutex_)
 
 class SharedLockable
 {

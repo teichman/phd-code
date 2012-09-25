@@ -60,7 +60,8 @@ void SlamCalibrationVisualizer::setCamera(const std::string& camera_path)
 
 void SlamCalibrationVisualizer::visualizationThreadFunction()
 {
-  while(scopeLockRead, !quitting_) {
+  while(true) {
+    { scopeLockRead; if(quitting_) break; }
     usleep(5e3);
     
     lockWrite();

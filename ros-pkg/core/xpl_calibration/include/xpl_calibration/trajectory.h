@@ -14,7 +14,9 @@ public:
   //! Deep copy
   Trajectory& operator=(const Trajectory& other);
   ~Trajectory();
-  
+
+  void clear();
+  //! Destroys everything inside.
   void resize(size_t num);
   void set(size_t idx, const Eigen::Affine3d& transform);
   const Eigen::Affine3d& get(size_t idx) const;

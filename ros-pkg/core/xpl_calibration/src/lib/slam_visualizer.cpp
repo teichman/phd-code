@@ -165,7 +165,15 @@ void SlamVisualizer::slamThreadFunction()
     if(getenv("PROFILE"))
       ProfilerStart("slam_test.prof");
     double count, final_mde;
-    Affine3d curr_to_prev = aligner.align(curr_frame_, prev_frame_, &count, &final_mde);
+    vector<cv::Point2d> curr_keypoints, prev_keypoints;
+    // for(int i = 0; i < 2000; ++i) {
+    //   cv::Point2d pt;
+    //   pt.x = rand() % 640;
+    //   pt.y = rand() % 480;
+    //   curr_keypoints.push_back(pt);
+    //   prev_keypoints.push_back(pt);
+    // }
+    Affine3d curr_to_prev = aligner.align(curr_frame_, prev_frame_, curr_keypoints, prev_keypoints, &count, &final_mde);
     if(getenv("PROFILE"))
       ProfilerStop();
 
@@ -202,7 +210,8 @@ void SlamVisualizer::slamThreadFunction()
           unlockWrite();
           rgbd::Frame frame_target;
           sseq_->readFrame(targets[j], &frame_target);
-          transforms[j] = lc_->fineTuneHypothesis(curr_frame_, frame_target, transforms[j]);
+          transforms[j] = lc_->fineTuneHypothesis(curr_frame_, frame_target, curr_idx, targets[j], 
+              transforms[j]);
         }
         cout << "Adding loop edge with transform: " << endl << transforms[j].matrix() << endl;
         slam_->addEdge(targets[j], curr_idx, transforms[j].cast<double>(), covariance);
