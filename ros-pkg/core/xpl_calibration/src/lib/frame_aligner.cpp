@@ -37,6 +37,15 @@ bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
   Affine3d guess;
   vector<cv::Point2d> correspondences0, correspondences1;
   bool found_rough_transform = computeRoughTransform(frame0, frame1, keypoints0, keypoints1, features0, features1, &correspondences0, &correspondences1, &guess);
+  if(view_handler_) {
+    double rx, ry, rz, tx, ty, tz;
+    generateXYZYPR(guess.cast<float>(), rx, ry, rz, tx, ty, tz);
+    Eigen::ArrayXd x(6); x << rx, ry, rz, tx, ty, tz;
+    FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, max_range_, 0.25));
+    view_handler_->handleGridSearchUpdate(x, mde->eval(x));
+    cout << "^^^^ Objective with initial transform from feature matching." << endl;
+    cv::waitKey();
+  }
   
   // -- Run grid search as desired.
   if(found_rough_transform)
@@ -446,6 +455,7 @@ void FrameAlignmentVisualizer::_run()
     scopeLockWrite;
     foo_ = true;
     if(needs_update_) {
+      vis_.removeAllPointClouds();
       Cloud::Ptr pcd(new Cloud);
       pcl::transformPointCloud(*cloud0_, *pcd, f0_to_f1_);
       *pcd += *cloud1_;
