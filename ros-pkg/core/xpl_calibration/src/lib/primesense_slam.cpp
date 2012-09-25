@@ -4,6 +4,8 @@ using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 
+#define VISUALIZE
+
 PrimeSenseSlam::PrimeSenseSlam() :
   fav_(NULL),
   min_dt_(0.2),
@@ -15,10 +17,11 @@ PrimeSenseSlam::PrimeSenseSlam() :
 
 void PrimeSenseSlam::_run()
 {
-
   FrameAligner aligner(sseq_->model_, sseq_->model_, max_range_);
+#ifdef VISUALIZE
   if(fav_)
     aligner.view_handler_ = fav_;
+#endif
 
   ROS_WARN("PrimeSenseSlam does not use learned model.");
   pgs_ = PoseGraphSlam::Ptr(new PoseGraphSlam(sseq_->size()));

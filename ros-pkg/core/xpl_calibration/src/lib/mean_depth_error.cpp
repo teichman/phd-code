@@ -5,8 +5,7 @@ using namespace Eigen;
 using namespace rgbd;
 
 //#define TIMING
-
-
+#define VISUALIZE
 
 // Takes points from frame0, turns them in to lines in the coordinate system of frame1, then finds how far keypoints in frame1 are
 // from the lines they should lie on.
@@ -107,6 +106,7 @@ FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, const 
     if((double)rand() / RAND_MAX <= fraction)
       indices_.push_back(i);
 
+#ifdef VISUALIZE
   cv::Mat3b vis0 = frame0.img_.clone();
   cv::Mat3b vis1 = frame1.img_.clone();
   for(size_t i = 0; i < correspondences0.size(); ++i) {
@@ -117,6 +117,7 @@ FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, const 
   cv::imshow("vis0", vis0);
   cv::imshow("vis1", vis1);
   cv::waitKey(5);
+#endif
 }
 
 double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
@@ -136,22 +137,22 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
 
   transformAndDecimate(pcd1_, f0_to_f1.inverse(), indices_, &transformed);
   meanDepthAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, max_range_);
-  keypointError(model0_, frame0_, correspondences0_, f0_to_f1, model1_, frame1_, correspondences1_, &keypoint_error, &keypoint_error_count);
+//  keypointError(model0_, frame0_, correspondences0_, f0_to_f1, model1_, frame1_, correspondences1_, &keypoint_error, &keypoint_error_count);
   
   transformAndDecimate(pcd0_, f0_to_f1, indices_, &transformed); 
   meanDepthAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, max_range_);
-  keypointError(model1_, frame1_, correspondences1_, f0_to_f1.inverse(), model0_, frame0_, correspondences0_, &keypoint_error, &keypoint_error_count);
+//  keypointError(model1_, frame1_, correspondences1_, f0_to_f1.inverse(), model0_, frame0_, correspondences0_, &keypoint_error, &keypoint_error_count);
 
   // Make count available to other users in single-threaded mode.
   if(count_)
     *count_ = count;
 
-  int min_correspondences = 20;
-  if(keypoint_error_count < min_correspondences) {
-    return numeric_limits<double>::max();
-  }
-  else
-    keypoint_error /= keypoint_error_count;
+  // int min_correspondences = 20;
+  // if(keypoint_error_count < min_correspondences) {
+  //   return numeric_limits<double>::max();
+  // }
+  // else
+  //   keypoint_error /= keypoint_error_count;
 
   double min_points = 100;
   if(count < min_points) {
@@ -164,8 +165,8 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   }
 
   //cout << "Num correspondences used for keypoint error: " << keypoint_error_count << ", Keypoint error: " << keypoint_error << endl;
-  val = 0.01 * keypoint_error;
-  //val = depth_error + 0.0023 * color_error;
+  //val = 0.01 * keypoint_error;
+  val = depth_error + 0.0023 * color_error;
   //val = depth_error + 0.0023 * color_error + 0.01 * keypoint_error;  // Color error term has a per-pixel max of 441.
 
   return val;
