@@ -146,12 +146,12 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   if(count_)
     *count_ = count;
 
-  // int min_correspondences = 20;
-  // if(keypoint_error_count < min_correspondences) {
-  //   return numeric_limits<double>::max();
-  // }
-  // else
-  //   keypoint_error /= keypoint_error_count;
+  int min_correspondences = 20;
+  if(keypoint_error_count < min_correspondences) {
+    return numeric_limits<double>::max();
+  }
+  else
+    keypoint_error /= keypoint_error_count;
 
   double min_points = 100;
   if(count < min_points) {
@@ -164,8 +164,8 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   }
 
   //cout << "Num correspondences used for keypoint error: " << keypoint_error_count << ", Keypoint error: " << keypoint_error << endl;
-  //val = 0.01 * keypoint_error;
-  val = depth_error + 0.0023 * color_error;
+  val = 0.01 * keypoint_error;
+  //val = depth_error + 0.0023 * color_error;
   //val = depth_error + 0.0023 * color_error + 0.01 * keypoint_error;  // Color error term has a per-pixel max of 441.
 
   return val;

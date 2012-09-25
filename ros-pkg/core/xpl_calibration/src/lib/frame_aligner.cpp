@@ -10,7 +10,7 @@ FrameAligner::FrameAligner(const rgbd::PrimeSenseModel& model0,
   view_handler_(NULL),
   num_ransac_samples_(1000),
   k_(2),
-  max_feature_dist_(500),
+  max_feature_dist_(300),
   min_ransac_inliers_(10),
   min_pairwise_keypoint_dist_(0.04),
   ransac_max_inlier_dist_(0.02),
@@ -44,7 +44,7 @@ bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
     FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, max_range_, 0.25));
     view_handler_->handleGridSearchUpdate(x, mde->eval(x));
     cout << "^^^^ Objective with initial transform from feature matching." << endl;
-    cv::waitKey();
+    //cv::waitKey();
   }
   
   // -- Run grid search as desired.
