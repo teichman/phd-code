@@ -10,7 +10,7 @@ PrimeSenseSlam::PrimeSenseSlam() :
   fav_(NULL),
   min_dt_(0.2),
   max_range_(3.5),
-  loopclosure_step_(2),
+  loopclosure_step_(5),
   keypoints_per_frame_(100)
 {
 }
