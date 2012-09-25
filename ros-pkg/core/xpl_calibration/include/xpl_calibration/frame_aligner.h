@@ -21,6 +21,7 @@ protected:
   Eigen::Affine3f f0_to_f1_;
   pcl::visualization::PCLVisualizer vis_;
   bool needs_update_;
+  bool foo_;
 };
 
 class FrameAligner

@@ -11,7 +11,7 @@ typedef boost::shared_ptr<boost::thread> ThreadPtr;
 class Agent : public SharedLockable
 {
 public:
-  Agent() : quitting_(false), running_(false) {}
+  Agent() : SharedLockable(), quitting_(false), running_(false) {}
   virtual ~Agent() {}
   
   void quit() { scopeLockWrite; quitting_ = true; }

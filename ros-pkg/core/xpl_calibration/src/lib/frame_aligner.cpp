@@ -59,13 +59,13 @@ bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   gs.verbose_ = false;
   gs.view_handler_ = view_handler_;
   gs.objective_ = mde;
-  gs.num_scalings_ = 5;
+  gs.num_scalings_ = 12;
   double max_res_rot = 1.5 * M_PI / 180.0;
   double max_res_trans = 0.05;
   gs.max_resolutions_ << max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;
   int gr = 2;
   gs.grid_radii_ << gr, gr, gr, gr, gr, gr;
-  double sf = 0.5;
+  double sf = 0.75;
   gs.scale_factors_ << sf, sf, sf, sf, sf, sf;
   gs.couplings_ << 0, 1, 2, 1, 0, 3;  // Search over (pitch, y) and (yaw, x) jointly.
   ArrayXd x = gs.search(ArrayXd::Zero(6));
@@ -400,12 +400,14 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
 
 
 FrameAlignmentVisualizer::FrameAlignmentVisualizer(rgbd::PrimeSenseModel model0, rgbd::PrimeSenseModel model1) : 
+  Agent(),
   model0_(model0),
   model1_(model1),
   cloud0_(new Cloud),
   cloud1_(new Cloud),
   vis_("FrameAlignmentVisualizer"),
-  needs_update_(false)
+  needs_update_(false),
+  foo_(false)
 {
   // -- Set the viewpoint to be sensible for PrimeSense devices.
   vis_.camera_.clip[0] = 0.00387244;
@@ -428,17 +430,21 @@ FrameAlignmentVisualizer::FrameAlignmentVisualizer(rgbd::PrimeSenseModel model0,
 
 void FrameAlignmentVisualizer::handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective)
 {
-  cout << "Grid search improvement: " << objective << " at x = " << x.transpose() << endl;
   scopeLockWrite;
+  foo_ = false;
   f0_to_f1_ = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
-  needs_update_ = true;  
+  needs_update_ = true;
+  cout << "Grid search improvement: " << objective << " at x = " << x.transpose() << endl;
 }
 
 void FrameAlignmentVisualizer::_run()
 {
-  while(scopeLockRead, !quitting_) {
+  while(true) {
+    { scopeLockRead; if(quitting_) break; }
+        
     usleep(1e3);
-    lockWrite();
+    scopeLockWrite;
+    foo_ = true;
     if(needs_update_) {
       Cloud::Ptr pcd(new Cloud);
       pcl::transformPointCloud(*cloud0_, *pcd, f0_to_f1_);
@@ -446,8 +452,8 @@ void FrameAlignmentVisualizer::_run()
       if(!vis_.updatePointCloud(pcd, "default"))
 	vis_.addPointCloud(pcd, "default");
     }
-    vis_.spinOnce(10);
-    unlockWrite();
+    vis_.spinOnce(2);
+    ROS_ASSERT(foo_);
   }
 }
 
