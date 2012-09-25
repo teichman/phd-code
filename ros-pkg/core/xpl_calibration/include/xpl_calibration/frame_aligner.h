@@ -1,16 +1,21 @@
 #ifndef FRAME_ALIGNER_H
 #define FRAME_ALIGNER_H
 
+#include <bag_of_tricks/agent.h>
 #include <xpl_calibration/mean_depth_error.h>
 
 class FrameAlignmentVisualizer : public GridSearchViewHandler, public Agent
 {
 public:
-  FrameAlignmentVisualizer(rgbd::Cloud::Ptr cloud0, rgbd::Cloud::Ptr cloud1);
-  void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective) const;
+  FrameAlignmentVisualizer(rgbd::PrimeSenseModel model0, rgbd::PrimeSenseModel model1);
+  void setFrames(rgbd::Frame frame0, rgbd::Frame frame1);
+  void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
+  //! You must run() in the main thread for the visualizer to work.
   void _run();
-
+  
 protected:
+  rgbd::PrimeSenseModel model0_;
+  rgbd::PrimeSenseModel model1_;
   rgbd::Cloud::Ptr cloud0_;
   rgbd::Cloud::Ptr cloud1_;
   Eigen::Affine3f f0_to_f1_;
@@ -23,6 +28,8 @@ class FrameAligner
 public:
   typedef boost::shared_ptr<cv::Mat1f> FeaturesPtr;
   typedef boost::shared_ptr<const cv::Mat1f> FeaturesConstPtr;
+
+  GridSearchViewHandler* view_handler_;
   
   // -- Params for feature matching method
   int num_ransac_samples_;
@@ -45,8 +52,7 @@ public:
   
   FrameAligner(const rgbd::PrimeSenseModel& model0,
 	       const rgbd::PrimeSenseModel& model1,
-	       double max_range,
-	       GridSearchViewHandler* view_handler = NULL);
+	       double max_range);
 
   //! Computes transform that takes points in 0 to points in 1. Tries using feature matching to get close, and, failing that, does
   //! a wide area grid search if you tell it to.
@@ -64,7 +70,6 @@ public:
 protected:
   rgbd::PrimeSenseModel model0_;
   rgbd::PrimeSenseModel model1_;
-  GridSearchViewHandler* view_handler_;
 
   //! Computes transform that takes points in 0 to points in 1. Starts with identity transform, has a wide search.
   //! Returns false if no transform found.

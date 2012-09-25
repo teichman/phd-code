@@ -45,7 +45,11 @@ int main(int argc, char** argv)
 
   PrimeSenseSlam pss;
   pss.sseq_ = sseq;
-  pss.run();
+  FrameAlignmentVisualizer fav(sseq->model_, sseq->model_);
+  pss.fav_ = &fav;
+  ThreadPtr slamthread = pss.launch();
+  fav.run();
+  slamthread->join();
 
   // -- Save outputs.
   if(opts.count("opcd"))

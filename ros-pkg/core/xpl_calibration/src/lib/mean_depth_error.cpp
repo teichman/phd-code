@@ -146,28 +146,21 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   if(count_)
     *count_ = count;
 
-  double min_correspondences = 20;
-  double min_points = 100;
-  if(keypoint_error_count < min_correspondences) {
-    //ROS_WARN("FrameAlignmentMDE had < min_correspondences correspondences.");
-    keypoint_error = 0;
-  }
-  else
-    keypoint_error /= keypoint_error_count;
+  // int min_correspondences = 20;
+  // if(keypoint_error_count < min_correspondences) {
+  //   return numeric_limits<double>::max();
+  // }
+  // else
+  //   keypoint_error /= keypoint_error_count;
 
+  double min_points = 100;
   if(count < min_points) {
     ROS_WARN("FrameAlignmentMDE had < min_points overlapping 3d points.");
-    depth_error = 0;
-    color_error = 0;
+    return numeric_limits<double>::max();
   }
   else {
     depth_error /= count;
     color_error /= count;
-  }
-
-  if(count < min_points && keypoint_error_count < min_correspondences) {
-    ROS_WARN("FrameAlignmentMDE found no overlapping 3d points and too few keypoint correspondences.");
-    return std::numeric_limits<double>::max();
   }
 
   //cout << "Num correspondences used for keypoint error: " << keypoint_error_count << ", Keypoint error: " << keypoint_error << endl;

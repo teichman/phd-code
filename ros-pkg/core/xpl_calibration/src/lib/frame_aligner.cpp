@@ -6,20 +6,19 @@ using namespace rgbd;
 
 FrameAligner::FrameAligner(const rgbd::PrimeSenseModel& model0,
 			   const rgbd::PrimeSenseModel& model1,
-			   double max_range,
-			   GridSearchViewHandler* view_handler) :
+			   double max_range) :
+  view_handler_(NULL),
   num_ransac_samples_(1000),
-  k_(5),
-  max_feature_dist_(300),
-  min_ransac_inliers_(5),
+  k_(2),
+  max_feature_dist_(500),
+  min_ransac_inliers_(10),
   min_pairwise_keypoint_dist_(0.04),
   ransac_max_inlier_dist_(0.02),
   min_ransac_inlier_percent_(0.1),
-  min_bounding_length_(.04),  
+  min_bounding_length_(.1),  
   max_range_(max_range),
   model0_(model0),
-  model1_(model1),
-  view_handler_(view_handler)
+  model1_(model1)
 {
 }
 
@@ -125,7 +124,7 @@ bool FrameAligner::narrowGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   gs.objective_ = mde;
   gs.num_scalings_ = 5;
   double max_res_rot = 1.5 * M_PI / 180.0;
-  double max_res_trans = 0.02;
+  double max_res_trans = 0.05;
   gs.max_resolutions_ << max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;
   int gr = 1;
   gs.grid_radii_ << gr, gr, gr, gr, gr, gr;
@@ -172,6 +171,9 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
   correspondences0->clear();
   correspondences1->clear();
   
+  if(features0->rows < k_ || features1->rows < k_)
+    return false;
+
   cv::FlannBasedMatcher matcher;
   vector< vector<cv::DMatch> > matches_each;
   // TODO: Why was this inside a try / catch?
@@ -223,12 +225,11 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
   //Visualize
   // if(visualize_)
   // {
-  //   Frame old_frame; sseq_->readFrame(old_t, &old_frame);
-  //   cv::Mat3b img_match;
-  //   cv::drawMatches(frame.img_, keypoints0, old_frame.img_, keypoints1,
-  // 		    matches, img_match);
-  //   cv::imshow("match", img_match);
-  //   cv::waitKey(50);
+  cv::Mat3b img_match;
+  cv::drawMatches(frame0.img_, keypoints0, frame1.img_, keypoints1,
+		  matches, img_match);
+  cv::imshow("match", img_match);
+  cv::waitKey(50);
   // }
 
   // TODO: Don't need to project the whole frame here, just keypoints.
@@ -312,7 +313,7 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
   vector<float> distances;
   Eigen::Affine3f best_transform;
   float best_distance = std::numeric_limits<float>::infinity();
-  size_t best_num_inliers = 0;
+  int best_num_inliers = 0;
   bool has_best = false;
   vector< std::pair<size_t, size_t> > best_inliers;
   for(size_t j = 0; j < candidates.size(); ++j)
@@ -353,6 +354,7 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
     {
       continue;
     }
+
     //Check bounding volume
     int has_x = (maxx - minx) > min_bounding_length_;
     int has_y = (maxy - miny) > min_bounding_length_;
@@ -363,14 +365,20 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
     }
     
     // Consider this transform
-    inlier_distance /= num_inliers; //Average out
-    if(inlier_distance < best_distance)
-    {
+    // inlier_distance /= num_inliers; //Average out
+    // if(inlier_distance < best_distance)
+    // {
+    if(num_inliers > best_num_inliers) {
       best_transform = candidates[j];
       best_distance = inlier_distance;
       best_num_inliers = num_inliers;
       best_inliers = inliers;
       has_best = true;
+
+      cout << "Best so far: " << endl;
+      cout << "  Num inliers: " << num_inliers << endl;
+      cout << "  Has bounding size of x: " << maxx - minx << ", y: " << maxy - miny << ", z: " << maxz - minz << endl;
+      cout << "  f1_to_f0: " << endl << best_transform.matrix() << endl;
     }
   }
   if(has_best)
@@ -382,6 +390,8 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
 	      keypoint_cloud0->points[best_inliers[j].second].getVector3fMap());
     Affine3d f1_to_f0 = tfc.getTransformation().cast<double>();
     *f0_to_f1 = f1_to_f0.inverse();
+    cout << "Final f1_to_f0: " << endl;
+    cout << f1_to_f0.matrix() << endl;
     return true;
   }
   else
@@ -389,15 +399,34 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
 }
 
 
-FrameAlignmentVisualizer::FrameAlignmentVisualizer(rgbd::Cloud::Ptr cloud0, rgbd::Cloud::Ptr cloud1) :
-						   
-  cloud0_(cloud0),
-  cloud1_(cloud1),
+FrameAlignmentVisualizer::FrameAlignmentVisualizer(rgbd::PrimeSenseModel model0, rgbd::PrimeSenseModel model1) : 
+  model0_(model0),
+  model1_(model1),
+  cloud0_(new Cloud),
+  cloud1_(new Cloud),
+  vis_("FrameAlignmentVisualizer"),
   needs_update_(false)
 {
+  // -- Set the viewpoint to be sensible for PrimeSense devices.
+  vis_.camera_.clip[0] = 0.00387244;
+  vis_.camera_.clip[1] = 3.87244;
+  vis_.camera_.focal[0] = -0.160878;
+  vis_.camera_.focal[1] = -0.0444743;
+  vis_.camera_.focal[2] = 1.281;
+  vis_.camera_.pos[0] = 0.0402195;
+  vis_.camera_.pos[1] = 0.0111186;
+  vis_.camera_.pos[2] = -1.7;
+  vis_.camera_.view[0] = 0;
+  vis_.camera_.view[1] = -1;
+  vis_.camera_.view[2] = 0;
+  vis_.camera_.window_size[0] = 1678;
+  vis_.camera_.window_size[1] = 525;
+  vis_.camera_.window_pos[0] = 2;
+  vis_.camera_.window_pos[1] = 82;
+  vis_.updateCamera();    
 }
 
-void FrameAlignmentVisualizer::handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective) const
+void FrameAlignmentVisualizer::handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective)
 {
   cout << "Grid search improvement: " << objective << " at x = " << x.transpose() << endl;
   scopeLockWrite;
@@ -417,7 +446,14 @@ void FrameAlignmentVisualizer::_run()
       if(!vis_.updatePointCloud(pcd, "default"))
 	vis_.addPointCloud(pcd, "default");
     }
-    vis_.spinOnce(3);
+    vis_.spinOnce(10);
     unlockWrite();
   }
+}
+
+void FrameAlignmentVisualizer::setFrames(rgbd::Frame frame0, rgbd::Frame frame1)
+{
+  scopeLockWrite;
+  model0_.frameToCloud(frame0, cloud0_.get());
+  model1_.frameToCloud(frame1, cloud1_.get());
 }

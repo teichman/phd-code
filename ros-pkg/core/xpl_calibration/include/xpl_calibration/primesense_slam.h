@@ -16,6 +16,8 @@ public:
 
   // -- Inputs
   rgbd::StreamSequence::ConstPtr sseq_;
+  //! Should be running in the main thread if you want to see anything.
+  FrameAlignmentVisualizer* fav_;
   
   // -- Params
   //! When choosing the next frame, advance by at least this much.

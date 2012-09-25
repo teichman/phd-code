@@ -5,6 +5,7 @@ using namespace Eigen;
 using namespace rgbd;
 
 PrimeSenseSlam::PrimeSenseSlam() :
+  fav_(NULL),
   min_dt_(0.2),
   max_range_(3.5),
   loopclosure_step_(2),
@@ -14,7 +15,11 @@ PrimeSenseSlam::PrimeSenseSlam() :
 
 void PrimeSenseSlam::_run()
 {
+
   FrameAligner aligner(sseq_->model_, sseq_->model_, max_range_);
+  if(fav_)
+    aligner.view_handler_ = fav_;
+
   ROS_WARN("PrimeSenseSlam does not use learned model.");
   pgs_ = PoseGraphSlam::Ptr(new PoseGraphSlam(sseq_->size()));
   Matrix6d covariance = Matrix6d::Identity() * 1e-3;  // TODO: Do something smarter with link covariances.
@@ -57,11 +62,13 @@ void PrimeSenseSlam::_run()
     ROS_ASSERT(keypoint_cache_.count(prev_idx));
     ROS_ASSERT(feature_cache_.count(prev_idx));
     Affine3d curr_to_prev;
-    // bool found = aligner.align(curr_frame, prev_frame,
-    // 			       curr_keypoints, keypoint_cache_[prev_idx],
-    // 			       curr_features, feature_cache_[prev_idx],
-    // 			       true, &curr_to_prev);
-    bool found = aligner.align(curr_frame, prev_frame, &curr_to_prev);
+    if(fav_)
+      fav_->setFrames(curr_frame, prev_frame);
+    bool found = aligner.align(curr_frame, prev_frame,
+    			       curr_keypoints, keypoint_cache_[prev_idx],
+    			       curr_features, feature_cache_[prev_idx],
+    			       true, &curr_to_prev);
+    // bool found = aligner.align(curr_frame, prev_frame, &curr_to_prev);
     if(found) {
       cout << "Added edge " << prev_idx << " -- " << curr_idx << endl;
       pgs_->addEdge(prev_idx, curr_idx, curr_to_prev, covariance);
@@ -77,11 +84,13 @@ void PrimeSenseSlam::_run()
       ROS_ASSERT(keypoint_cache_.count(idx));
       ROS_ASSERT(feature_cache_.count(idx));
       Affine3d curr_to_old;
-      // bool found = aligner.align(curr_frame, old_frame,
-      // 				 curr_keypoints, keypoint_cache_[idx],
-      // 				 curr_features, feature_cache_[idx],
-      // 				 false, &curr_to_old);
-      bool found = aligner.align(curr_frame, old_frame, &curr_to_old);
+      if(fav_)
+    	fav_->setFrames(curr_frame, old_frame);
+      bool found = aligner.align(curr_frame, old_frame,
+      				 curr_keypoints, keypoint_cache_[idx],
+      				 curr_features, feature_cache_[idx],
+      				 false, &curr_to_old);
+      //bool found = aligner.align(curr_frame, old_frame, &curr_to_old);
       if(found) {
     	cout << "Added edge " << idx << " -- " << curr_idx << endl;
     	pgs_->addEdge(idx, curr_idx, curr_to_old, covariance);
@@ -101,6 +110,8 @@ void PrimeSenseSlam::_run()
 
   // -- Clean up.
   quitting_ = true;
+  if(fav_)
+    fav_->quit();
 }
 
 // TODO: This seems to come up a lot and should be made more generally available.
