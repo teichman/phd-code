@@ -23,6 +23,12 @@ FrameAligner::FrameAligner(const rgbd::PrimeSenseModel& model0,
 {
 }
 
+bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1, Eigen::Affine3d* f0_to_f1) const
+{
+  vector<cv::Point2d> correspondences0, correspondences1;
+  return wideGridSearch(frame0, frame1, correspondences0, correspondences1, f0_to_f1);
+}
+
 bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
 			 const std::vector<cv::KeyPoint>& keypoints0, const std::vector<cv::KeyPoint>& keypoints1,
 			 FeaturesConstPtr features0, FeaturesConstPtr features1,
@@ -35,18 +41,18 @@ bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
   
   // -- Run grid search as desired.
   if(found_rough_transform)
-    return confidentAlign(frame0, frame1, correspondences0, correspondences1, guess, f0_to_f1);
+    return narrowGridSearch(frame0, frame1, correspondences0, correspondences1, guess, f0_to_f1);
   else if(consider_wide_search)
-    return unconfidentAlign(frame0, frame1, correspondences0, correspondences1, f0_to_f1);
+    return wideGridSearch(frame0, frame1, correspondences0, correspondences1, f0_to_f1);
   else
     return false;
 }
 
-bool FrameAligner::unconfidentAlign(rgbd::Frame frame0, rgbd::Frame frame1,
-				    const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1,
-				    Eigen::Affine3d* f0_to_f1) const
+bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
+				      const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1,
+				      Eigen::Affine3d* f0_to_f1) const
 {
-  ROS_DEBUG("FrameAligner::unconfidentAlign");
+  ROS_DEBUG("FrameAligner::wideGridSearch");
   // -- Run grid search.
   ScopedTimer st("FrameAligner::align");
   FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, max_range_, 0.25));
@@ -74,29 +80,42 @@ bool FrameAligner::unconfidentAlign(rgbd::Frame frame0, rgbd::Frame frame1,
 
   double count;
   mde->count_ = &count;
-  double final_mde = mde->eval(x);
+  double final_objective = mde->eval(x);
   
   cout << " -- Single-number statistics" << endl;
-  cout << "Final MDE: " << final_mde << endl;
+  cout << "Final objective: " << final_objective << endl;
   cout << "Count: " << count << endl;
   cout << "==============================" << endl;
 
-  // TODO: Add better conditions for alignment success.
-  if(count < 20000 || final_mde > 0.5) {
-    ROS_WARN("Alignment finished but did not pass success conditions.");
+  if(validate(count, final_objective)) {
+    *f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
+    return true;
+  }
+  else
+    return false;
+}
+
+bool FrameAligner::validate(double count, double final_objective) const
+{
+  if(count < 20000 || final_objective > 0.5) {
+    ROS_WARN("Alignment finished but was not considered successful..");
     return false;
   }
-
-  *f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
+  
+  // if(final_objective > 0.04) {
+  //   ROS_WARN("Alignment finished but was not considered successful..");
+  //   return false;
+  // }
+  
   return true;
 }
 
-bool FrameAligner::confidentAlign(rgbd::Frame frame0, rgbd::Frame frame1,
-				  const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1, 
-				  const Eigen::Affine3d& guess,
-				  Eigen::Affine3d* f0_to_f1) const
+bool FrameAligner::narrowGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
+				    const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1, 
+				    const Eigen::Affine3d& guess,
+				    Eigen::Affine3d* f0_to_f1) const
 {
-  ROS_DEBUG("FrameAligner::confidentAlign");
+  ROS_DEBUG("FrameAligner::narrowGridSearch");
   // -- Run grid search.
   ScopedTimer st("FrameAligner::align");
   FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, max_range_, 0.25));
@@ -129,21 +148,19 @@ bool FrameAligner::confidentAlign(rgbd::Frame frame0, rgbd::Frame frame1,
 
   double count;
   mde->count_ = &count;
-  double final_mde = mde->eval(x);
+  double final_objective = mde->eval(x);
   
   cout << " -- Single-number statistics" << endl;
-  cout << "Final MDE: " << final_mde << endl;
+  cout << "Final objective: " << final_objective << endl;
   cout << "Count: " << count << endl;
   cout << "==============================" << endl;
 
-  // TODO: Add better conditions for alignment success.
-  if(count < 20000 || final_mde > 0.5) {
-    ROS_WARN("Alignment finished but did not pass success conditions.");
-    return false;
+  if(validate(count, final_objective)) {
+    *f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
+    return true;
   }
-  
-  *f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
-  return true;
+  else
+    return false;
 }
 
 bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
@@ -371,3 +388,36 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
     return false;
 }
 
+
+FrameAlignmentVisualizer::FrameAlignmentVisualizer(rgbd::Cloud::Ptr cloud0, rgbd::Cloud::Ptr cloud1) :
+						   
+  cloud0_(cloud0),
+  cloud1_(cloud1),
+  needs_update_(false)
+{
+}
+
+void FrameAlignmentVisualizer::handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective) const
+{
+  cout << "Grid search improvement: " << objective << " at x = " << x.transpose() << endl;
+  scopeLockWrite;
+  f0_to_f1_ = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5));
+  needs_update_ = true;  
+}
+
+void FrameAlignmentVisualizer::_run()
+{
+  while(scopeLockRead, !quitting_) {
+    usleep(1e3);
+    lockWrite();
+    if(needs_update_) {
+      Cloud::Ptr pcd(new Cloud);
+      pcl::transformPointCloud(*cloud0_, *pcd, f0_to_f1_);
+      *pcd += *cloud1_;
+      if(!vis_.updatePointCloud(pcd, "default"))
+	vis_.addPointCloud(pcd, "default");
+    }
+    vis_.spinOnce(3);
+    unlockWrite();
+  }
+}

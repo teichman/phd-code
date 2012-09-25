@@ -53,35 +53,38 @@ void PrimeSenseSlam::_run()
     
     // -- Try to find link to most recent previous frame.
     //    Tries a wider search if not enough corresponding points to get a rough initial transform.
+    ROS_DEBUG_STREAM("Computing frame alignment between " << prev_idx << " and " << curr_idx);
     ROS_ASSERT(keypoint_cache_.count(prev_idx));
     ROS_ASSERT(feature_cache_.count(prev_idx));
     Affine3d curr_to_prev;
-    bool found = aligner.align(curr_frame, prev_frame,
-			       curr_keypoints, keypoint_cache_[prev_idx],
-			       curr_features, feature_cache_[prev_idx],
-			       true, &curr_to_prev);
+    // bool found = aligner.align(curr_frame, prev_frame,
+    // 			       curr_keypoints, keypoint_cache_[prev_idx],
+    // 			       curr_features, feature_cache_[prev_idx],
+    // 			       true, &curr_to_prev);
+    bool found = aligner.align(curr_frame, prev_frame, &curr_to_prev);
     if(found) {
       cout << "Added edge " << prev_idx << " -- " << curr_idx << endl;
       pgs_->addEdge(prev_idx, curr_idx, curr_to_prev, covariance);
     }
 
     // -- Try to find loop closure links to some previous frames.
-    for(size_t i = 0; i < cached_frames_.size() - 1; i += loopclosure_step_) {
+    for(size_t i = 0; i < (size_t)max<int>(0, (int)cached_frames_.size() - 2); i += loopclosure_step_) {
       size_t idx = cached_frames_[i];
-      cout << "Checking for loop closure between " << idx << " and " << curr_idx << endl;
+      ROS_DEBUG_STREAM("Checking for loop closure between " << idx << " and " << curr_idx);
       Frame old_frame;
       sseq_->readFrame(idx, &old_frame);
 
       ROS_ASSERT(keypoint_cache_.count(idx));
       ROS_ASSERT(feature_cache_.count(idx));
       Affine3d curr_to_old;
-      bool found = aligner.align(curr_frame, old_frame,
-				 curr_keypoints, keypoint_cache_[idx],
-				 curr_features, feature_cache_[idx],
-				 false, &curr_to_old);
+      // bool found = aligner.align(curr_frame, old_frame,
+      // 				 curr_keypoints, keypoint_cache_[idx],
+      // 				 curr_features, feature_cache_[idx],
+      // 				 false, &curr_to_old);
+      bool found = aligner.align(curr_frame, old_frame, &curr_to_old);
       if(found) {
-	cout << "Added edge " << idx << " -- " << curr_idx << endl;
-	pgs_->addEdge(idx, curr_idx, curr_to_old, covariance);
+    	cout << "Added edge " << idx << " -- " << curr_idx << endl;
+    	pgs_->addEdge(idx, curr_idx, curr_to_old, covariance);
       }
     }
   }
