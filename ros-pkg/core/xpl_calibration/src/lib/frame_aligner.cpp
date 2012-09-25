@@ -70,7 +70,7 @@ bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   gs.objective_ = mde;
   gs.num_scalings_ = 12;
   double max_res_rot = 1.5 * M_PI / 180.0;
-  double max_res_trans = 0.05;
+  double max_res_trans = 0.1;
   gs.max_resolutions_ << max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;
   int gr = 2;
   gs.grid_radii_ << gr, gr, gr, gr, gr, gr;
@@ -131,13 +131,13 @@ bool FrameAligner::narrowGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   gs.verbose_ = false;
   gs.view_handler_ = view_handler_;
   gs.objective_ = mde;
-  gs.num_scalings_ = 5;
+  gs.num_scalings_ = 12;
   double max_res_rot = 1.5 * M_PI / 180.0;
-  double max_res_trans = 0.05;
+  double max_res_trans = 0.10;
   gs.max_resolutions_ << max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;
-  int gr = 1;
+  int gr = 2;
   gs.grid_radii_ << gr, gr, gr, gr, gr, gr;
-  double sf = 0.5;
+  double sf = 0.75;
   gs.scale_factors_ << sf, sf, sf, sf, sf, sf;
   gs.couplings_ << 0, 1, 2, 1, 0, 3;  // Search over (pitch, y) and (yaw, x) jointly.
   //Convert guess to XYZRPY
