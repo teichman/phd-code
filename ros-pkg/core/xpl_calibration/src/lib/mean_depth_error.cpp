@@ -164,9 +164,17 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   }
 
   //cout << "Num correspondences used for keypoint error: " << keypoint_error_count << ", Keypoint error: " << keypoint_error << endl;
-  val = 0.01 * keypoint_error;
+  //val = 0.01 * keypoint_error;
   //val = depth_error + 0.0023 * color_error;
-  //val = depth_error + 0.0023 * color_error + 0.01 * keypoint_error;  // Color error term has a per-pixel max of 441.
+
+  // Color error term has a per-pixel max of 441.
+  // Keypoint error is hinged at 50.  It's probably a bit weaker than the 3D data, though, so we want it
+  // to just nudge things when the 3D doesn't really have a preference.
+  double depth_term = depth_error;
+  double color_term = 0.000115 * color_error;
+  double keypoint_term = 0.005 * keypoint_error;
+  val = depth_term + color_term + keypoint_term;
+  //cout << "Depth: " << depth_term << ", color: " << color_term << ", keypoint: " << keypoint_term << ", total: " << val << endl;
 
   return val;
 }

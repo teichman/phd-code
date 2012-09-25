@@ -105,7 +105,7 @@ bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
 
 bool FrameAligner::validate(double count, double final_objective) const
 {
-  if(count < 20000 || final_objective > 0.5) {
+  if(count < 20000 || final_objective > 0.2) {
     ROS_WARN("Alignment finished but was not considered successful..");
     return false;
   }
