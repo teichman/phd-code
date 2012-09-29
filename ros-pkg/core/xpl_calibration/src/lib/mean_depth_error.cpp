@@ -171,10 +171,11 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   // Keypoint error is hinged at 50.  It's probably a bit weaker than the 3D data, though, so we want it
   // to just nudge things when the 3D doesn't really have a preference.
   double depth_term = depth_error;
-  double color_term = 0.000115 * color_error;
-  double keypoint_term = 0.005 * keypoint_error;
+  double color_term = 0.00115 * color_error;
+  //double keypoint_term = 0.005 * keypoint_error;
+  double keypoint_term = 0.0;
   val = depth_term + color_term + keypoint_term;
-  //cout << "Depth: " << depth_term << ", color: " << color_term << ", keypoint: " << keypoint_term << ", total: " << val << endl;
+  //cout << "Depth fraction: " << depth_term / val << ", color fraction: " << color_term / val << ", keypoint fraction: " << keypoint_term / val << endl;
 
   return val;
 }
