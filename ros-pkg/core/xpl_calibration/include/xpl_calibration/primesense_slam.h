@@ -24,7 +24,8 @@ public:
   double min_dt_;
   //! Used in generating the final saved map and in frame alignment.
   double max_range_;
-  size_t loopclosure_step_;
+  //! Max number per frame to use.  Selected in random order.
+  size_t max_loopclosures_;
   int keypoints_per_frame_;
   
   // -- Outputs

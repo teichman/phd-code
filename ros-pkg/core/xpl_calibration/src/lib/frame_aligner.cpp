@@ -461,6 +461,7 @@ void FrameAlignmentVisualizer::_run()
       *pcd += *cloud1_;
       if(!vis_.updatePointCloud(pcd, "default"))
 	vis_.addPointCloud(pcd, "default");
+      needs_update_ = false;
     }
     vis_.spinOnce(2);
     ROS_ASSERT(foo_);
