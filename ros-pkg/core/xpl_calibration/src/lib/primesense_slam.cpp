@@ -75,11 +75,14 @@ void PrimeSenseSlam::_run()
 
     // -- Try to find loop closure links to some previous frames.
     vector<size_t> cached_frames_random;
-    ROS_ASSERT(cached_frames_.back() == curr_idx);
-    ROS_ASSERT(cached_frames_[cached_frames_.size() - 2] == prev_idx);
+    ROS_ASSERT(!cached_frames_.empty() && cached_frames_.back() == curr_idx);
+    if(cached_frames_.size() > 1)
+      ROS_ASSERT(cached_frames_[cached_frames_.size() - 2] == prev_idx);
     cached_frames_random.insert(cached_frames_random.end(), cached_frames_.begin(), cached_frames_.end() - 2);
-    ROS_ASSERT(cached_frames_random.back() != curr_idx);
-    ROS_ASSERT(cached_frames_random.back() != prev_idx);
+    if(!cached_frames_random.empty()) {
+      ROS_ASSERT(cached_frames_random.back() != curr_idx);
+      ROS_ASSERT(cached_frames_random.back() != prev_idx);
+    }
     random_shuffle(cached_frames_random.begin(), cached_frames_random.end());
     size_t num_successful_loopclosures = 0;
     for(size_t i = 0; i < cached_frames_random.size(); ++i) {

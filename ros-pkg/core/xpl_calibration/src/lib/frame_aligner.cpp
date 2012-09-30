@@ -15,7 +15,7 @@ FrameAligner::FrameAligner(const rgbd::PrimeSenseModel& model0,
   min_pairwise_keypoint_dist_(0.04),
   ransac_max_inlier_dist_(0.02),
   min_ransac_inlier_percent_(0.1),
-  min_bounding_length_(.1),  
+  min_bounding_length_(.5),  
   max_range_(max_range),
   model0_(model0),
   model1_(model1)
@@ -37,7 +37,9 @@ bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
   Affine3d guess;
   vector<cv::Point2d> correspondences0, correspondences1;
   bool found_rough_transform = computeRoughTransform(frame0, frame1, keypoints0, keypoints1, features0, features1, &correspondences0, &correspondences1, &guess);
-  if(view_handler_) {
+
+  // -- Visualize the initial rough transform.
+  if(found_rough_transform && view_handler_) {
     double rx, ry, rz, tx, ty, tz;
     generateXYZYPR(guess.cast<float>(), rx, ry, rz, tx, ty, tz);
     Eigen::ArrayXd x(6); x << rx, ry, rz, tx, ty, tz;
@@ -364,14 +366,50 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
       continue;
     }
 
-    //Check bounding volume
-    int has_x = (maxx - minx) > min_bounding_length_;
-    int has_y = (maxy - miny) > min_bounding_length_;
-    int has_z = (maxz - minz) > min_bounding_length_;
-    if(has_x + has_y + has_z < 2)
-    {
-      continue;
+    // -- Do PCA check.
+    Vector3d mean = Vector3d::Zero();
+    for(size_t i = 0; i < transformed_keypoint_cloud1.size(); ++i)
+      mean += transformed_keypoint_cloud1[i].getVector3fMap().cast<double>();
+    mean /= (double)transformed_keypoint_cloud1.size();
+    Matrix3d xxt = Matrix3d::Zero();
+    for(size_t i = 0; i < transformed_keypoint_cloud1.size(); ++i) {
+      Vector3d pt = transformed_keypoint_cloud1[i].getVector3fMap().cast<double>() - mean;
+      xxt += pt * pt.transpose();
     }
+    xxt /= (double)transformed_keypoint_cloud1.size();
+    Eigen::JacobiSVD<Matrix3d> svd(xxt, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Matrix3d U = svd.matrixU();
+    bool passed_pca = true;
+    for(int i = 0; i < U.cols(); ++i) {
+      Vector3d vec = U.col(i);
+      double maxval = -numeric_limits<double>::max();
+      double minval = numeric_limits<double>::max();
+      for(size_t k = 0; k < transformed_keypoint_cloud1.size(); ++k) {
+	Vector3d pt = transformed_keypoint_cloud1[k].getVector3fMap().cast<double>() - mean;
+	double val = vec.dot(pt);
+	maxval = max(val, maxval);
+	minval = min(val, minval);
+      }
+      if(maxval - minval < min_bounding_length_) {
+	// ROS_WARN_STREAM("Rejecting this hypothesized transform due to PCA check.");
+	// ROS_WARN_STREAM("Extremal values of " << minval << " to " << maxval);
+	// ROS_WARN_STREAM("Distance of " << maxval - minval << " along principal component " << i << ", " << vec.transpose());
+	// ROS_WARN_STREAM("Num pts: " << transformed_keypoint_cloud1.size());
+	passed_pca = false;
+      }
+    }
+    if(!passed_pca)
+      continue;
+            
+    
+    //Check bounding volume
+    // int has_x = (maxx - minx) > min_bounding_length_;
+    // int has_y = (maxy - miny) > min_bounding_length_;
+    // int has_z = (maxz - minz) > min_bounding_length_;
+    // if(has_x + has_y + has_z < 2)
+    // {
+    //   continue;
+    // }
     
     // Consider this transform
     // inlier_distance /= num_inliers; //Average out
