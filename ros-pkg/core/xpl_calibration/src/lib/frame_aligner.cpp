@@ -13,11 +13,11 @@ FrameAligner::FrameAligner(const rgbd::PrimeSenseModel& model0,
   num_ransac_samples_(1000),
   k_(2),
   max_feature_dist_(300),
-  min_ransac_inliers_(10),
-  min_pairwise_keypoint_dist_(0.04),
-  ransac_max_inlier_dist_(0.02),
-  min_ransac_inlier_percent_(0.1),
-  min_bounding_length_(.1),  
+  min_ransac_inliers_(20),
+  min_pairwise_keypoint_dist_(0.25),
+  ransac_max_inlier_dist_(0.05),
+  min_ransac_inlier_percent_(0.5),
+  min_bounding_length_(.5),  
   max_range_(max_range),
   model0_(model0),
   model1_(model1)
@@ -39,8 +39,10 @@ bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
   Affine3d guess;
   vector<cv::Point2d> correspondences0, correspondences1;
   bool found_rough_transform = computeRoughTransform(frame0, frame1, keypoints0, keypoints1, features0, features1, &correspondences0, &correspondences1, &guess);
+
+  // -- Visualize the initial rough transform.
 #ifdef VISUALIZE
-  if(view_handler_) {
+  if(found_rough_transform && view_handler_) {
     double rx, ry, rz, tx, ty, tz;
     generateXYZYPR(guess.cast<float>(), rx, ry, rz, tx, ty, tz);
     Eigen::ArrayXd x(6); x << rx, ry, rz, tx, ty, tz;
@@ -74,7 +76,7 @@ bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   gs.objective_ = mde;
   gs.num_scalings_ = 12;
   double max_res_rot = 1.5 * M_PI / 180.0;
-  double max_res_trans = 0.05;
+  double max_res_trans = 0.1;
   gs.max_resolutions_ << max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;
   int gr = 2;
   gs.grid_radii_ << gr, gr, gr, gr, gr, gr;
@@ -135,13 +137,13 @@ bool FrameAligner::narrowGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   gs.verbose_ = false;
   gs.view_handler_ = view_handler_;
   gs.objective_ = mde;
-  gs.num_scalings_ = 5;
+  gs.num_scalings_ = 12;
   double max_res_rot = 1.5 * M_PI / 180.0;
-  double max_res_trans = 0.05;
+  double max_res_trans = 0.10;
   gs.max_resolutions_ << max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;
-  int gr = 1;
+  int gr = 2;
   gs.grid_radii_ << gr, gr, gr, gr, gr, gr;
-  double sf = 0.5;
+  double sf = 0.75;
   gs.scale_factors_ << sf, sf, sf, sf, sf, sf;
   gs.couplings_ << 0, 1, 2, 1, 0, 3;  // Search over (pitch, y) and (yaw, x) jointly.
   //Convert guess to XYZRPY
@@ -366,14 +368,54 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
       continue;
     }
 
-    //Check bounding volume
-    int has_x = (maxx - minx) > min_bounding_length_;
-    int has_y = (maxy - miny) > min_bounding_length_;
-    int has_z = (maxz - minz) > min_bounding_length_;
-    if(has_x + has_y + has_z < 2)
-    {
-      continue;
+    // -- Do PCA check.
+    Vector3d mean = Vector3d::Zero();
+    for(size_t i = 0; i < transformed_keypoint_cloud1.size(); ++i)
+      mean += transformed_keypoint_cloud1[i].getVector3fMap().cast<double>();
+    mean /= (double)transformed_keypoint_cloud1.size();
+    Matrix3d xxt = Matrix3d::Zero();
+    for(size_t i = 0; i < transformed_keypoint_cloud1.size(); ++i) {
+      Vector3d pt = transformed_keypoint_cloud1[i].getVector3fMap().cast<double>() - mean;
+      xxt += pt * pt.transpose();
     }
+    xxt /= (double)transformed_keypoint_cloud1.size();
+    Eigen::JacobiSVD<Matrix3d> svd(xxt, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    Matrix3d U = svd.matrixU();
+    bool passed_pca = true;
+    // Only check for variation in the first two principal components.
+    // It's ok to have lots of points defining a plane; the problem is when they're all on
+    // a line.
+    for(int i = 0; i < U.cols() - 1; ++i) {
+      Vector3d vec = U.col(i);
+      double maxval = -numeric_limits<double>::max();
+      double minval = numeric_limits<double>::max();
+      for(size_t k = 0; k < transformed_keypoint_cloud1.size(); ++k) {
+	Vector3d pt = transformed_keypoint_cloud1[k].getVector3fMap().cast<double>() - mean;
+	double val = vec.dot(pt);
+	maxval = max(val, maxval);
+	minval = min(val, minval);
+      }
+      if(maxval - minval < min_bounding_length_) {
+	// ROS_WARN_STREAM("Rejecting this hypothesized transform due to PCA check.");
+	// ROS_WARN_STREAM("Extremal values of " << minval << " to " << maxval);
+	// ROS_WARN_STREAM("Distance of " << maxval - minval << " along principal component " << i << ", " << vec.transpose());
+	// ROS_WARN_STREAM("Num pts: " << transformed_keypoint_cloud1.size());
+	passed_pca = false;
+      }
+      //ROS_DEBUG_STREAM("Distance of " << maxval - minval << " along principal component " << i << ", " << vec.transpose());
+    }
+    if(!passed_pca)
+      continue;
+            
+    
+    //Check bounding volume
+    // int has_x = (maxx - minx) > min_bounding_length_;
+    // int has_y = (maxy - miny) > min_bounding_length_;
+    // int has_z = (maxz - minz) > min_bounding_length_;
+    // if(has_x + has_y + has_z < 2)
+    // {
+    //   continue;
+    // }
     
     // Consider this transform
     // inlier_distance /= num_inliers; //Average out
@@ -463,6 +505,7 @@ void FrameAlignmentVisualizer::_run()
       *pcd += *cloud1_;
       if(!vis_.updatePointCloud(pcd, "default"))
 	vis_.addPointCloud(pcd, "default");
+      needs_update_ = false;
     }
     vis_.spinOnce(2);
     ROS_ASSERT(foo_);

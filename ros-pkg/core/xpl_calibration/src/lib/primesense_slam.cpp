@@ -10,14 +10,15 @@ PrimeSenseSlam::PrimeSenseSlam() :
   fav_(NULL),
   min_dt_(0.2),
   max_range_(3.5),
-  loopclosure_step_(5),
+  max_loopclosures_(1),
   keypoints_per_frame_(100)
 {
 }
 
 void PrimeSenseSlam::_run()
 {
-  FrameAligner aligner(sseq_->model_, sseq_->model_, max_range_);
+  //FrameAligner aligner(sseq_->model_, sseq_->model_, max_range_);
+  FrameAligner aligner(sseq_->model_, sseq_->model_, 10.0);
 #ifdef VISUALIZE
   if(fav_)
     aligner.view_handler_ = fav_;
@@ -31,9 +32,8 @@ void PrimeSenseSlam::_run()
   size_t prev_idx;
   sseq_->readFrame(0, &curr_frame);
   size_t curr_idx = 0;
-  // Cache the features for the first frame.
   vector<cv::KeyPoint> unused;
-  getFeatures(curr_frame, curr_idx, unused);
+  cacheFeatures(curr_frame, curr_idx, unused);
   while(true) {
     // -- Find the next frame to use.
     prev_frame = curr_frame;
@@ -57,7 +57,7 @@ void PrimeSenseSlam::_run()
     
     // -- Compute orb features for that frame.
     vector<cv::KeyPoint> curr_keypoints;
-    FeaturesPtr curr_features = getFeatures(curr_frame, curr_idx, curr_keypoints);
+    FeaturesPtr curr_features = cacheFeatures(curr_frame, curr_idx, curr_keypoints);
     
     // -- Try to find link to most recent previous frame.
     //    Tries a wider search if not enough corresponding points to get a rough initial transform.
@@ -78,8 +78,19 @@ void PrimeSenseSlam::_run()
     }
 
     // -- Try to find loop closure links to some previous frames.
-    for(size_t i = 0; i < (size_t)max<int>(0, (int)cached_frames_.size() - 2); i += loopclosure_step_) {
-      size_t idx = cached_frames_[i];
+    vector<size_t> cached_frames_random;
+    ROS_ASSERT(!cached_frames_.empty() && cached_frames_.back() == curr_idx);
+    if(cached_frames_.size() > 1)
+      ROS_ASSERT(cached_frames_[cached_frames_.size() - 2] == prev_idx);
+    cached_frames_random.insert(cached_frames_random.end(), cached_frames_.begin(), cached_frames_.end() - 2);
+    if(!cached_frames_random.empty()) {
+      ROS_ASSERT(cached_frames_random.back() != curr_idx);
+      ROS_ASSERT(cached_frames_random.back() != prev_idx);
+    }
+    random_shuffle(cached_frames_random.begin(), cached_frames_random.end());
+    size_t num_successful_loopclosures = 0;
+    for(size_t i = 0; i < cached_frames_random.size(); ++i) {
+      size_t idx = cached_frames_random[i];
       ROS_DEBUG_STREAM("Checking for loop closure between " << idx << " and " << curr_idx);
       Frame old_frame;
       sseq_->readFrame(idx, &old_frame);
@@ -97,6 +108,9 @@ void PrimeSenseSlam::_run()
       if(found) {
     	cout << "Added edge " << idx << " -- " << curr_idx << endl;
     	pgs_->addEdge(idx, curr_idx, curr_to_old, covariance);
+	++num_successful_loopclosures;
+	if(num_successful_loopclosures == max_loopclosures_)
+	  break;
       }
     }
   }
@@ -140,8 +154,17 @@ void PrimeSenseSlam::buildMap(const Trajectory& traj)
   }
 }
 
-PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::getFeatures(const rgbd::Frame &frame, 
-							size_t t, vector<cv::KeyPoint> &keypoints)
+PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::cacheFeatures(const rgbd::Frame &frame, 
+							  size_t t, vector<cv::KeyPoint> &keypoints)
+{
+  FeaturesPtr features = getFeatures(frame, keypoints);
+  keypoint_cache_[t] = keypoints;
+  feature_cache_[t] = features;
+  cached_frames_.push_back(t);
+  return features;
+}
+
+PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::getFeatures(const rgbd::Frame &frame, vector<cv::KeyPoint> &keypoints) const
 {
   cv::Mat1b img;
   cv::cvtColor(frame.img_, img, CV_BGR2GRAY);
@@ -156,9 +179,6 @@ PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::getFeatures(const rgbd::Frame &frame
     for(int j  = 0; j < cvfeat.cols; j++)
       (*features)(i,j) = cvfeat.at<uint8_t>(i,j);
   
-  keypoint_cache_[t] = keypoints;
-  feature_cache_[t] = features;
-  cached_frames_.push_back(t);
   return features;
 }
 

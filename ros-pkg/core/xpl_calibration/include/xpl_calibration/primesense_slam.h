@@ -24,7 +24,8 @@ public:
   double min_dt_;
   //! Used in generating the final saved map and in frame alignment.
   double max_range_;
-  size_t loopclosure_step_;
+  //! Max number per frame to use.  Selected in random order.
+  size_t max_loopclosures_;
   int keypoints_per_frame_;
   
   // -- Outputs
@@ -37,6 +38,7 @@ public:
   // -- Methods
   PrimeSenseSlam();
   void _run();
+  FeaturesPtr getFeatures(const rgbd::Frame &frame, std::vector<cv::KeyPoint> &keypoints) const;
 
 protected:
   std::map< size_t, std::vector<cv::KeyPoint> > keypoint_cache_;
@@ -44,8 +46,7 @@ protected:
   std::vector<size_t> cached_frames_;
 
   void buildMap(const Trajectory& traj);
-  //! Fills caches.
-  FeaturesPtr getFeatures(const rgbd::Frame &frame, size_t t, std::vector<cv::KeyPoint> &keypoints);
+  FeaturesPtr cacheFeatures(const rgbd::Frame &frame, size_t t, std::vector<cv::KeyPoint> &keypoints);
 };
 
 class SlamVisualizer : public Agent
