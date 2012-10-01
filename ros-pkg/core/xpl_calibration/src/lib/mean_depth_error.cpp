@@ -136,22 +136,22 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
 
   transformAndDecimate(pcd1_, f0_to_f1.inverse(), indices_, &transformed);
   meanDepthAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, max_range_);
-  keypointError(model0_, frame0_, correspondences0_, f0_to_f1, model1_, frame1_, correspondences1_, &keypoint_error, &keypoint_error_count);
+//  keypointError(model0_, frame0_, correspondences0_, f0_to_f1, model1_, frame1_, correspondences1_, &keypoint_error, &keypoint_error_count);
   
   transformAndDecimate(pcd0_, f0_to_f1, indices_, &transformed); 
   meanDepthAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, max_range_);
-  keypointError(model1_, frame1_, correspondences1_, f0_to_f1.inverse(), model0_, frame0_, correspondences0_, &keypoint_error, &keypoint_error_count);
+//  keypointError(model1_, frame1_, correspondences1_, f0_to_f1.inverse(), model0_, frame0_, correspondences0_, &keypoint_error, &keypoint_error_count);
 
   // Make count available to other users in single-threaded mode.
   if(count_)
     *count_ = count;
 
-  int min_correspondences = 20;
-  if(keypoint_error_count < min_correspondences) {
-    return numeric_limits<double>::max();
-  }
-  else
-    keypoint_error /= keypoint_error_count;
+  // int min_correspondences = 20;
+  // if(keypoint_error_count < min_correspondences) {
+  //   return numeric_limits<double>::max();
+  // }
+  // else
+  //   keypoint_error /= keypoint_error_count;
 
   double min_points = 100;
   if(count < min_points) {
