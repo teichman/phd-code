@@ -8,7 +8,7 @@ PrimeSenseSlam::PrimeSenseSlam() :
   fav_(NULL),
   min_dt_(0.2),
   max_range_(3.5),
-  max_loopclosures_(5),
+  max_loopclosures_(1),
   keypoints_per_frame_(100)
 {
 }
@@ -151,8 +151,17 @@ void PrimeSenseSlam::buildMap(const Trajectory& traj)
   }
 }
 
-PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::getFeatures(const rgbd::Frame &frame, 
-							size_t t, vector<cv::KeyPoint> &keypoints)
+PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::cacheFeatures(const rgbd::Frame &frame, 
+							  size_t t, vector<cv::KeyPoint> &keypoints)
+{
+  FeaturesPtr features = getFeatures(frame, keypoints);
+  keypoint_cache_[t] = keypoints;
+  feature_cache_[t] = features;
+  cached_frames_.push_back(t);
+  return features;
+}
+
+PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::getFeatures(const rgbd::Frame &frame, vector<cv::KeyPoint> &keypoints)
 {
   cv::Mat1b img;
   cv::cvtColor(frame.img_, img, CV_BGR2GRAY);
@@ -167,9 +176,6 @@ PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::getFeatures(const rgbd::Frame &frame
     for(int j  = 0; j < cvfeat.cols; j++)
       (*features)(i,j) = cvfeat.at<uint8_t>(i,j);
   
-  keypoint_cache_[t] = keypoints;
-  feature_cache_[t] = features;
-  cached_frames_.push_back(t);
   return features;
 }
 

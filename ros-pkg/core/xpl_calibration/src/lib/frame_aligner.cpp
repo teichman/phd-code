@@ -380,7 +380,10 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
     Eigen::JacobiSVD<Matrix3d> svd(xxt, Eigen::ComputeFullU | Eigen::ComputeFullV);
     Matrix3d U = svd.matrixU();
     bool passed_pca = true;
-    for(int i = 0; i < U.cols(); ++i) {
+    // Only check for variation in the first two principal components.
+    // It's ok to have lots of points defining a plane; the problem is when they're all on
+    // a line.
+    for(int i = 0; i < U.cols() - 1; ++i) {
       Vector3d vec = U.col(i);
       double maxval = -numeric_limits<double>::max();
       double minval = numeric_limits<double>::max();
@@ -397,6 +400,7 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
 	// ROS_WARN_STREAM("Num pts: " << transformed_keypoint_cloud1.size());
 	passed_pca = false;
       }
+      //ROS_DEBUG_STREAM("Distance of " << maxval - minval << " along principal component " << i << ", " << vec.transpose());
     }
     if(!passed_pca)
       continue;
