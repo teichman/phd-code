@@ -12,6 +12,7 @@ using namespace rgbd;
 void keypointError(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, const std::vector<cv::Point2d> correspondences0,
 		   const Eigen::Affine3f& f0_to_f1,
 		   const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1, const std::vector<cv::Point2d>& correspondences1,
+		   double keypoint_hinge,
 		   double* keypoint_error, double* keypoint_error_count)
 {
   ROS_ASSERT(correspondences0.size() == correspondences1.size());
@@ -67,20 +68,17 @@ void keypointError(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, cons
     Vector2d pp = p - (normal.dot(p) - b) / (normal.dot(normal)) * normal;
     //    cout << "fabs(normal.dot(pp) - b): " << fabs(normal.dot(pp) - b) << endl;
     ROS_ASSERT(fabs(normal.dot(pp) - b) < 1e-6);
-    *keypoint_error += min(50.0, fabs(normal.dot(p - pp)));
+    *keypoint_error += min(keypoint_hinge, fabs(normal.dot(p - pp)));
     //*keypoint_error += fabs(normal.dot(p - pp));
     ++(*keypoint_error_count);
   }
 }
 
-FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
+FrameAlignmentMDE::FrameAlignmentMDE(const pipeline::Params& params,
+				     const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
 				     rgbd::Frame frame0, rgbd::Frame frame1,
-				     const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1,
-				     double max_range, double fraction) :
-  max_range_(max_range),
-  depth_weight_(1),
-  color_weight_(0.00115 / 2.0),
-  keypoint_weight_(0),
+				     const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1) :
+  params_(params),
   count_(NULL),
   model0_(model0),
   model1_(model1),
@@ -97,8 +95,8 @@ FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, const 
   ROS_ASSERT(!model1_.hasDepthDistortionModel());
   ROS_ASSERT(correspondences0_.size() == correspondences1_.size());
 
-  model0_.frameToCloud(frame0_, &pcd0_, max_range_);
-  model1_.frameToCloud(frame1_, &pcd1_, max_range_);
+  model0_.frameToCloud(frame0_, &pcd0_, params_.get<double>("max_range"));
+  model1_.frameToCloud(frame1_, &pcd1_, params_.get<double>("max_range"));
   ROS_ASSERT(pcd0_.size() == pcd1_.size());
 
   
@@ -106,21 +104,21 @@ FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, const 
   // (Calling rand from multiple execution threads is a disaster)
   indices_.reserve(pcd0_.size());
   for(size_t i = 0; i < pcd0_.size(); ++i)
-    if((double)rand() / RAND_MAX <= fraction)
+    if((double)rand() / RAND_MAX <= params_.get<double>("fraction"))
       indices_.push_back(i);
 
-#ifdef VISUALIZE
-  cv::Mat3b vis0 = frame0.img_.clone();
-  cv::Mat3b vis1 = frame1.img_.clone();
-  for(size_t i = 0; i < correspondences0.size(); ++i) {
-    cv::Scalar color(rand() % 255, rand() % 255, rand() % 255);
-    cv::circle(vis0, correspondences0[i], 2, color, -1);
-    cv::circle(vis1, correspondences1[i], 2, color, -1);
-  }
-  cv::imshow("vis0", vis0);
-  cv::imshow("vis1", vis1);
-  cv::waitKey(5);
-#endif
+// #ifdef VISUALIZE
+//   cv::Mat3b vis0 = frame0.img_.clone();
+//   cv::Mat3b vis1 = frame1.img_.clone();
+//   for(size_t i = 0; i < correspondences0.size(); ++i) {
+//     cv::Scalar color(rand() % 255, rand() % 255, rand() % 255);
+//     cv::circle(vis0, correspondences0[i], 2, color, -1);
+//     cv::circle(vis1, correspondences1[i], 2, color, -1);
+//   }
+//   cv::imshow("vis0", vis0);
+//   cv::imshow("vis1", vis1);
+//   cv::waitKey(5);
+// #endif
 }
 
 double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
@@ -139,27 +137,28 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   Cloud transformed;
 
   transformAndDecimate(pcd1_, f0_to_f1.inverse(), indices_, &transformed);
-  //meanDepthAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, max_range_);
-  meanDepthMultiplierAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, max_range_);
-//  keypointError(model0_, frame0_, correspondences0_, f0_to_f1, model1_, frame1_, correspondences1_, &keypoint_error, &keypoint_error_count);
+  //meanDepthAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, params_.get<double>("max_range"));
+  meanDepthMultiplierAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, params_.get<double>("max_range"));
+  keypointError(model0_, frame0_, correspondences0_, f0_to_f1, model1_, frame1_, correspondences1_,
+		params_.get<double>("keypoint_hinge"), &keypoint_error, &keypoint_error_count);
   
   transformAndDecimate(pcd0_, f0_to_f1, indices_, &transformed); 
-  //meanDepthAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, max_range_);
-  meanDepthMultiplierAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, max_range_);
-//  keypointError(model1_, frame1_, correspondences1_, f0_to_f1.inverse(), model0_, frame0_, correspondences0_, &keypoint_error, &keypoint_error_count);
+  //meanDepthAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, params_.get<double>("max_range"));
+  meanDepthMultiplierAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, params_.get<double>("max_range"));
+  keypointError(model1_, frame1_, correspondences1_, f0_to_f1.inverse(), model0_, frame0_, correspondences0_,
+		params_.get<double>("keypoint_hinge"), &keypoint_error, &keypoint_error_count);
 
   // Make count available to other users in single-threaded mode.
   if(count_)
     *count_ = count;
 
-  if(keypoint_weight_ != 0)
-    ROS_WARN("Need to turn on keypoint_error_count check.");
-  // int min_correspondences = 20;
-  // if(keypoint_error_count < min_correspondences) {
-  //   return numeric_limits<double>::max();
-  // }
-  // else
-  //   keypoint_error /= keypoint_error_count;
+  int min_correspondences = 20;
+  if(keypoint_error_count < min_correspondences) {
+    ROS_WARN("Ignoring candidate alignment because of min_correspondences.");
+    return numeric_limits<double>::max();
+  }
+  else
+    keypoint_error /= keypoint_error_count;
 
   double min_points = 100;
   if(count < min_points) {
@@ -172,15 +171,13 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   }
 
   //cout << "Num correspondences used for keypoint error: " << keypoint_error_count << ", Keypoint error: " << keypoint_error << endl;
-  //val = 0.01 * keypoint_error;
-  //val = depth_error + 0.0023 * color_error;
 
   // Color error term has a per-pixel max of 441.
   // Keypoint error is hinged at 50.  It's probably a bit weaker than the 3D data, though, so we want it
   // to just nudge things when the 3D doesn't really have a preference.
-  double depth_term = depth_weight_ * depth_error;
-  double color_term = color_weight_ * color_error;
-  double keypoint_term = keypoint_weight_ * keypoint_error;
+  double depth_term = params_.get<double>("depth_weight") * depth_error;
+  double color_term = params_.get<double>("color_weight") * color_error;
+  double keypoint_term = params_.get<double>("keypoint_weight") * keypoint_error;
   val = depth_term + color_term + keypoint_term;
   //cout << "Depth fraction: " << depth_term / val << ", color fraction: " << color_term / val << ", keypoint fraction: " << keypoint_term / val << endl;
 

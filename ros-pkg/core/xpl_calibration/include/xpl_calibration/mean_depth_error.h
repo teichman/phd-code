@@ -1,6 +1,7 @@
 #ifndef MEAN_DEPTH_ERROR_H
 #define MEAN_DEPTH_ERROR_H
 
+#include <pipeline/params.h>
 #include <xpl_calibration/object_matching_calibrator.h>  // For generateTransform.
 #include <rgbd_sequence/primesense_model.h>
 
@@ -10,18 +11,15 @@ class FrameAlignmentMDE : public ScalarFunction
 public:
   typedef boost::shared_ptr<FrameAlignmentMDE> Ptr;
   typedef boost::shared_ptr<const FrameAlignmentMDE> ConstPtr;
-
-  double max_range_;
-  double depth_weight_;
-  double color_weight_;
-  double keypoint_weight_;
   
   //! fraction is how much of the depth data to use.
-  FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
+  //! Default params can come from FrameAligner::defaultParams().
+  FrameAlignmentMDE(const pipeline::Params& params,
+		    const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
 		    rgbd::Frame frame0, rgbd::Frame frame1,
 		    const std::vector<cv::Point2d>& correspondences0 = std::vector<cv::Point2d>(),
-		    const std::vector<cv::Point2d>& correspondences1 = std::vector<cv::Point2d>(),
-		    double max_range = 3.5, double fraction = 1.0);
+		    const std::vector<cv::Point2d>& correspondences1 = std::vector<cv::Point2d>());
+
   //! x = [rx, ry, rz, tx, ty, tz].
   double eval(const Eigen::VectorXd& x) const;
 
@@ -30,6 +28,7 @@ public:
   double *count_;
   
 protected:
+  pipeline::Params params_;
   rgbd::PrimeSenseModel model0_;
   rgbd::PrimeSenseModel model1_;
   rgbd::Frame frame0_;
@@ -106,6 +105,7 @@ void meanDepthMultiplierAndColorError(const rgbd::PrimeSenseModel& model,
 void keypointError(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, const std::vector<cv::Point2d> correspondences0,
 		   const Eigen::Affine3f& f0_to_f1,
 		   const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1, const std::vector<cv::Point2d>& correspondences1,
+		   double keypoint_hinge,
 		   double* keypoint_error, double* keypoint_error_count);
 
 #endif // MEAN_DEPTH_ERROR_H
