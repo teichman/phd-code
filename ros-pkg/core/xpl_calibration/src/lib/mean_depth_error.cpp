@@ -136,11 +136,13 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   Cloud transformed;
 
   transformAndDecimate(pcd1_, f0_to_f1.inverse(), indices_, &transformed);
-  meanDepthAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, max_range_);
+  //meanDepthAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, max_range_);
+  meanDepthMultiplierAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, max_range_);
 //  keypointError(model0_, frame0_, correspondences0_, f0_to_f1, model1_, frame1_, correspondences1_, &keypoint_error, &keypoint_error_count);
   
   transformAndDecimate(pcd0_, f0_to_f1, indices_, &transformed); 
-  meanDepthAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, max_range_);
+  //meanDepthAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, max_range_);
+  meanDepthMultiplierAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, max_range_);
 //  keypointError(model1_, frame1_, correspondences1_, f0_to_f1.inverse(), model0_, frame0_, correspondences0_, &keypoint_error, &keypoint_error_count);
 
   // Make count available to other users in single-threaded mode.
@@ -415,7 +417,7 @@ void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
 
       // -- Count up z error.
       depth_error_mm += fabs(z - gtz);
-
+      
       // -- Count up color error.
       cv::Vec3b gtc = gt.img_(ppt.v_, ppt.u_);
       cv::Vec3b c = frame.img_(ppt.v_, ppt.u_);
@@ -428,6 +430,68 @@ void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
     }
   }
   *depth_error += depth_error_mm * 0.001;
+  *color_error += local_color_error;
+  
+#ifdef TIMING
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+#endif 
+}
+
+void meanDepthMultiplierAndColorError(const rgbd::PrimeSenseModel& model,
+				      Frame frame, const rgbd::Cloud& pcd,
+				      double* depth_error, double* color_error,
+				      double* count, double max_range)
+{
+  ROS_ASSERT(frame.depth_->rows() == model.height_);
+  ROS_ASSERT(frame.depth_->cols() == model.width_);
+  HighResTimer hrt;
+  
+  // -- Make the ground truth depth image.
+  hrt.reset("meanDepthError: cloudToFrame"); hrt.start();
+  Frame gt;
+  model.cloudToFrame(pcd, &gt);
+#ifdef TIMING
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+#endif 
+
+  // -- Count up mean depth error.
+  hrt.reset("meanDepthError: counting"); hrt.start();
+  ProjectivePoint ppt;
+  rgbd::Point pt;
+  rgbd::Point gtpt;
+  double max_range_mm = max_range * 1000;
+  double local_depth_error = 0;
+  double local_color_error = 0;
+
+  for(ppt.u_ = 0; ppt.u_ < gt.depth_->cols(); ++ppt.u_) {
+    for(ppt.v_ = 0; ppt.v_ < gt.depth_->rows(); ++ppt.v_) {
+      // -- Both ground truth and measurement must have data.
+      double gtz = gt.depth_->coeffRef(ppt.v_, ppt.u_);
+      if(gtz == 0)
+	continue;
+      double z = frame.depth_->coeffRef(ppt.v_, ppt.u_);
+      if(z == 0)
+	continue;
+      
+      // -- Ignore measured points beyond max_range.
+      if(z > max_range_mm)
+      	continue;
+
+      // -- Count up z error.
+      local_depth_error += fabs(1.0 - z / gtz);
+
+      // -- Count up color error.
+      cv::Vec3b gtc = gt.img_(ppt.v_, ppt.u_);
+      cv::Vec3b c = frame.img_(ppt.v_, ppt.u_);
+      local_color_error += sqrt((gtc[0] - c[0]) * (gtc[0] - c[0]) +
+      				(gtc[1] - c[1]) * (gtc[1] - c[1]) +
+      				(gtc[2] - c[2]) * (gtc[2] - c[2]));
+      //local_color_error += fabs((double)gtc[0] - c[0]) + fabs((double)gtc[1] - c[1]) + fabs((double)gtc[2] - c[2]);
+	      
+      ++(*count);
+    }
+  }
+  *depth_error += local_depth_error;
   *color_error += local_color_error;
   
 #ifdef TIMING

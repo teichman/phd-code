@@ -1,3 +1,4 @@
+#include <boost/program_options.hpp>
 #include <xpl_calibration/primesense_slam.h>
 
 using namespace std;
@@ -17,6 +18,7 @@ int main(int argc, char** argv)
     ("frame0", bpo::value<int>()->required(), "")
     ("frame1", bpo::value<int>()->required(), "")
     ("consider-wide-search", "")
+    ("max-range", bpo::value<double>()->default_value(10), "")
     ;
 
   p.add("sseq", 1).add("frame0", 1).add("frame1", 1);
@@ -37,21 +39,36 @@ int main(int argc, char** argv)
   StreamSequence::Ptr sseq(new StreamSequence);
   sseq->load(opts["sseq"].as<string>());
   
-  FrameAligner aligner(sseq->model_, sseq->model_, 10.0);
+  FrameAligner aligner(sseq->model_, sseq->model_, opts["max-range"].as<double>());
   FrameAlignmentVisualizer fav(sseq->model_, sseq->model_);
-  aligner.view_handler_ = &fav_;
+  aligner.view_handler_ = &fav;
   Frame frame0, frame1;
-
+  sseq->readFrame(opts["frame0"].as<int>(), &frame0);
+  sseq->readFrame(opts["frame1"].as<int>(), &frame1);
+  fav.setFrames(frame0, frame1);
+    
   vector<cv::KeyPoint> keypoints0, keypoints1;
-  PrimeSenseSlam::FeaturesPtr features0 = PrimeSenseSlam::getFeatures(frame0, &keypoints0);
-  PrimeSenseSlam::FeaturesPtr features1 = PrimeSenseSlam::getFeatures(frame1, &keypoints1);
+  PrimeSenseSlam pss;
+  PrimeSenseSlam::FeaturesPtr features0 = pss.getFeatures(frame0, keypoints0);
+  PrimeSenseSlam::FeaturesPtr features1 = pss.getFeatures(frame1, keypoints1);
+
+  Affine3d f0_to_f1;
+  // bool found = aligner.align(frame0, frame1,
+  // 			     keypoints0, keypoints1,
+  // 			     features0, features1,
+  // 			     (bool)opts.count("consider-wide-search"), &f0_to_f1);
+  ThreadPtr alignment_thread(new boost::thread(boost::bind(&FrameAligner::align, &aligner, frame0, frame1,
+							   keypoints0, keypoints1,
+							   features0, features1,
+							   (bool)opts.count("consider-wide-search"), &f0_to_f1)));
   
-  Affine3d f1_to_f0;
-  bool found = aligner.align(frame1, frame0,
-			     keypoints1, keypoints0,
-			     features1, features0,
-			     (bool)opts.count("consider-wide-search"), &f1_to_f0);
-  cout << "Alignment considered successful: " << found << endl;
+  fav.run();
+  alignment_thread->join();
+
+  cout << "Save alignment? (y / n): ";
+  string input;
+  cin >> input;
+  cout << endl << input << endl;
   
   return 0;
 }

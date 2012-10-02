@@ -95,6 +95,11 @@ void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
 			    double* depth_error, double* color_error, double* count,
 			    double max_range = std::numeric_limits<double>::max());
 
+void meanDepthMultiplierAndColorError(const rgbd::PrimeSenseModel& model,
+				      rgbd::Frame frame, const rgbd::Cloud& pcd,
+				      double* depth_error, double* color_error, double* count,
+				      double max_range = std::numeric_limits<double>::max());
+
 void keypointError(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, const std::vector<cv::Point2d> correspondences0,
 		   const Eigen::Affine3f& f0_to_f1,
 		   const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1, const std::vector<cv::Point2d>& correspondences1,

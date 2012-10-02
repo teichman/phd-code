@@ -49,7 +49,8 @@ bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
     FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, max_range_, 0.25));
     view_handler_->handleGridSearchUpdate(x, mde->eval(x));
     cout << "^^^^ Objective with initial transform from feature matching." << endl;
-    //cv::waitKey();
+    if(getenv("PAUSE_ON_ROUGH_TRANSFORM"))
+      cv::waitKey();
   }
 #endif
   

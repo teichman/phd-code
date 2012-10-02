@@ -126,3 +126,7 @@ target_link_libraries(primesense_slam ${PROJECT_NAME})
 rosbuild_add_executable(inspect_pose_graph src/prog/inspect_pose_graph.cpp)
 rosbuild_link_boost(inspect_pose_graph program_options filesystem)
 target_link_libraries(inspect_pose_graph ${PROJECT_NAME})
+
+rosbuild_add_executable(visualize_frame_alignment src/prog/visualize_frame_alignment.cpp)
+rosbuild_link_boost(visualize_frame_alignment program_options filesystem)
+target_link_libraries(visualize_frame_alignment ${PROJECT_NAME})
