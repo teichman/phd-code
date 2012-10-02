@@ -36,9 +36,11 @@ public:
   GridSearchViewHandler* view_handler_;
 
   pipeline::Params params_;
-  static inline pipeline::Params FrameAligner::defaultParams()
+  static inline pipeline::Params defaultParams()
   {
     pipeline::Params params;
+
+    // Feature matching params
     params.set<int>("num_ransac_samples", 1000);
     params.set<int>("k", 2);
     params.set<double>("max_feature_dist", 300);
@@ -47,7 +49,11 @@ public:
     params.set<double>("ransac_max_inlier_dist", 0.05);
     params.set<double>("min_ransac_inlier_percent", 0.5);
     params.set<double>("min_bounding_length", 0.5);
+
+    // Frame alignment params
     params.set<double>("max_range", 10.0);
+    params.set<double>("fraction", 0.25);
+    
     return params;
   }
   
