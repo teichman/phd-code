@@ -18,6 +18,7 @@ pipeline::Params FrameAligner::defaultParams()
   params.set<double>("min_ransac_inlier_percent", 0.5);
   params.set<double>("min_bounding_length", 0.5);
   params.set<double>("max_range", 10.0);
+  params.set<double>("fraction", 0.25);
   return params;
 }
 
@@ -53,7 +54,7 @@ bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
     double rx, ry, rz, tx, ty, tz;
     generateXYZYPR(guess.cast<float>(), rx, ry, rz, tx, ty, tz);
     Eigen::ArrayXd x(6); x << rx, ry, rz, tx, ty, tz;
-    FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, params_.get<double>("max_range"), 0.25));
+    FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, params_.get<double>("max_range"), params_.get<double>("fraction")));
     view_handler_->handleGridSearchUpdate(x, mde->eval(x));
     cout << "^^^^ Objective with initial transform from feature matching." << endl;
     if(getenv("PAUSE_ON_ROUGH_TRANSFORM"))
@@ -77,7 +78,7 @@ bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   ROS_DEBUG("FrameAligner::wideGridSearch");
   // -- Run grid search.
   ScopedTimer st("FrameAligner::align");
-  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, params_.get<double>("max_range"), 0.25));
+  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, params_.get<double>("max_range"), params_.get<double>("fraction")));
   GridSearch gs(6);
   gs.verbose_ = false;
   gs.view_handler_ = view_handler_;
@@ -140,7 +141,7 @@ bool FrameAligner::narrowGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   ROS_DEBUG("FrameAligner::narrowGridSearch");
   // -- Run grid search.
   ScopedTimer st("FrameAligner::align");
-  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, params_.get<double>("max_range"), 0.25));
+  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, params_.get<double>("max_range"), params_.get<double>("fraction")));
   GridSearch gs(6);
   gs.verbose_ = false;
   gs.view_handler_ = view_handler_;
