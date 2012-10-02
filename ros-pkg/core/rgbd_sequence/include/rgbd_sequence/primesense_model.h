@@ -4,6 +4,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <serializable/serializable.h>
 #include <eigen_extensions/eigen_extensions.h>
 
@@ -38,7 +39,7 @@ namespace rgbd
     void deserialize(std::istream& in);
   };
   
-  class Frame
+  class Frame : public Serializable
   {
   public:
     DepthMatPtr depth_;
@@ -46,7 +47,9 @@ namespace rgbd
     double timestamp_;
 
     cv::Mat3b depthImage() const;
-
+    void serialize(std::ostream& out) const;
+    void deserialize(std::istream& in);
+    
   protected:
     cv::Vec3b colorize(double depth, double min_range, double max_range) const;
   };

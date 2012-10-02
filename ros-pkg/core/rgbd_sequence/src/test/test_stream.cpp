@@ -6,6 +6,26 @@
 using namespace std;
 using namespace rgbd;
 
+TEST(Frame, Serialization)
+{
+  StreamSequence sseq;
+  if(!getenv("TESTSEQ")) { 
+    cout << "TESTSEQ is not set.  Skipping." << endl;
+  }
+  else { 
+    sseq.load(getenv("TESTSEQ"));
+    Frame frame;
+    sseq.readFrame(5, &frame);
+    frame.save("testframe");
+    Frame frame2;
+    frame2.load("testframe");
+    EXPECT_TRUE(frame2.img_.rows == frame.img_.rows);
+    EXPECT_TRUE(frame2.depth_->coeffRef(13, 13) == frame.depth_->coeffRef(13, 13));
+    EXPECT_TRUE(frame2.timestamp_ == frame.timestamp_);
+    EXPECT_TRUE(frame2.img_(13, 13)[1] == frame2.img_(13, 13)[1]);
+  }
+}
+
 TEST(StreamSequence, loads)
 {
   StreamSequence sseq;

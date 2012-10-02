@@ -416,6 +416,31 @@ namespace rgbd
 	depth(y, x) = colorize(depth_->coeffRef(y, x) * 0.001, 0, 10);
     return depth;
   }
-  
+
+  void Frame::serialize(std::ostream& out) const
+  {
+    eigen_extensions::serializeScalar(timestamp_, out);
+    eigen_extensions::serialize(*depth_, out);
+
+    vector<uchar> buf;
+    cv::imencode(".png", img_, buf);
+    size_t num_bytes = buf.size();
+    out.write((const char*)&num_bytes, sizeof(num_bytes));
+    out.write((const char*)&buf[0], num_bytes * sizeof(uchar));
+  }
+
+  void Frame::deserialize(std::istream& in)
+  {
+    eigen_extensions::deserializeScalar(in, &timestamp_);
+    depth_ = DepthMatPtr(new DepthMat);
+    eigen_extensions::deserialize(in, depth_.get());
+
+    size_t num_bytes;
+    in.read((char*)&num_bytes, sizeof(num_bytes));
+    vector<uchar> buf(num_bytes);
+    in.read((char*)&buf[0], num_bytes * sizeof(uchar));
+    img_ = cv::imdecode(buf, 1);
+  }
+
 } // namespace rgbd
 

@@ -6,19 +6,26 @@ using namespace rgbd;
 
 #define VISUALIZE
 
+pipeline::Params FrameAligner::defaultParams()
+{
+  pipeline::Params params;
+  params.set<int>("num_ransac_samples", 1000);
+  params.set<int>("k", 2);
+  params.set<double>("max_feature_dist", 300);
+  params.set<int>("min_ransac_inliers", 20);
+  params.set<double>("min_pairwise_keypoint_dist", 0.25);
+  params.set<double>("ransac_max_inlier_dist", 0.05);
+  params.set<double>("min_ransac_inlier_percent", 0.5);
+  params.set<double>("min_bounding_length", 0.5);
+  params.set<double>("max_range", 10.0);
+  return params;
+}
+
 FrameAligner::FrameAligner(const rgbd::PrimeSenseModel& model0,
-			   const rgbd::PrimeSenseModel& model1,
-			   double max_range) :
+			   const rgbd::PrimeSenseModel& model1) :
+			   
   view_handler_(NULL),
-  num_ransac_samples_(1000),
-  k_(2),
-  max_feature_dist_(300),
-  min_ransac_inliers_(20),
-  min_pairwise_keypoint_dist_(0.25),
-  ransac_max_inlier_dist_(0.05),
-  min_ransac_inlier_percent_(0.5),
-  min_bounding_length_(.5),  
-  max_range_(max_range),
+  params_(defaultParams()),
   model0_(model0),
   model1_(model1)
 {
@@ -46,7 +53,7 @@ bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
     double rx, ry, rz, tx, ty, tz;
     generateXYZYPR(guess.cast<float>(), rx, ry, rz, tx, ty, tz);
     Eigen::ArrayXd x(6); x << rx, ry, rz, tx, ty, tz;
-    FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, max_range_, 0.25));
+    FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, params_.get<double>("max_range"), 0.25));
     view_handler_->handleGridSearchUpdate(x, mde->eval(x));
     cout << "^^^^ Objective with initial transform from feature matching." << endl;
     if(getenv("PAUSE_ON_ROUGH_TRANSFORM"))
@@ -70,7 +77,7 @@ bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   ROS_DEBUG("FrameAligner::wideGridSearch");
   // -- Run grid search.
   ScopedTimer st("FrameAligner::align");
-  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, max_range_, 0.25));
+  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, params_.get<double>("max_range"), 0.25));
   GridSearch gs(6);
   gs.verbose_ = false;
   gs.view_handler_ = view_handler_;
@@ -133,7 +140,7 @@ bool FrameAligner::narrowGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   ROS_DEBUG("FrameAligner::narrowGridSearch");
   // -- Run grid search.
   ScopedTimer st("FrameAligner::align");
-  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, max_range_, 0.25));
+  FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(model0_, model1_, frame0, frame1, correspondences0, correspondences1, params_.get<double>("max_range"), 0.25));
   GridSearch gs(6);
   gs.verbose_ = false;
   gs.view_handler_ = view_handler_;
@@ -187,19 +194,20 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
   correspondences0->clear();
   correspondences1->clear();
   
-  if(features0->rows < k_ || features1->rows < k_)
+  if(features0->rows < params_.get<int>("k") || features1->rows < params_.get<int>("k"))
     return false;
 
   cv::FlannBasedMatcher matcher;
   vector< vector<cv::DMatch> > matches_each;
   // TODO: Why was this inside a try / catch?
-  matcher.knnMatch(*features0, *features1, matches_each, k_);
+  matcher.knnMatch(*features0, *features1, matches_each, params_.get<int>("k"));
 
   // -- Get best correspondences for use in grid search and build up flat vector of all matches
   //    that meet our criteria.
   vector<cv::DMatch> matches;
   correspondences0->reserve(matches_each.size());
   correspondences1->reserve(matches_each.size());
+  double max_feature_dist = params_.get<double>("max_feature_dist");
   for(size_t j = 0; j < matches_each.size(); j++) {
     const vector<cv::DMatch>& mat = matches_each[j];
     if(mat.empty())
@@ -210,7 +218,7 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
       //cout << mat[k].distance << " ";
       if(mat[k].queryIdx < 0 || mat[k].trainIdx < 0)
 	continue;
-      if(mat[k].distance > max_feature_dist_)
+      if(mat[k].distance > max_feature_dist)
 	continue;
 
       // Make sure opencv is doing what we think it is.
@@ -235,7 +243,7 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
   }
 
   //Check that enough are matched
-  if(matches.size() < min_ransac_inliers_)
+  if(matches.size() < (size_t)params_.get<int>("min_ransac_inliers"))
     return false;
 
 #ifdef VISUALIZE
@@ -254,7 +262,10 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
 
   //From here the logic is more or less copied from orb_matcher
   vector<Eigen::Affine3f> candidates;
-  for(int j = 0; j < num_ransac_samples_; ++j)
+  int num_ransac_samples = params_.get<int>("num_ransac_samples");
+  double min_pairwise_keypoint_dist = params_.get<double>("min_pairwise_keypoint_dist");
+  double ransac_max_inlier_dist = params_.get<double>("ransac_max_inlier_dist");
+  for(int j = 0; j < num_ransac_samples; ++j)
   {
     //Sample 3 points in ref img and precompute their distances to each other
     const cv::DMatch &match0 = matches[rand() % matches.size()];
@@ -270,11 +281,11 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
     double d01 = pcl::euclideanDistance(r0, r1);
     double d02 = pcl::euclideanDistance(r0, r2);
     double d12 = pcl::euclideanDistance(r1, r2);
-    if(d01 < min_pairwise_keypoint_dist_)
+    if(d01 < min_pairwise_keypoint_dist)
       continue;
-    if(d02 < min_pairwise_keypoint_dist_)
+    if(d02 < min_pairwise_keypoint_dist)
       continue;
-    if(d12 < min_pairwise_keypoint_dist_)
+    if(d12 < min_pairwise_keypoint_dist)
       continue;
     //Get their corresponding matches
     int oidx0 = match0.trainIdx;
@@ -285,11 +296,11 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
     pcl::PointXYZRGB t2 = cloud1->at(keypoints1[oidx2].pt.x, keypoints1[oidx2].pt.y);
     ROS_ASSERT(isFinite(t0) && isFinite(t1) && isFinite(t2));
     //If the matches are too distant from themselves w.r.t the distance in the current frame, continue
-    if(fabs(pcl::euclideanDistance(t0, t1) - d01) > ransac_max_inlier_dist_)
+    if(fabs(pcl::euclideanDistance(t0, t1) - d01) > ransac_max_inlier_dist)
       continue;
-    if(fabs(pcl::euclideanDistance(t0, t2) - d02) > ransac_max_inlier_dist_)
+    if(fabs(pcl::euclideanDistance(t0, t2) - d02) > ransac_max_inlier_dist)
       continue;
-    if(fabs(pcl::euclideanDistance(t1, t2) - d12) > ransac_max_inlier_dist_)
+    if(fabs(pcl::euclideanDistance(t1, t2) - d12) > ransac_max_inlier_dist)
       continue;
     //Otherwise generate transformation from correspondence
     pcl::TransformationFromCorrespondences tfc;
@@ -348,7 +359,7 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
       indices.clear();
       distances.clear();
       kdtree0.nearestKSearch(transformed_keypoint_cloud1.points[k], 1, indices, distances);
-      if(distances.size() != 0 && distances[0] < ransac_max_inlier_dist_)
+      if(distances.size() != 0 && distances[0] < ransac_max_inlier_dist)
       {
 	++num_inliers;
 	inlier_distance += distances[0];
@@ -364,7 +375,7 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
       }
     }
     //Check number of inliers
-    if(num_inliers < min_ransac_inlier_percent_ * keypoint_cloud0->size() || num_inliers < min_ransac_inliers_)
+    if(num_inliers < params_.get<double>("min_ransac_inlier_percent") * keypoint_cloud0->size() || num_inliers < params_.get<int>("min_ransac_inliers"))
     {
       continue;
     }
@@ -396,7 +407,7 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
 	maxval = max(val, maxval);
 	minval = min(val, minval);
       }
-      if(maxval - minval < min_bounding_length_) {
+      if(maxval - minval < params_.get<double>("min_bounding_length")) {
 	// ROS_WARN_STREAM("Rejecting this hypothesized transform due to PCA check.");
 	// ROS_WARN_STREAM("Extremal values of " << minval << " to " << maxval);
 	// ROS_WARN_STREAM("Distance of " << maxval - minval << " along principal component " << i << ", " << vec.transpose());
@@ -463,6 +474,8 @@ FrameAlignmentVisualizer::FrameAlignmentVisualizer(rgbd::PrimeSenseModel model0,
   needs_update_(false),
   foo_(false)
 {
+  vis_.registerKeyboardCallback(&FrameAlignmentVisualizer::keyboardCallback, *this);
+  
   // -- Set the viewpoint to be sensible for PrimeSense devices.
   vis_.camera_.clip[0] = 0.00387244;
   vis_.camera_.clip[1] = 3.87244;
@@ -518,4 +531,18 @@ void FrameAlignmentVisualizer::setFrames(rgbd::Frame frame0, rgbd::Frame frame1)
   scopeLockWrite;
   model0_.frameToCloud(frame0, cloud0_.get());
   model1_.frameToCloud(frame1, cloud1_.get());
+}
+
+void FrameAlignmentVisualizer::keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie)
+{
+  if(event.keyDown()) {
+    cout << "Pressed " << (int)event.getKeyCode() << endl;
+
+    if(event.getKeyCode() == 'd' || event.getKeyCode() == 27) {
+      cout << "Quitting FrameAlignmentVisualizer" << endl;
+      // spinOnce() ends up calling keyboardCallback, so we actually can't and don't want to lock here, since FrameAlignmentVisualizer is already locked during spinOnce().
+      //scopeLockWrite;  
+      quitting_ = true;
+    }
+  }
 }

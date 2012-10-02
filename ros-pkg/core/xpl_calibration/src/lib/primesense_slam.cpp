@@ -17,8 +17,9 @@ PrimeSenseSlam::PrimeSenseSlam() :
 
 void PrimeSenseSlam::_run()
 {
-  //FrameAligner aligner(sseq_->model_, sseq_->model_, max_range_);
-  FrameAligner aligner(sseq_->model_, sseq_->model_, 10.0);
+  FrameAligner aligner(sseq_->model_, sseq_->model_);
+  cout << "FrameAligner is using params: " << endl;
+  cout << aligner.params_ << endl;
 #ifdef VISUALIZE
   if(fav_)
     aligner.view_handler_ = fav_;

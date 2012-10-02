@@ -39,7 +39,10 @@ int main(int argc, char** argv)
   StreamSequence::Ptr sseq(new StreamSequence);
   sseq->load(opts["sseq"].as<string>());
   
-  FrameAligner aligner(sseq->model_, sseq->model_, opts["max-range"].as<double>());
+  FrameAligner aligner(sseq->model_, sseq->model_);
+  aligner.params_.set("max_range", opts["max-range"].as<double>());
+  cout << "FrameAligner is using params: " << endl;
+  cout << aligner.params_ << endl;
   FrameAlignmentVisualizer fav(sseq->model_, sseq->model_);
   aligner.view_handler_ = &fav;
   Frame frame0, frame1;
@@ -68,7 +71,22 @@ int main(int argc, char** argv)
   cout << "Save alignment? (y / n): ";
   string input;
   cin >> input;
-  cout << endl << input << endl;
+  if(input == "y") {
+    string alignments_dir = "alignments";
+    if(!bfs::exists(alignments_dir))
+      bfs::create_directory(alignments_dir);
+
+    ostringstream oss;
+    oss << alignments_dir << "/" << time(0);
+    string alignment_dir = oss.str();
+    cout << "Saving to " << alignment_dir << endl;
+    bfs::create_directory(alignment_dir);
+    frame0.save(alignment_dir + "/frame0");
+    frame1.save(alignment_dir + "/frame1");
+    eigen_extensions::saveASCII(f0_to_f1.matrix(), alignment_dir + "/f0_to_f1.eig.txt");
+  }
+  else
+    cout << "Not saving." << endl;
   
   return 0;
 }
