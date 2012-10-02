@@ -19,6 +19,9 @@ int main(int argc, char** argv)
     ("frame1", bpo::value<int>()->required(), "")
     ("consider-wide-search", "")
     ("max-range", bpo::value<double>()->default_value(10), "")
+    ("depth-weight", bpo::value<double>()->default_value(1))
+    ("color-weight", bpo::value<double>()->default_value(0.00115 / 2.0))
+    ("keypoint-weight", bpo::value<double>()->default_value(0))
     ;
 
   p.add("sseq", 1).add("frame0", 1).add("frame1", 1);

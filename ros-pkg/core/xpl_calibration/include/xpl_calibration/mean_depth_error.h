@@ -12,6 +12,9 @@ public:
   typedef boost::shared_ptr<const FrameAlignmentMDE> ConstPtr;
 
   double max_range_;
+  double depth_weight_;
+  double color_weight_;
+  double keypoint_weight_;
   
   //! fraction is how much of the depth data to use.
   FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,

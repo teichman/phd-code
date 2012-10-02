@@ -78,6 +78,9 @@ FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, const 
 				     const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1,
 				     double max_range, double fraction) :
   max_range_(max_range),
+  depth_weight_(1),
+  color_weight_(0.00115 / 2.0),
+  keypoint_weight_(0),
   count_(NULL),
   model0_(model0),
   model1_(model1),
@@ -149,6 +152,8 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   if(count_)
     *count_ = count;
 
+  if(keypoint_weight_ != 0)
+    ROS_WARN("Need to turn on keypoint_error_count check.");
   // int min_correspondences = 20;
   // if(keypoint_error_count < min_correspondences) {
   //   return numeric_limits<double>::max();
@@ -173,10 +178,9 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   // Color error term has a per-pixel max of 441.
   // Keypoint error is hinged at 50.  It's probably a bit weaker than the 3D data, though, so we want it
   // to just nudge things when the 3D doesn't really have a preference.
-  double depth_term = depth_error;
-  double color_term = 0.00115 / 2.0 * color_error;
-  //double keypoint_term = 0.005 * keypoint_error;
-  double keypoint_term = 0.0;
+  double depth_term = depth_weight_ * depth_error;
+  double color_term = color_weight_ * color_error;
+  double keypoint_term = keypoint_weight_ * keypoint_error;
   val = depth_term + color_term + keypoint_term;
   //cout << "Depth fraction: " << depth_term / val << ", color fraction: " << color_term / val << ", keypoint fraction: " << keypoint_term / val << endl;
 
