@@ -6,21 +6,6 @@ using namespace rgbd;
 
 #define VISUALIZE
 
-pipeline::Params FrameAligner::defaultParams()
-{
-  pipeline::Params params;
-  params.set<int>("num_ransac_samples", 1000);
-  params.set<int>("k", 2);
-  params.set<double>("max_feature_dist", 300);
-  params.set<int>("min_ransac_inliers", 20);
-  params.set<double>("min_pairwise_keypoint_dist", 0.25);
-  params.set<double>("ransac_max_inlier_dist", 0.05);
-  params.set<double>("min_ransac_inlier_percent", 0.5);
-  params.set<double>("min_bounding_length", 0.5);
-  params.set<double>("max_range", 10.0);
-  return params;
-}
-
 FrameAligner::FrameAligner(const rgbd::PrimeSenseModel& model0,
 			   const rgbd::PrimeSenseModel& model1) :
 			   

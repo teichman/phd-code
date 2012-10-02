@@ -36,26 +36,22 @@ public:
   GridSearchViewHandler* view_handler_;
 
   pipeline::Params params_;
-  // // -- Params for feature matching method
-  // int num_ransac_samples_;
-  // //! For knn.
-  // int k_;
-  // //! Arbitrary units
-  // float max_feature_dist_;
-  // int min_ransac_inliers_;
-  // //! meters
-  // float min_pairwise_keypoint_dist_;
-  // //! meters
-  // float ransac_max_inlier_dist_;
-  // //! [0, 1]
-  // float min_ransac_inlier_percent_;
-  // //! meters
-  // float min_bounding_length_;
-  // // -- Other params  
-  // double max_range_;
+  static inline pipeline::Params FrameAligner::defaultParams()
+  {
+    pipeline::Params params;
+    params.set<int>("num_ransac_samples", 1000);
+    params.set<int>("k", 2);
+    params.set<double>("max_feature_dist", 300);
+    params.set<int>("min_ransac_inliers", 20);
+    params.set<double>("min_pairwise_keypoint_dist", 0.25);
+    params.set<double>("ransac_max_inlier_dist", 0.05);
+    params.set<double>("min_ransac_inlier_percent", 0.5);
+    params.set<double>("min_bounding_length", 0.5);
+    params.set<double>("max_range", 10.0);
+    return params;
+  }
   
   FrameAligner(const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1);
-  static pipeline::Params defaultParams();
   
   //! Computes transform that takes points in 0 to points in 1. Tries using feature matching to get close, and, failing that, does
   //! a wide area grid search if you tell it to.
