@@ -54,11 +54,12 @@ public:
     params.set<double>("max_range", 10.0);
     params.set<double>("fraction", 0.25);
     params.set<double>("depth_weight", 1);
-    params.set<double>("color_weight", 0.00115 / 2.0);
+    params.set<double>("color_weight", 0.01);
     params.set<double>("keypoint_weight", 0);
     // params.set<double>("depth_hinge", 0);
     // params.set<double>("color_hinge", 0);
     params.set<double>("keypoint_hinge", 50);
+    params.set<double>("max_objective", 0.8);
     
     return params;
   }

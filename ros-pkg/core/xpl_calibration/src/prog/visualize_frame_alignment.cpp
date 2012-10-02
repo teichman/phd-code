@@ -18,10 +18,12 @@ int main(int argc, char** argv)
     ("frame0", bpo::value<int>()->required(), "")
     ("frame1", bpo::value<int>()->required(), "")
     ("consider-wide-search", "")
-    ("max-range", bpo::value<double>()->default_value(10), "")
-    ("depth-weight", bpo::value<double>()->default_value(1))
-    ("color-weight", bpo::value<double>()->default_value(0.00115 / 2.0))
-    ("keypoint-weight", bpo::value<double>()->default_value(0))
+    ("max-range", bpo::value<double>())
+    ("depth-weight", bpo::value<double>())
+    ("color-weight", bpo::value<double>())
+    ("keypoint-weight", bpo::value<double>())
+    ("keypoint-hinge", bpo::value<double>())
+    ("fraction", bpo::value<double>())
     ;
 
   p.add("sseq", 1).add("frame0", 1).add("frame1", 1);
@@ -41,11 +43,25 @@ int main(int argc, char** argv)
   cout << "Using " << opts["sseq"].as<string>() << endl;
   StreamSequence::Ptr sseq(new StreamSequence);
   sseq->load(opts["sseq"].as<string>());
-  
+
+  // -- Parse params.
   FrameAligner aligner(sseq->model_, sseq->model_);
-  aligner.params_.set("max_range", opts["max-range"].as<double>());
+  if(opts.count("max-range"))
+    aligner.params_.set("max_range", opts["max-range"].as<double>());
+  if(opts.count("depth-weight"))
+    aligner.params_.set("depth_weight", opts["depth-weight"].as<double>());
+  if(opts.count("color-weight"))
+    aligner.params_.set("color_weight", opts["color-weight"].as<double>());
+  if(opts.count("keypoint-weight"))
+    aligner.params_.set("keypoint_weight", opts["keypoint-weight"].as<double>());
+  if(opts.count("keypoint-hinge"))
+    aligner.params_.set("keypoint_hinge", opts["keypoint-hinge"].as<double>());
+  if(opts.count("fraction"))
+    aligner.params_.set("fraction", opts["fraction"].as<double>());
   cout << "FrameAligner is using params: " << endl;
   cout << aligner.params_ << endl;
+
+  
   FrameAlignmentVisualizer fav(sseq->model_, sseq->model_);
   aligner.view_handler_ = &fav;
   Frame frame0, frame1;
