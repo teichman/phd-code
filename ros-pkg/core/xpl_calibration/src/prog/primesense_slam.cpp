@@ -21,6 +21,7 @@ int main(int argc, char** argv)
     ("otraj", bpo::value<string>()->required(), "Output path for the final trajectory.")
     ("ograph", bpo::value<string>()->required(), "Output path for the final pose graph.")
     ("cam", bpo::value<string>(), "Camera file to use.")
+    ("visualize", "")
     ;
 
   p.add("sseq", 1).add("opcd", 1).add("otraj", 1).add("ograph", 1);
@@ -46,9 +47,11 @@ int main(int argc, char** argv)
   PrimeSenseSlam pss;
   pss.sseq_ = sseq;
   FrameAlignmentVisualizer fav(sseq->model_, sseq->model_);
-  pss.fav_ = &fav;
+  if(opts.count("visualize"))
+    pss.fav_ = &fav;
   ThreadPtr slamthread = pss.launch();
-  fav.run();
+  if(opts.count("visualize"))
+    fav.run();
   slamthread->join();
 
   // -- Save outputs.

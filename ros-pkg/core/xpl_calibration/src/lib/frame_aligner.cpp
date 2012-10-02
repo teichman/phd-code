@@ -4,6 +4,8 @@ using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 
+#define VISUALIZE
+
 FrameAligner::FrameAligner(const rgbd::PrimeSenseModel& model0,
 			   const rgbd::PrimeSenseModel& model1,
 			   double max_range) :
@@ -39,6 +41,7 @@ bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
   bool found_rough_transform = computeRoughTransform(frame0, frame1, keypoints0, keypoints1, features0, features1, &correspondences0, &correspondences1, &guess);
 
   // -- Visualize the initial rough transform.
+#ifdef VISUALIZE
   if(found_rough_transform && view_handler_) {
     double rx, ry, rz, tx, ty, tz;
     generateXYZYPR(guess.cast<float>(), rx, ry, rz, tx, ty, tz);
@@ -48,6 +51,7 @@ bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
     cout << "^^^^ Objective with initial transform from feature matching." << endl;
     //cv::waitKey();
   }
+#endif
   
   // -- Run grid search as desired.
   if(found_rough_transform)
@@ -233,15 +237,13 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
   if(matches.size() < min_ransac_inliers_)
     return false;
 
-  //Visualize
-  // if(visualize_)
-  // {
+#ifdef VISUALIZE
   cv::Mat3b img_match;
   cv::drawMatches(frame0.img_, keypoints0, frame1.img_, keypoints1,
 		  matches, img_match);
   cv::imshow("match", img_match);
-  cv::waitKey(50);
-  // }
+  cv::waitKey(10);
+#endif
 
   // TODO: Don't need to project the whole frame here, just keypoints.
   Cloud::Ptr cloud0(new Cloud);

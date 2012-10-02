@@ -4,6 +4,8 @@ using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 
+#define VISUALIZE
+
 PrimeSenseSlam::PrimeSenseSlam() :
   fav_(NULL),
   min_dt_(0.2),
@@ -17,8 +19,10 @@ void PrimeSenseSlam::_run()
 {
   //FrameAligner aligner(sseq_->model_, sseq_->model_, max_range_);
   FrameAligner aligner(sseq_->model_, sseq_->model_, 10.0);
+#ifdef VISUALIZE
   if(fav_)
     aligner.view_handler_ = fav_;
+#endif
 
   ROS_WARN("PrimeSenseSlam does not use learned model.");
   pgs_ = PoseGraphSlam::Ptr(new PoseGraphSlam(sseq_->size()));
@@ -28,9 +32,8 @@ void PrimeSenseSlam::_run()
   size_t prev_idx;
   sseq_->readFrame(0, &curr_frame);
   size_t curr_idx = 0;
-  // Cache the features for the first frame.
   vector<cv::KeyPoint> unused;
-  getFeatures(curr_frame, curr_idx, unused);
+  cacheFeatures(curr_frame, curr_idx, unused);
   while(true) {
     // -- Find the next frame to use.
     prev_frame = curr_frame;
@@ -54,7 +57,7 @@ void PrimeSenseSlam::_run()
     
     // -- Compute orb features for that frame.
     vector<cv::KeyPoint> curr_keypoints;
-    FeaturesPtr curr_features = getFeatures(curr_frame, curr_idx, curr_keypoints);
+    FeaturesPtr curr_features = cacheFeatures(curr_frame, curr_idx, curr_keypoints);
     
     // -- Try to find link to most recent previous frame.
     //    Tries a wider search if not enough corresponding points to get a rough initial transform.
@@ -161,7 +164,7 @@ PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::cacheFeatures(const rgbd::Frame &fra
   return features;
 }
 
-PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::getFeatures(const rgbd::Frame &frame, vector<cv::KeyPoint> &keypoints)
+PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::getFeatures(const rgbd::Frame &frame, vector<cv::KeyPoint> &keypoints) const
 {
   cv::Mat1b img;
   cv::cvtColor(frame.img_, img, CV_BGR2GRAY);

@@ -5,8 +5,7 @@ using namespace Eigen;
 using namespace rgbd;
 
 //#define TIMING
-
-
+#define VISUALIZE
 
 // Takes points from frame0, turns them in to lines in the coordinate system of frame1, then finds how far keypoints in frame1 are
 // from the lines they should lie on.
@@ -107,6 +106,7 @@ FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, const 
     if((double)rand() / RAND_MAX <= fraction)
       indices_.push_back(i);
 
+#ifdef VISUALIZE
   cv::Mat3b vis0 = frame0.img_.clone();
   cv::Mat3b vis1 = frame1.img_.clone();
   for(size_t i = 0; i < correspondences0.size(); ++i) {
@@ -117,6 +117,7 @@ FrameAlignmentMDE::FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, const 
   cv::imshow("vis0", vis0);
   cv::imshow("vis1", vis1);
   cv::waitKey(5);
+#endif
 }
 
 double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
