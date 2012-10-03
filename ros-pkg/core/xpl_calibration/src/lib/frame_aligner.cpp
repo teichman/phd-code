@@ -234,7 +234,7 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
 
   //Check that enough are matched
   if(matches.size() < (size_t)params_.get<int>("min_ransac_inliers")) {
-    ROS_DEBUG("Not enough matches, skipping.");
+    ROS_DEBUG_STREAM(matches.size() << " is not enough matches, skipping.");
     return false;
   }
 

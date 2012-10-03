@@ -11,7 +11,7 @@ PrimeSenseSlam::PrimeSenseSlam() :
   min_dt_(0.2),
   max_range_(3.5),
   max_loopclosures_(1),
-  keypoints_per_frame_(100)
+  keypoints_per_frame_(300)
 {
 }
 
