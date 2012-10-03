@@ -84,16 +84,18 @@ bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   cout << gs.num_evals_ / gs.time_ << " evals / second." << endl;
   cout << gs.time_ / gs.num_evals_ << " seconds / eval." << endl;
 
-  double count;
+  double count, depth_error;
   mde->count_ = &count;
+  mde->depth_error_ = &depth_error;
   double final_objective = mde->eval(x);
   
   cout << " -- Single-number statistics" << endl;
   cout << "Final objective: " << final_objective << endl;
+  cout << "Depth error: " << depth_error << endl;
   cout << "Count: " << count << endl;
   cout << "==============================" << endl;
 
-  if(validate(count, final_objective)) {
+  if(validate(count, depth_error)) {
     *f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
     return true;
   }
@@ -101,9 +103,9 @@ bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
     return false;
 }
 
-bool FrameAligner::validate(double count, double final_objective) const
+bool FrameAligner::validate(double count, double depth_error) const
 {
-  if(count < 20000 || final_objective > params_.get<double>("max_objective")) {
+  if(count < 20000 || depth_error > params_.get<double>("max_depth_error")) {
     ROS_WARN("Alignment finished but was not considered successful..");
     return false;
   }
@@ -152,16 +154,18 @@ bool FrameAligner::narrowGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   cout << gs.num_evals_ / gs.time_ << " evals / second." << endl;
   cout << gs.time_ / gs.num_evals_ << " seconds / eval." << endl;
 
-  double count;
+  double count, depth_error;
   mde->count_ = &count;
+  mde->depth_error_ = &depth_error;
   double final_objective = mde->eval(x);
   
   cout << " -- Single-number statistics" << endl;
   cout << "Final objective: " << final_objective << endl;
+  cout << "Depth error: " << depth_error << endl;
   cout << "Count: " << count << endl;
   cout << "==============================" << endl;
 
-  if(validate(count, final_objective)) {
+  if(validate(count, depth_error)) {
     *f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
     return true;
   }

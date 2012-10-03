@@ -59,7 +59,7 @@ public:
     // params.set<double>("depth_hinge", 0);
     // params.set<double>("color_hinge", 0);
     params.set<double>("keypoint_hinge", 50);
-    params.set<double>("max_objective", 0.8);
+    params.set<double>("max_depth_error", 0.05);
     
     return params;
   }
@@ -105,7 +105,7 @@ protected:
 			     std::vector<cv::Point2d>* correspondences0, std::vector<cv::Point2d>* correspondences1,
 			     Eigen::Affine3d* f0_to_f1) const;
 
-  bool validate(double count, double final_objective) const;
+  bool validate(double count, double depth_error) const;
 };
 
 #endif // FRAME_ALIGNER_H

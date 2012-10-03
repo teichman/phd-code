@@ -102,8 +102,9 @@ FrameAlignmentMDE::FrameAlignmentMDE(const pipeline::Params& params,
 				     const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
 				     rgbd::Frame frame0, rgbd::Frame frame1,
 				     const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1) :
-  params_(params),
   count_(NULL),
+  depth_error_(NULL),
+  params_(params),
   model0_(model0),
   model1_(model1),
   frame0_(frame0),
@@ -172,10 +173,6 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   // keypointError(model1_, frame1_, correspondences1_, f0_to_f1.inverse(), model0_, frame0_, correspondences0_,
   // 		params_.get<double>("keypoint_hinge"), &keypoint_error, &keypoint_error_count);
 
-  // Make count available to other users in single-threaded mode.
-  if(count_)
-    *count_ = count;
-
   // int min_correspondences = 20;
   // if(keypoint_error_count < min_correspondences) {
   //   ROS_WARN("Ignoring candidate alignment because of min_correspondences.");
@@ -206,6 +203,12 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   val = depth_term + color_term + keypoint_term;
   //cout << "Depth fraction: " << depth_term / val << ", color fraction: " << color_term / val << ", keypoint fraction: " << keypoint_term / val << endl;
 
+  // Make data available to other users in single-threaded mode.
+  if(count_)
+    *count_ = count;
+  if(depth_error_)
+    *depth_error_ = depth_error;
+  
   return val;
 }
 

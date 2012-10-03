@@ -23,9 +23,12 @@ public:
   //! x = [rx, ry, rz, tx, ty, tz].
   double eval(const Eigen::VectorXd& x) const;
 
-  //! Number of points in the last eval() which had matches.
+  //! Number of points from the last eval() which had matches.
   //! Only valid in a single-threaded context.
-  double *count_;
+  double* count_;
+  //! The unweighted depth error from the last eval() which had matches.
+  //! Only valid in a single-threaded context.
+  double* depth_error_;
   
 protected:
   pipeline::Params params_;
