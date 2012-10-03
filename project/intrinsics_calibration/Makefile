@@ -28,14 +28,6 @@ AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect
 
 SLAM_RUNS_xpl01 :=	$(shell ls $(SLAM_DATA_PATH)/xpl01)
 
-# Convenient to turn on if you want to watch it run, but not save images
-DEFAULT_GRID_VIS := 0
-# Turn off loop closure with this
-LOOP_CLOSURE_FLAG := --loop-closure
-# Switch to get live visuals again
-SLAM_PROGRAM := primesense_slam
-#SLAM_PROGRAM := slam_run_lightweight
-#SLAM_PROGRAM := slam_test
 all:
 	@echo You should probably be more specific.
 
@@ -160,7 +152,7 @@ $(1)/slam_results/$(2).traj: $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_
 
 $(1)/slam_results/$(2)_unrefined.traj: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
 	mkdir -p $$(@D)
-	GRIDSEARCH_VIS=${DEFAULT_GRID_VIS} rosrun xpl_calibration ${SLAM_PROGRAM} $$< $$(@D)/$(2)_unrefined.pcd  $$@ $$(@D)/$(2)_graph.log --cam $(CAMERAS_PATH)/$(1)/$(2).cam
+	rosrun xpl_calibration primesense_slam $$< $$(@D)/$(2)_unrefined.pcd  $$@ $$(@D)/$(2)_graph.log --cam $(CAMERAS_PATH)/$(1)/$(2).cam
 
 $(CAMERAS_PATH)/$(1)/$(2).cam:
 	mkdir -p $$(@D)

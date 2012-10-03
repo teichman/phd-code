@@ -24,6 +24,8 @@ int main(int argc, char** argv)
     ("keypoint-weight", bpo::value<double>())
     ("keypoint-hinge", bpo::value<double>())
     ("fraction", bpo::value<double>())
+    ("num-ransac-samples", bpo::value<int>())
+    ("min-ransac-inlier-percent", bpo::value<double>())
     ;
 
   p.add("sseq", 1).add("frame0", 1).add("frame1", 1);
@@ -58,6 +60,10 @@ int main(int argc, char** argv)
     aligner.params_.set("keypoint_hinge", opts["keypoint-hinge"].as<double>());
   if(opts.count("fraction"))
     aligner.params_.set("fraction", opts["fraction"].as<double>());
+  if(opts.count("num-ransac-samples"))
+    aligner.params_.set("num_ransac_samples", opts["num-ransac-samples"].as<int>());
+  if(opts.count("min-ransac-inlier-percent"))
+    aligner.params_.set("min_ransac_inlier_percent", opts["min-ransac-inlier-percent"].as<double>());
   cout << "FrameAligner is using params: " << endl;
   cout << aligner.params_ << endl;
 

@@ -178,8 +178,10 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
   correspondences0->clear();
   correspondences1->clear();
   
-  if(features0->rows < params_.get<int>("k") || features1->rows < params_.get<int>("k"))
+  if(features0->rows < params_.get<int>("k") || features1->rows < params_.get<int>("k")) {
+    ROS_DEBUG("Not enough features, skipping.");
     return false;
+  }
 
   cv::FlannBasedMatcher matcher;
   vector< vector<cv::DMatch> > matches_each;
@@ -227,15 +229,19 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
   }
 
   //Check that enough are matched
-  if(matches.size() < (size_t)params_.get<int>("min_ransac_inliers"))
+  if(matches.size() < (size_t)params_.get<int>("min_ransac_inliers")) {
+    ROS_DEBUG("Not enough matches, skipping.");
     return false;
+  }
 
 #ifdef VISUALIZE
   cv::Mat3b img_match;
   cv::drawMatches(frame0.img_, keypoints0, frame1.img_, keypoints1,
 		  matches, img_match);
   cv::imshow("match", img_match);
-  cv::waitKey(10);
+  // cv::imshow("frame0", frame0.img_);
+  // cv::imshow("frame1", frame1.img_);
+  cv::waitKey(500);
 #endif
 
   // TODO: Don't need to project the whole frame here, just keypoints.
@@ -265,12 +271,13 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
     double d01 = pcl::euclideanDistance(r0, r1);
     double d02 = pcl::euclideanDistance(r0, r2);
     double d12 = pcl::euclideanDistance(r1, r2);
-    if(d01 < min_pairwise_keypoint_dist)
+    if(d01 < min_pairwise_keypoint_dist ||
+       d02 < min_pairwise_keypoint_dist ||
+       d12 < min_pairwise_keypoint_dist)
+    {
+      //ROS_DEBUG_STREAM("Skipping sampled correspondences because inter-point distance is too small.");
       continue;
-    if(d02 < min_pairwise_keypoint_dist)
-      continue;
-    if(d12 < min_pairwise_keypoint_dist)
-      continue;
+    }
     //Get their corresponding matches
     int oidx0 = match0.trainIdx;
     int oidx1 = match1.trainIdx;
@@ -280,12 +287,13 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
     pcl::PointXYZRGB t2 = cloud1->at(keypoints1[oidx2].pt.x, keypoints1[oidx2].pt.y);
     ROS_ASSERT(isFinite(t0) && isFinite(t1) && isFinite(t2));
     //If the matches are too distant from themselves w.r.t the distance in the current frame, continue
-    if(fabs(pcl::euclideanDistance(t0, t1) - d01) > ransac_max_inlier_dist)
+    if(fabs(pcl::euclideanDistance(t0, t1) - d01) > ransac_max_inlier_dist ||
+       fabs(pcl::euclideanDistance(t0, t2) - d02) > ransac_max_inlier_dist ||
+       fabs(pcl::euclideanDistance(t1, t2) - d12) > ransac_max_inlier_dist)
+    {
+      //ROS_DEBUG_STREAM("Skipping sampled correspondences because inter-point distances are too different between the two frames.");
       continue;
-    if(fabs(pcl::euclideanDistance(t0, t2) - d02) > ransac_max_inlier_dist)
-      continue;
-    if(fabs(pcl::euclideanDistance(t1, t2) - d12) > ransac_max_inlier_dist)
-      continue;
+    }
     //Otherwise generate transformation from correspondence
     pcl::TransformationFromCorrespondences tfc;
     tfc.add(t0.getVector3fMap(), r0.getVector3fMap());
@@ -359,8 +367,12 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
       }
     }
     //Check number of inliers
-    if(num_inliers < params_.get<double>("min_ransac_inlier_percent") * keypoint_cloud0->size() || num_inliers < params_.get<int>("min_ransac_inliers"))
-    {
+    if(num_inliers < params_.get<double>("min_ransac_inlier_percent") * keypoint_cloud0->size()) {
+      //ROS_DEBUG_STREAM("Inlier percent " << (double)num_inliers / keypoint_cloud0->size() << " is too low.");
+      continue;
+    }
+    if(num_inliers < params_.get<int>("min_ransac_inliers")) {
+      //ROS_DEBUG_STREAM(num_inliers << " is too few inliers.");
       continue;
     }
 
@@ -400,10 +412,11 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
       }
       //ROS_DEBUG_STREAM("Distance of " << maxval - minval << " along principal component " << i << ", " << vec.transpose());
     }
-    if(!passed_pca)
+    if(!passed_pca) {
+      //ROS_DEBUG_STREAM("PCA test failed.");
       continue;
-            
-    
+    }
+         
     //Check bounding volume
     // int has_x = (maxx - minx) > min_bounding_length_;
     // int has_y = (maxy - miny) > min_bounding_length_;
