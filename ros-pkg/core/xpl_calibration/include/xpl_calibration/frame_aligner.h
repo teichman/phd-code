@@ -60,6 +60,7 @@ public:
     // params.set<double>("color_hinge", 0);
     params.set<double>("keypoint_hinge", 50);
     params.set<double>("max_depth_error", 0.05);
+    params.set<string>("gridsearch_type", "default");
     
     return params;
   }
@@ -106,6 +107,7 @@ protected:
 			     Eigen::Affine3d* f0_to_f1) const;
 
   bool validate(double count, double depth_error) const;
+  GridSearch setupGridSearch() const;
 };
 
 #endif // FRAME_ALIGNER_H

@@ -29,6 +29,7 @@ int main(int argc, char** argv)
     ("keypoints-per-frame", bpo::value<int>())
     ("min-pairwise-keypoint-dist", bpo::value<double>())
     ("ransac-max-inlier-dist", bpo::value<double>())
+    ("gridsearch-type", bpo::value<string>())
     ;
 
   p.add("sseq", 1).add("frame0", 1).add("frame1", 1);
@@ -71,6 +72,8 @@ int main(int argc, char** argv)
     aligner.params_.set("min_pairwise_keypoint_dist", opts["min-pairwise-keypoint-dist"].as<double>());
   if(opts.count("ransac-max-inlier-dist"))
     aligner.params_.set("ransac_max_inlier_dist", opts["ransac-max-inlier-dist"].as<double>());
+  if(opts.count("gridsearch-type"))
+    aligner.params_.set("gridsearch_type", opts["gridsearch-type"].as<string>());
   cout << "FrameAligner is using params: " << endl;
   cout << aligner.params_ << endl;
 

@@ -54,6 +54,40 @@ bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
     return false;
 }
 
+GridSearch FrameAligner::setupGridSearch() const
+{
+  GridSearch gs(6);
+  string type = params_.get<string>("gridsearch_type");  
+  if(type == "default") {
+    gs.verbose_ = false;
+    gs.view_handler_ = view_handler_;
+    gs.num_scalings_ = 12;
+    double max_res_rot = 1.5 * M_PI / 180.0;
+    double max_res_trans = 0.1;
+    gs.max_resolutions_ << max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;
+    int gr = 2;
+    gs.grid_radii_ << gr, gr, gr, gr, gr, gr;
+    double sf = 0.75;
+    gs.scale_factors_ << sf, sf, sf, sf, sf, sf;
+    gs.couplings_ << 0, 1, 2, 1, 0, 3;  // Search over (pitch, y) and (yaw, x) jointly.
+  }
+  else if(type == "coupled") {
+    gs.verbose_ = false;
+    gs.view_handler_ = view_handler_;
+    gs.num_scalings_ = 5;
+    double max_res_rot = 1.5 * M_PI / 180.0;
+    double max_res_trans = 0.1;
+    gs.max_resolutions_ << max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;
+    int gr = 1;
+    gs.grid_radii_ << gr, gr, gr, gr, gr, gr;
+    double sf = 0.5;
+    gs.scale_factors_ << sf, sf, sf, sf, sf, sf;
+    gs.couplings_ << 0, 0, 0, 0, 0, 0;
+  }
+  
+  return gs;
+}
+
 bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
 				      const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1,
 				      Eigen::Affine3d* f0_to_f1) const
@@ -62,19 +96,8 @@ bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   // -- Run grid search.
   ScopedTimer st("FrameAligner::align");
   FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(params_, model0_, model1_, frame0, frame1, correspondences0, correspondences1));
-  GridSearch gs(6);
-  gs.verbose_ = false;
-  gs.view_handler_ = view_handler_;
+  GridSearch gs = setupGridSearch();
   gs.objective_ = mde;
-  gs.num_scalings_ = 12;
-  double max_res_rot = 1.5 * M_PI / 180.0;
-  double max_res_trans = 0.1;
-  gs.max_resolutions_ << max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;
-  int gr = 2;
-  gs.grid_radii_ << gr, gr, gr, gr, gr, gr;
-  double sf = 0.75;
-  gs.scale_factors_ << sf, sf, sf, sf, sf, sf;
-  gs.couplings_ << 0, 1, 2, 1, 0, 3;  // Search over (pitch, y) and (yaw, x) jointly.
   ArrayXd x = gs.search(ArrayXd::Zero(6));
 
   // -- Print out statistics.
