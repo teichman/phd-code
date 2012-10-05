@@ -4,11 +4,19 @@
 using namespace std;
 using namespace Eigen;
 using namespace rgbd;
+namespace bfs = boost::filesystem;
+
+std::string sseqName(std::string str)
+{
+  if(str[str.size()-1] == '/')
+    str = str.substr(0, str.size() - 1);
+  bfs::path path(str);
+  return path.filename();
+}
 
 int main(int argc, char** argv)
 {
   namespace bpo = boost::program_options;
-  namespace bfs = boost::filesystem;
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
 
@@ -45,7 +53,7 @@ int main(int argc, char** argv)
     cout << opts_desc << endl;
     return 1;
   }
-
+  
   cout << "Using " << opts["sseq"].as<string>() << endl;
   StreamSequence::Ptr sseq(new StreamSequence);
   sseq->load(opts["sseq"].as<string>());
@@ -114,7 +122,7 @@ int main(int argc, char** argv)
       bfs::create_directory(alignments_dir);
 
     ostringstream oss;
-    oss << alignments_dir << "/" << time(0);
+    oss << alignments_dir << "/" << sseqName(opts["sseq"].as<string>()) << "-" << opts["frame0"].as<int>() << ":" << opts["frame1"].as<int>();
     string alignment_dir = oss.str();
     cout << "Saving to " << alignment_dir << endl;
     bfs::create_directory(alignment_dir);
