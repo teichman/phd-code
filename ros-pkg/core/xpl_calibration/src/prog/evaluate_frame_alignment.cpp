@@ -30,8 +30,8 @@ public:
     oss << "num_alignments_: " << num_alignments_ << endl;
     oss << "num_guessed_failed_: " << num_guessed_failed_ << endl;
     oss << "Mean translation error (meters): " << total_translation_error_ / num_alignments_ << endl;
-    oss << "Mean Frobenius norm of rotation matrix difference: " << total_rotation_error_ / num_alignments_ << endl;
-    oss << "mean alignment time: " << total_seconds_ / num_alignments_ << " seconds." << endl;
+    oss << "Mean rotation difference (radians): " << total_rotation_error_ / num_alignments_ << endl;
+    oss << "Mean alignment time: " << total_seconds_ / num_alignments_ << " seconds." << endl;
     return oss.str();
   }
 };
@@ -67,8 +67,13 @@ void evaluate(string path, PrimeSenseModel model, AlignmentEvaluation* eval)
   // oss << "Estimated transform: " << endl << f0_to_f1.matrix() << endl;
   double translation_error = (f0_to_f1.translation() - mat.block<3, 1>(0, 3)).norm();
   oss << "L2 norm of translation difference: " << translation_error << endl;
-  double rotation_error = (f0_to_f1.rotation() - mat.block<3, 3>(0, 0)).norm();
-  oss << "Frobenius norm of rotation matrix difference: " << rotation_error << endl;
+
+  double rx, ry, rz, gtrx, gtry, gtrz;
+  double tx, ty, tz;  // ignored.
+  generateXYZYPR(f0_to_f1.cast<float>(), rx, ry, rz, tx, ty, tz);
+  generateXYZYPR(Affine3f(mat.cast<float>()), gtrx, gtry, gtrz, tx, ty, tz);
+  double rotation_error = fabs(rx - gtrx) + fabs(ry - gtry) + fabs(rz - gtrz);
+  oss << "Total absolute rotation difference (radians): " << rotation_error << endl;
   eval->individual_results_ = oss.str();
   
   ++eval->num_alignments_;
