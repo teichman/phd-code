@@ -49,6 +49,7 @@ int main(int argc, char** argv)
   catch(...) { badargs = true; }
   if(opts.count("help") || badargs) {
     cout << "Usage: " << bfs::basename(argv[0]) << " SSEQ FRAME0 FRAME1 [OPTS]" << endl;
+    cout << "       To save the final alignment, press 'd' in PCLVis." << endl;
     cout << endl;
     cout << opts_desc << endl;
     return 1;
@@ -112,6 +113,8 @@ int main(int argc, char** argv)
   
   fav.run();
   alignment_thread->join();
+  cout << "Transform: " << endl;
+  cout << f0_to_f1.matrix() << endl;
 
   cout << "Save alignment? (y / n): ";
   string input;

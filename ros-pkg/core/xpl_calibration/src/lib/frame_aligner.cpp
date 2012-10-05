@@ -118,12 +118,8 @@ bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   cout << "Count: " << count << endl;
   cout << "==============================" << endl;
 
-  if(validate(count, depth_error)) {
-    *f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
-    return true;
-  }
-  else
-    return false;
+  *f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
+  return validate(count, depth_error);
 }
 
 bool FrameAligner::validate(double count, double depth_error) const
@@ -188,12 +184,8 @@ bool FrameAligner::narrowGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   cout << "Count: " << count << endl;
   cout << "==============================" << endl;
 
-  if(validate(count, depth_error)) {
-    *f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
-    return true;
-  }
-  else
-    return false;
+  *f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
+  return validate(count, depth_error);
 }
 
 bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
