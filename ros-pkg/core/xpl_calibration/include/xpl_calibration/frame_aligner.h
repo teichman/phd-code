@@ -47,7 +47,7 @@ public:
     params.set<int>("min_ransac_inliers", 20);
     params.set<double>("min_pairwise_keypoint_dist", 0.15);
     params.set<double>("ransac_max_inlier_dist", 0.05);
-    params.set<double>("min_ransac_inlier_percent", 0.33);
+    params.set<double>("min_ransac_inlier_percent", 0.5);
     params.set<double>("min_bounding_length", 0.5);
 
     // Frame alignment params
@@ -61,6 +61,7 @@ public:
     params.set<double>("keypoint_hinge", 50);
     params.set<double>("max_depth_error", 0.05);
     params.set<string>("gridsearch_type", "default");
+    params.set<int>("min_depth_count", 60000);  // About 20% of the image.
     
     return params;
   }

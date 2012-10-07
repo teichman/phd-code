@@ -124,7 +124,7 @@ bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
 
 bool FrameAligner::validate(double count, double depth_error) const
 {
-  if(count < 20000 || depth_error > params_.get<double>("max_depth_error")) {
+  if(count < params_.get<int>("min_depth_count") || depth_error > params_.get<double>("max_depth_error")) {
     ROS_WARN("Alignment finished but was not considered successful..");
     return false;
   }

@@ -25,6 +25,7 @@ int main(int argc, char** argv)
     ("sseq", bpo::value<string>()->required(), "StreamSequence, i.e. asus data.")
     ("frame0", bpo::value<int>()->required(), "")
     ("frame1", bpo::value<int>()->required(), "")
+    ("params", bpo::value<string>(), "A pipeline3 Params file.")
     ("consider-wide-search", "")
     ("max-range", bpo::value<double>())
     ("depth-weight", bpo::value<double>())
@@ -61,6 +62,8 @@ int main(int argc, char** argv)
 
   // -- Parse params.
   FrameAligner aligner(sseq->model_, sseq->model_);
+  if(opts.count("params"))
+    aligner.params_.load(opts["params"].as<string>());
   if(opts.count("max-range"))
     aligner.params_.set("max_range", opts["max-range"].as<double>());
   if(opts.count("depth-weight"))
