@@ -46,7 +46,7 @@ public:
     params.set<double>("max_feature_dist", 300);
     params.set<int>("min_ransac_inliers", 20);
     params.set<double>("min_pairwise_keypoint_dist", 0.15);
-    params.set<double>("ransac_max_inlier_dist", 0.05);
+    params.set<double>("ransac_max_inlier_dist", 0.03);
     params.set<double>("min_ransac_inlier_percent", 0.5);
     params.set<double>("min_bounding_length", 0.5);
 
