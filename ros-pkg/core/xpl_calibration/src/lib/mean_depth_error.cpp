@@ -144,6 +144,43 @@ FrameAlignmentMDE::FrameAlignmentMDE(const pipeline::Params& params,
 //   cv::imshow("vis1", vis1);
 //   cv::waitKey(5);
 // #endif
+//
+  // Precompute hue, Canny image, etc here
+  // HUE
+  cv::Mat3f img0_f; frame0_.img_.convertTo(img0_f, CV_32F, 1/255.);
+  cv::Mat3f img1_f; frame1_.img_.convertTo(img1_f, CV_32F, 1/255.);
+  cv::cvtColor(img0_f, img0_hsv_, CV_BGR2HSV);
+  cv::cvtColor(img1_f, img1_hsv_, CV_BGR2HSV);
+  // CANNY (TODO)
+  cv::Mat1b gray0; cv::cvtColor(frame0_.img_, gray0, CV_BGR2GRAY);
+  cv::Mat1b gray1; cv::cvtColor(frame1_.img_, gray1, CV_BGR2GRAY);
+  cv::Mat1b rawedges0; cv::Canny(gray0, rawedges0, 100, 150, 3);
+  cv::Mat1b rawedges1; cv::Canny(gray1, rawedges1, 100, 150, 3);
+  cv::Mat1b dilated0; cv::dilate(rawedges0, dilated0, cv::Mat1b::ones(5,5)); 
+  cv::Mat1b dilated1; cv::dilate(rawedges1, dilated1, cv::Mat1b::ones(5,5)); 
+  cv::GaussianBlur(dilated0, edges0_, cv::Size(15,15), 5);
+  cv::GaussianBlur(dilated1, edges1_, cv::Size(15,15), 5);
+  //int ndilate=25;
+  //edges0_ = cv::Mat1b::zeros(rawedges0.size());
+  //edges1_ = cv::Mat1b::zeros(rawedges1.size());
+  //cv::Mat1b dilated0; 
+  //cv::Mat1b dilated1; 
+  //for(int i = 0; i < ndilate; i++)
+  //{
+  //  //float scale = 1./ndilate; //LINEAR
+  //  float scale = (i+1)/(float)( (ndilate)*(ndilate+1)/2.);
+  //  cv::dilate(rawedges0, dilated0, cv::Mat1b::ones(i*2+1,i*2+1)); 
+  //  cv::dilate(rawedges1, dilated1, cv::Mat1b::ones(i*2+1,i*2+1)); 
+  //  edges0_ += scale * dilated0;
+  //  edges1_ += scale * dilated1;
+  //}
+  //cv::imshow("raw_edges", rawedges0);
+  //cv::imshow("edges", edges0_); 
+  //cv::waitKey();
+  // Load the color_names lookup table
+  eigen_extensions::load("/home/sdmiller/kitchen/recon3d/ros-pkg/recon/data/w2c.eig", 
+      &color_names_);
+
 }
 
 double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
@@ -156,6 +193,7 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   double count = 0;  // Total number of points with both ground truth and measurements.
   double val = 0;  // Total objective.
   double depth_error = 0;
+  double garbage;
   double color_error = 0;
   // double keypoint_error = 0;
   // double keypoint_error_count = 0;
@@ -163,13 +201,20 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
 
   transformAndDecimate(pcd1_, f0_to_f1.inverse(), indices_, &transformed);
   //meanDepthAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, params_.get<double>("max_range"));
-  meanDepthMultiplierAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, params_.get<double>("max_range"));
+  //meanDepthMultiplierAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, params_.get<double>("max_range"));
+  meanDepthMultiplierAndHueError(model0_, frame0_, transformed, img0_hsv_, img1_hsv_, indices_, &depth_error, &color_error, &count, params_.get<double>("max_range"));
+  //meanDepthMultiplierAndEdgeError(model0_, frame0_, transformed, edges0_, edges1_, indices_, &depth_error, &color_error, &count, params_.get<double>("max_range"));
+  //meanDepthMultiplierAndCNError(model0_, frame0_, transformed, color_names_, &depth_error, &color_error, &count, params_.get<double>("max_range"));
   // keypointError(model0_, frame0_, correspondences0_, f0_to_f1, model1_, frame1_, correspondences1_,
   // 		params_.get<double>("keypoint_hinge"), &keypoint_error, &keypoint_error_count);
   
   transformAndDecimate(pcd0_, f0_to_f1, indices_, &transformed); 
   //meanDepthAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, params_.get<double>("max_range"));
-  meanDepthMultiplierAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, params_.get<double>("max_range"));
+  //meanDepthMultiplierAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, params_.get<double>("max_range"));
+  meanDepthMultiplierAndHueError(model1_, frame1_, transformed, img1_hsv_, img0_hsv_, indices_, &depth_error, &color_error, &count, params_.get<double>("max_range"));
+  meanDepthMultiplierAndEdgeError(model1_, frame1_, transformed, edges1_, edges0_, indices_, &depth_error, &color_error, &count, params_.get<double>("max_range"));
+  //meanDepthMultiplierAndCNError(model1_, frame1_, transformed, color_names_, &depth_error, &color_error, &count, params_.get<double>("max_range"));
+
   // keypointError(model1_, frame1_, correspondences1_, f0_to_f1.inverse(), model0_, frame0_, correspondences0_,
   // 		params_.get<double>("keypoint_hinge"), &keypoint_error, &keypoint_error_count);
 
@@ -180,7 +225,7 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   // }
   // else
   //   keypoint_error /= keypoint_error_count;
-
+  //cout << "Avg error: " << color_error / count << endl;
   double min_points = 100;
   if(count < min_points) {
     ROS_WARN("FrameAlignmentMDE had < min_points overlapping 3d points.");
@@ -522,6 +567,210 @@ void meanDepthMultiplierAndColorError(const rgbd::PrimeSenseModel& model,
   }
   *depth_error += local_depth_error;
   *color_error += local_color_error;
+  
+#ifdef TIMING
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+#endif 
+}
+
+void meanDepthMultiplierAndHueError(const rgbd::PrimeSenseModel& model,
+				      Frame frame, const rgbd::Cloud& pcd,
+              const cv::Mat3f &hsv_frame, const cv::Mat3f &hsv_pcd,
+              const std::vector<size_t> &cloud_indices, 
+				      double* depth_error, double* color_error,
+				      double* count, double max_range)
+{
+  ROS_ASSERT(frame.depth_->rows() == model.height_);
+  ROS_ASSERT(frame.depth_->cols() == model.width_);
+  HighResTimer hrt;
+  
+  // -- Make the ground truth depth image.
+  hrt.reset("meanDepthError: cloudToFrame"); hrt.start();
+  Frame gt;
+  IndexMap indexmap;
+  model.cloudToFrame(pcd, &gt, &indexmap);
+#ifdef TIMING
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+#endif 
+
+  // -- Count up mean depth error.
+  hrt.reset("meanDepthError: counting"); hrt.start();
+  ProjectivePoint ppt;
+  rgbd::Point pt;
+  rgbd::Point gtpt;
+  double max_range_mm = max_range * 1000;
+  double local_depth_error = 0;
+  double local_color_error = 0;
+
+  for(ppt.u_ = 0; ppt.u_ < gt.depth_->cols(); ++ppt.u_) {
+    for(ppt.v_ = 0; ppt.v_ < gt.depth_->rows(); ++ppt.v_) {
+      // -- Both ground truth and measurement must have data.
+      double gtz = gt.depth_->coeffRef(ppt.v_, ppt.u_);
+      if(gtz == 0)
+	continue;
+      double z = frame.depth_->coeffRef(ppt.v_, ppt.u_);
+      if(z == 0)
+	continue;
+      
+      // -- Ignore measured points beyond max_range.
+      if(z > max_range_mm)
+      	continue;
+
+      // -- Count up z error.
+      local_depth_error += fabs(1.0 - z / gtz);
+
+      // -- Count up color error.
+      size_t idx = indexmap(ppt.v_, ppt.u_);
+      size_t orig_idx = cloud_indices[idx];
+      int gtu = orig_idx % model.width_;
+      int gtv = orig_idx / model.width_;
+      cv::Vec3f gth = hsv_pcd(gtv, gtu);
+      cv::Vec3f h = hsv_frame(ppt.v_, ppt.u_);
+      float hdiff = fabs(gth[0] - h[0]);
+      if(hdiff >= 180) 
+        hdiff -= 180;
+      float avg_sat = (gth[1]+h[1])/2.;
+      local_color_error += avg_sat * hdiff;
+      //local_color_error += fabs((double)gtc[0] - c[0]) + fabs((double)gtc[1] - c[1]) + fabs((double)gtc[2] - c[2]);
+	      
+      ++(*count);
+    }
+  }
+  *depth_error += local_depth_error;
+  *color_error += local_color_error;
+  
+#ifdef TIMING
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+#endif 
+}
+
+void meanDepthMultiplierAndEdgeError(const rgbd::PrimeSenseModel& model,
+				      Frame frame, const rgbd::Cloud& pcd,
+              const cv::Mat1b &edge_frame, const cv::Mat1b &edge_pcd,
+              const std::vector<size_t> &cloud_indices, 
+				      double* depth_error, double* color_error,
+				      double* count, double max_range)
+{
+  ROS_ASSERT(frame.depth_->rows() == model.height_);
+  ROS_ASSERT(frame.depth_->cols() == model.width_);
+  HighResTimer hrt;
+  
+  // -- Make the ground truth depth image.
+  hrt.reset("meanDepthError: cloudToFrame"); hrt.start();
+  Frame gt;
+  IndexMap indexmap;
+  model.cloudToFrame(pcd, &gt, &indexmap);
+#ifdef TIMING
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+#endif 
+
+  // -- Count up mean depth error.
+  hrt.reset("meanDepthError: counting"); hrt.start();
+  ProjectivePoint ppt;
+  rgbd::Point pt;
+  rgbd::Point gtpt;
+  double max_range_mm = max_range * 1000;
+  double local_depth_error = 0;
+  double local_color_error = 0;
+
+  for(ppt.u_ = 0; ppt.u_ < gt.depth_->cols(); ++ppt.u_) {
+    for(ppt.v_ = 0; ppt.v_ < gt.depth_->rows(); ++ppt.v_) {
+      // -- Both ground truth and measurement must have data.
+      double gtz = gt.depth_->coeffRef(ppt.v_, ppt.u_);
+      if(gtz == 0)
+	continue;
+      double z = frame.depth_->coeffRef(ppt.v_, ppt.u_);
+      if(z == 0)
+	continue;
+      
+      // -- Ignore measured points beyond max_range.
+      if(z > max_range_mm)
+      	continue;
+
+      // -- Count up z error.
+      local_depth_error += fabs(1.0 - z / gtz);
+
+      // -- Count up color error.
+      size_t idx = indexmap(ppt.v_, ppt.u_);
+      size_t orig_idx = cloud_indices[idx];
+      int gtu = orig_idx % model.width_;
+      int gtv = orig_idx / model.width_;
+      uint8_t gte = edge_pcd(gtv, gtu);
+      uint8_t e = edge_frame(ppt.v_, ppt.u_);
+      local_color_error += fabs((double)gte - e);
+      //local_color_error += fabs((double)gtc[0] - c[0]) + fabs((double)gtc[1] - c[1]) + fabs((double)gtc[2] - c[2]);
+	      
+      ++(*count);
+    }
+  }
+  *depth_error += local_depth_error;
+  *color_error += local_color_error;
+  
+#ifdef TIMING
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+#endif 
+}
+
+void meanDepthMultiplierAndCNError(const rgbd::PrimeSenseModel& model,
+				      Frame frame, const rgbd::Cloud& pcd,
+              const Eigen::MatrixXf &color_names_lookup,
+				      double* depth_error, double* color_error,
+				      double* count, double max_range)
+{
+  ROS_ASSERT(frame.depth_->rows() == model.height_);
+  ROS_ASSERT(frame.depth_->cols() == model.width_);
+  HighResTimer hrt;
+  
+  // -- Make the ground truth depth image.
+  hrt.reset("meanDepthError: cloudToFrame"); hrt.start();
+  Frame gt;
+  model.cloudToFrame(pcd, &gt);
+#ifdef TIMING
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+#endif 
+
+  // -- Count up mean depth error.
+  hrt.reset("meanDepthError: counting"); hrt.start();
+  ProjectivePoint ppt;
+  rgbd::Point pt;
+  rgbd::Point gtpt;
+  double max_range_mm = max_range * 1000;
+  double local_depth_error = 0;
+  double local_color_error = 0;
+
+  for(ppt.u_ = 0; ppt.u_ < gt.depth_->cols(); ++ppt.u_) {
+    for(ppt.v_ = 0; ppt.v_ < gt.depth_->rows(); ++ppt.v_) {
+      // -- Both ground truth and measurement must have data.
+      double gtz = gt.depth_->coeffRef(ppt.v_, ppt.u_);
+      if(gtz == 0)
+	continue;
+      double z = frame.depth_->coeffRef(ppt.v_, ppt.u_);
+      if(z == 0)
+	continue;
+      
+      // -- Ignore measured points beyond max_range.
+      if(z > max_range_mm)
+      	continue;
+
+      // -- Count up z error.
+      local_depth_error += fabs(1.0 - z / gtz);
+
+      // -- Count up color error.
+      cv::Vec3b gtc = gt.img_(ppt.v_, ppt.u_);
+      cv::Vec3b c = frame.img_(ppt.v_, ppt.u_);
+      size_t gtidx = gtc[2]/8 + 32*(gtc[1]/8) + 32*32*(gtc[0]/8);
+      size_t idx = c[2]/8 + 32*(c[1]/8) + 32*32*(c[0]/8);
+      local_color_error += (color_names_lookup.row(gtidx) - color_names_lookup.row(idx)).norm();
+      //local_color_error += sqrt((gtc[0] - c[0]) * (gtc[0] - c[0]) +
+      //				(gtc[1] - c[1]) * (gtc[1] - c[1]) +
+      //				(gtc[2] - c[2]) * (gtc[2] - c[2]));
+      //local_color_error += fabs((double)gtc[0] - c[0]) + fabs((double)gtc[1] - c[1]) + fabs((double)gtc[2] - c[2]);
+	      
+      ++(*count);
+    }
+  }
+  *depth_error += local_depth_error;
+  *color_error += 255*sqrt(3/13.)*local_color_error; //So we're closer to pixels
   
 #ifdef TIMING
   hrt.stop(); cout << hrt.reportMilliseconds() << endl;

@@ -65,7 +65,7 @@ namespace rgbd
     }
   }
   
-  void PrimeSenseModel::cloudToFrame(const Cloud& pcd, Frame* frame) const
+  void PrimeSenseModel::cloudToFrame(const Cloud& pcd, Frame* frame, IndexMap* indexmap) const
   {
     ROS_ASSERT(frame);
     ROS_ASSERT(width_ != -1 && height_ != -1 && cx_ != -1 && cy_ != -1 && fx_ != -1 && fy_ != -1);
@@ -74,6 +74,13 @@ namespace rgbd
     frame->depth_ = DepthMatPtr(new DepthMat(height_, width_));
     frame->depth_->setZero();  // 0 indicates a bad point.
     frame->img_ = cv::Mat3b(height_, width_);
+
+    if(indexmap)
+    {
+      *indexmap = IndexMap(height_, width_);
+      //ROS_ASSERT(pcd.height == height_);
+      //ROS_ASSERT(pcd.width == width_);
+    }
 
     ProjectivePoint ppt;
     for(size_t i = 0; i < pcd.size(); ++i) {
@@ -97,6 +104,9 @@ namespace rgbd
 	frame->img_(ppt.v_, ppt.u_)[0] = ppt.b_;
 	frame->img_(ppt.v_, ppt.u_)[1] = ppt.g_;
 	frame->img_(ppt.v_, ppt.u_)[2] = ppt.r_;
+  if(indexmap) {
+    (*indexmap)(ppt.v_, ppt.u_) = i;
+  }
       }
     }
   }

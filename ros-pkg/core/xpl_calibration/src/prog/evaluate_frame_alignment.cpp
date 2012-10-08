@@ -1,6 +1,6 @@
 #include <boost/program_options.hpp>
 #include <xpl_calibration/primesense_slam.h>
-
+//#define VISUALIZE
 using namespace std;
 using namespace Eigen;
 using namespace rgbd;
@@ -13,6 +13,9 @@ public:
   double total_translation_error_;
   double total_rotation_error_;
   double total_seconds_;
+#ifdef VISUALIZE
+  pcl::visualization::PCLVisualizer vis_; 
+#endif
 
   AlignmentEvaluation() :
     num_alignments_(0),
@@ -56,7 +59,19 @@ void evaluate(string path, PrimeSenseModel model, AlignmentEvaluation* eval)
   			     features0, features1,
   			     true, &f0_to_f1);
   hrt.stop();
-
+#ifdef VISUALIZE
+  eval->vis_.removeAllPointClouds();
+  rgbd::Cloud::Ptr 
+    cloud0(new rgbd::Cloud), 
+    cloud1(new rgbd::Cloud), 
+    cloud0_trans(new rgbd::Cloud);
+  model.frameToCloud(frame0, cloud0.get());
+  model.frameToCloud(frame1, cloud1.get());
+  pcl::transformPointCloud(*cloud0, *cloud0_trans, f0_to_f1.cast<float>());
+  eval->vis_.addPointCloud(cloud0_trans, "cloud0_trans");
+  eval->vis_.addPointCloud(cloud1, "cloud1_trans");
+  eval->vis_.spin();
+#endif
   cout << "Ground truth transform: " << endl << mat << endl;
   cout << "Estimated transform: " << endl << f0_to_f1.matrix() << endl;
   double translation_error = (f0_to_f1.translation() - mat.block<3, 1>(0, 3)).lpNorm<1>();
@@ -111,6 +126,7 @@ int main(int argc, char** argv)
   bfs::directory_iterator it(alignments_path), eod;
   BOOST_FOREACH(const bfs::path& p, make_pair(it, eod)) {
     string path = alignments_path + "/" + p.leaf();
+    if(path == model_path) continue;
     ROS_ASSERT(bfs::is_directory(path));
     paths.push_back(path);
   }
