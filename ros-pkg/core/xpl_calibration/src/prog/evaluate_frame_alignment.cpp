@@ -4,6 +4,7 @@
 using namespace std;
 using namespace Eigen;
 using namespace rgbd;
+namespace bpo = boost::program_options;
 
 class AlignmentEvaluation
 {
@@ -36,7 +37,7 @@ public:
   }
 };
 
-void evaluate(string path, PrimeSenseModel model, AlignmentEvaluation* eval)
+void evaluate(string path, PrimeSenseModel model, const bpo::variables_map& opts, AlignmentEvaluation* eval)
 {
   Frame frame0, frame1;
   frame0.load(path + "/frame0");
@@ -45,6 +46,11 @@ void evaluate(string path, PrimeSenseModel model, AlignmentEvaluation* eval)
   eigen_extensions::loadASCII(path + "/f0_to_f1.eig.txt", &mat);
 
   FrameAligner aligner(model, model);
+  if(opts.count("params"))
+    aligner.params_.load(opts["params"].as<string>());
+  cout << "Using params: " << endl;
+  cout << aligner.params_ << endl;
+        
   vector<cv::KeyPoint> keypoints0, keypoints1;
   PrimeSenseSlam pss;
   PrimeSenseSlam::FeaturesPtr features0 = pss.getFeatures(frame0, keypoints0);
@@ -88,7 +94,6 @@ int main(int argc, char** argv)
   string alignments_path;
   string model_path;
   
-  namespace bpo = boost::program_options;
   namespace bfs = boost::filesystem;
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
@@ -97,6 +102,7 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("alignments", bpo::value<string>(&alignments_path)->required(), "Directory of alignments produced by visualize_frame_alignment.")
     ("model", bpo::value<string>(&model_path)->required(), "PrimeSenseModel")
+    ("params", bpo::value<string>(), "A pipeline3 Params file.")
     ;
 
   p.add("alignments", 1).add("model", 1);
@@ -130,7 +136,7 @@ int main(int argc, char** argv)
   AlignmentEvaluation eval;
   for(size_t i = 0; i < paths.size(); ++i) {
     cout << paths[i] << endl;
-    evaluate(paths[i], model, &eval);
+    evaluate(paths[i], model, opts, &eval);
   }
 
   cout << endl << endl << endl;

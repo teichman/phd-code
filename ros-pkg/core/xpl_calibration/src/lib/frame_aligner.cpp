@@ -122,21 +122,6 @@ bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   return validate(count, depth_error);
 }
 
-bool FrameAligner::validate(double count, double depth_error) const
-{
-  if(count < 20000 || depth_error > params_.get<double>("max_depth_error")) {
-    ROS_WARN("Alignment finished but was not considered successful..");
-    return false;
-  }
-  
-  // if(final_objective > 0.04) {
-  //   ROS_WARN("Alignment finished but was not considered successful..");
-  //   return false;
-  // }
-  
-  return true;
-}
-
 bool FrameAligner::narrowGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
 				    const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1, 
 				    const Eigen::Affine3d& guess,
@@ -146,19 +131,8 @@ bool FrameAligner::narrowGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
   // -- Run grid search.
   ScopedTimer st("FrameAligner::align");
   FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(params_, model0_, model1_, frame0, frame1, correspondences0, correspondences1));
-  GridSearch gs(6);
-  gs.verbose_ = false;
-  gs.view_handler_ = view_handler_;
+  GridSearch gs = setupGridSearch();
   gs.objective_ = mde;
-  gs.num_scalings_ = 12;
-  double max_res_rot = 1.5 * M_PI / 180.0;
-  double max_res_trans = 0.10;
-  gs.max_resolutions_ << max_res_rot, max_res_rot, max_res_rot, max_res_trans, max_res_trans, max_res_trans;
-  int gr = 2;
-  gs.grid_radii_ << gr, gr, gr, gr, gr, gr;
-  double sf = 0.75;
-  gs.scale_factors_ << sf, sf, sf, sf, sf, sf;
-  gs.couplings_ << 0, 1, 2, 1, 0, 3;  // Search over (pitch, y) and (yaw, x) jointly.
   //Convert guess to XYZRPY
   double rx, ry, rz, tx, ty, tz;
   generateXYZYPR(guess.cast<float>(), rx, ry, rz, tx, ty, tz);
@@ -186,6 +160,21 @@ bool FrameAligner::narrowGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
 
   *f0_to_f1 = generateTransform(x(0), x(1), x(2), x(3), x(4), x(5)).cast<double>();
   return validate(count, depth_error);
+}
+
+bool FrameAligner::validate(double count, double depth_error) const
+{
+  if(count < params_.get<int>("min_depth_count") || depth_error > params_.get<double>("max_depth_error")) {
+    ROS_WARN("Alignment finished but was not considered successful..");
+    return false;
+  }
+  
+  // if(final_objective > 0.04) {
+  //   ROS_WARN("Alignment finished but was not considered successful..");
+  //   return false;
+  // }
+  
+  return true;
 }
 
 bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
