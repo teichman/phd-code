@@ -62,6 +62,7 @@ public:
     params.set<double>("keypoint_weight", 0);
     params.set<int>("canny_lower_thresh", 75);
     params.set<int>("canny_upper_thresh", 100);
+    params.set<int>("canny_kernel_radius", 1);
     params.set<int>("edge_fanout", 25);
     // params.set<double>("depth_hinge", 0);
     // params.set<double>("color_hinge", 0);

@@ -155,10 +155,11 @@ FrameAlignmentMDE::FrameAlignmentMDE(const pipeline::Params& params,
   // CANNY (TODO)
   cv::Mat1b gray0; cv::cvtColor(frame0_.img_, gray0, CV_BGR2GRAY);
   cv::Mat1b gray1; cv::cvtColor(frame1_.img_, gray1, CV_BGR2GRAY);
+  int canny_k = params_.get<int>("canny_kernel_radius")*2+1;
   cv::Mat1b rawedges0; cv::Canny(gray0, rawedges0, 
-      params_.get<int>("canny_lower_thresh"), params_.get<int>("canny_upper_thresh"), 3);
+      params_.get<int>("canny_lower_thresh"), params_.get<int>("canny_upper_thresh"), canny_k);
   cv::Mat1b rawedges1; cv::Canny(gray1, rawedges1,
-      params_.get<int>("canny_lower_thresh"), params_.get<int>("canny_upper_thresh"), 3);
+      params_.get<int>("canny_lower_thresh"), params_.get<int>("canny_upper_thresh"), canny_k);
   //cv::Mat1b dilated0; cv::dilate(rawedges0, dilated0, cv::Mat1b::ones(1,1)); 
   //cv::Mat1b dilated1; cv::dilate(rawedges1, dilated1, cv::Mat1b::ones(1,1)); 
   //cv::GaussianBlur(dilated0, edges0_, cv::Size(35,35), 15);
