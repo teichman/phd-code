@@ -4,11 +4,19 @@
 using namespace std;
 using namespace Eigen;
 using namespace rgbd;
+namespace bfs = boost::filesystem;
+
+std::string sseqName(std::string str)
+{
+  if(str[str.size()-1] == '/')
+    str = str.substr(0, str.size() - 1);
+  bfs::path path(str);
+  return path.filename();
+}
 
 int main(int argc, char** argv)
 {
   namespace bpo = boost::program_options;
-  namespace bfs = boost::filesystem;
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
 
@@ -21,6 +29,10 @@ int main(int argc, char** argv)
     ("max-range", bpo::value<double>())
     ("depth-weight", bpo::value<double>())
     ("color-weight", bpo::value<double>())
+    ("rgb-weight", bpo::value<double>())
+    ("hue-weight", bpo::value<double>())
+    ("edge-weight", bpo::value<double>())
+    ("cn-weight", bpo::value<double>())
     ("keypoint-weight", bpo::value<double>())
     ("keypoint-hinge", bpo::value<double>())
     ("fraction", bpo::value<double>())
@@ -29,6 +41,7 @@ int main(int argc, char** argv)
     ("keypoints-per-frame", bpo::value<int>())
     ("min-pairwise-keypoint-dist", bpo::value<double>())
     ("ransac-max-inlier-dist", bpo::value<double>())
+    ("gridsearch-type", bpo::value<string>())
     ;
 
   p.add("sseq", 1).add("frame0", 1).add("frame1", 1);
@@ -40,11 +53,12 @@ int main(int argc, char** argv)
   catch(...) { badargs = true; }
   if(opts.count("help") || badargs) {
     cout << "Usage: " << bfs::basename(argv[0]) << " SSEQ FRAME0 FRAME1 [OPTS]" << endl;
+    cout << "       To save the final alignment, press 'd' in PCLVis." << endl;
     cout << endl;
     cout << opts_desc << endl;
     return 1;
   }
-
+  
   cout << "Using " << opts["sseq"].as<string>() << endl;
   StreamSequence::Ptr sseq(new StreamSequence);
   sseq->load(opts["sseq"].as<string>());
@@ -57,6 +71,14 @@ int main(int argc, char** argv)
     aligner.params_.set("depth_weight", opts["depth-weight"].as<double>());
   if(opts.count("color-weight"))
     aligner.params_.set("color_weight", opts["color-weight"].as<double>());
+  if(opts.count("rgb-weight"))
+    aligner.params_.set("rgb_weight", opts["rgb-weight"].as<double>());
+  if(opts.count("hue-weight"))
+    aligner.params_.set("hue_weight", opts["hue-weight"].as<double>());
+  if(opts.count("edge-weight"))
+    aligner.params_.set("edge_weight", opts["edge-weight"].as<double>());
+  if(opts.count("cn-weight"))
+    aligner.params_.set("cn_weight", opts["cn-weight"].as<double>());
   if(opts.count("keypoint-weight"))
     aligner.params_.set("keypoint_weight", opts["keypoint-weight"].as<double>());
   if(opts.count("keypoint-hinge"))
@@ -71,6 +93,8 @@ int main(int argc, char** argv)
     aligner.params_.set("min_pairwise_keypoint_dist", opts["min-pairwise-keypoint-dist"].as<double>());
   if(opts.count("ransac-max-inlier-dist"))
     aligner.params_.set("ransac_max_inlier_dist", opts["ransac-max-inlier-dist"].as<double>());
+  if(opts.count("gridsearch-type"))
+    aligner.params_.set("gridsearch_type", opts["gridsearch-type"].as<string>());
   cout << "FrameAligner is using params: " << endl;
   cout << aligner.params_ << endl;
 
@@ -101,6 +125,8 @@ int main(int argc, char** argv)
   
   fav.run();
   alignment_thread->join();
+  cout << "Transform: " << endl;
+  cout << f0_to_f1.matrix() << endl;
 
   cout << "Save alignment? (y / n): ";
   string input;
@@ -111,7 +137,7 @@ int main(int argc, char** argv)
       bfs::create_directory(alignments_dir);
 
     ostringstream oss;
-    oss << alignments_dir << "/" << time(0);
+    oss << alignments_dir << "/" << sseqName(opts["sseq"].as<string>()) << "-" << opts["frame0"].as<int>() << ":" << opts["frame1"].as<int>();
     string alignment_dir = oss.str();
     cout << "Saving to " << alignment_dir << endl;
     bfs::create_directory(alignment_dir);

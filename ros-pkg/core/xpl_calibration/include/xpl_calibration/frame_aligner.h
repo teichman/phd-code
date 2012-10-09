@@ -46,20 +46,28 @@ public:
     params.set<double>("max_feature_dist", 300);
     params.set<int>("min_ransac_inliers", 20);
     params.set<double>("min_pairwise_keypoint_dist", 0.15);
-    params.set<double>("ransac_max_inlier_dist", 0.05);
+    params.set<double>("ransac_max_inlier_dist", 0.03);
     params.set<double>("min_ransac_inlier_percent", 0.33);
     params.set<double>("min_bounding_length", 0.5);
 
     // Frame alignment params
     params.set<double>("max_range", 10.0);
     params.set<double>("fraction", 0.25);
-    params.set<double>("depth_weight", 1);
+    params.set<double>("depth_weight", 2);
     params.set<double>("color_weight", 0.01);
+    params.set<double>("rgb_weight", 0.0);
+    params.set<double>("hue_weight", 0.0);
+    params.set<double>("edge_weight", 0.5);
+    params.set<double>("cn_weight", 1.0);
     params.set<double>("keypoint_weight", 0);
+    params.set<int>("canny_lower_thresh", 75);
+    params.set<int>("canny_upper_thresh", 100);
+    params.set<int>("edge_fanout", 25);
     // params.set<double>("depth_hinge", 0);
     // params.set<double>("color_hinge", 0);
     params.set<double>("keypoint_hinge", 50);
     params.set<double>("max_depth_error", 0.05);
+    params.set<string>("gridsearch_type", "default");
     
     return params;
   }
@@ -106,6 +114,7 @@ protected:
 			     Eigen::Affine3d* f0_to_f1) const;
 
   bool validate(double count, double depth_error) const;
+  GridSearch setupGridSearch() const;
 };
 
 #endif // FRAME_ALIGNER_H

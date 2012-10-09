@@ -1,4 +1,5 @@
 #include <xpl_calibration/mean_depth_error.h>
+#include <ros/package.h>
 
 using namespace std;
 using namespace Eigen;
@@ -154,31 +155,33 @@ FrameAlignmentMDE::FrameAlignmentMDE(const pipeline::Params& params,
   // CANNY (TODO)
   cv::Mat1b gray0; cv::cvtColor(frame0_.img_, gray0, CV_BGR2GRAY);
   cv::Mat1b gray1; cv::cvtColor(frame1_.img_, gray1, CV_BGR2GRAY);
-  cv::Mat1b rawedges0; cv::Canny(gray0, rawedges0, 100, 150, 3);
-  cv::Mat1b rawedges1; cv::Canny(gray1, rawedges1, 100, 150, 3);
-  cv::Mat1b dilated0; cv::dilate(rawedges0, dilated0, cv::Mat1b::ones(5,5)); 
-  cv::Mat1b dilated1; cv::dilate(rawedges1, dilated1, cv::Mat1b::ones(5,5)); 
-  cv::GaussianBlur(dilated0, edges0_, cv::Size(15,15), 5);
-  cv::GaussianBlur(dilated1, edges1_, cv::Size(15,15), 5);
-  //int ndilate=25;
-  //edges0_ = cv::Mat1b::zeros(rawedges0.size());
-  //edges1_ = cv::Mat1b::zeros(rawedges1.size());
-  //cv::Mat1b dilated0; 
-  //cv::Mat1b dilated1; 
-  //for(int i = 0; i < ndilate; i++)
-  //{
-  //  //float scale = 1./ndilate; //LINEAR
-  //  float scale = (i+1)/(float)( (ndilate)*(ndilate+1)/2.);
-  //  cv::dilate(rawedges0, dilated0, cv::Mat1b::ones(i*2+1,i*2+1)); 
-  //  cv::dilate(rawedges1, dilated1, cv::Mat1b::ones(i*2+1,i*2+1)); 
-  //  edges0_ += scale * dilated0;
-  //  edges1_ += scale * dilated1;
-  //}
-  //cv::imshow("raw_edges", rawedges0);
-  //cv::imshow("edges", edges0_); 
-  //cv::waitKey();
+  cv::Mat1b rawedges0; cv::Canny(gray0, rawedges0, 
+      params_.get<int>("canny_lower_thresh"), params_.get<int>("canny_upper_thresh"), 3);
+  cv::Mat1b rawedges1; cv::Canny(gray1, rawedges1,
+      params_.get<int>("canny_lower_thresh"), params_.get<int>("canny_upper_thresh"), 3);
+  //cv::Mat1b dilated0; cv::dilate(rawedges0, dilated0, cv::Mat1b::ones(1,1)); 
+  //cv::Mat1b dilated1; cv::dilate(rawedges1, dilated1, cv::Mat1b::ones(1,1)); 
+  //cv::GaussianBlur(dilated0, edges0_, cv::Size(35,35), 15);
+  //cv::GaussianBlur(dilated1, edges1_, cv::Size(35,35), 15);
+  int ndilate=params_.get<int>("edge_fanout");
+  edges0_ = cv::Mat1b::zeros(rawedges0.size());
+  edges1_ = cv::Mat1b::zeros(rawedges1.size());
+  cv::Mat1b dilated0; 
+  cv::Mat1b dilated1; 
+  for(int i = 0; i < ndilate; i++)
+  {
+    float scale = 1./(ndilate*2); //LINEAR
+    //float scale = (i+1)/(float)( (ndilate)*(ndilate+1)/2.);
+    cv::dilate(rawedges0, dilated0, cv::Mat1b::ones(i*2+1,i*2+1)); 
+    cv::dilate(rawedges1, dilated1, cv::Mat1b::ones(i*2+1,i*2+1)); 
+    edges0_ += scale * dilated0;
+    edges1_ += scale * dilated1;
+  }
+  cv::imshow("raw_edges", rawedges0);
+  cv::imshow("edges", edges0_); 
+  cv::waitKey(30);
   // Load the color_names lookup table
-  eigen_extensions::load("/home/sdmiller/kitchen/recon3d/ros-pkg/recon/data/w2c.eig", 
+  eigen_extensions::load(ros::package::getPath("xpl_calibration") + "/data/w2c.eig", 
       &color_names_);
 
 }
@@ -195,25 +198,38 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   double depth_error = 0;
   double garbage;
   double color_error = 0;
-  // double keypoint_error = 0;
-  // double keypoint_error_count = 0;
-  Cloud transformed;
+  // Specific weightings for different metrics
+  double rgb_error = 0;
+  double hue_error = 0;
+  double edge_error = 0;
+  double cn_error = 0;
+  double rgb_count = 0;
+  double hue_count = 0;
+  double edge_count = 0;
+  double cn_count = 0;
 
+  Cloud transformed;
   transformAndDecimate(pcd1_, f0_to_f1.inverse(), indices_, &transformed);
-  //meanDepthAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, params_.get<double>("max_range"));
-  //meanDepthMultiplierAndColorError(model0_, frame0_, transformed, &depth_error, &color_error, &count, params_.get<double>("max_range"));
-  meanDepthMultiplierAndHueError(model0_, frame0_, transformed, img0_hsv_, img1_hsv_, indices_, &depth_error, &color_error, &count, params_.get<double>("max_range"));
-  //meanDepthMultiplierAndEdgeError(model0_, frame0_, transformed, edges0_, edges1_, indices_, &depth_error, &color_error, &count, params_.get<double>("max_range"));
-  //meanDepthMultiplierAndCNError(model0_, frame0_, transformed, color_names_, &depth_error, &color_error, &count, params_.get<double>("max_range"));
+  if(params_.get<double>("rgb_weight") > 0 || params_.get<double>("depth_weight") > 0)
+    meanDepthMultiplierAndColorError(model0_, frame0_, transformed, &depth_error, &rgb_error, &rgb_count, params_.get<double>("max_range"));
+  if(params_.get<double>("hue_weight") > 0)
+    meanDepthMultiplierAndHueError(model0_, frame0_, transformed, img0_hsv_, img1_hsv_, indices_, &garbage, &hue_error, &hue_count, params_.get<double>("max_range"));
+  if(params_.get<double>("edge_weight") > 0)
+    meanDepthMultiplierAndEdgeError(model0_, frame0_, transformed, edges0_, edges1_, indices_, &garbage, &edge_error, &edge_count, params_.get<double>("max_range"));
+  if(params_.get<double>("cn_weight") > 0)
+    meanDepthMultiplierAndCNError(model0_, frame0_, transformed, color_names_, &garbage, &cn_error, &cn_count, params_.get<double>("max_range"));
   // keypointError(model0_, frame0_, correspondences0_, f0_to_f1, model1_, frame1_, correspondences1_,
   // 		params_.get<double>("keypoint_hinge"), &keypoint_error, &keypoint_error_count);
   
   transformAndDecimate(pcd0_, f0_to_f1, indices_, &transformed); 
-  //meanDepthAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, params_.get<double>("max_range"));
-  //meanDepthMultiplierAndColorError(model1_, frame1_, transformed, &depth_error, &color_error, &count, params_.get<double>("max_range"));
-  meanDepthMultiplierAndHueError(model1_, frame1_, transformed, img1_hsv_, img0_hsv_, indices_, &depth_error, &color_error, &count, params_.get<double>("max_range"));
-  meanDepthMultiplierAndEdgeError(model1_, frame1_, transformed, edges1_, edges0_, indices_, &depth_error, &color_error, &count, params_.get<double>("max_range"));
-  //meanDepthMultiplierAndCNError(model1_, frame1_, transformed, color_names_, &depth_error, &color_error, &count, params_.get<double>("max_range"));
+  if(params_.get<double>("rgb_weight") > 0 || params_.get<double>("depth_weight") > 0)
+    meanDepthMultiplierAndColorError(model1_, frame1_, transformed, &depth_error, &rgb_error, &rgb_count, params_.get<double>("max_range"));
+  if(params_.get<double>("hue_weight") > 0)
+    meanDepthMultiplierAndHueError(model1_, frame1_, transformed, img1_hsv_, img0_hsv_, indices_, &garbage, &hue_error, &hue_count, params_.get<double>("max_range"));
+  if(params_.get<double>("edge_weight") > 0)
+    meanDepthMultiplierAndEdgeError(model1_, frame1_, transformed, edges1_, edges0_, indices_, &garbage, &edge_error, &edge_count, params_.get<double>("max_range"));
+  if(params_.get<double>("cn_weight") > 0)
+    meanDepthMultiplierAndCNError(model1_, frame1_, transformed, color_names_, &garbage, &cn_error, &cn_count, params_.get<double>("max_range"));
 
   // keypointError(model1_, frame1_, correspondences1_, f0_to_f1.inverse(), model0_, frame0_, correspondences0_,
   // 		params_.get<double>("keypoint_hinge"), &keypoint_error, &keypoint_error_count);
@@ -227,13 +243,23 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   //   keypoint_error /= keypoint_error_count;
   //cout << "Avg error: " << color_error / count << endl;
   double min_points = 100;
+  count = rgb_count; //TODO make it actually count just depth regardless of method
   if(count < min_points) {
     ROS_WARN("FrameAlignmentMDE had < min_points overlapping 3d points.");
     return numeric_limits<double>::max();
   }
   else {
+    // Aggregate them all together
     depth_error /= count;
-    color_error /= count;
+    if(rgb_count > 0) rgb_error /= rgb_count;
+    if(hue_count > 0) hue_error /= hue_count;
+    if(edge_count > 0) edge_error /= edge_count;
+    if(cn_count > 0) cn_error /= cn_count;
+    color_error = 
+      params_.get<double>("rgb_weight")*rgb_error +
+      params_.get<double>("hue_weight")*hue_error +
+      params_.get<double>("edge_weight")*edge_error +
+      params_.get<double>("cn_weight")*cn_error;
   }
 
   //cout << "Num correspondences used for keypoint error: " << keypoint_error_count << ", Keypoint error: " << keypoint_error << endl;
