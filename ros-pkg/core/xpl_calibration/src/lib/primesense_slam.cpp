@@ -11,14 +11,16 @@ PrimeSenseSlam::PrimeSenseSlam() :
   min_dt_(0.2),
   max_range_(3.5),
   max_loopclosures_(1),
-  keypoints_per_frame_(100)
+  max_loopclosure_tests_(50),
+  keypoints_per_frame_(300)
 {
 }
 
 void PrimeSenseSlam::_run()
 {
-  //FrameAligner aligner(sseq_->model_, sseq_->model_, max_range_);
-  FrameAligner aligner(sseq_->model_, sseq_->model_, 10.0);
+  FrameAligner aligner(sseq_->model_, sseq_->model_);
+  cout << "FrameAligner is using params: " << endl;
+  cout << aligner.params_ << endl;
 #ifdef VISUALIZE
   if(fav_)
     aligner.view_handler_ = fav_;
@@ -78,39 +80,41 @@ void PrimeSenseSlam::_run()
     }
 
     // -- Try to find loop closure links to some previous frames.
-    vector<size_t> cached_frames_random;
-    ROS_ASSERT(!cached_frames_.empty() && cached_frames_.back() == curr_idx);
-    if(cached_frames_.size() > 1)
-      ROS_ASSERT(cached_frames_[cached_frames_.size() - 2] == prev_idx);
-    cached_frames_random.insert(cached_frames_random.end(), cached_frames_.begin(), cached_frames_.end() - 2);
-    if(!cached_frames_random.empty()) {
-      ROS_ASSERT(cached_frames_random.back() != curr_idx);
-      ROS_ASSERT(cached_frames_random.back() != prev_idx);
-    }
-    random_shuffle(cached_frames_random.begin(), cached_frames_random.end());
-    size_t num_successful_loopclosures = 0;
-    for(size_t i = 0; i < cached_frames_random.size(); ++i) {
-      size_t idx = cached_frames_random[i];
-      ROS_DEBUG_STREAM("Checking for loop closure between " << idx << " and " << curr_idx);
-      Frame old_frame;
-      sseq_->readFrame(idx, &old_frame);
+    if(max_loopclosures_ > 0) { 
+      vector<size_t> cached_frames_random;
+      ROS_ASSERT(!cached_frames_.empty() && cached_frames_.back() == curr_idx);
+      if(cached_frames_.size() > 1)
+	ROS_ASSERT(cached_frames_[cached_frames_.size() - 2] == prev_idx);
+      cached_frames_random.insert(cached_frames_random.end(), cached_frames_.begin(), cached_frames_.end() - 2);
+      if(!cached_frames_random.empty()) {
+	ROS_ASSERT(cached_frames_random.back() != curr_idx);
+	ROS_ASSERT(cached_frames_random.back() != prev_idx);
+      }
+      random_shuffle(cached_frames_random.begin(), cached_frames_random.end());
+      size_t num_successful_loopclosures = 0;
+      for(size_t i = 0; i < cached_frames_random.size() && i < max_loopclosure_tests_; ++i) {
+	size_t idx = cached_frames_random[i];
+	ROS_DEBUG_STREAM("Checking for loop closure between " << idx << " and " << curr_idx);
+	Frame old_frame;
+	sseq_->readFrame(idx, &old_frame);
 
-      ROS_ASSERT(keypoint_cache_.count(idx));
-      ROS_ASSERT(feature_cache_.count(idx));
-      Affine3d curr_to_old;
-      if(fav_)
-    	fav_->setFrames(curr_frame, old_frame);
-      bool found = aligner.align(curr_frame, old_frame,
-      				 curr_keypoints, keypoint_cache_[idx],
-      				 curr_features, feature_cache_[idx],
-      				 false, &curr_to_old);
-      //bool found = aligner.align(curr_frame, old_frame, &curr_to_old);
-      if(found) {
-    	cout << "Added edge " << idx << " -- " << curr_idx << endl;
-    	pgs_->addEdge(idx, curr_idx, curr_to_old, covariance);
-	++num_successful_loopclosures;
-	if(num_successful_loopclosures == max_loopclosures_)
-	  break;
+	ROS_ASSERT(keypoint_cache_.count(idx));
+	ROS_ASSERT(feature_cache_.count(idx));
+	Affine3d curr_to_old;
+	if(fav_)
+	  fav_->setFrames(curr_frame, old_frame);
+	bool found = aligner.align(curr_frame, old_frame,
+				   curr_keypoints, keypoint_cache_[idx],
+				   curr_features, feature_cache_[idx],
+				   false, &curr_to_old);
+	//bool found = aligner.align(curr_frame, old_frame, &curr_to_old);
+	if(found) {
+	  cout << "Added edge " << idx << " -- " << curr_idx << endl;
+	  pgs_->addEdge(idx, curr_idx, curr_to_old, covariance);
+	  ++num_successful_loopclosures;
+	  if(num_successful_loopclosures == max_loopclosures_)
+	    break;
+	}
       }
     }
   }

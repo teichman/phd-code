@@ -65,7 +65,7 @@ namespace rgbd
     }
   }
   
-  void PrimeSenseModel::cloudToFrame(const Cloud& pcd, Frame* frame) const
+  void PrimeSenseModel::cloudToFrame(const Cloud& pcd, Frame* frame, IndexMap* indexmap) const
   {
     ROS_ASSERT(frame);
     ROS_ASSERT(width_ != -1 && height_ != -1 && cx_ != -1 && cy_ != -1 && fx_ != -1 && fy_ != -1);
@@ -74,6 +74,13 @@ namespace rgbd
     frame->depth_ = DepthMatPtr(new DepthMat(height_, width_));
     frame->depth_->setZero();  // 0 indicates a bad point.
     frame->img_ = cv::Mat3b(height_, width_);
+
+    if(indexmap)
+    {
+      *indexmap = IndexMap(height_, width_);
+      //ROS_ASSERT(pcd.height == height_);
+      //ROS_ASSERT(pcd.width == width_);
+    }
 
     ProjectivePoint ppt;
     for(size_t i = 0; i < pcd.size(); ++i) {
@@ -97,6 +104,9 @@ namespace rgbd
 	frame->img_(ppt.v_, ppt.u_)[0] = ppt.b_;
 	frame->img_(ppt.v_, ppt.u_)[1] = ppt.g_;
 	frame->img_(ppt.v_, ppt.u_)[2] = ppt.r_;
+  if(indexmap) {
+    (*indexmap)(ppt.v_, ppt.u_) = i;
+  }
       }
     }
   }
@@ -416,6 +426,31 @@ namespace rgbd
 	depth(y, x) = colorize(depth_->coeffRef(y, x) * 0.001, 0, 10);
     return depth;
   }
-  
+
+  void Frame::serialize(std::ostream& out) const
+  {
+    eigen_extensions::serializeScalar(timestamp_, out);
+    eigen_extensions::serialize(*depth_, out);
+
+    vector<uchar> buf;
+    cv::imencode(".png", img_, buf);
+    size_t num_bytes = buf.size();
+    out.write((const char*)&num_bytes, sizeof(num_bytes));
+    out.write((const char*)&buf[0], num_bytes * sizeof(uchar));
+  }
+
+  void Frame::deserialize(std::istream& in)
+  {
+    eigen_extensions::deserializeScalar(in, &timestamp_);
+    depth_ = DepthMatPtr(new DepthMat);
+    eigen_extensions::deserialize(in, depth_.get());
+
+    size_t num_bytes;
+    in.read((char*)&num_bytes, sizeof(num_bytes));
+    vector<uchar> buf(num_bytes);
+    in.read((char*)&buf[0], num_bytes * sizeof(uchar));
+    img_ = cv::imdecode(buf, 1);
+  }
+
 } // namespace rgbd
 

@@ -1,6 +1,7 @@
 #ifndef MEAN_DEPTH_ERROR_H
 #define MEAN_DEPTH_ERROR_H
 
+#include <pipeline/params.h>
 #include <xpl_calibration/object_matching_calibrator.h>  // For generateTransform.
 #include <rgbd_sequence/primesense_model.h>
 
@@ -10,23 +11,27 @@ class FrameAlignmentMDE : public ScalarFunction
 public:
   typedef boost::shared_ptr<FrameAlignmentMDE> Ptr;
   typedef boost::shared_ptr<const FrameAlignmentMDE> ConstPtr;
-
-  double max_range_;
   
   //! fraction is how much of the depth data to use.
-  FrameAlignmentMDE(const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
+  //! Default params can come from FrameAligner::defaultParams().
+  FrameAlignmentMDE(const pipeline::Params& params,
+		    const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
 		    rgbd::Frame frame0, rgbd::Frame frame1,
 		    const std::vector<cv::Point2d>& correspondences0 = std::vector<cv::Point2d>(),
-		    const std::vector<cv::Point2d>& correspondences1 = std::vector<cv::Point2d>(),
-		    double max_range = 3.5, double fraction = 1.0);
+		    const std::vector<cv::Point2d>& correspondences1 = std::vector<cv::Point2d>());
+
   //! x = [rx, ry, rz, tx, ty, tz].
   double eval(const Eigen::VectorXd& x) const;
 
-  //! Number of points in the last eval() which had matches.
+  //! Number of points from the last eval() which had matches.
   //! Only valid in a single-threaded context.
-  double *count_;
+  double* count_;
+  //! The unweighted depth error from the last eval() which had matches.
+  //! Only valid in a single-threaded context.
+  double* depth_error_;
   
 protected:
+  pipeline::Params params_;
   rgbd::PrimeSenseModel model0_;
   rgbd::PrimeSenseModel model1_;
   rgbd::Frame frame0_;
@@ -36,6 +41,13 @@ protected:
   rgbd::Cloud pcd0_;
   rgbd::Cloud pcd1_;
   std::vector<size_t> indices_;
+  //! Precomputed images -- hsv, canny, etc
+  cv::Mat3f img0_hsv_;
+  cv::Mat3f img1_hsv_;
+  cv::Mat1b edges0_;
+  cv::Mat1b edges1_;
+  Eigen::MatrixXf color_names_;
+  
 };
 
 void transformAndDecimate(const rgbd::Cloud& in,
@@ -95,9 +107,32 @@ void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
 			    double* depth_error, double* color_error, double* count,
 			    double max_range = std::numeric_limits<double>::max());
 
+void meanDepthMultiplierAndColorError(const rgbd::PrimeSenseModel& model,
+				      rgbd::Frame frame, const rgbd::Cloud& pcd,
+				      double* depth_error, double* hue_error, double* count,
+				      double max_range = std::numeric_limits<double>::max());
+void meanDepthMultiplierAndHueError(const rgbd::PrimeSenseModel& model,
+				      rgbd::Frame frame, const rgbd::Cloud& pcd, 
+              const cv::Mat3f &hsv_frame, const cv::Mat3f &hsv_pcd, 
+              const std::vector<size_t> &cloud_indices, 
+				      double* depth_error, double* color_error, double* count,
+				      double max_range = std::numeric_limits<double>::max());
+void meanDepthMultiplierAndEdgeError(const rgbd::PrimeSenseModel& model,
+				      rgbd::Frame frame, const rgbd::Cloud& pcd, 
+              const cv::Mat1b &edge_frame, const cv::Mat1b &edge_pcd, 
+              const std::vector<size_t> &cloud_indices, 
+				      double* depth_error, double* color_error, double* count,
+				      double max_range = std::numeric_limits<double>::max());
+void meanDepthMultiplierAndCNError(const rgbd::PrimeSenseModel& model,
+				      rgbd::Frame frame, const rgbd::Cloud& pcd,
+              const Eigen::MatrixXf &color_names_lookup,
+				      double* depth_error, double* cn_error, double* count,
+				      double max_range = std::numeric_limits<double>::max());
+
 void keypointError(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, const std::vector<cv::Point2d> correspondences0,
 		   const Eigen::Affine3f& f0_to_f1,
 		   const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1, const std::vector<cv::Point2d>& correspondences1,
+		   double keypoint_hinge,
 		   double* keypoint_error, double* keypoint_error_count);
 
 #endif // MEAN_DEPTH_ERROR_H

@@ -20,6 +20,7 @@ int main(int argc, char** argv)
     ("opcd", bpo::value<string>()->required(), "Output path for the final pointcloud.")
     ("otraj", bpo::value<string>()->required(), "Output path for the final trajectory.")
     ("ograph", bpo::value<string>()->required(), "Output path for the final pose graph.")
+    ("max-loopclosures", bpo::value<int>())
     ("cam", bpo::value<string>(), "Camera file to use.")
     ("visualize", "")
     ;
@@ -45,6 +46,8 @@ int main(int argc, char** argv)
   sseq->load(opts["sseq"].as<string>());
 
   PrimeSenseSlam pss;
+  if(opts.count("max-loopclosures"))
+    pss.max_loopclosures_ = opts["max-loopclosures"].as<int>();
   pss.sseq_ = sseq;
   FrameAlignmentVisualizer fav(sseq->model_, sseq->model_);
   if(opts.count("visualize"))

@@ -5,6 +5,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <serializable/serializable.h>
 #include <eigen_extensions/eigen_extensions.h>
 
@@ -20,6 +21,7 @@ namespace rgbd
   typedef boost::shared_ptr<DepthMat> DepthMatPtr;
   typedef boost::shared_ptr<const DepthMat> DepthMatConstPtr;
   typedef std::vector< std::vector< std::vector<double> > > DepthIndex;
+  typedef Eigen::Matrix<size_t, Eigen::Dynamic, Eigen::Dynamic> IndexMap;
   
   //! "Projective" point comes from the OpenNI terminology, and refers to (u, v, z), i.e.
   //! pixel id and depth value.  Here I've added color, too, so that this represents everything
@@ -39,7 +41,7 @@ namespace rgbd
     void deserialize(std::istream& in);
   };
   
-  class Frame
+  class Frame : public Serializable
   {
   public:
     DepthMatPtr depth_;
@@ -47,7 +49,9 @@ namespace rgbd
     double timestamp_;
 
     cv::Mat3b depthImage() const;
-
+    void serialize(std::ostream& out) const;
+    void deserialize(std::istream& in);
+    
   protected:
     cv::Vec3b colorize(double depth, double min_range, double max_range) const;
   };
@@ -79,7 +83,7 @@ namespace rgbd
     //! The only way to apply the depth distortion model is to call undistort.
     void frameToCloud(const Frame& frame, Cloud* pcd,
 		      double max_range = std::numeric_limits<double>::max()) const;
-    void cloudToFrame(const Cloud& pcd, Frame* frame) const;
+    void cloudToFrame(const Cloud& pcd, Frame* frame, IndexMap* indexmap = NULL) const;
     void cloudToDepthIndex(const Cloud& pcd, DepthIndex* dindex) const;
     //! Applies depth distortion model to the depth data in frame.
     void undistort(Frame* frame) const;

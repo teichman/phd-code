@@ -34,7 +34,7 @@ namespace pipeline
 
   inline bool isInvalidChar(char c)
   {
-    return (!isalnum(c));
+    return (!isalnum(c) && c != '_');  // TODO: Is the underscore OK?
   }
 
   inline bool isValidName(const std::string &name)
@@ -49,7 +49,7 @@ namespace pipeline
   inline void assertValidName(const std::string& name)
   {
     if(!isValidName(name))
-      PL_ABORT("Name \"" << name << "\" is invalid.  Use only alphanumeric characters.");
+      PL_ABORT("Name \"" << name << "\" is invalid.  Use only alphanumeric characters and underscores.");  // TODO: Is the underscore OK?
   }
   
 } // namespace pipeline

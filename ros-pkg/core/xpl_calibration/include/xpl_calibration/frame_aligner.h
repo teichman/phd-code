@@ -1,7 +1,9 @@
 #ifndef FRAME_ALIGNER_H
 #define FRAME_ALIGNER_H
 
+#include <ros/package.h>
 #include <bag_of_tricks/agent.h>
+#include <pipeline/params.h>
 #include <xpl_calibration/mean_depth_error.h>
 
 class FrameAlignmentVisualizer : public GridSearchViewHandler, public Agent
@@ -22,6 +24,8 @@ protected:
   pcl::visualization::PCLVisualizer vis_;
   bool needs_update_;
   bool foo_;
+
+  void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie);
 };
 
 class FrameAligner
@@ -31,30 +35,17 @@ public:
   typedef boost::shared_ptr<const cv::Mat1f> FeaturesConstPtr;
 
   GridSearchViewHandler* view_handler_;
-  
-  // -- Params for feature matching method
-  int num_ransac_samples_;
-  //! For knn.
-  int k_;
-  //! Arbitrary units
-  float max_feature_dist_;
-  float min_ransac_inliers_;
-  //! meters
-  float min_pairwise_keypoint_dist_;
-  //! meters
-  float ransac_max_inlier_dist_;
-  //! [0, 1]
-  float min_ransac_inlier_percent_;
-  //! meters
-  float min_bounding_length_;
-  
-  // -- Other params  
-  double max_range_;
-  
-  FrameAligner(const rgbd::PrimeSenseModel& model0,
-	       const rgbd::PrimeSenseModel& model1,
-	       double max_range);
 
+  pipeline::Params params_;
+  static inline pipeline::Params defaultParams()
+  {
+    pipeline::Params params;
+    params.load(ros::package::getPath("xpl_calibration") + "/data/default_frame_alignment_params.txt");
+    return params;
+  }
+  
+  FrameAligner(const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1);
+  
   //! Computes transform that takes points in 0 to points in 1. Tries using feature matching to get close, and, failing that, does
   //! a wide area grid search if you tell it to.
   //! keypoints don't necessarily correspond.  Correspondences will be computed.
@@ -94,7 +85,8 @@ protected:
 			     std::vector<cv::Point2d>* correspondences0, std::vector<cv::Point2d>* correspondences1,
 			     Eigen::Affine3d* f0_to_f1) const;
 
-  bool validate(double count, double final_objective) const;
+  bool validate(double count, double depth_error) const;
+  GridSearch setupGridSearch() const;
 };
 
 #endif // FRAME_ALIGNER_H
