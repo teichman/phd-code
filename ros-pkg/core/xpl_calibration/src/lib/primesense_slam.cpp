@@ -11,6 +11,7 @@ PrimeSenseSlam::PrimeSenseSlam() :
   min_dt_(0.2),
   max_range_(3.5),
   max_loopclosures_(1),
+  max_loopclosure_tests_(50),
   keypoints_per_frame_(300)
 {
 }
@@ -91,7 +92,7 @@ void PrimeSenseSlam::_run()
       }
       random_shuffle(cached_frames_random.begin(), cached_frames_random.end());
       size_t num_successful_loopclosures = 0;
-      for(size_t i = 0; i < cached_frames_random.size(); ++i) {
+      for(size_t i = 0; i < cached_frames_random.size() && i < max_loopclosure_tests_; ++i) {
 	size_t idx = cached_frames_random[i];
 	ROS_DEBUG_STREAM("Checking for loop closure between " << idx << " and " << curr_idx);
 	Frame old_frame;
