@@ -6,6 +6,11 @@ using boost::any;
 namespace pipeline
 {
 
+  Twiddler::Twiddler() :
+    next_id_(0)
+  {
+  }
+  
   Params Twiddler::randomMerge(const Params& params0, const Params& params1)
   {
     Params params;
@@ -21,29 +26,51 @@ namespace pipeline
     return params;
   }
 
-  bool Twiddler::isImprovement(const Params& prev, const Params& curr) const
+  void Twiddler::initialize(std::string path)
   {
-    return (curr.get<double>("objective") < prev.get<double>("objective"));
+    ROS_ASSERT(!bfs::exists(path));
+    bfs::create_directory(path);
+    next_id_ = 0;
+    path_ = path;
   }
 
-  void Twiddler::run(const Params& init, std::string output_path)
+  void Twiddler::load(std::string path)
   {
-    ROS_ASSERT(!bfs::exists(output_path));
-    bfs::create_directory(output_path);
+    
+  }
 
+  double Twiddler::objective(const Results& results) const
+  {
+    return results["objective"];
+  }
+  
+  void Twiddler::run(const Params& init)
+  {
     Params best_params = init;
     Params best_results = evaluate(init);
     while(true) {
+      // -- Get another parameter variation.
       Params variation = generateParamVariation(best_params);
       if(results_.count(variation))
 	continue;
-      results_[variation] = evaluate(variation);
-      if(isImprovement(best_results, results_[variation])) {
+
+      // -- Evaluate and check for improvement.
+      Results results = evaluate(variation);
+      results_[variation] = results;
+      if(objective(results) < objective(best_results)) {
 	best_params = variation;
-	best_results = results_[variation];
+	best_results = results;
       }
 
-      // -- Save these results to output_path.
+      // -- Save results to output_path.
+      ostringstream oss;
+      oss << path << "/" << setw(5) << setfill('0') << next_id_;
+      string path = oss.str();
+      ROS_ASSERT(!bfs::exists(path));
+      bfs::create_directory(path);
+      results.save(path + "/results.txt");
+      variation.save(path + "/params.txt");
+      ++next_id_;
     }
   }
   

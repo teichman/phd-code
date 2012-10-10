@@ -16,6 +16,8 @@ std::string sseqName(std::string str)
 
 int main(int argc, char** argv)
 {
+  srand(time(0));
+  
   namespace bpo = boost::program_options;
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
