@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/pipeline3</url>
   <depend package="bag_of_tricks"/>
   <depend package="serializable"/>
+  <depend package="rosconsole"/>
 
   <export>
     <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath ${prefix}/lib -lpipeline3 `rosboost-cfg --lflags filesystem`"/>

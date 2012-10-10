@@ -5,6 +5,7 @@
 #include <vector>
 #include <stdlib.h>
 #include <assert.h>
+#include <sstream>
 #include <serializable/serializable.h>
 
 #define SHOW(x) #x << ": " << x
@@ -52,6 +53,15 @@ public:
       std::map<T, S>::operator[](first) = second;
     }
     getline(in, buf);  // Eat final newline.
+  }
+
+  std::string status(const std::string& prefix = "") const
+  {
+    std::ostringstream oss;
+    typename std::map<T, S>::const_iterator it;
+    for(it = std::map<T, S>::begin(); it != std::map<T, S>::end(); ++it)
+      oss << prefix << it->first << ": " << it->second << std::endl;
+    return oss.str();
   }
   
 };
