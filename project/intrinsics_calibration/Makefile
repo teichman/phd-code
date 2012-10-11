@@ -36,6 +36,17 @@ all:
 # Experiments
 ############################################################
 
+%-experiment_metadata.txt:
+	mkdir -p $(@D)
+	echo `hostname` > $@
+	echo `date +%F_%T` >> $@
+	echo '' >> $@
+	echo '' >> $@
+	env >> $@
+	echo '' >> $@
+	echo '' >> $@
+	git log -n1 >> $@
+	git di >> $@
 
 # -- Enumeration of targets for each sensor.
 define SENSOR_RULE_GENERATOR
@@ -43,8 +54,7 @@ define SENSOR_RULE_GENERATOR
 TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
 
 $(1)-quantitative-evaluation: 	$(1)/evaluation/results-baseline.txt \
-				$(1)/evaluation/results-distortion_model_and_recalib.txt \
-				$(1)/evaluation/results-distortion_model_no_recalib.txt
+				$(1)/evaluation/results-distortion_model_and_recalib.txt
 	@grep '^' $$^
 
 $(1)/evaluation/results-distortion_model_and_recalib.txt: $(1)/evaluation/learned_model.psm $(1)/evaluation/extrinsics 
@@ -53,6 +63,7 @@ $(1)/evaluation/results-distortion_model_and_recalib.txt: $(1)/evaluation/learne
 	--intrinsics $$< --extrinsics $$(@D)/extrinsics \
 	--evaluate $$@
 
+# Sanity check.
 $(1)/evaluation/results-distortion_model_no_recalib.txt: $(1)/evaluation/learned_model.psm
 	rosrun xpl_calibration asus_vs_velo \
 	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
@@ -78,12 +89,13 @@ $(1)/evaluation/extrinsics: $(1)/evaluation/learned_model.psm
 	--intrinsics learned_model.psm \
 	--compute-extrinsics
 
-$(1)/evaluation/learned_model.psm: $$(TRAJECTORIES_$(1))
+$(1)/evaluation/learned_model.psm: $$(TRAJECTORIES_$(1)) $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
 	rosrun xpl_calibration calibrate_slam \
 	--omodel $$@ \
 	$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
-	$$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
+	$$(addprefix --traj ,$$(TRAJECTORIES_$(1))) \
+	| tee $$@-log.txt
 
 $(1)-visualize-avv-intrinsics: $(1)/asus_vs_velodyne/extrinsics $(1)/asus_vs_velodyne/intrinsics
 	rosrun xpl_calibration asus_vs_velo \

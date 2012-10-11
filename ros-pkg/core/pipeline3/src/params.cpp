@@ -93,5 +93,73 @@ namespace pipeline
   {
     return (storage_.count(name) != 0);
   }
+
+  bool Params::operator==(const Params& other) const
+  {
+    std::map<std::string, boost::any>::const_iterator it;
+    for(it = storage_.begin(); it != storage_.end(); ++it) {
+      string name = it->first;
+      if(other.storage_.find(name) == other.storage_.end())
+	PL_ABORT("Tried to compare two Params objects with different fields.");
+
+      if(isType<double>(name)) {
+	if(get<double>(name) != other.get<double>(name))
+	  return false;
+      }
+      else if(isType<string>(name)) {
+	if(get<string>(name) != other.get<string>(name))
+	  return false;
+      }
+      else if(isType<int>(name)) {
+	if(get<int>(name) != other.get<int>(name))
+	  return false;
+      }
+      else if(isType<bool>(name)) {
+	if(get<bool>(name) != other.get<bool>(name))
+	  return false;
+      }
+      else
+	PL_ABORT("Unknown Param type.");
+    }
+    return true;
+  }
+
+  bool Params::operator<(const Params& other) const
+  {
+    std::map<std::string, boost::any>::const_iterator it;
+    for(it = storage_.begin(); it != storage_.end(); ++it) {
+      string name = it->first;
+      if(other.storage_.find(name) == other.storage_.end())
+	PL_ABORT("Tried to compare two Params objects with different fields.");
+
+      if(isType<double>(name)) {
+	if(get<double>(name) < other.get<double>(name))
+	  return true;
+	if(get<double>(name) > other.get<double>(name))
+	  return false;
+      }
+      else if(isType<string>(name)) {
+	if(get<string>(name) < other.get<string>(name))
+	  return true;
+	if(get<string>(name) > other.get<string>(name))
+	  return false;
+      }
+      else if(isType<int>(name)) {
+	if(get<int>(name) < other.get<int>(name))
+	  return true;
+	if(get<int>(name) > other.get<int>(name))
+	  return false;
+      }
+      else if(isType<bool>(name)) {
+	if((int)get<bool>(name) < (int)other.get<bool>(name))
+	  return true;
+	if((int)get<bool>(name) > (int)other.get<bool>(name))
+	  return false;
+      }
+      else
+	PL_ABORT("Unknown Param type.");
+    }
+    return false;
+  }
   
 } // namespace pipeline

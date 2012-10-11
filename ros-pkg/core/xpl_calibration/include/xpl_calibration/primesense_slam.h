@@ -26,6 +26,8 @@ public:
   double max_range_;
   //! Max number per frame to use.  Selected in random order.
   size_t max_loopclosures_;
+  //! per frame
+  size_t max_loopclosure_tests_;
   int keypoints_per_frame_;
   
   // -- Outputs

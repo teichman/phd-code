@@ -16,6 +16,8 @@ std::string sseqName(std::string str)
 
 int main(int argc, char** argv)
 {
+  srand(time(0));
+  
   namespace bpo = boost::program_options;
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
@@ -30,6 +32,10 @@ int main(int argc, char** argv)
     ("max-range", bpo::value<double>())
     ("depth-weight", bpo::value<double>())
     ("color-weight", bpo::value<double>())
+    ("rgb-weight", bpo::value<double>())
+    ("hue-weight", bpo::value<double>())
+    ("edge-weight", bpo::value<double>())
+    ("cn-weight", bpo::value<double>())
     ("keypoint-weight", bpo::value<double>())
     ("keypoint-hinge", bpo::value<double>())
     ("fraction", bpo::value<double>())
@@ -70,6 +76,14 @@ int main(int argc, char** argv)
     aligner.params_.set("depth_weight", opts["depth-weight"].as<double>());
   if(opts.count("color-weight"))
     aligner.params_.set("color_weight", opts["color-weight"].as<double>());
+  if(opts.count("rgb-weight"))
+    aligner.params_.set("rgb_weight", opts["rgb-weight"].as<double>());
+  if(opts.count("hue-weight"))
+    aligner.params_.set("hue_weight", opts["hue-weight"].as<double>());
+  if(opts.count("edge-weight"))
+    aligner.params_.set("edge_weight", opts["edge-weight"].as<double>());
+  if(opts.count("cn-weight"))
+    aligner.params_.set("cn_weight", opts["cn-weight"].as<double>());
   if(opts.count("keypoint-weight"))
     aligner.params_.set("keypoint_weight", opts["keypoint-weight"].as<double>());
   if(opts.count("keypoint-hinge"))

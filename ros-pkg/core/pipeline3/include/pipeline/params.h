@@ -19,8 +19,10 @@ namespace pipeline
     void serialize(std::ostream& out) const;
     void deserialize(std::istream& in);
     bool exists(const std::string& name) const;
+    bool operator==(const Params& other) const;
+    bool operator<(const Params& other) const;
     
-    template<typename T> bool isType(const std::string& name)
+    template<typename T> bool isType(const std::string& name) const
     {
       if(storage_.count(name) == 0) { 
 	PL_ABORT("Tried to check type of non-existent param \"" << name << "\".");
@@ -28,7 +30,7 @@ namespace pipeline
             
       bool is_T = true;
       try {
-	boost::any_cast<T>(storage_[name]);
+	boost::any_cast<T>(storage_.find(name)->second);
       }
       catch(boost::bad_any_cast& e) {
 	is_T = false;
@@ -62,6 +64,7 @@ namespace pipeline
       return boost::any_cast<T>(storage_.find(name)->second);
     }
 
+    
   };
 
 }

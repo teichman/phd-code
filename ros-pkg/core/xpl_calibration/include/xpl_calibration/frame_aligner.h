@@ -1,6 +1,7 @@
 #ifndef FRAME_ALIGNER_H
 #define FRAME_ALIGNER_H
 
+#include <ros/package.h>
 #include <bag_of_tricks/agent.h>
 #include <pipeline/params.h>
 #include <xpl_calibration/mean_depth_error.h>
@@ -39,30 +40,7 @@ public:
   static inline pipeline::Params defaultParams()
   {
     pipeline::Params params;
-
-    // Feature matching params
-    params.set<int>("num_ransac_samples", 5000);
-    params.set<int>("k", 2);
-    params.set<double>("max_feature_dist", 300);
-    params.set<int>("min_ransac_inliers", 20);
-    params.set<double>("min_pairwise_keypoint_dist", 0.15);
-    params.set<double>("ransac_max_inlier_dist", 0.03);
-    params.set<double>("min_ransac_inlier_percent", 0.5);
-    params.set<double>("min_bounding_length", 0.5);
-
-    // Frame alignment params
-    params.set<double>("max_range", 10.0);
-    params.set<double>("fraction", 0.25);
-    params.set<double>("depth_weight", 2);
-    params.set<double>("color_weight", 0.01);
-    params.set<double>("keypoint_weight", 0);
-    // params.set<double>("depth_hinge", 0);
-    // params.set<double>("color_hinge", 0);
-    params.set<double>("keypoint_hinge", 50);
-    params.set<double>("max_depth_error", 0.05);
-    params.set<string>("gridsearch_type", "default");
-    params.set<int>("min_depth_count", 60000);  // About 20% of the image.
-    
+    params.load(ros::package::getPath("xpl_calibration") + "/data/default_frame_alignment_params.txt");
     return params;
   }
   

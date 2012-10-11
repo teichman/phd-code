@@ -72,12 +72,22 @@ TEST(Dictionary, Dictionary)
   //dptr->leak_.resize(1e6);
   (*dptr)["foo"] = 1;
   map<string, int>* bptr = dptr;
-  (*bptr)["bar"] = 1;
+  (*bptr)["bar"] = 2;
   accessDictionary(*dptr);
 
+  dptr->save("dict");
+  Dictionary<string, int> dict;
+  dict.load("dict");
+  cout << dict << endl;
+  EXPECT_TRUE(dict["foo"] == (*dptr)["foo"]);
+  EXPECT_TRUE(dict["bar"] == (*dptr)["bar"]);
+	        
+  // This test only applied when Dictionary was just a map.  Now it's also Serializable.
+  // 
   // This would be a memory leak if Dictionary had members that map did not.
   // valgrind --leak-check=full --max-stackframe=2457616 bin/test_hrt confirms this is fine.
-  delete bptr;
+  //delete bptr;
+  delete dptr;
 }
 
 int main(int argc, char** argv)

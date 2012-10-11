@@ -1,6 +1,6 @@
 #include <boost/program_options.hpp>
 #include <xpl_calibration/primesense_slam.h>
-
+//#define VISUALIZE
 using namespace std;
 using namespace Eigen;
 using namespace rgbd;
@@ -32,7 +32,7 @@ public:
     oss << "num_guessed_failed_: " << num_guessed_failed_ << endl;
     oss << "Mean translation error (meters): " << total_translation_error_ / num_alignments_ << endl;
     oss << "Mean rotation difference (radians): " << total_rotation_error_ / num_alignments_ << endl;
-    oss << "Mean alignment time: " << total_seconds_ / num_alignments_ << " seconds." << endl;
+    oss << "Mean alignment time (seconds): " << total_seconds_ / num_alignments_ << endl;
     return oss.str();
   }
 };
@@ -63,7 +63,6 @@ void evaluate(string path, PrimeSenseModel model, const bpo::variables_map& opts
   			     features0, features1,
   			     true, &f0_to_f1);
   hrt.stop();
-
   ostringstream oss;
   oss << eval->individual_results_ << endl;
   

@@ -41,6 +41,13 @@ protected:
   rgbd::Cloud pcd0_;
   rgbd::Cloud pcd1_;
   std::vector<size_t> indices_;
+  //! Precomputed images -- hsv, canny, etc
+  cv::Mat3f img0_hsv_;
+  cv::Mat3f img1_hsv_;
+  cv::Mat1b edges0_;
+  cv::Mat1b edges1_;
+  Eigen::MatrixXf color_names_;
+  
 };
 
 void transformAndDecimate(const rgbd::Cloud& in,
@@ -102,7 +109,24 @@ void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
 
 void meanDepthMultiplierAndColorError(const rgbd::PrimeSenseModel& model,
 				      rgbd::Frame frame, const rgbd::Cloud& pcd,
+				      double* depth_error, double* hue_error, double* count,
+				      double max_range = std::numeric_limits<double>::max());
+void meanDepthMultiplierAndHueError(const rgbd::PrimeSenseModel& model,
+				      rgbd::Frame frame, const rgbd::Cloud& pcd, 
+              const cv::Mat3f &hsv_frame, const cv::Mat3f &hsv_pcd, 
+              const std::vector<size_t> &cloud_indices, 
 				      double* depth_error, double* color_error, double* count,
+				      double max_range = std::numeric_limits<double>::max());
+void meanDepthMultiplierAndEdgeError(const rgbd::PrimeSenseModel& model,
+				      rgbd::Frame frame, const rgbd::Cloud& pcd, 
+              const cv::Mat1b &edge_frame, const cv::Mat1b &edge_pcd, 
+              const std::vector<size_t> &cloud_indices, 
+				      double* depth_error, double* color_error, double* count,
+				      double max_range = std::numeric_limits<double>::max());
+void meanDepthMultiplierAndCNError(const rgbd::PrimeSenseModel& model,
+				      rgbd::Frame frame, const rgbd::Cloud& pcd,
+              const Eigen::MatrixXf &color_names_lookup,
+				      double* depth_error, double* cn_error, double* count,
 				      double max_range = std::numeric_limits<double>::max());
 
 void keypointError(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, const std::vector<cv::Point2d> correspondences0,

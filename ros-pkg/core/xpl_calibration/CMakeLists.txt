@@ -134,3 +134,7 @@ target_link_libraries(visualize_frame_alignment ${PROJECT_NAME})
 rosbuild_add_executable(evaluate_frame_alignment src/prog/evaluate_frame_alignment.cpp)
 rosbuild_link_boost(evaluate_frame_alignment program_options filesystem)
 target_link_libraries(evaluate_frame_alignment ${PROJECT_NAME})
+
+rosbuild_add_executable(twiddle_frame_alignment src/prog/twiddle_frame_alignment.cpp)
+rosbuild_link_boost(twiddle_frame_alignment program_options filesystem)
+target_link_libraries(twiddle_frame_alignment ${PROJECT_NAME})

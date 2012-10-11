@@ -437,6 +437,16 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
   cout << "xxt: " << endl << xxt << endl;
   cout << "b: " << b.transpose() << endl;
 
+  SelfAdjointEigenSolver<MatrixXd> eigensolver(xxt);
+  if(eigensolver.info() != Eigen::Success)
+    cout << " --- eigensolver failed" << endl;
+  else {
+    VectorXd eigenvalues = eigensolver.eigenvalues();
+    cout << " --- The eigenvalues of XX^T are: " << eigenvalues.transpose() << endl;
+    if(!(eigenvalues.array() > 0).all())
+      cout << " --- Quadratic is not convex." << endl;
+  }
+  
   // -- Fit the model.
   PrimeSenseModel model = initial_model_;
   xxt += MatrixXd::Identity(xxt.rows(), xxt.cols()) * REGULARIZATION;
