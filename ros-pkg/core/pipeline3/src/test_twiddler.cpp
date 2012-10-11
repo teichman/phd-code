@@ -9,7 +9,7 @@ class TestTwiddler : public Twiddler
 public:
   TestTwiddler() : Twiddler() {}
   
-  Results evaluate(std::string path, const Params& params)
+  Results evaluate(const Params& params, std::string evalpath)
   {
     Results results;
     double x = params.get<double>("x");
@@ -25,6 +25,7 @@ public:
       abort();
 
     results["objective"] = objective;
+    results.save(evalpath + "/some_extra_output.txt");
     return results;
   }
 
@@ -72,9 +73,9 @@ TEST(Twiddler, Easy)
   init.set<double>("w2", 1);
   init.set<double>("x", 1);
   init.set<string>("type", "constant");
-  string path = "twiddler_output_test";
-  int retval = system(("rm -rf " + path).c_str()); retval--;
-  twiddler.run(path, init);
+  string rootpath = "twiddler_output_test";
+  int retval = system(("rm -rf " + rootpath).c_str()); retval--;
+  twiddler.run(init, rootpath);
 }
 
 int main(int argc, char** argv) {

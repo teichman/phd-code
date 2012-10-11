@@ -16,26 +16,24 @@ namespace pipeline
   public:
     //! User-defined results of evaluating a Params set.
     typedef Dictionary<std::string, double> Results;
-
-    // std::vector<Params> params_;
-    // std::vector<Results> results_;
     std::map<Params, Results> results_;
     
     Twiddler();
     virtual ~Twiddler() {}
     //! path must not exist and will be created.
     //! Fills results_ and saves to path_ as new evaluations are made.
-    void run(std::string path, const Params& init);
+    void run(const Params& init, std::string rootpath);
     //! path must exist.  Loads existing results.
     //! results_ must be non-empty.  Finds the best set of results and picks up where it left off.
-    void resume(std::string path); 
+    void resume(std::string rootpath); 
 
     
     /************************************************************
      * Functions to be implemented
      ************************************************************/
 
-    virtual Results evaluate(std::string path, const Params& params) = 0;
+    //! You can place additional output in evalpath, if needed.
+    virtual Results evaluate(const Params& params, std::string evalpath) = 0;
     //! Given the best current params, generate a new set of params.
     //! You can implement whatever search strategy you want here.
     //! Twiddler will check whether your new Params is a duplicate.
@@ -45,7 +43,7 @@ namespace pipeline
     //! Lower is better.
     virtual double objective(const Results& results) const;
     //! This is called any time an improved set of params is found.
-    virtual void improvementHook(const Params& params, const Results& results) const;
+    virtual void improvementHook(const Params& params, const Results& results, std::string evalpath) const;
     //! Termination criteria.  Never terminates by default.
     virtual bool done(const Results& results) const;
 
@@ -64,7 +62,7 @@ namespace pipeline
     static Params randomMerge(const Params& params0, const Params& params1);
     
   protected:
-    std::string path_;
+    std::string rootpath_;
     size_t next_id_;
 
     void twiddle();

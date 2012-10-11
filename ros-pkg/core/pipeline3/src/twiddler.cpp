@@ -32,25 +32,37 @@ namespace pipeline
     return results["objective"];
   }
   
-  void Twiddler::run(std::string path, const Params& init)
+  void Twiddler::run(const Params& init, std::string rootpath)
   {
-    ROS_ASSERT(!bfs::exists(path));
-    bfs::create_directory(path);
-    path_ = path;
+    ROS_ASSERT(!bfs::exists(rootpath));
+    ROS_ASSERT(results_.empty());
+    bfs::create_directory(rootpath);
+    rootpath_ = rootpath;
     next_id_ = 0;
-    
-    if(!results_.count(init))
-      results_[init] = evaluate(path_, init);
+
+    // -- Run first evaluation on the initial set of params.
+    ostringstream oss;
+    oss << rootpath_ << "/" << setw(5) << setfill('0') << next_id_;
+    string evalpath = oss.str();
+    ROS_ASSERT(!bfs::exists(evalpath));
+    bfs::create_directory(evalpath);
+    results_[init] = evaluate(init, evalpath);
+    improvementHook(init, results_[init], evalpath);
+    results_[init].save(evalpath + "/results.txt");
+    init.save(evalpath + "/params.txt");
+    results_[init].save(rootpath_ + "/best_results.txt");
+    init.save(rootpath_ + "/best_params.txt");
+    ++next_id_;
 
     twiddle();
   }
 
-  void Twiddler::resume(std::string path)
+  void Twiddler::resume(std::string rootpath)
   {
-    ROS_ASSERT(bfs::exists(path));
-    path_ = path;
+    ROS_ASSERT(bfs::exists(rootpath));
+    rootpath_ = rootpath;
     
-    // -- Load everything from path.
+    // -- Load everything from rootpath.
     ROS_FATAL_STREAM("TODO");
     abort();
     // Set next_id_.
@@ -60,6 +72,7 @@ namespace pipeline
 
   void Twiddler::getBest(Params* best_params, Results* best_results) const
   {
+    ROS_ASSERT(!results_.empty());
     double best_objective = numeric_limits<double>::max();
     map<Params, Results>::const_iterator it, best;
     for(it = results_.begin(); it != results_.end(); ++it) {
@@ -86,22 +99,24 @@ namespace pipeline
       }
 
       // -- Evaluate and check for improvement.
-      Results results = evaluate(path_, variation);
+      ostringstream oss;
+      oss << rootpath_ << "/" << setw(5) << setfill('0') << next_id_;
+      string evalpath = oss.str();
+      ROS_ASSERT(!bfs::exists(evalpath));
+      bfs::create_directory(evalpath);
+      Results results = evaluate(variation, evalpath);
       results_[variation] = results;
       if(objective(results) < objective(best_results)) {
 	best_params = variation;
 	best_results = results;
-	improvementHook(best_params, best_results);
+	best_params.save(rootpath_ + "/best_params.txt");
+	best_results.save(rootpath_ + "/best_results.txt");
+	improvementHook(best_params, best_results, evalpath);
       }
 
       // -- Save results.
-      ostringstream oss;
-      oss << path_ << "/" << setw(5) << setfill('0') << next_id_;
-      string path = oss.str();
-      ROS_ASSERT(!bfs::exists(path));
-      bfs::create_directory(path);
-      results.save(path + "/results.txt");
-      variation.save(path + "/params.txt");
+      results.save(evalpath + "/results.txt");
+      variation.save(evalpath + "/params.txt");
       ++next_id_;
 
       if(done(results))
@@ -109,7 +124,7 @@ namespace pipeline
     }
   }
 
-  void Twiddler::improvementHook(const Params& params, const Results& results) const
+  void Twiddler::improvementHook(const Params& params, const Results& results, std::string evalpath) const
   {
     cout << "Twiddler found improvement!" << endl;
     cout << "New objective: " << objective(results) << endl;
