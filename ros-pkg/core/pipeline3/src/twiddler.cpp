@@ -29,6 +29,8 @@ namespace pipeline
 
   double Twiddler::objective(const Results& results) const
   {
+    if(!results.count("objective"))
+      PL_ABORT("\"objective\" field of Results object not set.  You should either fill this field in Twiddler::evaluate or overload Twiddler::objective.");
     return results["objective"];
   }
   
@@ -46,10 +48,10 @@ namespace pipeline
     string evalpath = oss.str();
     ROS_ASSERT(!bfs::exists(evalpath));
     bfs::create_directory(evalpath);
+    init.save(evalpath + "/params.txt");
     results_[init] = evaluate(init, evalpath);
     improvementHook(init, results_[init], evalpath);
     results_[init].save(evalpath + "/results.txt");
-    init.save(evalpath + "/params.txt");
     results_[init].save(rootpath_ + "/best_results.txt");
     init.save(rootpath_ + "/best_params.txt");
     ++next_id_;
@@ -91,12 +93,18 @@ namespace pipeline
     Results best_results;
     getBest(&best_params, &best_results);
     
+
+    int num_duplicates = 0;
     while(true) {
       // -- Get another parameter variation.
       Params variation = generateParamVariation(best_params);
       if(results_.count(variation)) {
+	++num_duplicates;
+	if(num_duplicates > 100)
+	  break;
 	continue;
       }
+      num_duplicates = 0;
 
       // -- Evaluate and check for improvement.
       ostringstream oss;
@@ -104,6 +112,7 @@ namespace pipeline
       string evalpath = oss.str();
       ROS_ASSERT(!bfs::exists(evalpath));
       bfs::create_directory(evalpath);
+      variation.save(evalpath + "/params.txt");
       Results results = evaluate(variation, evalpath);
       results_[variation] = results;
       if(objective(results) < objective(best_results)) {
@@ -116,7 +125,6 @@ namespace pipeline
 
       // -- Save results.
       results.save(evalpath + "/results.txt");
-      variation.save(evalpath + "/params.txt");
       ++next_id_;
 
       if(done(results))

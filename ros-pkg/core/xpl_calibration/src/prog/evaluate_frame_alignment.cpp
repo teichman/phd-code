@@ -32,7 +32,7 @@ public:
     oss << "num_guessed_failed_: " << num_guessed_failed_ << endl;
     oss << "Mean translation error (meters): " << total_translation_error_ / num_alignments_ << endl;
     oss << "Mean rotation difference (radians): " << total_rotation_error_ / num_alignments_ << endl;
-    oss << "Mean alignment time: " << total_seconds_ / num_alignments_ << " seconds." << endl;
+    oss << "Mean alignment time (seconds): " << total_seconds_ / num_alignments_ << endl;
     return oss.str();
   }
 };

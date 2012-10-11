@@ -47,7 +47,7 @@ public:
 	params.set<string>("type", "quadratic");
       else
 	params.set<string>("type", "constant");
-
+      
       // Have to twiddle type & w2 simultaneously or you can get stuck.
       params.set("w2", uniform(0.5, 1));
     }

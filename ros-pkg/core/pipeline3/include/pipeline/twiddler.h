@@ -33,6 +33,7 @@ namespace pipeline
      ************************************************************/
 
     //! You can place additional output in evalpath, if needed.
+    //! params can also be found in evalpath + "/params.txt" if you are using an external script.
     virtual Results evaluate(const Params& params, std::string evalpath) = 0;
     //! Given the best current params, generate a new set of params.
     //! You can implement whatever search strategy you want here.

@@ -19,8 +19,8 @@ public:
 
   const S& operator[](const T& key) const
   {
-    assert(count(key));
-    return find(key)->second;
+    assert((std::map<T, S>::count(key)));
+    return std::map<T, S>::find(key)->second;
   }
 
   S& operator[](const T& key)
