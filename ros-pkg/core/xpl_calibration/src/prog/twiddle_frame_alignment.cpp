@@ -5,6 +5,7 @@
 #include <ros/assert.h>
 #include <ros/package.h>
 #include <iomanip>
+#include <eigen_extensions/random.h>
 #include <xpl_calibration/frame_aligner.h>
 #include <pipeline/twiddler.h>
 
@@ -38,7 +39,7 @@ double FrameAlignmentTwiddler::objective(const Results& results) const
 Twiddler::Results FrameAlignmentTwiddler::evaluate(const Params& params, std::string evalpath)
 {
   ostringstream oss;
-  oss << ros::package::getPath("xpl_calibration") << "/bin/evaluate_frame_alignment one_alignment one_alignment/default_primesense_model --params " << evalpath << "/params.txt > " << evalpath << "/output.txt";
+  oss << ros::package::getPath("xpl_calibration") << "/bin/evaluate_frame_alignment alignments alignments/default_primesense_model --params " << evalpath << "/params.txt > " << evalpath << "/output.txt";
   int retval;
   retval = system(oss.str().c_str()); ROS_ASSERT(retval == 0);
   retval = system(("tail -n4 " + evalpath + "/output.txt | awk '{print $NF}' > " + evalpath + "/numbers.txt").c_str()); ROS_ASSERT(retval == 0);
@@ -58,14 +59,95 @@ Twiddler::Results FrameAlignmentTwiddler::evaluate(const Params& params, std::st
 
 Params FrameAlignmentTwiddler::generateParamVariation(Params params) const
 {
-  vector<double> color_weight_values;
-  color_weight_values.push_back(0);
-  color_weight_values.push_back(1e-3);
-  color_weight_values.push_back(1e-2);
-  color_weight_values.push_back(1e-1);
-  color_weight_values.push_back(1);
+  vector<string> moves;
+  vector<double> weights;
+  moves.push_back("color_weight");
+  weights.push_back(1);
+  moves.push_back("cn_weight");
+  weights.push_back(1);
+  moves.push_back("edge_weight");
+  weights.push_back(1);
+  moves.push_back("hue_weight");
+  weights.push_back(1);
+  moves.push_back("rgb_weight");
+  weights.push_back(1);
+  moves.push_back("all_color_terms");
+  weights.push_back(1);
+  moves.push_back("canny");
+  weights.push_back(1);
+
+  Eigen::VectorXd eigweights(weights.size());
+  for(size_t i = 0; i < weights.size(); ++i)
+    eigweights(i) = weights[i];
+  int idx = eigen_extensions::weightedSample(eigweights);
+  string move = moves[idx];
+
+  if(move == "color_weight" || move == "all_color_terms") {
+    vector<double> color_weight_values;
+    color_weight_values.push_back(0);
+    color_weight_values.push_back(0.01);
+    color_weight_values.push_back(0.02);
+    color_weight_values.push_back(0.05);
+    color_weight_values.push_back(0.1);
+    params.set<double>("color_weight", color_weight_values[rand() % color_weight_values.size()]);
+  }
+  if(move == "cn_weight" || move == "all_color_terms") {
+    vector<double> cn_weight_values;
+    cn_weight_values.push_back(0);
+    cn_weight_values.push_back(0.01);
+    cn_weight_values.push_back(0.02);
+    cn_weight_values.push_back(0.05);
+    cn_weight_values.push_back(0.1);
+    params.set<double>("cn_weight", cn_weight_values[rand() % cn_weight_values.size()]);
+  }
+  if(move == "hue_weight" || move == "all_color_terms") {
+    vector<double> hue_weight_values;
+    hue_weight_values.push_back(0);
+    hue_weight_values.push_back(0.01);
+    hue_weight_values.push_back(0.02);
+    hue_weight_values.push_back(0.05);
+    hue_weight_values.push_back(0.1);
+    params.set<double>("hue_weight", hue_weight_values[rand() % hue_weight_values.size()]);
+  }
+  if(move == "rgb_weight" || move == "all_color_terms") {
+    vector<double> rgb_weight_values;
+    rgb_weight_values.push_back(0);
+    rgb_weight_values.push_back(0.01);
+    rgb_weight_values.push_back(0.02);
+    rgb_weight_values.push_back(0.05);
+    rgb_weight_values.push_back(0.1);
+    params.set<double>("rgb_weight", rgb_weight_values[rand() % rgb_weight_values.size()]);
+  }
+  if(move == "edge_weight" || move == "all_color_terms") {
+    vector<double> edge_weight_values;
+    edge_weight_values.push_back(0);
+    edge_weight_values.push_back(0.01);
+    edge_weight_values.push_back(0.02);
+    edge_weight_values.push_back(0.05);
+    edge_weight_values.push_back(0.1);
+    params.set<double>("edge_weight", edge_weight_values[rand() % edge_weight_values.size()]);
+  }
+
+  // Don't bother touching these if we aren't using the edges anyway.
+  // Twiddler will see that params haven't changed and won't evaluate them if this is the case.
+  if(move == "canny" && params.get<double>("edge_weight") != 0) {
+    vector<int> radius_values;
+    radius_values.push_back(1);
+    radius_values.push_back(2);
+    radius_values.push_back(5);
+    params.set<int>("canny_kernel_radius", radius_values[rand() % radius_values.size()]);
+    vector<int> lower_thresh_values;
+    lower_thresh_values.push_back(75);
+    lower_thresh_values.push_back(50);
+    lower_thresh_values.push_back(100);
+    params.set<int>("canny_lower_thresh", lower_thresh_values[rand() % lower_thresh_values.size()]);
+    vector<int> upper_thresh_values;
+    upper_thresh_values.push_back(params.get<int>("canny_lower_thresh") + 25);
+    upper_thresh_values.push_back(params.get<int>("canny_lower_thresh") + 50);
+    upper_thresh_values.push_back(params.get<int>("canny_lower_thresh") + 75);
+    params.set<int>("canny_upper_thresh", upper_thresh_values[rand() % upper_thresh_values.size()]);
+  }
   
-  params.set<double>("color_weight", color_weight_values[rand() % color_weight_values.size()]);
   return params;
 }
 
