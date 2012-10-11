@@ -101,8 +101,6 @@ $(1)-visualize-avv-extrinsics: $(1)/asus_vs_velodyne/extrinsics
 $(1)/asus_vs_velodyne/extrinsics:
 	mkdir -p $$(@D)
 	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence --compute-extrinsics
-	cd $$(@D) && mkdir gridsearch
-	cd $$(@D) && mv gridsearch*.png gridsearch/
 
 $(1)-visualize-slam: $$(TRAJECTORIES_$(1))
 	rosrun xpl_calibration calibrate_slam --only-visualize $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
