@@ -10,7 +10,11 @@
 
 namespace pipeline
 {
-  
+
+  //! Twiddles a Params object and saves output.  The output is saved in a Dictionary<string, double>
+  //! so that you can save whatever you want.  For example, you might include "accuracy" and "timing"
+  //! output, then optimize accuracy subject to timing constraints.
+  //! See method comments for how exactly to do this.
   class Twiddler
   {
   public:
@@ -20,11 +24,11 @@ namespace pipeline
     
     Twiddler();
     virtual ~Twiddler() {}
-    //! path must not exist and will be created.
-    //! Fills results_ and saves to path_ as new evaluations are made.
+    //! rootpath is where the output of each evaluation will be saved.
+    //! It must not exist and will be created.
+    //! Results will also be saved into results_.
     void run(const Params& init, std::string rootpath);
-    //! path must exist.  Loads existing results.
-    //! results_ must be non-empty.  Finds the best set of results and picks up where it left off.
+    //! TODO
     void resume(std::string rootpath); 
 
     
