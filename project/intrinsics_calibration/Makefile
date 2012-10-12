@@ -96,6 +96,7 @@ $(1)/evaluation/learned_model.psm: $$(TRAJECTORIES_$(1)) $$$$@-experiment_metada
 	$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
 	$$(addprefix --traj ,$$(TRAJECTORIES_$(1))) \
 	| tee $$@-log.txt
+	mv .ddl $$(@D)/clams_coverage
 
 $(1)-visualize-avv-intrinsics: $(1)/asus_vs_velodyne/extrinsics $(1)/asus_vs_velodyne/intrinsics
 	rosrun xpl_calibration asus_vs_velo \
