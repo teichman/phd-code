@@ -20,6 +20,7 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx, double vgsize) const
   const StreamSequence& sseq = *sseqs_[idx];
 
   Cloud::Ptr map(new Cloud);
+  int num_used_frames = 0;
   for(size_t i = 0; i < traj.size(); ++i) {
     if(!traj.exists(i))
       continue;
@@ -34,12 +35,19 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx, double vgsize) const
     
     Cloud::Ptr tmp(new Cloud);
     model_.frameToCloud(frame, tmp.get(), max_range_);
-    pcl::transformPointCloud(*tmp, *tmp, traj.get(i).cast<float>());
+    Cloud::Ptr nonans(new Cloud);
+    nonans->reserve(tmp->size());
+    for(size_t j = 0; j < tmp->size(); ++j)
+      if(isFinite(tmp->at(j)))
+	nonans->push_back(tmp->at(j));
+        
+    pcl::transformPointCloud(*nonans, *nonans, traj.get(i).cast<float>());
 
-    *map += *tmp;
+    *map += *nonans;
+    ++num_used_frames;
   }
 
-  cout << "Unfiltered map has " << map->size() << " points." << endl;
+  cout << "Unfiltered map has " << map->size() << " points, " << map->size() / (double)num_used_frames << " points per frame in the map." << endl;
   cout << "Filtering..." << endl;
   HighResTimer hrt("filtering");
   hrt.start();
