@@ -143,8 +143,14 @@ $(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/
 $(1)-visualize-slam-trajectory-$(2): $(1)/slam_results/$(2).traj
 	rosrun xpl_calibration calibrate_slam --only-visualize --sseq $(SLAM_DATA_PATH)/$(1)/$(2) --traj $(1)/slam_results/$(2).traj
 
+$(1)-visualize-slam-unrefined-trajectory-$(2): $(1)/slam_results/$(2).traj
+	rosrun xpl_calibration calibrate_slam --only-visualize --sseq $(SLAM_DATA_PATH)/$(1)/$(2) --traj $(1)/slam_results/$(2)_unrefined.traj
+
 $(1)-visualize-slam-pcd-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
 	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
+
+$(1)-visualize-slam-unrefined-pcd-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
+	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2)_unrefined.pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
 
 .PHONY: $(1)-inspect-posegraph-$(2)
 $(1)-inspect-posegraph-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_graph.log
