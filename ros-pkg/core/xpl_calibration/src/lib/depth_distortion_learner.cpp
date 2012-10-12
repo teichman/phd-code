@@ -446,6 +446,15 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
     if(!(eigenvalues.array() > 0).all())
       cout << " --- Quadratic is not convex." << endl;
   }
+  SelfAdjointEigenSolver<MatrixXd> eigensolver_reg(xxt + MatrixXd::Identity(xxt.rows(), xxt.cols()) * REGULARIZATION);
+  if(eigensolver_reg.info() != Eigen::Success)
+    cout << " --- eigensolver_reg failed" << endl;
+  else {
+    VectorXd eigenvalues = eigensolver_reg.eigenvalues();
+    cout << " --- The eigenvalues of (regularized) XX^T are: " << eigenvalues.transpose() << endl;
+    if(!(eigenvalues.array() > 0).all())
+      cout << " --- Regularized quadratic is not convex!" << endl;
+  }
   
   // -- Fit the model.
   PrimeSenseModel model = initial_model_;
