@@ -7,7 +7,7 @@ namespace bfs = boost::filesystem;
 
 #define DDL_INCR (getenv("DDL_INCR") ? atoi(getenv("DDL_INCR")) : 1)
 #define REGULARIZATION (getenv("REGULARIZATION") ? atof(getenv("REGULARIZATION")) : 0.0)
-//#define VISUALIZE
+#define VISUALIZE
 
 DepthDistortionLearner::DepthDistortionLearner(const PrimeSenseModel& initial_model) :
   initial_model_(initial_model),
@@ -389,6 +389,16 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
     cv::waitKey(10);
     if(DDL_INCR != 1)
       cv::waitKey();
+    string visdir = ".multipliers";
+    if(!bfs::exists(visdir))
+      bfs::create_directory(visdir);
+    ostringstream oss;
+    oss << visdir << "/" << setw(5) << setfill('0') << i;
+    string basename = oss.str();
+    cv::imwrite(basename + "-filters.png", visualization);
+    cv::imwrite(basename + "-multipliers.png", visualizeMultipliers(multipliers));
+    cv::imwrite(basename + "-depth.png", frames_[i].depthImage());
+    cv::imwrite(basename + "-mapdepth.png", mapframe.depthImage());
     #endif
 
     hrt.reset("Accumulating xxt"); hrt.start();
