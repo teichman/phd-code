@@ -9,7 +9,6 @@ using namespace rgbd;
 PrimeSenseSlam::PrimeSenseSlam() :
   fav_(NULL),
   min_dt_(0.2),
-  max_range_(3.5),
   max_loopclosures_(1),
   max_loopclosure_tests_(50),
   keypoints_per_frame_(300)
@@ -146,7 +145,7 @@ void PrimeSenseSlam::buildMap(const Trajectory& traj)
       continue;
     
     Cloud::Ptr curr_pcd = sseq_->getCloud(i);
-    zthresh(curr_pcd, max_range_);
+    zthresh(curr_pcd, MAX_RANGE_MAP);
     Cloud::Ptr curr_pcd_transformed(new Cloud);
     pcl::transformPointCloud(*curr_pcd, *curr_pcd_transformed, traj.get(i).cast<float>());
     *map_ += *curr_pcd_transformed;
