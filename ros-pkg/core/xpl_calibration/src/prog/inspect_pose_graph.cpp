@@ -10,6 +10,7 @@
 #include <pcl/common/transforms.h>
 #include <pcl/filters/voxel_grid.h>
 #include <xpl_calibration/trajectory.h>
+#include <xpl_calibration/primesense_slam.h>
 
 using namespace std;
 using namespace g2o;
@@ -76,7 +77,7 @@ int main(int argc, char** argv)
   //    if(slam.numEdges(i)==0) continue;
   //    //Get the cloud
   //    Cloud::Ptr curr_pcd = sseq->getCloud(i);
-  //    zthresh(curr_pcd, 2.0);
+  //    zthresh(curr_pcd, MAX_RANGE_MAP);
   //    Cloud::Ptr curr_pcd_transformed(new Cloud);
   //    //Transform it
   //    Eigen::Affine3d trans = slam.transform(i);
@@ -199,7 +200,7 @@ int main(int argc, char** argv)
     if(slam.numEdges(i)==0) continue;
     //Get the cloud
     Cloud::Ptr curr_pcd = sseq->getCloud(i);
-    zthresh(curr_pcd, 2.0);
+    zthresh(curr_pcd, MAX_RANGE_MAP);
     Cloud::Ptr curr_pcd_transformed(new Cloud);
     //Transform it
     Eigen::Affine3d trans = slam.transform(i);

@@ -8,6 +8,8 @@
 #include <xpl_calibration/trajectory.h>
 #include <xpl_calibration/frame_aligner.h>
 
+#define MAX_RANGE_MAP 2.0
+
 class PrimeSenseSlam : public Agent
 {
 public:
@@ -22,8 +24,6 @@ public:
   // -- Params
   //! When choosing the next frame, advance by at least this much.
   double min_dt_;
-  //! Used in generating the final saved map and in frame alignment.
-  double max_range_;
   //! Max number per frame to use.  Selected in random order.
   size_t max_loopclosures_;
   //! per frame

@@ -1,6 +1,7 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 #include <xpl_calibration/slam_calibration_visualizer.h>
+#include <xpl_calibration/primesense_slam.h>
 
 using namespace std;
 using namespace Eigen;
@@ -22,7 +23,7 @@ int main(int argc, char** argv)
     ("only-visualize", "Don't calibrate; just visualize the map you would have used to calibrate from.")
     ("imodel", bpo::value<string>(), "Use this model when projecting the frames.")
     ("omodel", bpo::value<string>()->default_value("model.psm"), "Output path for learned model.")
-    ("max-range", bpo::value<double>()->default_value(2.5), "Maximum range to use when building the map from the given trajectory.")
+    ("max-range", bpo::value<double>()->default_value(MAX_RANGE_MAP), "Maximum range to use when building the map from the given trajectory.")
     ;
 
   bpo::variables_map opts;
