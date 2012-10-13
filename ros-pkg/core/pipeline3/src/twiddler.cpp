@@ -179,5 +179,29 @@ namespace pipeline
   {
     return false;
   }
+
+  void Twiddler::getOrdering(std::vector<Params>* params, std::vector<Results>* results, std::vector<double>* objectives) const
+  {
+    params->clear();
+    results->clear();
+    objectives->clear();
+    params->reserve(results_.size());
+    results->reserve(results_.size());
+    objectives->reserve(results_.size());
+
+    vector< pair<double, Params> > index;
+    index.reserve(results_.size());
+    map<Params, Results>::const_iterator it;
+    for(it = results_.begin(); it != results_.end(); ++it)
+      index.push_back(pair<double, Params>(objective(it->second), it->first));
+    sort(index.begin(), index.end());  // ascending
+
+    for(size_t i = 0; i < index.size(); ++i) {
+      params->push_back(index[i].second);
+      ROS_ASSERT(results_.find(index[i].second) != results_.end());
+      results->push_back(results_.find(index[i].second)->second);
+      objectives->push_back(index[i].first);
+    }
+  }
   
 }

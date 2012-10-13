@@ -66,6 +66,8 @@ namespace pipeline
      ************************************************************/
 
     void getBest(Params* best_params, Results* best_results) const;
+    //! ordered_params->at(0) is the best set of params so far.  Ascending order.
+    void getOrdering(std::vector<Params>* params, std::vector<Results>* results, std::vector<double>* objectives) const;
 
     
     /************************************************************

@@ -107,6 +107,28 @@ TEST(Twiddler, Resume)
   cout << params << endl;  
 }
 
+TEST(Twiddler, Ordering)
+{
+  TestTwiddler twiddler;
+  string rootpath = "twiddler_output_test";
+  twiddler.load(rootpath);
+  vector<Params> params;
+  vector<Twiddler::Results> results;
+  vector<double> objectives;
+  twiddler.getOrdering(&params, &results, &objectives);
+
+  for(size_t i = 0; i < min<size_t>(7, params.size()); ++i) {
+    cout << "====================" << endl;
+    cout << "Objective: " << objectives[i] << endl;
+    cout << "--------------------" << endl;
+    cout << results[i];
+    cout << "--------------------" << endl;
+    cout << params[i];
+    if(i > 0)
+      EXPECT_TRUE(objectives[i] >= objectives[i-1]);
+  }
+}
+
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
