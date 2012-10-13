@@ -177,6 +177,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  srand(time(0));
   FrameAlignmentTwiddler twiddler;
   twiddler.run(FrameAligner::defaultParams(), opts["output"].as<string>());
   
