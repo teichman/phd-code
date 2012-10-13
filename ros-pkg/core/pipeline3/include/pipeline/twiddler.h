@@ -1,11 +1,14 @@
 #ifndef TWIDDLER_H
 #define TWIDDLER_H
 
+#define BOOST_FILESYSTEM_VERSION 2
+
 #include <signal.h>
 #include <boost/filesystem.hpp>
 #include <ros/assert.h>
 #include <ros/console.h>
 #include <bag_of_tricks/bag_of_tricks.h>
+#include <bag_of_tricks/high_res_timer.h>
 #include <pipeline/params.h>
 
 namespace pipeline
@@ -15,6 +18,7 @@ namespace pipeline
   //! so that you can save whatever you want.  For example, you might include "accuracy" and "timing"
   //! output, then optimize accuracy subject to timing constraints.
   //! See method comments for how exactly to do this.
+  //! The objective function value is being minimized.
   class Twiddler
   {
   public:
@@ -24,13 +28,17 @@ namespace pipeline
     
     Twiddler();
     virtual ~Twiddler() {}
+
+    //! Creates a directory and seeds the results with the initial params.
+    //! Can call twiddle after this.
     //! rootpath is where the output of each evaluation will be saved.
     //! It must not exist and will be created.
-    //! Results will also be saved into results_.
-    void run(const Params& init, std::string rootpath);
-    //! TODO
-    void resume(std::string rootpath); 
-
+    void initialize(const Params& init, const std::string& rootpath);
+    //! Loads the data from a previous run.
+    void load(std::string rootpath);
+    //! load or initialize must have been called.
+    //! generateParamVariation, evaluate, save.
+    void twiddle(double max_hours = 0);
     
     /************************************************************
      * Functions to be implemented
@@ -68,9 +76,6 @@ namespace pipeline
     
   protected:
     std::string rootpath_;
-    size_t next_id_;
-
-    void twiddle();
   };
 
 }

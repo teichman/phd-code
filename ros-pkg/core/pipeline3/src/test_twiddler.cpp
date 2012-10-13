@@ -75,7 +75,36 @@ TEST(Twiddler, Easy)
   init.set<string>("type", "constant");
   string rootpath = "twiddler_output_test";
   int retval = system(("rm -rf " + rootpath).c_str()); retval--;
-  twiddler.run(init, rootpath);
+  twiddler.initialize(init, rootpath);
+  twiddler.twiddle();
+}
+
+TEST(Twiddler, Resume)
+{
+  TestTwiddler twiddler;
+  Params init;
+  init.set<double>("w0", 1);
+  init.set<double>("w1", 0);
+  init.set<double>("w2", 1);
+  init.set<double>("x", 1);
+  init.set<string>("type", "constant");
+  string rootpath = "twiddler_output_test";
+  int retval = system(("rm -rf " + rootpath).c_str()); retval--;
+  twiddler.initialize(init, rootpath);
+  twiddler.twiddle(0.1 / 3600.0);
+  cout << "Best so far: " << endl;
+  Params params;
+  Twiddler::Results results;
+  twiddler.getBest(&params, &results);
+  cout << results << endl;
+  cout << params << endl;  
+  
+  twiddler.load(rootpath);
+  twiddler.twiddle();
+  cout << "Final results: " << endl;
+  twiddler.getBest(&params, &results);
+  cout << results << endl;
+  cout << params << endl;  
 }
 
 int main(int argc, char** argv) {
