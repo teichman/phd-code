@@ -133,8 +133,9 @@ Params FrameAlignmentTwiddler::generateParamVariation(Params params) const
   if(move == "canny" && params.get<double>("edge_weight") != 0) {
     vector<int> radius_values;
     radius_values.push_back(1);
-    radius_values.push_back(2);
-    radius_values.push_back(5);
+    // 5 caused an opencv crash.  What are acceptable params for this?  Disabling for now.
+    // radius_values.push_back(2);
+    // radius_values.push_back(5);
     params.set<int>("canny_kernel_radius", radius_values[rand() % radius_values.size()]);
     vector<int> lower_thresh_values;
     lower_thresh_values.push_back(75);
@@ -179,7 +180,16 @@ int main(int argc, char** argv)
 
   srand(time(0));
   FrameAlignmentTwiddler twiddler;
-  twiddler.run(FrameAligner::defaultParams(), opts["output"].as<string>());
+  string path = opts["output"].as<string>();
+  if(bfs::exists(path)) {
+    cout << "Resuming Twiddler run in " << path << endl;
+    twiddler.load(path);
+  }
+  else {
+    cout << "Initializing new Twiddler in " << path << endl;
+    twiddler.initialize(FrameAligner::defaultParams(), path);
+  }
+  twiddler.twiddle();
   
   return 0;
 }
