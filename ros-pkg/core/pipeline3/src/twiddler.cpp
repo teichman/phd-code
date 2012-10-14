@@ -1,4 +1,5 @@
 #include <pipeline/twiddler.h>
+#include <boost/foreach.hpp>
 
 using namespace std;
 using boost::any;
@@ -7,8 +8,7 @@ namespace bfs = boost::filesystem;
 namespace pipeline
 {
 
-  Twiddler::Twiddler() :
-    next_id_(0)
+  Twiddler::Twiddler()
   {
   }
   
@@ -33,18 +33,17 @@ namespace pipeline
       PL_ABORT("\"objective\" field of Results object not set.  You should either fill this field in Twiddler::evaluate or overload Twiddler::objective.");
     return results["objective"];
   }
-  
-  void Twiddler::run(const Params& init, std::string rootpath)
+
+  void Twiddler::initialize(const Params& init, const std::string& rootpath)
   {
     ROS_ASSERT(!bfs::exists(rootpath));
     ROS_ASSERT(results_.empty());
     bfs::create_directory(rootpath);
     rootpath_ = rootpath;
-    next_id_ = 0;
 
     // -- Run first evaluation on the initial set of params.
     ostringstream oss;
-    oss << rootpath_ << "/" << setw(5) << setfill('0') << next_id_;
+    oss << rootpath_ << "/" << setw(5) << setfill('0') << results_.size();
     string evalpath = oss.str();
     ROS_ASSERT(!bfs::exists(evalpath));
     bfs::create_directory(evalpath);
@@ -54,22 +53,41 @@ namespace pipeline
     results_[init].save(evalpath + "/results.txt");
     results_[init].save(rootpath_ + "/best_results.txt");
     init.save(rootpath_ + "/best_params.txt");
-    ++next_id_;
 
-    twiddle();
+    // index_.push_back(pair(objective(results_[init]), init));
+    // sort(index_.begin(), index_.end());
   }
 
-  void Twiddler::resume(std::string rootpath)
+  void Twiddler::load(std::string rootpath)
   {
     ROS_ASSERT(bfs::exists(rootpath));
+    
     rootpath_ = rootpath;
+    results_.clear();
+    // todo: clear any other state here
     
-    // -- Load everything from rootpath.
-    ROS_FATAL_STREAM("TODO");
-    abort();
-    // Set next_id_.
-    
-    twiddle();
+    // -- Get all results paths.
+    vector<string> paths;
+    bfs::directory_iterator it(rootpath_), eod;
+    BOOST_FOREACH(const bfs::path& p, make_pair(it, eod)) {
+      string path = rootpath_ + "/" + p.leaf();
+      if(bfs::is_directory(path))
+	paths.push_back(path);
+    }
+    sort(paths.begin(), paths.end());
+
+    // -- Load results.
+    for(size_t i = 0; i < paths.size(); ++i) {
+      Results results;
+      results.load(paths[i] + "/results.txt");
+      Params params;
+      params.load(paths[i] + "/params.txt");
+      results_[params] = results;
+      //index_.push_back(pair(objective(results), params));
+    }
+    //sort(index_.begin(), index_.end());
+    ROS_ASSERT(results_.size() == paths.size());
+    //ROS_ASSERT(results_.size() == index_.size());
   }
 
   void Twiddler::getBest(Params* best_params, Results* best_results) const
@@ -79,23 +97,38 @@ namespace pipeline
     map<Params, Results>::const_iterator it, best;
     for(it = results_.begin(); it != results_.end(); ++it) {
       if(objective(it->second) < best_objective) {
-	best_objective = objective(it->second);
-	best = it;
+       best_objective = objective(it->second);
+       best = it;
       }
     }
     *best_params = best->first;
     *best_results = best->second;
+    
+    // ROS_ASSERT(results_.size() = index_.size());
+    // *best_params = index_[0]->second;
+    // *best_results = results_[*best_params];
   }
   
-  void Twiddler::twiddle()
+  void Twiddler::twiddle(double max_hours)
   {
+    ROS_ASSERT(!rootpath_.empty());
+    ROS_ASSERT(!results_.empty());
+    
+    HighResTimer hrt;
+    hrt.start();
+    
     Params best_params;
     Results best_results;
     getBest(&best_params, &best_results);
     
-
     int num_duplicates = 0;
     while(true) {
+      // -- Check if it's time to stop.
+      if(max_hours > 0 && hrt.getHours() > max_hours) {
+	cout << "Twiddler is out of time; finishing." << endl;
+	break;
+      }
+
       // -- Get another parameter variation.
       Params variation = generateParamVariation(best_params);
       if(results_.count(variation)) {
@@ -108,7 +141,7 @@ namespace pipeline
 
       // -- Evaluate and check for improvement.
       ostringstream oss;
-      oss << rootpath_ << "/" << setw(5) << setfill('0') << next_id_;
+      oss << rootpath_ << "/" << setw(5) << setfill('0') << results_.size();
       string evalpath = oss.str();
       ROS_ASSERT(!bfs::exists(evalpath));
       bfs::create_directory(evalpath);
@@ -123,9 +156,10 @@ namespace pipeline
 	improvementHook(best_params, best_results, evalpath);
       }
 
+      // TODO: add to ordering
+      
       // -- Save results.
       results.save(evalpath + "/results.txt");
-      ++next_id_;
 
       if(done(results))
 	break;
@@ -144,6 +178,30 @@ namespace pipeline
   bool Twiddler::done(const Results& results) const
   {
     return false;
+  }
+
+  void Twiddler::getOrdering(std::vector<Params>* params, std::vector<Results>* results, std::vector<double>* objectives) const
+  {
+    params->clear();
+    results->clear();
+    objectives->clear();
+    params->reserve(results_.size());
+    results->reserve(results_.size());
+    objectives->reserve(results_.size());
+
+    vector< pair<double, Params> > index;
+    index.reserve(results_.size());
+    map<Params, Results>::const_iterator it;
+    for(it = results_.begin(); it != results_.end(); ++it)
+      index.push_back(pair<double, Params>(objective(it->second), it->first));
+    sort(index.begin(), index.end());  // ascending
+
+    for(size_t i = 0; i < index.size(); ++i) {
+      params->push_back(index[i].second);
+      ROS_ASSERT(results_.find(index[i].second) != results_.end());
+      results->push_back(results_.find(index[i].second)->second);
+      objectives->push_back(index[i].first);
+    }
   }
   
 }
