@@ -203,19 +203,5 @@ namespace pipeline
       objectives->push_back(index[i].first);
     }
   }
-
-  void Twiddler::improvementHook(const Params& params, const Results& results) const
-  {
-    cout << "Twiddler found improvement!" << endl;
-    cout << "New objective: " << objective(results) << endl;
-    cout << "Results: " << endl;
-    cout << results.status();
-    cout << params << endl;
-  }
-
-  bool Twiddler::done(const Results& results) const
-  {
-    return false;
-  }
   
 }
