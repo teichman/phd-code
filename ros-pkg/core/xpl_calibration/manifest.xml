@@ -20,6 +20,7 @@
   <depend package="roslib"/>
   <depend package="pose_graph_slam"/>
   <!-- depend package="cloud_basics_bleeding" /-->
+  <!-- TODO integrate viswrapper, timesaver -->
 
   <export>
     <cpp cflags="-I${prefix}/include"

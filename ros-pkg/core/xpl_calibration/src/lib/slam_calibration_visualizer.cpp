@@ -77,8 +77,8 @@ void SlamCalibrationVisualizer::visualizationThreadFunction()
     vis_.removeCoordinateSystem();
     vis_.addCoordinateSystem(0.3, calibrator_->trajectories_[seq_idx_].get(frame_idx_).cast<float>());
     
-    vis_.spinOnce(3);
     unlockWrite();
+    vis_.spinOnce(3);
   }
 }
 

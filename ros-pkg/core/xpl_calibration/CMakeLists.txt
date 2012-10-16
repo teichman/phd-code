@@ -49,6 +49,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/slam_calibration_visualizer.cpp
 #  src/lib/slam_lightweight.cpp
   src/lib/primesense_slam.cpp
+  src/lib/link_visualizer.cpp
   )
 rosbuild_add_compile_flags(${PROJECT_NAME} -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 rosbuild_link_boost(${PROJECT_NAME} system program_options)
@@ -126,6 +127,10 @@ target_link_libraries(primesense_slam ${PROJECT_NAME})
 rosbuild_add_executable(inspect_pose_graph src/prog/inspect_pose_graph.cpp)
 rosbuild_link_boost(inspect_pose_graph program_options filesystem)
 target_link_libraries(inspect_pose_graph ${PROJECT_NAME})
+
+rosbuild_add_executable(view_links src/prog/view_links.cpp)
+rosbuild_link_boost(view_links program_options filesystem)
+target_link_libraries(view_links ${PROJECT_NAME})
 
 rosbuild_add_executable(visualize_frame_alignment src/prog/visualize_frame_alignment.cpp)
 rosbuild_link_boost(visualize_frame_alignment program_options filesystem)

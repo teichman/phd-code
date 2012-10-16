@@ -114,8 +114,6 @@ $(1)-visualize-avv-extrinsics: $(1)/asus_vs_velodyne/extrinsics
 $(1)/asus_vs_velodyne/extrinsics:
 	mkdir -p $$(@D)
 	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence --compute-extrinsics
-	cd $$(@D) && mkdir gridsearch
-	cd $$(@D) && mv gridsearch*.png gridsearch/
 
 $(1)-visualize-slam: $$(TRAJECTORIES_$(1))
 	rosrun xpl_calibration calibrate_slam --only-visualize $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
@@ -147,12 +145,22 @@ $(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/
 $(1)-visualize-slam-trajectory-$(2): $(1)/slam_results/$(2).traj
 	rosrun xpl_calibration calibrate_slam --only-visualize --sseq $(SLAM_DATA_PATH)/$(1)/$(2) --traj $(1)/slam_results/$(2).traj
 
+$(1)-visualize-slam-unrefined-trajectory-$(2): $(1)/slam_results/$(2).traj
+	rosrun xpl_calibration calibrate_slam --only-visualize --sseq $(SLAM_DATA_PATH)/$(1)/$(2) --traj $(1)/slam_results/$(2)_unrefined.traj
+
 $(1)-visualize-slam-pcd-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
 	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
+
+$(1)-visualize-slam-unrefined-pcd-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
+	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2)_unrefined.pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
 
 .PHONY: $(1)-inspect-posegraph-$(2)
 $(1)-inspect-posegraph-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_graph.log
 	rosrun xpl_calibration inspect_pose_graph $$< $(1)/slam_results/$(2)_graph.log --visualize
+
+.PHONY: $(1)-view-links-$(2)
+$(1)-view-links-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_graph.log
+	rosrun xpl_calibration view_links $$< $(1)/slam_results/$(2)_graph.log
 
 $(1)/slam_results/$(2).traj: $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_unrefined.traj
 	rosrun xpl_calibration inspect_pose_graph $$< $(1)/slam_results/$(2)_graph.log --otraj $(1)/slam_results/$(2).traj --opcd $(1)/slam_results/$(2).pcd
