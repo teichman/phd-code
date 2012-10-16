@@ -7,7 +7,7 @@ namespace bfs = boost::filesystem;
 
 #define DDL_INCR (getenv("DDL_INCR") ? atoi(getenv("DDL_INCR")) : 1)
 #define REGULARIZATION (getenv("REGULARIZATION") ? atof(getenv("REGULARIZATION")) : 0.0)
-//#define VISUALIZE
+#define VISUALIZE
 
 DepthDistortionLearner::DepthDistortionLearner(const PrimeSenseModel& initial_model) :
   initial_model_(initial_model),
@@ -53,13 +53,13 @@ PrimeSenseModel DepthDistortionLearner::fitFocalLength()
   return model;
 }
 
-bool gaussianTest(const PrimeSenseModel& model, const DepthMat& mapdepth, const DepthIndex& dindex, int uc, int vc, double radius, cv::Mat3b* visualization, double* mean_dist)
+bool gaussianTest(const PrimeSenseModel& model, const DepthMat& mapdepth, const DepthMat depth, const DepthIndex& dindex, int uc, int vc, double radius, cv::Mat3b* visualization, double* mean_dist)
 {
   Point pt_center, pt_ul, pt_lr;
   ProjectivePoint ppt, ppt_ul, ppt_lr;
   ppt.u_ = uc;
   ppt.v_ = vc;
-  ppt.z_ = mapdepth(vc, uc);
+  ppt.z_ = depth(vc, uc);
   model.project(ppt, &pt_center);
 
   pt_ul = pt_center;
@@ -91,16 +91,18 @@ bool gaussianTest(const PrimeSenseModel& model, const DepthMat& mapdepth, const 
   }
 
   // -- Filter down to only the closest connected component.
-  double kernel = 0.1;
+  double kernel = 0.05 * 1000;
   size_t min_points = 1;
   vector<double> component;
   component.reserve(distances.size());
   sort(distances.begin(), distances.end());
-  for(size_t i = 0; i < distances.size(); ++i) { 
+  for(size_t i = 0; i < distances.size(); ++i) {
+    ROS_ASSERT(i == 0 || distances[i] >= distances[i-1]);
     component.push_back(distances[i]);
-    if(i > 0 && distances[i] - distances[i-1] > kernel)
+    if(i > 0 && (distances[i] - distances[i-1] > kernel))
       break;
   }
+  //cout << min_u << " to " << max_u << ", " << min_v << " to " << max_v << ": first component has " << component.size() << " points out of " << distances.size() << endl;
   if(component.size() < min_points)
     return false;
 
@@ -116,7 +118,8 @@ bool gaussianTest(const PrimeSenseModel& model, const DepthMat& mapdepth, const 
 
   //cout << "z " << ppt.z_ << ", num " << num << ", mean " << mean << ", var " << var << endl;
   double stdev = sqrt(var);
-  double stdev_thresh = 0.02 * ppt.z_ * 0.0005;
+  double stdev_thresh = 0.03;
+  //double stdev_thresh = 0.02 * ppt.z_ * 0.0005;
   double val = min(1.0, stdev / stdev_thresh);
   (*visualization)(vc, uc) = cv::Vec3b(0, 255 * (1.0 - val), 255 * val);
   if(stdev > stdev_thresh)
@@ -307,7 +310,7 @@ void DepthDistortionLearner::computeMultiplierMap(const PrimeSenseModel& model,
       // 	continue;
 
       double mean_dist = 0;
-      if(use_filters_ && !gaussianTest(model, mapdepth, dindex, ppt.u_, ppt.v_, 0.02, visualization, &mean_dist))
+      if(use_filters_ && !gaussianTest(model, mapdepth, depth, dindex, ppt.u_, ppt.v_, 0.02, visualization, &mean_dist))
       	continue;
       
       ppt.z_ = mapdepth(ppt.v_, ppt.u_);
