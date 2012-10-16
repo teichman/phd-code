@@ -1,5 +1,6 @@
 #include <dst/realtime_interface.h>
 #include <bag_of_tricks/high_res_timer.h>
+#include <std_msgs/Header.h>
 
 #define SHOW_IR (getenv("SHOW_IR"))
 #define NUM_THREADS (getenv("NUM_THREADS") ? atoi(getenv("NUM_THREADS")) : 1)
@@ -168,7 +169,8 @@ namespace dst
       return;
 
     double its = img_stamp_queue_.back();
-    double pts = pcd_queue_.back()->header.stamp * 1e-9 ;
+    double pts = pcd_queue_.back()->header.stamp * 1e-9;
+    cout << "its: " << its << ", pts: " << pts << endl;
     if(fabs(its - pts) < thresh_) {
       cout << "Backs are equal. Adding pair at " << pts << " with delta " << fabs(its - pts) << endl;
       imgs_.push_back(img_queue_.back());
@@ -179,10 +181,10 @@ namespace dst
       segmentLatest();
     }
     else if(its < pts) {
-      double delta = fabs(pcd_queue_.front()->header.stamp * 1e-9  - its);
+      double delta = fabs(pcd_queue_.front()->header.stamp * 1e-9 - its);
       while(!pcd_queue_.empty()) {
 	if(delta < thresh_) {
-	  cout << "PCD more recent. Adding pair at " << pcd_queue_.front()->header.stamp * 1e-9  << " with delta " << delta << endl;
+	  cout << "PCD more recent. Adding pair at " << pcd_queue_.front()->header.stamp * 1e-9 << " with delta " << delta << endl;
 	  imgs_.push_back(img_queue_.back());
 	  pcds_.push_back(pcd_queue_.front());
 	  
@@ -193,7 +195,7 @@ namespace dst
 	  segmentLatest();
 	  break;
 	}
-	else if(pcd_queue_.front()->header.stamp * 1e-9  < its)
+	else if(pcd_queue_.front()->header.stamp * 1e-9 < its)
 	  pcd_queue_.pop_front();
 	else
 	  break;
