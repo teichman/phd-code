@@ -4,7 +4,7 @@ using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 
-#define VISUALIZE
+//#define VISUALIZE
 
 PrimeSenseSlam::PrimeSenseSlam() :
   fav_(NULL),
@@ -90,8 +90,18 @@ void PrimeSenseSlam::_run()
 	ROS_ASSERT(cached_frames_random.back() != prev_idx);
       }
       random_shuffle(cached_frames_random.begin(), cached_frames_random.end());
-      size_t num_successful_loopclosures = 0;
-      for(size_t i = 0; i < cached_frames_random.size() && i < max_loopclosure_tests_; ++i) {
+      size_t num_rough_transforms = 0;
+      size_t max_rough_transforms = max_loopclosures_ * 2; //HEURISTIC, see if it holds
+      // BEGIN parallelism
+      size_t max_attempts = cached_frames_random.size() < max_loopclosure_tests_ ? 
+        cached_frames_random.size() : max_loopclosure_tests_;
+      vector<bool> found_rough(max_attempts, false);
+      vector<vector<cv::Point2d> > correspondences0(max_attempts), correspondences1(max_attempts);
+      vector<Eigen::Affine3d> guesses(max_attempts);
+      #pragma omp parallel for
+      for(size_t i = 0; i < max_attempts; ++i) {
+  if(num_rough_transforms >= max_rough_transforms)
+    continue;
 	size_t idx = cached_frames_random[i];
 	ROS_DEBUG_STREAM("Checking for loop closure between " << idx << " and " << curr_idx);
 	Frame old_frame;
@@ -99,23 +109,47 @@ void PrimeSenseSlam::_run()
 
 	ROS_ASSERT(keypoint_cache_.count(idx));
 	ROS_ASSERT(feature_cache_.count(idx));
-	Affine3d curr_to_old;
-	if(fav_)
-	  fav_->setFrames(curr_frame, old_frame);
-	bool found = aligner.align(curr_frame, old_frame,
-				   curr_keypoints, keypoint_cache_[idx],
-				   curr_features, feature_cache_[idx],
-				   false, &curr_to_old);
-	//bool found = aligner.align(curr_frame, old_frame, &curr_to_old);
-	if(found) {
-	  cout << "Added edge " << idx << " -- " << curr_idx << endl;
-	  pgs_->addEdge(idx, curr_idx, curr_to_old, covariance);
-	  ++num_successful_loopclosures;
-	  if(num_successful_loopclosures == max_loopclosures_)
-	    break;
-	}
+  bool found = aligner.computeRoughTransform(
+      curr_frame, old_frame,
+      curr_keypoints, keypoint_cache_[idx],
+      curr_features, feature_cache_[idx],
+      &(correspondences0[i]), &(correspondences1[i]), &(guesses[i]));
+  if(found) {
+    found_rough[i] = true;
+    #pragma omp critical
+    {++num_rough_transforms;}
+  }
       }
+      size_t num_successful_loopclosures = 0;
+      for(size_t i = 0; i < found_rough.size(); i++){
+  if(!found_rough[i]) continue;
+	size_t idx = cached_frames_random[i];
+	ROS_DEBUG_STREAM("Densely aligning loop closure between " << idx << " and " << curr_idx);
+  Frame old_frame;
+  sseq_->readFrame(idx, &old_frame);
+    if(fav_)
+      fav_->setFrames(curr_frame, old_frame);
+    Eigen::Affine3d curr_to_old;
+    bool found = aligner.narrowGridSearch(
+        curr_frame, old_frame,
+        correspondences0[i], correspondences1[i], guesses[i], &curr_to_old);
+	  if(found) {
+	    cout << "Added edge " << idx << " -- " << curr_idx << endl;
+      pgs_->addEdge(idx, curr_idx, curr_to_old, covariance);
+      ++num_successful_loopclosures;
+      if(num_successful_loopclosures >= max_loopclosures_)
+        break;
     }
+      }
+	//bool found = aligner.align(curr_frame, old_frame,
+	//			   curr_keypoints, keypoint_cache_[idx],
+	//			   curr_features, feature_cache_[idx],
+	//			   false, &curr_to_old);
+	//bool found = aligner.align(curr_frame, old_frame, &curr_to_old);
+	  //if(num_successful_loopclosures == max_loopclosures_)
+	  //  break;
+	//}
+      }
   }
 
   // -- Run slam solver and get final trajectory and pcd.

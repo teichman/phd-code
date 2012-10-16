@@ -12,7 +12,8 @@ LinkVisualizer::LinkVisualizer(StreamSequence::ConstPtr sseq, PoseGraphSlam::Ptr
   transform_(true),
   edge_idx_(0),
   sorted_(false),
-  frame_text_("")
+  frame_text_(""),
+  view_mode_(ALL)
 {
   vis_.registerKeyboardCallback(&LinkVisualizer::keyboardCallback, *this);
   vis_.setBackgroundColor(1,1,1);
@@ -73,8 +74,14 @@ void LinkVisualizer::visualizationThreadFunction()
     lockWrite();
     if(needs_update_) {
       Cloud::Ptr prev = sseq_->getCloud(cur_edge_->idx0);
-      if(!vis_.updatePointCloud(prev, "prev"))
+      if(view_mode_ == PREV || view_mode_ == ALL)
+      {
+        if(!vis_.updatePointCloud(prev, "prev"))
     vis_.addPointCloud(prev, "prev");
+      } else
+      {
+        vis_.removePointCloud("prev");
+      }
       Cloud::Ptr curr = sseq_->getCloud(cur_edge_->idx1);
       Cloud::Ptr curr_trans;
       if(transform_)
@@ -85,8 +92,14 @@ void LinkVisualizer::visualizationThreadFunction()
       {
         curr_trans = curr;
       }
-      if(!vis_.updatePointCloud(curr_trans, "curr_trans"))
+      if(view_mode_ == CUR || view_mode_ == ALL)
+      {
+        if(!vis_.updatePointCloud(curr_trans, "curr_trans"))
     vis_.addPointCloud(curr_trans, "curr_trans");
+      } else
+      {
+        vis_.removePointCloud("curr_trans");
+      }
       int xpos = 20; int ypos = 10; int fontsize = 25;
       string toshow = frame_text_;
       if(transform_) toshow += " (after)";
@@ -123,6 +136,14 @@ void LinkVisualizer::keyboardCallback(const pcl::visualization::KeyboardEvent& e
       toggleSort();
       incrementEdgeIdx(0);
     }
+    else if(key == 'z')
+      setViewMode(PREV);
+    else if(key == 'x')
+      setViewMode(CUR);
+    else if(key == 'c')
+      setViewMode(ALL);
+    else
+      cout << "key: " << (int)key << endl;
   }
 }
 
@@ -141,6 +162,7 @@ void LinkVisualizer::incrementEdgeIdx(int num)
   oss << "Edge " << cur_edge_->idx1 << "->" << cur_edge_->idx0;
   oss << " [error: " << (sorted_ ? errors_desc_[edge_idx_] : errors_[edge_idx_]) << "]" << endl;
   frame_text_ = oss.str();
+  view_mode_ = ALL;
   needs_update_ = true;
 }
 
@@ -158,4 +180,13 @@ void LinkVisualizer::toggleSort()
   edge_idx_ = 0;
   cout << "Sorted: " << sorted_ << endl;
   needs_update_ = true;
+}
+
+void LinkVisualizer::setViewMode(ViewMode mode)
+{
+  cout << "View Mode: " << mode << endl;
+  scopeLockWrite;
+  view_mode_ = mode;
+  needs_update_ = true;
+
 }

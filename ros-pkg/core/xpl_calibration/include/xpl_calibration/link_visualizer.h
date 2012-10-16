@@ -17,6 +17,12 @@ public:
   void run();
   void setCamera(const std::string& camera_path);
 protected:
+  enum ViewMode
+  {
+    PREV,
+    CUR,
+    ALL
+  };
   pcl::visualization::PCLVisualizer vis_;
   rgbd::StreamSequence::ConstPtr sseq_;
   PoseGraphSlam::Ptr slam_;
@@ -30,12 +36,14 @@ protected:
   std::vector<double> errors_;
   std::vector<double> errors_desc_;
   std::vector<size_t> edges_desc_;
+  ViewMode view_mode_;
   
   void visualizationThreadFunction();
   void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie);
   void incrementEdgeIdx(int amt);
   void toggleTransform();
   void toggleSort();
+  void setViewMode(ViewMode mode);
 };
 
 #endif //LINK_VISUALIZER_H
