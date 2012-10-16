@@ -7,7 +7,7 @@ namespace bfs = boost::filesystem;
 
 #define DDL_INCR (getenv("DDL_INCR") ? atoi(getenv("DDL_INCR")) : 1)
 #define REGULARIZATION (getenv("REGULARIZATION") ? atof(getenv("REGULARIZATION")) : 0.0)
-//#define VISUALIZE
+#define VISUALIZE
 
 DepthDistortionLearner::DepthDistortionLearner(const PrimeSenseModel& initial_model) :
   initial_model_(initial_model),
@@ -81,38 +81,28 @@ bool gaussianTest(const PrimeSenseModel& model, const DepthMat& mapdepth, const 
   int min_v = ppt_ul.v_;
   int max_v = ppt_lr.v_;
 
-  // -- Get all distances in this window.
-  vector<double> distances;
+  double mean = 0;
+  double num = 0;
   for(ppt.u_ = min_u; ppt.u_ <= max_u; ++ppt.u_) {
     for(ppt.v_ = min_v; ppt.v_ <= max_v; ++ppt.v_) {
       const vector<double>& vals = dindex[ppt.v_][ppt.u_];
-      distances.insert(distances.end(), vals.begin(), vals.end());
+      num += vals.size();
+      for(size_t i = 0; i < vals.size(); ++i)
+	mean += vals[i];
     }
   }
+  ROS_ASSERT(num > 0);
+  mean /= num;
 
-  // -- Filter down to only the closest connected component.
-  double kernel = 0.1;
-  size_t min_points = 1;
-  vector<double> component;
-  component.reserve(distances.size());
-  sort(distances.begin(), distances.end());
-  for(size_t i = 0; i < distances.size(); ++i) { 
-    component.push_back(distances[i]);
-    if(i > 0 && distances[i] - distances[i-1] > kernel)
-      break;
-  }
-  if(component.size() < min_points)
-    return false;
-
-  // -- Compute mean and variance of the first connected component.
-  double mean = 0;
-  for(size_t i = 0; i < component.size(); ++i)
-    mean += component[i];
-  mean /= component.size();
   double var = 0;
-  for(size_t i = 0; i < component.size(); ++i)
-    var += (component[i] - mean) * (component[i] - mean);
-  var /= component.size();
+  for(ppt.u_ = min_u; ppt.u_ <= max_u; ++ppt.u_) {
+    for(ppt.v_ = min_v; ppt.v_ <= max_v; ++ppt.v_) {
+      const vector<double>& vals = dindex[ppt.v_][ppt.u_];
+      for(size_t i = 0; i < vals.size(); ++i)
+	var += (vals[i] - mean) * (vals[i] - mean);
+    }
+  }
+  var /= num;
 
   //cout << "z " << ppt.z_ << ", num " << num << ", mean " << mean << ", var " << var << endl;
   double stdev = sqrt(var);
@@ -399,6 +389,16 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
     cv::waitKey(10);
     if(DDL_INCR != 1)
       cv::waitKey();
+    string visdir = ".multipliers";
+    if(!bfs::exists(visdir))
+      bfs::create_directory(visdir);
+    ostringstream oss;
+    oss << visdir << "/" << setw(5) << setfill('0') << i;
+    string basename = oss.str();
+    cv::imwrite(basename + "-filters.png", visualization);
+    cv::imwrite(basename + "-multipliers.png", visualizeMultipliers(multipliers));
+    cv::imwrite(basename + "-depth.png", frames_[i].depthImage());
+    cv::imwrite(basename + "-mapdepth.png", mapframe.depthImage());
     #endif
 
     hrt.reset("Accumulating xxt"); hrt.start();
