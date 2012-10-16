@@ -375,9 +375,9 @@ Individual frames are evaluated with two different metrics.  Hamming loss, or to
 \end{figure}
 
 
-Overall, our method demonstrates a normalized error reduction of about 65\% compared to the state-of-the-art.  Detailed results can be seen in Figure~\ref{fig:bargraph}.  Training of our method takes a total of about 10 minutes, and as this need only be done once, this is acceptable. At runtime, HoughTrack's implementation takes about 200ms per frame, whereas our method's implementation takes about 1200ms per frame.\footnote{Both implementations were compiled with optimizations turned on, run on the same machine, and given one thread.} While this is currently too slow for real-time usage, almost all of this time is spent computing features and only about a millisecond is spent on the graph cuts solver.  This means real-time performance can be achieved with speedups of feature computation alone, most immediately by parallelization and by computing features only at the boundaries of the object where they are actually needed.
+Overall, our method demonstrates a normalized error reduction of about 65\% compared to the state-of-the-art.  Detailed results can be seen in Figure~\ref{fig:bargraph}.  Training of our method takes a total of about 10 minutes, and as this need only be done once, this is acceptable. At runtime, HoughTrack's implementation takes about 200ms per frame, whereas our method's implementation takes about 1200ms per frame.\footnote{Both implementations were compiled with optimizations turned on, run on the same machine, and given one thread.} While this is currently too slow for real-time usage, almost all of this time is spent computing features and only about a millisecond is spent on the graph cuts solver.  This means real-time performance can be achieved with speedups of feature computation alone, most immediately by parallelization and by computing features only at the boundaries of the object where they are actually needed.  At 640x480 resolution, graph cuts alone typically takes about 30ms; however, one could employ a similar trick and run the graph cuts solver only for the nodes near the boundaries of the object, providing a potentially large savings.
 
-\subsection{Qualititative analysis}
+\subsection{Qualitative analysis}
 
 \subsubsection{Strengths}
 
