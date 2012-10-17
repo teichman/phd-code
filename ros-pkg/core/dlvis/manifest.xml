@@ -1,0 +1,17 @@
+<package>
+  <description brief="display_list_visualizer">
+
+     display_list_visualizer
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/display_list_visualizer</url>
+  <depend package="rgbd_sequence"/>
+  <depend package="xpl_calibration"/>
+  <depend package="timer"/>
+
+</package>
+
+
