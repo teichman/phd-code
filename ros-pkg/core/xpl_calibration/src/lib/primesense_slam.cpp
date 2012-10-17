@@ -1,5 +1,7 @@
 #include <xpl_calibration/primesense_slam.h>
 
+#define OMP_THREADS 8
+
 using namespace std;
 using namespace Eigen;
 using namespace rgbd;
@@ -34,7 +36,8 @@ void PrimeSenseSlam::_run()
   sseq_->readFrame(0, &curr_frame);
   size_t curr_idx = 0;
   vector<cv::KeyPoint> unused;
-  cacheFeatures(curr_frame, curr_idx, unused);
+  rgbd::Cloud::ConstPtr unused2;
+  cacheFeatures(curr_frame, curr_idx, unused, unused2);
   while(true) {
     // -- Find the next frame to use.
     prev_frame = curr_frame;
@@ -58,7 +61,9 @@ void PrimeSenseSlam::_run()
     
     // -- Compute orb features for that frame.
     vector<cv::KeyPoint> curr_keypoints;
-    FeaturesPtr curr_features = cacheFeatures(curr_frame, curr_idx, curr_keypoints);
+    rgbd::Cloud::ConstPtr curr_keycloud;
+    FeaturesPtr curr_features = cacheFeatures(curr_frame, curr_idx, curr_keypoints, 
+        curr_keycloud);
     
     // -- Try to find link to most recent previous frame.
     //    Tries a wider search if not enough corresponding points to get a rough initial transform.
@@ -70,6 +75,7 @@ void PrimeSenseSlam::_run()
       fav_->setFrames(curr_frame, prev_frame);
     bool found = aligner.align(curr_frame, prev_frame,
     			       curr_keypoints, keypoint_cache_[prev_idx],
+                 curr_keycloud, keycloud_cache_[prev_idx],
     			       curr_features, feature_cache_[prev_idx],
     			       true, &curr_to_prev);
     // bool found = aligner.align(curr_frame, prev_frame, &curr_to_prev);
@@ -98,20 +104,22 @@ void PrimeSenseSlam::_run()
       vector<bool> found_rough(max_attempts, false);
       vector<vector<cv::Point2d> > correspondences0(max_attempts), correspondences1(max_attempts);
       vector<Eigen::Affine3d> guesses(max_attempts);
+      omp_set_num_threads(OMP_THREADS);
       #pragma omp parallel for
       for(size_t i = 0; i < max_attempts; ++i) {
   if(num_rough_transforms >= max_rough_transforms)
     continue;
 	size_t idx = cached_frames_random[i];
 	ROS_DEBUG_STREAM("Checking for loop closure between " << idx << " and " << curr_idx);
-	Frame old_frame;
-	sseq_->readFrame(idx, &old_frame);
+	//Frame old_frame;
+	//sseq_->readFrame(idx, &old_frame);
 
 	ROS_ASSERT(keypoint_cache_.count(idx));
 	ROS_ASSERT(feature_cache_.count(idx));
   bool found = aligner.computeRoughTransform(
-      curr_frame, old_frame,
+      // curr_frame, old_frame, TODO SHOULDNT BE NECESSARY
       curr_keypoints, keypoint_cache_[idx],
+      curr_keycloud, keycloud_cache_[idx],
       curr_features, feature_cache_[idx],
       &(correspondences0[i]), &(correspondences1[i]), &(guesses[i]));
   if(found) {
@@ -192,16 +200,17 @@ void PrimeSenseSlam::buildMap(const Trajectory& traj)
 }
 
 PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::cacheFeatures(const rgbd::Frame &frame, 
-							  size_t t, vector<cv::KeyPoint> &keypoints)
+							  size_t t, vector<cv::KeyPoint> &keypoints, rgbd::Cloud::ConstPtr &keycloud)
 {
-  FeaturesPtr features = getFeatures(frame, keypoints);
+  FeaturesPtr features = getFeatures(frame, keypoints, keycloud);
   keypoint_cache_[t] = keypoints;
+  keycloud_cache_[t] = keycloud;
   feature_cache_[t] = features;
   cached_frames_.push_back(t);
   return features;
 }
 
-PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::getFeatures(const rgbd::Frame &frame, vector<cv::KeyPoint> &keypoints) const
+PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::getFeatures(const rgbd::Frame &frame, vector<cv::KeyPoint> &keypoints, rgbd::Cloud::ConstPtr &keycloud) const
 {
   cv::Mat1b img;
   cv::cvtColor(frame.img_, img, CV_BGR2GRAY);
@@ -215,6 +224,22 @@ PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::getFeatures(const rgbd::Frame &frame
   for(size_t i = 0; i < keypoints.size(); i++)
     for(int j  = 0; j < cvfeat.cols; j++)
       (*features)(i,j) = cvfeat.at<uint8_t>(i,j);
+  
+  // Make keycloud
+  rgbd::Cloud* keycloudptr = new rgbd::Cloud;
+  keycloudptr->points.resize(keypoints.size());
+  keycloudptr->height = 1;
+  keycloudptr->width = keypoints.size();
+  for(size_t i = 0; i < keypoints.size(); i++)
+  {
+    const cv::KeyPoint &kpt = keypoints[i];
+    rgbd::ProjectivePoint kppt;
+    kppt.u_ = kpt.pt.x;
+    kppt.v_ = kpt.pt.y;
+    kppt.z_ = frame.depth_->coeffRef(kppt.v_, kppt.u_);
+    sseq_->model_.project(kppt, &(keycloudptr->points[i]));
+  }
+  keycloud = rgbd::Cloud::ConstPtr((const rgbd::Cloud*) keycloudptr);
   
   return features;
 }

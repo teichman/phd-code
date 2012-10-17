@@ -14,6 +14,35 @@ std::string sseqName(std::string str)
   return path.filename();
 }
 
+class AlignerWrapper
+{
+public:
+  AlignerWrapper(const FrameAligner *aligner, 
+      const rgbd::Frame *frame0, const rgbd::Frame *frame1,
+      const vector<cv::KeyPoint> *keypoints0, const vector<cv::KeyPoint> *keypoints1,
+      rgbd::Cloud::ConstPtr keycloud0, rgbd::Cloud::ConstPtr keycloud1,
+      PrimeSenseSlam::FeaturesConstPtr features0, PrimeSenseSlam::FeaturesConstPtr features1,
+      bool consider_wide):
+    aligner_(aligner), frame0_(frame0), frame1_(frame1),
+    keypoints0_(keypoints0), keypoints1_(keypoints1),
+    keycloud0_(keycloud0), keycloud1_(keycloud1),
+    features0_(features0), features1_(features1),
+    consider_wide_(consider_wide)
+  {}
+  void run( Eigen::Affine3d* f0_to_f1)
+  {
+    aligner_->align(*frame0_, *frame1_, *keypoints0_, *keypoints1_, keycloud0_, keycloud1_,
+        features0_, features1_, consider_wide_, f0_to_f1);
+  }
+protected:
+  const FrameAligner* aligner_;
+  const rgbd::Frame *frame0_, *frame1_;
+  const vector<cv::KeyPoint> *keypoints0_, *keypoints1_;
+  rgbd::Cloud::ConstPtr keycloud0_, keycloud1_;
+  PrimeSenseSlam::FeaturesConstPtr features0_, features1_;
+  bool consider_wide_;
+};
+
 int main(int argc, char** argv)
 {
   srand(time(0));
@@ -112,21 +141,27 @@ int main(int argc, char** argv)
   fav.setFrames(frame0, frame1);
     
   vector<cv::KeyPoint> keypoints0, keypoints1;
+  rgbd::Cloud::ConstPtr keycloud0, keycloud1;
   PrimeSenseSlam pss;
   if(opts.count("keypoints-per-frame"))
     pss.keypoints_per_frame_ = opts["keypoints-per-frame"].as<int>();
-  PrimeSenseSlam::FeaturesPtr features0 = pss.getFeatures(frame0, keypoints0);
-  PrimeSenseSlam::FeaturesPtr features1 = pss.getFeatures(frame1, keypoints1);
+  PrimeSenseSlam::FeaturesConstPtr features0 = pss.getFeatures(frame0, keypoints0, keycloud0);
+  PrimeSenseSlam::FeaturesConstPtr features1 = pss.getFeatures(frame1, keypoints1, keycloud1);
 
   Affine3d f0_to_f1;
   // bool found = aligner.align(frame0, frame1,
   // 			     keypoints0, keypoints1,
   // 			     features0, features1,
   // 			     (bool)opts.count("consider-wide-search"), &f0_to_f1);
-  ThreadPtr alignment_thread(new boost::thread(boost::bind(&FrameAligner::align, &aligner, frame0, frame1,
-							   keypoints0, keypoints1,
-							   features0, features1,
-							   (bool)opts.count("consider-wide-search"), &f0_to_f1)));
+  AlignerWrapper aw(&aligner, &frame0, &frame1, &keypoints0, &keypoints1, 
+      keycloud0, keycloud1, features0, features1, (bool)opts.count("consider-wide-search"));
+  ThreadPtr alignment_thread(new boost::thread(boost::bind(&AlignerWrapper::run, &aw, &f0_to_f1)));
+  //ThreadPtr alignment_thread(new boost::thread(boost::bind(&FrameAligner::align, &aligner, 
+  //               frame0, frame1,
+	//						   keypoints0, keypoints1,
+  //               keycloud0, keycloud1,
+	//						   features0, features1,
+	//						   (bool)opts.count("consider-wide-search"), &f0_to_f1)));
   
   fav.run();
   alignment_thread->join();
