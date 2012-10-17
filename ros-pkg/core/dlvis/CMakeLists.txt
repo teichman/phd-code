@@ -35,3 +35,6 @@ target_link_libraries(display_list_test GLU glut)
 
 rosbuild_add_executable(dlvis_test src/prog/dlvis_test.cpp)
 target_link_libraries(dlvis_test dlvis)
+
+rosbuild_add_executable(pclvis_test src/prog/pclvis_test.cpp)
+target_link_libraries(pclvis_test dlvis)
