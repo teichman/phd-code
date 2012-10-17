@@ -22,7 +22,8 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
+rosbuild_add_library(dlvis src/lib/dlvis.cpp)
+target_link_libraries(dlvis GLU glut)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
@@ -31,3 +32,6 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_executable(display_list_test src/prog/display_list_test.cpp)
 target_link_libraries(display_list_test GLU glut)
+
+rosbuild_add_executable(dlvis_test src/prog/dlvis_test.cpp)
+target_link_libraries(dlvis_test dlvis)
