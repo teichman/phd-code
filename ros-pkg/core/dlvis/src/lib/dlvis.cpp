@@ -22,7 +22,8 @@ DLVis::DLVis(string title) :
   move_sensitivity_(0.001),
   zoom_sensitivity_(0.01),
   min_zoom_range_(0.1),
-  motion_state_(IDLE)
+  motion_state_(IDLE),
+  customKeyboardCallback_(NULL)
 {
   ROS_ASSERT(!g_dlvis);
   g_dlvis = this;
@@ -95,6 +96,8 @@ void DLVis::mousePressCallback(int button, int state, int x, int y)
 
 void DLVis::keyboardCallback(unsigned char c, int x, int y)
 {
+  if(customKeyboardCallback_)
+    customKeyboardCallback_(c, x, y);
 }
 
 void DLVis::zoomCamera(double dy)
@@ -253,4 +256,9 @@ void DLVis::updateDisplayList()
   }
   glEnd();
   glEndList();    
+}
+
+void DLVis::registerKeyboardCallback(KeyboardCallbackFunction func)
+{
+  customKeyboardCallback_ = func;
 }
