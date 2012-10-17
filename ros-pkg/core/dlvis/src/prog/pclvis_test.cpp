@@ -15,6 +15,7 @@ int main(int argc, char** argv)
     *all += pcd;
   }
 
+  cout << "Visualizing " << all->size() << " points." << endl;
   pcl::visualization::CloudViewer viewer("pcd");
   viewer.showCloud(all);
   while(!viewer.wasStopped()) {

@@ -141,6 +141,8 @@ void DLVis::rotateCamera(double dx, double dy)
 
 void DLVis::display()
 {
+  //ScopedTimer st("DLVis::display()");
+  
   // -- Update the display list if necessary.
   lockWrite();
   if(needs_update_)
@@ -240,6 +242,7 @@ void DLVis::_run()
 void DLVis::updateDisplayList()
 {  
   // Fill dlid_ with the cloud display list.
+  ROS_WARN("DLVis needs to delete old lists.");
   //glDeleteLists(-ready[f], 1); // delete old list
   if(!cloud_)
     return;
