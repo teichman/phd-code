@@ -141,6 +141,8 @@ void DLVis::rotateCamera(double dx, double dy)
 
 void DLVis::display()
 {
+  ScopedTimer st("DLVis::display()");
+  
   // -- Update the display list if necessary.
   lockWrite();
   if(needs_update_)
@@ -151,8 +153,10 @@ void DLVis::display()
   glClearColor(0, 0, 0, 0.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glPointSize(2);
-  if(cloud_)
+  if(cloud_) {
+    ScopedTimer st("glCallList");
     glCallList(dlid_);
+  }
   glutSwapBuffers();
   
   // -- Set the camera view.
@@ -240,6 +244,7 @@ void DLVis::_run()
 void DLVis::updateDisplayList()
 {  
   // Fill dlid_ with the cloud display list.
+  ROS_WARN("DLVis needs to delete old lists.");
   //glDeleteLists(-ready[f], 1); // delete old list
   if(!cloud_)
     return;
