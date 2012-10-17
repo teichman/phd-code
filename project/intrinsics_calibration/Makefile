@@ -156,6 +156,10 @@ $(1)-visualize-slam-unrefined-pcd-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PA
 $(1)-inspect-posegraph-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_graph.log
 	rosrun xpl_calibration inspect_pose_graph $$< $(1)/slam_results/$(2)_graph.log --visualize
 
+.PHONY: $(1)-view-links-$(2)
+$(1)-view-links-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_graph.log
+	rosrun xpl_calibration view_links $$< $(1)/slam_results/$(2)_graph.log
+
 $(1)/slam_results/$(2).traj: $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_unrefined.traj
 	rosrun xpl_calibration inspect_pose_graph $$< $(1)/slam_results/$(2)_graph.log --otraj $(1)/slam_results/$(2).traj --opcd $(1)/slam_results/$(2).pcd
 

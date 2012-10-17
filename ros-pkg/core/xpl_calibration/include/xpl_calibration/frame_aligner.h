@@ -52,12 +52,29 @@ public:
   //! Returns false if no transform found.
   bool align(rgbd::Frame frame0, rgbd::Frame frame1,
 	     const std::vector<cv::KeyPoint>& keypoints0, const std::vector<cv::KeyPoint>& keypoints1,
+       rgbd::Cloud::ConstPtr keycloud0, rgbd::Cloud::ConstPtr keycloud1,
 	     FeaturesConstPtr features0, FeaturesConstPtr features1,
 	     bool consider_wide_search, Eigen::Affine3d* f0_to_f1) const;
   
   //! Computes transform that takes points in 0 to points in 1.  Starts with identity transform, does a wide search.
   //! Returns false if no transform found.
   bool align(rgbd::Frame frame0, rgbd::Frame frame1, Eigen::Affine3d* f0_to_f1) const;
+
+  //! Using keypoint matching method only to compute transform that takes points in 0 to points in 1.
+  //! correspondences will be filled with whatever can be found.
+  //! Returns false if no transform found.
+  bool computeRoughTransform( // rgbd::Frame frame0, rgbd::Frame frame1, TODO REMOVE
+			 const std::vector<cv::KeyPoint>& keypoints0, const std::vector<cv::KeyPoint>& keypoints1,
+       rgbd::Cloud::ConstPtr keycloud0, rgbd::Cloud::ConstPtr keycloud1,
+			 FeaturesConstPtr features0, FeaturesConstPtr features1,
+			 std::vector<cv::Point2d>* correspondences0, std::vector<cv::Point2d>* correspondences1,
+			 Eigen::Affine3d* f0_to_f1) const;
+  //! Computes transform that takes points in 0 to points in 1.  Starts with guess, has a narrow search.
+  //! Returns false if no transform found.
+  bool narrowGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
+			const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1, 
+			const Eigen::Affine3d& guess,
+			Eigen::Affine3d* f0_to_f1) const;
 	         
 protected:
   rgbd::PrimeSenseModel model0_;
@@ -69,21 +86,6 @@ protected:
 		      const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1,
 		      Eigen::Affine3d* f0_to_f1) const;
   
-  //! Computes transform that takes points in 0 to points in 1.  Starts with guess, has a narrow search.
-  //! Returns false if no transform found.
-  bool narrowGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
-			const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1, 
-			const Eigen::Affine3d& guess,
-			Eigen::Affine3d* f0_to_f1) const;
-
-  //! Using keypoint matching method only to compute transform that takes points in 0 to points in 1.
-  //! correspondences will be filled with whatever can be found.
-  //! Returns false if no transform found.
-  bool computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
-			     const std::vector<cv::KeyPoint>& keypoints0, const std::vector<cv::KeyPoint>& keypoints1,
-			     FeaturesConstPtr features0, FeaturesConstPtr features1,
-			     std::vector<cv::Point2d>* correspondences0, std::vector<cv::Point2d>* correspondences1,
-			     Eigen::Affine3d* f0_to_f1) const;
 
   bool validate(double count, double depth_error) const;
   GridSearch setupGridSearch() const;

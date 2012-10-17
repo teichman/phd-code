@@ -52,14 +52,16 @@ void evaluate(string path, PrimeSenseModel model, const bpo::variables_map& opts
   cout << aligner.params_ << endl;
         
   vector<cv::KeyPoint> keypoints0, keypoints1;
+  rgbd::Cloud::ConstPtr keycloud0, keycloud1;
   PrimeSenseSlam pss;
-  PrimeSenseSlam::FeaturesPtr features0 = pss.getFeatures(frame0, keypoints0);
-  PrimeSenseSlam::FeaturesPtr features1 = pss.getFeatures(frame1, keypoints1);
+  PrimeSenseSlam::FeaturesPtr features0 = pss.getFeatures(frame0, keypoints0, keycloud0);
+  PrimeSenseSlam::FeaturesPtr features1 = pss.getFeatures(frame1, keypoints1, keycloud1);
   Affine3d f0_to_f1;
   HighResTimer hrt("alignment");
   hrt.start();
   bool found = aligner.align(frame0, frame1,
   			     keypoints0, keypoints1,
+             keycloud0, keycloud1,
   			     features0, features1,
   			     true, &f0_to_f1);
   hrt.stop();
