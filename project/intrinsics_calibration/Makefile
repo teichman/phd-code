@@ -6,7 +6,7 @@
 .SECONDEXPANSION:	# Allows use of automatic vars in prerequisites.
 .SECONDARY:		# Prevents deletion of intermediate targets in a chain of implicit rules.
 
-export NUM_THREADS	:= 40
+export NUM_THREADS	:= 8
 #SHELL = $(warning ---------- Making $@$(if $?,. Newer prereqs: $?)) /bin/bash -x
 SHELL			:= /bin/bash
 REPO_ROOT		:= $(shell dirname $$(dirname $$(dirname $$(rospack find dst))))
