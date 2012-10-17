@@ -146,7 +146,6 @@ void gui3D_display(void)
   // if (!__gui3d_use_qt)
   //   glutSwapBuffers();
 }
-
 void mouseMotion(int x, int y)
 {
   int dx, dy;
