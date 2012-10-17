@@ -60,11 +60,8 @@ void DLVis::staticKeyboardCallback(unsigned char c, int x, int y)
 
 void DLVis::mouseMotionCallback(int x, int y)
 {
-  int dx, dy;
-
-  dx = x - prev_x_;
-  dy = y - prev_y_;
-
+  int dx = x - prev_x_;
+  int dy = y - prev_y_;
   if(motion_state_ == ROTATING) 
     rotateCamera(dx, dy);
   else if(motion_state_ == MOVING) 
@@ -84,7 +81,6 @@ void DLVis::passiveMouseMotionCallback(int x, int y)
 
 void DLVis::mousePressCallback(int button, int state, int x, int y)
 {
-  cout << "Got mouse press: " << button << " " << state << endl;
   if(state == GLUT_DOWN) {
     if(button == GLUT_LEFT_BUTTON)
       motion_state_ = ROTATING;
@@ -99,7 +95,6 @@ void DLVis::mousePressCallback(int button, int state, int x, int y)
 
 void DLVis::keyboardCallback(unsigned char c, int x, int y)
 {
-  cout << "Got key: " << c << endl;
 }
 
 void DLVis::zoomCamera(double dy)
@@ -200,12 +195,12 @@ void DLVis::reshape(int w, int h)
   glViewport(0, 0, w, h);
 
   // Set the clipping volume
-  gluPerspective(45,ratio,1,1000);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  gluLookAt(0, 1.75, 5,
-	    0, 1.75, 4,
-	    0.0f, 1.0f, 0.0f);
+  //gluPerspective(45,ratio,1,1000);
+  // glMatrixMode(GL_MODELVIEW);
+  // glLoadIdentity();
+  // gluLookAt(0, 1.75, 5,
+  // 	    0, 1.75, 4,
+  // 	    0.0f, 1.0f, 0.0f);
 }
 
 void DLVis::setPointCloud(rgbd::Cloud::ConstPtr cloud)
@@ -241,7 +236,6 @@ void DLVis::_run()
 
 void DLVis::updateDisplayList()
 {  
-
   // Fill dlid_ with the cloud display list.
   //glDeleteLists(-ready[f], 1); // delete old list
   if(!cloud_)
