@@ -1,3 +1,4 @@
+ros-pkg/*/*/lib
 *build/
 *bin/
 *.so

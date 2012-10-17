@@ -96,6 +96,38 @@ int main(int argc, char** argv)
   //  map_vis.removeAllPointClouds();
   }
   // Prune disconnected components
+  vector<size_t> nodes_with_edges;
+  for(size_t i = 0; i < slam.numNodes(); i++)
+  {
+    if(slam.numEdges(i) > 0) nodes_with_edges.push_back(i);
+  }
+  vector<vector<size_t> > edges(slam.numNodes()); //edges[i] = edges contected to i;
+  for(size_t i = 0; i < slam.edges_.size(); i++)
+  {
+    const EdgeStruct &e = slam.edges_[i];
+    edges[e.idx0].push_back(e.idx1);
+    edges[e.idx1].push_back(e.idx0);
+  }
+  vector<bool> visited(slam.numNodes(), false);
+  vector<size_t> tovisit;
+  tovisit.push_back(nodes_with_edges[0]);
+  while(tovisit.size() > 0)
+  {
+    size_t curnode = tovisit[tovisit.size()-1];
+    tovisit.pop_back();
+    if(visited[curnode]) continue;
+    visited[curnode] = true;
+    for(size_t i = 0; i < edges[curnode].size(); i++)
+    {
+      size_t neighbor = edges[curnode][i];
+      if(!visited[neighbor])
+        tovisit.push_back(neighbor);
+    }
+  }
+  for(size_t i = 0; i < nodes_with_edges.size(); i++)
+  {
+    if(!visited[nodes_with_edges[i]]) cout << "Unvisited: " << nodes_with_edges[i] << endl;
+  }
   while(true)
   {
     if(visualize)
@@ -198,6 +230,7 @@ int main(int argc, char** argv)
   for(size_t i = 0; i < slam.numNodes(); i++)
   {
     if(slam.numEdges(i)==0) continue;
+    if(!visited[i]) continue;
     //Get the cloud
     Cloud::Ptr curr_pcd = sseq->getCloud(i);
     zthresh(curr_pcd, MAX_RANGE_MAP);
@@ -230,6 +263,7 @@ int main(int argc, char** argv)
     for(size_t i = 0; i < slam.numNodes(); ++i)
     {
       if(slam.numEdges(i) == 0) continue;
+      if(!visited[i]) continue;
       traj.set(i, slam.transform(i));
     }
     traj.save(otraj);

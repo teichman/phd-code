@@ -4,11 +4,11 @@
 ############################################################
 
 SHELL			:= /bin/bash
-RACE_ROOT		:= /earth/driving/track_classification
+REPO_ROOT		:= $(shell dirname $$(dirname $$(dirname $$(rospack find dst))))
 export NUM_THREADS	:= 40  # No longer comparing with HoughTrack on speed so we can bump up the number of threads.
 export SKIP		:= 1
 export MASK		:= 1
-MAKE_ROOT		:= $(RACE_ROOT)/src/project/dst
+MAKE_ROOT		:= $(REPO_ROOT)/project/dst
 MAKEFILE		:= $(MAKE_ROOT)/Makefile
 
 .SECONDEXPANSION:	# Allows use of automatic vars in prerequisites.
