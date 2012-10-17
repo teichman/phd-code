@@ -9,6 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/display_list_visualizer</url>
   <depend package="pcl_bleeding"/>
+  <depend package="bag_of_tricks"/>
 
 </package>
 
