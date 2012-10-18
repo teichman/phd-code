@@ -5,130 +5,113 @@ using namespace std;
 using namespace g2o;
 
 
-PoseGraphSlam::PoseGraphSlam(int num_nodes)
+PoseGraphSlam::PoseGraphSlam(size_t num_nodes)
 {
-  typedef BlockSolver< BlockSolverTraits<-1, -1> >  SlamBlockSolver;
-  typedef LinearSolverCSparse<SlamBlockSolver::PoseMatrixType> SlamLinearSolver;
-  typedef LinearSolverCholmod<SlamBlockSolver::PoseMatrixType> SlamLinearCholmodSolver;
-   
-  SlamLinearCholmodSolver* linear_solver = new SlamLinearCholmodSolver();
-  linear_solver->setBlockOrdering(false);
-  SlamBlockSolver* solver = new SlamBlockSolver(&optimizer_, linear_solver);
-  optimizer_.setSolver(solver);
+  initialize(num_nodes);
+}
 
-  for(int i = 0; i < num_nodes; ++i) { 
-    VertexSE3* v = new VertexSE3;
-    v->setId(i);
-    optimizer_.addVertex(v);
-  }
+void
+PoseGraphSlam::initialize(size_t num_nodes)
+{
+  nodes_.resize(num_nodes);
+  for(size_t i = 0; i < num_nodes; i++)
+    nodes_[i] = (int)i;
 }
 
 void PoseGraphSlam::addEdge(int idx0, int idx1,
 			    const Eigen::Affine3d& transform,
 			    const Matrix6d& covariance)
 {
-  // cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
-  // cout << "Adding edge with transform: " << endl;
-  // cout << transform.matrix() << endl << endl;
-
-  Matrix3d rotation = transform.matrix().block(0, 0, 3, 3);
-  Vector3d translation = transform.translation();
-  SE3Quat se3(rotation, translation);
-  
-  // Quaterniond quat(rotation);
-  // cout << "--------------------" << endl;
-  // cout << rotation << endl << endl;
-  // cout << quat.toRotationMatrix() << endl << endl;
-  // Vector3d e0(1, 0, 0);
-  // cout << e0.transpose() << "  -----  norm " << e0.norm() << endl;
-  // cout << (rotation * e0).transpose() << "  -----  norm " << (rotation * e0).norm() << endl;
-  // cout << (quat.toRotationMatrix() * e0).transpose() << "  -----  norm " << (quat.toRotationMatrix() * e0).norm() << endl;
-  // ROS_ASSERT(fabs((rotation * e0).norm() - 1) < 1e-6);
-  // ROS_ASSERT(fabs((quat.toRotationMatrix() * e0).norm() - 1) < 1e-6);
-  // ROS_ASSERT((quat.toRotationMatrix() - rotation).norm() < 1e-6);
-  
-  // cout << "####################" << endl;
-  // cout << transform.matrix() << endl << endl;
-  // cout << ((Affine3d)se3.to_homogenious_matrix()).matrix() << endl << endl;
-  // ROS_ASSERT((((Affine3d)se3.to_homogenious_matrix()).matrix() - transform.matrix()).norm() < 1e-6);
   EdgeStruct edge_struct;
   edge_struct.idx0 = idx0;
   edge_struct.idx1 = idx1;
   edge_struct.transform = transform;
   edge_struct.covariance = covariance;
   edges_.push_back(edge_struct); 
-
-  EdgeSE3* edge = new EdgeSE3;
-  edge->vertices()[0] = optimizer_.vertex(idx0);
-  edge->vertices()[1] = optimizer_.vertex(idx1);
-  
-  edge->setMeasurement(se3);
-  edge->setInverseMeasurement(se3.inverse());
-  edge->setInformation(covariance.inverse());
-  optimizer_.addEdge(edge);
-  edge_ptrs_.push_back(edge);
+  update_graph_ = true;
+  update_subgraphs_ = true;
 }
   
 void PoseGraphSlam::removeEdge(size_t idx)
 {
-  //Remove from g2o
-  optimizer_.removeEdge(edge_ptrs_[idx]);
-  //Remove from my own lists
   edges_.erase(edges_.begin()+idx);
-  edge_ptrs_.erase(edge_ptrs_.begin()+idx);
+  update_graph_ = true;
+  update_subgraphs_ = true;
 }
 
-void PoseGraphSlam::solve(int num_iters)
+size_t PoseGraphSlam::solve(size_t min_size, int num_iters)
 {
-  //for(size_t i = 0; i < vertices_.size(); i++)
-  //  optimizer_.addVertex(vertices_[i]);
-  //for(size_t i = 0; i < edges_.size(); i++)
-  //  optimizer_.addEdge(edges_[i]);
-  VertexSE3* v0 = dynamic_cast<VertexSE3*>(optimizer_.vertex(0));
-  ROS_ASSERT(v0);
-  v0->setToOrigin();
-  v0->setFixed(true);
-
-  // Quaterniond quat;
-  // quat.setIdentity();
-  // SE3Quat se3(quat, Vector3d(0, 0, 0));
-  // v0->setEstimate(se3);
+  ROS_ASSERT(min_size > 1);
+  vector<Graph_t::Ptr> subgraphs; getSubgraphs(subgraphs, min_size);
+  optimizers_cache_.resize(subgraphs.size());
+  for(size_t i = 0; i <  subgraphs.size(); i++)
+  {
+    Graph_t::Ptr subgraph = subgraphs[i];
+    vector<int> nodes(subgraph->nodes_.size());
+    vector<EdgeStruct> edges(subgraph->edges_.size());
+    for(size_t j = 0; j < subgraph->nodes_.size(); j++)
+      nodes[j] = subgraph->nodes_[j];
+    for(size_t j = 0; j < subgraph->edges_.size(); j++)
+      edges[j] = *((EdgeStruct*) subgraph->edges_[j].data_ptr);
+    optimizers_cache_[i] = prepareSolver(nodes, edges);
+    cout << "Optimizing subgraph " << i+1 << "/" << subgraphs.size() << endl;
+    optimizers_cache_[i]->optimizer_->initializeOptimization();
+    optimizers_cache_[i]->optimizer_->optimize(num_iters);
+    cout << "done." << endl;
+  }
+  return subgraphs.size();
+}
   
-  cout << "Optimizing..." << endl;
-  //optimizer_.setVerbose(true);
-  optimizer_.initializeOptimization();
-  optimizer_.optimize(num_iters);
-  cout << "done." << endl;
+void PoseGraphSlam::getSubgraphs(vector<vector<int> > &subgraph_nodes)
+{
+  ROS_ASSERT(!update_graph_ && !update_subgraphs_);
+  vector<Graph_t::Ptr> subgraphs; getSubgraphs(subgraphs, cached_min_size_);
+  subgraph_nodes.resize(subgraphs.size());
+  for(size_t i = 0; i < subgraphs.size(); i++)
+    subgraph_nodes[i] = subgraphs[i]->nodes_;
 }
 
-Eigen::Affine3d PoseGraphSlam::transform(int idx) const
+Eigen::Affine3d PoseGraphSlam::transform(int idx, int *root_idx)
 {
-  // double data[7];
-  // optimizer_.vertex(idx)->getEstimateData(data);
-  // Vector3d translation;  // offset
-  // translation << data[0], data[1], data[2];
-  // Quaterniond quat(data[6], data[3], data[4], data[5]);  // heading
-  // return Translation3d(translation) * Affine3d(quat.toRotationMatrix());
-
-  const VertexSE3* v = dynamic_cast<const VertexSE3*>(optimizer_.vertex(idx));
+  //Fail if called before solve() was called
+  ROS_ASSERT(!update_graph_ && !update_subgraphs_);
+  if(!has_subgraph_[idx])
+  {
+    if(root_idx) *root_idx = -1;
+    return Eigen::Affine3d(Eigen::Matrix4d::Identity());
+  }
+  size_t graph_idx = idx_to_subgraph_idx_[idx];
+  const VertexSE3* v = dynamic_cast<const VertexSE3*>(
+      optimizers_cache_[graph_idx]->optimizer_->vertex(idx));
   ROS_ASSERT(v);
   SE3Quat se3 = v->estimate();
+  if(root_idx)
+    *root_idx = subgraph_cache_[graph_idx]->nodes_[0];
   return Eigen::Affine3d(se3.to_homogenious_matrix());  // awesome.
 }
 
-void PoseGraphSlam::vertexData(int idx, Vector3d* translation, Quaterniond* quat) const
+void PoseGraphSlam::vertexData(int idx, Vector3d* translation, Quaterniond* quat, 
+    int *root_idx)
 {
+  if(!has_subgraph_[idx])
+  {
+    if(root_idx) *root_idx = -1;
+    return;
+  }
+  int graph_idx = idx_to_subgraph_idx_[idx];
   double data[7];
-  optimizer_.vertex(idx)->getEstimateData(data);
+  optimizers_cache_[graph_idx]->optimizer_->vertex(idx)->getEstimateData(data);
   *translation << data[0], data[1], data[2];
   *quat = Quaterniond(data[6], data[3], data[4], data[5]);
+  if(root_idx)
+    *root_idx = subgraph_cache_[graph_idx]->nodes_[0];
 }
 
-size_t PoseGraphSlam::numEdges(size_t idx) const
+// TODO Alter so it respects the subgraph way of doing things?
+size_t PoseGraphSlam::numEdges(int idx)
 {
-  const VertexSE3* v = dynamic_cast<const VertexSE3*>(optimizer_.vertex(idx));
-  ROS_ASSERT(v);
-  return v->edges().size();
+  vector<int> neighbors; getGraph()->getNeighbors(idx, neighbors);
+  return neighbors.size();
 }
 
 void PoseGraphSlam::serialize(std::ostream& out) const
@@ -150,11 +133,8 @@ void PoseGraphSlam::deserialize(std::istream& in)
   if(numNodes() != n_vert)
   {
     ROS_ASSERT(numNodes() == 0);
-    for(int i = 0; i < n_vert; ++i) { 
-      VertexSE3* v = new VertexSE3;
-      v->setId(i);
-      optimizer_.addVertex(v);
-    }
+    initialize(n_vert);
+    ROS_ASSERT(numNodes() == n_vert);
   }
   size_t n_edges; in >> n_edges;
   for(size_t i = 0; i < n_edges; i++)
@@ -166,4 +146,94 @@ void PoseGraphSlam::deserialize(std::istream& in)
     Matrix6d covariance; eigen_extensions::deserializeASCII(in, &covariance);
     addEdge(idx0, idx1, transform, covariance);
   }
+}
+  
+PoseGraphSlam::G2OPtr 
+PoseGraphSlam::prepareSolver(const vector<int> &nodes, const vector<EdgeStruct> &edges)
+{
+  //Create the optimizer
+  G2OPtr solver(new G2OStruct);
+  //Add all nodes
+  for(size_t i = 0; i < nodes.size(); i++)
+  {
+    VertexSE3* v = new VertexSE3;
+    v->setId(nodes[i]);
+    if(i == 0)
+    {
+      v->setToOrigin();
+      v->setFixed(true);
+    }
+    solver->optimizer_->addVertex(v);
+  }
+  //Add all edges
+  for(size_t i = 0; i < edges.size(); i++)
+  {
+    const EdgeStruct &edge = edges[i];
+    EdgeSE3* edgeptr = new EdgeSE3;
+    edgeptr->vertices()[0] = solver->optimizer_->vertex(edge.idx0);
+    edgeptr->vertices()[1] = solver->optimizer_->vertex(edge.idx1);
+    Matrix3d rotation = edge.transform.matrix().block(0, 0, 3, 3);
+    Vector3d translation = edge.transform.translation();
+    SE3Quat se3(rotation, translation);
+    edgeptr->setMeasurement(se3);
+    edgeptr->setInverseMeasurement(se3.inverse());
+    edgeptr->setInformation(edge.covariance.inverse());
+    solver->optimizer_->addEdge(edgeptr);
+  }
+  return solver;
+}
+
+PoseGraphSlam::G2OStruct::G2OStruct()
+{
+  linear_solver_ = new SlamLinearCholmodSolver();
+  linear_solver_->setBlockOrdering(false);
+  optimizer_ = new g2o::SparseOptimizer;
+  solver_ = new SlamBlockSolver(optimizer_, linear_solver_);
+  optimizer_->setSolver(solver_);
+}
+
+PoseGraphSlam::G2OStruct::~G2OStruct()
+{
+  //delete linear_solver_;
+  //delete solver_;
+  delete optimizer_;
+}
+
+Graph_t::Ptr PoseGraphSlam::getGraph()
+{
+  if(update_graph_)
+  {
+    cout << "Updating graph" << endl;
+    graph_cache_ = Graph_t::Ptr(new Graph_t);
+    for(size_t i = 0; i < nodes_.size(); i++)
+      graph_cache_->addNode(nodes_[i]);
+    for(size_t i = 0; i < edges_.size(); i++)
+      graph_cache_->addEdge(edges_[i].idx0, edges_[i].idx1, (void*) &edges_[i]);
+    update_graph_ = false;
+    update_subgraphs_ = true; //Must update subgraphs after doing this
+  }
+  return graph_cache_;
+}
+
+void PoseGraphSlam::getSubgraphs(vector<Graph_t::Ptr> &subgraphs, size_t min_size)
+{
+  if(update_subgraphs_ || min_size != cached_min_size_)
+  {
+    cout << "Updating subgraph" << endl;
+    Graph_t::Ptr graph = getGraph();
+    subgraph_cache_.clear();
+    graph->getSubgraphs(subgraph_cache_, min_size);
+    update_subgraphs_ = false;
+    cached_min_size_ = min_size;
+    has_subgraph_.clear();
+    idx_to_subgraph_idx_.clear();
+    // Update index map
+    for(size_t i = 0; i < subgraph_cache_.size(); i++)
+      for(size_t j = 0; j < subgraph_cache_[i]->nodes_.size(); j++)
+      {
+        has_subgraph_[subgraph_cache_[i]->nodes_[j]] = true;
+        idx_to_subgraph_idx_[subgraph_cache_[i]->nodes_[j]] = i;
+      }
+  }
+  subgraphs = subgraph_cache_;
 }
