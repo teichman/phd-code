@@ -66,35 +66,6 @@ int main(int argc, char** argv)
   pcl::visualization::PCLVisualizer map_vis("map");
   //Build the map
   slam.solve();
-  cout << "Building initial map" << endl;
-  Cloud_t::Ptr map(new Cloud_t);
-  pcl::VoxelGrid<Point_t> vg;
-  vg.setLeafSize(0.02, 0.02, 0.02);
-  if(visualize)
-  {
-  //  for(size_t i = 0; i < slam.numNodes(); i++)
-  //  {
-  //    if(slam.numEdges(i)==0) continue;
-  //    //Get the cloud
-  //    Cloud::Ptr curr_pcd = sseq->getCloud(i);
-  //    zthresh(curr_pcd, MAX_RANGE_MAP);
-  //    Cloud::Ptr curr_pcd_transformed(new Cloud);
-  //    //Transform it
-  //    Eigen::Affine3d trans = slam.transform(i);
-  //    pcl::transformPointCloud(*curr_pcd, *curr_pcd_transformed, trans.cast<float>());
-  //    *map += *curr_pcd_transformed;
-  //    //Filter it
-  //    Cloud::Ptr vis(new Cloud);
-  //    vg.setInputCloud(map);
-  //    vg.filter(*vis);
-  //    *map = *vis;
-  //  }
-  //  
-  //  map_vis.addPointCloud(map, "map");
-  //  cout << "Showing map" << endl;
-  //  map_vis.spin();
-  //  map_vis.removeAllPointClouds();
-  }
   // Prune disconnected components
   vector<size_t> nodes_with_edges;
   for(size_t i = 0; i < slam.numNodes(); i++)
@@ -226,49 +197,120 @@ int main(int argc, char** argv)
   }
   //Build the map again
   cout << "Rebuilding map" << endl;
-  *map = Cloud_t();
-  for(size_t i = 0; i < slam.numNodes(); i++)
+  pcl::VoxelGrid<Point_t> vg;
+  vg.setLeafSize(0.02, 0.02, 0.02);
+  vector<vector<int> > subgraphs; slam.getSubgraphs(subgraphs);
+  
+  for(size_t i = 0; i < subgraphs.size(); i++)
   {
-    if(slam.numEdges(i)==0) continue;
-    if(!visited[i]) continue;
-    //Get the cloud
-    Cloud::Ptr curr_pcd = sseq->getCloud(i);
-    zthresh(curr_pcd, MAX_RANGE_MAP);
-    Cloud::Ptr curr_pcd_transformed(new Cloud);
-    //Transform it
-    Eigen::Affine3d trans = slam.transform(i);
-    pcl::transformPointCloud(*curr_pcd, *curr_pcd_transformed, trans.cast<float>());
-    *map += *curr_pcd_transformed;
-    //Filter it
-    Cloud::Ptr vis(new Cloud);
-    vg.setInputCloud(map);
-    vg.filter(*vis);
-    *map = *vis;
-  }
-  if(visualize)
-  {
-    map_vis.addPointCloud(map, "map");
-    cout << "Showing map" << endl;
-    map_vis.spin();
-  }
-  if(opcd != "")
-  {
-    pcl::io::savePCDFileBinary(opcd, *map);
-    cout << "Saved final map to " << opcd << endl;
-  }
-  if(otraj != "")
-  {
+    // Make map
+    Cloud::Ptr map(new Cloud);
+    const vector<int> &subgraph = subgraphs[i];
+    cout << "Building map " << i+1 << "/" << subgraphs.size() << endl;
+    for(size_t j = 0; j < subgraph.size(); j++)
+    {
+      int node = subgraph[j];
+      //Get the cloud
+      Cloud::Ptr curr_pcd = sseq->getCloud(node);
+      zthresh(curr_pcd, MAX_RANGE_MAP);
+      Cloud::Ptr curr_pcd_transformed(new Cloud);
+      //Transform it
+      Eigen::Affine3d trans = slam.transform(node);
+      pcl::transformPointCloud(*curr_pcd, *curr_pcd_transformed, trans.cast<float>());
+      *map += *curr_pcd_transformed;
+      //Filter it
+      Cloud::Ptr vis(new Cloud);
+      vg.setInputCloud(map);
+      vg.filter(*vis);
+      *map = *vis;
+    }
+    cout << "Done" << endl;
+    // Visualize it
+    if(visualize)
+    {
+
+      if(!map_vis.addPointCloud(map, "map"))
+        map_vis.updatePointCloud(map, "map");
+    }
+    // Save it
+    if(opcd != "")
+    {
+      string pcdname;
+      if(i == 0) pcdname = opcd;
+      else
+      {
+        string basename = opcd.substr(0, opcd.length() - 4);
+        ostringstream oss;
+        oss << basename << "_" << i << ".pcd";
+        pcdname = oss.str();
+      }
+      
+      pcl::io::savePCDFileBinary(pcdname, *map);
+      cout << "Saved final map to " << pcdname << endl;
+    }
+    // Make trajectory
+    if(otraj == "") continue;
     Trajectory traj;
     traj.resize(slam.numNodes());
-    for(size_t i = 0; i < slam.numNodes(); ++i)
+    for(size_t j = 0; j < subgraph.size(); j++)
     {
-      if(slam.numEdges(i) == 0) continue;
-      if(!visited[i]) continue;
-      traj.set(i, slam.transform(i));
+      int node = subgraph[j];
+      traj.set(node, slam.transform(node));
     }
-    traj.save(otraj);
-    cout << "Saved trajectory to " << otraj << endl;
+    string trajname;
+    if(i == 0) trajname = otraj;
+    else
+    {
+      string basename = otraj.substr(0, otraj.length() - 5);
+      ostringstream oss;
+      oss << basename << "_" << i << ".traj";
+      trajname = oss.str();
+    }
+    traj.save(trajname);
+    cout << "Saved trajectory to " << trajname << endl;
   }
+//  for(size_t i = 0; i < slam.numNodes(); i++)
+//  {
+//    if(slam.numEdges(i)==0) continue;
+//    if(!visited[i]) continue;
+//    //Get the cloud
+//    Cloud::Ptr curr_pcd = sseq->getCloud(i);
+//    zthresh(curr_pcd, MAX_RANGE_MAP);
+//    Cloud::Ptr curr_pcd_transformed(new Cloud);
+//    //Transform it
+//    Eigen::Affine3d trans = slam.transform(i);
+//    pcl::transformPointCloud(*curr_pcd, *curr_pcd_transformed, trans.cast<float>());
+//    *map += *curr_pcd_transformed;
+//    //Filter it
+//    Cloud::Ptr vis(new Cloud);
+//    vg.setInputCloud(map);
+//    vg.filter(*vis);
+//    *map = *vis;
+//  }
+//  if(visualize)
+//  {
+//    map_vis.addPointCloud(map, "map");
+//    cout << "Showing map" << endl;
+//    map_vis.spin();
+//  }
+//  if(opcd != "")
+//  {
+//    pcl::io::savePCDFileBinary(opcd, *map);
+//    cout << "Saved final map to " << opcd << endl;
+//  }
+//  if(otraj != "")
+//  {
+//    Trajectory traj;
+//    traj.resize(slam.numNodes());
+//    for(size_t i = 0; i < slam.numNodes(); ++i)
+//    {
+//      if(slam.numEdges(i) == 0) continue;
+//      if(!visited[i]) continue;
+//      traj.set(i, slam.transform(i));
+//    }
+//    traj.save(otraj);
+//    cout << "Saved trajectory to " << otraj << endl;
+//  }
 
 
   return 0;

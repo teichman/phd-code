@@ -58,10 +58,36 @@ int main(int argc, char** argv)
   slamthread->join();
 
   // -- Save outputs.
+  // TODO make save individual clouds and traj, not just the first. Need to rework makefile
+  // For now, the first cloud/traj has no number modifying it.
   if(opts.count("opcd"))
-    pcl::io::savePCDFileBinary(opts["opcd"].as<string>(), *pss.map_);
+  {
+    string basename = opts["opcd"].as<string>();
+    basename = basename.substr(0, basename.length() - 4);
+    for(size_t i = 0; i < pss.maps_.size(); i++)
+    {
+      ostringstream oss;
+      oss << basename;
+      if(i > 0)
+        oss << "_" << i << ".pcd";
+      else oss << ".pcd";
+      pcl::io::savePCDFileBinary(oss.str(), *pss.maps_[i]);
+    }
+  }
   if(opts.count("otraj"))
-    pss.traj_.save(opts["otraj"].as<string>());
+  {
+    string basename = opts["traj"].as<string>();
+    basename = basename.substr(0, basename.length() - 5);
+    for(size_t i = 0; i < pss.maps_.size(); i++)
+    {
+      ostringstream oss;
+      oss << basename;
+      if(i > 0)
+        oss << "_" << i << ".traj";
+      else oss << ".traj";
+      pss.trajs_[i].save(oss.str());
+    }
+  }
   if(opts.count("ograph"))
     pss.pgs_->save(opts["ograph"].as<string>());
   

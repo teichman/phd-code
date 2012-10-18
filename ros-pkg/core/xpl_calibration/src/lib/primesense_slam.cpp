@@ -161,14 +161,25 @@ void PrimeSenseSlam::_run()
   }
 
   // -- Run slam solver and get final trajectory and pcd.
-  pgs_->solve();
-  traj_.resize(pgs_->numNodes());
-  for(size_t i = 0; i < pgs_->numNodes(); ++i) {
-    if(pgs_->numEdges(i) == 0)
-      continue;
-    traj_.set(i, pgs_->transform(i));
+  pgs_->solve(); //TODO add minimum size
+  vector<vector<int> > subgraphs; pgs_->getSubgraphs(subgraphs); 
+  trajs_.resize(subgraphs.size());
+  maps_.resize(subgraphs.size());
+  for(size_t i = 0; i < subgraphs.size(); i++)
+  {
+    Trajectory &traj = trajs_[i];
+    const vector<int> &subgraph = subgraphs[i];
+    traj.resize(pgs_->numNodes());
+    for(size_t j = 0; j < subgraph.size(); ++j)
+      traj.set(subgraph[j], pgs_->transform(subgraph[j]));
+    maps_[i] = buildMap(traj);
   }
-  buildMap(traj_);
+  //for(size_t i = 0; i < pgs_->numNodes(); ++i) {
+  //  if(pgs_->numEdges(i) == 0)
+  //    continue;
+  //  traj_.set(i, pgs_->transform(i));
+  //}
+  //buildMap(traj_);
 
   // -- Clean up.
   quitting_ = true;
@@ -177,11 +188,11 @@ void PrimeSenseSlam::_run()
 }
 
 // TODO: This seems to come up a lot and should be made more generally available.
-void PrimeSenseSlam::buildMap(const Trajectory& traj)
+Cloud::Ptr PrimeSenseSlam::buildMap(const Trajectory& traj) const
 {
   pcl::VoxelGrid<rgbd::Point> vg;
   vg.setLeafSize(0.02, 0.02, 0.02);
-  map_ = Cloud::Ptr(new Cloud);
+  Cloud::Ptr map(new Cloud);
   for(size_t i = 0; i < traj.size(); i++) {
     if(!traj.exists(i))
       continue;
@@ -190,13 +201,14 @@ void PrimeSenseSlam::buildMap(const Trajectory& traj)
     zthresh(curr_pcd, MAX_RANGE_MAP);
     Cloud::Ptr curr_pcd_transformed(new Cloud);
     pcl::transformPointCloud(*curr_pcd, *curr_pcd_transformed, traj.get(i).cast<float>());
-    *map_ += *curr_pcd_transformed;
+    *map += *curr_pcd_transformed;
 
     Cloud::Ptr tmp(new Cloud);
-    vg.setInputCloud(map_);
+    vg.setInputCloud(map);
     vg.filter(*tmp);
-    *map_ = *tmp;
+    *map = *tmp;
   }
+  return map;
 }
 
 PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::cacheFeatures(const rgbd::Frame &frame, 

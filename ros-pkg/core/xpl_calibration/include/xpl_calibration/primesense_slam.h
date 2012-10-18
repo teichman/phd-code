@@ -31,9 +31,9 @@ public:
   int keypoints_per_frame_;
   
   // -- Outputs
-  Trajectory traj_;
+  vector<Trajectory> trajs_;
   //! Just for visualization.
-  rgbd::Cloud::Ptr map_;
+  vector<rgbd::Cloud::Ptr> maps_;
   //! For saving the graph.
   PoseGraphSlam::Ptr pgs_;
   
@@ -49,7 +49,7 @@ protected:
   std::map< size_t, FeaturesPtr > feature_cache_;
   std::vector<size_t> cached_frames_;
 
-  void buildMap(const Trajectory& traj);
+  rgbd::Cloud::Ptr buildMap(const Trajectory& traj) const;
   FeaturesPtr cacheFeatures(const rgbd::Frame &frame, size_t t, 
       std::vector<cv::KeyPoint> &keypoints, rgbd::Cloud::ConstPtr &keycloud);
 };
