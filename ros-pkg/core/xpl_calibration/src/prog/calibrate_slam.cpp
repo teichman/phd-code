@@ -15,11 +15,12 @@ int main(int argc, char** argv)
   bpo::positional_options_description p;
 
   vector<string> sequence_paths;
+  vector<string> trajectory_dirs;
   vector<string> trajectory_paths;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("sseq", bpo::value< vector<string> >(&sequence_paths)->required(), "StreamSequences, i.e. asus data.")
-    ("traj", bpo::value< vector<string> >(&trajectory_paths)->required(), "Trajectories from slam.")
+    ("traj", bpo::value< vector<string> >(&trajectory_dirs)->required(), "Trajectories from slam.")
     ("only-visualize", "Don't calibrate; just visualize the map you would have used to calibrate from.")
     ("imodel", bpo::value<string>(), "Use this model when projecting the frames.")
     ("omodel", bpo::value<string>()->default_value("model.psm"), "Output path for learned model.")

@@ -26,7 +26,9 @@ AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-0
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
-SLAM_RUNS_xpl01 :=	$(shell ls $(SLAM_DATA_PATH)/xpl01)
+#SLAM_RUNS_xpl01 :=	$(shell ls $(SLAM_DATA_PATH)/xpl01)
+SLAM_RUNS_xpl01 := 2a_quick_2 2a_loops_1
+
 
 all:
 	@echo You should probably be more specific.
@@ -46,14 +48,16 @@ all:
 	echo '' >> $@
 	echo '' >> $@
 	git log -n1 >> $@
-	git di >> $@
+	git diff >> $@
 
 # -- Enumeration of targets for each sensor.
 define SENSOR_RULE_GENERATOR
 
-# TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
 # Now "trajectories" is a directory which contains all submaps and the posegraph
-TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(SLAM_RUNS_$(1)))
+TRAJDIRS_$(1) := $$(addprefix $(1)/slam_results/, $$(SLAM_RUNS_$(1)))
+TRAJECTORIES_SUB_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do find $$$${DIR} -name *.traj; done`
+SLAM_RUNS_DUPL_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do \
+	for TRAJ in $$$$(ls $$$${DIR} | grep traj); do basename $$$${DIR} | xargs -I {} echo $(SLAM_DATA_PATH)/$(1)/{}; done; done`
 
 $(1)-quantitative-evaluation: 	$(1)/evaluation/results-baseline.txt \
 				$(1)/evaluation/results-distortion_model_and_recalib.txt
@@ -91,15 +95,16 @@ $(1)/evaluation/extrinsics: $(1)/evaluation/learned_model.psm
 	--intrinsics learned_model.psm \
 	--compute-extrinsics
 
-$(1)/evaluation/learned_model.psm: $$(TRAJECTORIES_$(1)) $$$$@-experiment_metadata.txt
-	#TODO don't just look at submap 0
+$(1)/evaluation/learned_model.psm: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
 	rosrun xpl_calibration calibrate_slam \
+	$$$$(for f in $$(SLAM_RUNS_DUPL_$(1)); do echo --sseq $$$$f; done) \
+	$$$$(for f in $$(TRAJECTORIES_SUB_$(1)); do echo --traj $$$$f; done) \
 	--omodel $$@ \
-	$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
-	$$(addprefix --traj ,$$(addsuffix /submap0.traj, $$(TRAJECTORIES_$(1)))) \
 	| tee $$@-log.txt
 	mv .ddl $$(@D)/clams_coverage
+	#$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
+	#$$(addprefix --traj ,$$(addsuffix /submap0.traj, $$(TRAJDIRS_$(1)))) \
 
 $(1)-visualize-avv-intrinsics: $(1)/asus_vs_velodyne/extrinsics $(1)/asus_vs_velodyne/intrinsics
 	rosrun xpl_calibration asus_vs_velo \
@@ -118,12 +123,13 @@ $(1)/asus_vs_velodyne/extrinsics:
 	mkdir -p $$(@D)
 	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence --compute-extrinsics
 
-$(1)-visualize-slam: $$(TRAJECTORIES_$(1))
-	#TODO don't just look at submap 0
-	rosrun xpl_calibration calibrate_slam --only-visualize $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(addsuffix /submap0.traj, $$(TRAJECTORIES_$(1))))
+$(1)-visualize-slam: $$(TRAJDIRS_$(1))
+	rosrun xpl_calibration calibrate_slam --only-visualize \
+	$$$$(for f in $$(SLAM_RUNS_DUPL_$(1)); do echo --sseq $$$$f; done) \
+	$$$$(for f in $$(TRAJECTORIES_SUB_$(1)); do echo --traj $$$$f; done)
 
 .PHONY: $(1)/slam_results
-$(1)/slam_results: $$(TRAJECTORIES_$(1))
+$(1)/slam_results: $$(TRAJDIRS_$(1))
 
 .PHONY: $(1)/slam_videos
 $(1)/slam_videos: $$(addprefix $(1)/slam_videos/, $$(addsuffix .avi, $$(SLAM_RUNS_$(1))))
