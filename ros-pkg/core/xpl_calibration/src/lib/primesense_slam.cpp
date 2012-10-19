@@ -151,17 +151,8 @@ void PrimeSenseSlam::_run()
         break;
     }
       }
-	//bool found = aligner.align(curr_frame, old_frame,
-	//			   curr_keypoints, keypoint_cache_[idx],
-	//			   curr_features, feature_cache_[idx],
-	//			   false, &curr_to_old);
-	//bool found = aligner.align(curr_frame, old_frame, &curr_to_old);
-	  //if(num_successful_loopclosures == max_loopclosures_)
-	  //  break;
-	//}
-      }
+    }
   }
-
   populateTrajAndMaps();
   // -- Clean up.
   quitting_ = true;

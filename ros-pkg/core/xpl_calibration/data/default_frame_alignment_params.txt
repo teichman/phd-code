@@ -17,7 +17,7 @@ double max_depth_error 0.05
 double max_feature_dist 300
 double max_range 10
 double min_bounding_length 0.5
-int min_depth_count 60000
+int min_depth_count 30000
 double min_pairwise_keypoint_dist 0.15
 double min_ransac_inlier_percent 0.5
 int min_ransac_inliers 20
