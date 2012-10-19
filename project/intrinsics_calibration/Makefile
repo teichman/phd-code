@@ -51,7 +51,9 @@ all:
 # -- Enumeration of targets for each sensor.
 define SENSOR_RULE_GENERATOR
 
-TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
+# TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(addsuffix .traj, $$(SLAM_RUNS_$(1))))
+# Now "trajectories" is a directory which contains all submaps and the posegraph
+TRAJECTORIES_$(1) := $$(addprefix $(1)/slam_results/, $$(SLAM_RUNS_$(1)))
 
 $(1)-quantitative-evaluation: 	$(1)/evaluation/results-baseline.txt \
 				$(1)/evaluation/results-distortion_model_and_recalib.txt
@@ -90,11 +92,12 @@ $(1)/evaluation/extrinsics: $(1)/evaluation/learned_model.psm
 	--compute-extrinsics
 
 $(1)/evaluation/learned_model.psm: $$(TRAJECTORIES_$(1)) $$$$@-experiment_metadata.txt
+	#TODO don't just look at submap 0
 	mkdir -p $$(@D)
 	rosrun xpl_calibration calibrate_slam \
 	--omodel $$@ \
 	$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
-	$$(addprefix --traj ,$$(TRAJECTORIES_$(1))) \
+	$$(addprefix --traj ,$$(addsuffix /submap0.traj, $$(TRAJECTORIES_$(1)))) \
 	| tee $$@-log.txt
 	mv .ddl $$(@D)/clams_coverage
 
@@ -116,13 +119,15 @@ $(1)/asus_vs_velodyne/extrinsics:
 	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence --compute-extrinsics
 
 $(1)-visualize-slam: $$(TRAJECTORIES_$(1))
-	rosrun xpl_calibration calibrate_slam --only-visualize $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(TRAJECTORIES_$(1)))
+	#TODO don't just look at submap 0
+	rosrun xpl_calibration calibrate_slam --only-visualize $$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) $$(addprefix --traj ,$$(addsuffix /submap0.traj, $$(TRAJECTORIES_$(1))))
 
 .PHONY: $(1)/slam_results
 $(1)/slam_results: $$(TRAJECTORIES_$(1))
 
 .PHONY: $(1)/slam_videos
 $(1)/slam_videos: $$(addprefix $(1)/slam_videos/, $$(addsuffix .avi, $$(SLAM_RUNS_$(1))))
+
 
 endef
 $(foreach SENSOR,$(SENSORS),$(eval $(call SENSOR_RULE_GENERATOR,$(SENSOR))))
@@ -132,36 +137,52 @@ $(foreach SENSOR,$(SENSORS),$(eval $(call SENSOR_RULE_GENERATOR,$(SENSOR))))
 define SENSOR_RUN_RULE_GENERATOR
 
 # Press j to take a screenshot from the angle you want.
-$(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam $(1)/slam_results/$(2).traj
-	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
+$(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam $(1)/slam_results/$(2)
+	#TODO dont only use first submap
+	SUBMAP=`find $(1)/slam_results/$(2) -name "*.pcd" | head -1` && rosrun pcl_bleeding pcd_viewer $$$${SUBMAP}
+	#rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
 	mv `ls screenshot*.cam -tr | tail -n1` $(CAMERAS_PATH)/$(1)/$(2).cam
 	rm `ls screenshot*.png -tr | tail -n1`
 
 #$(1)-visualize-slam-trajectory-with-learned-model-$(2): $(1)/slam_results/$(2).traj
 #	rosrun xpl_calibration calibrate_slam --only-visualize --sseq $(SLAM_DATA_PATH)/$(1)/$(2) --traj $(1)/slam_results/$(2).traj
 
-$(1)-visualize-slam-trajectory-$(2): $(1)/slam_results/$(2).traj
-	rosrun xpl_calibration calibrate_slam --only-visualize --sseq $(SLAM_DATA_PATH)/$(1)/$(2) --traj $(1)/slam_results/$(2).traj
+$(1)-visualize-slam-trajectory-$(2): $(1)/slam_results/$(2)
+	for TRAJ in `find $(1)/slam_results/$(2) -name "*.traj"`; do \
+	rosrun xpl_calibration calibrate_slam --only-visualize --sseq $(SLAM_DATA_PATH)/$(1)/$(2) --traj $$$${TRAJ}; \
+	done
 
-$(1)-visualize-slam-unrefined-trajectory-$(2): $(1)/slam_results/$(2).traj
-	rosrun xpl_calibration calibrate_slam --only-visualize --sseq $(SLAM_DATA_PATH)/$(1)/$(2) --traj $(1)/slam_results/$(2)_unrefined.traj
+$(1)-visualize-slam-unrefined-trajectory-$(2): $(1)/slam_results/$(2)_unrefined
+	for TRAJ in `find $(1)/slam_results/$(2)_unrefined -name "*.traj"`; do \
+	rosrun xpl_calibration calibrate_slam --only-visualize --sseq $(SLAM_DATA_PATH)/$(1)/$(2) --traj $$$${TRAJ} ; \
+	done
 
-$(1)-visualize-slam-pcd-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
-	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2).pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
+$(1)-visualize-slam-pcd-$(2): $(1)/slam_results/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
+	for PCD in `find $(1)/slam_results/$(2) -name "*.pcd"`; do \
+	rosrun pcl_bleeding pcd_viewer $$$${PCD} -cam $(CAMERAS_PATH)/$(1)/$(2).cam; \
+	done
 
-$(1)-visualize-slam-unrefined-pcd-$(2): $(1)/slam_results/$(2).traj $(CAMERAS_PATH)/$(1)/$(2).cam
-	rosrun pcl_bleeding pcd_viewer $(1)/slam_results/$(2)_unrefined.pcd -cam $(CAMERAS_PATH)/$(1)/$(2).cam
+$(1)-visualize-slam-unrefined-pcd-$(2): $(1)/slam_results/$(2)_unreifned $(CAMERAS_PATH)/$(1)/$(2).cam
+	for PCD in `find $(1)/slam_results/$(2)_unrefined -name "*.pcd"`; do \
+	rosrun pcl_bleeding pcd_viewer $$$${PCD} -cam $(CAMERAS_PATH)/$(1)/$(2).cam; \
+	done
 
 .PHONY: $(1)-inspect-posegraph-$(2)
-$(1)-inspect-posegraph-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_graph.log
-	rosrun xpl_calibration inspect_pose_graph $$< $(1)/slam_results/$(2)_graph.log --visualize
+$(1)-inspect-posegraph-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_unrefined
+	rosrun xpl_calibration inspect_pose_graph $$< $(1)/slam_results/$(2)_unrefined/graph.log --visualize
 
 .PHONY: $(1)-view-links-$(2)
-$(1)-view-links-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_graph.log
-	rosrun xpl_calibration view_links $$< $(1)/slam_results/$(2)_graph.log
+$(1)-view-links-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_unrefined
+	rosrun xpl_calibration view_links $$< $(1)/slam_results/$(2)_unrefined/graph.log
 
-$(1)/slam_results/$(2).traj: $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_unrefined.traj
-	rosrun xpl_calibration inspect_pose_graph $$< $(1)/slam_results/$(2)_graph.log --otraj $(1)/slam_results/$(2).traj --opcd $(1)/slam_results/$(2).pcd
+$(1)/slam_results/$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_unrefined
+	rosrun xpl_calibration inspect_pose_graph $$< $(1)/slam_results/$(2)_unrefined/graph.log --otraj $(1)/slam_results/$(2) --opcd $(1)/slam_results/$(2) --ograph $(1)/slam_results/$(2)/graph.log
+
+.PHONY: $(1)-remake-unrefined-$(2)
+$(1)-remake-unrefined-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_unrefined
+	rm -rf $(1)/slam_results/$(2)_unrefined/submap* $(1)/slam_results/$(2)
+	rosrun xpl_calibration inspect_pose_graph $$< $(1)/slam_results/$(2)_unrefined/graph.log --otraj $(1)/slam_results/$(2)_unrefined --opcd $(1)/slam_results/$(2)_unrefined --threshold 9999999
+
 
 # $(1)/slam_videos/$(2).avi: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
 # 	mkdir -p $$(@D)/$(2)
@@ -171,9 +192,9 @@ $(1)/slam_results/$(2).traj: $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_
 # 	cd $$(@D)/$(2) && mencoder "mf://slam-png/slam*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(2)-alignment.avi
 # 	cd $$(@D)/$(2) && mencoder "mf://montage-png/montage*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(2)-montage.avi
 
-$(1)/slam_results/$(2)_unrefined.traj: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
+$(1)/slam_results/$(2)_unrefined: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
 	mkdir -p $$(@D)
-	rosrun xpl_calibration primesense_slam $$< $$(@D)/$(2)_unrefined.pcd  $$@ $$(@D)/$(2)_graph.log --cam $(CAMERAS_PATH)/$(1)/$(2).cam
+	rosrun xpl_calibration primesense_slam $$< --otraj $$@ --opcd $$@ --ograph $$@/graph.log --cam $(CAMERAS_PATH)/$(1)/$(2).cam
 
 $(CAMERAS_PATH)/$(1)/$(2).cam:
 	mkdir -p $$(@D)

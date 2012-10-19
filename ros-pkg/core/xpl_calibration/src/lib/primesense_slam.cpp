@@ -10,15 +10,18 @@ using namespace rgbd;
 
 PrimeSenseSlam::PrimeSenseSlam() :
   fav_(NULL),
-  min_dt_(0.2),
-  max_loopclosures_(1),
-  max_loopclosure_tests_(50),
-  keypoints_per_frame_(300)
+  params_(defaultParams())
 {
+  min_dt_ = params_.get<double>("min_dt");
+  max_loopclosures_ = params_.get<int>("max_loopclosures");
+  max_loopclosure_tests_ = params_.get<int>("max_loopclosure_tests");
+  keypoints_per_frame_ = params_.get<int>("keypoints_per_frame");
 }
 
 void PrimeSenseSlam::_run()
 {
+  cout << "PrimseSenseSlam is using params: " << endl;
+  cout << params_ << endl;
   FrameAligner aligner(sseq_->model_, sseq_->model_);
   cout << "FrameAligner is using params: " << endl;
   cout << aligner.params_ << endl;
@@ -117,7 +120,6 @@ void PrimeSenseSlam::_run()
 	ROS_ASSERT(keypoint_cache_.count(idx));
 	ROS_ASSERT(feature_cache_.count(idx));
   bool found = aligner.computeRoughTransform(
-      // curr_frame, old_frame, TODO SHOULDNT BE NECESSARY
       curr_keypoints, keypoint_cache_[idx],
       curr_keycloud, keycloud_cache_[idx],
       curr_features, feature_cache_[idx],
@@ -160,8 +162,17 @@ void PrimeSenseSlam::_run()
       }
   }
 
+  populateTrajAndMaps();
+  // -- Clean up.
+  quitting_ = true;
+  if(fav_)
+    fav_->quit();  
+}
+
+void PrimeSenseSlam::populateTrajAndMaps()
+{
   // -- Run slam solver and get final trajectory and pcd.
-  pgs_->solve(); //TODO add minimum size
+  pgs_->solve(params_.get<int>("min_subgraph_size"));
   vector<vector<int> > subgraphs; pgs_->getSubgraphs(subgraphs); 
   trajs_.resize(subgraphs.size());
   maps_.resize(subgraphs.size());
@@ -174,17 +185,6 @@ void PrimeSenseSlam::_run()
       traj.set(subgraph[j], pgs_->transform(subgraph[j]));
     maps_[i] = buildMap(traj);
   }
-  //for(size_t i = 0; i < pgs_->numNodes(); ++i) {
-  //  if(pgs_->numEdges(i) == 0)
-  //    continue;
-  //  traj_.set(i, pgs_->transform(i));
-  //}
-  //buildMap(traj_);
-
-  // -- Clean up.
-  quitting_ = true;
-  if(fav_)
-    fav_->quit();
 }
 
 // TODO: This seems to come up a lot and should be made more generally available.
@@ -193,21 +193,37 @@ Cloud::Ptr PrimeSenseSlam::buildMap(const Trajectory& traj) const
   pcl::VoxelGrid<rgbd::Point> vg;
   vg.setLeafSize(0.02, 0.02, 0.02);
   Cloud::Ptr map(new Cloud);
+  int num_frames_used = 0;
   for(size_t i = 0; i < traj.size(); i++) {
     if(!traj.exists(i))
       continue;
-    
+    cout << "Using frame " << i << " / " << traj.size() << endl;
     Cloud::Ptr curr_pcd = sseq_->getCloud(i);
-    zthresh(curr_pcd, MAX_RANGE_MAP);
+    Cloud::Ptr nonans(new Cloud);
+    nonans->reserve(curr_pcd->size());
+    for(size_t j = 0; j < curr_pcd->size(); ++j)
+      if(isFinite(curr_pcd->at(j)))
+	nonans->push_back(curr_pcd->at(j));
+    zthresh(nonans, MAX_RANGE_MAP);
     Cloud::Ptr curr_pcd_transformed(new Cloud);
-    pcl::transformPointCloud(*curr_pcd, *curr_pcd_transformed, traj.get(i).cast<float>());
+    pcl::transformPointCloud(*nonans, *curr_pcd_transformed, traj.get(i).cast<float>());
     *map += *curr_pcd_transformed;
-
-    Cloud::Ptr tmp(new Cloud);
-    vg.setInputCloud(map);
-    vg.filter(*tmp);
-    *map = *tmp;
+    
+    num_frames_used++;
+    if(num_frames_used % 250 == 0)
+    {
+      cout << "Filtering" << endl;
+      Cloud::Ptr tmp(new Cloud);
+      vg.setInputCloud(map);
+      vg.filter(*tmp);
+      *map = *tmp;
+    }
   }
+  cout << "Filtering" << endl;
+  Cloud::Ptr tmp(new Cloud);
+  vg.setInputCloud(map);
+  vg.filter(*tmp);
+  *map = *tmp;
   return map;
 }
 

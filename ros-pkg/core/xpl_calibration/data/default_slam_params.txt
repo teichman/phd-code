@@ -1,0 +1,7 @@
+Params (6)
+double edge_pruning_threshold 0.1
+int keypoints_per_frame 300
+double min_dt 0.2
+int max_loopclosures 5
+int max_loopclosure_tests 500
+int min_subgraph_size 3

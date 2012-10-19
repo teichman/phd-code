@@ -40,8 +40,18 @@ public:
   // -- Methods
   PrimeSenseSlam();
   void _run();
+  //! Called at the end of _run(), public so we can call it externally w/o running everything
+  void populateTrajAndMaps();
   FeaturesPtr getFeatures(const rgbd::Frame &frame, std::vector<cv::KeyPoint> &keypoints,
       rgbd::Cloud::ConstPtr &keycloud) const;
+
+  pipeline::Params params_;
+  static inline pipeline::Params defaultParams()
+  {
+    pipeline::Params params;
+    params.load(ros::package::getPath("xpl_calibration") + "/data/default_slam_params.txt");
+    return params;
+  }
 
 protected:
   std::map< size_t, std::vector<cv::KeyPoint> > keypoint_cache_;
