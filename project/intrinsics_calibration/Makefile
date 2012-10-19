@@ -26,8 +26,8 @@ AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-0
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
-#SLAM_RUNS_xpl01 :=	$(shell ls $(SLAM_DATA_PATH)/xpl01)
-SLAM_RUNS_xpl01 := 2a_quick_2 2a_loops_1
+SLAM_RUNS_xpl01 :=	$(shell ls $(SLAM_DATA_PATH)/xpl01)
+#SLAM_RUNS_xpl01 := 2a_quick_2 2a_loops_1
 
 
 all:
