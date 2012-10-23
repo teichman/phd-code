@@ -113,11 +113,20 @@ namespace dst
   
   void RealTimeInterface::cloudCallback(const KinectCloud::ConstPtr& cloud)
   {
+    KinectCloud::Ptr thresholded(new KinectCloud(*cloud));
+    Point bad;
+    bad.x = numeric_limits<float>::quiet_NaN();
+    bad.y = numeric_limits<float>::quiet_NaN();
+    bad.z = numeric_limits<float>::quiet_NaN();
+    for(size_t i = 0; i < thresholded->size(); ++i)
+      if(thresholded->at(i).z > 2.5)
+	thresholded->at(i) = bad;
+    
     lock();
     if(!segmenting_)
-      cloud_viewer_.showCloud(cloud);
-    else { 
-      pcd_queue_.push_back(cloud);
+      cloud_viewer_.showCloud(thresholded);
+    else {
+      pcd_queue_.push_back(thresholded);
       processQueues();
     }
     unlock();
