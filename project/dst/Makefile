@@ -1,6 +1,6 @@
 
 ############################################################
-# -- Global settings.
+# -- Global settings
 ############################################################
 
 SHELL			:= /bin/bash
@@ -47,6 +47,16 @@ TESTING		:= 	clementine \
 			hbog3 \
 			hung_jacket
 
+# -- Tiny datasets for testing code.
+
+# TRAINING	:=	dinner_table_trivial \
+# 			magazine \
+# 			flat
+
+# TESTING		:= 	clementine \
+# 			boxing_glove \
+# 			hbog3
+
 HT_FAIL := 		sitting_still \
 			dropping_paper \
 
@@ -54,8 +64,118 @@ HT_FAIL := 		sitting_still \
 TRAINING_PATHS	:= 	$(addprefix $(SEQUENCE_DIR)/, $(TRAINING))
 TESTING_PATHS	:= 	$(addprefix $(SEQUENCE_DIR)/, $(TESTING))
 
-specificity:
+all:
 	@echo You should probably be more specific.
+
+
+############################################################
+# -- Plots
+############################################################
+
+.PHONY: wafr-results
+wafr-results: bargraph.pdf
+
+.PHONY: tase-results
+tase-results: bargraph.pdf
+
+
+############################################################
+# -- TASE realtime experiments
+############################################################
+
+avs/accuracy_vs_speed.pdf: 	avs \
+				$$(MAKE_ROOT)/plot_accuracy_vs_speed.py \
+				$$(MAKE_ROOT)/common_plotting.py
+	cd $< && \
+	for type in mask0_skip01 $(addprefix mask1_skip, 01 02 04 07 99); do \
+	echo $$type; \
+	cat `find -name testing_results.txt | sort | grep $$type` | grep 'Total time' | awk '{print $$NF}' > $${type}-times.txt; \
+	cat `find -name testing_results.txt | sort | grep $$type` | grep 'Overall mean' | awk '{print $$NF}' > $${type}-losses.txt; \
+	paste $${type}-times.txt $${type}-losses.txt > $${type}.txt; \
+	rm $${type}-times.txt $${type}-losses.txt; \
+	done
+	cd $< && python $(MAKE_ROOT)/plot_accuracy_vs_speed.py `find -name 'mask*.txt' | sort`
+
+avs: $$@/$$@-experiment_metadata.txt
+	mkdir -p $@
+	cd $@ && for i in {1..3}; do \
+	dir=`date +%F_%T`; \
+	mkdir $$dir; cd $$dir; \
+	mkdir mask0_skip01; cd mask0_skip01; \
+	SKIP=01 make -f $(MAKEFILE) testing_results.txt; \
+	cd ../; \
+	for skip in 01 02 04 07 10 15 20 99; do \
+	mkdir mask1_skip$${skip}; cd mask1_skip$${skip}; \
+	MASK= SKIP=$${skip} make -f $(MAKEFILE) testing_results.txt; \
+	cd ../; \
+	done; \
+	cd ../; \
+	done;
+
+testing_results.txt: weights.eig.txt $$@-experiment_metadata.txt
+	rosrun dst evaluate weights.eig.txt $(TESTING_PATHS) $@ | tee $@-log.txt
+
+
+############################################################
+# -- WAFR HoughTrack comparison experiment
+############################################################
+
+dst/timing.txt: dst/evaluation.txt
+	@cat `find dst/ -name eval.txt` | grep 'Average time' | awk '{sum += $$NF} END {print sum / NR}' > $@
+	@echo "DST average time per frame:" `cat $@` ms
+
+bargraph.pdf: dst/evaluation.txt houghtrack/evaluation.txt $$(MAKE_ROOT)/plot_bargraph.py
+	python $(MAKE_ROOT)/plot_bargraph.py
+
+means.txt: houghtrack/evaluation.txt dst/evaluation.txt
+	@cat houghtrack/evaluation.txt | grep 'Mean Hamming loss' | awk '{sum += $$NF} END {print "HT mean Hamming loss: " sum / NR}'
+	@cat houghtrack/evaluation.txt | grep 'Mean capped normalized accuracy' | awk '{sum += $$NF} END {print "HT mean normalized accuracy: " sum / NR}'
+	@cat dst/evaluation.txt | grep 'Mean Hamming loss' | awk '{sum += $$NF} END {print "DST mean Hamming loss: " sum / NR}'
+	@cat dst/evaluation.txt | grep 'Mean capped normalized accuracy' | awk '{sum += $$NF} END {print "DST mean normalized accuracy: " sum / NR}'
+
+# Ignores sequences which we had to scale up to prevent HT from crashing.
+houghtrack/timing.txt: houghtrack/evaluation.txt
+	@for file in `find -name result-log.txt | egrep -v 'clementine|hbog|hung_jacket|red_still'`; do \
+	cat $$file | grep AVERAGE -A5 | grep -v AVERAGE | awk '{sum += $$NF} END {print sum}'; \
+	done | awk '{sum += $$NF} END {print sum / NR}' > $@
+	@echo "HoughTrack average time per frame:" `cat $@` seconds
+
+houghtrack/normalized_accuracy.txt: houghtrack/evaluation.txt
+	cat evaluation.txt | grep 'Mean capped normalized acc' | awk '{sum += $$NF} END {print sum / NR}' > $@
+
+DST_EVALS := $(addprefix dst/, $(addsuffix /eval.txt, $(TESTING)))
+dst/evaluation.txt: $$(DST_EVALS)
+	cd $(@D) && cat $(addsuffix /eval.txt, $(TESTING)) > evaluation.txt
+
+HT_EVALS := $(addprefix houghtrack/, $(addsuffix /eval.txt, $(TESTING)))
+houghtrack/evaluation.txt: $$(HT_EVALS)
+	cd $(@D) && cat $(addsuffix /eval.txt, $(TESTING)) > evaluation.txt
+
+define EVALUATION_RULE_GENERATOR
+dst/$(1)/eval.txt: weights.eig.txt $$$$@-experiment_metadata.txt
+	mkdir -p $$(@D)
+	rosrun dst evaluate weights.eig.txt $(SEQUENCE_DIR)/$(1) $$@ | tee $$@-log.txt
+
+houghtrack/$(1)/conf:
+	mkdir -p $$(@D)
+	if [ -e $(MAKE_ROOT)/custom_ht_confs/$(1).conf ]; then \
+	echo Copying custom conf file $(MAKE_ROOT)/custom_ht_confs/$(1).conf; \
+	cp $(MAKE_ROOT)/custom_ht_confs/$(1).conf $$@; \
+	else \
+	echo Generating conf file.; \
+	rosrun dst generate_houghtrack_input $(SEQUENCE_DIR)/$(1) > $$@; \
+	fi
+
+houghtrack/$(1)/result: houghtrack/$(1)/conf $$$$@-experiment_metadata.txt
+	cd $$(@D) && time rosrun houghtrack Track conf | tee result-log.txt
+
+houghtrack/$(1)/eval.txt: houghtrack/$(1)/result
+	cd $$(@D) && rosrun dst evaluate_houghtrack $(SEQUENCE_DIR)/$(1) result > eval.txt
+endef
+$(foreach VAL,$(TESTING),$(eval $(call EVALUATION_RULE_GENERATOR,$(VAL))))
+
+weights.eig.txt: $$@-experiment_metadata.txt
+	rosrun dst train $(TRAINING_PATHS) $@ | tee $@-log.txt
 
 
 ############################################################
@@ -87,75 +207,6 @@ dataset_sizes:
 
 
 ############################################################
-# -- Experiments
-############################################################
-
-weights.eig.txt: $$@-experiment_metadata.txt
-	rosrun dst train $(TRAINING_PATHS) $@ | tee $@-log.txt
-
-#testing_results.txt: weights.eig.txt $$@-experiment_metadata.txt
-#	rosrun dst evaluate weights.eig.txt $(TESTING_PATHS) $@ | tee $@-log.txt
-
-define EVALUATION_RULE_GENERATOR
-dst/$(1)/eval.txt: weights.eig.txt $$$$@-experiment_metadata.txt
-	mkdir -p $$(@D)
-	rosrun dst evaluate weights.eig.txt $(SEQUENCE_DIR)/$(1) $$@ | tee $$@-log.txt
-
-houghtrack/$(1)/conf:
-	mkdir -p $$(@D)
-	if [ -e $(MAKE_ROOT)/custom_ht_confs/$(1).conf ]; then \
-	echo Copying custom conf file $(MAKE_ROOT)/custom_ht_confs/$(1).conf; \
-	cp $(MAKE_ROOT)/custom_ht_confs/$(1).conf $$@; \
-	else \
-	echo Generating conf file.; \
-	rosrun dst generate_houghtrack_input $(SEQUENCE_DIR)/$(1) > $$@; \
-	fi
-
-houghtrack/$(1)/result: houghtrack/$(1)/conf $$$$@-experiment_metadata.txt
-	cd $$(@D) && time rosrun houghtrack Track conf | tee result-log.txt
-
-houghtrack/$(1)/eval.txt: houghtrack/$(1)/result
-	cd $$(@D) && rosrun dst evaluate_houghtrack $(SEQUENCE_DIR)/$(1) result > eval.txt
-endef
-$(foreach VAL,$(TESTING),$(eval $(call EVALUATION_RULE_GENERATOR,$(VAL))))
-
-DST_EVALS := $(addprefix dst/, $(addsuffix /eval.txt, $(TESTING)))
-dst/evaluation.txt: $$(DST_EVALS)
-	cd $(@D) && cat $(addsuffix /eval.txt, $(TESTING)) > evaluation.txt
-
-HT_EVALS := $(addprefix houghtrack/, $(addsuffix /eval.txt, $(TESTING)))
-houghtrack/evaluation.txt: $$(HT_EVALS)
-	cd $(@D) && cat $(addsuffix /eval.txt, $(TESTING)) > evaluation.txt
-
-means.txt: houghtrack/evaluation.txt dst/evaluation.txt
-	@cat houghtrack/evaluation.txt | grep 'Mean Hamming loss' | awk '{sum += $$NF} END {print "HT mean Hamming loss: " sum / NR}'
-	@cat houghtrack/evaluation.txt | grep 'Mean capped normalized accuracy' | awk '{sum += $$NF} END {print "HT mean normalized accuracy: " sum / NR}'
-	@cat dst/evaluation.txt | grep 'Mean Hamming loss' | awk '{sum += $$NF} END {print "DST mean Hamming loss: " sum / NR}'
-	@cat dst/evaluation.txt | grep 'Mean capped normalized accuracy' | awk '{sum += $$NF} END {print "DST mean normalized accuracy: " sum / NR}'
-
-# Ignores sequences which we had to scale up to prevent HT from crashing.
-houghtrack/timing.txt: houghtrack/evaluation.txt
-	@for file in `find -name result-log.txt | egrep -v 'clementine|hbog|hung_jacket|red_still'`; do \
-	cat $$file | grep AVERAGE -A5 | grep -v AVERAGE | awk '{sum += $$NF} END {print sum}'; \
-	done | awk '{sum += $$NF} END {print sum / NR}' > $@
-	@echo "HoughTrack average time per frame:" `cat $@` seconds
-
-houghtrack/normalized_accuracy.txt: houghtrack/evaluation.txt
-	cat evaluation.txt | grep 'Mean capped normalized acc' | awk '{sum += $$NF} END {print sum / NR}' > $@
-
-dst/timing.txt: dst/evaluation.txt
-	@cat `find dst/ -name eval.txt` | grep 'Average time' | awk '{sum += $$NF} END {print sum / NR}' > $@
-	@echo "DST average time per frame:" `cat $@` ms
-
-############################################################
-# -- Plots
-############################################################
-
-bargraph.pdf: dst/evaluation.txt houghtrack/evaluation.txt $$(MAKE_ROOT)/plot_bargraph.py
-	python $(MAKE_ROOT)/plot_bargraph.py
-
-
-############################################################
 # -- Latex
 ############################################################
 
@@ -164,6 +215,8 @@ wafr/img: bargraph.pdf
 	mkdir -p $@
 	cp $< $@
 
+# This is kind of gross.  It leaves a copy of the .tex in the workspace dir, and you might
+# get confused and edit it rather than the original, then lose your work.
 wafr/wafr2012.pdf: 	$$(MAKE_ROOT)/wafr/wafr2012.tex \
 			$$(MAKE_ROOT)/wafr/wafr2012.bib \
 			$$(MAKE_ROOT)/wafr/svmult.cls \
