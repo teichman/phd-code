@@ -14,7 +14,7 @@ namespace dst
   RealTimeInterface::RealTimeInterface(const std::string& device_id) :
     sp_(NUM_THREADS),
     img_view_("Image"),
-    seed_radius_(2),
+    seed_radius_(4),
     device_id_(device_id),
     grabber_(device_id_,
 	     pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz,

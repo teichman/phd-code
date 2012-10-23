@@ -62,7 +62,7 @@ namespace dst
     // -- Force the SeedNPG weight to be very high.
     for(size_t i = 0; i < generators_.size(); ++i) {
       if(generators_[i]->getShortName().substr(0, 7).compare("SeedNPG") == 0)
-	weights_(i) = 10000;
+	weights_(i) = 1000000;
     }
 
     if(verbose) {
