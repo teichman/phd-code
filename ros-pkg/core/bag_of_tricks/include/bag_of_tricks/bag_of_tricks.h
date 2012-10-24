@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <sstream>
+#include <boost/shared_ptr.hpp>
 #include <serializable/serializable.h>
 
 #define SHOW(x) #x << ": " << x
@@ -63,7 +64,17 @@ public:
       oss << prefix << it->first << ": " << it->second << std::endl;
     return oss.str();
   }
-  
+      
 };
+
+template<typename Out, typename In>
+std::vector< boost::shared_ptr<Out> > cast(const std::vector< boost::shared_ptr<In> >& vec)
+{
+  std::vector< boost::shared_ptr<Out> > cvec(vec.size());
+  for(size_t i = 0; i < vec.size(); ++i)
+    cvec[i] = boost::dynamic_pointer_cast<Out>(vec[i]);
+  return cvec;
+}
+
 
 #endif // BAG_OF_TRICKS_H

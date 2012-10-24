@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 using namespace std;
+using boost::shared_ptr;
 
 TEST(HighResTimer, HighResTimer)
 {
@@ -85,9 +86,28 @@ TEST(Dictionary, Dictionary)
   // This test only applied when Dictionary was just a map.  Now it's also Serializable.
   // 
   // This would be a memory leak if Dictionary had members that map did not.
-  // valgrind --leak-check=full --max-stackframe=2457616 bin/test_hrt confirms this is fine.
+  // valgrind --leak-check=full --manx-stackframe=2457616 bin/test_hrt confirms this is fine.
   //delete bptr;
   delete dptr;
+}
+
+void foo(const std::vector< boost::shared_ptr< const Dictionary<string, int> > >& dicts)
+{
+  cout << "There are: " << dicts.size() << endl;
+}
+
+void foo(const std::vector< boost::shared_ptr<Serializable> >& dicts)
+{
+  cout << "There are: " << dicts.size() << endl;
+}
+
+TEST(Cast, Cast)
+{
+  vector< shared_ptr< Dictionary<string, int> > > dicts(3);
+  vector< shared_ptr<Serializable> > sers(3);
+  foo(cast< const Dictionary<string, int> >(dicts));
+  foo(cast<Serializable>(dicts));
+  vector< shared_ptr< Dictionary<string, int> > > baz = cast< Dictionary<string, int> >(sers);
 }
 
 int main(int argc, char** argv)
