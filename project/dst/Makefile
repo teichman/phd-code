@@ -97,9 +97,9 @@ avs/accuracy_vs_speed.pdf: 	avs/done \
 	done
 	cd $< && python $(MAKE_ROOT)/plot_accuracy_vs_speed.py `find -name 'mask*.txt' | sort`
 
-avs/done: $$@/$$@-experiment_metadata.txt
-	mkdir -p $@
-	cd $@ && for i in {1..10}; do \
+avs/done: #$$@/$$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	cd $(@D) && for i in {1..10}; do \
 	dir=`date +%F_%T`; \
 	mkdir $$dir; cd $$dir; \
 	mkdir mask0_skip01; cd mask0_skip01; \
