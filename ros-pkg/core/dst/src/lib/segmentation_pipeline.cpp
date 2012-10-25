@@ -7,7 +7,7 @@
 #define DEPG_SIGMA_NORM (getenv("DEPG_SIGMA_NORM") ? atof(getenv("DEPG_SIGMA_NORM")) : 0.010)
 #define DEPG_SIGMA_EUC (getenv("DEPG_SIGMA_EUC") ? atof(getenv("DEPG_SIGMA_EUC")) : 0.01)
 
-#define SKIP (getenv("SKIP") ? atoi(getenv("SKIP")) : 4)
+#define SKIP (getenv("SKIP") ? atoi(getenv("SKIP")) : 1)
 
 using namespace std;
 namespace bfs = boost::filesystem;

@@ -26,7 +26,6 @@ SlamVisualizer::SlamVisualizer() :
   vis_.registerKeyboardCallback(&SlamVisualizer::keyboardCallback, *this);
   vis_.setBackgroundColor(1, 1, 1);
   //vis_.addCoordinateSystem(1.0);
-  vg_.setLeafSize(0.02, 0.02, 0.02);
   
   // -- Set the viewpoint to be sensible for PrimeSense devices.
   vis_.camera_.clip[0] = 0.00387244;

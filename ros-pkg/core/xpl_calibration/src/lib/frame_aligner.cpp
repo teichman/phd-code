@@ -23,13 +23,16 @@ bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1, Eigen::Affine3d
 
 bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
 			 const std::vector<cv::KeyPoint>& keypoints0, const std::vector<cv::KeyPoint>& keypoints1,
+       rgbd::Cloud::ConstPtr keycloud0, rgbd::Cloud::ConstPtr keycloud1,
 			 FeaturesConstPtr features0, FeaturesConstPtr features1,
 			 bool consider_wide_search, Eigen::Affine3d* f0_to_f1) const
 {
   // -- Try to get rough transform between the two based on the corresponding keypoints.
   Affine3d guess;
   vector<cv::Point2d> correspondences0, correspondences1;
-  bool found_rough_transform = computeRoughTransform(frame0, frame1, keypoints0, keypoints1, features0, features1, &correspondences0, &correspondences1, &guess);
+  bool found_rough_transform = computeRoughTransform(//frame0, frame1,
+      keypoints0, keypoints1, 
+      keycloud0, keycloud1, features0, features1, &correspondences0, &correspondences1, &guess);
 
   // -- Visualize the initial rough transform.
 #ifdef VISUALIZE
@@ -177,8 +180,9 @@ bool FrameAligner::validate(double count, double depth_error) const
   return true;
 }
 
-bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
+bool FrameAligner::computeRoughTransform(//rgbd::Frame frame0, rgbd::Frame frame1,
 					 const std::vector<cv::KeyPoint>& keypoints0, const std::vector<cv::KeyPoint>& keypoints1,
+           rgbd::Cloud::ConstPtr keycloud0, rgbd::Cloud::ConstPtr keycloud1,
 					 FeaturesConstPtr features0, FeaturesConstPtr features1,
 					 std::vector<cv::Point2d>* correspondences0, std::vector<cv::Point2d>* correspondences1,
 					 Eigen::Affine3d* f0_to_f1) const
@@ -228,10 +232,17 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
       }
 
       // Saved matches must have depth for 3d ransac.
+      /*  
       if(frame0.depth_->coeffRef(keypoints0[mat[k].queryIdx].pt.y, keypoints0[mat[k].queryIdx].pt.x) > 0 &&
 	 frame1.depth_->coeffRef(keypoints1[mat[k].trainIdx].pt.y, keypoints1[mat[k].trainIdx].pt.x) > 0)
       {
 	matches.push_back(mat[k]);
+      }
+      */
+      if( isFinite(keycloud0->at(mat[k].queryIdx)) && 
+          isFinite(keycloud1->at(mat[k].trainIdx)) )
+      {
+        matches.push_back(mat[k]);
       }
     }
   }
@@ -241,22 +252,22 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
     ROS_DEBUG_STREAM(matches.size() << " is not enough matches, skipping.");
     return false;
   }
-
-#ifdef VISUALIZE
-  cv::Mat3b img_match;
-  cv::drawMatches(frame0.img_, keypoints0, frame1.img_, keypoints1,
-		  matches, img_match);
-  cv::imshow("match", img_match);
-  // cv::imshow("frame0", frame0.img_);
-  // cv::imshow("frame1", frame1.img_);
-  cv::waitKey(500);
-#endif
+// SDM Removed for now, trying to avoid loading frames
+//#ifdef VISUALIZE
+//  cv::Mat3b img_match;
+//  cv::drawMatches(frame0.img_, keypoints0, frame1.img_, keypoints1,
+//		  matches, img_match);
+//  cv::imshow("match", img_match);
+//  // cv::imshow("frame0", frame0.img_);
+//  // cv::imshow("frame1", frame1.img_);
+//  cv::waitKey(500);
+//#endif
 
   // TODO: Don't need to project the whole frame here, just keypoints.
-  Cloud::Ptr cloud0(new Cloud);
-  Cloud::Ptr cloud1(new Cloud);
-  model0_.frameToCloud(frame0, cloud0.get());
-  model1_.frameToCloud(frame1, cloud1.get());
+  //Cloud::Ptr cloud0(new Cloud);
+  //Cloud::Ptr cloud1(new Cloud);
+  //model0_.frameToCloud(frame0, cloud0.get());
+  //model1_.frameToCloud(frame1, cloud1.get());
 
   //From here the logic is more or less copied from orb_matcher
   vector<Eigen::Affine3f> candidates;
@@ -272,9 +283,12 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
     int idx0 = match0.queryIdx;
     int idx1 = match1.queryIdx;
     int idx2 = match2.queryIdx;
-    pcl::PointXYZRGB r0 = cloud0->at(keypoints0[idx0].pt.x, keypoints0[idx0].pt.y);
-    pcl::PointXYZRGB r1 = cloud0->at(keypoints0[idx1].pt.x, keypoints0[idx1].pt.y);
-    pcl::PointXYZRGB r2 = cloud0->at(keypoints0[idx2].pt.x, keypoints0[idx2].pt.y);
+    //pcl::PointXYZRGB r0 = cloud0->at(keypoints0[idx0].pt.x, keypoints0[idx0].pt.y);
+    //pcl::PointXYZRGB r1 = cloud0->at(keypoints0[idx1].pt.x, keypoints0[idx1].pt.y);
+    //pcl::PointXYZRGB r2 = cloud0->at(keypoints0[idx2].pt.x, keypoints0[idx2].pt.y);
+    pcl::PointXYZRGB r0 = keycloud0->at(idx0);
+    pcl::PointXYZRGB r1 = keycloud0->at(idx1);
+    pcl::PointXYZRGB r2 = keycloud0->at(idx2);
     ROS_ASSERT(isFinite(r0) && isFinite(r1) && isFinite(r2));
     double d01 = pcl::euclideanDistance(r0, r1);
     double d02 = pcl::euclideanDistance(r0, r2);
@@ -290,9 +304,12 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
     int oidx0 = match0.trainIdx;
     int oidx1 = match1.trainIdx;
     int oidx2 = match2.trainIdx;
-    pcl::PointXYZRGB t0 = cloud1->at(keypoints1[oidx0].pt.x, keypoints1[oidx0].pt.y);
-    pcl::PointXYZRGB t1 = cloud1->at(keypoints1[oidx1].pt.x, keypoints1[oidx1].pt.y);
-    pcl::PointXYZRGB t2 = cloud1->at(keypoints1[oidx2].pt.x, keypoints1[oidx2].pt.y);
+    //pcl::PointXYZRGB t0 = cloud1->at(keypoints1[oidx0].pt.x, keypoints1[oidx0].pt.y);
+    //pcl::PointXYZRGB t1 = cloud1->at(keypoints1[oidx1].pt.x, keypoints1[oidx1].pt.y);
+    //pcl::PointXYZRGB t2 = cloud1->at(keypoints1[oidx2].pt.x, keypoints1[oidx2].pt.y);
+    pcl::PointXYZRGB t0 = keycloud1->at(oidx0);
+    pcl::PointXYZRGB t1 = keycloud1->at(oidx1);
+    pcl::PointXYZRGB t2 = keycloud1->at(oidx2);
     ROS_ASSERT(isFinite(t0) && isFinite(t1) && isFinite(t2));
     //If the matches are too distant from themselves w.r.t the distance in the current frame, continue
     if(fabs(pcl::euclideanDistance(t0, t1) - d01) > ransac_max_inlier_dist ||
@@ -317,15 +334,16 @@ bool FrameAligner::computeRoughTransform(rgbd::Frame frame0, rgbd::Frame frame1,
   }
   cout << "Have " << candidates.size() << " candidates after RANSAC, before inlier check" << endl;
   //Do inlier check
+  // SDM for now leaving this in to filter out infinite points
   Cloud::Ptr keypoint_cloud0(new Cloud);
   for(size_t j = 0; j < keypoints0.size(); ++j) {
-    Point pt = cloud0->at(keypoints0[j].pt.x, keypoints0[j].pt.y);
+    Point pt = keycloud0->at(j);
     if(isFinite(pt))
       keypoint_cloud0->push_back(pt);
   }
   Cloud::Ptr keypoint_cloud1(new Cloud);
   for(size_t j = 0; j < keypoints1.size(); ++j) {
-    Point pt = cloud1->at(keypoints1[j].pt.x, keypoints1[j].pt.y);
+    Point pt = keycloud1->at(j);
     if(isFinite(pt))
       keypoint_cloud1->push_back(pt);
   }

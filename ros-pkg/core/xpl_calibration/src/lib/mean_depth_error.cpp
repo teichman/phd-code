@@ -178,9 +178,9 @@ FrameAlignmentMDE::FrameAlignmentMDE(const pipeline::Params& params,
     edges0_ += scale * dilated0;
     edges1_ += scale * dilated1;
   }
-  cv::imshow("raw_edges", rawedges0);
-  cv::imshow("edges", edges0_); 
-  cv::waitKey(30);
+  //cv::imshow("raw_edges", rawedges0);
+  //cv::imshow("edges", edges0_); 
+  //cv::waitKey(30);
   // Load the color_names lookup table
   eigen_extensions::load(ros::package::getPath("xpl_calibration") + "/data/w2c.eig", 
       &color_names_);
