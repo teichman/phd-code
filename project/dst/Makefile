@@ -84,7 +84,7 @@ tase-results: bargraph.pdf
 # -- TASE realtime experiments
 ############################################################
 
-avs/accuracy_vs_speed.pdf: 	avs \
+avs/accuracy_vs_speed.pdf: 	avs/done \
 				$$(MAKE_ROOT)/plot_accuracy_vs_speed.py \
 				$$(MAKE_ROOT)/common_plotting.py
 	cd $< && \
@@ -97,9 +97,9 @@ avs/accuracy_vs_speed.pdf: 	avs \
 	done
 	cd $< && python $(MAKE_ROOT)/plot_accuracy_vs_speed.py `find -name 'mask*.txt' | sort`
 
-avs: $$@/$$@-experiment_metadata.txt
+avs/done: $$@/$$@-experiment_metadata.txt
 	mkdir -p $@
-	cd $@ && for i in {1..3}; do \
+	cd $@ && for i in {1..10}; do \
 	dir=`date +%F_%T`; \
 	mkdir $$dir; cd $$dir; \
 	mkdir mask0_skip01; cd mask0_skip01; \
@@ -112,6 +112,7 @@ avs: $$@/$$@-experiment_metadata.txt
 	done; \
 	cd ../; \
 	done;
+	touch $@
 
 testing_results.txt: weights.eig.txt $$@-experiment_metadata.txt
 	$(EVALUATE) weights.eig.txt $(TESTING_PATHS) $@ | tee $@-log.txt
