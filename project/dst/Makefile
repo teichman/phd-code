@@ -6,8 +6,6 @@
 SHELL			:= /bin/bash
 REPO_ROOT		:= $(shell dirname $$(dirname $$(dirname $$(rospack find dst))))
 export NUM_THREADS	:= 40  # No longer comparing with HoughTrack on speed so we can bump up the number of threads.
-export SKIP		:= 1
-export MASK		:= 1
 MAKE_ROOT		:= $(REPO_ROOT)/project/dst
 MAKEFILE		:= $(MAKE_ROOT)/Makefile
 
@@ -68,6 +66,9 @@ all:
 	@echo You should probably be more specific.
 
 
+EVALUATE	:= rosrun dst evaluate
+TRAIN		:= rosrun dst train
+
 ############################################################
 # -- Plots
 ############################################################
@@ -102,18 +103,18 @@ avs: $$@/$$@-experiment_metadata.txt
 	dir=`date +%F_%T`; \
 	mkdir $$dir; cd $$dir; \
 	mkdir mask0_skip01; cd mask0_skip01; \
-	SKIP=01 make -f $(MAKEFILE) testing_results.txt; \
+	MASK=0 SKIP=01 make -f $(MAKEFILE) testing_results.txt; \
 	cd ../; \
 	for skip in 01 02 04 07 10 15 20 99; do \
 	mkdir mask1_skip$${skip}; cd mask1_skip$${skip}; \
-	MASK= SKIP=$${skip} make -f $(MAKEFILE) testing_results.txt; \
+	MASK=1 SKIP=$${skip} make -f $(MAKEFILE) testing_results.txt; \
 	cd ../; \
 	done; \
 	cd ../; \
 	done;
 
 testing_results.txt: weights.eig.txt $$@-experiment_metadata.txt
-	rosrun dst evaluate weights.eig.txt $(TESTING_PATHS) $@ | tee $@-log.txt
+	$(EVALUATE) weights.eig.txt $(TESTING_PATHS) $@ | tee $@-log.txt
 
 
 ############################################################
@@ -154,7 +155,7 @@ houghtrack/evaluation.txt: $$(HT_EVALS)
 define EVALUATION_RULE_GENERATOR
 dst/$(1)/eval.txt: weights.eig.txt $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
-	rosrun dst evaluate weights.eig.txt $(SEQUENCE_DIR)/$(1) $$@ | tee $$@-log.txt
+	$(EVALUATE) weights.eig.txt $(SEQUENCE_DIR)/$(1) $$@ | tee $$@-log.txt
 
 houghtrack/$(1)/conf:
 	mkdir -p $$(@D)
@@ -170,12 +171,12 @@ houghtrack/$(1)/result: houghtrack/$(1)/conf $$$$@-experiment_metadata.txt
 	cd $$(@D) && time rosrun houghtrack Track conf | tee result-log.txt
 
 houghtrack/$(1)/eval.txt: houghtrack/$(1)/result
-	cd $$(@D) && rosrun dst evaluate_houghtrack $(SEQUENCE_DIR)/$(1) result > eval.txt
+	cd $$(@D) && $(EVALUATE)_houghtrack $(SEQUENCE_DIR)/$(1) result > eval.txt
 endef
 $(foreach VAL,$(TESTING),$(eval $(call EVALUATION_RULE_GENERATOR,$(VAL))))
 
 weights.eig.txt: $$@-experiment_metadata.txt
-	rosrun dst train $(TRAINING_PATHS) $@ | tee $@-log.txt
+	$(TRAIN) $(TRAINING_PATHS) $@ | tee $@-log.txt
 
 
 ############################################################
