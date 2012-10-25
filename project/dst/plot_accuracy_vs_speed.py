@@ -65,7 +65,7 @@ for idx, s in enumerate(speedups):
 
 
 ylim(0, 1)
-#legend(loc='lower right')
+legend(loc='lower left')
 savefig('accuracy_vs_speed.pdf')
 savefig('accuracy_vs_speed.png')
 

@@ -26,47 +26,66 @@ os.system("grep 'Average time' `find " + path + " -wholename '.*/mask1_skip01/te
 masktimes = np.loadtxt(tmpfile)
 os.system("grep 'Overall mean capped normalized loss' `find " + path + " -wholename '.*/mask1_skip01/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
 masklosses = np.loadtxt(tmpfile)
+#os.system("grep 'Average time' `find " + path + " -wholename '.*/mask1_skip02/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
+#maskskiptimes = np.loadtxt(tmpfile)
+#os.system("grep 'Overall mean capped normalized loss' `find " + path + " -wholename '.*/mask1_skip02/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
+#maskskiplosses = np.loadtxt(tmpfile)
 os.system("rm " + tmpfile)
 
 # -- Make a nice bargraph.
 fig = plt.figure()
-host = fig.add_subplot(111)
-par1 = host.twinx()
+loss_ax = fig.add_subplot(111)
+time_ax = loss_ax.twinx()
 width = 1
 
 ind = np.array([0, 3])
 vals = np.array([np.mean(losses), np.mean(masklosses)])
-stdevs = np.array([np.std(losses), np.std(masklosses)])
-loss_bars = host.bar(ind, vals, width, color='green', yerr=stdevs, ecolor='k')
-host.set_ylabel("Loss")
-host.set_xticks([1, 4])
-host.set_xticklabels(["Original", "Boundary mask"])
+loss_stdevs = np.array([np.std(losses), np.std(masklosses)])
+loss_bars = loss_ax.bar(ind, vals, width, color='green', yerr=loss_stdevs, ecolor='k')
+loss_ax.set_ylabel("Loss")
+loss_ax.set_xticks([1, 4])
+loss_ax.set_xticklabels(["Original", "Boundary mask"])
 
 ind = np.array([1, 4])
 vals = np.array([np.mean(times), np.mean(masktimes)])
-stdevs = np.array([np.std(times), np.std(masktimes)])
-time_bars = par1.bar(ind, vals, width, color='gray', yerr=stdevs, ecolor='k')
-par1.set_ylabel("Time (ms)")
+time_stdevs = np.array([np.std(times), np.std(masktimes)])
+time_bars = time_ax.bar(ind, vals, width, color='gray', yerr=time_stdevs, ecolor='k')
+time_ax.set_ylabel("Time (ms)")
 
 # Add space for the annotations.
-host.set_ylim([1.1 * x for x in host.get_ylim()])
-par1.set_ylim([1.1 * x for x in par1.get_ylim()])
+loss_ax.set_ylim([1.2 * x for x in loss_ax.get_ylim()])
+time_ax.set_ylim([1.2 * x for x in time_ax.get_ylim()])
 
 # Add the annotations.
-def labelLosses(ax, rects, unit):
-        for rect in rects:
+def labelLosses(ax, rects, stdevs, unit):
+        for (idx, rect) in enumerate(rects):
             height = rect.get_height()
-            stdev = 0.139485349534
-            ax.text(rect.get_x()+rect.get_width()/2., 1.05*height, ('%0.2f $\pm$ %0.2f' % (height, stdev)) + " " + unit, ha='center', va='bottom', fontsize='smaller')
+            ax.text(rect.get_x()+rect.get_width()/2., 1.05*height, ('%0.2f $\pm$ %0.2f' % (height, stdevs[idx])) + " " + unit, ha='center', va='bottom', fontsize='smaller')
 
-def labelTimes(ax, rects, unit):
-        for rect in rects:
+def labelTimes(ax, rects, stdevs, unit):
+    for (idx, rect) in enumerate(rects):
             height = rect.get_height()
-            stdev = 4.351232345345
-            ax.text(rect.get_x()+rect.get_width()/2., 1.05*height, ('%3.0f $\pm$ %3.0f' % (height, stdev)) + " " + unit, ha='center', va='bottom', fontsize='smaller')
-labelTimes(par1, time_bars, "ms")
-labelLosses(host, loss_bars, "")
+            width = rect.get_width()
+#            ax.annotate(('%3.0f $\pm$ %3.1f' % (height, stdevs[idx])), xy=(rect.get_x() + width/2., 1.05 * height), xytext=(50, 50), textcoords='offset points', arrowprops=dict(arrowstyle='->', facecolor='black'))
+            ax.text(rect.get_x() + width / 2. + 0.05, height + 30, ('%3.0f $\pm$ %3.1f' % (height, stdevs[idx])) + " " + unit, ha='center', va='bottom', fontsize='smaller')
+
+labelTimes(time_ax, time_bars, time_stdevs, "ms")
+labelLosses(loss_ax, loss_bars, loss_stdevs, "")
+
+print "Times"
+print times
+print np.std(times)
+print "Times with mask"
+print masktimes
+print np.std(masktimes)
+print "Losses"
+print losses
+print np.std(losses)
+print "Losses with mask"
+print masklosses
+print np.std(masklosses)
+
 
 # Save.
-savefig('mask.png')
-savefig('mask.pdf')
+savefig(path + '/mask.png')
+savefig(path + '/mask.pdf')

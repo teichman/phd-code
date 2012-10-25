@@ -87,7 +87,7 @@ tase-results: bargraph.pdf
 avs/accuracy_vs_speed.pdf: 	avs/done \
 				$$(MAKE_ROOT)/plot_accuracy_vs_speed.py \
 				$$(MAKE_ROOT)/common_plotting.py
-	cd $< && \
+	cd $(@D) && \
 	for type in mask0_skip01 $(addprefix mask1_skip, 01 02 04 07 99); do \
 	echo $$type; \
 	cat `find -name testing_results.txt | sort | grep $$type` | grep 'Total time' | awk '{print $$NF}' > $${type}-times.txt; \
@@ -95,7 +95,7 @@ avs/accuracy_vs_speed.pdf: 	avs/done \
 	paste $${type}-times.txt $${type}-losses.txt > $${type}.txt; \
 	rm $${type}-times.txt $${type}-losses.txt; \
 	done
-	cd $< && python $(MAKE_ROOT)/plot_accuracy_vs_speed.py `find -name 'mask*.txt' | sort`
+	cd $(@D) && python $(MAKE_ROOT)/plot_accuracy_vs_speed.py `find -name 'mask*.txt' | sort`
 
 avs/done: #$$@/$$@-experiment_metadata.txt
 	mkdir -p $(@D)
