@@ -112,6 +112,11 @@ rosbuild_add_executable(evaluate src/program/evaluate.cpp)
 target_link_libraries(evaluate dst)
 rosbuild_add_compile_flags(evaluate -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
+rosbuild_add_executable(generate_random_weights src/program/generate_random_weights.cpp)
+target_link_libraries(generate_random_weights)
+rosbuild_link_boost(generate_random_weights filesystem program_options)
+rosbuild_add_compile_flags(generate_random_weights -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
 rosbuild_add_gtest(test_maxflow src/test/test_maxflow.cpp)
 target_link_libraries(test_maxflow dst)
 rosbuild_add_gtest_build_flags(test_maxflow)
