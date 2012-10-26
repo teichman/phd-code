@@ -51,7 +51,7 @@ losses.append(np.loadtxt(tmpfile))
 os.system("rm " + tmpfile)
 
 # -- Make a nice bargraph.
-fig = plt.figure(figsize=(9,4))
+fig = plt.figure(figsize=(13,4))
 loss_ax = fig.add_subplot(111)
 time_ax = loss_ax.twinx()
 width = 1
@@ -81,21 +81,39 @@ loss_ax.set_xlim([xlim[0] - width, xlim[1] + width])
 def labelLosses(ax, rects, stdevs, unit):
         for (idx, rect) in enumerate(rects):
             height = rect.get_height()
-            ax.text(rect.get_x() + width / 2. + width * 0.05, height + 0.02, ('%0.2f \n $\pm$ %0.2f' % (height, stdevs[idx])) + unit, ha='center', va='bottom', fontsize='xx-small', multialignment='center')
+            ax.text(rect.get_x() + width / 2. + width * 0.05, height + 0.02, ('%0.2f \n $\pm$ %0.2f' % (height, stdevs[idx])) + unit, ha='center', va='bottom', fontsize='small', multialignment='center')
 
 def labelTimes(ax, rects, stdevs, unit):
     for (idx, rect) in enumerate(rects):
             height = rect.get_height()
             width = rect.get_width()
-            ax.text(rect.get_x() + width / 2., height + 30, ('%3.0f \n $\pm$ %3.1f' % (height, stdevs[idx])) + unit, ha='center', va='bottom', fontsize='xx-small', multialignment='center')
+            ax.text(rect.get_x() + width / 2., height + 30, ('%3.0f \n $\pm$ %3.1f' % (height, stdevs[idx])) + unit, ha='center', va='bottom', fontsize='small', multialignment='center')
 
 labelTimes(time_ax, time_bars, time_stdevs, "ms")
 labelLosses(loss_ax, loss_bars, loss_stdevs, "")
 
-#plt.setp(loss_ax.get_xticklabels(), rotation='vertical', fontsize=14)
-plt.setp(loss_ax.get_xticklabels(), fontsize=10)
+#plt.setp(loss_ax.get_xticklabels(), fontsize=10)
+
+# Chop off unnecessary lines.
+loss_ax.yaxis.set_ticks_position('none')
+loss_ax.xaxis.set_ticks_position('bottom')
+loss_ax.set_ylabel("")
+loss_ax.set_xlabel("")
+loss_ax.set_yticks([])
+for loc, spine in loss_ax.spines.iteritems():
+    if loc in ['right','top','left']:
+        spine.set_color('none')
+
+time_ax.yaxis.set_ticks_position('none')
+time_ax.xaxis.set_ticks_position('bottom')
+time_ax.set_ylabel("")
+time_ax.set_xlabel("")
+time_ax.set_yticks([])
+for loc, spine in time_ax.spines.iteritems():
+    if loc in ['right','top','left']:
+        spine.set_color('none')
 
 # Save.
-savefig(path + '/realtime.png')
-savefig(path + '/realtime.pdf')
+savefig(path + '/realtime.png', bbox_inches='tight', pad_inches=0.0)
+savefig(path + '/realtime.pdf', bbox_inches='tight', pad_inches=0.0)
 

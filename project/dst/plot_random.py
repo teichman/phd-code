@@ -26,7 +26,7 @@ accuracies = 1 - losses
 
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
-ax.hist(accuracies)
+ax.hist(accuracies, 20)
 
 ax.set_xlim([0, 1])
 ax.set_xlabel("Accuracy")
@@ -36,7 +36,7 @@ ax.yaxis.set_ticks_position('left')
 ax.xaxis.set_ticks_position('bottom')
 #ax.xaxis.set_ticks(ax.xaxis.get_majorticklocs()[1:])
 #ax.yaxis.set_ticks(ax.yaxis.get_majorticklocs()[1:])
-ax.xaxis.set_ticks([ax.xaxis.get_majorticklocs()[0], ax.xaxis.get_majorticklocs()[-1]])
+#ax.xaxis.set_ticks([ax.xaxis.get_majorticklocs()[0], ax.xaxis.get_majorticklocs()[-1]])
 ax.yaxis.set_ticks([ax.yaxis.get_majorticklocs()[-1]])
 for loc, spine in ax.spines.iteritems():
     if loc in ['right','top']:
@@ -45,6 +45,6 @@ for loc, spine in ax.spines.iteritems():
 
 # Save.
 savefig(path + '/random.png')
-#savefig(path + '/random.pdf')
+savefig(path + '/random.pdf')
 
 
