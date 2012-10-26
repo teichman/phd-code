@@ -77,7 +77,7 @@ TRAIN		:= rosrun dst train
 wafr-results: bargraph.pdf
 
 .PHONY: tase-results
-tase-results: bargraph.pdf
+tase-results: bargraph.pdf avs/mask.pdf
 
 
 ############################################################
@@ -114,7 +114,7 @@ avs/done: #$$@/$$@-experiment_metadata.txt
 	done;
 	touch $@
 
-avs/mask.pdf: $$(@D)/done
+avs/mask.pdf: $$(@D)/done $$(MAKE_ROOT)/plot_mask.py
 	python $(MAKE_ROOT)/plot_mask.py $(@D)
 
 testing_results.txt: weights.eig.txt $$@-experiment_metadata.txt

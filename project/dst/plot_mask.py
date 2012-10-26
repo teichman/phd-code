@@ -36,13 +36,13 @@ times.append(np.loadtxt(tmpfile))
 os.system("for file in `find " + path + " -name testing_results.txt | sort | grep mask1_skip01`; do cat $file | grep 'Mean capped normalized loss' | awk '{sum += $NF} END {print sum / NR}'; done > " + tmpfile)
 losses.append(np.loadtxt(tmpfile))
 
-names.append("Mask + \n 50\% downsample")
+names.append("Mask \& \n 50\% downsample")
 os.system("grep 'Average time' `find " + path + " -wholename '*mask1_skip02/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
 times.append(np.loadtxt(tmpfile))
 os.system("for file in `find " + path + " -name testing_results.txt | sort | grep mask1_skip02`; do cat $file | grep 'Mean capped normalized loss' | awk '{sum += $NF} END {print sum / NR}'; done > " + tmpfile)
 losses.append(np.loadtxt(tmpfile))
 
-names.append("Mask + \n 75\% downsample")
+names.append("Mask \& \n 75\% downsample")
 os.system("grep 'Average time' `find " + path + " -wholename '*mask1_skip04/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
 times.append(np.loadtxt(tmpfile))
 os.system("for file in `find " + path + " -name testing_results.txt | sort | grep mask1_skip04`; do cat $file | grep 'Mean capped normalized loss' | awk '{sum += $NF} END {print sum / NR}'; done > " + tmpfile)
@@ -51,7 +51,7 @@ losses.append(np.loadtxt(tmpfile))
 os.system("rm " + tmpfile)
 
 # -- Make a nice bargraph.
-fig = plt.figure()
+fig = plt.figure(figsize=(9,4))
 loss_ax = fig.add_subplot(111)
 time_ax = loss_ax.twinx()
 width = 1
@@ -73,20 +73,21 @@ time_ax.set_ylabel("Time (ms)")
 # Add space for the annotations.
 loss_ax.set_ylim([1.2 * x for x in loss_ax.get_ylim()])
 time_ax.set_ylim([1.2 * x for x in time_ax.get_ylim()])
-loss_ax.set_xlim([1.1 * x for x in loss_ax.get_xlim()])
+xlim = loss_ax.get_xlim()
+loss_ax.set_xlim([xlim[0] - width, xlim[1] + width])
+#loss_ax.set_xlim([1.1 * x - width for x in loss_ax.get_xlim()])
 
 # Add the annotations.
 def labelLosses(ax, rects, stdevs, unit):
         for (idx, rect) in enumerate(rects):
             height = rect.get_height()
-            ax.text(rect.get_x() + width / 2. + width * 0.05, height + 0.03, ('%0.2f \n $\pm$ %0.2f' % (height, stdevs[idx])) + " " + unit, ha='center', va='bottom', fontsize='xx-small')
+            ax.text(rect.get_x() + width / 2. + width * 0.05, height + 0.02, ('%0.2f \n $\pm$ %0.2f' % (height, stdevs[idx])) + unit, ha='center', va='bottom', fontsize='xx-small', multialignment='center')
 
 def labelTimes(ax, rects, stdevs, unit):
     for (idx, rect) in enumerate(rects):
             height = rect.get_height()
             width = rect.get_width()
-#            ax.text(rect.get_x() + width / 2. + width * 0.05, height + 30, ('%3.0f \n $\pm$ %3.1f' % (height, stdevs[idx])) + " " + unit, ha='center', va='bottom', fontsize='xx-small')
-            ax.text(rect.get_x() + width / 2. + width * 0.4, height + 30, ('%3.0f $\pm$ %3.1f' % (height, stdevs[idx])) + " " + unit, ha='center', va='bottom', fontsize='xx-small')
+            ax.text(rect.get_x() + width / 2., height + 30, ('%3.0f \n $\pm$ %3.1f' % (height, stdevs[idx])) + unit, ha='center', va='bottom', fontsize='xx-small', multialignment='center')
 
 labelTimes(time_ax, time_bars, time_stdevs, "ms")
 labelLosses(loss_ax, loss_bars, loss_stdevs, "")
