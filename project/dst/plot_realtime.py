@@ -96,6 +96,6 @@ labelLosses(loss_ax, loss_bars, loss_stdevs, "")
 plt.setp(loss_ax.get_xticklabels(), fontsize=10)
 
 # Save.
-savefig(path + '/mask.png')
-savefig(path + '/mask.pdf')
+savefig(path + '/realtime.png')
+savefig(path + '/realtime.pdf')
 

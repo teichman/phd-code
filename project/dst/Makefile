@@ -74,9 +74,12 @@ TRAIN		:= rosrun dst train
 # -- T-ASE paper
 ############################################################
 
-tase2013.pdf: tase-results
+tase2013.pdf: 	bargraph.pdf \
+		avs/realtime.pdf \
+		$$(MAKE_ROOT)/tase/tase2013.tex
+
 	ln -sf `pwd`/bargraph.pdf $(MAKE_ROOT)/tase/img/
-	ln -sf `pwd`/avs/mask.pdf $(MAKE_ROOT)/tase/img/
+	ln -sf `pwd`/avs/realtime.pdf $(MAKE_ROOT)/tase/img/
 	cd $(MAKE_ROOT)/tase && pdflatex tase2013
 	cd $(MAKE_ROOT)/tase && bibtex tase2013
 	cd $(MAKE_ROOT)/tase && pdflatex tase2013
@@ -93,7 +96,7 @@ tase2013.pdf: tase-results
 wafr-results: bargraph.pdf
 
 .PHONY: tase-results
-tase-results: bargraph.pdf avs/mask.pdf
+tase-results: bargraph.pdf avs/realtime.pdf
 
 
 ############################################################
@@ -130,8 +133,8 @@ avs/done: #$$@/$$@-experiment_metadata.txt
 	done;
 	touch $@
 
-avs/mask.pdf: $$(@D)/done $$(MAKE_ROOT)/plot_mask.py
-	python $(MAKE_ROOT)/plot_mask.py $(@D)
+avs/realtime.pdf: $$(@D)/done $$(MAKE_ROOT)/plot_realtime.py
+	python $(MAKE_ROOT)/plot_realtime.py $(@D)
 
 testing_results.txt: weights.eig.txt $$@-experiment_metadata.txt
 	$(EVALUATE) weights.eig.txt $(TESTING_PATHS) $@ | tee $@-log.txt
