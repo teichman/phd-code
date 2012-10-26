@@ -98,3 +98,4 @@ plt.setp(loss_ax.get_xticklabels(), fontsize=10)
 # Save.
 savefig(path + '/mask.png')
 savefig(path + '/mask.pdf')
+

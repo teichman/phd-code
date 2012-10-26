@@ -69,6 +69,22 @@ all:
 EVALUATE	:= rosrun dst evaluate
 TRAIN		:= rosrun dst train
 
+
+############################################################
+# -- T-ASE paper
+############################################################
+
+tase2013.pdf: tase-results
+	ln -sf `pwd`/bargraph.pdf $(MAKE_ROOT)/tase/img/
+	ln -sf `pwd`/avs/mask.pdf $(MAKE_ROOT)/tase/img/
+	cd $(MAKE_ROOT)/tase && pdflatex tase2013
+	cd $(MAKE_ROOT)/tase && bibtex tase2013
+	cd $(MAKE_ROOT)/tase && pdflatex tase2013
+	cd $(MAKE_ROOT)/tase && pdflatex tase2013
+	cd $(MAKE_ROOT)/tase && rm tase2013.{aux,bbl,blg,log,idx} latex_macros.aux
+	mv $(MAKE_ROOT)/tase/tase2013.pdf .
+
+
 ############################################################
 # -- Plots
 ############################################################
