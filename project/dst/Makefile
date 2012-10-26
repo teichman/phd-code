@@ -46,14 +46,12 @@ TESTING		:= 	clementine \
 			hung_jacket
 
 # -- Tiny datasets for testing code.
+# TRAINING :=	mug1_first15 \
+# 		romeo_first19
 
-# TRAINING	:=	dinner_table_trivial \
-# 			magazine \
-# 			flat
-
-# TESTING		:= 	clementine \
-# 			boxing_glove \
-# 			hbog3
+# TESTING :=	boxing_glove \
+# 		boxing_mitt \
+# 		ND_megaphone
 
 HT_FAIL := 		sitting_still \
 			dropping_paper \
@@ -97,6 +95,22 @@ wafr-results: bargraph.pdf
 
 .PHONY: tase-results
 tase-results: bargraph.pdf avs/realtime.pdf
+
+
+############################################################
+# -- TASE learning
+############################################################
+
+random/done:
+	mkdir -p $(@D)
+	cd $(@D) && for i in {1..10}; do \
+	dir=`date +%F_%T`; \
+	mkdir $$dir; cd $$dir; \
+	rosrun dst generate_random_weights 18 random.eig.txt; \
+	MASK=1 SKIP=2 $(EVALUATE) random.eig.txt $(TESTING_PATHS) testing_results.txt | tee testing_results.txt-log.txt; \
+	cd ../; \
+	done;
+	touch $@
 
 
 ############################################################
