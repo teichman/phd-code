@@ -46,14 +46,12 @@ TESTING		:= 	clementine \
 			hung_jacket
 
 # -- Tiny datasets for testing code.
+# TRAINING :=	mug1_first15 \
+# 		romeo_first19
 
-# TRAINING	:=	dinner_table_trivial \
-# 			magazine \
-# 			flat
-
-# TESTING		:= 	clementine \
-# 			boxing_glove \
-# 			hbog3
+# TESTING :=	boxing_glove \
+# 		boxing_mitt \
+# 		ND_megaphone
 
 HT_FAIL := 		sitting_still \
 			dropping_paper \
@@ -69,6 +67,25 @@ all:
 EVALUATE	:= rosrun dst evaluate
 TRAIN		:= rosrun dst train
 
+
+############################################################
+# -- T-ASE paper
+############################################################
+
+tase2013.pdf: 	bargraph.pdf \
+		avs/realtime.pdf \
+		$$(MAKE_ROOT)/tase/tase2013.tex
+
+	ln -sf `pwd`/bargraph.pdf $(MAKE_ROOT)/tase/img/
+	ln -sf `pwd`/avs/realtime.pdf $(MAKE_ROOT)/tase/img/
+	cd $(MAKE_ROOT)/tase && pdflatex tase2013
+	cd $(MAKE_ROOT)/tase && bibtex tase2013
+	cd $(MAKE_ROOT)/tase && pdflatex tase2013
+	cd $(MAKE_ROOT)/tase && pdflatex tase2013
+	cd $(MAKE_ROOT)/tase && rm tase2013.{aux,bbl,blg,log,idx} latex_macros.aux
+	mv $(MAKE_ROOT)/tase/tase2013.pdf .
+
+
 ############################################################
 # -- Plots
 ############################################################
@@ -77,7 +94,23 @@ TRAIN		:= rosrun dst train
 wafr-results: bargraph.pdf
 
 .PHONY: tase-results
-tase-results: bargraph.pdf
+tase-results: bargraph.pdf avs/realtime.pdf
+
+
+############################################################
+# -- TASE learning
+############################################################
+
+random/done:
+	mkdir -p $(@D)
+	cd $(@D) && for i in {1..1000}; do \
+	dir=`date +%F_%T`; \
+	mkdir $$dir; cd $$dir; \
+	rosrun dst generate_random_weights 18 random.eig.txt; \
+	MASK=1 SKIP=2 $(EVALUATE) random.eig.txt $(TESTING_PATHS) testing_results.txt | tee testing_results.txt-log.txt; \
+	cd ../; \
+	done;
+	touch $@
 
 
 ############################################################
@@ -87,7 +120,7 @@ tase-results: bargraph.pdf
 avs/accuracy_vs_speed.pdf: 	avs/done \
 				$$(MAKE_ROOT)/plot_accuracy_vs_speed.py \
 				$$(MAKE_ROOT)/common_plotting.py
-	cd $< && \
+	cd $(@D) && \
 	for type in mask0_skip01 $(addprefix mask1_skip, 01 02 04 07 99); do \
 	echo $$type; \
 	cat `find -name testing_results.txt | sort | grep $$type` | grep 'Total time' | awk '{print $$NF}' > $${type}-times.txt; \
@@ -95,7 +128,7 @@ avs/accuracy_vs_speed.pdf: 	avs/done \
 	paste $${type}-times.txt $${type}-losses.txt > $${type}.txt; \
 	rm $${type}-times.txt $${type}-losses.txt; \
 	done
-	cd $< && python $(MAKE_ROOT)/plot_accuracy_vs_speed.py `find -name 'mask*.txt' | sort`
+	cd $(@D) && python $(MAKE_ROOT)/plot_accuracy_vs_speed.py `find -name 'mask*.txt' | sort`
 
 avs/done: #$$@/$$@-experiment_metadata.txt
 	mkdir -p $(@D)
@@ -113,6 +146,9 @@ avs/done: #$$@/$$@-experiment_metadata.txt
 	cd ../; \
 	done;
 	touch $@
+
+avs/realtime.pdf: $$(@D)/done $$(MAKE_ROOT)/plot_realtime.py
+	python $(MAKE_ROOT)/plot_realtime.py $(@D)
 
 testing_results.txt: weights.eig.txt $$@-experiment_metadata.txt
 	$(EVALUATE) weights.eig.txt $(TESTING_PATHS) $@ | tee $@-log.txt
