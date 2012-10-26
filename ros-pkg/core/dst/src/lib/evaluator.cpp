@@ -147,8 +147,8 @@ namespace dst
     double hamming_loss = 0;
     double total_frames = 0;
     for(size_t i = 0; i < seq_res_.size(); ++i) {
-      capped_normalized_loss += seq_res_[i].capped_normalized_loss_;
-      hamming_loss += seq_res_[i].hamming_loss_;
+      capped_normalized_loss += seq_res_[i].capped_normalized_loss_ / seq_res_[i].total_frames_;
+      hamming_loss += seq_res_[i].hamming_loss_ / seq_res_[i].total_frames_;
       total_frames += seq_res_[i].total_frames_;
       
       oss << seq_res_[i].status() << endl;
@@ -157,8 +157,8 @@ namespace dst
     oss << "Frame to frame: " << frame_to_frame_ << endl;
     oss << "Total number of sequences evaluated: " << seq_res_.size() << endl;
     oss << "Total number of frames evaluated: " << total_frames << endl;
-    oss << "Overall Hamming loss: " << hamming_loss / total_frames << endl;
-    oss << "Overall mean capped normalized loss: " << capped_normalized_loss / total_frames << endl;
+    oss << "Overall Hamming loss: " << hamming_loss / seq_res_.size() << endl;
+    oss << "Overall mean capped normalized loss: " << capped_normalized_loss / seq_res_.size() << endl;
     oss << "Total time to run evaluations (min): " << hrt_.getMinutes() << endl;
     oss << "Average time per frame (ms): " << hrt_.getMilliseconds() / total_frames << endl;
 
