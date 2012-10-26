@@ -24,27 +24,28 @@ times = []
 losses = []
 
 names.append("Original");
+
 os.system("grep 'Average time' `find " + path + " -wholename '*mask0_skip01/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
 times.append(np.loadtxt(tmpfile))
-os.system("grep 'Overall mean capped normalized loss' `find " + path + " -wholename '*mask0_skip01/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
+os.system("for file in `find " + path + " -name testing_results.txt | sort | grep mask0_skip01`; do cat $file | grep 'Mean capped normalized loss' | awk '{sum += $NF} END {print sum / NR}'; done > " + tmpfile)
 losses.append(np.loadtxt(tmpfile))
 
 names.append("Mask")
 os.system("grep 'Average time' `find " + path + " -wholename '*mask1_skip01/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
 times.append(np.loadtxt(tmpfile))
-os.system("grep 'Overall mean capped normalized loss' `find " + path + " -wholename '*mask1_skip01/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
+os.system("for file in `find " + path + " -name testing_results.txt | sort | grep mask1_skip01`; do cat $file | grep 'Mean capped normalized loss' | awk '{sum += $NF} END {print sum / NR}'; done > " + tmpfile)
 losses.append(np.loadtxt(tmpfile))
 
 names.append("Mask + \n 50\% downsample")
 os.system("grep 'Average time' `find " + path + " -wholename '*mask1_skip02/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
 times.append(np.loadtxt(tmpfile))
-os.system("grep 'Overall mean capped normalized loss' `find " + path + " -wholename '*mask1_skip02/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
+os.system("for file in `find " + path + " -name testing_results.txt | sort | grep mask1_skip02`; do cat $file | grep 'Mean capped normalized loss' | awk '{sum += $NF} END {print sum / NR}'; done > " + tmpfile)
 losses.append(np.loadtxt(tmpfile))
 
 names.append("Mask + \n 75\% downsample")
 os.system("grep 'Average time' `find " + path + " -wholename '*mask1_skip04/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
 times.append(np.loadtxt(tmpfile))
-os.system("grep 'Overall mean capped normalized loss' `find " + path + " -wholename '*mask1_skip04/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
+os.system("for file in `find " + path + " -name testing_results.txt | sort | grep mask1_skip04`; do cat $file | grep 'Mean capped normalized loss' | awk '{sum += $NF} END {print sum / NR}'; done > " + tmpfile)
 losses.append(np.loadtxt(tmpfile))
 
 os.system("rm " + tmpfile)
@@ -58,7 +59,7 @@ width = 1
 ind = np.arange(0, size(names)) * 3 * width
 vals = [np.mean(l) for l in losses]
 loss_stdevs = [np.std(l) for l in losses]
-loss_bars = loss_ax.bar(ind, vals, width, color='green', yerr=loss_stdevs, ecolor='k')
+loss_bars = loss_ax.bar(ind, vals, width, color='green', yerr=loss_stdevs, ecolor='k', capsize=5)
 loss_ax.set_ylabel("Loss")
 loss_ax.set_xticks(ind + width)
 loss_ax.set_xticklabels(names)
@@ -66,7 +67,7 @@ loss_ax.set_xticklabels(names)
 time_ind = ind + width
 vals = [np.mean(t) for t in times]
 time_stdevs = [np.std(t) for t in times]
-time_bars = time_ax.bar(time_ind, vals, width, color='gray', yerr=time_stdevs, ecolor='k')
+time_bars = time_ax.bar(time_ind, vals, width, color='gray', yerr=time_stdevs, ecolor='k', capsize=5)
 time_ax.set_ylabel("Time (ms)")
 
 # Add space for the annotations.

@@ -114,6 +114,9 @@ avs/done: #$$@/$$@-experiment_metadata.txt
 	done;
 	touch $@
 
+avs/mask.pdf: $$(@D)/done
+	python $(MAKE_ROOT)/plot_mask.py $(@D)
+
 testing_results.txt: weights.eig.txt $$@-experiment_metadata.txt
 	$(EVALUATE) weights.eig.txt $(TESTING_PATHS) $@ | tee $@-log.txt
 
