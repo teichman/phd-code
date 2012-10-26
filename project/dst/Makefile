@@ -103,7 +103,7 @@ tase-results: bargraph.pdf avs/realtime.pdf
 
 random/done:
 	mkdir -p $(@D)
-	cd $(@D) && for i in {1..10}; do \
+	cd $(@D) && for i in {1..100}; do \
 	dir=`date +%F_%T`; \
 	mkdir $$dir; cd $$dir; \
 	rosrun dst generate_random_weights 18 random.eig.txt; \
