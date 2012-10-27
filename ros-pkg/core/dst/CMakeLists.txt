@@ -102,6 +102,7 @@ rosbuild_add_compile_flags(openni_viewer_simple -Wno-deprecated -Wno-unused-but-
 
 rosbuild_add_executable(realtime_interface src/program/realtime_interface.cpp)
 target_link_libraries(realtime_interface dst)
+rosbuild_link_boost(realtime_interface filesystem program_options)
 rosbuild_add_compile_flags(realtime_interface -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
 rosbuild_add_executable(translate_sequence src/program/translate_sequence.cpp)
