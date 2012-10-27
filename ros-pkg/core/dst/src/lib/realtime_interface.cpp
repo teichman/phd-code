@@ -10,17 +10,16 @@ using namespace Eigen;
 namespace dst
 {
   
-  RealTimeInterface::RealTimeInterface(const std::string& device_id) :
+  RealTimeInterface::RealTimeInterface(const std::string& device_id,
+				       pcl::OpenNIGrabber::Mode mode,
+				       double scale) :
     sp_(NUM_THREADS),
     img_view_("Image"),
-    seed_radius_(2),
+    mode_(mode),
     device_id_(device_id),
-    grabber_(device_id_,
-	     pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz,
-	     pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz),
+    grabber_(device_id_, mode, mode),
     cloud_viewer_("PointCloud"),
     segmenting_(false),
-    seed_(cv::Size(160, 120), 127),
     needs_redraw_(false),
     thresh_(0.01)
   {
@@ -29,7 +28,18 @@ namespace dst
     imgs_.reserve(1000);
 
     img_view_.setDelegate((OpenCVViewDelegate*)this);
-    img_view_.scale_ = 3;
+    img_view_.scale_ = scale;
+
+    if(mode == pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz) {
+      size_ = cv::Size(160, 120);
+      seed_radius_ = 4;
+    }
+    else {
+      ROS_ASSERT(mode == pcl::OpenNIGrabber::OpenNI_VGA_30Hz);
+      size_ = cv::Size(640, 480);
+      seed_radius_ = 16;
+    }
+    seed_ = cv::Mat1b(size_, 127);
   }
   
   void RealTimeInterface::run()
@@ -138,10 +148,7 @@ namespace dst
   }
   
   cv::Mat3b RealTimeInterface::oniToCV(const boost::shared_ptr<openni_wrapper::Image>& oni) const
-  {
-    ROS_ASSERT(oni->getHeight() == 240);
-    ROS_ASSERT(oni->getWidth() == 320);
-    
+  {    
     cv::Mat3b img(oni->getHeight(), oni->getWidth());
     uchar data[img.rows * img.cols * 3];
     oni->fillRGB(img.cols, img.rows, data);
@@ -154,10 +161,21 @@ namespace dst
       }
     }
 
-    cv::Mat3b small;
-    cv::resize(img, small, cv::Size(160, 120));
-    
-    return small;
+    if(mode_ == pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz) {
+      ROS_ASSERT(oni->getHeight() == 240);
+      ROS_ASSERT(oni->getWidth() == 320);
+      cv::Mat3b small;
+      cv::resize(img, small, cv::Size(160, 120));
+      return small;
+    }
+    else {
+      ROS_ASSERT(mode_ == pcl::OpenNIGrabber::OpenNI_VGA_30Hz);
+      ROS_ASSERT(oni->getHeight() == 480);
+      ROS_ASSERT(oni->getWidth() == 640);
+      ROS_ASSERT(img.rows == 480);
+      ROS_ASSERT(img.cols == 640);
+      return img;
+    }
   }
 
   void  RealTimeInterface::processQueues()
@@ -234,7 +252,7 @@ namespace dst
     ROS_ASSERT(pcds_.size() == imgs_.size());
     ROS_ASSERT(segmentations_.size() == pcd_results_.size());
 
-    segmentations_.push_back(cv::Mat1b(cv::Size(160, 120), 127));
+    segmentations_.push_back(cv::Mat1b(size_, 127));
     pcd_results_.push_back(KinectCloud::Ptr(new KinectCloud()));
 			     			     
     if(pcds_.size() == 1) {
@@ -341,12 +359,17 @@ namespace dst
     // if(segmenting_)
     //   return;
 
+    cout << "event: " << event << ", x0: " << x0 << ", y0: " << y0 << ", flags: " << flags
+	 << ", CV_EVENT_FLAG_LBUTTON: " << CV_EVENT_FLAG_LBUTTON << endl;
+
     // -- Left click to add to source.
     if(flags & CV_EVENT_FLAG_LBUTTON) {
+      cout << "Setting fg." << endl;
       for(int y = max(0, y0 - seed_radius_); y < seed_.rows && y <= y0 + seed_radius_; ++y)
-	for(int x = max(0, x0 - seed_radius_); x < seed_.cols && x <= x0 + seed_radius_; ++x)
+	for(int x = max(0, x0 - seed_radius_); x < seed_.cols && x <= x0 + seed_radius_; ++x) {
 	  seed_(y, x) = 255;
-
+	}
+      
       needs_redraw_ = true;
     }
 

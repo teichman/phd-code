@@ -18,7 +18,9 @@ namespace dst
     OpenCVView img_view_;
     int seed_radius_;
     
-    RealTimeInterface(const std::string& device_id = "");
+    RealTimeInterface(const std::string& device_id = "",
+		      pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz,
+		      double scale = 3);
     void cloudCallback(const KinectCloud::ConstPtr& cloud);
     void imageCallback(const boost::shared_ptr<openni_wrapper::Image>& image);
     void irCallback(const boost::shared_ptr<openni_wrapper::IRImage>& oni_img);
@@ -29,6 +31,8 @@ namespace dst
     
   protected:
     std::string device_id_;
+    pcl::OpenNIGrabber::Mode mode_;
+    cv::Size size_;
     pcl::OpenNIGrabber grabber_;
     pcl::visualization::CloudViewer cloud_viewer_;
     std::vector<KinectCloud::ConstPtr> pcds_;
