@@ -1,0 +1,438 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{times}
+
+% numbers option provides compact numerical references in the text. 
+\usepackage[numbers]{natbib}
+\usepackage{multicol}
+\usepackage[bookmarks=true]{hyperref}
+
+\pdfinfo{
+   /Author (Homer Simpson)
+   /Title  (Robots: Our new overlords)
+   /CreationDate (D:20101201120000)
+   /Subject (Robots)
+   /Keywords (Robots;Overlords)
+}
+
+
+\usepackage{color}
+\usepackage{graphicx} % for pdf, bitmapped graphics files
+%\usepackage{epsfig} % for postscript graphics files
+\usepackage{subfig}
+\usepackage{mathptmx} % assumes new font selection scheme installed
+\usepackage{amsmath} % assumes amsmath package installed
+\usepackage{amssymb}  % assumes amsmath package installed
+\usepackage{fmtcount}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\include{latex_macros}
+\newcommand{\img}{img}
+
+\begin{document}
+
+% paper title
+\title{Real-time, interactive \\ discriminative segmentation and tracking}
+
+% You will get a Paper-ID when submitting a pdf file to the conference system
+\author{Author Names Omitted for Anonymous Review. \\ Paper-ID 17}
+
+%\author{\authorblockN{Michael Shell}
+%\authorblockA{School of Electrical and\\Computer Engineering\\
+%Georgia Institute of Technology\\
+%Atlanta, Georgia 30332--0250\\
+%Email: mshell@ece.gatech.edu}
+%\and
+%\authorblockN{Homer Simpson}
+%\authorblockA{Twentieth Century Fox\\
+%Springfield, USA\\
+%Email: homer@thesimpsons.com}
+%\and
+%\authorblockN{James Kirk\\ and Montgomery Scott}
+%\authorblockA{Starfleet Academy\\
+%San Francisco, California 96678-2391\\
+%Telephone: (800) 555--1212\\
+%Fax: (888) 555--1212}}
+
+
+% avoiding spaces at the end of the author lines is not a problem with
+% conference papers because we don't use \thanks or \IEEEmembership
+
+
+% for over three affiliations, or if they all won't fit within the width
+% of the page, use this alternative format:
+% 
+%\author{\authorblockN{Michael Shell\authorrefmark{1},
+%Homer Simpson\authorrefmark{2},
+%James Kirk\authorrefmark{3}, 
+%Montgomery Scott\authorrefmark{3} and
+%Eldon Tyrell\authorrefmark{4}}
+%\authorblockA{\authorrefmark{1}School of Electrical and Computer Engineering\\
+%Georgia Institute of Technology,
+%Atlanta, Georgia 30332--0250\\ Email: mshell@ece.gatech.edu}
+%\authorblockA{\authorrefmark{2}Twentieth Century Fox, Springfield, USA\\
+%Email: homer@thesimpsons.com}
+%\authorblockA{\authorrefmark{3}Starfleet Academy, San Francisco, California 96678-2391\\
+%Telephone: (800) 555--1212, Fax: (888) 555--1212}
+%\authorblockA{\authorrefmark{4}Tyrell Inc., 123 Replicant Street, Los Angeles, California 90210--4321}}
+
+
+\maketitle
+
+\begin{abstract}
+
+  We consider the problem of object segmentation and tracking in RGBD streams available from sensors such as the Microsoft Kinect or the Asus Xtion Pro Live.  We frame this problem with very few assumptions - possibly nonrigid objects, no prior object model, no stationary sensor, no prior 3D map - thus making a solution potentially useful for a large number of tasks.  In this paper, we focus on using segmentation and tracking to assist a user in generating training data for object recognition systems.
+
+Our approach makes use of a rich feature set, including local image appearance, depth discontinuities, optical flow, and surface normals to inform the segmentation decision; graph cuts is used for inference.  The proposed method \emph{learns} how to segment and track objects from ground-truth segmented sequences using a structural support vector machine.
+
+We adapt the method of our previous (in review; anonymized) work \cite{teichman2012a} to the interactive setting, provide two algorithmic speedups critical to real-time capability, and demonstrate the method applied to training an object detector and running in a real-time interactive mode on a handheld scanner.  We envision such a scanner as providing a natural and easy way to train robot perception systems to recognize new objects without the need for an engineered model capture rig or large amounts of tedious, unassisted hand-labeling.
+
+\end{abstract}
+
+\IEEEpeerreviewmaketitle
+
+\section{Introduction}
+
+High quality, dense depth sensors have revolutionized the field of robotics, first in autonomous driving with the Velodyne dense LIDAR sensor used in the DARPA Urban Challenge, and now with the development of economical and readily-available RGBD sensors such as those developed by PrimeSense.  In this paper, we consider the task of using such a sensor for propagating a fine-grained object segmentation through time to create a detailed segmentation mask at each frame in the sequence.  Unlike superpixel segmentation and similar methods, we assume that the initial segmentation of the object is given, and aim to produce foreground/background masks for the rest of a sequence with as little human assistance as possible.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{\img/front_and_back.pdf}
+  \caption{A real-time interactive segmentation and tracking interface is used to collect labeled examples of a cat; the segmented object is shown with a red border (best viewed on-screen).  Using the methods in this paper, a system such as this one could be used for training robotic object recognition systems or 3D model capture in unstructured environments.}
+  \label{fig:tricorder}
+\end{figure}
+
+
+The immediate goal of this work is to enable easy and intuitive collection of labeled data in unstructured environments for the training of object recognition systems.  In particular, as robotic systems become more common in everyday use, casual users will need to train robots to recognize new objects; this requires the collection of a training dataset.  We believe an approach such as the one proposed in this paper could provide a solution to this problem.  The interactive methods presented here are also applicable to the unstructured model-capture problem, but we do not investigate this in detail here.
+
+As a longer-term goal, fully-automatic segmentation and tracking could allow robotic systems to make use of the tracking-based semi-supervised learning method of \citet{teichman2011b}, who address the object recognition problem in autonomous driving.  There, segmentation and tracking of arbitrary objects is often easy to come by with depth segmentation and the assumption that objects on roads actively avoid touching each other.
+
+  Here, we cannot assume that simple depth segmentation will be sufficient.  Additionally, we do not assume the presence of a pre-trained object model (\ie as the Kinect models human joint angles), as that would preclude the system from segmenting and tracking arbitrary objects of interest.  As such, this task falls into the category of \emph{model-free} segmentation and tracking, \ie no prior class model is assumed.  Similarly, to maximize the applicability of the approach, we do not assume the sensor is stationary or that a pre-built static environment map is available.
+
+The contributions of this work are threefold: we 1)~adapt the method of \cite{teichman2012a} to the interactive setting, 2)~provide two algorithmic speedups critical to enabling online use, and 3)~demonstrate the method applied to training an object detector and running in a real-time interactive mode on a handheld scanner.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{\img/moving_jacket-cropped_pcds.pdf}
+  \caption{To segment and track a jacket offline, a human provides two labeled frames: one to initialize the algorithm and another to correct a mistake the algorithm makes.  Labels are provided as foreground and background hints, shown in white and black.  Using these hints, the jacket is segmented correctly as it is moved to the table.  For video examples of this sequence with and without user interaction, see (anonymized) \href{http://vimeo.com/album/1821926}{http://vimeo.com/album/1821926}.}
+  \label{fig:jacket}
+\end{figure}
+
+
+\subsection{Related work}
+
+
+Traditional data-labeling schemes generally involve a model-capture rig with a calibration pattern or a labeling program which provides little assistance to the labeler.  Mechanical Turk provides a method of acquiring labeled data, but may not be appropriate in scenarios where highly reliable data is required, a delay in getting labeled data is unacceptable, or when one does not wish images of their home or office to be available online.  When Mechanical Turk is appropriate, a system such as ours could be used to increase the output of the workers.
+
+Human-assisted object segmentation has been the subject of much work including interactive graph cuts \cite{boykov2001a}, GrabCut \cite{rother2004a}, and Video SnapCut \cite{bai2009a}.  The first two of these address interactive segmentation in still images; the last addresses interactive segmentation of videos but is not intended for real-time, online use. The work of \citet{budvytis2011a} addresses the specific scenario of offline video segmentation of objects, where labelings of the first and last frames are given. Here, one of our use cases is online segmentation, where only feed-forward methods are suitable.  This also directs us in the long term towards fully automatic segmentation and tracking methods that could be usable onboard robot perception systems.
+
+Discriminative tracking \cite{grabner2006a, stalder2009a, kalal2010a} approaches the same online, model-free tracking task, but where the goal is to track arbitrary objects in a bounding box rather than provide a detailed segmentation mask.  In contrast, our work could be referred to as \emph{discriminative segmentation and tracking}.  While bounding box trackers would likely be useful for training bounding-box-based object detectors, the detailed segmentation mask output by our algorithm allows one to A) remove the background noise from the training examples, as is sometimes desirable, B) provide training examples to object recognition methods that take as input pre-segmented objects, and C) use the method to collect segmented examples of objects for 3D model synthesis.
+
+Rigid object tracking using depth information, such as the open source method in PCL \cite{rusu2011a}, solves the proposed problem except that by definition, it is not designed to work with deformable objects.
+
+An alternative approach to acquiring labeled data for robotic systems is that of \citet{krainin2011a}, in which a robot picks up and holds an object, building a 3D model as it sees the object from multiple perspectives.
+
+\subsection{Approach}
+\label{sec:intuition}
+
+There are a large number of possible cues that could inform a discriminative segmentation and tracking algorithm.  Optical flow, image appearance, 3D structure, depth discontinuities, color discontinuities, etc., all provide potentially useful information.  For example:
+\begin{itemize}
+  \item An optical flow vector implies that the label of the source pixel is likely to propagate to that of the destination pixel.
+\item Pixels with similar color and texture to previous foreground examples are likely to be foreground.
+\item The shape of the object in the previous frame is likely to be similar to the shape of the object in the next frame.
+\item Points nearby in 3D space are likely to share the same label.
+\item Nearby points with similar colors are likely to share the same label.
+\end{itemize}
+
+Previous work generally focuses on a few particular features; here, we advocate the use of a large number of features based on these intuitions.  This presents a new problem: naively adding features corresponding to these intuitions will generally result in a poor model because they must be combined intelligently.
+
+In the past, rich and complex models that use many features were not possible to learn due to the intractability of computing the partition function present in computing the gradient.  Recently, however, the margin-maximizing approach of structural SVMs of \cite{taskar2005a, tsochantaridis2005a}, adapted to use graph cuts for vision in \cite{szummer2008a}, has enabled learning in these scenarios.  Intuitively, this method calls for doing inference (in this case, generating a foreground/background segmentation), then adding constraints to an optimization problem which assert that the margin between the ground truth labeling and the generated (and incorrect) labeling should be as large as possible.  Finally, the work of \citet{joachims2009a} introduces an equivalent formulation of the optimization problem which we use here to solve the learning problem much more efficiently. The application of this approach will be discussed in detail in Section~\ref{sec:learning}.
+
+
+\section{Graph cuts and structural SVMs}
+
+Our approach relies on a conditional random field for capturing rich feature sets, graph cuts for efficient prediction of foreground/background labels, and structural SVMs for learning how to combine the different features.
+
+We start with inference as it is a component of the learning algorithm, then describe learning, then the outline of the energy function.  This section largely follows the learning and inference methods of our previous (anonymized) work, \cite{teichman2012a}, with the addition of using the 1-slack formulation of structural SVMs \cite{joachims2009a} for more efficient learning.
+
+\subsection{Inference}
+\label{sec:inference}
+
+A conditional random field (CRF) is an undirected probabilistic model well-known for its ability to encode a preference for locally-consistent predictions and ability to make use of rich feature sets while spending modeling power on only the distribution of the target variables given the observed variables.  The conditional random field takes the form
+\begin{align}
+  \Pr(y | x; w) = \frac{1}{Z(x; w)} e^{-E(y, x; w)},
+\end{align}
+where $Z$ is the normalizer or partition function.  The energy function $E$ contains the features or potentials that encode various intuitions about what labels individual pixels should take and which pixels should share the same labels.  In particular, the energy function is defined as
+\begin{align}
+  E(y, x; w) = & \sum_{i \in \Phi_\nu} w_i \sum_{j \in \nu_i} \phi_j^{(i)}(y, x) \label{eqn:energy} \\
+& + \sum_{i \in \Phi_{\mathcal{E}}} w_i \sum_{(j,k) \in \mathcal{N}_i}  \phi_{jk}^{(i)}(y, x). \notag
+\end{align}
+Here, $\Phi_\nu$ is the set of node potential indices (\ie one for each type of node potential such as local image appearance or 3D structure alignment), $\nu_i$ is the set of all node indices for this potential type (\ie normally one per pixel), and $\phi_j^{(i)}$ is the value of the node potential of type $i$ at pixel $j$, given features $x$ and segmentation $y$.  Similarly, $\Phi_\mathcal{E}$ is the set of edge potential indices, $\mathcal{N}_i$ is the neighborhood system for edge potential type $i$, and $\phi_{jk}^{(i)}$ is the edge potential between pixels $j$ and $k$ for edge potentials of type $i$.  Thus, the weights apply at the feature-type level, \ie $w_i$ describes how important the $i$th feature is.
+
+MAP inference in this model,
+\begin{align}
+  \maximize{y} \Pr(y | x; w) = \minimize{y} E(y, x; w)
+\end{align}
+can be efficiently computed for $y \in \{-1, +1\}^n$ and submodular energy function $E$ using graph cuts \cite{boykov2001a}.
+
+\subsection{Learning}
+\label{sec:learning}
+
+\begin{figure*}
+  \centering
+  \includegraphics[width=\linewidth]{\img/features1.pdf}
+  \caption{Visualizations of selected edge and node potentials in the CRF, before our modifications to enable real-time segmentation.  Edge potentials are zoomed in to show fine structure.  Strong edge potentials are darker, weaker edge potentials fade to original image color.  Node potentials expressing a preference for foreground are shown in red, for background in green, and for neither in black.  Top row: original image, canny edge potentials, color distance, depth edge potentials.  Bottom row: ICP, frame alignment bilateral filter, optical flow, and patch classifier node potentials.  Best viewed in color.}
+  \label{fig:features}
+\end{figure*}
+
+
+While it would be desirable to learn the weights directly using a maximum likelihood approach, \eg
+\begin{align}
+  \maximize{w} \prod_m \Pr(y_m | x_m; w),
+\end{align}
+this is not possible because of the presence of the partition function $Z(x; w) = \sum_{y} \exp(-E(y, x; w))$ in the gradient; this function sums over all possible segmentations of the image.
+  
+Fortunately, there is an alternative approach which builds on the machinery of support vector machines \cite{taskar2005a, tsochantaridis2005a, szummer2008a}.  Solving the margin maximizing optimization problem
+\begin{equation}
+  \begin{aligned}
+    & \minimize{w, \xi} & & \frac{1}{2} ||w||^2 + \frac{C}{M} \sum_{m=1}^M \xi_m \label{eqn:nslack} \\
+    & \st & & \xi \geq 0 \\
+& & & E ( y, x_m; w ) - E ( y_m, x_m; w ) \geq \\
+& & & \quad \Delta (y_m, y) - \xi_m \quad \forall m, \forall y \in \mathcal{Y}
+  \end{aligned}
+\end{equation}
+would result in a good solution; here, $C$ is a constant, $\Delta$ is a loss function, $\xi_m$ is a slack variable for training example $m$, and $\mathcal{Y}$ is the set of all possible labelings of an image. This problem, too, is intractable because it has exponentially many constraints.  However, one can iteratively build a small, greedy approximation to the exponential set of constraints such that the resulting weights $w$ are good.
+
+Finally, one can transform (\ref{eqn:nslack}), known as the $n$-slack formulation, into the equivalent problem
+\begin{equation}
+  \begin{aligned}
+    & \minimize{w, \xi} & & \frac{1}{2} ||w||^2 + C\xi \\
+    & \st & & \xi \geq 0 \\
+    & & & \frac{1}{M} \sum_{m=1}^M E ( \hat{y}_m, x_m; w )
+    - E ( y_m, x_m; w ) \geq \\
+    & & & \quad \frac{1}{M} \sum_{m=1}^M \Delta(y_m, \hat{y}_m) - \xi \\
+    & & & \quad \forall (\hat{y}_1, ..., \hat{y}_M) \in \mathcal{Y}^M,
+  \end{aligned}
+\end{equation}
+which can be solved much more efficiently, as described in \citet{joachims2009a}.  As before, while the number of constraints is exponential, one can build a small, greedy approximation that produces good results.  Known as the 1-slack formulation, this problem is equivalent and can be solved much more efficiently than (\ref{eqn:nslack}), often by one or two orders of magnitude.
+
+The goal is to segment and track an entire sequence correctly given a single seed frame.  However, this does not fit into the form required for efficient optimization via structural SVM, \ie predictions are required to be $\argmax_y w^T \Psi(y, x)$ for some unweighted feature function $\Psi(y, x)$; this is the case for segmenting a \emph{single} frame given the previous labeling, but the choice of $w$ affects $\Psi(y, x)$ on the next frame.  This is because features such as image appearance or frame-to-frame model fitting depend on the segmentation from the previous frame or frames.  To address this problem, we propose that the structural SVM learns the best parameters for segmenting the next frame assuming that all previous frames in the track have been segmented correctly.  This is important for correctly reasoning about potentials that accumulate state over the course of tracking.  For example, as the algorithm runs, each segmented frame is provided as training data to the patch classifier node potential.
+
+
+\begin{algorithm}[h]
+  \caption{Structural SVM for learning to segment}
+  \label{alg:ssvm}
+  \begin{algorithmic}
+    \STATE $\mathcal{D}$ is a set of training examples $(y, x)$,                             formed as described in Section~\ref{sec:learning}.
+\STATE $C$ and $\epsilon$ are constants, chosen by cross validation.
+\STATE 
+\STATE $\mathcal{W} \leftarrow \emptyset$
+\REPEAT
+\STATE Update the parameters $w$ to maximize the margin.
+\begin{equation*}
+  \begin{aligned}
+    & \minimize{w, \xi} & & \frac{1}{2} ||w||^2 + C\xi \\
+    & \st & & w \geq 0, \quad \xi \geq 0 \\
+    & & & \frac{1}{M} \sum_{m=1}^M E ( \hat{y}_m, x_m; w )
+    - E ( y_m, x_m; w ) \geq \\
+    & & & \quad \frac{1}{M} \sum_{m=1}^M \Delta(y_m, \hat{y}_m) - \xi \\
+    & & & \quad \forall (\hat{y}_1, ..., \hat{y}_M) \in \mathcal{W}
+  \end{aligned}
+\end{equation*}
+
+\FOR{$( y_m, x_m ) \in \mathcal{D}$}
+\STATE Find the MAP assignment using graph cuts.
+\STATE $\hat{y}_m \leftarrow \argmin_y E (y, x_m; w )$
+\ENDFOR
+\STATE $\mathcal{W} \leftarrow \mathcal{W} \cup \{(\hat{y}_1, \dots, \hat{y}_M\}$
+\UNTIL
+\STATE $\quad \frac{1}{M} \sum_{m = 1}^M \Delta(y_m, \hat{y}_m) - E ( \hat{y}_m, x_m; w) + E ( y_m, x_m; w ) \leq \xi + \epsilon$
+  \end{algorithmic}
+\end{algorithm}
+
+The structural SVM solver is detailed in Algorithm~\ref{alg:ssvm}.  Because the graph cuts solver assumes a submodular energy function, non-negative edge weights $w_i$ for all $i \in \Phi_{\mathcal{E}}$ are required\footnote{As our node potentials are generally designed to produce values with the desired sign, we constrain them in Algorithm~\ref{alg:ssvm} to have non-negative weights as well.}  The term $\Delta (y_m, y)$ is 0-1 loss; a margin rescaling approach, in which the required margin is scaled according to, for example, Hamming loss, could easily be obtained by changing $\Delta$ to Hamming loss and making a small modification to the graph cuts solver during learning (see \cite{szummer2008a}). 
+
+
+\subsection{Energy function terms}
+\label{sec:energy}
+
+The proposed energy function of Eq.~\ref{eqn:energy} consists of many terms capturing the intuitions discussed in Section~\ref{sec:intuition}.  In this work, we provide eight node potentials and four edge potentials.  See Figure~\ref{fig:features} for visualizations.
+
+Examples of node potentials include a bilateral filter which blurs the previous frame's segmentation into the current frame while respecting color and Euclidean distance edges, a random fern patch classifier similar to \cite{ozuysal2007a}, and optical flow (i.e., the label from a pixel in the previous frame generates a node potential in the corresponding pixel in the current frame).  Edge potentials are generated from depth (dis)continuities, color changes, Canny edges, and surface normal changes.  Beyond those in \cite{teichman2012a}, we add edge potentials that are the product of other sets of edge potentials; this enables the algorithm to reason about combinations of edge types.
+
+As a concrete example, the CRF includes edges for which the energy term $\phi_{jk}(y, x)$ is $\exp(-d / \sigma_d - n / \sigma_n)$, where $j$ and $k$ are neighboring points in the image, $d$ is the Euclidean distance between the points, $n$ is the point-to-plane distance (\ie the length of the projection of the difference vector onto the normal vector at point $i$), and $\sigma_d$ and $\sigma_n$ are parameters that determine the relative strengths of the two terms.  We leave the remaining details of the energy function to \cite{teichman2012a}.
+
+
+\section{Autonomous segmentation}
+
+Before proceeding to the interactive case, we quantitatively analyze the segmentation and tracking algorithm using a dataset of sixteen fully-labeled sequences with a total of about 1300 frames.  Objects include, for example, a sheet of paper, kitten, jacket, mug, and a laptop; in general, the dataset includes rigid and non-rigid objects, and textured and non-textured objects.  The sensor is handheld and moving in many of them, and we make no assumptions about static environments or known maps.
+
+The dataset was split into training and testing sets of approximately equal size and seven full runs of learning and evaluation were done; the final accuracy was approximately 80\%.  Results are plotted in Figure~\ref{fig:avi}.
+
+We report accuracy results using a metric designed to capture our intuitive notion of segmentation correctness.  Hamming loss alone is undesirable because it does not take into account object size; getting fifty pixels wrong might be 5\% or 50\% of the object in question.  We normalize the Hamming loss by the number of pixels in the ground truth foreground of the object\footnote{All frames contain at least one foreground pixel.}.  Additionally, we cap this normalized Hamming loss at 1; this makes the mean, capped normalized loss interpretable roughly as the average number of frames correct across the training set.  Accuracy results are reported as one minus this capped normalized loss.
+
+\begin{figure*}
+  \centering
+  \includegraphics[width=\linewidth]{\img/fix.png}
+  \caption{Example interactive segmentation of a sequence.  One initial frame is labeled to indicate that the paper is to be tracked, and one additional frame is labeled to ensure that the carpet at the edge of the scene does not get labeled as foreground.}  \label{fig:dropping}
+\end{figure*}
+
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{\img/accuracy_vs_iter.pdf}
+  \caption{Accuracy of automatic segmentation, without hints from a user.  Accuracy is normalized for object size; see text for details.  The final result of about 80\% is insufficient for fully autonomous systems to use the method, but a human in the loop can correct the mistakes that it does make.  For (anonymized) examples of segmentation results without human intervention, see \href{http://vimeo.com/album/1821909}{http://vimeo.com/album/1821909}.}
+  \label{fig:avi}
+\end{figure}
+
+\section{Interactive segmentation}
+\label{sec:interactive}
+
+While the algorithm cannot currently segment and track perfectly on its own, it is possible for a user to give suggestions at points in a sequence where it makes mistakes.  Concretely, this is implemented by adding node potentials at points that a human marks as foreground or background.  The segmentation is then re-started.  See Figures~\ref{fig:dropping}~and~\ref{fig:jacket} for visualizations of this process.  Note that this mode need not be real-time, as the segmentations are produced offline.
+
+Qualitatively, this often results in sequences that required little human effort to segment.  Certain object types, however, are still challenging.  Particularly troublesome are very thin objects like cat tails or mug handles which do not stay well connected in the model, and parts of objects that frequently become occluded and unoccluded while disconnected from the rest of the object (in the visible pointcloud; not in reality).  Some sequences are still challenging to label in this way, some are fairly easy (for example, the cereal box in Section~\ref{sec:application} took 20 frames with hints to segment the remaining ~900 frames), and others require nothing more than the seed frame.
+
+
+\subsection{Real-time performance}
+\label{sec:speed}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{\img/speed.pdf}
+  \caption{By downsampling several of the potentials and only computing in the vicinity of the object in the previous frame, it is possible to increase the speed of segmentation and tracking by about an order of magnitude.  Here, the frame alignment bilateral filter node potential is shown when computed with and without these optimizations.  Node potentials that favor foreground are shown in red, background in green.  For videos of the node and edge potentials with and without the optimizations, see \href{http://vimeo.com/album/1822023}{http://vimeo.com/album/1822023}.}
+  \label{fig:speed}
+\end{figure}
+
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{\img/accuracy_vs_speed.pdf}
+  \caption{Accuracy is unaffected by the algorithmic changes suggested in Section~\ref{sec:speed}, and yields approximately an order of magnitude speedup, enabling online use of the segmentation and tracking algorithm.  The average time to run the proposed algorithm on one frame is about 60ms on a modern quad core laptop.}
+  \label{fig:avs}
+\end{figure}
+
+
+The method of \cite{teichman2012a} took about 800ms to process each frame, far too slow for online use.  In this section, we introduce two improvements that significantly decrease the computational requirements of the algorithm and enable it to be used online. We note that the graph cuts solver of \citet{boykov2001a}, used for inference in our implementation, typically takes on the order of a millisecond or two for our segmentation problems on the 160x120 images we use.  Thus, the bottleneck is entirely in the computation of the rich feature set used for node and edge potentials.
+
+First, we can restrict attention to just the region of the border of the object in the previous frame.  The first stage in the pipeline is to compute this mask; most subsequent stages compute only in the region of this mask.  For example, we need only compute surface normals for these boundary points, and need only compute the surface normal edge potentials in this region as well.  A node potential for points outside this boundary mask is applied based on its label in the previous frame.
+
+Second, we can compute two of the more expensive node potentials (the patch classifier and the bilateral filter) on only a sample of the pixels, and the smoothing effect of the CRF will, ideally, prevent segmentation results from suffering.  See Figure~\ref{fig:speed} for a visualization of the proposed changes.
+
+To ensure that performance is not sacrificed in exchange for speed, we evaluated our algorithm with and without the mask and at different levels of downsampling in the patch classifier and bilateral filter node potentials.  Approximately an order of magnitude speedup is possible with no loss in overall accuracy on the test set; see Figure~\ref{fig:avs}.
+
+Finally, it is worth noting that parallelism and smart caching of shared results is essential to produce real-time performance in a system like this, especially because of the rich feature set that is used.
+
+
+
+\subsection{Handheld scanner}
+
+We prototype a handheld scanner using an Asus Xtion Pro Live mounted on a standard tablet PC; see Figures~\ref{fig:tricorder}~and~\ref{fig:usage}.  This enables natural, interactive segmentation of streams of data using the touch screen.  Foreground and background hints provided by the human operator are used as additional node potentials; no changes to the algorithm as described in Section~\ref{sec:speed} are necessary.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{\img/usage-smaller.pdf}
+  \caption{Usage of the handheld scanner.  Initially, no object is being tracked.  A user provides foreground and background hints as the RGBD data streams in; they are interpreted as node potentials in the graph cuts algorithm, which generates a new segmentation at every frame.  Segmented objects are shown in red.  Best viewed in color and on-screen.}
+  \label{fig:usage}
+\end{figure}
+
+
+
+\section{Application to training \\ object recognition systems}
+\label{sec:application}
+
+In this section, we describe the application of our object segmentation and tracking method to the problem of data labeling in supervised object detection systems.  Such systems require carefully segmented training data for learning and therefore involve either a costly hand-labeling step or a tightly controlled environment in which segmentations can be determined automatically with high confidence.  In contrast, our method provides a means to assign labels with minimal human involvement or minimal environmental control.
+
+Although our method is distinct from any detection approach, we are primarily interested in real-time detection and therefore consider the efficient LINE-MOD template-matching framework put forth in \citet{hinterstoisser2011a}.  This approach requires a training phase in which previously segmented images are used to learn \textit{templates} that store observed features in different \textit{modalities}, such as color and depth.  Then, during testing, images are scanned for template matches, and matches exceeding a specified threshold are labeled accordingly.  While the method is straight-forward and effective, the prerequisite step obtaining labeled data is often the greatest bottleneck.
+
+To highlight and address this difficulty, we conducted a small set of experiments in which we incorporated our interactive segmentation and tracking approach into the pipeline.  Specifically, we first selected several objects and obtained several image sequences for each object using the interactive segmentation method of Section~\ref{sec:interactive}.  Next, for each object, we used our method to achieve ground-truth segmentations that we then used to train a LINE-MOD detector.  A depiction of this process is shown in Figure~\ref{fig:train_linemod}.  We then repeated the process, but withheld the ground-truth from the detector during the testing phase.  Finally, the true labelings were used to evaluate the detector on these sequences.  This process is depicted in Figure~\ref{fig:test_linemod}.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=1.0\linewidth]{\img/train_montage.png}
+  \caption{\small{LINE-MOD training for three image sequences (rows).  The original image (first column) is segmented using the interactive method of this paper (second column) so that gradient, depth, and color features (third column, first, second, and third rows, respectively) can be extracted and used to learn a template.}}
+  \label{fig:train_linemod}
+  \end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=1.0\linewidth]{\img/test_montage.png}
+  \caption{\small{LINE-MOD testing for three sequences (rows).  In each case, we begin with the original image (first column), and extract gradient, depth, and color features.  Matches that exceed a given threshold (0.995 here) are accepted (third column, shown in red).  Using the true segmentation (fourth column), we then compare against valid matches (third column, shown in blue).}}.
+  \label{fig:test_linemod}
+  \end{figure}
+
+\section{Conclusion} 
+\label{sec:conclusion}
+
+In summary, we adapt the discriminative segmentation and tracking method of \cite{teichman2012a} to the interactive setting, provide two algorithmic speedups critical to enabling online use, and demonstrate the method applied to training an object detector.  Further, we prototype a handheld scanner which runs our method in a real-time interactive mode.  We believe this approach could provide a natural and relatively easy method of collecting training data for object recognition systems and 3D model capture.  Additionally, we hope that this line of work will lead to model-free segmentation and tracking methods robust enough to be useful on robots without human assistance.  This would enable the use of the tracking-based semi-supervised learning method of \citet{teichman2011b} in a broader range of situations than is currently possible.
+
+While we believe this direction to be a promising one, much work remains to be done.  The current implementation of the algorithm is still fragile when segmenting, for example, thin objects, quickly moving objects, and objects which frequently self-occlude parts. The current implementation also has no facility for re-acquiring targets after they have been lost.  In these situations, the user is required to provide corrections.
+
+The good news, however, is that it seems possible that improvements to node and edge potentials could resolve these limitations.  Using longer range edges (rather than a simple 2D grid connecting neighbors only) could improve performance on thin objects and quickly moving objects, and improvements in the image-appearance-based patch classifier could result in better segmentations of objects that self-occlude parts frequently.  A node potential based on LINE-MOD or a discriminative tracker such as \citet{kalal2010a} could solve the re-acquisition problem, and could be run on object parts rather than the object as a whole to enable usage on non-rigid objects.  Additionally, speedups of the node and edge potentials would be beneficial as faster framerates and higher resolutions result in better segmentations.  Node and edge potentials that explicitly reason about occlusion would also likely be useful.
+
+The feature-rich representation we use presents a challenge and an opportunity.  There are a large number of parameters in the computation pipeline which cannot be learned via the structural SVM (\eg the $\sigma$'s discussed in Section~\ref{sec:energy}). There is also substantial freedom in the structure of the computation pipeline.  Choosing the structure and the parameters by eye is possible, but onerous; there is an opportunity to learn these in a way that maximizes accuracy while respecting the timing constraints.
+
+Some core algorithmic improvements are also possible.  For example, the use of the mean field segmentation algorithm of \citet{krahenbuhl2011a} with the permutohedral lattice for efficient computation could be applied to better connect thin objects.
+
+\bibliographystyle{plainnat}
+\bibliography{rss2012}
+
+\end{document}
+
+
+In practice, we compute the mean Hamming loss on the training set at every iteration and use the best learned parameters across all iterations.
+A large number of segmentation masks of objects can be obtained with a small amount of human annotation across an RGBD sequence.
+
+First, we note that the graph cuts solver of \citet{boykov2001a} is $O(mn^2|C|)$, where $m$ is the number of edges, $n$ is the number of nodes, and $C$ is the cost of the minimum cut.
+
+  In particular, an edge potential that uses only image information will encode a strong connection when there is no image edge, but 
+
+
+the product of depth edges with image edges is sensible because neighboring pixels that lie on a depth edge but not an image edge probably should not have a strong connection between them, but
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.3\linewidth]{\img/front_view-small.JPG}
+  \caption{Front view of the scanner prototype.}
+  \label{fig:tricorder_front}
+\end{figure}
+
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{\img/back_view3-small.JPG}
+  \caption{The proposed method learns to segment and track arbitrary objects using a rich set of features that include depth, surface normals, color, and optical flow; at runtime, a human in the loop can provide corrections where necessary, and the segmented object can be used as training data to an object recognition system.  }
+  \label{fig:tricorder_back}
+\end{figure}
+
+Much later, this could enable object recognition methods in which segmentation and tracking happens first; this makes training and classification both easier, as shown in the junior work.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{\img/usage.pdf}
+  \caption{}
+  \label{fig:usage}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{\img/usage-2.pdf}
+  \caption{}
+  \label{fig:}
+\end{figure}
+
+
+Indeed, the authors in [CITE] attached a calibration pattern to each scene in order to obtain ground truth.
+
+\begin{figure*}
+  \centering
+  \includegraphics[width=\linewidth]{\img/segmentation_pipeline_graphviz-raw.pdf}
+  \caption{Computation pipeline.  Caching and parallelism is essential for realtime performance.  NPG stands for node potential generator, EPG for edge potential generator, and EPP for edge potential product.}
+  \label{fig:pipeline}
+\end{figure*}
+
+
+  In general, the specifics are less important than providing a large and diverse range of features for the learning algorithm to choose from.
+
+See Figure~\ref{fig:pipeline} for the computation graph
+
+The dataset we use for quantitative evaluation includes some difficult sequences, but is certainly not the most difficult one could imagine solving, and does not include, for example, the segmentation and tracking of uncooperative targets.
