@@ -27,8 +27,10 @@ vga_feature = np.loadtxt(tmpfile)
 os.system("cat " + vgapath + "/*-vga.txt | grep maxflow | grep milliseconds | awk '{sum += $2} END {print sum / NR}' > " + tmpfile)
 vga_maxflow = np.loadtxt(tmpfile)
 
-qqvga_feature = 55.
-qqvga_maxflow = 5.
+os.system("grep 'Total feature computation' `find " + avspath + " -name testing_results.txt-log.txt | grep mask1_skip02` | awk '{sum += $4} END {print sum / NR}' > " + tmpfile)
+qqvga_feature = np.loadtxt(tmpfile)
+os.system("grep maxflow `find " + avspath + " -name testing_results.txt-log.txt | grep mask1_skip02` | awk '{sum += $2} END {print sum / NR}' > " + tmpfile)
+qqvga_maxflow = np.loadtxt(tmpfile)
 
 os.system("rm " + tmpfile)
 

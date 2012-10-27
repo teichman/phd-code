@@ -92,7 +92,7 @@ namespace dst
     ROS_ASSERT(!seq->segmentations_.empty());
 
     SegmentationPipeline sp(NUM_THREADS);
-    sp.verbose_ = false;
+    sp.verbose_ = true;
     sp.setWeights(weights_);
     cv::Mat1b pred(seq->segmentations_[0].size(), 127);
     cv::Mat1b empty_seed(seq->seed_images_[0].size(), 127);
