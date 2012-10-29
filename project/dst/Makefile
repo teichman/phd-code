@@ -134,7 +134,7 @@ avi/done: #$$@/$$@-experiment_metadata.txt
 	cd $(@D) && for num in `seq -f'%04g' 0 9999`; do \
 	mkdir $$num; cd $$num; \
 	MASK=1 SKIP=2 SAVE_INNER_WEIGHTS= make -f $(MAKEFILE) testing_results.txt; \
-	for w in `ls weights*.eig.txt`; do \
+	for w in `ls weights0*.eig.txt | awk 'NR%3==1 {print $$0}'`; do \
 	bname=$${w%.eig.txt}; \
 	mkdir $$bname; \
 	mv $$w $$bname; \
