@@ -120,6 +120,33 @@ random/random.pdf: $$(MAKE_ROOT)/plot_random.py random/done
 	python $< random/
 
 
+avi/accuracy_vs_iter.pdf: 	avi/done \
+				$$(MAKE_ROOT)/plot_accuracy_vs_iter.py \
+				$$(MAKE_ROOT)/common_plotting.py
+	cd $(<D) && for dir in `find * -maxdepth 0 -type d`; do \
+	cd $$dir; \
+	cat `find -name '*-results.txt' | sort` | grep 'Overall mean' | awk '{print $$NF}' > vals.txt; \
+	cd ../; done
+	cd $(<D) && python $(MAKE_ROOT)/plot_accuracy_vs_iter.py `find -name vals.txt`
+
+avi/done: #$$@/$$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	cd $(@D) && for num in `seq -f'%04g' 0 9999`; do \
+	mkdir $$num; cd $$num; \
+	MASK=1 SKIP=2 SAVE_INNER_WEIGHTS= make -f $(MAKEFILE) testing_results.txt; \
+	for w in `ls weights*.eig.txt`; do \
+	bname=$${w%.eig.txt}; \
+	mkdir $$bname; \
+	mv $$w $$bname; \
+	cd $$bname; \
+	MASK=1 SKIP=2 $(EVALUATE) $$w $(TESTING_PATHS) $${bname}-results.txt > $${bname}-results-log.txt; \
+	cd ..; \
+	done; \
+	cd ../; \
+	done;
+	touch $@
+
+
 ############################################################
 # -- TASE realtime experiments
 ############################################################
