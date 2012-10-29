@@ -30,19 +30,19 @@ times.append(np.loadtxt(tmpfile))
 os.system("for file in `find " + path + " -name testing_results.txt | sort | grep mask0_skip01`; do cat $file | grep 'Mean capped normalized loss' | awk '{sum += $NF} END {print sum / NR}'; done > " + tmpfile)
 losses.append(np.loadtxt(tmpfile))
 
-names.append("Mask")
+names.append("Boundary mask")
 os.system("grep 'Average time' `find " + path + " -wholename '*mask1_skip01/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
 times.append(np.loadtxt(tmpfile))
 os.system("for file in `find " + path + " -name testing_results.txt | sort | grep mask1_skip01`; do cat $file | grep 'Mean capped normalized loss' | awk '{sum += $NF} END {print sum / NR}'; done > " + tmpfile)
 losses.append(np.loadtxt(tmpfile))
 
-names.append("Mask \& \n 50\% downsample")
+names.append("Boundary mask \& \n 50\% downsample")
 os.system("grep 'Average time' `find " + path + " -wholename '*mask1_skip02/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
 times.append(np.loadtxt(tmpfile))
 os.system("for file in `find " + path + " -name testing_results.txt | sort | grep mask1_skip02`; do cat $file | grep 'Mean capped normalized loss' | awk '{sum += $NF} END {print sum / NR}'; done > " + tmpfile)
 losses.append(np.loadtxt(tmpfile))
 
-names.append("Mask \& \n 75\% downsample")
+names.append("Boundary mask \& \n 75\% downsample")
 os.system("grep 'Average time' `find " + path + " -wholename '*mask1_skip04/testing_results.txt' | sort` | awk '{print $NF}' > " + tmpfile)
 times.append(np.loadtxt(tmpfile))
 os.system("for file in `find " + path + " -name testing_results.txt | sort | grep mask1_skip04`; do cat $file | grep 'Mean capped normalized loss' | awk '{sum += $NF} END {print sum / NR}'; done > " + tmpfile)
@@ -85,7 +85,7 @@ loss_ax.set_xlim([xlim[0] - width, xlim[1] + width])
 def labelLosses(ax, rects, stdevs, unit):
         for (idx, rect) in enumerate(rects):
             height = rect.get_height()
-            ax.text(rect.get_x() + width / 2. + width * 0.05, height + 0.02, ('%0.2f \n $\pm$ %0.2f' % (height, stdevs[idx])) + unit, ha='center', va='bottom', fontsize='small', multialignment='center')
+            ax.text(rect.get_x() + width / 2. + width * 0.05, height + 0.02, ('%0.3f \n $\pm$ %0.3f' % (height, stdevs[idx])) + unit, ha='center', va='bottom', fontsize='small', multialignment='center')
 
 def labelTimes(ax, rects, stdevs, unit):
     for (idx, rect) in enumerate(rects):

@@ -379,6 +379,10 @@ Overall, our method demonstrates a normalized error reduction of about 65\% comp
 
 \subsubsection{Real time performance}
 
+Description of method
+
+Figures showing what the method looks like
+
 \begin{figure}
   \centering
   \includegraphics[width=\linewidth]{img/realtime.pdf}
@@ -395,7 +399,7 @@ Overall, our method demonstrates a normalized error reduction of about 65\% comp
 \end{figure}
 
 
-\subsection{The importance of learning}
+\subsubsection{The importance of learning}
 
 \begin{figure}
   \centering
@@ -404,6 +408,7 @@ Overall, our method demonstrates a normalized error reduction of about 65\% comp
   \label{fig:timing}
 \end{figure}
 
+Could probably use a method like this for learning, but it's incredibly slow.  This took overnight \todo{actual time?}, vs an average training time of 2.6 minutes for the structural SVM when using the boundary mask and 50\% downsampling of selected features, as described \todo{here}.  \todo{You could probably be smarter about caching for the random evaluations.  If you cached all the features for all frames, assuming the previous segmentation was correct, then evaluated random weights, you could avoid the vast majority of computation.  This would be at least an order of magnitude faster, possibly more.  That still might be an order of magnitude or two slower than structural SVM training, but without knowing this it's not fair to compare the running times and claim that random evaluation is too slow.  All you can claim here is that most random weights suck.   ... it might even be that with early termination (total error greater best error so far means you stop evaluating these weights) random evaluation turns out to be a reasonable method of learning. }
 
 \subsection{Qualitative analysis}
 

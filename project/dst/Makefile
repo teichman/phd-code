@@ -116,6 +116,9 @@ random/done:
 	done;
 	touch $@
 
+random/random.pdf: $$(MAKE_ROOT)/plot_random.py random/done 
+	python $< random/
+
 
 ############################################################
 # -- TASE realtime experiments
