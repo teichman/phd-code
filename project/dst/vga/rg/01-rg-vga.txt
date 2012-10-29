@@ -1,0 +1,2702 @@
+0.00924963	CannyEPG_threshold1:75_threshold2:100_16844440672128421024                                          
+0.0227115 	ColorDeltaEPG_16844440672128421024                                                                  
+0.0609809 	DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438                                            
+0.0077223 	SurfaceNormalEPG_605279030290387305                                                                 
+0.133872  	EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305_8081766739824474441
+0.0358249 	EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_17676588423117411551
+0.0697873 	EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_3793116829452260163
+0.0336776 	EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_17270317568373198357
+
+10000     	SeedNPG_15216689642890190814                                                                        
+0.0360342 	BilateralNPG_14953576982252011012                                                                   
+0.659944  	SeedDistanceNPG_variance:1_9693032406735864574                                                      
+0.201187  	LabelFlowNPG_3925309321022018471                                                                    
+0.0492703 	PatchClassifierNPG_radius:7_393707465411194277                                                      
+0.231372  	DistanceNPG_sigma:0.15_6410694079559762113                                                          
+0.0379191 	IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0_1465132488261561732
+0.0111227 	BoundaryMaskNode_11969468041180875758                                                               
+0.004224  	PriorNPG_16844440672128421024                                                                       
+0.0066011 	TemplateMatcherNPG_7224857344867106795                                                              
+
+Cloud timestamp: 1.38139
+Cloud timestamp: 1.51487
+event: 0, x0: 578, y0: 20, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 582, y0: 20, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 586, y0: 25, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 592, y0: 35, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 599, y0: 48, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 607, y0: 62, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 616, y0: 79, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 623, y0: 94, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 625, y0: 103, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 625, y0: 110, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 1.61501
+event: 0, x0: 625, y0: 109, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 625, y0: 106, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 622, y0: 99, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 621, y0: 93, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 619, y0: 89, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 1.68188
+event: 0, x0: 617, y0: 85, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 616, y0: 84, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 616, y0: 83, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 1.74947
+event: 0, x0: 615, y0: 83, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 614, y0: 83, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 606, y0: 83, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 591, y0: 81, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 572, y0: 79, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 549, y0: 77, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 524, y0: 75, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 1.81773
+event: 0, x0: 495, y0: 75, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 470, y0: 75, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 449, y0: 73, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 438, y0: 73, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 429, y0: 70, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 427, y0: 70, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 1.886
+event: 0, x0: 427, y0: 69, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 426, y0: 69, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 1.95426
+event: 0, x0: 426, y0: 68, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 424, y0: 68, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 423, y0: 67, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 421, y0: 67, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 420, y0: 66, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 420, y0: 65, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 419, y0: 65, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 2.02252
+event: 0, x0: 419, y0: 64, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 418, y0: 64, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 418, y0: 63, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 418, y0: 62, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 418, y0: 61, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 2.09078
+event: 0, x0: 418, y0: 60, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 418, y0: 59, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 418, y0: 57, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 417, y0: 55, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 417, y0: 52, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 2.12492
+event: 0, x0: 417, y0: 50, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 416, y0: 46, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 415, y0: 42, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 415, y0: 37, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 413, y0: 29, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 412, y0: 19, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 2.19318
+event: 0, x0: 410, y0: 6, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 2.26144
+Cloud timestamp: 2.3297
+Cloud timestamp: 2.36383
+Cloud timestamp: 2.39797
+Cloud timestamp: 2.4321
+Cloud timestamp: 2.50036
+Cloud timestamp: 2.56862
+Cloud timestamp: 2.63688
+Cloud timestamp: 2.67102
+Cloud timestamp: 2.73928
+Cloud timestamp: 2.80754
+Cloud timestamp: 2.84167
+Cloud timestamp: 2.94407
+Cloud timestamp: 3.01169
+Cloud timestamp: 3.07869
+Cloud timestamp: 3.14568
+Cloud timestamp: 3.21267
+Cloud timestamp: 3.27973
+event: 0, x0: 191, y0: 4, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 120, y0: 15, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 49, y0: 26, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 3.34685
+Cloud timestamp: 3.44762
+Cloud timestamp: 3.5148
+Cloud timestamp: 3.58199
+Cloud timestamp: 3.78354
+Cloud timestamp: 3.88431
+Cloud timestamp: 3.9179
+Cloud timestamp: 3.95149
+Cloud timestamp: 3.98508
+Cloud timestamp: 4.05227
+Cloud timestamp: 4.11945
+Cloud timestamp: 4.38805
+event: 0, x0: 5, y0: 201, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 4.48857
+event: 0, x0: 28, y0: 204, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 55, y0: 213, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 84, y0: 224, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 115, y0: 236, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 140, y0: 241, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 163, y0: 245, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 182, y0: 247, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 201, y0: 250, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 216, y0: 252, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 4.58897
+event: 0, x0: 230, y0: 254, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 243, y0: 256, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 248, y0: 256, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 252, y0: 256, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 256, y0: 256, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 260, y0: 256, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 268, y0: 256, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 277, y0: 256, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 287, y0: 256, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 299, y0: 256, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 311, y0: 252, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 4.62243
+event: 0, x0: 327, y0: 245, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 342, y0: 237, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 358, y0: 229, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 377, y0: 220, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 394, y0: 213, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 415, y0: 204, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 4.65587
+Cloud timestamp: 4.72273
+event: 0, x0: 430, y0: 197, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 439, y0: 192, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 447, y0: 187, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 456, y0: 182, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 461, y0: 180, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 465, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 467, y0: 178, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 468, y0: 178, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 468, y0: 177, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 469, y0: 177, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 471, y0: 176, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 472, y0: 176, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 472, y0: 175, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 475, y0: 174, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 4.7896
+event: 0, x0: 476, y0: 173, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 478, y0: 172, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 480, y0: 171, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 482, y0: 170, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 485, y0: 169, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 4.85646
+event: 0, x0: 487, y0: 169, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 489, y0: 169, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 491, y0: 169, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 493, y0: 169, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 494, y0: 169, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 495, y0: 170, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 4.92333
+event: 0, x0: 498, y0: 170, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 498, y0: 171, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 499, y0: 171, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 500, y0: 171, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 502, y0: 172, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 504, y0: 172, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 506, y0: 172, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 507, y0: 173, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 508, y0: 173, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 4.99019
+Cloud timestamp: 5.05706
+event: 0, x0: 509, y0: 173, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 510, y0: 174, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 512, y0: 175, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 513, y0: 175, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 515, y0: 176, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 516, y0: 177, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 517, y0: 177, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 5.12392
+event: 0, x0: 517, y0: 178, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 518, y0: 178, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 519, y0: 178, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 520, y0: 178, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 520, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 521, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 5.22422
+Cloud timestamp: 5.32452
+event: 0, x0: 522, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 523, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 524, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 525, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 526, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 527, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 528, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 5.39139
+event: 0, x0: 529, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 530, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 531, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 532, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 5.45825
+event: 0, x0: 533, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 534, y0: 179, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 534, y0: 178, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 535, y0: 178, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 5.52512
+event: 0, x0: 535, y0: 177, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 536, y0: 177, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 537, y0: 177, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 538, y0: 177, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 5.59201
+Cloud timestamp: 5.65901
+event: 1, x0: 538, y0: 177, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 5.72609
+event: 0, x0: 537, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+Cloud timestamp: 5.79325
+event: 0, x0: 536, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 535, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 534, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 533, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 532, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 531, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 529, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 528, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 526, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+Cloud timestamp: 5.86046
+event: 0, x0: 524, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 522, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 521, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 520, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 519, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+Cloud timestamp: 5.92774
+event: 0, x0: 518, y0: 177, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 515, y0: 176, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 513, y0: 176, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 510, y0: 175, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 511, y0: 175, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 510, y0: 175, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 509, y0: 175, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+Cloud timestamp: 5.99505
+event: 0, x0: 508, y0: 175, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 507, y0: 175, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 506, y0: 175, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 505, y0: 175, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 503, y0: 175, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 500, y0: 175, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 498, y0: 175, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 497, y0: 175, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 496, y0: 175, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 496, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+Cloud timestamp: 6.09601
+event: 0, x0: 494, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 493, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 491, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 488, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 486, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 484, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+Cloud timestamp: 6.16332
+event: 0, x0: 483, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 482, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 481, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 480, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 479, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+Cloud timestamp: 6.23063
+event: 0, x0: 478, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 477, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 476, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 475, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 474, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+Cloud timestamp: 6.3316
+event: 0, x0: 473, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+event: 0, x0: 472, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+Cloud timestamp: 6.39891
+Cloud timestamp: 6.46616
+Cloud timestamp: 6.53327
+event: 4, x0: 472, y0: 174, flags: 1, CV_EVENT_FLAG_LBUTTON: 1
+Setting fg.
+Cloud timestamp: 6.60033
+event: 0, x0: 472, y0: 175, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 471, y0: 178, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 469, y0: 183, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 465, y0: 193, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 459, y0: 203, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 451, y0: 213, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 6.70076
+event: 0, x0: 440, y0: 224, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 425, y0: 235, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 408, y0: 246, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 390, y0: 256, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 375, y0: 263, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 6.76762
+event: 0, x0: 362, y0: 269, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 355, y0: 271, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 353, y0: 271, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 352, y0: 271, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 351, y0: 271, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 6.83449
+Cloud timestamp: 6.90135
+event: 0, x0: 350, y0: 270, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 350, y0: 269, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 350, y0: 268, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 350, y0: 267, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 350, y0: 266, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 349, y0: 265, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 349, y0: 263, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 349, y0: 261, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 349, y0: 259, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 6.96822
+event: 0, x0: 349, y0: 257, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 349, y0: 255, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 349, y0: 254, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 349, y0: 253, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 349, y0: 252, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 349, y0: 251, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 7.03508
+event: 2, x0: 349, y0: 251, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 7.10195
+event: 0, x0: 350, y0: 251, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 351, y0: 251, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 355, y0: 253, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 7.16882
+event: 0, x0: 359, y0: 256, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 365, y0: 260, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 370, y0: 263, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 376, y0: 264, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 381, y0: 266, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 385, y0: 268, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 390, y0: 270, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 395, y0: 271, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 399, y0: 273, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 404, y0: 273, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 408, y0: 274, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 412, y0: 274, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 7.23568
+event: 0, x0: 416, y0: 274, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 420, y0: 274, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 421, y0: 274, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 423, y0: 274, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 425, y0: 274, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 7.30255
+event: 0, x0: 427, y0: 274, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 430, y0: 274, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 433, y0: 274, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 436, y0: 274, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 440, y0: 274, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 443, y0: 274, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 446, y0: 274, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 449, y0: 274, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 454, y0: 273, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 458, y0: 272, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 462, y0: 271, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 465, y0: 271, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 7.36941
+event: 0, x0: 467, y0: 270, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 469, y0: 270, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 471, y0: 270, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 473, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 474, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 7.43628
+event: 0, x0: 475, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 476, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 477, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 478, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 479, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 480, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 482, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 486, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 491, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 497, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 7.50314
+event: 0, x0: 505, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 512, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 517, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 521, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 522, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 7.57001
+event: 0, x0: 523, y0: 269, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 7.63687
+event: 0, x0: 523, y0: 268, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 523, y0: 267, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 523, y0: 266, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 523, y0: 265, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 523, y0: 264, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 523, y0: 263, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 523, y0: 262, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 7.73717
+event: 0, x0: 523, y0: 261, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 521, y0: 260, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 518, y0: 259, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 7.80407
+event: 0, x0: 515, y0: 258, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 511, y0: 257, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 503, y0: 256, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 496, y0: 254, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 489, y0: 254, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 480, y0: 252, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 474, y0: 252, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 468, y0: 250, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 464, y0: 248, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 461, y0: 248, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 460, y0: 248, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 459, y0: 247, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 7.87106
+event: 0, x0: 458, y0: 247, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 457, y0: 247, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 456, y0: 247, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 455, y0: 246, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 454, y0: 246, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 452, y0: 246, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 449, y0: 246, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 446, y0: 246, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 7.97168
+event: 0, x0: 442, y0: 246, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 438, y0: 245, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 434, y0: 245, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 431, y0: 245, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 426, y0: 245, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 420, y0: 245, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 8.03883
+event: 0, x0: 414, y0: 245, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 409, y0: 245, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 399, y0: 245, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 388, y0: 245, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 378, y0: 244, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 371, y0: 244, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 365, y0: 244, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 363, y0: 242, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 362, y0: 241, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 361, y0: 241, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 360, y0: 240, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 359, y0: 240, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 358, y0: 239, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 8.10604
+event: 0, x0: 356, y0: 237, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 354, y0: 236, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 351, y0: 234, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 348, y0: 232, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 345, y0: 229, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 8.17329
+event: 0, x0: 342, y0: 226, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 340, y0: 222, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 337, y0: 218, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 334, y0: 213, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 328, y0: 206, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 324, y0: 198, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 321, y0: 193, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 318, y0: 187, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 315, y0: 182, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 313, y0: 177, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 310, y0: 172, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 309, y0: 167, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 8.24054
+event: 0, x0: 307, y0: 162, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 305, y0: 157, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 304, y0: 151, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 302, y0: 145, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 302, y0: 138, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 300, y0: 130, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 300, y0: 123, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 300, y0: 115, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 300, y0: 107, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 8.34141
+event: 0, x0: 300, y0: 100, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 303, y0: 91, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 307, y0: 84, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 313, y0: 74, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 320, y0: 67, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 327, y0: 59, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 336, y0: 51, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 346, y0: 46, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 355, y0: 42, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 363, y0: 37, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 372, y0: 35, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 380, y0: 33, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 8.40865
+event: 0, x0: 391, y0: 30, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 399, y0: 28, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 408, y0: 26, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 417, y0: 25, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 426, y0: 22, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 8.4759
+event: 0, x0: 437, y0: 20, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 448, y0: 18, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 458, y0: 16, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 465, y0: 14, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 469, y0: 13, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 471, y0: 13, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 472, y0: 12, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 474, y0: 12, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 476, y0: 12, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 478, y0: 11, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 482, y0: 11, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 8.54315
+event: 0, x0: 486, y0: 9, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 491, y0: 9, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 495, y0: 8, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 500, y0: 8, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 507, y0: 8, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 515, y0: 8, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 8.61039
+event: 0, x0: 522, y0: 10, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 528, y0: 11, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 534, y0: 14, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 540, y0: 15, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 546, y0: 18, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 551, y0: 19, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 556, y0: 22, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 8.67764
+event: 0, x0: 562, y0: 26, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 570, y0: 31, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 577, y0: 36, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 583, y0: 42, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 588, y0: 48, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 591, y0: 54, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 594, y0: 60, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 596, y0: 64, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 598, y0: 68, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 598, y0: 73, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 601, y0: 78, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 8.74489
+event: 0, x0: 601, y0: 81, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 601, y0: 84, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 601, y0: 86, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 602, y0: 88, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 602, y0: 89, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 602, y0: 91, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 8.8121
+event: 0, x0: 603, y0: 93, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 603, y0: 94, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 604, y0: 96, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 605, y0: 97, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 606, y0: 98, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 608, y0: 100, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 610, y0: 102, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 8.87922
+event: 0, x0: 615, y0: 104, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 619, y0: 104, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 625, y0: 106, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 631, y0: 108, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 635, y0: 110, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 637, y0: 111, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 638, y0: 111, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 639, y0: 112, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 640, y0: 112, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 640, y0: 113, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 641, y0: 113, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 641, y0: 114, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 641, y0: 115, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 642, y0: 116, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 8.94621
+event: 0, x0: 643, y0: 118, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 643, y0: 121, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 643, y0: 125, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 643, y0: 129, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 642, y0: 134, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 639, y0: 141, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 635, y0: 147, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 632, y0: 152, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 629, y0: 157, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 9.04654
+event: 0, x0: 625, y0: 162, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 623, y0: 166, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 622, y0: 169, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 621, y0: 170, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 621, y0: 172, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 620, y0: 172, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 620, y0: 174, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 620, y0: 175, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 619, y0: 175, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 619, y0: 176, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 9.11341
+event: 0, x0: 619, y0: 177, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 619, y0: 179, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 619, y0: 181, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 620, y0: 183, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 620, y0: 186, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 621, y0: 189, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 9.18027
+event: 0, x0: 622, y0: 193, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 624, y0: 196, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 624, y0: 198, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 626, y0: 202, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 626, y0: 204, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 627, y0: 207, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 627, y0: 209, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 628, y0: 213, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 628, y0: 216, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 629, y0: 220, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 629, y0: 223, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 9.24714
+event: 0, x0: 629, y0: 226, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 630, y0: 228, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 630, y0: 229, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 630, y0: 230, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 630, y0: 231, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 9.314
+Cloud timestamp: 9.38087
+event: 0, x0: 630, y0: 232, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 630, y0: 233, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 630, y0: 234, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 9.44773
+event: 0, x0: 630, y0: 235, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 631, y0: 235, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 631, y0: 236, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+event: 5, x0: 631, y0: 236, flags: 2, CV_EVENT_FLAG_LBUTTON: 1
+Cloud timestamp: 9.5146
+Cloud timestamp: 9.58147
+Cloud timestamp: 9.64833
+  Queue sizes: 0 1
+Cloud timestamp: 9.74863
+  Queue sizes: 1 1
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+Cloud timestamp: 9.8155
+  Queue sizes: 2 3
+Img more recent. Adding pair at 9.8155 with delta: 0.000873
+Segmenting pair with timestamp 9.8155
+Aligned queue sizes: 1 1
+graph allocation: 10.498 milliseconds.
+flush: 0.028027 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+1277.17		SeedDistanceNPG_variance:1
+219.605		EdgePotentialAggregator
+148.304		ColorDeltaEPG
+60.479		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+49.927		CannyEPG_threshold1:75_threshold2:100
+40.346		NodePotentialAggregator
+25.158		HSVImageNode
+19.938		BoundaryMaskNode
+18.035		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+17.188		SeedNPG
+15.922		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+14.3		PriorNPG
+8.327		DepthEPG_radius2d:1_sigma_norm:0.01
+7.758		OrganizedSurfaceNormalNode
+7.674		DepthProjector
+6.547		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+5.76		SurfaceNormalEPG
+3.446		TemplateMatcherNPG
+2.053		IntensityImageNode
+0.865		IntegralImageNode
+0.185		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+0.18		KdTreeNode_radius:0.03
+0.012		BilateralNPG
+0.007		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+0.005		SceneAlignmentNode_edge_threshold:0.1
+0.004		PatchClassifierNPG_radius:7
+0.002		ForegroundKdTreeNode
+0.001		DistanceNPG_sigma:0.15
+0.001		LabelFlowNPG
+0.001		EntryPoint-CurrentImage
+0		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+Number of threads:	12
+Sum of node compute times:	1949.2 ms.
+Start-to-finish wall time:	1325.99 ms.
+Slowest path (1325.19 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      7.68	    7.67	DepthProjector
+   1284.85	 1277.17	SeedDistanceNPG_variance:1
+   1325.19	   40.35	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 1326 milliseconds.
+maxflow: 10.1943 milliseconds.
+event: 0, x0: 631, y0: 237, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 630, y0: 237, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 628, y0: 239, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 626, y0: 241, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 624, y0: 243, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 620, y0: 248, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 613, y0: 255, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 604, y0: 265, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 596, y0: 277, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 587, y0: 290, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 578, y0: 302, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 570, y0: 314, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 560, y0: 325, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 551, y0: 335, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 544, y0: 343, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 535, y0: 352, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 525, y0: 362, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 514, y0: 372, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 502, y0: 382, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 489, y0: 392, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 474, y0: 402, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 459, y0: 412, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 445, y0: 422, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 432, y0: 431, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 421, y0: 438, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 414, y0: 443, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 408, y0: 445, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 407, y0: 445, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 406, y0: 445, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 405, y0: 444, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 404, y0: 442, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 401, y0: 440, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 399, y0: 437, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 397, y0: 434, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 395, y0: 432, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 394, y0: 430, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 393, y0: 428, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 393, y0: 426, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 393, y0: 424, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 393, y0: 422, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 393, y0: 421, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 393, y0: 420, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 393, y0: 418, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 394, y0: 417, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 394, y0: 416, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 395, y0: 416, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 397, y0: 415, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 398, y0: 413, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 399, y0: 409, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 399, y0: 404, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 397, y0: 403, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 397, y0: 404, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 397, y0: 406, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 397, y0: 410, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 397, y0: 418, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 397, y0: 433, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 395, y0: 451, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+event: 0, x0: 393, y0: 469, flags: 0, CV_EVENT_FLAG_LBUTTON: 1
+  Queue sizes: 0 2
+Cloud timestamp: 11.2919
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+  Queue sizes: 1 2
+Cloud timestamp: 11.3591
+  Queue sizes: 2 2
+Backs are equal. Adding pair at 11.3591 with delta 0.000949
+Segmenting pair with timestamp 11.3591
+Aligned queue sizes: 2 2
+graph allocation: 6.86168 milliseconds.
+flush: 8.23459 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+227.068		EdgePotentialAggregator
+186.077		PatchClassifierNPG_radius:7
+133.944		ColorDeltaEPG
+89.708		SeedDistanceNPG_variance:1
+68.706		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+63.669		NodePotentialAggregator
+51.121		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+26.845		DepthEPG_radius2d:1_sigma_norm:0.01
+22.813		CannyEPG_threshold1:75_threshold2:100
+19.077		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+14.982		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+13.83		OrganizedSurfaceNormalNode
+13.399		HSVImageNode
+12.809		SurfaceNormalEPG
+12.762		SceneAlignmentNode_edge_threshold:0.1
+11.599		DistanceNPG_sigma:0.15
+8.49		SeedNPG
+8.375		ForegroundKdTreeNode
+7.563		BoundaryMaskNode
+5.95		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+5.131		DepthProjector
+3.412		LabelFlowNPG
+2.857		KdTreeNode_radius:0.03
+1.124		IntensityImageNode
+0.94		IntegralImageNode
+0.746		TemplateMatcherNPG
+0.053		BilateralNPG
+0.002		PriorNPG
+0.002		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+0.001		EntryPoint-Graph
+0.001		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+0		EntryPoint-CurrentImage
+Number of threads:	12
+Sum of node compute times:	1013.06 ms.
+Start-to-finish wall time:	422.249 ms.
+Slowest path (412.133 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+    133.94	  133.94	ColorDeltaEPG
+    185.06	   51.12	EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+    412.13	  227.07	EdgePotentialAggregator
+
+============================================================
+
+Total feature computation: 422.258 milliseconds.
+maxflow: 13.2458 milliseconds.
+  Queue sizes: 0 1
+  Queue sizes: 0 2
+  Queue sizes: 0 3
+Cloud timestamp: 11.9286
+  Queue sizes: 1 3
+Img more recent. Adding pair at 11.9286 with delta: 0.000709
+Segmenting pair with timestamp 11.9286
+Aligned queue sizes: 3 3
+graph allocation: 5.39893 milliseconds.
+flush: 10.6875 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+670.298		BilateralNPG
+418.903		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+258.757		PatchClassifierNPG_radius:7
+239.994		EdgePotentialAggregator
+131.38		ColorDeltaEPG
+89.058		SeedDistanceNPG_variance:1
+79.077		NodePotentialAggregator
+65.713		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+53.657		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+32.312		DepthEPG_radius2d:1_sigma_norm:0.01
+27.781		HSVImageNode
+22.993		CannyEPG_threshold1:75_threshold2:100
+20.184		SurfaceNormalEPG
+15.773		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+13.429		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+10.841		OrganizedSurfaceNormalNode
+10.627		DistanceNPG_sigma:0.15
+9.636		BoundaryMaskNode
+9.542		SceneAlignmentNode_edge_threshold:0.1
+8.399		SeedNPG
+6.153		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+5.328		DepthProjector
+3.579		ForegroundKdTreeNode
+3.381		KdTreeNode_radius:0.03
+1.214		IntensityImageNode
+0.779		TemplateMatcherNPG
+0.6		IntegralImageNode
+0.038		LabelFlowNPG
+0.003		PriorNPG
+0.001		EntryPoint-PreviousCloud
+0.001		EntryPoint-CurrentImage
+0		EntryPoint-Graph
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+Number of threads:	12
+Sum of node compute times:	2209.43 ms.
+Start-to-finish wall time:	821.606 ms.
+Slowest path (817.903 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      5.33	    5.33	DepthProjector
+     58.99	   53.66	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     68.53	    9.54	SceneAlignmentNode_edge_threshold:0.1
+    738.83	  670.30	BilateralNPG
+    817.90	   79.08	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 821.615 milliseconds.
+maxflow: 9.13112 milliseconds.
+  Queue sizes: 0 2
+Cloud timestamp: 12.8991
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+Cloud timestamp: 12.966
+  Queue sizes: 2 3
+Img more recent. Adding pair at 12.966 with delta: 0.000888
+Segmenting pair with timestamp 12.966
+Aligned queue sizes: 4 4
+graph allocation: 7.35548 milliseconds.
+flush: 15.6975 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+573.592		BilateralNPG
+478.03		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+233.031		EdgePotentialAggregator
+196.369		PatchClassifierNPG_radius:7
+133.128		ColorDeltaEPG
+88.144		SeedDistanceNPG_variance:1
+73.194		NodePotentialAggregator
+58.007		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+49.853		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+29.585		DepthEPG_radius2d:1_sigma_norm:0.01
+26.076		CannyEPG_threshold1:75_threshold2:100
+17.729		SurfaceNormalEPG
+16.133		HSVImageNode
+12.598		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+11.316		OrganizedSurfaceNormalNode
+11.127		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+9.826		SceneAlignmentNode_edge_threshold:0.1
+9.542		DistanceNPG_sigma:0.15
+7.853		BoundaryMaskNode
+7.833		DepthProjector
+7.226		SeedNPG
+6.004		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+4.076		ForegroundKdTreeNode
+2.722		KdTreeNode_radius:0.03
+1.233		IntensityImageNode
+1.034		IntegralImageNode
+0.871		TemplateMatcherNPG
+0.04		LabelFlowNPG
+0.002		PriorNPG
+0.001		EntryPoint-Graph
+0.001		EntryPoint-CurrentImage
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+Number of threads:	12
+Sum of node compute times:	2066.18 ms.
+Start-to-finish wall time:	723.639 ms.
+Slowest path (722.453 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      7.83	    7.83	DepthProjector
+     65.84	   58.01	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     75.67	    9.83	SceneAlignmentNode_edge_threshold:0.1
+    649.26	  573.59	BilateralNPG
+    722.45	   73.19	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 723.647 milliseconds.
+maxflow: 10.9107 milliseconds.
+  Queue sizes: 0 2
+Cloud timestamp: 12.9994
+  Queue sizes: 1 2
+Img more recent. Adding pair at 12.9994 with delta: 0.000939
+Segmenting pair with timestamp 12.9994
+Aligned queue sizes: 5 5
+graph allocation: 3.89571 milliseconds.
+flush: 13.0485 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+586.183		BilateralNPG
+461.769		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+239.223		EdgePotentialAggregator
+212.247		PatchClassifierNPG_radius:7
+136.202		ColorDeltaEPG
+91.028		SeedDistanceNPG_variance:1
+78.026		NodePotentialAggregator
+55.972		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+54.71		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+32.446		DepthEPG_radius2d:1_sigma_norm:0.01
+27.107		CannyEPG_threshold1:75_threshold2:100
+17.729		SurfaceNormalEPG
+15.387		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+13.047		HSVImageNode
+11.917		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+11.675		OrganizedSurfaceNormalNode
+9.15		DistanceNPG_sigma:0.15
+8.543		SceneAlignmentNode_edge_threshold:0.1
+8.239		SeedNPG
+7.577		BoundaryMaskNode
+6.668		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+5.981		DepthProjector
+4.813		ForegroundKdTreeNode
+2.244		IntensityImageNode
+2.121		KdTreeNode_radius:0.03
+0.686		TemplateMatcherNPG
+0.628		IntegralImageNode
+0.028		LabelFlowNPG
+0.002		PriorNPG
+0		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+0		EntryPoint-CurrentImage
+Number of threads:	12
+Sum of node compute times:	2101.35 ms.
+Start-to-finish wall time:	735.746 ms.
+Slowest path (734.705 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      5.98	    5.98	DepthProjector
+     61.95	   55.97	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     70.50	    8.54	SceneAlignmentNode_edge_threshold:0.1
+    656.68	  586.18	BilateralNPG
+    734.70	   78.03	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 735.756 milliseconds.
+maxflow: 9.95407 milliseconds.
+Cloud timestamp: 13.8383
+  Queue sizes: 1 1
+  Queue sizes: 1 2
+  Queue sizes: 1 2
+Cloud timestamp: 14.7441
+  Queue sizes: 2 2
+Backs are equal. Adding pair at 14.7441 with delta 0.000923
+Segmenting pair with timestamp 14.7441
+Aligned queue sizes: 6 6
+graph allocation: 4.90998 milliseconds.
+flush: 14.5707 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+569.238		BilateralNPG
+431.829		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+242.377		EdgePotentialAggregator
+206.836		PatchClassifierNPG_radius:7
+135.105		ColorDeltaEPG
+91.79		SeedDistanceNPG_variance:1
+72.698		NodePotentialAggregator
+55.64		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+53.011		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+31.374		DepthEPG_radius2d:1_sigma_norm:0.01
+27.36		CannyEPG_threshold1:75_threshold2:100
+16.21		SurfaceNormalEPG
+15.142		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+13.079		HSVImageNode
+11.868		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+11.586		DistanceNPG_sigma:0.15
+10.973		OrganizedSurfaceNormalNode
+10.491		SceneAlignmentNode_edge_threshold:0.1
+8.707		BoundaryMaskNode
+8.481		SeedNPG
+6.798		DepthProjector
+6.052		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+3.388		ForegroundKdTreeNode
+3.003		TemplateMatcherNPG
+2.235		KdTreeNode_radius:0.03
+1.019		IntensityImageNode
+0.731		IntegralImageNode
+0.031		LabelFlowNPG
+0.001		PriorNPG
+0.001		EntryPoint-Graph
+0.001		EntryPoint-PreviousCloud
+0.001		EntryPoint-CurrentImage
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+Number of threads:	12
+Sum of node compute times:	2047.06 ms.
+Start-to-finish wall time:	716.491 ms.
+Slowest path (712.237 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      6.80	    6.80	DepthProjector
+     59.81	   53.01	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     70.30	   10.49	SceneAlignmentNode_edge_threshold:0.1
+    639.54	  569.24	BilateralNPG
+    712.24	   72.70	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 716.5 milliseconds.
+maxflow: 9.46346 milliseconds.
+  Queue sizes: 0 1
+Cloud timestamp: 15.58
+  Queue sizes: 1 1
+  Queue sizes: 1 2
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+Cloud timestamp: 15.6804
+  Queue sizes: 2 3
+Img more recent. Adding pair at 15.6804 with delta: 0.001281
+Segmenting pair with timestamp 15.6804
+Aligned queue sizes: 7 7
+graph allocation: 10.8408 milliseconds.
+flush: 12.3108 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+581.214		BilateralNPG
+412.433		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+234.862		EdgePotentialAggregator
+192.698		PatchClassifierNPG_radius:7
+130.128		ColorDeltaEPG
+87.681		SeedDistanceNPG_variance:1
+70.474		NodePotentialAggregator
+58.042		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+49.374		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+23.405		DepthEPG_radius2d:1_sigma_norm:0.01
+23.293		CannyEPG_threshold1:75_threshold2:100
+16.976		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+14.121		HSVImageNode
+12.064		SurfaceNormalEPG
+11.718		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+11.276		OrganizedSurfaceNormalNode
+9.241		SceneAlignmentNode_edge_threshold:0.1
+8.98		DistanceNPG_sigma:0.15
+8.263		SeedNPG
+7.191		BoundaryMaskNode
+6.084		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+6.005		DepthProjector
+3.728		ForegroundKdTreeNode
+2.08		KdTreeNode_radius:0.03
+1.199		IntensityImageNode
+0.695		TemplateMatcherNPG
+0.634		IntegralImageNode
+0.03		LabelFlowNPG
+0.002		PriorNPG
+0.001		EntryPoint-Graph
+0.001		EntryPoint-PreviousSegmentation
+0.001		EntryPoint-SeedImage
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-CurrentImage
+Number of threads:	12
+Sum of node compute times:	1983.89 ms.
+Start-to-finish wall time:	726.505 ms.
+Slowest path (724.976 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      6.00	    6.00	DepthProjector
+     64.05	   58.04	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     73.29	    9.24	SceneAlignmentNode_edge_threshold:0.1
+    654.50	  581.21	BilateralNPG
+    724.98	   70.47	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 726.514 milliseconds.
+maxflow: 9.55286 milliseconds.
+  Queue sizes: 0 2
+  Queue sizes: 0 3
+  Queue sizes: 0 4
+Cloud timestamp: 15.7139
+  Queue sizes: 1 4
+Img more recent. Adding pair at 15.7139 with delta: 0.001301
+Segmenting pair with timestamp 15.7139
+Aligned queue sizes: 8 8
+graph allocation: 5.18266 milliseconds.
+flush: 12.6032 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+569.078		BilateralNPG
+462.076		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+231.03		EdgePotentialAggregator
+208.33		PatchClassifierNPG_radius:7
+139.233		ColorDeltaEPG
+125.599		DistanceNPG_sigma:0.15
+88.478		SeedDistanceNPG_variance:1
+76.806		NodePotentialAggregator
+57.928		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+55.217		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+33.637		DepthEPG_radius2d:1_sigma_norm:0.01
+23.586		CannyEPG_threshold1:75_threshold2:100
+18.234		SurfaceNormalEPG
+13.381		HSVImageNode
+12.117		OrganizedSurfaceNormalNode
+11.66		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+11.518		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+9.036		SceneAlignmentNode_edge_threshold:0.1
+7.648		SeedNPG
+7.558		BoundaryMaskNode
+6.425		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+5.209		DepthProjector
+3.1		ForegroundKdTreeNode
+2.299		IntensityImageNode
+2.294		KdTreeNode_radius:0.03
+0.689		TemplateMatcherNPG
+0.586		IntegralImageNode
+0.041		LabelFlowNPG
+0.002		PriorNPG
+0		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+0		EntryPoint-CurrentImage
+Number of threads:	12
+Sum of node compute times:	2182.79 ms.
+Start-to-finish wall time:	719.201 ms.
+Slowest path (718.057 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      5.21	    5.21	DepthProjector
+     63.14	   57.93	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     72.17	    9.04	SceneAlignmentNode_edge_threshold:0.1
+    641.25	  569.08	BilateralNPG
+    718.06	   76.81	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 719.211 milliseconds.
+maxflow: 10.0091 milliseconds.
+Cloud timestamp: 16.5872
+  Queue sizes: 1 3
+Img more recent. Adding pair at 16.5872 with delta: 0.000599
+Segmenting pair with timestamp 16.5872
+Aligned queue sizes: 9 9
+graph allocation: 11.0655 milliseconds.
+flush: 12.6928 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+603.236		BilateralNPG
+407.22		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+272.238		EdgePotentialAggregator
+218.343		PatchClassifierNPG_radius:7
+144.534		DistanceNPG_sigma:0.15
+137.278		ColorDeltaEPG
+91.201		SeedDistanceNPG_variance:1
+78.621		NodePotentialAggregator
+54.429		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+52.049		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+33.7		DepthEPG_radius2d:1_sigma_norm:0.01
+24.082		CannyEPG_threshold1:75_threshold2:100
+17.155		SurfaceNormalEPG
+13.646		HSVImageNode
+13.068		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+12.546		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+11.134		OrganizedSurfaceNormalNode
+8.696		SeedNPG
+8.575		BoundaryMaskNode
+8.424		SceneAlignmentNode_edge_threshold:0.1
+6.93		DepthProjector
+6.314		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+6.012		ForegroundKdTreeNode
+2.223		KdTreeNode_radius:0.03
+0.971		IntensityImageNode
+0.738		TemplateMatcherNPG
+0.508		IntegralImageNode
+0.039		LabelFlowNPG
+0.001		PriorNPG
+0.001		EntryPoint-PreviousCloud
+0.001		EntryPoint-PreviousSegmentation
+0.001		EntryPoint-CurrentImage
+0		EntryPoint-Graph
+0		EntryPoint-Cloud
+0		EntryPoint-SeedImage
+Number of threads:	12
+Sum of node compute times:	2233.91 ms.
+Start-to-finish wall time:	754.011 ms.
+Slowest path (751.641 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      6.93	    6.93	DepthProjector
+     61.36	   54.43	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     69.78	    8.42	SceneAlignmentNode_edge_threshold:0.1
+    673.02	  603.24	BilateralNPG
+    751.64	   78.62	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 754.018 milliseconds.
+maxflow: 9.71615 milliseconds.
+  Queue sizes: 0 2
+Cloud timestamp: 17.4584
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+Cloud timestamp: 18.3285
+  Queue sizes: 2 3
+Img more recent. Adding pair at 18.3285 with delta: 0.000936
+Segmenting pair with timestamp 18.3285
+Aligned queue sizes: 10 10
+graph allocation: 2.94933 milliseconds.
+flush: 12.7548 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+562.875		BilateralNPG
+436.325		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+248.393		EdgePotentialAggregator
+210.565		PatchClassifierNPG_radius:7
+134.303		ColorDeltaEPG
+126.832		DistanceNPG_sigma:0.15
+101.659		SeedDistanceNPG_variance:1
+72.663		NodePotentialAggregator
+52.367		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+50.078		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+29.255		DepthEPG_radius2d:1_sigma_norm:0.01
+22.511		CannyEPG_threshold1:75_threshold2:100
+18.18		SurfaceNormalEPG
+17.608		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+14.892		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+13.66		HSVImageNode
+12.438		SeedNPG
+10.727		OrganizedSurfaceNormalNode
+8.61		SceneAlignmentNode_edge_threshold:0.1
+7.12		BoundaryMaskNode
+6.429		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+5.34		DepthProjector
+3.787		ForegroundKdTreeNode
+2.686		KdTreeNode_radius:0.03
+1.006		IntensityImageNode
+0.694		TemplateMatcherNPG
+0.593		IntegralImageNode
+0.036		LabelFlowNPG
+0.002		PriorNPG
+0.001		EntryPoint-Graph
+0.001		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+0		EntryPoint-CurrentImage
+Number of threads:	12
+Sum of node compute times:	2171.64 ms.
+Start-to-finish wall time:	703.162 ms.
+Slowest path (701.855 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      5.34	    5.34	DepthProjector
+     57.71	   52.37	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     66.32	    8.61	SceneAlignmentNode_edge_threshold:0.1
+    629.19	  562.88	BilateralNPG
+    701.86	   72.66	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 703.17 milliseconds.
+maxflow: 9.13365 milliseconds.
+  Queue sizes: 0 3
+Cloud timestamp: 18.362
+  Queue sizes: 1 3
+Img more recent. Adding pair at 18.362 with delta: 0.000988
+Segmenting pair with timestamp 18.362
+Aligned queue sizes: 11 11
+graph allocation: 6.50919 milliseconds.
+flush: 12.3842 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+514.545		BilateralNPG
+379.953		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+224.77		EdgePotentialAggregator
+207.638		PatchClassifierNPG_radius:7
+138.317		ColorDeltaEPG
+123.115		DistanceNPG_sigma:0.15
+107.133		SeedDistanceNPG_variance:1
+96.468		NodePotentialAggregator
+55.594		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+52.954		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+36.73		DepthEPG_radius2d:1_sigma_norm:0.01
+31.063		CannyEPG_threshold1:75_threshold2:100
+16.043		HSVImageNode
+15.368		SurfaceNormalEPG
+13.74		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+13.355		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+11.687		OrganizedSurfaceNormalNode
+9.571		SceneAlignmentNode_edge_threshold:0.1
+7.631		SeedNPG
+7.468		BoundaryMaskNode
+6.231		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+5.836		DepthProjector
+3.924		ForegroundKdTreeNode
+1.986		KdTreeNode_radius:0.03
+1.183		IntensityImageNode
+0.742		TemplateMatcherNPG
+0.627		IntegralImageNode
+0.029		LabelFlowNPG
+0.003		PriorNPG
+0.001		EntryPoint-SeedImage
+0		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-CurrentImage
+Number of threads:	12
+Sum of node compute times:	2083.7 ms.
+Start-to-finish wall time:	692.416 ms.
+Slowest path (682.014 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      5.84	    5.84	DepthProjector
+     61.43	   55.59	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     71.00	    9.57	SceneAlignmentNode_edge_threshold:0.1
+    585.55	  514.55	BilateralNPG
+    682.01	   96.47	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 692.425 milliseconds.
+maxflow: 11.0289 milliseconds.
+Cloud timestamp: 19.2347
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+  Queue sizes: 1 2
+Cloud timestamp: 20.073
+  Queue sizes: 2 2
+Backs are equal. Adding pair at 20.073 with delta 0.000704
+Segmenting pair with timestamp 20.073
+Aligned queue sizes: 12 12
+graph allocation: 5.782 milliseconds.
+flush: 12.2954 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+550.769		BilateralNPG
+407.579		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+253.907		EdgePotentialAggregator
+227.698		PatchClassifierNPG_radius:7
+130.181		ColorDeltaEPG
+112.002		DistanceNPG_sigma:0.15
+87.817		SeedDistanceNPG_variance:1
+74.623		NodePotentialAggregator
+70.075		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+62.412		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+32.372		DepthEPG_radius2d:1_sigma_norm:0.01
+23.325		CannyEPG_threshold1:75_threshold2:100
+18.05		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+15.053		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+12.967		HSVImageNode
+11.993		SurfaceNormalEPG
+10.612		OrganizedSurfaceNormalNode
+7.828		SeedNPG
+7.423		BoundaryMaskNode
+6.818		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+6.672		SceneAlignmentNode_edge_threshold:0.1
+5.393		DepthProjector
+3.648		ForegroundKdTreeNode
+2.487		KdTreeNode_radius:0.03
+1.046		IntensityImageNode
+0.689		TemplateMatcherNPG
+0.662		IntegralImageNode
+0.041		LabelFlowNPG
+0.002		PriorNPG
+0.001		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+0		EntryPoint-CurrentImage
+Number of threads:	12
+Sum of node compute times:	2144.14 ms.
+Start-to-finish wall time:	701.075 ms.
+Slowest path (699.869 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      5.39	    5.39	DepthProjector
+     67.80	   62.41	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     74.48	    6.67	SceneAlignmentNode_edge_threshold:0.1
+    625.25	  550.77	BilateralNPG
+    699.87	   74.62	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 701.086 milliseconds.
+maxflow: 9.56275 milliseconds.
+  Queue sizes: 0 1
+  Queue sizes: 0 2
+  Queue sizes: 0 3
+Cloud timestamp: 20.9088
+  Queue sizes: 1 3
+Img more recent. Adding pair at 20.9088 with delta: 0.001346
+Segmenting pair with timestamp 20.9088
+Aligned queue sizes: 13 13
+graph allocation: 3.57283 milliseconds.
+flush: 12.617 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+563.827		BilateralNPG
+502.334		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+236.101		EdgePotentialAggregator
+212.363		PatchClassifierNPG_radius:7
+136.524		ColorDeltaEPG
+110.892		DistanceNPG_sigma:0.15
+89.068		SeedDistanceNPG_variance:1
+70.415		NodePotentialAggregator
+64.441		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+62.023		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+28.792		DepthEPG_radius2d:1_sigma_norm:0.01
+27.643		CannyEPG_threshold1:75_threshold2:100
+17.886		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+17.087		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+15.989		SurfaceNormalEPG
+15.149		HSVImageNode
+11.935		OrganizedSurfaceNormalNode
+10.419		SceneAlignmentNode_edge_threshold:0.1
+8.241		BoundaryMaskNode
+7.714		SeedNPG
+6.036		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+5.389		DepthProjector
+3.503		ForegroundKdTreeNode
+1.942		KdTreeNode_radius:0.03
+1.221		IntensityImageNode
+0.879		TemplateMatcherNPG
+0.628		IntegralImageNode
+0.035		LabelFlowNPG
+0.002		PriorNPG
+0.001		EntryPoint-Graph
+0.001		EntryPoint-PreviousSegmentation
+0.001		EntryPoint-CurrentImage
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-SeedImage
+Number of threads:	12
+Sum of node compute times:	2228.48 ms.
+Start-to-finish wall time:	714.891 ms.
+Slowest path (712.074 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      5.39	    5.39	DepthProjector
+     67.41	   62.02	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     77.83	   10.42	SceneAlignmentNode_edge_threshold:0.1
+    641.66	  563.83	BilateralNPG
+    712.07	   70.42	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 714.901 milliseconds.
+maxflow: 9.95385 milliseconds.
+  Queue sizes: 0 2
+Cloud timestamp: 21.7819
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+  Queue sizes: 1 2
+Cloud timestamp: 21.8827
+  Queue sizes: 2 2
+Backs are equal. Adding pair at 21.8827 with delta 0.000526
+Segmenting pair with timestamp 21.8827
+Aligned queue sizes: 14 14
+graph allocation: 9.70703 milliseconds.
+flush: 12.2281 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+600.736		BilateralNPG
+408.153		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+262.754		PatchClassifierNPG_radius:7
+229.92		EdgePotentialAggregator
+134.959		ColorDeltaEPG
+111.295		DistanceNPG_sigma:0.15
+97.565		SeedDistanceNPG_variance:1
+70.527		NodePotentialAggregator
+56.131		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+44.186		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+28.845		DepthEPG_radius2d:1_sigma_norm:0.01
+23.272		CannyEPG_threshold1:75_threshold2:100
+15.156		HSVImageNode
+12.629		SurfaceNormalEPG
+12.509		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+11.736		OrganizedSurfaceNormalNode
+11.186		BoundaryMaskNode
+10.997		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+10.334		SceneAlignmentNode_edge_threshold:0.1
+8.536		SeedNPG
+6.675		ForegroundKdTreeNode
+6.274		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+4.911		DepthProjector
+2.879		KdTreeNode_radius:0.03
+1.18		IntensityImageNode
+0.746		TemplateMatcherNPG
+0.629		IntegralImageNode
+0.035		LabelFlowNPG
+0.001		PriorNPG
+0.001		EntryPoint-PreviousSegmentation
+0		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-SeedImage
+0		EntryPoint-CurrentImage
+Number of threads:	12
+Sum of node compute times:	2184.76 ms.
+Start-to-finish wall time:	749.553 ms.
+Slowest path (742.639 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      4.91	    4.91	DepthProjector
+     61.04	   56.13	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     71.38	   10.33	SceneAlignmentNode_edge_threshold:0.1
+    672.11	  600.74	BilateralNPG
+    742.64	   70.53	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 749.562 milliseconds.
+maxflow: 9.05153 milliseconds.
+  Queue sizes: 0 1
+Cloud timestamp: 22.7537
+  Queue sizes: 1 1
+  Queue sizes: 1 2
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+Cloud timestamp: 22.854
+  Queue sizes: 2 3
+Img more recent. Adding pair at 22.854 with delta: 0.000142
+Segmenting pair with timestamp 22.854
+Aligned queue sizes: 15 15
+graph allocation: 10.9019 milliseconds.
+flush: 11.8573 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+524.1		BilateralNPG
+441.26		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+236.692		EdgePotentialAggregator
+169.14		PatchClassifierNPG_radius:7
+127.93		ColorDeltaEPG
+122.238		DistanceNPG_sigma:0.15
+88.813		SeedDistanceNPG_variance:1
+74.946		NodePotentialAggregator
+56.49		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+56.323		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+28.191		CannyEPG_threshold1:75_threshold2:100
+22.156		DepthEPG_radius2d:1_sigma_norm:0.01
+13.389		HSVImageNode
+12.664		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+12.603		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+11.659		SurfaceNormalEPG
+11.207		OrganizedSurfaceNormalNode
+10.472		SceneAlignmentNode_edge_threshold:0.1
+9.921		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+7.583		SeedNPG
+7.545		BoundaryMaskNode
+5.407		DepthProjector
+3.098		ForegroundKdTreeNode
+2.954		KdTreeNode_radius:0.03
+1.006		IntensityImageNode
+0.834		TemplateMatcherNPG
+0.564		IntegralImageNode
+0.058		LabelFlowNPG
+0.002		PriorNPG
+0		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+0		EntryPoint-CurrentImage
+Number of threads:	12
+Sum of node compute times:	2059.25 ms.
+Start-to-finish wall time:	793.257 ms.
+Slowest path (671.415 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      5.41	    5.41	DepthProjector
+     61.90	   56.49	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     72.37	   10.47	SceneAlignmentNode_edge_threshold:0.1
+    596.47	  524.10	BilateralNPG
+    671.42	   74.95	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 793.267 milliseconds.
+maxflow: 9.2252 milliseconds.
+  Queue sizes: 0 2
+  Queue sizes: 0 3
+  Queue sizes: 0 4
+Cloud timestamp: 22.8874
+  Queue sizes: 1 4
+Img more recent. Adding pair at 22.8874 with delta: 0.000225
+Segmenting pair with timestamp 22.8874
+Aligned queue sizes: 16 16
+graph allocation: 2.87464 milliseconds.
+flush: 12.436 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+572.463		BilateralNPG
+402.497		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+237.104		EdgePotentialAggregator
+223.8		PatchClassifierNPG_radius:7
+138.747		ColorDeltaEPG
+112.798		DistanceNPG_sigma:0.15
+90.739		SeedDistanceNPG_variance:1
+73.692		NodePotentialAggregator
+60.191		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+57.748		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+29.84		DepthEPG_radius2d:1_sigma_norm:0.01
+25.302		CannyEPG_threshold1:75_threshold2:100
+16.908		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+16.769		HSVImageNode
+15.464		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+12.117		OrganizedSurfaceNormalNode
+11.619		SurfaceNormalEPG
+9.74		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+8.621		BoundaryMaskNode
+7.949		SeedNPG
+7.235		SceneAlignmentNode_edge_threshold:0.1
+5.847		DepthProjector
+3.856		ForegroundKdTreeNode
+2.359		KdTreeNode_radius:0.03
+0.975		IntensityImageNode
+0.91		TemplateMatcherNPG
+0.597		IntegralImageNode
+0.039		LabelFlowNPG
+0.002		PriorNPG
+0.001		EntryPoint-SeedImage
+0.001		EntryPoint-CurrentImage
+0		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+Number of threads:	12
+Sum of node compute times:	2145.93 ms.
+Start-to-finish wall time:	720.666 ms.
+Slowest path (719.429 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      5.85	    5.85	DepthProjector
+     66.04	   60.19	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     73.27	    7.24	SceneAlignmentNode_edge_threshold:0.1
+    645.74	  572.46	BilateralNPG
+    719.43	   73.69	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 720.674 milliseconds.
+maxflow: 9.55768 milliseconds.
+Cloud timestamp: 23.8254
+  Queue sizes: 1 3
+Img more recent. Adding pair at 23.8254 with delta: 0.000683
+Segmenting pair with timestamp 23.8254
+Aligned queue sizes: 17 17
+graph allocation: 10.5761 milliseconds.
+flush: 13.4204 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+560.361		BilateralNPG
+449.568		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+228.429		EdgePotentialAggregator
+205.161		PatchClassifierNPG_radius:7
+135.963		ColorDeltaEPG
+116.443		DistanceNPG_sigma:0.15
+92.696		SeedDistanceNPG_variance:1
+79.889		NodePotentialAggregator
+61.248		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+58.204		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+34.456		CannyEPG_threshold1:75_threshold2:100
+28.929		DepthEPG_radius2d:1_sigma_norm:0.01
+18.313		SurfaceNormalEPG
+15.883		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+15.632		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+12.868		HSVImageNode
+11.176		OrganizedSurfaceNormalNode
+9.698		SeedNPG
+8.068		BoundaryMaskNode
+7.855		SceneAlignmentNode_edge_threshold:0.1
+6.923		DepthProjector
+5.974		ForegroundKdTreeNode
+5.882		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+3.824		KdTreeNode_radius:0.03
+1.23		IntensityImageNode
+0.792		TemplateMatcherNPG
+0.721		IntegralImageNode
+0.031		LabelFlowNPG
+0.001		PriorNPG
+0		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+0		EntryPoint-CurrentImage
+Number of threads:	12
+Sum of node compute times:	2176.22 ms.
+Start-to-finish wall time:	714.019 ms.
+Slowest path (713.232 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      6.92	    6.92	DepthProjector
+     65.13	   58.20	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     72.98	    7.86	SceneAlignmentNode_edge_threshold:0.1
+    633.34	  560.36	BilateralNPG
+    713.23	   79.89	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 714.028 milliseconds.
+maxflow: 10.5696 milliseconds.
+  Queue sizes: 0 2
+Cloud timestamp: 24.6987
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+Cloud timestamp: 25.5349
+  Queue sizes: 2 3
+Img more recent. Adding pair at 25.5349 with delta: 0.000484
+Segmenting pair with timestamp 25.5349
+Aligned queue sizes: 18 18
+graph allocation: 2.76388 milliseconds.
+flush: 12.844 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+639.347		BilateralNPG
+432.542		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+233.086		PatchClassifierNPG_radius:7
+229.998		EdgePotentialAggregator
+140.391		DistanceNPG_sigma:0.15
+131.345		ColorDeltaEPG
+88.263		SeedDistanceNPG_variance:1
+78.102		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+73.679		NodePotentialAggregator
+60.235		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+33.139		DepthEPG_radius2d:1_sigma_norm:0.01
+24.113		CannyEPG_threshold1:75_threshold2:100
+22.386		SurfaceNormalEPG
+13.443		HSVImageNode
+12.757		OrganizedSurfaceNormalNode
+12.641		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+11.524		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+8.526		SeedNPG
+8.197		SceneAlignmentNode_edge_threshold:0.1
+7.361		BoundaryMaskNode
+5.838		DepthProjector
+5.753		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+3.314		ForegroundKdTreeNode
+2.419		KdTreeNode_radius:0.03
+1.029		IntensityImageNode
+0.688		TemplateMatcherNPG
+0.53		IntegralImageNode
+0.036		LabelFlowNPG
+0.002		PriorNPG
+0.001		EntryPoint-CurrentImage
+0		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+Number of threads:	12
+Sum of node compute times:	2280.69 ms.
+Start-to-finish wall time:	807.977 ms.
+Slowest path (805.164 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      5.84	    5.84	DepthProjector
+     83.94	   78.10	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     92.14	    8.20	SceneAlignmentNode_edge_threshold:0.1
+    731.49	  639.35	BilateralNPG
+    805.16	   73.68	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 807.987 milliseconds.
+maxflow: 9.62574 milliseconds.
+  Queue sizes: 0 3
+Cloud timestamp: 25.5683
+  Queue sizes: 1 3
+Img more recent. Adding pair at 25.5683 with delta: 0.000567
+Segmenting pair with timestamp 25.5683
+Aligned queue sizes: 19 19
+graph allocation: 9.76901 milliseconds.
+flush: 12.5867 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+763.002		BilateralNPG
+498.384		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+240.036		PatchClassifierNPG_radius:7
+237.155		EdgePotentialAggregator
+144.599		DistanceNPG_sigma:0.15
+131.134		ColorDeltaEPG
+89.616		SeedDistanceNPG_variance:1
+85.281		NodePotentialAggregator
+58.341		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+47.321		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+29.689		DepthEPG_radius2d:1_sigma_norm:0.01
+26.54		CannyEPG_threshold1:75_threshold2:100
+19.34		HSVImageNode
+17.45		SurfaceNormalEPG
+12.473		OrganizedSurfaceNormalNode
+10.652		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+10.449		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+7.815		SeedNPG
+7.346		BoundaryMaskNode
+6.843		SceneAlignmentNode_edge_threshold:0.1
+6.489		ForegroundKdTreeNode
+5.839		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+5.141		DepthProjector
+2.084		KdTreeNode_radius:0.03
+1.022		IntensityImageNode
+0.696		TemplateMatcherNPG
+0.619		IntegralImageNode
+0.03		LabelFlowNPG
+0.002		PriorNPG
+0.001		EntryPoint-Graph
+0.001		EntryPoint-PreviousSegmentation
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-SeedImage
+0		EntryPoint-CurrentImage
+Number of threads:	12
+Sum of node compute times:	2465.39 ms.
+Start-to-finish wall time:	919.689 ms.
+Slowest path (918.608 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      5.14	    5.14	DepthProjector
+     63.48	   58.34	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     70.33	    6.84	SceneAlignmentNode_edge_threshold:0.1
+    833.33	  763.00	BilateralNPG
+    918.61	   85.28	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 919.698 milliseconds.
+maxflow: 9.61042 milliseconds.
+Cloud timestamp: 26.5406
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+  Queue sizes: 1 2
+Cloud timestamp: 27.614
+  Queue sizes: 2 2
+Backs are equal. Adding pair at 27.614 with delta 0.000641
+Segmenting pair with timestamp 27.614
+Aligned queue sizes: 20 20
+graph allocation: 11.2091 milliseconds.
+flush: 13.1941 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+1270.11		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+405.704		BilateralNPG
+229.157		EdgePotentialAggregator
+208.207		PatchClassifierNPG_radius:7
+167.612		DistanceNPG_sigma:0.15
+135.724		ColorDeltaEPG
+111.283		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+92.531		SeedDistanceNPG_variance:1
+74.899		NodePotentialAggregator
+46.396		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+32.044		DepthEPG_radius2d:1_sigma_norm:0.01
+26.532		CannyEPG_threshold1:75_threshold2:100
+13.885		HSVImageNode
+13.784		SurfaceNormalEPG
+12.877		OrganizedSurfaceNormalNode
+12.373		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+10.882		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+9.333		SceneAlignmentNode_edge_threshold:0.1
+8.755		SeedNPG
+7.987		BoundaryMaskNode
+6.419		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+6.335		DepthProjector
+3.707		ForegroundKdTreeNode
+2.611		KdTreeNode_radius:0.03
+1.009		IntensityImageNode
+0.928		TemplateMatcherNPG
+0.553		IntegralImageNode
+0.03		LabelFlowNPG
+0.002		PriorNPG
+0.001		EntryPoint-Graph
+0.001		EntryPoint-PreviousSegmentation
+0.001		EntryPoint-CurrentImage
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-SeedImage
+Number of threads:	12
+Sum of node compute times:	2911.68 ms.
+Start-to-finish wall time:	1475.11 ms.
+Slowest path (1471.96 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      6.34	    6.33	DepthProjector
+    117.62	  111.28	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+    126.95	    9.33	SceneAlignmentNode_edge_threshold:0.1
+   1397.07	 1270.11	IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+   1471.96	   74.90	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 1475.12 milliseconds.
+maxflow: 10.1874 milliseconds.
+  Queue sizes: 0 1
+Cloud timestamp: 29.2218
+  Queue sizes: 1 1
+  Queue sizes: 1 2
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+Cloud timestamp: 29.289
+  Queue sizes: 2 3
+Img more recent. Adding pair at 29.289 with delta: 0.000156
+Segmenting pair with timestamp 29.289
+Aligned queue sizes: 21 21
+graph allocation: 2.70808 milliseconds.
+flush: 12.5904 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+891.828		BilateralNPG
+418.374		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+331.193		PatchClassifierNPG_radius:7
+229.34		EdgePotentialAggregator
+137.52		ColorDeltaEPG
+92.067		SeedDistanceNPG_variance:1
+78.483		NodePotentialAggregator
+69.81		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+47.891		DepthEPG_radius2d:1_sigma_norm:0.01
+46.419		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+38.142		DistanceNPG_sigma:0.15
+24.405		SurfaceNormalEPG
+24.324		CannyEPG_threshold1:75_threshold2:100
+16.237		OrganizedSurfaceNormalNode
+15.271		HSVImageNode
+12.416		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+11.529		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+8.149		SceneAlignmentNode_edge_threshold:0.1
+7.936		SeedNPG
+7.46		BoundaryMaskNode
+6.581		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+5.933		DepthProjector
+3.651		KdTreeNode_radius:0.03
+3.009		ForegroundKdTreeNode
+0.975		IntensityImageNode
+0.746		TemplateMatcherNPG
+0.567		IntegralImageNode
+0.035		LabelFlowNPG
+0.001		PriorNPG
+0.001		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+0		EntryPoint-CurrentImage
+Number of threads:	12
+Sum of node compute times:	2530.29 ms.
+Start-to-finish wall time:	1057.46 ms.
+Slowest path (1054.2 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      5.93	    5.93	DepthProjector
+     75.74	   69.81	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     83.89	    8.15	SceneAlignmentNode_edge_threshold:0.1
+    975.72	  891.83	BilateralNPG
+   1054.20	   78.48	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 1057.47 milliseconds.
+maxflow: 11.8348 milliseconds.
+  Queue sizes: 0 2
+Cloud timestamp: 29.3226
+  Queue sizes: 1 2
+Img more recent. Adding pair at 29.3226 with delta: 4.8e-05
+Segmenting pair with timestamp 29.3226
+Aligned queue sizes: 22 22
+graph allocation: 10.944 milliseconds.
+flush: 12.3761 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+1084.35		BilateralNPG
+465.149		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+230.411		EdgePotentialAggregator
+225.997		PatchClassifierNPG_radius:7
+135.019		ColorDeltaEPG
+88.209		SeedDistanceNPG_variance:1
+74.135		NodePotentialAggregator
+70.823		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+61.468		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+32.492		DepthEPG_radius2d:1_sigma_norm:0.01
+23.179		CannyEPG_threshold1:75_threshold2:100
+14.506		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+13.908		SurfaceNormalEPG
+13.13		HSVImageNode
+12.073		BoundaryMaskNode
+11.68		DistanceNPG_sigma:0.15
+11.489		OrganizedSurfaceNormalNode
+9.893		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+9.745		SceneAlignmentNode_edge_threshold:0.1
+7.498		SeedNPG
+7.483		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+5.561		DepthProjector
+2.594		ForegroundKdTreeNode
+2.469		KdTreeNode_radius:0.03
+0.998		IntensityImageNode
+0.816		TemplateMatcherNPG
+0.519		IntegralImageNode
+0.031		LabelFlowNPG
+0.001		PriorNPG
+0.001		EntryPoint-CurrentImage
+0		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+Number of threads:	12
+Sum of node compute times:	2615.63 ms.
+Start-to-finish wall time:	1247.1 ms.
+Slowest path (1244.61 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      5.56	    5.56	DepthProjector
+     76.38	   70.82	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     86.13	    9.74	SceneAlignmentNode_edge_threshold:0.1
+   1170.48	 1084.35	BilateralNPG
+   1244.61	   74.14	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 1247.11 milliseconds.
+maxflow: 10.8932 milliseconds.
+Cloud timestamp: 30.4958
+  Queue sizes: 1 1
+  Queue sizes: 1 2
+  Queue sizes: 1 2
+Cloud timestamp: 31.9037
+  Queue sizes: 2 2
+Backs are equal. Adding pair at 31.9037 with delta 0.000336
+Segmenting pair with timestamp 31.9037
+Aligned queue sizes: 23 23
+graph allocation: 11.2088 milliseconds.
+flush: 12.1822 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+590.446		BilateralNPG
+553.449		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+232.905		EdgePotentialAggregator
+209.086		PatchClassifierNPG_radius:7
+135.67		ColorDeltaEPG
+94.467		DistanceNPG_sigma:0.15
+90.084		SeedDistanceNPG_variance:1
+72.773		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+72.304		NodePotentialAggregator
+44.525		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+31.377		DepthEPG_radius2d:1_sigma_norm:0.01
+31.362		CannyEPG_threshold1:75_threshold2:100
+15.43		HSVImageNode
+13.766		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+13.082		OrganizedSurfaceNormalNode
+12.663		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+12.63		SurfaceNormalEPG
+9.078		SeedNPG
+8.852		BoundaryMaskNode
+8.228		SceneAlignmentNode_edge_threshold:0.1
+6.867		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+6.381		DepthProjector
+3.444		ForegroundKdTreeNode
+2.659		KdTreeNode_radius:0.03
+1.322		IntensityImageNode
+0.871		TemplateMatcherNPG
+0.735		IntegralImageNode
+0.039		LabelFlowNPG
+0.001		PriorNPG
+0.001		EntryPoint-PreviousSegmentation
+0		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-SeedImage
+0		EntryPoint-CurrentImage
+Number of threads:	12
+Sum of node compute times:	2274.5 ms.
+Start-to-finish wall time:	761.205 ms.
+Slowest path (750.132 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      6.38	    6.38	DepthProjector
+     79.15	   72.77	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     87.38	    8.23	SceneAlignmentNode_edge_threshold:0.1
+    677.83	  590.45	BilateralNPG
+    750.13	   72.30	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 761.214 milliseconds.
+maxflow: 10.3191 milliseconds.
+  Queue sizes: 0 1
+  Queue sizes: 0 2
+Cloud timestamp: 32.8418
+  Queue sizes: 1 2
+Backs are equal. Adding pair at 32.8418 with delta 9e-05
+Segmenting pair with timestamp 32.8418
+Aligned queue sizes: 24 24
+graph allocation: 3.30511 milliseconds.
+flush: 12.7749 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+755.777		BilateralNPG
+442.024		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+237.299		EdgePotentialAggregator
+217.042		PatchClassifierNPG_radius:7
+135.592		ColorDeltaEPG
+98.643		SeedDistanceNPG_variance:1
+75.913		NodePotentialAggregator
+62.073		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+45.149		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+30.746		DepthEPG_radius2d:1_sigma_norm:0.01
+24.812		CannyEPG_threshold1:75_threshold2:100
+17.512		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+14.888		SurfaceNormalEPG
+13.153		OrganizedSurfaceNormalNode
+13.141		HSVImageNode
+12.44		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+10.385		DistanceNPG_sigma:0.15
+9.561		BoundaryMaskNode
+8.252		SeedNPG
+6.647		SceneAlignmentNode_edge_threshold:0.1
+6.559		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+6.275		DepthProjector
+3.036		ForegroundKdTreeNode
+2.576		KdTreeNode_radius:0.03
+1.033		IntensityImageNode
+0.727		TemplateMatcherNPG
+0.637		IntegralImageNode
+0.027		LabelFlowNPG
+0.002		PriorNPG
+0.001		EntryPoint-PreviousCloud
+0.001		EntryPoint-CurrentImage
+0		EntryPoint-Graph
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+Number of threads:	12
+Sum of node compute times:	2251.92 ms.
+Start-to-finish wall time:	907.593 ms.
+Slowest path (906.686 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      6.28	    6.28	DepthProjector
+     68.35	   62.07	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     75.00	    6.65	SceneAlignmentNode_edge_threshold:0.1
+    830.77	  755.78	BilateralNPG
+    906.69	   75.91	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 907.601 milliseconds.
+maxflow: 10.5832 milliseconds.
+  Queue sizes: 0 1
+Cloud timestamp: 33.9135
+  Queue sizes: 1 1
+  Queue sizes: 1 2
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+  Queue sizes: 1 4
+Cloud timestamp: 34.0143
+  Queue sizes: 2 4
+Img more recent. Adding pair at 34.0143 with delta: 0.000623
+Segmenting pair with timestamp 34.0143
+Aligned queue sizes: 25 25
+graph allocation: 10.5255 milliseconds.
+flush: 12.1385 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+771.91		BilateralNPG
+687.392		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+257.828		EdgePotentialAggregator
+214.078		PatchClassifierNPG_radius:7
+154.39		ColorDeltaEPG
+87.002		SeedDistanceNPG_variance:1
+71.651		NodePotentialAggregator
+62.01		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+45.418		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+29.512		DepthEPG_radius2d:1_sigma_norm:0.01
+26.206		CannyEPG_threshold1:75_threshold2:100
+19.483		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+13.87		SurfaceNormalEPG
+13.484		HSVImageNode
+12.838		DepthProjector
+12.046		OrganizedSurfaceNormalNode
+10.804		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+9.443		DistanceNPG_sigma:0.15
+9.305		SeedNPG
+8.795		BoundaryMaskNode
+7.207		SceneAlignmentNode_edge_threshold:0.1
+6.87		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+3.285		ForegroundKdTreeNode
+3.092		KdTreeNode_radius:0.03
+1.218		IntensityImageNode
+0.73		TemplateMatcherNPG
+0.631		IntegralImageNode
+0.027		LabelFlowNPG
+0.002		PriorNPG
+0.001		EntryPoint-Graph
+0.001		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+0		EntryPoint-CurrentImage
+Number of threads:	12
+Sum of node compute times:	2540.53 ms.
+Start-to-finish wall time:	926.785 ms.
+Slowest path (925.616 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+     12.84	   12.84	DepthProjector
+     74.85	   62.01	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     82.05	    7.21	SceneAlignmentNode_edge_threshold:0.1
+    853.96	  771.91	BilateralNPG
+    925.62	   71.65	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 926.795 milliseconds.
+maxflow: 11.1277 milliseconds.
+  Queue sizes: 0 3
+  Queue sizes: 0 4
+  Queue sizes: 0 5
+Cloud timestamp: 34.0479
+  Queue sizes: 1 5
+Img more recent. Adding pair at 34.0479 with delta: 0.000547
+Segmenting pair with timestamp 34.0479
+Aligned queue sizes: 26 26
+graph allocation: 10.9638 milliseconds.
+flush: 12.8266 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+619.738		BilateralNPG
+535.795		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+247.253		EdgePotentialAggregator
+217.475		PatchClassifierNPG_radius:7
+129.132		ColorDeltaEPG
+99.315		DistanceNPG_sigma:0.15
+91.939		SeedDistanceNPG_variance:1
+73.332		NodePotentialAggregator
+65.79		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+54.694		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+24.806		DepthEPG_radius2d:1_sigma_norm:0.01
+24.702		CannyEPG_threshold1:75_threshold2:100
+15.374		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+13.564		OrganizedSurfaceNormalNode
+12.963		HSVImageNode
+12.383		SurfaceNormalEPG
+10.423		SceneAlignmentNode_edge_threshold:0.1
+10.37		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+9.213		BoundaryMaskNode
+7.249		SeedNPG
+5.858		ForegroundKdTreeNode
+5.848		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+5.37		DepthProjector
+1.966		KdTreeNode_radius:0.03
+0.979		IntensityImageNode
+0.762		TemplateMatcherNPG
+0.532		IntegralImageNode
+0.031		LabelFlowNPG
+0.001		PriorNPG
+0.001		EntryPoint-Graph
+0.001		EntryPoint-PreviousSegmentation
+0.001		EntryPoint-CurrentImage
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-SeedImage
+Number of threads:	12
+Sum of node compute times:	2296.86 ms.
+Start-to-finish wall time:	776.178 ms.
+Slowest path (774.654 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      5.37	    5.37	DepthProjector
+     71.16	   65.79	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     81.58	   10.42	SceneAlignmentNode_edge_threshold:0.1
+    701.32	  619.74	BilateralNPG
+    774.65	   73.33	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 776.188 milliseconds.
+maxflow: 10.9821 milliseconds.
+Cloud timestamp: 35.1552
+  Queue sizes: 1 4
+Img more recent. Adding pair at 35.1552 with delta: 0.000738
+Segmenting pair with timestamp 35.1552
+Aligned queue sizes: 27 27
+graph allocation: 10.7182 milliseconds.
+flush: 11.9916 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+918.691		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+520.383		BilateralNPG
+302.421		EdgePotentialAggregator
+217.957		PatchClassifierNPG_radius:7
+132.41		DistanceNPG_sigma:0.15
+130.436		ColorDeltaEPG
+92.662		SeedDistanceNPG_variance:1
+70.287		NodePotentialAggregator
+64.605		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+54.017		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+31.611		DepthEPG_radius2d:1_sigma_norm:0.01
+22.793		CannyEPG_threshold1:75_threshold2:100
+19.662		SurfaceNormalEPG
+15.497		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+14.729		HSVImageNode
+12.329		OrganizedSurfaceNormalNode
+10.904		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+9.324		BoundaryMaskNode
+8.182		SeedNPG
+7.625		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+7.407		SceneAlignmentNode_edge_threshold:0.1
+6.251		DepthProjector
+3.909		ForegroundKdTreeNode
+2.275		KdTreeNode_radius:0.03
+1.016		IntensityImageNode
+0.866		IntegralImageNode
+0.731		TemplateMatcherNPG
+0.03		LabelFlowNPG
+0.001		PriorNPG
+0.001		EntryPoint-PreviousCloud
+0.001		EntryPoint-CurrentImage
+0		EntryPoint-Graph
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+Number of threads:	12
+Sum of node compute times:	2679.01 ms.
+Start-to-finish wall time:	1068.06 ms.
+Slowest path (1067.24 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      6.25	    6.25	DepthProjector
+     70.86	   64.61	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     78.26	    7.41	SceneAlignmentNode_edge_threshold:0.1
+    996.96	  918.69	IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+   1067.24	   70.29	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 1068.07 milliseconds.
+maxflow: 10.8815 milliseconds.
+  Queue sizes: 0 2
+Cloud timestamp: 36.0917
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+  Queue sizes: 1 2
+Cloud timestamp: 37.3006
+  Queue sizes: 2 2
+Img more recent. Adding pair at 37.3006 with delta: 0.001093
+Segmenting pair with timestamp 37.3006
+Aligned queue sizes: 28 28
+graph allocation: 11.1858 milliseconds.
+flush: 13.2346 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+648.979		BilateralNPG
+586.38		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+330.141		PatchClassifierNPG_radius:7
+231.322		EdgePotentialAggregator
+134.527		ColorDeltaEPG
+116.466		DistanceNPG_sigma:0.15
+91.343		SeedDistanceNPG_variance:1
+72.407		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+70.965		NodePotentialAggregator
+43.811		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+30.746		DepthEPG_radius2d:1_sigma_norm:0.01
+23.463		CannyEPG_threshold1:75_threshold2:100
+17.268		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+15.102		SurfaceNormalEPG
+13.733		OrganizedSurfaceNormalNode
+13.161		HSVImageNode
+12.848		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+8.069		SeedNPG
+7.583		SceneAlignmentNode_edge_threshold:0.1
+7.531		BoundaryMaskNode
+6.184		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+6.113		DepthProjector
+4.153		ForegroundKdTreeNode
+2.496		KdTreeNode_radius:0.03
+1.102		IntensityImageNode
+0.799		TemplateMatcherNPG
+0.52		IntegralImageNode
+0.031		LabelFlowNPG
+0.002		PriorNPG
+0.001		EntryPoint-CurrentImage
+0		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-SeedImage
+Number of threads:	12
+Sum of node compute times:	2497.25 ms.
+Start-to-finish wall time:	806.826 ms.
+Slowest path (806.048 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      6.11	    6.11	DepthProjector
+     78.52	   72.41	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     86.10	    7.58	SceneAlignmentNode_edge_threshold:0.1
+    735.08	  648.98	BilateralNPG
+    806.05	   70.97	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 806.835 milliseconds.
+maxflow: 12.4188 milliseconds.
+  Queue sizes: 0 2
+Cloud timestamp: 38.3037
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+  Queue sizes: 1 2
+  Queue sizes: 1 3
+  Queue sizes: 1 4
+Cloud timestamp: 38.4043
+  Queue sizes: 2 4
+Img more recent. Adding pair at 38.4043 with delta: 0.00121
+Segmenting pair with timestamp 38.4043
+Aligned queue sizes: 29 29
+graph allocation: 5.21742 milliseconds.
+flush: 15.1893 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+1061.46		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+886.021		BilateralNPG
+314.871		PatchClassifierNPG_radius:7
+228.821		EdgePotentialAggregator
+134.817		ColorDeltaEPG
+91.981		SeedDistanceNPG_variance:1
+77.264		NodePotentialAggregator
+77.248		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+49.355		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+38.018		DepthEPG_radius2d:1_sigma_norm:0.01
+24.876		CannyEPG_threshold1:75_threshold2:100
+17.769		SurfaceNormalEPG
+16.652		DistanceNPG_sigma:0.15
+16.018		HSVImageNode
+13.992		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+13.288		OrganizedSurfaceNormalNode
+10.764		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+9.177		BoundaryMaskNode
+8.192		SceneAlignmentNode_edge_threshold:0.1
+7.477		SeedNPG
+6.765		DepthProjector
+6.553		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+5.26		ForegroundKdTreeNode
+2.348		KdTreeNode_radius:0.03
+1.226		IntensityImageNode
+0.749		TemplateMatcherNPG
+0.734		IntegralImageNode
+0.08		PriorNPG
+0.029		LabelFlowNPG
+0.001		EntryPoint-PreviousSegmentation
+0.001		EntryPoint-CurrentImage
+0		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-SeedImage
+Number of threads:	12
+Sum of node compute times:	3121.81 ms.
+Start-to-finish wall time:	1231.75 ms.
+Slowest path (1230.93 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      6.77	    6.76	DepthProjector
+     84.01	   77.25	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     92.21	    8.19	SceneAlignmentNode_edge_threshold:0.1
+   1153.67	 1061.46	IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+   1230.93	   77.26	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 1231.75 milliseconds.
+maxflow: 11.8827 milliseconds.
+  Queue sizes: 0 3
+Cloud timestamp: 38.4379
+  Queue sizes: 1 3
+Img more recent. Adding pair at 38.4379 with delta: 0.001134
+Segmenting pair with timestamp 38.4379
+Aligned queue sizes: 30 30
+graph allocation: 10.885 milliseconds.
+flush: 12.9183 milliseconds.
+============================================================
+Pipeline timing report
+Time (ms) 	Node name
+------------------------------------------------------------
+1385.88		IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+610.082		BilateralNPG
+234.997		EdgePotentialAggregator
+214.745		PatchClassifierNPG_radius:7
+141.913		ColorDeltaEPG
+122.561		DistanceNPG_sigma:0.15
+89.587		SeedDistanceNPG_variance:1
+71.182		NodePotentialAggregator
+53.963		OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+53.54		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438_SurfaceNormalEPG_605279030290387305
+30.829		CannyEPG_threshold1:75_threshold2:100
+26.688		DepthEPG_radius2d:1_sigma_norm:0.01
+17.017		EPP_ColorDeltaEPG_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+15.907		BoundaryMaskNode
+15.617		HSVImageNode
+14.822		EPP_CannyEPG_threshold1:75_threshold2:100_16844440672128421024_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+13.765		OrganizedSurfaceNormalNode
+13.363		SurfaceNormalEPG
+8.997		SceneAlignmentNode_edge_threshold:0.1
+8.776		SeedNPG
+7.029		EPP_SurfaceNormalEPG_605279030290387305_DepthEPG_radius2d:1_sigma_norm:0.01_15378551206113263438
+5.088		ForegroundKdTreeNode
+4.995		DepthProjector
+2.517		KdTreeNode_radius:0.03
+0.994		IntensityImageNode
+0.84		TemplateMatcherNPG
+0.68		IntegralImageNode
+0.044		LabelFlowNPG
+0.002		PriorNPG
+0.001		EntryPoint-SeedImage
+0		EntryPoint-Graph
+0		EntryPoint-PreviousCloud
+0		EntryPoint-Cloud
+0		EntryPoint-PreviousSegmentation
+0		EntryPoint-CurrentImage
+Number of threads:	12
+Sum of node compute times:	3166.42 ms.
+Start-to-finish wall time:	2027.45 ms.
+Slowest path (1525.02 ms): 
+      0.00	    0.00	EntryPoint-CurrentImage
+      5.00	    5.00	DepthProjector
+     58.96	   53.96	OpticalFlowNode_max_corners:1000_quality_level:0.02_min_distance:1
+     67.95	    9.00	SceneAlignmentNode_edge_threshold:0.1
+   1453.83	 1385.88	IcpNPG_score_thresh:0.75_distance_thresh:0.05_fringe_radius:0.05_sigma_dist:0.02_sigma_color:75_dtrans_thresh:0.001_use_prev_bg:1_lookback:0
+   1525.02	   71.18	NodePotentialAggregator
+
+============================================================
+
+Total feature computation: 2027.46 milliseconds.
+maxflow: 9.97217 milliseconds.
+Segmented 30 frames.
+Total segmentation time: 29.6191 seconds.
+987.302 ms per frame on average.
+Cloud timestamp: 39.8135
+Cloud timestamp: 42.0262
+Cloud timestamp: 42.0596
+Cloud timestamp: 42.0931
+Cloud timestamp: 42.16
+Cloud timestamp: 42.2269
+Cloud timestamp: 42.2939
+Cloud timestamp: 42.3608
+Cloud timestamp: 42.4612
+Cloud timestamp: 42.5951
+Cloud timestamp: 42.662
+Cloud timestamp: 42.6954
+Cloud timestamp: 42.8293
+Cloud timestamp: 42.9297
+Cloud timestamp: 42.9966
+Cloud timestamp: 43.0636
+Cloud timestamp: 43.1639
+Cloud timestamp: 43.2643
+Cloud timestamp: 43.2978
+Cloud timestamp: 43.3982
+Cloud timestamp: 43.4652
+Cloud timestamp: 43.4988
+Cloud timestamp: 43.633
+Cloud timestamp: 43.7002
+Cloud timestamp: 43.7338
+Cloud timestamp: 43.801
+Cloud timestamp: 43.9018
+Cloud timestamp: 44.0025
