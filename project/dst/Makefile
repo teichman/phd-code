@@ -74,10 +74,14 @@ TRAIN		:= rosrun dst train
 
 tase2013.pdf: 	bargraph.pdf \
 		avs/realtime.pdf \
+		avs/timing.pdf \
+		random/random.pdf \
 		$$(MAKE_ROOT)/tase/tase2013.tex
 
 	ln -sf `pwd`/bargraph.pdf $(MAKE_ROOT)/tase/img/
 	ln -sf `pwd`/avs/realtime.pdf $(MAKE_ROOT)/tase/img/
+	ln -sf `pwd`/avs/timing.pdf $(MAKE_ROOT)/tase/img/
+	ln -sf `pwd`/random/random.pdf $(MAKE_ROOT)/tase/img/
 	cd $(MAKE_ROOT)/tase && pdflatex tase2013
 	cd $(MAKE_ROOT)/tase && bibtex tase2013
 	cd $(MAKE_ROOT)/tase && pdflatex tase2013
@@ -94,7 +98,7 @@ tase2013.pdf: 	bargraph.pdf \
 wafr-results: bargraph.pdf
 
 .PHONY: tase-results
-tase-results: bargraph.pdf avs/realtime.pdf
+tase-results: bargraph.pdf avs/realtime.pdf avs/timing.pdf random/random.pdf
 
 
 ############################################################
@@ -112,10 +116,43 @@ random/done:
 	done;
 	touch $@
 
+random/random.pdf: $$(MAKE_ROOT)/plot_random.py random/done 
+	python $< random/
+
+
+avi/accuracy_vs_iter.pdf: 	avi/done \
+				$$(MAKE_ROOT)/plot_accuracy_vs_iter.py \
+				$$(MAKE_ROOT)/common_plotting.py
+	cd $(<D) && for dir in `find * -maxdepth 0 -type d`; do \
+	cd $$dir; \
+	cat `find -name '*-results.txt' | sort` | grep 'Overall mean' | awk '{print $$NF}' > vals.txt; \
+	cd ../; done
+	cd $(<D) && python $(MAKE_ROOT)/plot_accuracy_vs_iter.py `find -name vals.txt`
+
+avi/done: #$$@/$$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	cd $(@D) && for num in `seq -f'%04g' 0 9999`; do \
+	mkdir $$num; cd $$num; \
+	MASK=1 SKIP=2 SAVE_INNER_WEIGHTS= make -f $(MAKEFILE) testing_results.txt; \
+	for w in `ls weights0*.eig.txt | awk 'NR%3==1 {print $$0}'`; do \
+	bname=$${w%.eig.txt}; \
+	mkdir $$bname; \
+	mv $$w $$bname; \
+	cd $$bname; \
+	MASK=1 SKIP=2 $(EVALUATE) $$w $(TESTING_PATHS) $${bname}-results.txt > $${bname}-results-log.txt; \
+	cd ..; \
+	done; \
+	cd ../; \
+	done;
+	touch $@
+
 
 ############################################################
 # -- TASE realtime experiments
 ############################################################
+
+avs/timing.pdf: $$(MAKE_ROOT)/plot_timing.py
+	python $< $(@D) $(MAKE_ROOT)/vga/rg
 
 avs/accuracy_vs_speed.pdf: 	avs/done \
 				$$(MAKE_ROOT)/plot_accuracy_vs_speed.py \
