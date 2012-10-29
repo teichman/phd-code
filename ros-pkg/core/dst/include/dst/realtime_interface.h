@@ -49,6 +49,8 @@ namespace dst
     std::deque<double> img_stamp_queue_;
     std::deque<KinectCloud::ConstPtr> pcd_queue_;
     double thresh_;
+    HighResTimer hrt_;
+    int num_segmented_;
     
     cv::Mat3b oniToCV(const boost::shared_ptr<openni_wrapper::Image>& oni) const;
     cv::Mat1b irToCV(const boost::shared_ptr<openni_wrapper::IRImage>& ir) const;

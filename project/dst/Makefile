@@ -74,10 +74,14 @@ TRAIN		:= rosrun dst train
 
 tase2013.pdf: 	bargraph.pdf \
 		avs/realtime.pdf \
+		avs/timing.pdf \
+		random/random.pdf \
 		$$(MAKE_ROOT)/tase/tase2013.tex
 
 	ln -sf `pwd`/bargraph.pdf $(MAKE_ROOT)/tase/img/
 	ln -sf `pwd`/avs/realtime.pdf $(MAKE_ROOT)/tase/img/
+	ln -sf `pwd`/avs/timing.pdf $(MAKE_ROOT)/tase/img/
+	ln -sf `pwd`/random/random.pdf $(MAKE_ROOT)/tase/img/
 	cd $(MAKE_ROOT)/tase && pdflatex tase2013
 	cd $(MAKE_ROOT)/tase && bibtex tase2013
 	cd $(MAKE_ROOT)/tase && pdflatex tase2013
@@ -94,7 +98,7 @@ tase2013.pdf: 	bargraph.pdf \
 wafr-results: bargraph.pdf
 
 .PHONY: tase-results
-tase-results: bargraph.pdf avs/realtime.pdf
+tase-results: bargraph.pdf avs/realtime.pdf avs/timing.pdf random/random.pdf
 
 
 ############################################################
@@ -118,7 +122,7 @@ random/done:
 ############################################################
 
 avs/timing.pdf: $$(MAKE_ROOT)/plot_timing.py
-	python $< $(@D) $(MAKE_ROOT)/vga
+	python $< $(@D) $(MAKE_ROOT)/vga/rg
 
 avs/accuracy_vs_speed.pdf: 	avs/done \
 				$$(MAKE_ROOT)/plot_accuracy_vs_speed.py \

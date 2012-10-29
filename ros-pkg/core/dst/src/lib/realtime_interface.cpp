@@ -15,8 +15,8 @@ namespace dst
 				       double scale) :
     sp_(NUM_THREADS),
     img_view_("Image"),
-    mode_(mode),
     device_id_(device_id),
+    mode_(mode),
     grabber_(device_id_, mode, mode),
     cloud_viewer_("PointCloud"),
     segmenting_(false),
@@ -95,7 +95,12 @@ namespace dst
     switch(key) {
     case ' ':
       segmenting_ = !segmenting_;
-      if(segmenting_) { 
+      if(!segmenting_) {
+	cout << "Segmented " << num_segmented_ << " frames." << endl;
+	cout << hrt_.reportSeconds() << endl;
+	cout << hrt_.getMilliseconds() / (double)num_segmented_ << " ms per frame on average." << endl;
+      }
+      else {
 	sp_.reset();
 	img_queue_.clear();
 	img_stamp_queue_.clear();
@@ -104,6 +109,9 @@ namespace dst
 	imgs_.clear();
 	segmentations_.clear();
 	pcd_results_.clear();
+
+	num_segmented_ = 0;
+	hrt_.reset("Total segmentation time");
       }
       break;
     case 'c':
@@ -123,6 +131,7 @@ namespace dst
   void RealTimeInterface::cloudCallback(const KinectCloud::ConstPtr& cloud)
   {
     lock();
+    cout << "Cloud timestamp: " << cloud->header.stamp.toSec() << endl;
     if(!segmenting_)
       cloud_viewer_.showCloud(cloud);
     else { 
@@ -254,7 +263,9 @@ namespace dst
 
     segmentations_.push_back(cv::Mat1b(size_, 127));
     pcd_results_.push_back(KinectCloud::Ptr(new KinectCloud()));
-			     			     
+
+    hrt_.start();
+	
     if(pcds_.size() == 1) {
       ROS_ASSERT(segmentations_.size() == 1 && pcd_results_.size() == 1);
       
@@ -281,13 +292,15 @@ namespace dst
 
       seed_ = 127;
     }
-    
+
+    hrt_.stop();
     // -- Visualize the segmentation.
     // double scale = 3;
     // cv::Size sz(segmentations_.back().cols * scale, segmentations_.back().rows * scale);
     // cv::resize(segmentations_.back(), seg_vis_, sz, cv::INTER_NEAREST);
     // cv::imshow("Segmentation", seg_vis_);
-    //cv::imshow("Segmentation", segmentations_.back());    
+    //cv::imshow("Segmentation", segmentations_.back());
+    ++num_segmented_;
   }
   
   void RealTimeInterface::imageCallback(const boost::shared_ptr<openni_wrapper::Image>& oni_img)

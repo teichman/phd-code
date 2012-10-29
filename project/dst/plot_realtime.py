@@ -63,12 +63,16 @@ loss_bars = loss_ax.bar(ind, vals, width, color='green', yerr=loss_stdevs, ecolo
 loss_ax.set_ylabel("Loss")
 loss_ax.set_xticks(ind + width)
 loss_ax.set_xticklabels(names)
+for rect in loss_bars:
+    rect.set_alpha(0.5)
 
 time_ind = ind + width
 vals = [np.mean(t) for t in times]
 time_stdevs = [np.std(t) for t in times]
 time_bars = time_ax.bar(time_ind, vals, width, color='gray', yerr=time_stdevs, ecolor='k', capsize=5)
 time_ax.set_ylabel("Time (ms)")
+for rect in time_bars:
+    rect.set_alpha(0.5)
 
 # Add space for the annotations.
 loss_ax.set_ylim([1.2 * x for x in loss_ax.get_ylim()])

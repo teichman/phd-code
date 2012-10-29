@@ -22,10 +22,12 @@ avspath = sys.argv[1];
 vgapath = sys.argv[2];
 tmpfile = ".python-asotunsatoheuthaoneut"
 
-os.system("cat " + vgapath + "/*-vga.txt | grep 'Total feature computation' | grep milliseconds | awk '{sum += $4} END {print sum / NR}' > " + tmpfile);
+os.system("cat " + vgapath + "/*-vga.txt | grep 'Total feature computation' | grep milliseconds | awk '{sum += $4} END {print sum / NR}' > " + tmpfile)
 vga_feature = np.loadtxt(tmpfile)
 os.system("cat " + vgapath + "/*-vga.txt | grep maxflow | grep milliseconds | awk '{sum += $2} END {print sum / NR}' > " + tmpfile)
 vga_maxflow = np.loadtxt(tmpfile)
+os.system("cat " + vgapath + "/*-vga.txt | grep 'per frame on average' | awk '{sum += $1} END {print sum / NR}' > " + tmpfile)
+vga_total = np.loadtxt(tmpfile)
 
 os.system("grep 'Total feature computation' `find " + avspath + " -name testing_results.txt-log.txt | grep mask1_skip02` | awk '{sum += $4} END {print sum / NR}' > " + tmpfile)
 qqvga_feature = np.loadtxt(tmpfile)
@@ -36,9 +38,9 @@ qqvga_total = np.loadtxt(tmpfile)
 
 os.system("rm " + tmpfile)
 
-# -- Plot VGA results.
-figw = 15
-figh = 5
+# -- Setup.
+figw = 12
+figh = 4
 fig = plt.figure(figsize = (figw, figh))
 
 def timingPlot(ax, feat, gc, total):
@@ -52,8 +54,9 @@ def timingPlot(ax, feat, gc, total):
         w.set_alpha(0.5)
     return pie
 
+# -- Plot VGA results.
 vga_ax = fig.add_subplot(1, 3, 1, aspect='equal')
-timingPlot(vga_ax, vga_feature, vga_maxflow, vga_feature + vga_maxflow)
+timingPlot(vga_ax, vga_feature, vga_maxflow, vga_total)
 vga_ax.set_title("640 $\\times$ 480", bbox={'facecolor':'0.8', 'pad':10}, position=(0.5, -0.1))
 
 # -- Plot QQVGA results.
