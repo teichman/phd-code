@@ -281,6 +281,9 @@ namespace dst
       case 's':
 	segmentSequence();
 	break;
+      case 'R':
+	segmentSequence(current_idx_);
+	break;
       case 'S':
 	saveSequence();
 	break;
@@ -652,16 +655,15 @@ namespace dst
     needs_redraw_ = true;
   }
 
-  void SequenceSegmentationViewController::segmentSequence()
+  void SequenceSegmentationViewController::segmentSequence(int idx)
   {
-    // -- Erase all segmentations except the previous one.
-    for(size_t i = 0; i < seq_->segmentations_.size(); ++i) {
-      if((int)i == current_idx_ - 1)
-    	continue;
+    cout << "Segmenting sequence starting with idx " << idx << endl;
+    
+    // -- Erase all segmentations after idx.
+    for(size_t i = idx + 1; i < seq_->segmentations_.size(); ++i)
       seq_->segmentations_[i] = 127;
-    }
-
-    current_idx_ = 0;
+    
+    current_idx_ = idx;
     draw();
     cv::waitKey(10);
     
@@ -678,15 +680,27 @@ namespace dst
 		seq_->segmentations_[current_idx_],
 		segmented_pcds_[current_idx_]);
       }
+      else if(current_idx_ == idx) {
+	sp_->run(seq_->segmentations_[current_idx_].clone(),  // Seed it with the segmentation previously computed.
+		 seq_->images_[current_idx_],
+		 seq_->pointclouds_[current_idx_],
+		 cv::Mat3b(),
+		 cv::Mat1b(),
+		 KinectCloud::Ptr(),
+		 seq_->segmentations_[current_idx_],
+		 segmented_pcds_[current_idx_]);
+      }
       else {
+	ROS_ASSERT(seq_->pointclouds_[current_idx_ - 1]);
+	ROS_ASSERT(seq_->pointclouds_[current_idx_]);
 	sp_->run(seq_->seed_images_[current_idx_],
-		seq_->images_[current_idx_],
-		seq_->pointclouds_[current_idx_],
-		seq_->images_[current_idx_-1],
-		seq_->segmentations_[current_idx_-1],
-		seq_->pointclouds_[current_idx_-1],
-		seq_->segmentations_[current_idx_],
-		segmented_pcds_[current_idx_]);
+		 seq_->images_[current_idx_],
+		 seq_->pointclouds_[current_idx_],
+		 seq_->images_[current_idx_-1],
+		 seq_->segmentations_[current_idx_-1],
+		 seq_->pointclouds_[current_idx_-1],
+		 seq_->segmentations_[current_idx_],
+		 segmented_pcds_[current_idx_]);
       }
 
       draw();
