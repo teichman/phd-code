@@ -15,37 +15,36 @@ cp.setup()
 
 # -- Load data and draw.
 fig = figure()
-xlabel('Learning Iteration')
-ylabel('Accuracy')
+ax = fig.add_subplot(1, 1, 1)
+ax.set_xlabel('Learning Iteration')
+ax.set_ylabel('Accuracy')
 grid(True)
 tmpfile = ".python-aosethusnatohesutahoesnut"
-indices = []
-vals = []
-maxidx = 0
+os.system("find " + sys.argv[1] + " -name 'weights0*-results.txt' | sort | awk -F/ '{print $4}' | sed 's/[^0-9]//g' | sort | tail -n1 > " + tmpfile)
+maxidx = numpy.loadtxt(tmpfile)
+print "maxidx:", maxidx
+org = [np.array([]) for x in np.arange(0, maxidx + 1)]
+assert(len(org) == maxidx + 1)
 for path in os.listdir(sys.argv[1]):
     if os.path.isdir(path):
-#        print path
         os.system("cat `find " + path + " -name '*-results.txt' | sort` | grep 'Overall mean' | awk '{print $NF}' > " + tmpfile)
-        vals.append(numpy.loadtxt(tmpfile))
+        vals = numpy.loadtxt(tmpfile)
+        vals = np.ones(len(vals)) - vals
         os.system("find " + path + " -name '*-results.txt' | sort | awk -F/ '{print $2}' | sed 's/weights//' > " + tmpfile)
-        indices.append(numpy.loadtxt(tmpfile))
-        maxidx = max(np.amax(indices[-1]), maxidx)
-#        scatter(indices, ones(len(vals)) - vals, marker=cp.markers[0], s=40)
+        indices = numpy.loadtxt(tmpfile)
+        for i, index in enumerate(indices):
+            org[int(index)] = np.append(org[int(index)], vals[i])
 
-print 'max: ' + str(int(maxidx))
-org = []
-for i in np.arange(0, int(maxidx)+1):
-    org.append(np.array([]))
-    for j, index in enumerate(indices):
-        for ind in index:
-            if ind == i:
-                org[i].append(vals[j])
+print [len(x) for x in org]
+means = [np.mean(x) for x in org if len(x) > 0]
+stdevs = [np.std(x) for x in org if len(x) > 0]
+assert(len(means) == len(indices))
 
-print org
-#totals = np.array()
+print means
+print stdevs
 
-
-
+ax.plot(indices, means, zorder=1, color='green')
+ax.errorbar(indices, means, yerr=stdevs, fmt=None, ecolor='gray', elinewidth=2, ecapsize=2, zorder=10)
 
 os.system("rm " + tmpfile)
 ylim(0, 1)

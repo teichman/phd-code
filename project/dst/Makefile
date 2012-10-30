@@ -120,7 +120,7 @@ random/random.pdf: $$(MAKE_ROOT)/plot_random.py random/done
 	python $< random/
 
 
-avi/accuracy_vs_iter.pdf: 	avi/done \
+avi/accuracy_vs_iter.pdf: 	avi/secondpass \
 				$$(MAKE_ROOT)/plot_accuracy_vs_iter.py \
 				$$(MAKE_ROOT)/common_plotting.py
 	cd $(<D) && for dir in `find * -maxdepth 0 -type d`; do \
@@ -145,6 +145,22 @@ avi/done: #$$@/$$@-experiment_metadata.txt
 	cd ../; \
 	done;
 	touch $@
+
+avi/secondpass: avi/done
+	cd $(@D) && for iter in `find -maxdepth 1 -name '0*' -type d | sort`; do \
+	cd $$iter; \
+	for w in weights0001.eig.txt weights0002.eig.txt; do \
+	bname=$${w%.eig.txt}; \
+	mkdir $$bname; \
+	mv $$w $$bname; \
+	cd $$bname; \
+	MASK=1 SKIP=2 $(EVALUATE) $$w $(TESTING_PATHS) $${bname}-results.txt > $${bname}-results-log.txt; \
+	cd ..; \
+	done; \
+	cd ..; \
+	done; \
+	touch $@
+
 
 
 ############################################################
