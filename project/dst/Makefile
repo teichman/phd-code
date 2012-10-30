@@ -123,11 +123,7 @@ random/random.pdf: $$(MAKE_ROOT)/plot_random.py random/done
 avi/accuracy_vs_iter.pdf: 	avi/secondpass \
 				$$(MAKE_ROOT)/plot_accuracy_vs_iter.py \
 				$$(MAKE_ROOT)/common_plotting.py
-	cd $(<D) && for dir in `find * -maxdepth 0 -type d`; do \
-	cd $$dir; \
-	cat `find -name '*-results.txt' | sort` | grep 'Overall mean' | awk '{print $$NF}' > vals.txt; \
-	cd ../; done
-	cd $(<D) && python $(MAKE_ROOT)/plot_accuracy_vs_iter.py `find -name vals.txt`
+	cd $(<D) && python $(MAKE_ROOT)/plot_accuracy_vs_iter.py .
 
 avi/done: #$$@/$$@-experiment_metadata.txt
 	mkdir -p $(@D)
@@ -159,6 +155,7 @@ avi/secondpass: avi/done
 	done; \
 	cd ..; \
 	done; \
+	cd ..; \
 	touch $@
 
 
