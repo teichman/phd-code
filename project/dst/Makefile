@@ -72,16 +72,7 @@ TRAIN		:= rosrun dst train
 # -- T-ASE paper
 ############################################################
 
-tase2013.pdf: 	bargraph.pdf \
-		avs/realtime.pdf \
-		avs/timing.pdf \
-		random/random.pdf \
-		$$(MAKE_ROOT)/tase/tase2013.tex
-
-	ln -sf `pwd`/bargraph.pdf $(MAKE_ROOT)/tase/img/
-	ln -sf `pwd`/avs/realtime.pdf $(MAKE_ROOT)/tase/img/
-	ln -sf `pwd`/avs/timing.pdf $(MAKE_ROOT)/tase/img/
-	ln -sf `pwd`/random/random.pdf $(MAKE_ROOT)/tase/img/
+tase2013.pdf: 	$$(MAKE_ROOT)/tase/tase2013.tex
 	cd $(MAKE_ROOT)/tase && pdflatex tase2013
 	cd $(MAKE_ROOT)/tase && bibtex tase2013
 	cd $(MAKE_ROOT)/tase && pdflatex tase2013
@@ -99,6 +90,10 @@ wafr-results: bargraph.pdf
 
 .PHONY: tase-results
 tase-results: bargraph.pdf avs/realtime.pdf avs/timing.pdf random/random.pdf
+	ln -sf `pwd`/bargraph.pdf $(MAKE_ROOT)/tase/img/
+	ln -sf `pwd`/avs/realtime.pdf $(MAKE_ROOT)/tase/img/
+	ln -sf `pwd`/avs/timing.pdf $(MAKE_ROOT)/tase/img/
+	ln -sf `pwd`/random/random.pdf $(MAKE_ROOT)/tase/img/
 
 
 ############################################################
