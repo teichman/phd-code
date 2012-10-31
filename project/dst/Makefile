@@ -140,7 +140,7 @@ avi/done: #$$@/$$@-experiment_metadata.txt
 avi/secondpass: avi/done
 	cd $(@D) && for iter in `find -maxdepth 1 -name '0*' -type d | sort`; do \
 	cd $$iter; \
-	for w in weights0001.eig.txt weights0002.eig.txt; do \
+	for w in weights0001.eig.txt weights0002.eig.txt `ls weights0*.eig.txt | tail -n2`; do \
 	bname=$${w%.eig.txt}; \
 	mkdir $$bname; \
 	mv $$w $$bname; \
