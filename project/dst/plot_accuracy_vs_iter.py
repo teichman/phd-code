@@ -35,12 +35,16 @@ for path in os.listdir(sys.argv[1]):
         for i, index in enumerate(indices):
             org[int(index)] = np.append(org[int(index)], vals[i])
 
+print "lengths:"
 print [len(x) for x in org]
+indices = [idx for idx, x in enumerate(org) if len(x) > 0]
 means = [np.mean(x) for x in org if len(x) > 0]
 stdevs = [np.std(x) for x in org if len(x) > 0]
-assert(len(means) == len(indices))
-
+print "indices:"
+print indices
+print "means:"
 print means
+print "stdevs:"
 print stdevs
 
 ax.plot(indices, means, zorder=1, color='green')

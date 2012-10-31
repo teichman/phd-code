@@ -310,10 +310,22 @@ namespace rgbd
 
   void OpenNIStreamRecorder::initializeOpenNI()
   {
-    ROS_ASSERT(mode_ == "VGA");
-    
-    model_.width_ = 640;
-    model_.height_ = 480;
+    ROS_ASSERT(mode_ == "VGA" || mode_ == "QVGA" || mode_ == "QQVGA");
+
+    if(mode_ == "VGA") {
+      model_.width_ = 640;
+      model_.height_ = 480;
+    }
+    else if(mode_ == "QVGA") {
+      ROS_WARN("Focal length for non-VGA is not yet set correctly.");
+      model_.width_ = 320;
+      model_.height_ = 240;
+    }
+    else {
+      ROS_WARN("Focal length for non-VGA is not yet set correctly.");
+      model_.width_ = 160;
+      model_.height_ = 120;
+    }
     model_.cx_ = model_.width_ / 2;
     model_.cy_ = model_.height_ / 2;
 
