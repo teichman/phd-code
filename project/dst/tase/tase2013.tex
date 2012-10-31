@@ -41,8 +41,6 @@
 \usepackage{algorithmic}
 
 \include{latex_macros}
-\newcommand{\media}{/home/teichman/sync/media}
-\newcommand{\img}{\media/2011/11-11-20_cvpr2012}
 
 \begin{document}
 
@@ -74,7 +72,7 @@ First, model-free segmentation and tracking opens the door for a simple and effe
 
 \begin{figure}
   \centering
-  \includegraphics[width=\linewidth]{\img/headliner2/headliner2.pdf}
+  \includegraphics[width=\linewidth]{img/headliner2.pdf}
   \caption{Given an initial seed labeling (first frame; cat on a coffee table), the goal is to produce a detailed segmentation of the object over time (subsequent frames) without assuming a rigid object or a pre-trained object model.  Foreground points are shown in bold.}
   \label{fig:goal}
 \end{figure}
@@ -226,7 +224,7 @@ The structural SVM solver is detailed in Algorithm~\ref{alg:ssvm}.  Because the 
 
 \begin{figure*}
   \centering
-  \includegraphics[width=\linewidth]{\img/features1.pdf}
+  \includegraphics[width=\linewidth]{img/features1.pdf}
   \caption{Visualizations of selected edge and node potentials in the CRF.  Edge potentials are zoomed in to show fine structure.  Strong edge potentials are darker, while weaker edge potentials fade to original image color.  Node potentials expressing a preference for foreground are shown in red, for background in green, and for neither in black.  Top row: original image, canny edge potentials, color distance, depth edge potentials.  Bottom row: ICP, frame alignment bilateral filter, optical flow, and patch classifier node potentials.  Best viewed in color.}
   \label{fig:features}
 \end{figure*}
@@ -306,7 +304,7 @@ After alignment of the current frame to the previous frame using the same optica
 \subsubsection{Edge potentials}
 
 \begin{figure}
-  \includegraphics[width=7cm]{\img/normals/normals.pdf}
+  \includegraphics[width=7cm]{img/normals.pdf}
   \sidecaption[t]
   \caption{While image appearance and depth information may sometimes provide little information about an object boundary, a change in surface normals can be informative. Surface normals are shown as small dark lines, seen from two angles to aid in depth perception.}
   \label{fig:normals}
@@ -416,7 +414,7 @@ Could probably use a method like this for learning, but it's incredibly slow.  T
 
 \begin{figure*}
   \centering
-  \includegraphics[width=\linewidth]{\img/emu_caller/emu_caller-gs.pdf}
+  \includegraphics[width=\linewidth]{img/emu_caller-gs.pdf}
   \caption{Visualization of results in which image appearance alone would lead to a very difficult segmentation problem, but which becomes relatively easy when reasoning about depth as well.}
   \label{fig:emu}
 \end{figure*}
@@ -437,11 +435,14 @@ The feature-rich representation we use presents a challenge and an opportunity. 
 \begin{figure*}
   \centering
   \vspace{1cm}
-  \includegraphics[width=\linewidth]{\media/2012/12-02-23_wafr_static_imagery/results/results-gs.pdf}
+  \includegraphics[width=\linewidth]{img/results-gs.pdf}
   \caption{Visualization of results.  The first frame in each sequence (far left) is the seed frame.  Foreground points are shown in bold and color while background points are shown small and gray. Best viewed on-screen.}
   \label{fig:results}
   \vspace{50pt}
 \end{figure*}
+
+\subsection{Use-case example: training object detectors}
+\todo{fill in}
 
 \section{Conclusions}
 

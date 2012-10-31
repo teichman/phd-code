@@ -24,9 +24,11 @@ os.system("rm " + tmpfile)
 
 accuracies = 1 - losses
 
-fig = plt.figure(figsize=(9,4))
+fig = plt.figure(figsize=(11,4))
 ax = fig.add_subplot(1, 1, 1)
-ax.hist(accuracies, 10)
+his = ax.hist(accuracies, 20)
+for rect in his[2]:
+    rect.set_alpha(0.5)
 
 ax.set_xlim([0, 1])
 ax.set_xlabel("Accuracy")
