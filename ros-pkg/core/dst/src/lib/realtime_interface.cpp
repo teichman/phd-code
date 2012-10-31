@@ -141,7 +141,7 @@ namespace dst
 	thresholded->at(i) = bad;
     
     lock();
-    cout << "Cloud timestamp: " << cloud->header.stamp.toSec() << endl;
+    //cout << "Cloud timestamp: " << cloud->header.stamp.toSec() << endl;
     if(!segmenting_)
       cloud_viewer_.showCloud(thresholded);
     else {
