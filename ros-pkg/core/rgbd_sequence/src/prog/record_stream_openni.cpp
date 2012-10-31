@@ -15,6 +15,7 @@ int main(int argc, char** argv)
     ("id", bpo::value<int>()->required(), "Device id")
     ("register", "Register depth to rgb data")
     ("fake-rgb", "Don't actually record rgb data")
+    ("resolution", bpo::value<string>()->default_value("VGA"), "VGA (640x480) or QVGA (320x240)")
     ("output,o", bpo::value<string>(), "Directory to put new sequences in")
     ;
 
@@ -38,7 +39,7 @@ int main(int argc, char** argv)
   
   OpenNIStreamRecorder rec(opts["device"].as<string>(),
 			   opts["id"].as<int>(),
-			   "VGA",
+			   opts["resolution"].as<string>(),
 			   opts.count("fake-rgb"),
 			   opts.count("register"));
 
