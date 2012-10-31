@@ -45,7 +45,7 @@
 \begin{document}
 
 \title*{Learning to Segment and Track in RGBD}
-\author{Alex Teichman and Sebastian Thrun}
+\author{Alex Teichman, Jake Lussier, and Sebastian Thrun}
 \institute{Stanford University}
 
 \maketitle
@@ -232,6 +232,7 @@ The structural SVM solver is detailed in Algorithm~\ref{alg:ssvm}.  Because the 
 We now review the particular choice of energy function (\ref{eqn:energy}) that we use in our implementation. The particular choice of features can be modified or added to without substantially changing the underlying framework. See Figure~\ref{fig:features} for visualizations.  All node potentials are designed to be constrained to $[-1, +1]$, and all edge potentials to $[-1, 0]$.  While not strictly necessary, this aids in interpreting the weights learned by the structural SVM.
 
 \subsubsection{Node potentials}
+\label{sec:npot}
 Node potentials capture several aspects of shape, appearance, and motion.  All take the form
 \begin{align}
   \label{eqn:npot}
@@ -375,39 +376,6 @@ Individual frames are evaluated with two different metrics.  Hamming loss, or to
 
 Overall, our method demonstrates a normalized error reduction of about 65\% compared to the state-of-the-art.  Detailed results can be seen in Figure~\ref{fig:bargraph}.  Training of our method takes a total of about 10 minutes, and as this need only be done once, this is acceptable. At runtime, HoughTrack's implementation takes about 200ms per frame, whereas our method's implementation takes about 1200ms per frame.\footnote{Both implementations were compiled with optimizations turned on, run on the same machine, and given one thread.} While this is currently too slow for real-time usage, almost all of this time is spent computing features and only about a millisecond is spent on the graph cuts solver.  This means real-time performance can be achieved with speedups of feature computation alone, most immediately by parallelization and by computing features only at the boundaries of the object where they are actually needed.  At 640x480 resolution, graph cuts alone typically takes about 30ms; however, one could employ a similar trick and run the graph cuts solver only for the nodes near the boundaries of the object, providing a potentially large savings.
 
-\subsubsection{Real time performance}
-
-Description of method
-
-Figures showing what the method looks like
-
-\begin{figure}
-  \centering
-  \includegraphics[width=\linewidth]{img/realtime.pdf}
-  \caption{}
-  \label{fig:realtime}
-\end{figure}
-
-
-\begin{figure}
-  \centering
-  \includegraphics[width=\linewidth]{img/timing.pdf}
-  \caption{``other'' is miscellaneous overhead.}
-  \label{fig:timing}
-\end{figure}
-
-
-\subsubsection{The importance of learning}
-
-\begin{figure}
-  \centering
-  \includegraphics[width=\linewidth]{img/random.pdf}
-  \caption{}
-  \label{fig:timing}
-\end{figure}
-
-Could probably use a method like this for learning, but it's incredibly slow.  This took overnight \todo{actual time?}, vs an average training time of 2.6 minutes for the structural SVM when using the boundary mask and 50\% downsampling of selected features, as described \todo{here}.  \todo{You could probably be smarter about caching for the random evaluations.  If you cached all the features for all frames, assuming the previous segmentation was correct, then evaluated random weights, you could avoid the vast majority of computation.  This would be at least an order of magnitude faster, possibly more.  That still might be an order of magnitude or two slower than structural SVM training, but without knowing this it's not fair to compare the running times and claim that random evaluation is too slow.  All you can claim here is that most random weights suck.   ... it might even be that with early termination (total error greater best error so far means you stop evaluating these weights) random evaluation turns out to be a reasonable method of learning. }
-
 \subsection{Qualitative analysis}
 
 \subsubsection{Strengths}
@@ -430,6 +398,63 @@ As is typical in tracking tasks, stability versus permissiveness is a tradeoff. 
 It is likely that improvements to node and edge potentials could resolve these limitations.  Using longer range edges (rather than a simple 2D grid connecting neighbors only) could improve performance on thin objects and quickly moving objects, and improvements in the image-appearance-based patch classifier could result in better segmentations of objects that self-occlude parts frequently.  A node potential based on LINE-MOD or a discriminative tracker such as \cite{kalal2010a} could solve the re-acquisition problem, and could be run on object parts rather than the object as a whole to enable usage on non-rigid objects.
 
 The feature-rich representation we use presents a challenge and an opportunity.  There are a large number of parameters in the computation pipeline which cannot be learned via the structural SVM (\eg the $\sigma$'s discussed in Section~\ref{sec:energy}). There is also substantial freedom in the structure of the computation pipeline.  Choosing the structure and the parameters by hand (as we have done here) is possible, but onerous; there is an opportunity to learn these in a way that maximizes accuracy while respecting timing constraints.
+
+
+\subsubsection{Real-time performance}
+\label{sec:realtime}
+
+So far, we have discussed a relatively slow implementation of the segmentation and tracking algorithm.   While this version is still useful for tasks such as offline object labeling or model building, a real-time algorithm is desirable.  This is particularly important for, \eg, using the algorithm as a stage in a track classification pipeline, where objects are first segmented and tracked without semantic knowledge, then the track is classified as a whole.  See \cite{teichman2011a} for an example of this approach where simple depth segmentation is suitable as the model-free segmentation and tracking algorithm.  In this section, we show how to achieve real-time performance (\ie at least 10 frames per second) with only a very small loss in segmentation accuracy.  As noted in Section~\ref{sec:quant}, the graph cuts inference algorithm is very fast compared to the feature computation, so we can focus our efforts entirely on optimizing this part of the pipeline.
+
+We make use of two key ideas in achieving real-time performance.  First, one need only compute features and feature pre-requisites at the boundaries of the target object.  Intuitively, there is no point in computing surface normals in the upper right corner of the RGBD image when the object of interest is in the lower left.  Second, it is not necessary to compute expensive node potentials at every pixel in the image because the edge potentials in the CRF will tend to smooth out the final segmentation.  Examples comparing the original and real-time methods can be seen in Figure~\ref{fig:mask}.
+
+\begin{figure}
+  \centering
+%  \includegraphics[width=\linewidth]{img/mask.pdf}
+  \caption{}
+  \label{fig:mask}
+\end{figure}
+
+
+Concretely, at each timestep, a boundary mask is computed by dilating the background and foreground masks from the previous segmentation and taking their intersection; this provides a mask that highlights only the edges of the object.  Then, all following steps in the computation pipeline compute only inside the boundary mask.  Node and edge potentials described in Section~\ref{sec:energy} are thus not computed in non-boundary regions.  Instead, we add a new node potential which biases these regions towards the label they had from the previous segmentation.  In terms of the node potential definitions in Section~\ref{sec:npot}, we define $s_j$ to be 0 if pixel $j$ is not part of the boundary of the object, and to be the $\{-1, +1\}$ label from the previous segmentation otherwise.  Then the new node potential is
+\begin{align*}
+  \phi_j(y, x) & =
+  \left\{
+  \begin{array}{rl}
+    -1 & \mbox{ if } y_j = s_j \\
+    0 & \mbox{ otherwise.}
+  \end{array}
+  \right.
+\end{align*}
+Further, inside the boundary mask, downsampling is applied to the patch classifier, bilateral, and ICP node potentials.  For programmatic convenience and because it detracts little from the speed of the algorithm, graph cuts inference is run on the entire image.
+
+To show that this optimization does not adversely affect segmentation performance, we ran ten iterations comparing the optimized segmentation algorithm vs the original algorithm using the same experimental setup as Section~\ref{sec:quant}.  Quantitative results showing overall segmentation accuracy and runtimes are shown in Figure~\ref{fig:realtime}. Experiments were run using a multi-threaded implementation on a desktop with an Intel Xeon E5504 quadcore processor\footnote{45nm architecture released in 2009}.  \todo{reference times for new laptop, to show that this doesn't require a giant fucking server.}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{img/realtime.pdf}
+  \caption{Normalized loss and average per-frame segmentation time compared with different levels of algorithmic optimization as discussed in Section~\ref{sec:realtime}.  Tens runs of each condition were made.  Error bars and annotations show one standard deviation.  While a 75\% downsampling induces too much error to be acceptable, 50\% downsampling appears to be a good trade of a minor amount of accuracy for approximately an order of magnitude speedup.}
+  \label{fig:realtime}
+\end{figure}
+
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{img/timing.pdf}
+  \caption{``other'' is miscellaneous overhead.}
+  \label{fig:timing}
+\end{figure}
+
+
+\subsubsection{The importance of learning}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{img/random.pdf}
+  \caption{}
+  \label{fig:timing}
+\end{figure}
+
+Could probably use a method like this for learning, but it's incredibly slow.  This took overnight \todo{actual time?}, vs an average training time of 2.6 minutes for the structural SVM when using the boundary mask and 50\% downsampling of selected features, as described \todo{here}.  \todo{You could probably be smarter about caching for the random evaluations.  If you cached all the features for all frames, assuming the previous segmentation was correct, then evaluated random weights, you could avoid the vast majority of computation.  This would be at least an order of magnitude faster, possibly more.  That still might be an order of magnitude or two slower than structural SVM training, but without knowing this it's not fair to compare the running times and claim that random evaluation is too slow.  All you can claim here is that most random weights suck.   ... it might even be that with early termination (total error greater best error so far means you stop evaluating these weights) random evaluation turns out to be a reasonable method of learning. }
 
 
 \begin{figure*}
