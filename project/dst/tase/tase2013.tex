@@ -492,10 +492,25 @@ Even at \vga, it is conceivable that real-time operation could be obtained with 
 \end{figure*}
 
 \subsection{Use-case example: training object detectors}
-\label{sec:example}
-Unlike the rest of this paper, here we allow additional segmentation hints to be provided by a user.
+In this section, we describe the application of our object segmentation and tracking method to the problem of data labeling in supervised object detection systems. Such systems rely on well segmented training data typically obtained from either meticulously rigged turntables or elaborate crowd-sourcing applications.  While the former allows for high-quality training examples for a full $360^{\circ}$ range of views, it also involves an appropriate rig, is limited to objects that can be easily placed in a rig, and must be repeatedly reconfigured for different perspectives.  The latter allows for unstructured environments and avoids the physical setup annoyances but also requires a well-designed web application and a data processing framework robust to noisy and incompatible responses. This approach is also altogether inapplicable for problems involving sensitive data.  Other data labeling approaches, such as learning and subtracting a background model, are increasingly rare as they are generally even more unreliable and/or difficult to implement.
 
-\todo{fill in}
+In contrast, our method provides a means to accurately assign labels with minimal human involvement or environmental control. As shown in Figure~\ref{fig:data_labeling}, the user simply provides rough background and foreground labels to the first frame and then runs LOBSTR to obtain object segmentations for subsequent frames.  In the event of an errant segmentation (as in frame 132 in  Figure~\ref{fig:data_labeling}, the user can interrupt the sequence segmentation, provide a few corrective mouse clicks, and then continue segmenting the sequence.  After comparatively much less time and effort, the user is left with a collection of cleanly segmented objects instances.
+
+In Figure~\ref{fig:object_rec}, we demonstrate how these segmented examples can be used to construct an object detector. We offer a small example in which we aim to detect a coffee box in fifteen diverse scenes with varying lighting, occlusion, etc.  Our method does not rely on any particular  detection approach, but since we are interested in real-time detection, we feed our labeled coffee box examples into the efficient LINE-MOD template-matching framework described in Hinterstoisser et al \cite{hinterstoisser2011a}. At training time, LINE-MOD uses the depth and image cues to build the templates shown in the upper-left of Figure~\ref{fig:object_rec}. At testing time, LINE-MOD searches for those templates in the previously unseen images shown in the bottom left of Figure~\ref{fig:object_rec}.  As shown in the illustration, the highest rated match in each of the testing images effectively recovers the object position and pose.
+
+\begin{figure}
+\centering
+        \includegraphics[width=\linewidth]{img/data_labeling.png}
+\caption{\small{Example data labeling pipeline. Given an input RGBD sequence, the user first provides coarse, sparse foreground (white) and background (black) labels.  LOBSTR properly segments subsequent frames until frame 132, at which point some minor corrections are required. LOBSTR resumes and runs on the remaining 60 frames with no problems. The pipeline output is a set of clearly accurate object segmentations. }}
+\label{fig:data_labeling}
+\end{figure}
+
+\begin{figure}
+\centering
+        \includegraphics[width=\linewidth]{img/object_recognition.png}
+\caption{\small{Object detection example. Color and depth templates are extracted from coffee box examples (such as those shown in Figure~\ref{fig:data_labeling}, and a set of unlabeled RGBD frames is provided.  An appropriate object detection method (LINE-MOD in our example) searches for the templates in the input frames and identifies the highest scoring match (shown in red). Note that given our cleanly segmented examples, LINE-MOD is able to accurately detect the object in diverse scenes, under mild occlusion, and in different lighting levels (even in the absence of light in the last example).}}
+\label{fig:object_rec}
+\end{figure}
 
 \section{Conclusions}
 
