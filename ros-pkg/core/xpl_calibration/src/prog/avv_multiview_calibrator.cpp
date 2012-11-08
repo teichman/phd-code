@@ -12,6 +12,7 @@ int main(int argc, char** argv)
   vector<string> sseq_paths;
   vector<string> vseq_paths;
   vector<string> extrinsics_paths;
+  string output_path;
   
   bpo::options_description opts_desc("Allowed options");
   opts_desc.add_options()
@@ -19,6 +20,7 @@ int main(int argc, char** argv)
     ("sseqs", bpo::value< vector<string> >(&sseq_paths)->required()->multitoken(), "")
     ("vseqs", bpo::value< vector<string> >(&vseq_paths)->required()->multitoken(), "")
     ("extrinsics", bpo::value< vector<string> >(&extrinsics_paths)->required()->multitoken(), "")
+    ("output,o", bpo::value<string>(&output_path)->default_value("learned_intrinsics"), "Output path for learned model.")
     ;
 
   bpo::positional_options_description p;
@@ -52,18 +54,18 @@ int main(int argc, char** argv)
 
   AVVMultiviewModel mvm;
   for(size_t i = 0; i < sseq_paths.size(); ++i) {
-    AVVModel model;
-    model.sseq_ = StreamSequence::Ptr(new StreamSequence);
-    model.sseq_->load(sseq_paths[i]);
-    model.vseq_ = VeloSequence::Ptr(new VeloSequence);
-    model.vseq_->load(vseq_paths[i]);
-    model.extrinsics_.load(extrinsics_paths[i]);
-    mvm.models_.push_back(model);
+    AVVSequence avvseq;
+    avvseq.sseq_ = StreamSequence::Ptr(new StreamSequence);
+    avvseq.sseq_->load(sseq_paths[i]);
+    avvseq.vseq_ = VeloSequence::Ptr(new VeloSequence(vseq_paths[i]));
+    avvseq.extrinsics_.load(extrinsics_paths[i]);
+    mvm.sequences_.push_back(avvseq);
   }
 
   cout << "Learning distortion models." << endl;
   PrimeSenseModel psm = mvm.learnDistortionModel();
-  
+  psm.save(output_path);
+  cout << "Saved learned model to " << output_path << endl;
   
   return 0;
 }
