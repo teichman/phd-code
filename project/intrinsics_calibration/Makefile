@@ -29,9 +29,11 @@ SLAM_RUNS_xpl01		:= $(shell ls $(SLAM_DATA_PATH)/xpl01)
 
 
 # Data specifically for the 2012-11-06 run in which multiple sensor views were collected.
-AVV_MULTIVIEW_PATHS_xpl01	:= 	$(AVV_PATH)/2012-11-06_primesense_vs_velo/xpl01_down-11-06-2012_00-17-19 \
-					$(AVV_PATH)/2012-11-06_primesense_vs_velo/xpl01_straight-11-06-2012_00-08-08 \
-					$(AVV_PATH)/2012-11-06_primesense_vs_velo/xpl01_up-11-06-2012_00-12-51
+AVV_MULTIVIEW_NAMES_xpl01	:= 	xpl01_straight-11-06-2012_00-08-08 \
+					xpl01_down-11-06-2012_00-17-19
+#					xpl01_up-11-06-2012_00-12-51
+AVV_MULTIVIEW_PATHS_xpl01	:=	$(addprefix $(AVV_PATH)/2012-11-06_primesense_vs_velo/, $(AVV_MULTIVIEW_NAMES_xpl01))
+
 AVV_MULTIVIEW_PATHS_xpl04	:=	$(AVV_PATH)/2012-11-06_primesense_vs_velo/xpl04_down-11-05-2012_23-47-23 \
 					$(AVV_PATH)/2012-11-06_primesense_vs_velo/xpl04_straight-11-06-2012_00-01-38 \
 					$(AVV_PATH)/2012-11-06_primesense_vs_velo/xpl04_up-11-05-2012_23-53-26
@@ -221,14 +223,42 @@ all-multiview-extrinsics: 	xpl01/asus_vs_velodyne-multiview/xpl01_down-11-06-201
 				xpl04/asus_vs_velodyne-multiview/xpl04_straight-11-06-2012_00-01-38/extrinsics \
 				xpl04/asus_vs_velodyne-multiview/xpl04_up-11-05-2012_23-53-26/extrinsics
 
+define MULTIVIEW_AVV_SENSOR_RULE_GENERATOR
+
+AVV_MULTIVIEW_SSEQ_PATHS_$(1)		:=	$$(addsuffix -StreamSequence, $$(AVV_MULTIVIEW_PATHS_$(1)))
+AVV_MULTIVIEW_VSEQ_PATHS_$(1)		:=	$$(addsuffix -VeloSequence, $$(AVV_MULTIVIEW_PATHS_$(1)))
+AVV_MULTIVIEW_EXTRINSICS_PATHS_$(1)	:=	$$(addprefix $(1)/asus_vs_velodyne-multiview/, $$(addsuffix /extrinsics, $$(AVV_MULTIVIEW_NAMES_$(1))))
+
+$(1)/asus_vs_velodyne-multiview/intrinsics.psm: $$(AVV_MULTIVIEW_EXTRINSICS_PATHS_$(1)) $$$$@-experiment_metadata.txt
+	mkdir -p $$(@D)
+	rosrun xpl_calibration avv_multiview_calibrator \
+	--sseqs $$(AVV_MULTIVIEW_SSEQ_PATHS_$(1)) \
+	--vseqs $$(AVV_MULTIVIEW_VSEQ_PATHS_$(1)) \
+	--extrinsics $$(AVV_MULTIVIEW_EXTRINSICS_PATHS_$(1)) \
+	--output $$@ | tee $$@-log.txt
+endef
+$(foreach SENSOR,xpl01 xpl04,$(eval $(call MULTIVIEW_AVV_SENSOR_RULE_GENERATOR,$(SENSOR))))
+
+
 MULTIVIEW_PATH := $(AVV_PATH)/2012-11-06_primesense_vs_velo
 
-define MULTIVIEW_AVV_RULE_GENERATOR
+define MULTIVIEW_AVV_EXTRINSICS_RULE_GENERATOR
+
+$(1)-visualize-multiview-avv-intrinsics-$(2): $(1)/asus_vs_velodyne-multiview/intrinsics.psm $(1)/asus_vs_velodyne-multiview/$(2)/extrinsics
+	rosrun xpl_calibration asus_vs_velo \
+	$(MULTIVIEW_PATH)/$(2)-StreamSequence \
+	$(MULTIVIEW_PATH)/$(2)-VeloSequence \
+	--extrinsics $(1)/asus_vs_velodyne-multiview/$(2)/extrinsics \
+	--intrinsics $(1)/asus_vs_velodyne-multiview/intrinsics.psm 
+
 $(1)-visualize-multiview-avv-extrinsics-$(2): $(1)/asus_vs_velodyne-multiview/$(2)/extrinsics
-	rosrun xpl_calibration asus_vs_velo $(MULTIVIEW_PATH)/$(2)-StreamSequence $(MULTIVIEW_PATH)/$(2)-VeloSequence --extrinsics $$<
+	rosrun xpl_calibration asus_vs_velo \
+	$(MULTIVIEW_PATH)/$(2)-StreamSequence \
+	$(MULTIVIEW_PATH)/$(2)-VeloSequence \
+	--extrinsics $$<
 
 $(1)/asus_vs_velodyne-multiview/$(2)/extrinsics:
 	mkdir -p $$(@D)
 	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $(MULTIVIEW_PATH)/$(2)-StreamSequence $(MULTIVIEW_PATH)/$(2)-VeloSequence --compute-extrinsics
 endef
-$(foreach SENSOR,xpl01 xpl04,$(foreach RUN,$(shell ls $(AVV_PATH)/2012-11-06_primesense_vs_velo | grep $(SENSOR) | grep VeloSequence | sed 's/-VeloSequence//g'),$(eval $(call MULTIVIEW_AVV_RULE_GENERATOR,$(SENSOR),$(RUN)))))
+$(foreach SENSOR,xpl01 xpl04,$(foreach RUN,$(shell ls $(AVV_PATH)/2012-11-06_primesense_vs_velo | grep $(SENSOR) | grep VeloSequence | sed 's/-VeloSequence//g'),$(eval $(call MULTIVIEW_AVV_EXTRINSICS_RULE_GENERATOR,$(SENSOR),$(RUN)))))
