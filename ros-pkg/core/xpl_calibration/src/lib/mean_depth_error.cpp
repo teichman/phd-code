@@ -357,7 +357,7 @@ double SequenceAlignmentMDE::eval(const Eigen::VectorXd& x) const
 
   double min_per_pcd = 1000;
   if(count / num_pcds < min_per_pcd) {
-    ROS_WARN_STREAM("Mean number of corresponding points per pcd is " << count / num_pcds << ", which is less than threshold of " << min_per_pcd);
+    //ROS_WARN_STREAM("Mean number of corresponding points per pcd is " << count / num_pcds << ", which is less than threshold of " << min_per_pcd);
     return std::numeric_limits<double>::max();
   }
   else

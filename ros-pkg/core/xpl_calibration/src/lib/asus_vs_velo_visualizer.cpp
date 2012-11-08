@@ -494,7 +494,7 @@ VeloToAsusCalibrator AsusVsVeloVisualizer::setupCalibrator()
     cout << "- Loading nearby asus frames for velo keyframe " << i << " / " << calibrator.pcds_.size() << endl;
 
     vector<size_t> indices;
-    for(int j = max(0, idx - window); j <= min(idx + window, (int)sseq_->size()); ++j)
+    for(int j = max(0, idx - window); j < min(idx + window, (int)sseq_->size()); ++j)
       indices.push_back(j);
     
     vector<Frame> frames(indices.size());
