@@ -480,7 +480,7 @@ Even at \vga, it is conceivable that real-time operation could be obtained with 
 \begin{figure}
   \centering
   \includegraphics[width=\linewidth]{img/timing.pdf}
-  \caption{Average frame segmentation timing breakdown for \vga and \qqvga resolutions using the boundary mask and 50\% downsampling of node potentials.  Best viewed in color.}
+  \caption{Average frame segmentation timing breakdown for \vga and \qqvga resolutions using the boundary mask and 50\% downsampling of node potentials.  Best viewed in color. \todo{``VGA'' and ``QQVGA'' in figure}}
   \label{fig:timing}
 \end{figure}
 
@@ -500,7 +500,7 @@ Even at \vga, it is conceivable that real-time operation could be obtained with 
 
 In this section, we describe the application of our segmentation and tracking method to the problem of data labeling in supervised object detection systems. Supervised object detection systems rely on well-segmented training data typically obtained from either meticulously rigged turntables or elaborate crowd-sourcing applications, as discussed in Section~\ref{sec:trainingintro}. In contrast, our method provides a means to accurately assign labels with minimal human involvement or environmental control.
 
-Unlike the rest of this paper, here we allow additional segmentation hints to be provided by a user.  These are integrated into the model with the seed label node potential, discussed in Section~\ref{sec:npot}.  In previous sections, these node potentials exist only for the first frame; here we allow them to exist at other points during the sequence.
+Unlike the rest of this paper, here we allow additional segmentation hints to be provided by a user.  These are integrated into the model with the seed label node potential, discussed in Section~\ref{sec:npot}. \todo{seed label distance too?}  In previous sections, these node potentials exist only for the first frame; here we allow them to exist at other points during the sequence.
 
 As shown in Figure~\ref{fig:data_labeling}, the user simply provides rough background and foreground labels to the first frame and then runs STRGEN to obtain object segmentations for subsequent frames.  In the event of an errant segmentation (as in frame 132 in Figure~\ref{fig:data_labeling}), the user can interrupt the sequence segmentation, provide a few corrective mouse clicks, and then continue segmenting the sequence.  After comparatively much less time and effort, the user is left with a collection of cleanly segmented objects instances.
 
