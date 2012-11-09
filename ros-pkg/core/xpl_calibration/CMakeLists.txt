@@ -50,6 +50,7 @@ rosbuild_add_library(${PROJECT_NAME}
 #  src/lib/slam_lightweight.cpp
   src/lib/primesense_slam.cpp
   src/lib/link_visualizer.cpp
+  src/lib/discrete_depth_distortion_model.cpp
   )
 rosbuild_add_compile_flags(${PROJECT_NAME} -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 rosbuild_link_boost(${PROJECT_NAME} system program_options)
@@ -143,3 +144,7 @@ target_link_libraries(evaluate_frame_alignment ${PROJECT_NAME})
 rosbuild_add_executable(twiddle_frame_alignment src/prog/twiddle_frame_alignment.cpp)
 rosbuild_link_boost(twiddle_frame_alignment program_options filesystem)
 target_link_libraries(twiddle_frame_alignment ${PROJECT_NAME})
+
+rosbuild_add_executable(avv_multiview_calibrator src/prog/avv_multiview_calibrator.cpp src/lib/asus_vs_velo_visualizer.cpp src/lib/avv_multiview_model.cpp)
+rosbuild_link_boost(avv_multiview_calibrator program_options filesystem)
+target_link_libraries(avv_multiview_calibrator ${PROJECT_NAME})

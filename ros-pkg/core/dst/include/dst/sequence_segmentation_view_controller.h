@@ -63,7 +63,7 @@ namespace dst
     void drawSegVis();
     void drawSeedVis();
     void segmentImage();
-    void segmentSequence();
+    void segmentSequence(int idx = 0);
     void saveSequence();
     size_t size() const;
     void transitionTo(state_t state);

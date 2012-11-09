@@ -1,0 +1,54 @@
+#ifndef DISCRETE_DEPTH_DISTORTION_MODEL_H
+#define DISCRETE_DEPTH_DISTORTION_MODEL_H
+
+#include <rgbd_sequence/primesense_model.h>
+
+class Frustum : public Serializable
+{
+public:
+  Frustum(int smoothing = 1, double bin_depth = 1.0);
+  //! distance to origin, not z value.
+  void addExample(double ground_truth, double measurement);
+  void undistort(rgbd::Point* pt) const;
+  void serialize(std::ostream& out) const;
+  void deserialize(std::istream& in);
+  
+protected:
+  double max_mult_;
+  double min_mult_;
+  double max_dist_;
+  int num_bins_;
+  double bin_depth_;
+  Eigen::VectorXf counts_;
+  Eigen::VectorXf total_multipliers_;
+  Eigen::VectorXf multipliers_;
+};
+
+class DiscreteDepthDistortionModel : public Serializable
+{
+public:
+  DiscreteDepthDistortionModel() {}
+  DiscreteDepthDistortionModel(const rgbd::PrimeSenseModel& psm, int bin_width = 8, int bin_height = 6, double bin_depth = 0.25, int smoothing = 1);
+  void undistort(rgbd::Frame* frame) const;
+  void accumulate(const rgbd::Frame& ground_truth, const rgbd::Frame& measurement);
+  void serialize(std::ostream& out) const;
+  void deserialize(std::istream& in);
+  
+protected:
+  rgbd::PrimeSenseModel psm_;
+  int width_;
+  int height_;
+  int bin_width_;
+  int bin_height_;
+  double bin_depth_;
+  int num_bins_x_;
+  int num_bins_y_;
+  
+  //! depth is in meters
+  Frustum& frustum(int y, int x);
+  const Frustum& frustum(int y, int x) const;
+  //! frustums_[y][x]
+  std::vector< std::vector<Frustum> > frustums_;
+};
+
+#endif // DISCRETE_DEPTH_DISTORTION_MODEL_H

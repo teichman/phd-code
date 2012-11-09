@@ -12,8 +12,7 @@ built: svn
 
 svn:
 	svn co http://svn.pointclouds.org/pcl/tags/pcl-1.6.0 $@
-	cd svn && patch -p0 < ../patch-1.5.1-2012-04-04
-	cd svn && patch -p0 < ../patch-1.5.1-2012-08-16_addArrow_text_color
+	cd svn && patch -p0 < ../patch-1.6.0-2012-10-28
 
 remove_msgs:
 	cd svn/common/include; \

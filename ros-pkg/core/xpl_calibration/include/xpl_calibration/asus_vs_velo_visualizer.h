@@ -11,6 +11,7 @@
 #include <rgbd_sequence/stream_sequence.h>
 #include <xpl_calibration/depth_distortion_learner.h>
 #include <xpl_calibration/velo_to_asus_calibrator.h>
+#include <xpl_calibration/discrete_depth_distortion_model.h>
 
 typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
 
@@ -39,8 +40,12 @@ public:
   int num_pixel_plots_;
   VeloToAsusCalibration cal_;
   rgbd::PrimeSenseModel model_;
+  //! If not NULL, then use this instead of the polynomial.
+  //! Will be deleted by AsusVsVeloVisualizer.
+  DiscreteDepthDistortionModel* dddm_;
   
   AsusVsVeloVisualizer(rgbd::StreamSequence::Ptr sseq, VeloSequence::ConstPtr vseq);
+  ~AsusVsVeloVisualizer();
   void run();
   void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
   void saveAll(std::string tag = "") const;

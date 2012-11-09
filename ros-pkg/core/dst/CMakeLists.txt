@@ -102,6 +102,7 @@ rosbuild_add_compile_flags(openni_viewer_simple -Wno-deprecated -Wno-unused-but-
 
 rosbuild_add_executable(realtime_interface src/program/realtime_interface.cpp)
 target_link_libraries(realtime_interface dst)
+rosbuild_link_boost(realtime_interface filesystem program_options)
 rosbuild_add_compile_flags(realtime_interface -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
 rosbuild_add_executable(translate_sequence src/program/translate_sequence.cpp)
@@ -111,6 +112,11 @@ rosbuild_add_compile_flags(translate_sequence -Wno-deprecated -Wno-unused-but-se
 rosbuild_add_executable(evaluate src/program/evaluate.cpp)
 target_link_libraries(evaluate dst)
 rosbuild_add_compile_flags(evaluate -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+
+rosbuild_add_executable(generate_random_weights src/program/generate_random_weights.cpp)
+target_link_libraries(generate_random_weights)
+rosbuild_link_boost(generate_random_weights filesystem program_options)
+rosbuild_add_compile_flags(generate_random_weights -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 
 rosbuild_add_gtest(test_maxflow src/test/test_maxflow.cpp)
 target_link_libraries(test_maxflow dst)

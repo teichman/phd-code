@@ -1,6 +1,6 @@
 #include <dst/boundary_mask_node.h>
 
-#define MASK getenv("MASK")
+#define MASK (getenv("MASK") ? atoi(getenv("MASK")) : 0)
 
 using namespace std;
 using namespace Eigen;

@@ -281,6 +281,9 @@ namespace dst
       case 's':
 	segmentSequence();
 	break;
+      case 'R':
+	segmentSequence(current_idx_);
+	break;
       case 'S':
 	saveSequence();
 	break;
@@ -374,6 +377,8 @@ namespace dst
     cv::Mat1b seed = seq_->seed_images_[current_idx_];
     vector<int> indices;
     for(size_t i = 0; i < cloud.size(); ++i) {
+      if(!isFinite(cloud[i]))
+	continue;
       int y = (int)i / cloud.width;
       int x = (int)i - y * cloud.width;
       if(seed(y, x) == 0)
@@ -385,26 +390,39 @@ namespace dst
     }
 
     // -- Fit the best plane.
+    KinectCloud::Ptr bg(new KinectCloud);
+    bg->resize(indices.size());
+    for(size_t i = 0; i < indices.size(); ++i)
+      (*bg)[i] = cloud[indices[i]];
+
     double tol = 0.005;
-    SampleConsensusModelPlane<Point>::Ptr plane(new SampleConsensusModelPlane<Point>(seq_->pointclouds_[current_idx_], indices));
+    SampleConsensusModelPlane<Point>::Ptr plane(new SampleConsensusModelPlane<Point>(bg));
     RandomSampleConsensus<Point> ransac(plane);
     ransac.setDistanceThreshold(tol);
     ransac.computeModel();
     std::vector<int> inliers;
-    ransac.getInliers(inliers);  // inliers indexes into the original pointcloud, not indices.
+    ransac.getInliers(inliers);  // inliers indexes into bg
     VectorXf raw_coefs;
     ransac.getModelCoefficients(raw_coefs);
     VectorXf coefs;
     plane->optimizeModelCoefficients(inliers, raw_coefs, coefs);
-    
+
+    cout << "Plane fit coefficients: " << coefs.transpose() << endl;
+    cout << "Num inliers among bg points: " << inliers.size() << endl;
+    for(size_t i = 0; i < inliers.size(); ++i)
+      cout << "Pt: " << (*bg)[inliers[i]].getVector4fMap().transpose() << ", a^T pt: " << coefs.dot((*bg)[inliers[i]].getVector4fMap()) << endl;
+
+    int num = 0;
     for(size_t i = 0; i < cloud.size(); ++i) {
-      if(fabs(coefs.dot(cloud[i].getVector4fMap()) + coefs(3)) < tol) { 
+      if(fabs(coefs.dot(cloud[i].getVector4fMap())) < tol) { 
 	int y = (int)i / cloud.width;
 	int x = (int)i - y * cloud.width;
 	seed(y, x) = 0;
+	++num;
       }
     }
-
+    cout << "Total num inliers set to bg: " << num << endl;
+    
     needs_redraw_ = true;
   }
 
@@ -470,7 +488,7 @@ namespace dst
     for(size_t i = 0; i < cloud.size(); ++i) {
       int y = (int)i / cloud.width;
       int x = (int)i - y * cloud.width;
-      if(seed(y, x) == 255) { 
+      if(seed(y, x) == 255 && isFinite(cloud[i])) { 
 	fg->push_back(cloud[i]);
 	indices.push_back(i);
       }
@@ -637,16 +655,15 @@ namespace dst
     needs_redraw_ = true;
   }
 
-  void SequenceSegmentationViewController::segmentSequence()
+  void SequenceSegmentationViewController::segmentSequence(int idx)
   {
-    // -- Erase all segmentations except the previous one.
-    for(size_t i = 0; i < seq_->segmentations_.size(); ++i) {
-      if((int)i == current_idx_ - 1)
-    	continue;
+    cout << "Segmenting sequence starting with idx " << idx << endl;
+    
+    // -- Erase all segmentations after idx.
+    for(size_t i = idx + 1; i < seq_->segmentations_.size(); ++i)
       seq_->segmentations_[i] = 127;
-    }
-
-    current_idx_ = 0;
+    
+    current_idx_ = idx;
     draw();
     cv::waitKey(10);
     
@@ -663,15 +680,27 @@ namespace dst
 		seq_->segmentations_[current_idx_],
 		segmented_pcds_[current_idx_]);
       }
+      else if(current_idx_ == idx) {
+	sp_->run(seq_->segmentations_[current_idx_].clone(),  // Seed it with the segmentation previously computed.
+		 seq_->images_[current_idx_],
+		 seq_->pointclouds_[current_idx_],
+		 cv::Mat3b(),
+		 cv::Mat1b(),
+		 KinectCloud::Ptr(),
+		 seq_->segmentations_[current_idx_],
+		 segmented_pcds_[current_idx_]);
+      }
       else {
+	ROS_ASSERT(seq_->pointclouds_[current_idx_ - 1]);
+	ROS_ASSERT(seq_->pointclouds_[current_idx_]);
 	sp_->run(seq_->seed_images_[current_idx_],
-		seq_->images_[current_idx_],
-		seq_->pointclouds_[current_idx_],
-		seq_->images_[current_idx_-1],
-		seq_->segmentations_[current_idx_-1],
-		seq_->pointclouds_[current_idx_-1],
-		seq_->segmentations_[current_idx_],
-		segmented_pcds_[current_idx_]);
+		 seq_->images_[current_idx_],
+		 seq_->pointclouds_[current_idx_],
+		 seq_->images_[current_idx_-1],
+		 seq_->segmentations_[current_idx_-1],
+		 seq_->pointclouds_[current_idx_-1],
+		 seq_->segmentations_[current_idx_],
+		 segmented_pcds_[current_idx_]);
       }
 
       draw();

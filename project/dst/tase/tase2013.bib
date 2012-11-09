@@ -1,0 +1,1262 @@
+ 
+@inproceedings{sheikh2005a,
+annote = {
+This is the more advanced background subtraction paper that Gary sent me.
+
+Remarkably similar to DS&T.  They use what is essentially a bilateral filter for assigning node potentials (separate models for foreground and background, then log odds) and a constant term for edge potentials, then run graph cuts to find the segmentation.  Pretty good. Picks up shadows, but that's not especially surprising.
+
+11fps on 240x360 on a 3GHz machine.  That's not bad at all.  They mention that they use something called a Binned KDE rather than the usual Gaussian thing.  This is worth investigating.
+},
+author = {Yaser Sheikh and Mubarak Shah},
+booktitle = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+file = {home/teichman/sync/papers/pdf/sheikh2005a.pdf},
+title = {Bayesian Modeling of Dynamic Scenes for Object Detection},
+year = {2005},
+}
+
+@inproceedings{krahenbuhl2011a,
+annote = {
+
+For the problem of simultaneously segmenting and classifying an image, like much of the work Daphne has done in computer vision.
+
+Obviously, you can't form a fully-connected CRF at all; this is all done implicitly.
+
+Philipp said this probably needed some more work before it was really applicable.
+
+Things I should learn related to this:
+* Mean field
+* Permutohedral lattice
+* Gaussian filtering
+},
+author = {Krahenbuhl, P and Koltun, V},
+booktitle = {Advances in Neural Information Processing Systems},
+file = {home/teichman/sync/papers/pdf/krahenbuhl2011a.pdf},
+title = {Efficient inference in fully connected CRFs with Gaussian edge potentials},
+year = {2011},
+}
+
+@inproceedings{berclaz2011a,
+annote = {
+For the case of determining tracks of objects given object detections from something like latent SVM.
+
+Speed is pretty good.  5-7 people, about one minute of data, takes about 10 seconds.
+},
+author = {Berclaz, Jerome and Fleuret, Francois and Turetken, Engin and Fua, Pascal},
+booktitle = {},
+file = {home/teichman/sync/papers/pdf/berclaz2011a.pdf},
+title = {Multiple Object Tracking using K-Shortest Paths Optimization},
+year = {2011},
+}
+
+@inproceedings{adams2010a,
+annote = {
+A way to compute any Gaussian filter (bilateral filters, non-local means, etc.) efficiently.
+},
+author = {Andrew Adams and Jongmin Baek and Myers Abraham Davis},
+title = {Fast high-dimensional filtering using the permutohedral lattice},
+booktitle = {Computer Graphics Forum},
+year = {2010},
+file = {home/teichman/sync/papers/pdf/adams2010a.pdf},
+}
+
+@inproceedings{jiang2007a,
+annote = {
+For the case of determining tracks of objects given object detections from something like latent SVM.
+
+Quite slow.  200 seconds for 10 objects being tracked over 20 frames.  This is probably not useful.  See berclaz2011a for a faster version.
+},
+author = {Jiang, Hao and Fels, Sidney and Little, James},
+booktitle = {CVPR},
+file = {home/teichman/sync/papers/pdf/jiang2007a.pdf},
+title = {A linear programming approach for multiple object tracking},
+year = {2007},
+}
+
+@inproceedings{rusu2011a,
+author    = {Radu Bogdan Rusu and Steve Cousins},
+title     = {{3D is here: Point Cloud Library (PCL)}},
+booktitle = {{IEEE International Conference on Robotics and Automation (ICRA)}},
+month     = {May 9-13},
+year      = {2011},
+address   = {Shanghai, China}
+}
+
+@inproceedings{levinson2011a,
+author = {Levinson, Jesse and Askeland, Jake and Becker, Jan and Dolson, Jennifer and Held, David and Kammel, Soeren and Kolter, J Zico and Langer, Dirk and Pink, Oliver and Pratt, Vaughan and Sokolsky, Michael and Stanek, Ganymed and Stavens, David and Teichman, Alex and Werling, Moritz and Thrun, Sebastian},
+booktitle = {Intelligent Vehicles Symposium},
+title = {Towards Fully Autonomous Driving: Systems and Algorithms},
+year = {2011}
+}
+
+@inproceedings{levinson2010a,
+author = {Levinson, Jesse and Thrun, Sebastian},
+booktitle = {International Conference on Robotics and Automation},
+title = {{Robust vehicle localization in urban environments using probabilistic maps}},
+year = {2010}
+}
+
+
+@inproceedings{teichman2011a,
+author = {Teichman, Alex and Levinson, Jesse and Thrun, Sebastian},
+booktitle = {International Conference on Robotics and Automation},
+file = {:home/teichman/.local/share/data/Mendeley Ltd./Mendeley Desktop/Downloaded/Teichman, Levinson, Thrun - 2011 - Towards 3D Object Recognition via Classification of Arbitrary Object Tracks.pdf:pdf},
+title = {{Towards 3D object recognition via classification of arbitrary object tracks}},
+year = {2011}
+}
+
+@inproceedings{teichman2011b,
+author = {Teichman, Alex and Thrun, Sebastian},
+booktitle = {Robotics: Science and Systems},
+title = {{Tracking-based semi-supervised learning}},
+url = {http://cs.stanford.edu/people/teichman/rss2011.html},
+year = {2011}
+}
+
+@inproceedings{teichman2011c,
+author = {Teichman, Alex and Thrun, Sebastian},
+year = {2011},
+title = {{Video output of object recognition}},
+url = {http://cs.stanford.edu/people/teichman/rss2011.html},
+}
+
+@inproceedings{velodyne_example,
+title = {{Video of Velodyne data}},
+url = {http://youtu.be/ENiNKvDocvE}
+}
+
+@inproceedings{joshi2012a,
+annote = {
+ICRA 2012 review paper.
+
+I like this idea.  This is a practical way to improve active learning for a practical algorithm.
+
+I do have one concern: you only show labeled training set sizes up to a few hundred examples, whereas kNN classifiers are generally most effective for large datasets.  What happens when you extend these plots out to large numbers of training examples?  Even if the O(Nk^2) methods can't reach there, it would be reassuring to see O(Nk) method beat the random baseline in this regime.  In this vein, units in Figure 5 would be helpful: are these seconds or hours?  Is it even at all practical to use this method for larger datasets?
+
+You show the speed improvement in sample selection for ModFF+LSH, but don't show accuracy results using this method.  Do they still beat random?
+
+If I understand correctly, the batch-mode aspect of the algorithm is only important for the section in which you use uncertainty sampling; otherwise it appears to make no difference.  In Fig. 1 and 2, the algorithms are referred to as batch-mode, which, while true, appears irrelevant as labels are not used in the process of determining what samples to ask for next. You should probably clarify this.
+
+There are a number of minor errors and strangely-worded
+sentences.  For example:
+* You need to define $e$.  I had to look up the Nemhauser
+paper for this.  It might be, for example, error rather
+than the base of the natural logarithm.
+* Inconsistent notation in Fig. 2.
+* \phi instead of \emptyset.
+* x instead of \times in Section III.
+...
+},
+author = {},
+booktitle = {},
+file = {home/teichman/sync/papers/pdf/joshi2012a.pdf},
+title = {Coverage optimized active learning for k-NN classifiers},
+year = {2012},
+}
+
+@article{nemhauser1978a,
+annote = {
+This paper shows that the greedy approximation to maximizing a submodular set function is within (1 - 1/e) of the optimum, where e is the base of the natural logarithm.
+},
+author = {Nemhauser, G.L. and Wolsey, L.A. and Fisher, M.L.},
+journal = {Mathematical Programming},
+file = {home/teichman/sync/papers/pdf/nemhauser1978a.pdf},
+title = {An analysis of approximations for maximizing submodular set functions - I},
+year = {1978},
+}
+
+@inproceedings{pinto2011a,
+annote = {
+Chris Baldassano presented this; I overhead and joined the group because it sounded like what Andrew wanted to do a startup on: face detection for facebook / g+.
+
+They randomly sample CNN/DBN models.  No learning of the right filters, etc. - just randomly sample 7000 models and see which one is the best when you toss it in to an SVM.  Wow.  It's like random projections, but with some useful invariances thrown in.
+
+They get 85\% correct in a 100-way problem from facebook.  This is really not bad.
+
+They compare with face.com which has a public API.
+
+Face detection on facebook or g+ is going to need to use the social graph.
+},
+author = {},
+booktitle = {},
+file = {home/teichman/sync/papers/pdf/pinto2011a.pdf},
+title = {Scaling Up Biologically-Inspired Computer Vision: A Case Study in Unconstrained Face Recognition on Facebook},
+year = {2011},
+}
+
+@inproceedings{kalal2010a,
+annote = {
+Model-free tracking paper that corresponds to the predator tracker.
+},
+author = {Kalal, Zdenek and Matas, Jiri and Mikolajczyk, Krystian},
+booktitle = {CVPR},
+file = {home/teichman/sync/papers/pdf/kalal2010a.pdf},
+title = {P-N Learning: Bootstrapping Binary Classifiers by Structural Constraints},
+year = {2010},
+}
+
+@inproceedings{ozuysal2007a,
+annote = {
+Ferns paper.
+},
+author = {Ozuysal, Mustafa and Fua, Pascal and Lepetit, Vincent},
+booktitle = {CVPR},
+file = {home/teichman/sync/papers/pdf/ozuysal2007.pdf},
+title = {Fast Keypoint Recognition in Ten Lines of Code},
+year = {2007},
+}
+
+@inproceedings{liu2011a,
+annote = {
+CVPR tracking paper that looks at bounding boxes.
+},
+author = {Liu, Baiyang and Huang, Junzhou and Yang, Lin and Kulikowsk, Casimir},
+booktitle = {CVPR},
+file = {home/teichman/sync/papers/pdf/liu2011a.pdf},
+title = {Robust Tracking Using Local Sparse Appearance Model and K-Selection},
+year = {2011},
+}
+
+@inproceedings{budvytis2011a,
+annote = {
+These guys are after the same thing I am, but without depth information.
+
+"Our results have wide
+applicability, including harvesting labelled video data for
+training discriminative models"
+
+They get it.
+
+"Task-dependent segmentation" vs "task-independent segmentation".  The former is what they and I are doing.  The latter is like superpixel segmentation.
+
+They are given labelings of the first and the last frame.  This is totally different from the robotics use-case.
+},
+author = {Budvytis, Ignas and Badrinarayanan, Vijay and  Cipolla, Roberto},
+booktitle = {CVPR},
+file = {home/teichman/sync/papers/pdf/budvytis2011a.pdf},
+title = {Semi-Supervised Video Segmentation using Tree Structured Graphical Models},
+year = {2011},
+}
+
+@inproceedings{sundberg2011a,
+annote = {
+This is different from DS&T in that they're determining figure/ground by motion, whereas we are given figure in advance.
+},
+author = {Patrik Sundberg and Thomas Brox and Michael Maire and Pablo Arbel'ez and Jitendra Malik},
+booktitle = {CVPR},
+file = {home/teichman/sync/papers/pdf/sundberg2011a.pdf},
+title = {Occlusion Boundary Detection and Figure/Ground Assignment from Optical Flow},
+year = {2011},
+}
+
+@inproceedings{fragkiadaki2011a,
+annote = {
+They're doing figure-ground segmentation, where figure is determined to be anything "salient".
+},
+author = {Katerina Fragkiadaki and Jianbo Shi},
+booktitle = {CVPR},
+file = {home/teichman/sync/papers/pdf/fragkiadaki2011a.pdf},
+title = {Detection Free Tracking: Exploiting Motion and Topology for Segmenting and Tracking under Entanglement},
+year = {2011},
+}
+
+@inproceedings{badrinarayanan2010a,
+annote = {
+Label propagation: given fully-labeled starting and ending frames, propagate semantic multi-class labeling throughout the video.
+
+This is a great way to get lots of automatically-labeled semantic segmentations.
+},
+author = {Vijay Badrinarayanan and Fabio Galasso and Roberto Cipolla},
+booktitle = {CVPR},
+file = {home/teichman/sync/papers/pdf/Badrinarayanan.pdf},
+title = {Label propagation in video sequences},
+year = {2010},
+}
+
+@inproceedings{budvytis2010a,
+annote = {
+Just like budvytis2011a.
+},
+author = {Budvytis, Ignas and Badrinarayanan, Vijay and Cipolla, Roberto},
+booktitle = {CVPR},
+file = {home/teichman/sync/papers/pdf/budvytis2010a.pdf},
+title = {Label propagation in complex video sequences using semi-supervised learning},
+year = {2010},
+}
+
+@inproceedings{dieter2003a,
+annote = {
+Adaptive choice of number of particles.
+},
+author = {Dieter Fox},
+booktitle = {IJRR},
+file = {home/teichman/sync/papers/pdf/dieter2003a.pdf},
+title = {Adapting the Sample Size in Particle Filters Through KLD-Sampling},
+year = {2003},
+}
+
+@inproceedings{sand2006a,
+annote = {
+The goal is to track many particles (features) throughout a video.
+
+Seven seconds per frame, so not applicable to DS&T.
+},
+author = {Peter Sand and Seth Teller},
+booktitle = {CVPR},
+file = {home/teichman/sync/papers/pdf/sand2006a.pdf},
+title = {Particle video: Long-range motion estimation using point trajectories},
+year = {2006},
+}
+
+@inproceedings{bai2009a,
+annote = {
+These guys produce the segmentation results that I really want using just video data... but they have user interaction.  The perfect segmentations that they show are misleading: they are the results of lots of user input.  It's not compeletely automatic.
+
+That said, this is damn good.  It's also now available in Adobe AfterEffects.
+
+Many binary foreground / background classifiers (outputting a kxk mask) are learned at overlapping points on the object boundary.  They are propagated to the next frame with SIFT and optical flow, then make their predictions, then all of their predictions are aggregated and fed to a graph cuts optimizer.
+
+The classifiers use color and shape information; when color isn't useful, they automatically rely more on the shape information.
+},
+author = {Xue Bai and Jue Wang and David Simons and Guillermo Sapiro},
+booktitle = {SIGGRAPH},
+file = {home/teichman/sync/papers/pdf/bai2009a.pdf},
+title = {Video snapcut: robust video object cutout using localized classifiers},
+year = {2009},
+}
+
+@inproceedings{gross2006a,
+annote = {
+CRF learning for chain models, done by optimizing Hamming loss directly and applying a clever way to smooth out the sum of step functions (i.e. use a sigmoid instead of a step function).  Unfortunately this does not apply to the image graph cuts case because there is no efficient way to estimate probabilities there, whereas there is for chain models (Viterbi, maximum expected accuracy).
+},
+author = {Samuel Gross and Olga Russakovsky and Chuong Do and Serafim Batzoglou},
+booktitle = {NIPS},
+file = {home/teichman/sync/papers/pdf/gross2006a.pdf},
+title = {Training conditional random fields for maximum labelwise accuracy},
+year = {2006},
+}
+
+@inproceedings{li2008a,
+annote = {
+
+},
+author = {Yunpeng Li and Daniel Huttenlocher},
+booktitle = {CVPR},
+file = {home/teichman/sync/papers/pdf/li2008a.pdf},
+title = {Learning for Stereo Vision Using the Structured Support Vector Machine},
+year = {2008},
+}
+
+@inproceedings{koppula2011a,
+annote = {},
+author = {Hema Swetha Koppula and Abhishek Anand and Thorsten Joachims and Ashutosh Saxena},
+booktitle = {NIPS},
+file = {home/teichman/sync/papers/pdf/koppula2011a.pdf},
+title = {Labeling 3D scenes for Personal Assistant Robots},
+year = {2011},
+}
+
+@inproceedings{szummer2008a,
+annote = {
+Structural SVMs for graph cuts.
+},
+author = {Martin Szummer and Pushmeet Kohli and Derek Hoiem},
+booktitle = {ECCV},
+file = {home/teichman/sync/papers/pdf/szummer2008a.pdf},
+title = {Learning CRFs using Graph Cuts},
+year = {2008},
+}
+
+@inproceedings{gulshan2011a,
+annote = {
+Kinect background subtraction is used to collect lots of training examples of humans.
+},
+author = {Varun Gulshan and Victor Lempitsky and Andrew Zisserman},
+booktitle = {ICCV Workshop on Consumer Depth Cameras for Computer Vision},
+file = {home/teichman/sync/papers/pdf/gulshan2011a.pdf},
+title = {Humanising GrabCut: Learning to segment humans using the Kinect},
+year = {2011},
+}
+
+@misc{urmson2011a,
+address = {Robotics: Science and Systems},
+author = {Urmson, Chris},
+title = {{The Google Self-Driving Car Project}},
+year = {2011}
+}
+
+@Article{joachims2009a,
+  author = 	 {T. Joachims and T. Finley and Chun-Nam Yu},
+  title = 	 {Cutting-Plane Training of Structural SVMs},
+  journal = 	 {Machine Learning},
+  volume =	 77,
+  number =	 1,
+  pages =        {27-59},
+  year = 	 {2009}
+}
+
+@INPROCEEDINGS{ferreau2007b,
+  author = {H.J. Ferreau},
+  title = {{qpOASES} -- An Open-Source Implementation of the Online Active Set Strategy for Fast Model Predictive Control},
+  booktitle = {Proceedings of the Workshop on Nonlinear Model Based Control -- Softwareand Applications, Loughborough},
+  year = {2007},
+  pages = {29--30},
+  keywords = {c++ implementation, QP solver}
+}
+
+@ARTICLE{boykov2001a,
+    author = {Yuri Boykov and Vladimir Kolmogorov},
+    title = {An Experimental Comparison of Min-Cut/Max-Flow Algorithms for Energy Minimization in Vision},
+    journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+    year = {2001},
+    volume = {26},
+    pages = {359--374}
+}
+
+@inproceedings{kumar2011a,
+annote = {
+Example of semantic segmentation.
+},
+author = {M.P. Kumar and H. Turki and D. Preston and D. Koller},
+booktitle = {ICCV},
+file = {home/teichman/sync/papers/pdf/kumar2011a.pdf},
+title = {Learning Specific-Class Segmentation from Diverse Data},
+year = {2011},
+}
+
+@inproceedings{rother2004a,
+ author = {Rother, Carsten and Kolmogorov, Vladimir and Blake, Andrew},
+ title = {"GrabCut": interactive foreground extraction using iterated graph cuts},
+ booktitle = {ACM SIGGRAPH 2004 Papers},
+ series = {SIGGRAPH '04},
+ year = {2004},
+ location = {Los Angeles, California},
+ pages = {309--314},
+ numpages = {6},
+ url = {http://doi.acm.org/10.1145/1186562.1015720},
+ doi = {http://doi.acm.org/10.1145/1186562.1015720},
+ acmid = {1015720},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ }
+
+@inproceedings{taskar2005a,
+annote = {
+One of the original structural svm papers?
+},
+author = {B. Taskar and V. Chatalbashev and D. Koller and C. Guestrin},
+booktitle = {ICML},
+file = {home/teichman/sync/papers/pdf/taskar2005a.pdf},
+title = {Learning Structured Prediction Models: A Large Margin Approach},
+year = {2005},
+}
+
+@article{tsochantaridis2005a,
+annote = {
+One of the original structural svm papers?
+},
+author = {I. Tsochantaridis and T. Joachims and T. Hofmann and Y. Altun},
+booktitle = {Journal of Machine Learning Research},
+file = {home/teichman/sync/papers/pdf/tsochantaridis2005a.pdf},
+title = {Large margin methods for structured and interdependent output variables},
+year = {2005},
+}
+
+@article{viola2004a,
+annote = {The classic Viola-Jones paper.  Integral image features, boosting cascades.
+      },
+author = {Viola, Paul and Jones, Michael J.},
+doi = {10.1023/B:VISI.0000013087.49260.fb},
+file = {:home/teichman/.local/share/data/Mendeley Ltd./Mendeley Desktop/Downloaded/Viola, Jones - 2004 - Robust Real-Time Face Detection.pdf:pdf},
+issn = {0920-5691},
+journal = {International Journal of Computer Vision},
+keywords = {boosting,face detection,human sensing},
+month = may,
+number = {2},
+pages = {137--154},
+title = {{Robust Real-Time Face Detection}},
+url = {http://www.springerlink.com/openurl.asp?id=doi:10.1023/B:VISI.0000013087.49260.fb},
+volume = {57},
+year = {2004}
+}
+
+@inproceedings{grabner2006a,
+author = {Grabner, Helmut and Grabner, Michael and Bischof, Horst},
+booktitle = {British Machine Vision Conference},
+file = {:home/teichman/.local/share/data/Mendeley Ltd./Mendeley Desktop/Downloaded/Grabner, Grabner, Bischof - 2006 - Real-Time Tracking via On-line Boosting.pdf:pdf},
+title = {{Real-Time Tracking via On-line Boosting}},
+year = {2006}
+}
+
+@inproceedings{stalder2009a,
+annote = {Another discriminative tracking paper.  Very flaky evaluation.  I am not at all convinced that I should use this.
+        
+The term "model-free tracking" is used here.},
+author = {Stalder, Severin and Grabner, Helmut and Gool, Luc Van},
+booktitle = {International Conference on Computer Vision Workshop on On-line Learning for Computer Vision},
+doi = {10.1109/ICCVW.2009.5457445},
+file = {:home/teichman/.local/share/data/Mendeley Ltd./Mendeley Desktop/Downloaded/Stalder, Grabner, Gool - 2009 - Beyond semi-supervised tracking Tracking should be as simple as detection, but not simpler than recognition.pdf:pdf},
+isbn = {978-1-4244-4442-7},
+month = sep,
+title = {{Beyond semi-supervised tracking: Tracking should be as simple as detection, but not simpler than recognition}},
+url = {http://ieeexplore.ieee.org/lpdocs/epic03/wrapper.htm?arnumber=5457445},
+year = {2009}
+}
+
+@inproceedings{lafferty2001a,
+annote = {
+The original CRF paper.
+},
+author = {J. Lafferty and A. McCallum and F. Pereira},
+booktitle = {ICML},
+file = {home/teichman/sync/papers/pdf/lafferty2001a.pdf},
+title = {Conditional random fields: Probabilistic models for segmenting and labeling sequence data},
+year = {2001},
+}
+
+@inproceedings{godec2011a,
+annote = {
+The HoughTrack paper.
+
+Discriminative segmentation and tracking in video sequences.  No learning framework, only one feature type.  There are lots of hacks: IIR forgetting function, ignore sparsely populated trees, normalize the probabilities in each leaf to simulate equal amounts of training data, 
+
+They report "percentage of frames for each sequence until the tracking
+approach fails by visual inspection".  That seems completely unacceptable.
+
+Their code is buggy (glibc errors pop up frequently, and I found a mismatched int blah[] / delete blah, doesn't compute on the last frame, etc) and the super sensitive to the maxScale parameter, which determines how large the tracked region is allowed to grow.  If you set this to be large, it will basically grow without bound.
+
+It seems like he should have patches vote for the outline of the object rather than the object center.
+},
+author = {Martin Godec and Peter Roth and Horst Bischof},
+booktitle = {ICCV},
+file = {home/teichman/sync/papers/pdf/godec2011a.pdf},
+title = {Hough-based Tracking of Non-Rigid Objects},
+year = {2011},
+}
+
+@inproceedings{hinterstoisser2011a,
+annote = {
+The linemod paper.
+},
+author = {Stefan Hinterstoisser and Stefan Holzer and Cedric Cagniart and Slobodan Ilic and Kurt Konolige and Nassir Navab and Vincent Lepetit},
+booktitle = {ICCV},
+file = {home/teichman/sync/papers/pdf/hinterstoisser2011a.pdf},
+title = {Multimodal Templates for Real-Time Detection of Texture-less Objects in Heavily Cluttered Scenes},
+year = {2011},
+}
+
+@inproceedings{kohli2005a,
+annote = {
+Optimization of graph cuts for sequences.  This might be useful if graph cuts ever becomes the slow part of doing DS&T.
+},
+author = {Pushmeet Kohli and Philip Torr},
+booktitle = {ICCV},
+file = {home/teichman/sync/papers/pdf/kohli2005a.pdf},
+title = {Efficiently Solving Dynamic Markov Random Fields using Graph Cuts},
+year = {2005},
+}
+
+@inproceedings{schmidt2009a,
+annote = {
+Do faster graph cuts if you assume everything is in a plane.
+},
+author = {Frank Schmidt and Eno Toppe and Daniel Cremers},
+booktitle = {CVPR},
+file = {home/teichman/sync/papers/pdf/schmidt2009a.pdf},
+title = {Efficient Planar Graph Cuts with Applications in Computer Vision},
+year = {2009},
+}
+
+@INPROCEEDINGS{triebel2010a,
+AUTHOR    = {R. Triebel AND J. Shin AND R. Siegwart},
+TITLE     = {Segmentation and Unsupervised Part-based Discovery of Repetitive Objects},
+BOOKTITLE = {Proceedings of Robotics: Science and Systems},
+YEAR      = {2010},
+ADDRESS   = {Zaragoza, Spain},
+MONTH     = {June},
+}
+
+@inproceedings{lim2001a,
+annote = {
+This early paper mentions the idea of DS&T.  They don't use graph cuts.
+},
+author={Jungeun Lim and Jong Beom Ra},
+booktitle={International Conference on Image Processing},
+title={Semi-automatic video segmentation for object tracking},
+year={2001},
+doi={10.1109/ICIP.2001.958429},
+file = {home/teichman/sync/papers/pdf/lim2001a.pdf},
+}
+
+@inproceedings{jaeggi2010a,
+annote = {
+Paper discussing dual n-back training vs single n-back training and its effects on people's ability to solve puzzles.
+
+The control group did not see the experimenters every day, whereas the training groups did.  The higher performance of the training groups could just be because they were receiving more attention, and thus were more motivated or believed they were smarter.  Essentially, they haven't rigorously eliminated the Hawthorne effect or the placebo effect.  This is unfortunate.  Can we really trust these results?  Is it really worth taking doing this for a month?
+},
+author = {},
+booktitle = {},
+file = {home/teichman/sync/papers/pdf/jaeggi2010a.pdf},
+title = {The relationship between n-back performance and matrix reasoning — implications for training and transfer},
+year = {2010},
+}
+
+@inproceedings{gao2011a,
+annote = {
+Daphne paper about object recognition which explicitly reasons about occlusion and segmentation.  Should be mentioned in the DS&T paper, isn't yet.
+},
+author = {},
+booktitle = {},
+file = {home/teichman/sync/papers/pdf/gao2011a.pdf},
+title = {},
+year = {2011},
+}
+
+@inproceedings{roth2006a,
+annote = {
+Background subtraction for model-free segmentation on a video sequence with hand-held objects.
+},
+author = {Peter Roth and Michael Donoser and Horst Bischof},
+booktitle = {International Conference on Computer Vision Systems},
+file = {home/teichman/sync/papers/pdf/roth2006a.pdf},
+title = {On-line Learning of Unknown Hand Held Objects via Tracking},
+year = {2006},
+}
+
+@inproceedings{nguyen2008a,
+annote = {
+No hand model.  Looks more similar to discriminative tracking than hand tracking.  Generally weak paper.
+},
+file = {home/teichman/sync/papers/pdf/nguyen2008a.pdf},
+author    = {Nguyen Dang Binh and Thuy Thi Nguyen and Horst Bischof},
+title     = {An active boosting-based learning framework for real-time hand detection},
+booktitle = {International Conference on Automatic Face and Gesture Recognition},
+year      = {2008},
+}
+
+@inproceedings{oikonomidis2011a,
+annote = {
+This work explicitly models the hand with all its joints.  Uses a multicamera system.  Designed for the case of a hand interacting with some object.
+
+One could conceivably use this method for subtracting away the hand, then using the remaining pointclouds to stitch together a model, though it requires a multicamera setup.
+},
+author = {Iason Oikonomidis and Nikolaos Kyriazis and Antonis A. Argyros},
+booktitle = {ICCV},
+file = {home/teichman/sync/papers/pdf/oikonomidis2011a.pdf},
+title = {Full DOF tracking of a hand interacting with an object by modeling occlusions and physical constraints},
+year = {2011},
+}
+
+@inproceedings{hamer2010a,
+annote = {
+This work develops priors for specific objects.  It's not especially useful for the handheld object learning case because by definition we do not know anything yet about the object.  96 DOF hand model.
+
+They use the same prior for both hand tracking and grasp synthesis tasks.
+},
+author = {Henning Hamer and Juergen Gall and Thibaut Weise and Luc Van Gool},
+booktitle = {CVPR},
+file = {home/teichman/sync/papers/pdf/hamer2010a.pdf},
+title = {An Object-Dependent Hand Pose Prior from Sparse Training Data},
+year = {2010},
+}
+
+@inproceedings{erol2007a,
+annote = {
+Review of hand pose estimation work.  This does not include handheld model capture.
+},
+author = {A. Erol and G. Bebis and M. Nicolescu and R. D. Boyle and X. Twombly},
+booktitle = {Computer Vision and Image Understanding},
+file = {home/teichman/sync/papers/pdf/erol2007a.pdf},
+title = {Vision-based hand pose estimation: A review},
+year = {2007},
+}
+
+@inproceedings{athitsos2003a,
+annote = {
+Large database of synthetic 3D hands.  Image only, uses chamfer matching.
+},
+author = {V. Athitsos and S. Sclaroff},
+booktitle = {CVPR},
+file = {home/teichman/sync/papers/pdf/athitsos2003a.pdf},
+title = {Estimating 3d hand pose from a cluttered image},
+year = {2003},
+}
+
+@inproceedings{hamer2009a,
+annote = {
+Uses RGBD from structed light stereo and an explicit hand model.  6 seconds per frame, even when using a GPU.  Our work could improve on theirs by not requiring hand contact at all times and by being faster.
+
+Uses a similar idea to Christian and Varun's work on human tracking: they wiggle all the joints, use a GPU to draw them, and see how well they line up.  Exact BP (tree-based structure) is used for inference.
+},
+author = {H. Hamer and K. Schindler and E. Koller-Meier and L. Van Gool},
+booktitle = {ICCV},
+file = {home/teichman/sync/papers/pdf/hamer2009a.pdf},
+title = {Tracking a hand manipulating an object},
+year = {2009},
+}
+
+@inproceedings{rehg1994a,
+annote = {
+Very old hand tracker based on vision data only without markers on the hand.  Not for hands holding objects.
+},
+author = {J. M. Rehg and T. Kanade}, 
+booktitle = {ECCV},
+file = {home/teichman/sync/papers/pdf/rehg1994a.pdf},
+title = {Visual tracking of high dof articulated structures: An application to human hand tracking},
+year = {1994},
+}
+
+@inproceedings{rusinkiewicz2002a,
+title = {Real-time 3d model acquisition},
+author = {S. Rusinkiewicz and O. Hall-Holt and M. Levoy},
+booktitle = {ACM Transactions on Graphics},
+year = {2002},
+annote = {},
+file = {home/teichman/sync/papers/pdf/rusinkiewicz2002a.pdf},
+}
+
+@inproceedings{stenger2006a,
+title = {Model-based hand tracking using a hierarchical bayesian filter},
+author = {B. Stenger and A. Thayananthan and P. Torr and R. Cipolla},
+booktitle = {Pattern Analysis and Machine Intelligence},
+year = {2006},
+annote = {},
+file = {home/teichman/sync/papers/pdf/stenger2006a.pdf},
+}
+
+@inproceedings{sudderth2004a,
+title = {Visual hand tracking using nonparametric belief propagation},
+author = {E. Sudderth and M. Mandel and W. Freeman and A. Willsky},
+booktitle = {CVPR Workshop on Generative Model-based Vision},
+year = {2004},
+annote = {},
+file = {home/teichman/sync/papers/pdf/sudderth2004a.pdf},
+}
+
+@inproceedings{romero2010a,
+title = {Hands in action: Real-time 3D reconstruction of hands in interaction with objects},
+author = {J. Romero and H. Kjellstrom and D. Kragic},
+booktitle = {ICRA},
+year = {2010},
+annote = {
+Large (100k) synthetic database of hand poses, including objects. LSH to do nearest neighbor lookup.  Smoothing over time by giving higher weights to those hand poses that are similar to the previous hand pose.  Camera input only.
+
+One could conceivably use this method for subtracting away the hand, then using the remaining pointclouds to stitch together a model.
+},
+file = {home/teichman/sync/papers/pdf/romero2010a.pdf},
+}
+
+@inproceedings{oikonomidis2011b,
+title = {Efficient model-based 3d tracking of hand articulations using kinect},
+author = {I. Oikonomidis and N. Kyriazis and A. Argyros},
+booktitle = {BMVC},
+year = {2011},
+annote = {
+This work deals only with the hand tracking problem - the hand is, by definition, not holding anything.
+},
+file = {home/teichman/sync/papers/pdf/oikonomidis2011b.pdf},
+}
+
+@inproceedings{kjellstrom2008a,
+title = {Visual recognition of grasps for human-to-robot mapping},
+author = {H. Kjellstrom and J. Romero and D. Kragi},
+booktitle = {IROS},
+year = {2008},
+annote = {},
+file = {home/teichman/sync/papers/pdf/kjellstrom2008a.pdf},
+}
+
+@inproceedings{delagorce2008a,
+title = {Model-based hand tracking with texture, shading and self-occlusions},
+author = {M. de la Gorce and N. Paragios and D. J. Fleet},
+booktitle = {CVPR},
+year = {2008},
+annote = {},
+file = {home/teichman/sync/papers/pdf/delagorce2008a.pdf},
+}
+
+@inproceedings{feix2009a,
+title = {A comprehensive grasp taxonomy},
+author = {T. Feix and R. Pawlik and H. Schmiedmayer and J. Romero and D. Kragic},
+booktitle = {RSS Workshop on Understanding the Human Hand for Advancing Robotic Manipulation},
+year = {2009},
+annote = {
+This 2 page abstract discusses the different types of grasps that show up in the literature.  The long-term goal is to come up with a mechanical hand that is as simple as possible, yet can perform as many of these grasps as possible.
+
+This seems somewhat misguided to me.  Why bother with what human hands can do?  Better to develop some clever way to use whatever tools you (the robot) have available.  For example, automatically learning to use the vacuum coffeegrounds gripper vs an Aaron Dollar hand would be awesome.
+},
+file = {home/teichman/sync/papers/pdf/feix2009a.pdf},
+}
+
+@inproceedings{levin2003a,
+title = {Unsupervised improvement of visual detectors using co-training},
+author = {A. Levin and P. Viola and Y. Freund},
+booktitle = {ICCV},
+year = {2003},
+annote = {
+An example of co-training being useful in computer vision.  Why don't we see more of this?
+},
+file = {home/teichman/sync/papers/pdf/levin2003a.pdf},
+}
+
+@inproceedings{roth2005a,
+title = {On-line conservative learning for person detection},
+author = {P. Roth and H. Grabner and D. Skocaj and H. Bischof and A. Leonardis},
+booktitle = {IEEE Workshop on VS-PETS},
+year = {2005},
+annote = {
+Easy in that background subtraction gets you most of the way - stationary cameras are used.  Similar to co-training in that they use two different models.
+},
+file = {home/teichman/sync/papers/pdf/roth2005a.pdf},
+}
+
+@inproceedings{krainin2011a,
+title = {Manipulator and object tracking for in-hand 3D object modeling},
+author = {Michael Krainin and Peter Henry and Xiaofeng Ren and Dieter Fox},
+booktitle = {IJRR},
+year = {2011},
+annote = {
+Journal version of krainin2011b.
+
+Combines robot arm tracking (known controls - though they demonstrate that this is not necessary - and model-based tracking of a known arm with known degrees of freedom) with ICP to track the arm and the object in 6DOF over time.  This is good because textureless objects can be handled easily.  3D model of the manipulator is required including angle positions, etc.  They do articulated ICP to align the arm model with the data.
+
+Interesting connection with the original ADBF idea: their surfel confidence comes from the number of different angles seen rather than the number of times it was seen.  It's hardcoded and doesn't use any ADBF-like math, but same intuition.
+
+Strangely, they show completed models with holes even though this is supposed to work after regrasping on a different location.
+
+Also strangely, their literature on in-hand model capture is completely lacking the papers on hand tracking.  They don't explicitly do modeling, but there is no reason you couldn't...
+},
+file = {home/teichman/sync/papers/pdf/krainin2011a.pdf},
+}
+
+@inproceedings{torralba2011a,
+title = {Unbiased look at dataset bias},
+author = {},
+booktitle = {},
+year = {},
+annote = {
+Fun paper suggested by Andrej.  Their point is that dataset benchmarks are good but only get you so far; we're probably overfitting to the existing datasets now.
+},
+file = {home/teichman/sync/papers/pdf/torralba2011a.pdf},
+}
+
+@inproceedings{strobl2009a,
+title = {The Self-Referenced DLR 3D-Modeler},
+author = {K. H. Strobl and E. Mair and T. Bodenmuller and S. Kielhofer and W. Sepp and M. Suppa and D. Burschka and G. Hirzinger},
+booktitle = {IROS},
+year = {2009},
+annote = {
+Visual feature tracking for camera pose estimation while reconstructing a 3D model.  They don't show the final model, so I do not believe that it works.  Uses a 3D scanner.
+},
+file = {home/teichman/sync/papers/pdf/strobl2009a.pdf},
+}
+
+@inproceedings{kraft2009a,
+title = {Birth of the Object: Detection of Objectness and Extraction of Object Shape through Object Action Complexes},
+author = {Dirk Kraft and Nicolas Pugeault and Emre Baseski and Mila Popovic and Danica Kragic and Sinan Kalkan and Florentin Worgotter and Norbert Kruger},
+booktitle = {International Journal of Humanoid Robotics},
+year = {2009},
+annote = {
+Neuroscience-inspired method of using a robot to segment an object and build a (very rough sketch of) a 3D model.  Uses stereo cameras.  Seems like it should be much older than 2009.
+},
+file = {home/teichman/sync/papers/pdf/kraft2009a.pdf},
+}
+
+@inproceedings{ude2008a,
+title = {Making object learning and recognition an active process},
+author = {A. Ude and D. Omrcen and G. Cheng},
+booktitle = {International Journal of Humanoid Robotics},
+year = {2008},
+annote = {
+A robot learns to recognize objects by picking them up and looking at them.  krainin2011a looks super advanced compared to this.
+},
+file = {home/teichman/sync/papers/pdf/ude2008a.pdf},
+}
+
+@inproceedings{sturm2010a,
+title = {Vision-based Detection for Learning Articulation Models of Cabinet Doors and Drawers in Household Environments},
+author = {Jurgen Sturm and Kurt Konolige and Cyrill Stachniss and Wolfram Burgard},
+booktitle = {ICRA},
+year = {2010},
+annote = {},
+file = {home/teichman/sync/papers/pdf/sturm2010a.pdf},
+}
+
+@inproceedings{krainin2011b,
+title = {Autonomous Generation of Complete 3D Object Models Using Next Best View Manipulation Planning},
+author = {Michael Krainin and Brian Curless and Dieter Fox},
+booktitle = {ICRA},
+year = {2011},
+annote = {
+Conference version of krainin2011a.  Uses next best view planning to figure what part of the object to look at, builds 3D models.  Looks like they should probably be using James Diebel's work on reconstructing surfaces, and should do the same to get sharp edges in the colors of the point cloud.
+},
+file = {home/teichman/sync/papers/pdf/krainin2011b.pdf},
+}
+
+@inproceedings{kawasaki2004a,
+title = {Entire Model Acquisition System using Handheld 3D Digitizer},
+author = {Hiroshi Kawasaki and Ryo Furukawa},
+booktitle = {3DPVT},
+year = {2004},
+annote = {
+Specialized 3D model capture rig with markers, turntable, etc.  Based on a light-striping depth sensor.
+},
+file = {home/teichman/sync/papers/pdf/kawasaki2004a.pdf},
+}
+
+@inproceedings{coudrin2011a,
+title = {Precise Registration of 3D Images Acquired from a Hand-Held Visual Sensor},
+author = {Benjamin Coudrin and Michel Devy and Jean-Jos{\'e} Orteu and Ludovic Brethes},
+booktitle = {ACIVS},
+year = {2011},
+annote = {Handheld sensor moved around a stationary rigid object.},
+file = {home/teichman/sync/papers/pdf/coudrin2011a.pdf},
+}
+
+@article{mair2010a,
+title = {Real-time Image-based Localization for Hand-held 3D-modeling},
+author = {Mair, Elmar and Strobl, Klaus and Bodenmüller, Tim and Suppa, Michael and Burschka, Darius},
+booktitle = {Kunstliche Intelligenz},
+year = {2010},
+annote = {Handheld sensor moved around a stationary rigid object.},
+file = {home/teichman/sync/papers/pdf/mair2010a.pdf},
+}
+
+@inproceedings{baeza-yates1998,
+title = {Fast Approximate String Matching in a Dictionary},
+author = {Ricardo Baeza-Yates and Gonzalo Navarro},
+booktitle = {SPIRE},
+year = {1998},
+annote = {
+To search a large database of known strings for matches within a string edit distance of 1, the BK-Tree discussed in this paper is a fast way to do the lookup.  Beyond a distance of 1, the other algorithms they mention are faster.
+},
+file = {home/teichman/sync/papers/pdf/baeza-yates1998.pdf},
+}
+
+@inproceedings{herbst2011a,
+title = {Toward Object Discovery and Modeling via 3-D Scene Comparison},
+author = {Evan Herbst and Peter Henry and Xiaofeng Ren and Dieter Fox},
+booktitle = {ICRA},
+year = {2011},
+annote = {
+Run slam, do scan differencing, segment out objects using change detection.
+
+Applying this method in a very large dataset approach would be interesting.
+},
+file = {home/teichman/sync/papers/pdf/herbst2011a.pdf},
+}
+
+@inproceedings{newcombe2010a,
+title = {Live Dense Reconstruction with a Single Moving Camera},
+author = {Richard Newcombe and Andrew Davison},
+booktitle = {CVPR},
+year = {2010},
+annote = {
+Amazing structure from motion using a single video stream.
+},
+file = {home/teichman/sync/papers/pdf/newcombe2010a.pdf},
+}
+
+@inproceedings{kleinlogel2008a,
+title = {The Secret World of Shrimps: Polarisation Vision at Its Best},
+author = {Sonja Kleinlogel and Andrew G. White},
+booktitle = {PLoS ONE},
+year = {2008},
+annote = {
+Fascinating article about how mantis shrimp can see all types of polarized light, including circular polarization in both directions.
+},
+file = {home/teichman/sync/papers/pdf/kleinlogel2008a.pdf},
+}
+
+@inproceedings{ferreau2011a,
+title = {qpOASES User's Manual},
+author = {Hans Joachim Ferreau, Eckhard Arnold, Holger Diedam, Boris Houska, Christian Kirches, Aude Perrin, Andreas Potschka, Thomas Wiese, Leonard Wirsching},
+booktitle = {},
+year = {2011},
+annote = {
+Cite using ferreau2007b.
+},
+file = {home/teichman/sync/papers/pdf/ferreau2011a.pdf},
+}
+
+@inproceedings{malisiewicz2007,
+title = {Improving Spatial Support for Objects via Multiple Segmentations},
+author = {Tomasz Malisiewicz and Alexei A. Efros},
+booktitle = {BMVC},
+year = {2007},
+annote = {
+Says that segmentation first is a useful thing when doing object recognition.
+
+Fig. 2's caption is self-contradictory.  Is this accuracy or just recall?  If the latter, it's really not so interesting.
+},
+file = {home/teichman/sync/papers/pdf/malisiewicz2007.pdf},
+}
+
+@inproceedings{kramers1941,
+title = {Statistics of the Two-Dimensional Ferromagnet, Part I},
+author = {H. Kramers and G. Wannier},
+booktitle = {Physical Review},
+year = {1941},
+annote = {
+For constant node potentials and constant edge potentials, you can solve for the partition function exactly for infinitely long 1D chains.  There's an approximate solution for 2D grids.
+
+This is probably not applicable to the more feature-rich case.
+},
+file = {home/teichman/sync/papers/pdf/kramers1941.pdf},
+}
+
+@inproceedings{vandesande2011a,
+title = {Segmentation as Selective Search for Object Recognition},
+author = {Koen E. A. van de Sande and Jasper R. R. Uijlings and Theo Gevers and Arnold W. M. Smeulders},
+booktitle = {ICCV},
+year = {2011},
+annote = {
+Search over segmentations first, then run your classifier.
+
+This is definitely worth looking into in more depth.
+},
+file = {home/teichman/sync/papers/pdf/vandesande2011a.pdf},
+}
+
+@inproceedings{levinson2010b,
+title = {Unsupervised Calibration for Multi-beam Lasers},
+author = {Jesse Levinson and Sebastian Thrun},
+booktitle = {ISER},
+year = {2010},
+annote = {
+SCAM paper.
+},
+file = {home/teichman/sync/papers/pdf/levinson2010b.pdf},
+}
+
+@article{friedman2000a,
+title = {Additive logistic regression: a statistical view of boosting},
+author = {Jerome Friedman and Trevor Hastie and Robert Tibshirani},
+booktitle = {The Annals of Statistics},
+year = {2000},
+annote = {
+Boosting paper.
+},
+file = {home/teichman/sync/papers/pdf/friedman2000a.pdf},
+}
+
+@inproceedings{douillard2009a,
+title = {Laser and Vision Based Classification in Urban Environments},
+author = {Bertrand Douillard},
+type = {{PhD} dissertation},
+year = {2009},
+annote = {
+4.2.3 - lit review for classifying the ground
+4.3 - ground classification (asphalt vs grass)
+
+2.5D grid makes up the graph for graph cuts.  Logitboost classifier for node potentials.
+
+He uses a CRF for continuity, and sets the weights to 1 by hand.  Using learning with a pseudolikelihood method of estimating z gives very close to the identity matrix; using exactly the identity matrix lets you speed up the inference.
+
+Ways to differentiate ourselves:
+* Use a richer set of features.
+* Real-time performance even using this richer set of features.
+* Semi-supervised learning.
+* Some sort of geometrical model of roads on top of the graph cuts output.
+},
+file = {home/teichman/sync/papers/pdf/douillard2009a.pdf},
+}
+
+@inproceedings{alvarez2011a,
+title = {Road Detection Based on Illuminant Invariance},
+author = {J Alvarez and Antonio Lopez},
+booktitle = {IEEE Transactions on Intelligent Transportation Systems},
+year = {2011},
+annote = {
+The road detection paper Jake sent me.
+
+Fancy color model for better road detection.  Pixel-wise classifier based on their fancy color model is a histogram with a threshold, where the histogram elements come from a few samples taken at the bottom of the image.  Ad hoc flood fill for smoothing - this feels like it should be graph cuts instead.
+
+The results they show are surprisingly good given the simplicity of the method.
+
+We can improve on this by using a richer model to handle oversaturation, undersaturation, and lane markings.  3D info can greatly help with the first two, and a simple image patch classifier can probably handle the third, given enough training data.
+
+},
+file = {home/teichman/sync/papers/pdf/alvarez2011a.pdf},
+}
+
+@inproceedings{katz2010a,
+title = {Track-based self-supervised classification of dynamic obstacles},
+author = {Roman Katz and Juan Nieto and Eduardo Nebot and Bertrand Douillard},
+booktitle = {Journal of Autonomous Robots},
+year = {2010},
+annote = {
+Moving objects only.  Their track classifier is not the accumulation of frame classifications but rather a distinct thing which operates on the accumulation of laser frames.  Also, they have a clustering step in which you must set the number of clusters by hand.
+},
+file = {home/teichman/sync/papers/pdf/katz2010a.pdf},
+}
+
+@inproceedings{douillard2010a,
+title = {A pipeline for the segmentation and classification of 3d pointclouds},
+author = {B Douillard and J Underwood and V Vlaskine and A Quadros and S Singh},
+booktitle = {ISER},
+year = {2010},
+annote = {
+2 seconds per scan.  Segment using standard ground-plane-based connected components, then classify by using ICP matching.
+},
+file = {home/teichman/sync/papers/pdf/douillard2010a.pdf},
+}
+
+@inproceedings{moosmann2009a,
+title = {Segmentation of 3D Lidar Data in non-flat Urban Environments using a Local Convexity Criterion},
+author = {F Moosmann and O Pink and C Stiller},
+booktitle = {Intelligent Vehicles Symposium},
+year = {2009},
+annote = {
+Objects are segmented by constructing a graph, then using some ad-hoc rules based on joining segments.
+
+Something like the local convexit feature could be super useful in DST.
+},
+file = {home/teichman/sync/papers/pdf/moosmann2009a.pdf},
+}
+
+@inproceedings{bibby2008a,
+title = {Robust Real-Time Visual Tracking Using Pixel-Wise Posteriors},
+author = {Charles Bibby and Ian Reid},
+booktitle = {ECCV},
+year = {2008},
+annote = {
+The DST problem for camera-only.  Actually looks pretty reasonable, though who knows to what extent they are cherry-picking.
+
+They specify a generative model that includes a YUV histogram.  32 bins for each channel.  I did something very similar to this and it sucked really badly.  Some of their sequences actually look like color would not be sufficient.
+
+No learning, no depth information.
+},
+file = {home/teichman/sync/papers/pdf/bibby2008a.pdf},
+}
+
+@inproceedings{tsai2010a,
+title = {Motion Coherent Tracking with Multi-label MRF optimization},
+author = {David Tsai and Matthew Flagg and James Rehg},
+booktitle = {BMVC},
+year = {2010},
+annote = {
+Offline, so not a direct competitor to DST.
+
+Multi-label CRF.  The labels are the flow vectors.
+
+They don't use graph cuts & alpha expansions.  Instead, they use something called Fast-PD which is claimed to be better.
+
+Another interesting idea: they use Fast-PD on downsampled images, then graphcuts to propagate those labels to the remainder of the pixels.
+
+These guys use the terms 'unary potentials' and 'pairwise potentials' for terms in the energy function.  Node and edge potentials, as I'm currently calling them, might be just fine.
+
+"Single set of manually-specified parameters".  Better than different params for each, but it means they're showing results on their training set.
+},
+file = {home/teichman/sync/papers/pdf/tsai2010a.pdf},
+}
+
+@inproceedings{ren2007a,
+title = {Tracking as Repeated Figure/Ground Segmentation},
+author = {Xiaofeng Ren and Jitendra Malik},
+booktitle = {CVPR},
+year = {2007},
+annote = {
+Superpixel segmentation, repeated application of CRF.  Very similar to DST.  Loopy belief propagation to solve for segmentation posterior.
+
+Brightness and RGB histograms for foreground and background.  I tried this and it was shit.  Am I missing something? Or are they just choosing sequences where this works?
+
+Correspondence of superpixels from one frame to the next using a linear program and something like Earth Mover's Distance.
+
+Claims that superpixels make it more robust.  No way.
+
+No timing results.  No learning.
+
+Their scale potential is interesting: it involves all the variables at once.  This is an example of a global potential which could be useful for road segmentation, where we want to incorporate global intuition about road geometry.
+},
+file = {home/teichman/sync/papers/pdf/ren2007a.pdf},
+}
+
+@inproceedings{kwon2009a,
+title = {Tracking of a Non-Rigid Object via Patch-based Dynamic Appearance Modeling and Adaptive Basin Hopping Monte Carlo Sampling},
+author = {Junseok Kwon and Kyoung Mu Lee},
+booktitle = {CVPR},
+year = {2009},
+annote = {
+Basin Hopping Monte Carlo (BHMC) paper.  Addresses the DST task.
+
+BHMC might be worth looking in to, as a general optimization technique.
+},
+file = {home/teichman/sync/papers/pdf/kwon2009a.pdf},
+}
+
+@inproceedings{babenko2009a,
+title = {Visual Tracking with Online Multiple Instance Learning},
+author = {Boris Babenko and Ming-Hsuan Yang and Serge Belongie},
+booktitle = {CVPR},
+year = {2009},
+annote = {
+Bounding box discriminative tracker.
+},
+file = {home/teichman/sync/papers/pdf/babenko2009a.pdf},
+}
+
+@inproceedings{shotton2011a,
+title = {Real-Time Human Pose Recognition in Parts from Single Depth Images},
+author = {Jamie Shotton and Andrew Fitzgibbon and Mat Cook and Toby Sharp and Mark Finocchio and Richard Moore and Alex Kipman and Andrew Blake},
+booktitle = {CVPR},
+year = {2011},
+annote = {
+The Kinect paper.
+},
+file = {home/teichman/sync/papers/pdf/shotton2011a.pdf},
+}
+
+@inproceedings{prisacariu2009a,
+title = {PWP3D: Real-time segmentation and tracking of 3D objects},
+author = {Victor A. Prisacariu and Ian D. Reid},
+booktitle = {BMVC},
+year = {2009},
+annote = {
+Assumes depth information and a known, rigid 3D object model.
+},
+file = {home/teichman/sync/papers/pdf/prisacariu2009a.pdf},
+}
+
+@inproceedings{aeschliman2010a,
+title = {A probabilistic framework for joint segmentation and tracking},
+author = {Chad Aeschliman and Johnny Park and Avinash Kak},
+booktitle = {CVPR},
+year = {2010},
+annote = {
+Assumes stationary camera.  Makes segmentation mask for multiple targets.
+},
+file = {home/teichman/sync/papers/pdf/aeschliman2010a.pdf},
+}
+
+@inproceedings{bibby2010a,
+title = {Real-time Tracking of Multiple Occluding Objects using Level Sets},
+author = {Charles Bibby and Ian Reid},
+booktitle = {CVPR},
+year = {2010},
+annote = {
+Extension of bibby2008a to the multi-object segmentation and tracking case.
+
+No experiments with a moving camera.  Does this require a stationary camera?
+},
+file = {home/teichman/sync/papers/pdf/bibby2010a.pdf},
+}
+
+@inproceedings{petrovskaya2009a,
+title = {Model Based Vehicle Detection and Tracking for Autonomous Urban Driving},
+author = {Anna Petrovskaya and Sebastian Thrun},
+booktitle = {Autonomous Robots},
+year = {2009},
+annote = {
+Anya's tracking paper.
+},
+file = {home/teichman/sync/papers/pdf/petrovskaya2009a.pdf},
+}
+
+@inproceedings{teichman2012a,
+title = {Learning to Segment and Track in RBGD},
+author = {Alex Teichman and Sebastian Thrun},
+booktitle = {WAFR},
+year = {2012},
+annote = {},
+file = {home/teichman/sync/papers/pdf/teichman2012a.pdf},
+}
