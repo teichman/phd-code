@@ -1,5 +1,6 @@
-Params (6)
-double edge_pruning_threshold 0.002
+Params (7)
+double edge_trans_threshold 0.02
+double edge_rot_threshold 0.035
 int keypoints_per_frame 300
 double min_dt 0.2
 int max_loopclosures 5

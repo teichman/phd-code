@@ -50,6 +50,7 @@ void PrimeSenseSlam::_run()
     while(dt < min_dt_) {
       ++curr_idx;
       if(curr_idx >= sseq_->size()) {
+      //if(curr_idx >= 200) {
 	done = true;
 	break;
       }

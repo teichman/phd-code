@@ -36,7 +36,9 @@ int main(int argc, char** argv)
     ("otraj", bpo::value<string>(), "Out DIR for the final trajectory.")
     ("opcd", bpo::value<string>(), "Out DIR for the final map pcd.")
     ("ograph", bpo::value<string>(), "Out PATH for the final posegraph.")
-    ("threshold", bpo::value<double>(), "Edge error threshold")
+    ("trans_threshold", bpo::value<double>(), "Edge error threshold")
+    ("rot_threshold", bpo::value<double>(), "Edge error threshold")
+
     ("visualize", "Visualize incrementally removed edges")
     ;
 
@@ -55,9 +57,12 @@ int main(int argc, char** argv)
   }
   string otraj = opts.count("otraj") ? opts["otraj"].as<string>() : "";
   string opcd = opts.count("opcd") ? opts["opcd"].as<string>() : "";
-  double threshold = opts.count("threshold") ? 
-    opts["threshold"].as<double>() : 
-    PrimeSenseSlam::defaultParams().get<double>("edge_pruning_threshold");
+  double trans_threshold = opts.count("trans_threshold") ?
+    opts["trans_threshold"].as<double>() :
+    PrimeSenseSlam::defaultParams().get<double>("edge_trans_threshold");
+  double rot_threshold = opts.count("rot_threshold") ?
+    opts["rot_threshold"].as<double>() :
+    PrimeSenseSlam::defaultParams().get<double>("edge_rot_threshold");
   
 
   cout << "Using " << opts["sseq"].as<string>() << endl;
@@ -69,110 +74,35 @@ int main(int argc, char** argv)
   slam->load(opts["posegraph"].as<string>());
 
   pcl::visualization::PCLVisualizer *vis;
-  pcl::visualization::PCLVisualizer *map_vis;
   if(visualize)
   {
     vis = new pcl::visualization::PCLVisualizer();
-    map_vis = new pcl::visualization::PCLVisualizer("map");
   }
   //Build the map
   slam->solve();
-  while(true)
+  cout << "Original graph" << endl;
+  if(visualize)
   {
-    if(visualize)
-    {
-      vis->removeAllPointClouds();
-      vis->removeAllShapes();
-      map_vis->removeAllPointClouds();
-      map_vis->removeAllShapes();
-    }
-    // See which is the max violated node
-    slam->solve();
-    vector<double> errors(slam->edges_.size());
-    for(size_t i = 0; i < slam->edges_.size(); i++)
-    {
-      const EdgeStruct &e = slam->edges_[i];
-      //const Eigen::Affine3d &predicted_trans = slam->transform(e.idx0)*e.transform;
-      //Eigen::Affine3d map_trans = slam->transform(e.idx1);
-      //errors[i] = (map_trans.matrix() - predicted_trans.matrix()).norm();
-      const Eigen::Affine3d &pairwise_trans = e.transform;
-      Eigen::Affine3d predicted_pairwise_trans = slam->transform(e.idx0).inverse()*slam->transform(e.idx1);
-      errors[i] = (pairwise_trans.matrix() - predicted_pairwise_trans.matrix()).norm();
-    }
-    vector<size_t> idxs;
-    vector<double> errors_desc;
-    sortv(errors, errors_desc, idxs, DESCENDING);
-    for(size_t i = 0; i < errors_desc.size(); i++)
-    {
-      const EdgeStruct &e = slam->edges_[idxs[i]];
-      cout << "Edge " << e.idx1 << "->" << e.idx0 << ": " << errors_desc[i] << endl;
-      if(i > 25)
-        break;
-    }
-    //Draw nodes in a circle
-    size_t num_nodes = slam->numNodes();
-    float dtheta = (7*M_PI/4) / num_nodes;
-    CloudBW_t::Ptr nodes(new CloudBW_t);
-    CloudBW_t::Ptr active_nodes(new CloudBW_t);
-    float r = 5;
-    for(size_t i = 0; i < num_nodes; i++)
-    {
-      float x = r*cos(dtheta*i);
-      float y = r*sin(dtheta*i);
-      float z = 0.5;
-      nodes->points.push_back(PointBW_t(x, y, z));
-      if(slam->numEdges(i) > 0)
-        active_nodes->points.push_back(PointBW_t(x,y,z));
-    }
-    if(visualize)
-    {
-      //Draw all nodes in blue
-      pcl::visualization::PointCloudColorHandlerCustom<PointBW_t> handler(nodes, 0, 0, 255);
-      vis->addPointCloud(nodes, handler, "nodes");
-      vis->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "nodes");
-      //Draw active (connected) nodes in green
-      int pt_r = 2;
-      pcl::visualization::PointCloudColorHandlerCustom<PointBW_t> active_handler(active_nodes, 0, 255, 0);
-      vis->addPointCloud(active_nodes, active_handler, "active_nodes");
-      vis->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, pt_r, "active_nodes");
-      //Highlight the start point
-      vis->addSphere(nodes->points[0], 0.05, 0, 255, 255, "start");
-      //Draw all edges
-      //Color by max violation, where gray is nothing and red is 0.2
-      for(size_t i = 0; i < slam->edges_.size(); i++)
-      {
-        const EdgeStruct& e = slam->edges_[i];
-        const PointBW_t &start = nodes->points[e.idx0];
-        const PointBW_t &end = nodes->points[e.idx1];
-        ostringstream oss;
-        oss << "edge " << i;
-        vis->addLine(start, end, (0.9*errors[i]/0.2)+0.1, 0.1, 0.1, oss.str());
-      }
-      vis->spin();
-    }
-    //Visualize the worst edge
-    if(errors_desc[0] < threshold)
-    {
-      cout << "Max error " << errors_desc[0] << "< threshold " << threshold << endl;
-      break;
-    }
-    const EdgeStruct &worst = slam->edges_[idxs[0]];
-
-    Cloud_t::Ptr prev = sseq->getCloud(worst.idx0);
-    Cloud_t::Ptr curr = sseq->getCloud(worst.idx1);
-    Cloud_t::Ptr curr_trans(new Cloud_t);
-    pcl::transformPointCloud(*curr, *curr_trans, worst.transform.cast<float>());
-    if(visualize)
-    {
-      map_vis->addPointCloud(prev, "prev");
-      map_vis->addPointCloud(curr_trans, "curr");
-      map_vis->spin();
-    }
-    //Remove it
-    slam->removeEdge(idxs[0]);
-    slam->solve();
-    cout << "Removed!" << endl;
+    slam->visualize(*vis);
+    vis->spin();
   }
+  size_t num_pruned = slam->pruneUnsatisfiedEdges(trans_threshold, rot_threshold, 25);
+  slam->solve();
+  cout << "Pruned " << num_pruned << " unsatisfied edges" << endl;
+  if(visualize)
+  {
+    slam->visualize(*vis);
+    vis->spin();
+  }
+  num_pruned = slam->pruneAllSatisfiedEdges();
+  slam->solve();
+  cout << "Pruned " << num_pruned << " fully satisfied edges" << endl;
+  if(visualize)
+  {
+    slam->visualize(*vis);
+    vis->spin();
+  }
+  
   //Build the map again
   cout << "Rebuilding map(s)" << endl;
   PrimeSenseSlam pss;
@@ -182,11 +112,6 @@ int main(int argc, char** argv)
   for(size_t i = 0; i < pss.maps_.size(); i++)
   {
     Cloud::Ptr map = pss.maps_[i];
-    if(visualize)
-    {
-      if(!map_vis->addPointCloud(map, "map"))
-        map_vis->updatePointCloud(map, "map");
-    }
     // Save it
     if(opcd != "")
     {
@@ -217,7 +142,6 @@ int main(int argc, char** argv)
   if(visualize)
   {
     delete vis;
-    delete map_vis;
   }
   return 0;
 }

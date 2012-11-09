@@ -1,9 +1,12 @@
 #include <pose_graph_slam/pose_graph_slam.h>
 #include <eigen_extensions/eigen_extensions.h>
+#include <pcl/visualization/pcl_visualizer.h>
 
 using namespace std;
 using namespace g2o;
 
+typedef pcl::PointXYZ PointBW_t;
+typedef pcl::PointCloud<PointBW_t> CloudBW_t;
 
 PoseGraphSlam::PoseGraphSlam(size_t num_nodes)
 {
@@ -13,6 +16,7 @@ PoseGraphSlam::PoseGraphSlam(size_t num_nodes)
 void
 PoseGraphSlam::initialize(size_t num_nodes)
 {
+  verbose_ = false;
   nodes_.resize(num_nodes);
   for(size_t i = 0; i < num_nodes; i++)
     nodes_[i] = (int)i;
@@ -54,10 +58,12 @@ size_t PoseGraphSlam::solve(size_t min_size, int num_iters)
     for(size_t j = 0; j < subgraph->edges_.size(); j++)
       edges[j] = *((EdgeStruct*) subgraph->edges_[j].data_ptr);
     optimizers_cache_[i] = prepareSolver(nodes, edges);
-    cout << "Optimizing subgraph " << i+1 << "/" << subgraphs.size() << endl;
+    if(verbose_)
+      cout << "Optimizing subgraph " << i+1 << "/" << subgraphs.size() << endl;
     optimizers_cache_[i]->optimizer_->initializeOptimization();
     optimizers_cache_[i]->optimizer_->optimize(num_iters);
-    cout << "done." << endl;
+    if(verbose_)
+      cout << "done." << endl;
   }
   return subgraphs.size();
 }
@@ -73,8 +79,8 @@ void PoseGraphSlam::getSubgraphs(vector<vector<int> > &subgraph_nodes)
 
 Eigen::Affine3d PoseGraphSlam::transform(int idx, int *root_idx)
 {
-  //Fail if called before solve() was called
-  ROS_ASSERT(!update_graph_ && !update_subgraphs_);
+  //// Fail if called before solve() was called
+  //ROS_ASSERT(!update_graph_ && !update_subgraphs_);
   if(!has_subgraph_[idx])
   {
     if(root_idx) *root_idx = -1;
@@ -153,6 +159,7 @@ PoseGraphSlam::prepareSolver(const vector<int> &nodes, const vector<EdgeStruct> 
 {
   //Create the optimizer
   G2OPtr solver(new G2OStruct);
+  if(verbose_) solver->optimizer_->setVerbose(true);
   //Add all nodes
   for(size_t i = 0; i < nodes.size(); i++)
   {
@@ -188,6 +195,7 @@ PoseGraphSlam::G2OStruct::G2OStruct()
   linear_solver_ = new SlamLinearCholmodSolver();
   linear_solver_->setBlockOrdering(false);
   optimizer_ = new g2o::SparseOptimizer;
+  optimizer_->setVerbose(false);
   solver_ = new SlamBlockSolver(optimizer_, linear_solver_);
   optimizer_->setSolver(solver_);
 }
@@ -203,7 +211,8 @@ Graph_t::Ptr PoseGraphSlam::getGraph()
 {
   if(update_graph_)
   {
-    cout << "Updating graph" << endl;
+    if(verbose_)
+      cout << "Updating graph" << endl;
     graph_cache_ = Graph_t::Ptr(new Graph_t);
     for(size_t i = 0; i < nodes_.size(); i++)
       graph_cache_->addNode(nodes_[i]);
@@ -219,7 +228,8 @@ void PoseGraphSlam::getSubgraphs(vector<Graph_t::Ptr> &subgraphs, size_t min_siz
 {
   if(update_subgraphs_ || min_size != cached_min_size_)
   {
-    cout << "Updating subgraph" << endl;
+    if(verbose_)
+      cout << "Updating subgraph" << endl;
     Graph_t::Ptr graph = getGraph();
     subgraph_cache_.clear();
     graph->getSubgraphs(subgraph_cache_, min_size);
@@ -236,4 +246,136 @@ void PoseGraphSlam::getSubgraphs(vector<Graph_t::Ptr> &subgraphs, size_t min_siz
       }
   }
   subgraphs = subgraph_cache_;
+}
+  
+//! Prunes all edges which are perfectly satisfied. Returns the number removed
+size_t PoseGraphSlam::pruneAllSatisfiedEdges()
+{
+  solve();
+  vector<size_t> to_remove;
+  for(size_t i = 0; i < edges_.size(); i++)
+  {
+    const EdgeStruct &e = edges_[i];
+    Eigen::Affine3d actual0 = transform(e.idx0);
+    Eigen::Affine3d actual1 = transform(e.idx1);
+    Eigen::Affine3d actual_pairwise = actual0.inverse()*actual1;
+    if((actual_pairwise.matrix() - e.transform.matrix()).norm() < 1E-4)
+      to_remove.push_back(i);
+  }
+  for(size_t i = 0; i < to_remove.size(); i++)
+    removeEdge(i);
+  return to_remove.size();
+}
+//! Prune all edges which are unsatisfied within a certain translation or rotation threshold
+size_t PoseGraphSlam::pruneUnsatisfiedEdgesBatch(float max_translation, float max_rotation)
+{
+  solve();
+  vector<size_t> to_remove;
+  for(size_t i = 0; i < edges_.size(); i++)
+  {
+    const EdgeStruct &e = edges_[i];
+    Eigen::Affine3d actual0 = transform(e.idx0);
+    Eigen::Affine3d actual1 = transform(e.idx1);
+    Eigen::Affine3d actual_pairwise = actual0.inverse()*actual1;
+    Eigen::Affine3d error = actual_pairwise.inverse()*e.transform;
+    if(error.translation().norm() > max_translation || 
+        fabs(Eigen::AngleAxisd(error.rotation()).angle()) > max_rotation)
+      to_remove.push_back(i);
+  }
+  for(size_t i = 0; i < to_remove.size(); i++)
+    removeEdge(i);
+  return to_remove.size();
+}
+//! Prune all edges which are unsatisfied within a certain translation or rotation threshold
+size_t PoseGraphSlam::pruneUnsatisfiedEdges(float max_translation, float max_rotation, size_t step)
+{
+  solve();
+  size_t num_removed = 0;
+  while(true)
+  {
+    double max_trans = -1*std::numeric_limits<float>::infinity();
+    double max_rot = -1*std::numeric_limits<float>::infinity();
+    int max_trans_idx = -1;
+    int max_rot_idx = -1;
+    for(size_t i = 0; i < edges_.size(); i++)
+    {
+      const EdgeStruct &e = edges_[i];
+      Eigen::Affine3d actual0 = transform(e.idx0);
+      Eigen::Affine3d actual1 = transform(e.idx1);
+      Eigen::Affine3d actual_pairwise = actual0.inverse()*actual1;
+      Eigen::Affine3d error = actual_pairwise.inverse()*e.transform;
+      double trans = error.translation().norm();
+      if(trans > max_trans && trans > max_translation)
+      {
+        max_trans = trans;
+        max_trans_idx = i;
+      }
+      double rot = fabs(Eigen::AngleAxisd(error.rotation()).angle());
+      if(rot > max_rot && rot > max_rotation)
+      {
+        max_rot = rot;
+        max_rot_idx = i;
+      }
+    }
+    if(max_trans_idx >= 0 && max_rot_idx >= 0)
+    {
+      removeEdge( max_trans/max_translation > max_rot / max_rotation ? 
+          max_trans_idx : max_rot_idx );
+    }
+    else if(max_trans_idx >= 0)
+      removeEdge(max_trans_idx);
+    else if(max_rot_idx >= 0)
+      removeEdge(max_rot_idx);
+    else
+      break;
+    num_removed++;
+    if(num_removed % step == 0)
+      solve();
+  }
+  return num_removed;
+}
+  
+//! Visualize in the given PCLVisualizer
+void PoseGraphSlam::visualize(pcl::visualization::PCLVisualizer &vis, double max_error)
+{
+  vis.removeAllShapes();
+  vis.removeAllPointClouds();
+  float dtheta = (7*M_PI/4) / numNodes();
+  CloudBW_t::Ptr nodes(new CloudBW_t);
+  CloudBW_t::Ptr active_nodes(new CloudBW_t);
+  float r = 5;
+  for(size_t i = 0; i < numNodes(); i++)
+  {
+    float x = r*cos(dtheta*i);
+    float y = r*sin(dtheta*i);
+    float z = 0.5;
+    nodes->points.push_back(PointBW_t(x, y, z));
+    if(numEdges(i) > 0)
+      active_nodes->points.push_back(PointBW_t(x,y,z));
+  }
+  pcl::visualization::PointCloudColorHandlerCustom<PointBW_t> handler(nodes, 0, 0, 255);
+  vis.addPointCloud(nodes, handler, "nodes");
+  vis.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "nodes");
+  // Draw active (connected) nodes in green
+  int pt_r = 2;
+  pcl::visualization::PointCloudColorHandlerCustom<PointBW_t> active_handler(active_nodes, 0, 255, 0);
+  vis.addPointCloud(active_nodes, active_handler, "active_nodes");
+  vis.setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, pt_r, "active_nodes");
+  // Highlight the start point
+  vis.addSphere(nodes->at(0), 0.05, 0, 255, 255, "start");
+  // Draw all edges, colored by max violation where gray is nothing and red is max_error
+  for(size_t i = 0; i < edges_.size(); i++)
+  {
+    const EdgeStruct &e = edges_[i];
+    Eigen::Affine3d actual0 = transform(e.idx0);
+    Eigen::Affine3d actual1 = transform(e.idx1);
+    Eigen::Affine3d actual_pairwise = actual0.inverse()*actual1;
+    double error = (actual_pairwise.matrix() - e.transform.matrix()).norm();
+    const PointBW_t &start = nodes->at(e.idx0);
+    const PointBW_t &end = nodes->at(e.idx1);
+    ostringstream oss;
+    oss << "edge_" << i;
+    vis.addLine(start, end, (0.9*error/max_error)+0.1, 0.1, 0.1, oss.str());
+  }
+
 }

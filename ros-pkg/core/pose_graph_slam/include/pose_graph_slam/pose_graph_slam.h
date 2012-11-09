@@ -15,6 +15,7 @@
 #include <eigen_extensions/eigen_extensions.h>
 #include <serializable/serializable.h>
 #include <pose_graph_slam/connected_components.h>
+#include <pcl/visualization/pcl_visualizer.h>
 
 typedef Eigen::Matrix<double, 6, 6> Matrix6d;
 
@@ -65,10 +66,20 @@ public:
   //! Serialization
   void serialize(std::ostream& out) const; 
   void deserialize(std::istream& in); 
+  //! Prunes all edges which are perfectly satisfied . Return the number removed
+  size_t pruneAllSatisfiedEdges();
+  //! Prune all edges which are unsatisfied within a certain translation and/or rotation threshold
+  size_t pruneUnsatisfiedEdgesBatch(float max_translation, float max_rotation);
+  //! Prune all edges which are unsatisfied within a certain translation or rotation threshold
+  //! where "step" says after how many prunings you will re-solve the pose graph. 
+  size_t pruneUnsatisfiedEdges(float max_translation, float max_rotation, size_t step=1);
+  //! Visualize in the given PCLVisualizer
+  void visualize(pcl::visualization::PCLVisualizer &vis, double max_error=0.2);
 
   std::vector<int> nodes_;
   std::vector<EdgeStruct> edges_;
-  
+  //! Set if you want print statements about the optimization
+  bool verbose_; 
 protected:
   typedef g2o::BlockSolver< g2o::BlockSolverTraits<-1, -1> >  SlamBlockSolver;
   typedef g2o::LinearSolverCSparse<SlamBlockSolver::PoseMatrixType> SlamLinearSolver;

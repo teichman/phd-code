@@ -168,7 +168,7 @@ $(1)-visualize-slam-pcd-$(2): $(1)/slam_results/$(2) $(CAMERAS_PATH)/$(1)/$(2).c
 	rosrun pcl_bleeding pcd_viewer $$$${PCD} -cam $(CAMERAS_PATH)/$(1)/$(2).cam; \
 	done
 
-$(1)-visualize-slam-unrefined-pcd-$(2): $(1)/slam_results/$(2)_unreifned $(CAMERAS_PATH)/$(1)/$(2).cam
+$(1)-visualize-slam-unrefined-pcd-$(2): $(1)/slam_results/$(2)_unrefined $(CAMERAS_PATH)/$(1)/$(2).cam
 	for PCD in `find $(1)/slam_results/$(2)_unrefined -name "*.pcd"`; do \
 	rosrun pcl_bleeding pcd_viewer $$$${PCD} -cam $(CAMERAS_PATH)/$(1)/$(2).cam; \
 	done
