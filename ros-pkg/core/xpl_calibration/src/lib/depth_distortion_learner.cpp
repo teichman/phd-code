@@ -339,6 +339,77 @@ void DepthDistortionLearner::computeMultiplierMap(const PrimeSenseModel& model,
   }
 }
 
+DiscreteDepthDistortionModel DepthDistortionLearner::fitDiscreteModel()
+{
+  ROS_ASSERT(frames_.size() == pcds_.size());
+  ROS_ASSERT(frames_.size() == transforms_.size());
+
+  CoverageMap2 cmap2(frames_[0].depth_->rows(), frames_[0].depth_->cols(), 0, 12, 12);
+  DiscreteDepthDistortionModel dddm(initial_model_);
+  
+// #ifndef VISUALIZE
+// #pragma omp parallel for
+// #endif 
+  for(size_t i = 0; i < frames_.size(); i += DDL_INCR) {
+    ScopedTimer st("total for frame");
+    PrimeSenseModel localmodel = initial_model_;
+    HighResTimer hrt;
+    
+    cout << "Accumulating training set for depth distortion model fit, frame " << i << " / " << frames_.size() << endl;
+    hrt.reset("transforming"); hrt.start();
+    rgbd::Cloud transformed;
+    pcl::transformPointCloud(*pcds_[i], transformed, transforms_[i].cast<float>());
+    hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+
+    Frame mapframe;
+    DepthIndex dindex;
+    hrt.reset("projecting"); hrt.start();
+    localmodel.cloudToFrame(transformed, &mapframe);
+    localmodel.cloudToDepthIndex(transformed, &dindex);
+    hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+
+    hrt.reset("Computing multiplier map"); hrt.start();
+    const DepthMat& depth = *frames_[i].depth_;
+    const DepthMat& mapdepth = *mapframe.depth_;
+    MatrixXd multipliers(depth.rows(), depth.cols());
+    cv::Mat3b visualization(depth.rows(), depth.cols());
+    computeMultiplierMap(localmodel, depth, mapdepth, dindex, &multipliers, &visualization);
+    hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+    
+    #ifdef VISUALIZE
+    cv::imshow("multipliers and filters", visualization);
+    cv::imshow("multipliers", visualizeMultipliers(multipliers));
+    cv::imshow("depth", frames_[i].depthImage());
+    cv::imshow("mapdepth", mapframe.depthImage());
+    cv::waitKey(10);
+    if(DDL_INCR != 1)
+      cv::waitKey();
+    string visdir = ".multipliers";
+    if(!bfs::exists(visdir))
+      bfs::create_directory(visdir);
+    ostringstream oss;
+    oss << visdir << "/" << setw(5) << setfill('0') << i;
+    string basename = oss.str();
+    cv::imwrite(basename + "-filters.png", visualization);
+    cv::imwrite(basename + "-multipliers.png", visualizeMultipliers(multipliers));
+    cv::imwrite(basename + "-depth.png", frames_[i].depthImage());
+    cv::imwrite(basename + "-mapdepth.png", mapframe.depthImage());
+    #endif
+
+    dddm.accumulate(frames_[i], multipliers);
+  }	
+
+  string dir = ".ddl";
+  if(!bfs::exists(dir))
+    bfs::create_directory(dir);
+  else
+    ROS_ASSERT(bfs::is_directory(dir));
+  cmap2.saveVisualizations(dir);
+  cout << "Saved coverage visualization to " << dir << endl;
+  
+  return dddm;
+}
+
 PrimeSenseModel DepthDistortionLearner::fitModel()
 {
   ROS_ASSERT(frames_.size() == pcds_.size());

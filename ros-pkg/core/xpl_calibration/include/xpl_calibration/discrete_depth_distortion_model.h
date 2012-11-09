@@ -9,6 +9,7 @@ public:
   Frustum(int smoothing = 1, double bin_depth = 1.0);
   //! distance to origin, not z value.
   void addExample(double ground_truth, double measurement);
+  void addMultiplier(double measurement, double multiplier);
   void undistort(rgbd::Point* pt) const;
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);
@@ -31,6 +32,7 @@ public:
   DiscreteDepthDistortionModel(const rgbd::PrimeSenseModel& psm, int bin_width = 8, int bin_height = 6, double bin_depth = 0.25, int smoothing = 1);
   void undistort(rgbd::Frame* frame) const;
   void accumulate(const rgbd::Frame& ground_truth, const rgbd::Frame& measurement);
+  void accumulate(const rgbd::Frame& measurement, const Eigen::MatrixXd& multipliers);
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);
   

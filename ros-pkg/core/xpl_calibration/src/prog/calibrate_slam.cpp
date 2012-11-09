@@ -23,6 +23,7 @@ int main(int argc, char** argv)
     ("only-visualize", "Don't calibrate; just visualize the map you would have used to calibrate from.")
     ("imodel", bpo::value<string>(), "Use this model when projecting the frames.")
     ("omodel", bpo::value<string>()->default_value("model.psm"), "Output path for learned model.")
+    ("discrete", "Learn discrete depth distortion model instead of polynomial.")
     ("max-range", bpo::value<double>()->default_value(MAX_RANGE_MAP), "Maximum range to use when building the map from the given trajectory.")
     ;
 
@@ -71,11 +72,15 @@ int main(int argc, char** argv)
     vis.run();
     return 0;
   }
+  else if(opts.count("discrete")) {
+    DiscreteDepthDistortionModel dddm = calibrator->calibrateDiscrete();
+    dddm.save(opts["omodel"].as<string>());
+    cout << "Saved discrete model to " << opts["omodel"].as<string>() << endl;
+  }
   else {
     PrimeSenseModel model = calibrator->calibrate();
     model.save(opts["omodel"].as<string>());
-    cout << "Saved model to " << opts["omodel"].as<string>() << endl;
-    return 0;
+    cout << "Saved polynomial model to " << opts["omodel"].as<string>() << endl;
   }
     
   return 0;

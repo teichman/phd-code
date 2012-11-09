@@ -29,6 +29,19 @@ void Frustum::addExample(double ground_truth, double measurement)
   multipliers_(idx) = total_multipliers_(idx) / counts_(idx);
 }
 
+void Frustum::addMultiplier(double measurement, double multiplier)
+{
+  ROS_ASSERT(multiplier > 0);
+  if(multiplier > max_mult_ || multiplier < min_mult_)
+    return;
+  
+  int idx = min(num_bins_ - 1, (int)floor(measurement / bin_depth_));
+  ROS_ASSERT(idx >= 0);
+  total_multipliers_(idx) += multiplier;
+  ++counts_(idx);
+  multipliers_(idx) = total_multipliers_(idx) / counts_(idx);
+}
+
 void Frustum::undistort(rgbd::Point* pt) const
 {
   double dist = pt->getVector3fMap().norm();
@@ -97,6 +110,34 @@ void DiscreteDepthDistortionModel::undistort(Frame* frame) const
 
       //ROS_ASSERT(ppt.u_ == u && ppt.v_ == v);  // TODO: PrimeSenseModel should project back to exactly the same spot.
       frame->depth_->coeffRef(v, u) = ppt.z_;
+    }
+  }
+}
+
+void DiscreteDepthDistortionModel::accumulate(const rgbd::Frame& measurement, const Eigen::MatrixXd& multipliers)
+{
+  ROS_ASSERT(psm_.width_ == measurement.depth_->cols());
+  ROS_ASSERT(psm_.height_ == measurement.depth_->rows());
+  ROS_ASSERT(psm_.width_ == multipliers.cols());
+  ROS_ASSERT(psm_.height_ == multipliers.rows());
+
+  ProjectivePoint ppt;
+  Point pt;
+  for(ppt.v_ = 0; ppt.v_ < psm_.height_; ++ppt.v_) {
+    for(ppt.u_ = 0; ppt.u_ < psm_.width_; ++ppt.u_) {
+      double mult = multipliers(ppt.v_, ppt.u_);
+      if(measurement.depth_->coeffRef(ppt.v_, ppt.u_) == 0) {
+	ROS_ASSERT(mult == 0);
+	continue;
+      }
+      if(mult == 0)
+	continue;
+      
+      ppt.z_ = measurement.depth_->coeffRef(ppt.v_, ppt.u_);
+      psm_.project(ppt, &pt);
+      double meas = pt.getVector3fMap().norm();
+      
+      frustum(ppt.v_, ppt.u_).addMultiplier(meas, mult);
     }
   }
 }

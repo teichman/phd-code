@@ -70,7 +70,13 @@ size_t SlamCalibrator::size() const
   return trajectories_.size();
 }
 
-PrimeSenseModel SlamCalibrator::calibrate() const
+DiscreteDepthDistortionModel SlamCalibrator::calibrateDiscrete() const
+{
+  DepthDistortionLearner ddl = setupDepthDistortionLearner();
+  return ddl.fitDiscreteModel();
+}
+
+DepthDistortionLearner SlamCalibrator::setupDepthDistortionLearner() const
 {
   PrimeSenseModel initial_model = sseqs_[0]->model_;
   initial_model.resetDepthDistortionModel();
@@ -116,7 +122,14 @@ PrimeSenseModel SlamCalibrator::calibrate() const
   cv::imshow("coverage", cmap);
   cv::imwrite("coverage.png", cmap);
   cv::waitKey(100);
-  
+
+  return ddl;
+}
+
+PrimeSenseModel SlamCalibrator::calibrate() const
+{
+  DepthDistortionLearner ddl = setupDepthDistortionLearner();
+    
   cout << "Fitting models using " << ddl.size() << " frames." << endl;
   PrimeSenseModel model;
   // cout << "Fitting focal length." << endl;

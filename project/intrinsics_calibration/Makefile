@@ -92,6 +92,12 @@ $(1)-visualize-slam-intrinsics: $(1)/evaluation/extrinsics $(1)/evaluation/learn
 	--extrinsics $(1)/evaluation/extrinsics \
 	--intrinsics $(1)/evaluation/learned_model.psm
 
+$(1)-visualize-slam-discrete-intrinsics: $(1)/evaluation/extrinsics $(1)/evaluation/discrete_learned_model
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--extrinsics $(1)/evaluation/extrinsics \
+	--discrete-intrinsics $(1)/evaluation/discrete_learned_model
+
 $(1)/evaluation/extrinsics: $(1)/evaluation/learned_model.psm
 	cd $$(@D) && \
 	rosrun xpl_calibration asus_vs_velo \
@@ -102,6 +108,16 @@ $(1)/evaluation/extrinsics: $(1)/evaluation/learned_model.psm
 $(1)/evaluation/learned_model.psm: $$(TRAJECTORIES_$(1)) $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
 	rosrun xpl_calibration calibrate_slam \
+	--omodel $$@ \
+	$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
+	$$(addprefix --traj ,$$(TRAJECTORIES_$(1))) \
+	| tee $$@-log.txt
+	mv .ddl $$(@D)/clams_coverage
+
+$(1)/evaluation/discrete_learned_model: $$(TRAJECTORIES_$(1)) $$$$@-experiment_metadata.txt
+	mkdir -p $$(@D)
+	rosrun xpl_calibration calibrate_slam \
+	--discrete \
 	--omodel $$@ \
 	$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
 	$$(addprefix --traj ,$$(TRAJECTORIES_$(1))) \
