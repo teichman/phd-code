@@ -50,6 +50,7 @@ rosbuild_add_library(${PROJECT_NAME}
 #  src/lib/slam_lightweight.cpp
   src/lib/primesense_slam.cpp
   src/lib/link_visualizer.cpp
+  src/lib/discrete_depth_distortion_model.cpp
   )
 rosbuild_add_compile_flags(${PROJECT_NAME} -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 rosbuild_link_boost(${PROJECT_NAME} system program_options)
