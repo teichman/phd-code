@@ -123,7 +123,7 @@ $(1)/evaluation/discrete_extrinsics: $(1)/evaluation/discrete_learned_model
 	cd $$(@D) && \
 	rosrun xpl_calibration asus_vs_velo \
 	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
-	--discrete-intrinsics $(1)/evaluation/discrete_learned_model \
+	--discrete-intrinsics discrete_learned_model \
 	--compute-extrinsics $$@;
 
 $(1)/evaluation/learned_model.psm: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
