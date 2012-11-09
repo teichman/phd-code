@@ -315,9 +315,6 @@ void AsusVsVeloVisualizer::run()
     case 'F':
       incrementFocalLength(-10);
       break;
-    case 'S':
-      saveAll("manual");
-      break;
     case ',':
       incrementVeloIdx(-1);
       break;
@@ -512,7 +509,11 @@ VeloToAsusCalibrator AsusVsVeloVisualizer::setupCalibrator()
     #pragma omp parallel for
     for(size_t j = 0; j < indices.size(); ++j) { 
       sseq_->readFrame(indices[j], &frames[j]);
-      model_.undistort(&frames[j]);  // Very important: get the best extrinsics using the given depth distortion model.
+      // Very important: get the best extrinsics using the given depth distortion model.
+      if(dddm_)
+	dddm_->undistort(&frames[j]);
+      else
+	model_.undistort(&frames[j]);  
       frames[j].timestamp_ -= sseq_start_;
     }
     calibrator.frames_.insert(calibrator.frames_.end(), frames.begin(), frames.end());
@@ -623,24 +624,17 @@ void AsusVsVeloVisualizer::play(bool save)
   }
 }
 
-void AsusVsVeloVisualizer::saveExtrinsics(std::string tag) const
+void AsusVsVeloVisualizer::saveExtrinsics(std::string path) const
 {
-  cal_.save("extrinsics" + tag);
-  cout << "Saved calibration to \"" << "extrinsics" << tag << "\"" << endl;
+  cal_.save(path);
+  cout << "Saved extrinsic calibration to " << path << endl;
 }
 
-void AsusVsVeloVisualizer::saveIntrinsics(std::string tag) const
+void AsusVsVeloVisualizer::saveIntrinsics(std::string path) const
 {
-  string filename = "intrinsics" + tag;
-  model_.save(filename);
-  cout << "Saved depth distortion model to \"" << filename << "\"" << endl;
+  model_.save(path);
+  cout << "Saved depth distortion model to \"" << path << "\"" << endl;
   cout << model_.status("  ");
-}
-
-void AsusVsVeloVisualizer::saveAll(std::string tag) const
-{
-  saveExtrinsics(tag);
-  saveIntrinsics(tag);
 }
 
 void AsusVsVeloVisualizer::fitFocalLength()

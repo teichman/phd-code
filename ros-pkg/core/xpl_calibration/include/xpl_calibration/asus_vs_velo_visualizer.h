@@ -48,9 +48,8 @@ public:
   ~AsusVsVeloVisualizer();
   void run();
   void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
-  void saveAll(std::string tag = "") const;
-  void saveExtrinsics(std::string tag = "") const;
-  void saveIntrinsics(std::string tag = "") const;
+  void saveExtrinsics(std::string path) const;
+  void saveIntrinsics(std::string path) const;
   //! Find alignment and sync offset.
   void calibrate();
   void evaluate(std::string eval_path);

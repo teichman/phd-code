@@ -18,6 +18,8 @@ Frustum::Frustum(int smoothing, double bin_depth) :
 
 void Frustum::addExample(double ground_truth, double measurement)
 {
+  scopeLockWrite;
+  
   double mult = ground_truth / measurement;
   if(mult > max_mult_ || mult < min_mult_)
     return;
@@ -31,6 +33,8 @@ void Frustum::addExample(double ground_truth, double measurement)
 
 void Frustum::addMultiplier(double measurement, double multiplier)
 {
+  scopeLockWrite;
+  
   ROS_ASSERT(multiplier > 0);
   if(multiplier > max_mult_ || multiplier < min_mult_)
     return;
@@ -84,9 +88,24 @@ DiscreteDepthDistortionModel::DiscreteDepthDistortionModel(const PrimeSenseModel
   num_bins_x_ = psm_.width_ / bin_width_;
   num_bins_y_ = psm_.height_ / bin_height_;
   frustums_.resize(num_bins_y_);
-  Frustum defrust(smoothing, bin_depth);
-  for(size_t i = 0; i < frustums_.size(); ++i)
-    frustums_[i].resize(num_bins_x_, defrust);
+  for(size_t i = 0; i < frustums_.size(); ++i) {
+    frustums_[i].resize(num_bins_x_, NULL);
+    for(size_t j = 0; j < frustums_[i].size(); ++j)
+      frustums_[i][j] = new Frustum(smoothing, bin_depth);
+  }
+}
+
+void DiscreteDepthDistortionModel::deleteFrustums()
+{
+  for(size_t y = 0; y < frustums_.size(); ++y)
+    for(size_t x = 0; x < frustums_[y].size(); ++x)
+      if(frustums_[y][x])
+	delete frustums_[y][x];
+}
+
+DiscreteDepthDistortionModel::~DiscreteDepthDistortionModel()
+{
+  deleteFrustums();
 }
 
 void DiscreteDepthDistortionModel::undistort(Frame* frame) const
@@ -182,7 +201,7 @@ void DiscreteDepthDistortionModel::serialize(std::ostream& out) const
 
   for(int y = 0; y < num_bins_y_; ++y)
     for(int x = 0; x < num_bins_x_; ++x) 
-      frustums_[y][x].serialize(out);
+      frustums_[y][x]->serialize(out);
 }
 
 void DiscreteDepthDistortionModel::deserialize(std::istream& in)
@@ -194,11 +213,15 @@ void DiscreteDepthDistortionModel::deserialize(std::istream& in)
   eigen_extensions::deserializeScalar(in, &num_bins_x_);
   eigen_extensions::deserializeScalar(in, &num_bins_y_);
 
+  deleteFrustums();
+  
   frustums_.resize(num_bins_y_);
   for(size_t y = 0; y < frustums_.size(); ++y) {
-    frustums_[y].resize(num_bins_x_);
-    for(size_t x = 0; x < frustums_[y].size(); ++x)
-      frustums_[y][x].deserialize(in);
+    frustums_[y].resize(num_bins_x_, NULL);
+    for(size_t x = 0; x < frustums_[y].size(); ++x) {
+      frustums_[y][x] = new Frustum;
+      frustums_[y][x]->deserialize(in);
+    }
   }
 }
 
@@ -208,7 +231,7 @@ Frustum& DiscreteDepthDistortionModel::frustum(int y, int x)
   ROS_ASSERT(y >= 0 && y < psm_.height_);
   int xidx = x / bin_width_;
   int yidx = y / bin_height_;
-  return frustums_[yidx][xidx];
+  return (*frustums_[yidx][xidx]);
 }
 
 const Frustum& DiscreteDepthDistortionModel::frustum(int y, int x) const
@@ -217,6 +240,6 @@ const Frustum& DiscreteDepthDistortionModel::frustum(int y, int x) const
   ROS_ASSERT(y >= 0 && y < psm_.height_);
   int xidx = x / bin_width_;
   int yidx = y / bin_height_;
-  return frustums_[yidx][xidx];
+  return (*frustums_[yidx][xidx]);
 }
 

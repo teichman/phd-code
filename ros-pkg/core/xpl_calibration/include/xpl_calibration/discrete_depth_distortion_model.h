@@ -2,8 +2,9 @@
 #define DISCRETE_DEPTH_DISTORTION_MODEL_H
 
 #include <rgbd_sequence/primesense_model.h>
+#include <bag_of_tricks/lockable.h>
 
-class Frustum : public Serializable
+class Frustum : public Serializable, public SharedLockable
 {
 public:
   Frustum(int smoothing = 1, double bin_depth = 1.0);
@@ -29,6 +30,7 @@ class DiscreteDepthDistortionModel : public Serializable
 {
 public:
   DiscreteDepthDistortionModel() {}
+  ~DiscreteDepthDistortionModel();
   DiscreteDepthDistortionModel(const rgbd::PrimeSenseModel& psm, int bin_width = 8, int bin_height = 6, double bin_depth = 0.25, int smoothing = 1);
   void undistort(rgbd::Frame* frame) const;
   void accumulate(const rgbd::Frame& ground_truth, const rgbd::Frame& measurement);
@@ -45,12 +47,14 @@ protected:
   double bin_depth_;
   int num_bins_x_;
   int num_bins_y_;
-  
+
+  //! frustums_[y][x]
+  std::vector< std::vector<Frustum*> > frustums_;
+
+  void deleteFrustums();
   //! depth is in meters
   Frustum& frustum(int y, int x);
   const Frustum& frustum(int y, int x) const;
-  //! frustums_[y][x]
-  std::vector< std::vector<Frustum> > frustums_;
 };
 
 #endif // DISCRETE_DEPTH_DISTORTION_MODEL_H

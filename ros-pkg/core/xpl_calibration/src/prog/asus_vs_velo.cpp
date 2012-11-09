@@ -16,8 +16,8 @@ int main(int argc, char** argv)
     ("extrinsics", bpo::value<string>(), "Use pre-computed extrinsics")
     ("intrinsics", bpo::value<string>(), "Use pre-computed PrimeSense model")
     ("discrete-intrinsics", bpo::value<string>(), "Use pre-computed discrete distortion model")
-    ("compute-extrinsics", "Automatically start extrinsics search")
-    ("compute-intrinsics", "Automatically start intrinsics search")
+    ("compute-extrinsics", bpo::value<string>(), "Automatically start extrinsics search and save here")
+    ("compute-intrinsics", bpo::value<string>(), "Automatically start intrinsics search")
     ("evaluate", bpo::value<string>(), "Runs evaluation of the given extrinsics and intrinsics and saves the result here.  It is assumed that the extrinsics are the best for the given intrinsics.")
 //    ("visualize-distortion", "Visualize the distortion.  Extrinsics must be provided.")
     ("skip", bpo::value<int>()->default_value(20), "For use with --visualize-distortion.  Use every kth frame for accumulating statistics.")
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
     ROS_ASSERT(!opts.count("extrinsics"));
     cout << "Computing extrinsics." << endl;
     avv.calibrate();
-    avv.saveExtrinsics();  // "extrinsics"
+    avv.saveExtrinsics(opts["compute-extrinsics"].as<string>());
     return 0;
   }    
 
@@ -84,7 +84,7 @@ int main(int argc, char** argv)
     ROS_ASSERT(!opts.count("intrinsics"));
     cout << "Computing depth distortion model." << endl;
     avv.fitModel();
-    avv.saveIntrinsics();  // "intrinsics"
+    avv.saveIntrinsics(opts["compute-intrinsics"].as<string>());
     return 0;
   }
 

@@ -25,7 +25,18 @@ AVV_PATH_xpl01		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_01_t
 AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-09-12-2012_23-35-53
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
-SLAM_RUNS_xpl01		:= $(shell ls $(SLAM_DATA_PATH)/xpl01)
+
+SLAM_RUNS_xpl01		:= 	2a_backandforth \
+				2a_loops_1 \
+				2a_loops_2 \
+				2012-10-22_2a_backandforth_0 \
+				2012-10-22_2a_backandforth_1 \
+				2012-10-22_2a_backandforth_2 \
+				2012-10-22_2a_backandforth_4
+
+# SLAM_RUNS_xpl01		:= 	2a_backandforth \
+# 				2a_loops_1 \
+# 				2a_loops_2
 
 # Data specifically for the 2012-11-06 run in which multiple sensor views were collected.
 AVV_MULTIVIEW_NAMES_xpl01	:= 	xpl01_straight-11-06-2012_00-08-08
@@ -95,7 +106,7 @@ $(1)-visualize-slam-intrinsics: $(1)/evaluation/extrinsics $(1)/evaluation/learn
 	--extrinsics $(1)/evaluation/extrinsics \
 	--intrinsics $(1)/evaluation/learned_model.psm
 
-$(1)-visualize-slam-discrete-intrinsics: $(1)/evaluation/extrinsics $(1)/evaluation/discrete_learned_model
+$(1)-visualize-slam-discrete-intrinsics: $(1)/evaluation/discrete_extrinsics $(1)/evaluation/discrete_learned_model
 	rosrun xpl_calibration asus_vs_velo \
 	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
 	--extrinsics $(1)/evaluation/extrinsics \
@@ -106,7 +117,14 @@ $(1)/evaluation/extrinsics: $(1)/evaluation/learned_model.psm
 	rosrun xpl_calibration asus_vs_velo \
 	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
 	--intrinsics learned_model.psm \
-	--compute-extrinsics
+	--compute-extrinsics $$@
+
+$(1)/evaluation/discrete_extrinsics: $(1)/evaluation/discrete_learned_model
+	cd $$(@D) && \
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--discrete-intrinsics $(1)/evaluation/discrete_learned_model \
+	--compute-extrinsics $$@;
 
 $(1)/evaluation/learned_model.psm: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
@@ -115,18 +133,18 @@ $(1)/evaluation/learned_model.psm: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.t
 	$$$$(for f in $$(TRAJECTORIES_SUB_$(1)); do echo --traj $$$$f; done) \
 	--omodel $$@ \
 	| tee $$@-log.txt
+	rm -rf $$(@D)/clams_coverage
 	mv .ddl $$(@D)/clams_coverage
-	#$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
-	#$$(addprefix --traj ,$$(addsuffix /submap0.traj, $$(TRAJDIRS_$(1)))) \
 
-$(1)/evaluation/discrete_learned_model: $$(TRAJECTORIES_$(1)) $$$$@-experiment_metadata.txt
+$(1)/evaluation/discrete_learned_model: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
 	rosrun xpl_calibration calibrate_slam \
 	--discrete \
+	$$$$(for f in $$(SLAM_RUNS_DUPL_$(1)); do echo --sseq $$$$f; done) \
+	$$$$(for f in $$(TRAJECTORIES_SUB_$(1)); do echo --traj $$$$f; done) \
 	--omodel $$@ \
-	$$(addprefix --sseq $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
-	$$(addprefix --traj ,$$(TRAJECTORIES_$(1))) \
 	| tee $$@-log.txt
+	rm -rf $$(@D)/clams_coverage
 	mv .ddl $$(@D)/clams_coverage
 
 $(1)-visualize-avv-intrinsics: $(1)/asus_vs_velodyne/extrinsics $(1)/asus_vs_velodyne/intrinsics
@@ -137,14 +155,26 @@ $(1)-visualize-avv-intrinsics: $(1)/asus_vs_velodyne/extrinsics $(1)/asus_vs_vel
 
 $(1)/asus_vs_velodyne/intrinsics: $(1)/asus_vs_velodyne/extrinsics
 	mkdir -p $$(@D)
-	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence --extrinsics extrinsics --compute-intrinsics
+	cd $$(@D) && \
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence \
+	$$(AVV_PATH_$(1))-VeloSequence \
+	--extrinsics extrinsics \
+	--compute-intrinsics $$@
 
 $(1)-visualize-avv-extrinsics: $(1)/asus_vs_velodyne/extrinsics
-	rosrun xpl_calibration asus_vs_velo $$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence --extrinsics $$<
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence \
+	$$(AVV_PATH_$(1))-VeloSequence \
+	--extrinsics $$<
 
 $(1)/asus_vs_velodyne/extrinsics:
 	mkdir -p $$(@D)
-	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence --compute-extrinsics
+	cd $$(@D) && \
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence \
+	$$(AVV_PATH_$(1))-VeloSequence \
+	--compute-extrinsics $$@
 
 $(1)-visualize-slam: $$(TRAJDIRS_$(1))
 	rosrun xpl_calibration calibrate_slam --only-visualize \
@@ -316,7 +346,11 @@ $(1)-visualize-multiview-avv-extrinsics-$(2): $(1)/asus_vs_velodyne-multiview/$(
 
 $(1)/asus_vs_velodyne-multiview/$(2)/extrinsics:
 	mkdir -p $$(@D)
-	cd $$(@D) && rosrun xpl_calibration asus_vs_velo $(MULTIVIEW_PATH)/$(2)-StreamSequence $(MULTIVIEW_PATH)/$(2)-VeloSequence --compute-extrinsics
+	cd $$(@D) && \
+	rosrun xpl_calibration asus_vs_velo \
+	$(MULTIVIEW_PATH)/$(2)-StreamSequence \
+	$(MULTIVIEW_PATH)/$(2)-VeloSequence \
+	--compute-extrinsics $$@
 
 endef
 $(foreach SENSOR,xpl01 xpl04,$(foreach RUN,$(shell ls $(AVV_PATH)/2012-11-06_primesense_vs_velo | grep $(SENSOR) | grep VeloSequence | sed 's/-VeloSequence//g'),$(eval $(call MULTIVIEW_AVV_EXTRINSICS_RULE_GENERATOR,$(SENSOR),$(RUN)))))
