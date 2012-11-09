@@ -21,6 +21,7 @@ int main(int argc, char** argv)
     ("vseqs", bpo::value< vector<string> >(&vseq_paths)->required()->multitoken(), "")
     ("extrinsics", bpo::value< vector<string> >(&extrinsics_paths)->required()->multitoken(), "")
     ("output,o", bpo::value<string>(&output_path)->default_value("learned_intrinsics"), "Output path for learned model.")
+    ("discrete", "Learn discrete depth distortion model rather than polynomial")
     ;
 
   bpo::positional_options_description p;
@@ -63,9 +64,16 @@ int main(int argc, char** argv)
   }
 
   cout << "Learning distortion models." << endl;
-  PrimeSenseModel psm = mvm.learnDistortionModel();
-  psm.save(output_path);
-  cout << "Saved learned model to " << output_path << endl;
-  
+  if(opts.count("discrete")) {
+    DiscreteDepthDistortionModel dddm = mvm.learnDiscreteDistortionModel();
+    dddm.save(output_path);
+    cout << "Saved learned discrete model to " << output_path << endl;
+  }
+  else {
+    PrimeSenseModel psm = mvm.learnDistortionModel();
+    psm.save(output_path);
+    cout << "Saved learned polynomial model to " << output_path << endl;
+  }
+    
   return 0;
 }

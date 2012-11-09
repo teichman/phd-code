@@ -14,6 +14,8 @@ public:
   void deserialize(std::istream& in);
   
 protected:
+  double max_mult_;
+  double min_mult_;
   double max_dist_;
   int num_bins_;
   double bin_depth_;
@@ -25,7 +27,8 @@ protected:
 class DiscreteDepthDistortionModel : public Serializable
 {
 public:
-  DiscreteDepthDistortionModel(const rgbd::PrimeSenseModel& psm, int bin_width, int bin_height, double bin_depth, int smoothing);
+  DiscreteDepthDistortionModel() {}
+  DiscreteDepthDistortionModel(const rgbd::PrimeSenseModel& psm, int bin_width = 8, int bin_height = 6, double bin_depth = 0.25, int smoothing = 1);
   void undistort(rgbd::Frame* frame) const;
   void accumulate(const rgbd::Frame& ground_truth, const rgbd::Frame& measurement);
   void serialize(std::ostream& out) const;

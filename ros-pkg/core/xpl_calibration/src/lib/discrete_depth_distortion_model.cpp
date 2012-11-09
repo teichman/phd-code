@@ -5,6 +5,8 @@ using namespace Eigen;
 using namespace rgbd;
 
 Frustum::Frustum(int smoothing, double bin_depth) :
+  max_mult_(1.4),
+  min_mult_(0.6),
   max_dist_(15),
   bin_depth_(bin_depth)
 {
@@ -16,9 +18,13 @@ Frustum::Frustum(int smoothing, double bin_depth) :
 
 void Frustum::addExample(double ground_truth, double measurement)
 {
-  int idx = floor(measurement / bin_depth_);
-  ROS_ASSERT(idx >= 0 && idx < num_bins_);
-  total_multipliers_(idx) += ground_truth / measurement;
+  double mult = ground_truth / measurement;
+  if(mult > max_mult_ || mult < min_mult_)
+    return;
+  
+  int idx = min(num_bins_ - 1, (int)floor(measurement / bin_depth_));
+  ROS_ASSERT(idx >= 0);
+  total_multipliers_(idx) += mult;
   ++counts_(idx);
   multipliers_(idx) = total_multipliers_(idx) / counts_(idx);
 }
@@ -26,7 +32,8 @@ void Frustum::addExample(double ground_truth, double measurement)
 void Frustum::undistort(rgbd::Point* pt) const
 {
   double dist = pt->getVector3fMap().norm();
-  int idx = floor(dist / bin_depth_);
+  int idx = min(num_bins_ - 1, (int)floor(dist / bin_depth_));
+  ROS_ASSERT(idx >= 0);
   pt->getVector3fMap() *= multipliers_(idx);
 }
 
@@ -76,16 +83,20 @@ void DiscreteDepthDistortionModel::undistort(Frame* frame) const
 
   ProjectivePoint ppt;
   Point pt;
-  for(ppt.v_ = 0; ppt.v_ < psm_.height_; ++ppt.v_) {
-    for(ppt.u_ = 0; ppt.u_ < psm_.width_; ++ppt.u_) {
-      int u = ppt.u_;
-      int v = ppt.v_;
-      ppt.z_ = frame->depth_->coeffRef(ppt.v_, ppt.u_);
+  for(int v = 0; v < psm_.height_; ++v) {
+    for(int u = 0; u < psm_.width_; ++u) {
+      if(frame->depth_->coeffRef(v, u) == 0)
+	continue;
+
+      ppt.v_ = v;
+      ppt.u_ = u;
+      ppt.z_ = frame->depth_->coeffRef(v, u);
       psm_.project(ppt, &pt);
-      frustum(ppt.v_, ppt.u_).undistort(&pt);
+      frustum(v, u).undistort(&pt);
       psm_.project(pt, &ppt);
-      ROS_ASSERT(ppt.u_ == u && ppt.v_ == v);
-      frame->depth_->coeffRef(ppt.v_, ppt.u_) = ppt.z_;
+
+      //ROS_ASSERT(ppt.u_ == u && ppt.v_ == v);  // TODO: PrimeSenseModel should project back to exactly the same spot.
+      frame->depth_->coeffRef(v, u) = ppt.z_;
     }
   }
 }
@@ -101,6 +112,11 @@ void DiscreteDepthDistortionModel::accumulate(const Frame& ground_truth, const F
   Point pt;
   for(ppt.v_ = 0; ppt.v_ < psm_.height_; ++ppt.v_) {
     for(ppt.u_ = 0; ppt.u_ < psm_.width_; ++ppt.u_) {
+      if(ground_truth.depth_->coeffRef(ppt.v_, ppt.u_) == 0)
+	continue;
+      if(measurement.depth_->coeffRef(ppt.v_, ppt.u_) == 0)
+	continue;
+      
       ppt.z_ = ground_truth.depth_->coeffRef(ppt.v_, ppt.u_);
       psm_.project(ppt, &pt);
       double gt = pt.getVector3fMap().norm();
