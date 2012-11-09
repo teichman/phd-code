@@ -17,9 +17,9 @@ int main(int argc, char** argv)
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("sseq", bpo::value<string>()->required(), "StreamSequence, i.e. asus data.")
-    ("opcd", bpo::value<string>()->required(), "Output path for the final pointcloud.")
-    ("otraj", bpo::value<string>()->required(), "Output path for the final trajectory.")
-    ("ograph", bpo::value<string>()->required(), "Output path for the final pose graph.")
+    ("opcd", bpo::value<string>()->required(), "Output DIR for the final pointcloud.")
+    ("otraj", bpo::value<string>()->required(), "Output DIR for the final trajectory.")
+    ("ograph", bpo::value<string>()->required(), "Output PATH for the final pose graph.")
     ("max-loopclosures", bpo::value<int>())
     ("cam", bpo::value<string>(), "Camera file to use.")
     ("visualize", "")
@@ -59,11 +59,31 @@ int main(int argc, char** argv)
 
   // -- Save outputs.
   if(opts.count("opcd"))
-    pcl::io::savePCDFileBinary(opts["opcd"].as<string>(), *pss.map_);
+  {
+    boost::filesystem::path dir(opts["opcd"].as<string>());
+    boost::filesystem::create_directory(dir);
+    for(size_t i = 0; i < pss.maps_.size(); i++)
+    {
+      ostringstream oss;
+      oss << opts["opcd"].as<string>() << "/submap_" << i << ".pcd";
+      pcl::io::savePCDFileBinary(oss.str(), *pss.maps_[i]);
+    }
+  }
   if(opts.count("otraj"))
-    pss.traj_.save(opts["otraj"].as<string>());
+  {
+    boost::filesystem::path dir(opts["otraj"].as<string>());
+    boost::filesystem::create_directory(dir);
+    for(size_t i = 0; i < pss.trajs_.size(); i++)
+    {
+      ostringstream oss;
+      oss << opts["otraj"].as<string>() << "/submap_" << i << ".traj";
+      pss.trajs_[i].save(oss.str());
+    }
+  }
   if(opts.count("ograph"))
+  {
     pss.pgs_->save(opts["ograph"].as<string>());
+  }
   
   return 0;
 }
