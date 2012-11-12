@@ -5,7 +5,7 @@
 
 SHELL			:= /bin/bash
 REPO_ROOT		:= $(shell dirname $$(dirname $$(dirname $$(rospack find dst))))
-export NUM_THREADS	:= 40  # No longer comparing with HoughTrack on speed so we can bump up the number of threads.
+export NUM_THREADS	:= 12  # No longer comparing with HoughTrack on speed so we can bump up the number of threads.
 MAKE_ROOT		:= $(REPO_ROOT)/project/dst
 MAKEFILE		:= $(MAKE_ROOT)/Makefile
 

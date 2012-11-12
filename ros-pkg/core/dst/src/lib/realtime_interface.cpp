@@ -146,8 +146,10 @@ namespace dst
     seq.seed_images_ = seed_imgs_;
     seq.segmentations_ = segmentations_;
     seq.pointclouds_.resize(pcds_.size());
-    for(size_t i = 0; i < pcds_.size(); ++i)
+    for(size_t i = 0; i < pcds_.size(); ++i) {
       seq.pointclouds_[i] = KinectCloud::Ptr(new KinectCloud(*pcds_[i]));
+      cout << seq.pointclouds_[i]->header.stamp << endl;
+    }
     ostringstream oss;
     time_t timestamp = time(0);
     oss << "realtime_interface_sequence-" << timestamp;
