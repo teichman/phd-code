@@ -52,14 +52,15 @@ os.system("rm " + tmpfile)
 
 # -- Make a nice bargraph.
 fig = plt.figure(figsize=(13,4))
-loss_ax = fig.add_subplot(111)
+loss_ax = fig.add_axes([0, 0.2, 0.85, 0.8])
+#loss_ax = fig.add_subplot(1,1,1)
 time_ax = loss_ax.twinx()
 width = 1
 
 ind = np.arange(0, size(names)) * 3 * width
 vals = [np.mean(l) for l in losses]
 loss_stdevs = [np.std(l) for l in losses]
-loss_bars = loss_ax.bar(ind, vals, width, color='green', yerr=loss_stdevs, ecolor='k', capsize=5)
+loss_bars = loss_ax.bar(ind, vals, width, color='green', yerr=loss_stdevs, ecolor='k', capsize=5, label='Loss')
 loss_ax.set_ylabel("Loss")
 loss_ax.set_xticks(ind + width)
 loss_ax.set_xticklabels(names)
@@ -69,7 +70,7 @@ for rect in loss_bars:
 time_ind = ind + width
 vals = [np.mean(t) for t in times]
 time_stdevs = [np.std(t) for t in times]
-time_bars = time_ax.bar(time_ind, vals, width, color='gray', yerr=time_stdevs, ecolor='k', capsize=5)
+time_bars = time_ax.bar(time_ind, vals, width, color='gray', yerr=time_stdevs, ecolor='k', capsize=5, label='Time')
 time_ax.set_ylabel("Time (ms)")
 for rect in time_bars:
     rect.set_alpha(0.5)
@@ -85,13 +86,13 @@ loss_ax.set_xlim([xlim[0] - width, xlim[1] + width])
 def labelLosses(ax, rects, stdevs, unit):
         for (idx, rect) in enumerate(rects):
             height = rect.get_height()
-            ax.text(rect.get_x() + width / 2. + width * 0.05, height + 0.02, ('%0.3f \n $\pm$ %0.3f' % (height, stdevs[idx])) + unit, ha='center', va='bottom', fontsize='small', multialignment='center')
+            ax.text(rect.get_x() + width / 2. + width * 0.05, height + 0.03, ('%0.3f \n $\pm$ %0.3f' % (height, stdevs[idx])) + unit, ha='center', va='bottom', fontsize='small', multialignment='center')
 
 def labelTimes(ax, rects, stdevs, unit):
     for (idx, rect) in enumerate(rects):
             height = rect.get_height()
             width = rect.get_width()
-            ax.text(rect.get_x() + width / 2., height + 30, ('%3.0f \n $\pm$ %3.1f' % (height, stdevs[idx])) + unit, ha='center', va='bottom', fontsize='small', multialignment='center')
+            ax.text(rect.get_x() + width / 2., height + 15, ('%3.0f \n $\pm$ %3.1f' % (height, stdevs[idx])) + unit, ha='center', va='bottom', fontsize='small', multialignment='center')
 
 labelTimes(time_ax, time_bars, time_stdevs, "ms")
 labelLosses(loss_ax, loss_bars, loss_stdevs, "")
@@ -117,7 +118,13 @@ for loc, spine in time_ax.spines.iteritems():
     if loc in ['right','top','left']:
         spine.set_color('none')
 
+#leg = fig.legend(pie[0], ("Features", "Graph cuts", "Other"), loc='center', bbox_to_anchor = (0.5, 0.5))
+#leg = fig.legend(("Loss", "Time"), loc='right', bbox_to_anchor=(0.5, 0.5))
+#leg_ax = fig.add_axes([0.75, 0, 0.25, 1])
+fig.legend((loss_bars, time_bars), ('Loss', 'Time'), loc=(0.85, 0.5))
+
 # Save.
-savefig(path + '/realtime.png', bbox_inches='tight', pad_inches=0.0)
-savefig(path + '/realtime.pdf', bbox_inches='tight', pad_inches=0.0)
+#savefig(path + '/realtime.png', bbox_inches='tight', pad_inches=0.0)
+#savefig(path + '/realtime.pdf', bbox_inches='tight', pad_inches=0.0)
+savefig(path + '/realtime.pdf')
 
