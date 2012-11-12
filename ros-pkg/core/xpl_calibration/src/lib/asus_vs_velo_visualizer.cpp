@@ -42,6 +42,7 @@ Cloud::Ptr VeloSequence::getCloud(size_t idx) const
 AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::Ptr sseq, VeloSequence::ConstPtr vseq) :
   skip_(5),
   num_pixel_plots_(20),
+  dddm_(NULL),
   sseq_(sseq),
   vseq_(vseq),
   vw_("Visualizer", 0.3),
@@ -70,6 +71,12 @@ AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::Ptr sseq, VeloS
   setInitialExtrinsics();
 
   updateVeloBounds();
+}
+
+AsusVsVeloVisualizer::~AsusVsVeloVisualizer()
+{
+  if(dddm_)
+    delete dddm_;
 }
 
 void AsusVsVeloVisualizer::setInitialExtrinsics()
@@ -181,7 +188,11 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
     Frame frame;
     sseq_->readFrame(asus_idx_, &frame);
     if(unwarp_) {
-      model_.undistort(&frame);
+      if(dddm_)
+	dddm_->undistort(&frame);
+      else
+	model_.undistort(&frame);
+
       model_.frameToCloud(frame, asus_.get());
     }
     else
@@ -266,7 +277,7 @@ void AsusVsVeloVisualizer::run()
       break;
     case 'm':
       unwarp_ = !unwarp_;
-      if(model_.fx_ == 0 || !model_.hasDepthDistortionModel()) {
+      if(dddm_ == NULL && (model_.fx_ == 0 || !model_.hasDepthDistortionModel())) {
 	cout << "Cannot unwarp without a learned depth distortion model." << endl;
 	unwarp_ = false;
       }
@@ -303,9 +314,6 @@ void AsusVsVeloVisualizer::run()
       break;
     case 'F':
       incrementFocalLength(-10);
-      break;
-    case 'S':
-      saveAll("manual");
       break;
     case ',':
       incrementVeloIdx(-1);
@@ -494,14 +502,18 @@ VeloToAsusCalibrator AsusVsVeloVisualizer::setupCalibrator()
     cout << "- Loading nearby asus frames for velo keyframe " << i << " / " << calibrator.pcds_.size() << endl;
 
     vector<size_t> indices;
-    for(int j = max(0, idx - window); j <= min(idx + window, (int)sseq_->size()); ++j)
+    for(int j = max(0, idx - window); j < min(idx + window, (int)sseq_->size()); ++j)
       indices.push_back(j);
     
     vector<Frame> frames(indices.size());
     #pragma omp parallel for
     for(size_t j = 0; j < indices.size(); ++j) { 
       sseq_->readFrame(indices[j], &frames[j]);
-      model_.undistort(&frames[j]);  // Very important: get the best extrinsics using the given depth distortion model.
+      // Very important: get the best extrinsics using the given depth distortion model.
+      if(dddm_)
+	dddm_->undistort(&frames[j]);
+      else
+	model_.undistort(&frames[j]);  
       frames[j].timestamp_ -= sseq_start_;
     }
     calibrator.frames_.insert(calibrator.frames_.end(), frames.begin(), frames.end());
@@ -612,24 +624,17 @@ void AsusVsVeloVisualizer::play(bool save)
   }
 }
 
-void AsusVsVeloVisualizer::saveExtrinsics(std::string tag) const
+void AsusVsVeloVisualizer::saveExtrinsics(std::string path) const
 {
-  cal_.save("extrinsics" + tag);
-  cout << "Saved calibration to \"" << "extrinsics" << tag << "\"" << endl;
+  cal_.save(path);
+  cout << "Saved extrinsic calibration to " << path << endl;
 }
 
-void AsusVsVeloVisualizer::saveIntrinsics(std::string tag) const
+void AsusVsVeloVisualizer::saveIntrinsics(std::string path) const
 {
-  string filename = "intrinsics" + tag;
-  model_.save(filename);
-  cout << "Saved depth distortion model to \"" << filename << "\"" << endl;
+  model_.save(path);
+  cout << "Saved depth distortion model to \"" << path << "\"" << endl;
   cout << model_.status("  ");
-}
-
-void AsusVsVeloVisualizer::saveAll(std::string tag) const
-{
-  saveExtrinsics(tag);
-  saveIntrinsics(tag);
 }
 
 void AsusVsVeloVisualizer::fitFocalLength()

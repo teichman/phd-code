@@ -22,8 +22,10 @@ public:
   rgbd::Cloud::Ptr buildMap(size_t idx, double vgsize) const;
   size_t size() const;
   rgbd::PrimeSenseModel calibrate() const;
-  
+  DiscreteDepthDistortionModel calibrateDiscrete() const;
+
 protected:
+  DepthDistortionLearner setupDepthDistortionLearner() const;
 };
 
 #endif // SLAM_CALIBRATOR_H

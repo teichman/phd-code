@@ -98,33 +98,36 @@ protected:
 };
 
 void meanDepthError(const rgbd::PrimeSenseModel& model,
-		    rgbd::Frame frame, const rgbd::Cloud& pcd,
+		    const rgbd::Frame &frame, const rgbd::Cloud& pcd, const rgbd::Frame &gt,
 		    double* val, double* count,
 		    double max_range = std::numeric_limits<double>::max());
 
 void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
-			    rgbd::Frame frame, const rgbd::Cloud& pcd,
+			    const rgbd::Frame &frame, const rgbd::Cloud& pcd, const rgbd::Frame &gt,
 			    double* depth_error, double* color_error, double* count,
 			    double max_range = std::numeric_limits<double>::max());
 
 void meanDepthMultiplierAndColorError(const rgbd::PrimeSenseModel& model,
-				      rgbd::Frame frame, const rgbd::Cloud& pcd,
+				      const rgbd::Frame &frame, const rgbd::Cloud& pcd, const rgbd::Frame &gt,
 				      double* depth_error, double* hue_error, double* count,
 				      double max_range = std::numeric_limits<double>::max());
 void meanDepthMultiplierAndHueError(const rgbd::PrimeSenseModel& model,
-				      rgbd::Frame frame, const rgbd::Cloud& pcd, 
+				      const rgbd::Frame &frame, const rgbd::Cloud& pcd,
+              const rgbd::Frame &gt, const rgbd::IndexMap &indexmap,
               const cv::Mat3f &hsv_frame, const cv::Mat3f &hsv_pcd, 
               const std::vector<size_t> &cloud_indices, 
 				      double* depth_error, double* color_error, double* count,
 				      double max_range = std::numeric_limits<double>::max());
 void meanDepthMultiplierAndEdgeError(const rgbd::PrimeSenseModel& model,
-				      rgbd::Frame frame, const rgbd::Cloud& pcd, 
+				      const rgbd::Frame &frame, const rgbd::Cloud& pcd, 
+              const rgbd::Frame &gt, const rgbd::IndexMap &indexmap,
               const cv::Mat1b &edge_frame, const cv::Mat1b &edge_pcd, 
               const std::vector<size_t> &cloud_indices, 
 				      double* depth_error, double* color_error, double* count,
 				      double max_range = std::numeric_limits<double>::max());
 void meanDepthMultiplierAndCNError(const rgbd::PrimeSenseModel& model,
-				      rgbd::Frame frame, const rgbd::Cloud& pcd,
+				      const rgbd::Frame &frame, const rgbd::Cloud& pcd,
+              const rgbd::Frame &gt,
               const Eigen::MatrixXf &color_names_lookup,
 				      double* depth_error, double* cn_error, double* count,
 				      double max_range = std::numeric_limits<double>::max());

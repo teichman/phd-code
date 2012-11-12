@@ -59,11 +59,10 @@ namespace rgbd
     rgbd::Cloud::Ptr getCloud(double timestamp, double* dt) const __attribute__ ((__deprecated__));
     cv::Mat3b getImage(size_t idx) const __attribute__ ((__deprecated__));
     cv::Mat3b getImage(double timestamp, double* dt) const __attribute__ ((__deprecated__));
-    
-  protected:
     //! dt is signed.
     size_t seek(double timestamp, double* dt) const;
-
+    
+  protected:
     // Assignment op & copy constructor would deep copy if they were implemented.
     StreamSequence(const StreamSequence& seq);
     StreamSequence& operator=(const StreamSequence& seq);

@@ -31,17 +31,27 @@ public:
   int keypoints_per_frame_;
   
   // -- Outputs
-  Trajectory traj_;
+  vector<Trajectory> trajs_;
   //! Just for visualization.
-  rgbd::Cloud::Ptr map_;
+  vector<rgbd::Cloud::Ptr> maps_;
   //! For saving the graph.
   PoseGraphSlam::Ptr pgs_;
   
   // -- Methods
   PrimeSenseSlam();
   void _run();
+  //! Called at the end of _run(), public so we can call it externally w/o running everything
+  void populateTrajAndMaps();
   FeaturesPtr getFeatures(const rgbd::Frame &frame, std::vector<cv::KeyPoint> &keypoints,
       rgbd::Cloud::ConstPtr &keycloud) const;
+
+  pipeline::Params params_;
+  static inline pipeline::Params defaultParams()
+  {
+    pipeline::Params params;
+    params.load(ros::package::getPath("xpl_calibration") + "/data/default_slam_params.txt");
+    return params;
+  }
 
 protected:
   std::map< size_t, std::vector<cv::KeyPoint> > keypoint_cache_;
@@ -49,7 +59,7 @@ protected:
   std::map< size_t, FeaturesPtr > feature_cache_;
   std::vector<size_t> cached_frames_;
 
-  void buildMap(const Trajectory& traj);
+  rgbd::Cloud::Ptr buildMap(const Trajectory& traj) const;
   FeaturesPtr cacheFeatures(const rgbd::Frame &frame, size_t t, 
       std::vector<cv::KeyPoint> &keypoints, rgbd::Cloud::ConstPtr &keycloud);
 };
