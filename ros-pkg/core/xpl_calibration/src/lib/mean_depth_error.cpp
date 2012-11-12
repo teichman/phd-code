@@ -211,26 +211,30 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
 
   Cloud transformed;
   transformAndDecimate(pcd1_, f0_to_f1.inverse(), indices_, &transformed);
+  Frame transformed_frame;
+  IndexMap indexmap;
+  model0_.cloudToFrame(transformed, &transformed_frame, &indexmap);
   if(params_.get<double>("rgb_weight") > 0 || params_.get<double>("depth_weight") > 0)
-    meanDepthMultiplierAndColorError(model0_, frame0_, transformed, &depth_error, &rgb_error, &rgb_count, params_.get<double>("max_range"));
+    meanDepthMultiplierAndColorError(model0_, frame0_, transformed, transformed_frame, &depth_error, &rgb_error, &rgb_count, params_.get<double>("max_range"));
   if(params_.get<double>("hue_weight") > 0)
-    meanDepthMultiplierAndHueError(model0_, frame0_, transformed, img0_hsv_, img1_hsv_, indices_, &garbage, &hue_error, &hue_count, params_.get<double>("max_range"));
+    meanDepthMultiplierAndHueError(model0_, frame0_, transformed, transformed_frame, indexmap, img0_hsv_, img1_hsv_, indices_, &garbage, &hue_error, &hue_count, params_.get<double>("max_range"));
   if(params_.get<double>("edge_weight") > 0)
-    meanDepthMultiplierAndEdgeError(model0_, frame0_, transformed, edges0_, edges1_, indices_, &garbage, &edge_error, &edge_count, params_.get<double>("max_range"));
+    meanDepthMultiplierAndEdgeError(model0_, frame0_, transformed, transformed_frame, indexmap, edges0_, edges1_, indices_, &garbage, &edge_error, &edge_count, params_.get<double>("max_range"));
   if(params_.get<double>("cn_weight") > 0)
-    meanDepthMultiplierAndCNError(model0_, frame0_, transformed, color_names_, &garbage, &cn_error, &cn_count, params_.get<double>("max_range"));
+    meanDepthMultiplierAndCNError(model0_, frame0_, transformed, transformed_frame, color_names_, &garbage, &cn_error, &cn_count, params_.get<double>("max_range"));
   // keypointError(model0_, frame0_, correspondences0_, f0_to_f1, model1_, frame1_, correspondences1_,
   // 		params_.get<double>("keypoint_hinge"), &keypoint_error, &keypoint_error_count);
   
   transformAndDecimate(pcd0_, f0_to_f1, indices_, &transformed); 
+  model1_.cloudToFrame(transformed, &transformed_frame, &indexmap);
   if(params_.get<double>("rgb_weight") > 0 || params_.get<double>("depth_weight") > 0)
-    meanDepthMultiplierAndColorError(model1_, frame1_, transformed, &depth_error, &rgb_error, &rgb_count, params_.get<double>("max_range"));
+    meanDepthMultiplierAndColorError(model1_, frame1_, transformed, transformed_frame, &depth_error, &rgb_error, &rgb_count, params_.get<double>("max_range"));
   if(params_.get<double>("hue_weight") > 0)
-    meanDepthMultiplierAndHueError(model1_, frame1_, transformed, img1_hsv_, img0_hsv_, indices_, &garbage, &hue_error, &hue_count, params_.get<double>("max_range"));
+    meanDepthMultiplierAndHueError(model1_, frame1_, transformed, transformed_frame, indexmap, img1_hsv_, img0_hsv_, indices_, &garbage, &hue_error, &hue_count, params_.get<double>("max_range"));
   if(params_.get<double>("edge_weight") > 0)
-    meanDepthMultiplierAndEdgeError(model1_, frame1_, transformed, edges1_, edges0_, indices_, &garbage, &edge_error, &edge_count, params_.get<double>("max_range"));
+    meanDepthMultiplierAndEdgeError(model1_, frame1_, transformed, transformed_frame, indexmap, edges1_, edges0_, indices_, &garbage, &edge_error, &edge_count, params_.get<double>("max_range"));
   if(params_.get<double>("cn_weight") > 0)
-    meanDepthMultiplierAndCNError(model1_, frame1_, transformed, color_names_, &garbage, &cn_error, &cn_count, params_.get<double>("max_range"));
+    meanDepthMultiplierAndCNError(model1_, frame1_, transformed, transformed_frame, color_names_, &garbage, &cn_error, &cn_count, params_.get<double>("max_range"));
 
   // keypointError(model1_, frame1_, correspondences1_, f0_to_f1.inverse(), model0_, frame0_, correspondences0_,
   // 		params_.get<double>("keypoint_hinge"), &keypoint_error, &keypoint_error_count);
@@ -344,6 +348,7 @@ double SequenceAlignmentMDE::eval(const Eigen::VectorXd& x) const
   double count = 0;  // Total number of points with both ground truth and measurements.
   double val = 0;  // Total objective.
   Cloud transformed;
+  Frame transformed_frame;
   int num_pcds = 0;
   for(size_t i = 0; i < pcds_.size(); ++i) {
     int idx = seek(frames_, offset + pcds_[i]->header.stamp.toSec(), dt_thresh_);
@@ -351,13 +356,14 @@ double SequenceAlignmentMDE::eval(const Eigen::VectorXd& x) const
       continue;
 
     pcl::transformPointCloud(*pcds_[i], transformed, transform);
-    meanDepthError(model_, frames_[idx], transformed, &val, &count);
+    model_.cloudToFrame(transformed, &transformed_frame);
+    meanDepthError(model_, frames_[idx], transformed, transformed_frame, &val, &count);
     ++num_pcds;
   }
 
-  double min_count = 100 * num_pcds;
-  if(count < min_count) {
-    ROS_WARN_STREAM("Number of corresponding pcds is less than the threshold of " << min_count);
+  double min_per_pcd = 1000;
+  if(count / num_pcds < min_per_pcd) {
+    //ROS_WARN_STREAM("Mean number of corresponding points per pcd is " << count / num_pcds << ", which is less than threshold of " << min_per_pcd);
     return std::numeric_limits<double>::max();
   }
   else
@@ -395,10 +401,13 @@ double FocalLengthMDE::eval(const Eigen::VectorXd& x) const
   double count = 0;  // Total number of points with both ground truth and measurements.
   double val = 0;  // Total objective.
   Cloud transformed;
+  Frame transformed_frame;
   for(size_t i = 0; i < pcds_.size(); ++i) {
     transformAndDecimate(*pcds_[i], transforms_[i].cast<float>(), indices_, &transformed);
+    model.cloudToFrame(transformed, &transformed_frame);
+
     //pcl::transformPointCloud(*pcds_[i], transformed, transforms_[i].cast<float>());
-    meanDepthError(model, frames_[i], transformed, &val, &count);
+    meanDepthError(model, frames_[i], transformed, transformed_frame, &val, &count);
   }
 
   double min_count = 100 * pcds_.size();
@@ -411,7 +420,7 @@ double FocalLengthMDE::eval(const Eigen::VectorXd& x) const
 }
 
 void meanDepthError(const rgbd::PrimeSenseModel& model,
-		    Frame frame, const rgbd::Cloud& pcd,
+		    const Frame &frame, const rgbd::Cloud& pcd, const Frame &gt,
 		    double* val, double* count, double max_range)
 {
   //ScopedTimer st("meanDepthError total");
@@ -421,8 +430,8 @@ void meanDepthError(const rgbd::PrimeSenseModel& model,
   
   // -- Make the ground truth depth image.
   hrt.reset("meanDepthError: cloudToFrame"); hrt.start();
-  Frame gt;
-  model.cloudToFrame(pcd, &gt);
+  //Frame gt;
+  //model.cloudToFrame(pcd, &gt);
 #ifdef TIMING
   hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 #endif 
@@ -477,7 +486,8 @@ void meanDepthError(const rgbd::PrimeSenseModel& model,
 }
 
 void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
-			    Frame frame, const rgbd::Cloud& pcd,
+			    const Frame &frame, const rgbd::Cloud& pcd,
+          const Frame &gt,
 			    double* depth_error, double* color_error,
 			    double* count, double max_range)
 {
@@ -487,8 +497,8 @@ void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
   
   // -- Make the ground truth depth image.
   hrt.reset("meanDepthError: cloudToFrame"); hrt.start();
-  Frame gt;
-  model.cloudToFrame(pcd, &gt);
+  //Frame gt;
+  //model.cloudToFrame(pcd, &gt);
 #ifdef TIMING
   hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 #endif 
@@ -539,7 +549,8 @@ void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
 }
 
 void meanDepthMultiplierAndColorError(const rgbd::PrimeSenseModel& model,
-				      Frame frame, const rgbd::Cloud& pcd,
+				      const Frame &frame, const rgbd::Cloud& pcd,
+              const Frame &gt,
 				      double* depth_error, double* color_error,
 				      double* count, double max_range)
 {
@@ -549,8 +560,8 @@ void meanDepthMultiplierAndColorError(const rgbd::PrimeSenseModel& model,
   
   // -- Make the ground truth depth image.
   hrt.reset("meanDepthError: cloudToFrame"); hrt.start();
-  Frame gt;
-  model.cloudToFrame(pcd, &gt);
+  //Frame gt;
+  //model.cloudToFrame(pcd, &gt);
 #ifdef TIMING
   hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 #endif 
@@ -601,7 +612,8 @@ void meanDepthMultiplierAndColorError(const rgbd::PrimeSenseModel& model,
 }
 
 void meanDepthMultiplierAndHueError(const rgbd::PrimeSenseModel& model,
-				      Frame frame, const rgbd::Cloud& pcd,
+				      const Frame &frame, const rgbd::Cloud& pcd,
+              const Frame &gt, const IndexMap &indexmap,
               const cv::Mat3f &hsv_frame, const cv::Mat3f &hsv_pcd,
               const std::vector<size_t> &cloud_indices, 
 				      double* depth_error, double* color_error,
@@ -613,9 +625,9 @@ void meanDepthMultiplierAndHueError(const rgbd::PrimeSenseModel& model,
   
   // -- Make the ground truth depth image.
   hrt.reset("meanDepthError: cloudToFrame"); hrt.start();
-  Frame gt;
-  IndexMap indexmap;
-  model.cloudToFrame(pcd, &gt, &indexmap);
+  //Frame gt;
+  //IndexMap indexmap;
+  //model.cloudToFrame(pcd, &gt, &indexmap);
 #ifdef TIMING
   hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 #endif 
@@ -672,7 +684,8 @@ void meanDepthMultiplierAndHueError(const rgbd::PrimeSenseModel& model,
 }
 
 void meanDepthMultiplierAndEdgeError(const rgbd::PrimeSenseModel& model,
-				      Frame frame, const rgbd::Cloud& pcd,
+				      const Frame &frame, const rgbd::Cloud& pcd,
+              const Frame &gt, const IndexMap &indexmap,
               const cv::Mat1b &edge_frame, const cv::Mat1b &edge_pcd,
               const std::vector<size_t> &cloud_indices, 
 				      double* depth_error, double* color_error,
@@ -684,9 +697,9 @@ void meanDepthMultiplierAndEdgeError(const rgbd::PrimeSenseModel& model,
   
   // -- Make the ground truth depth image.
   hrt.reset("meanDepthError: cloudToFrame"); hrt.start();
-  Frame gt;
-  IndexMap indexmap;
-  model.cloudToFrame(pcd, &gt, &indexmap);
+  //Frame gt;
+  //IndexMap indexmap;
+  //model.cloudToFrame(pcd, &gt, &indexmap);
 #ifdef TIMING
   hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 #endif 
@@ -739,7 +752,8 @@ void meanDepthMultiplierAndEdgeError(const rgbd::PrimeSenseModel& model,
 }
 
 void meanDepthMultiplierAndCNError(const rgbd::PrimeSenseModel& model,
-				      Frame frame, const rgbd::Cloud& pcd,
+				      const Frame &frame, const rgbd::Cloud& pcd,
+              const Frame &gt,
               const Eigen::MatrixXf &color_names_lookup,
 				      double* depth_error, double* color_error,
 				      double* count, double max_range)
@@ -750,8 +764,8 @@ void meanDepthMultiplierAndCNError(const rgbd::PrimeSenseModel& model,
   
   // -- Make the ground truth depth image.
   hrt.reset("meanDepthError: cloudToFrame"); hrt.start();
-  Frame gt;
-  model.cloudToFrame(pcd, &gt);
+  //Frame gt;
+  //model.cloudToFrame(pcd, &gt);
 #ifdef TIMING
   hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 #endif 

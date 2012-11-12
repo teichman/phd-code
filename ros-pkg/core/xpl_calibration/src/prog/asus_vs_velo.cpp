@@ -15,8 +15,9 @@ int main(int argc, char** argv)
     ("vseq", bpo::value<string>()->required(), "VeloSequence")
     ("extrinsics", bpo::value<string>(), "Use pre-computed extrinsics")
     ("intrinsics", bpo::value<string>(), "Use pre-computed PrimeSense model")
-    ("compute-extrinsics", "Automatically start extrinsics search")
-    ("compute-intrinsics", "Automatically start intrinsics search")
+    ("discrete-intrinsics", bpo::value<string>(), "Use pre-computed discrete distortion model")
+    ("compute-extrinsics", bpo::value<string>(), "Automatically start extrinsics search and save here")
+    ("compute-intrinsics", bpo::value<string>(), "Automatically start intrinsics search")
     ("evaluate", bpo::value<string>(), "Runs evaluation of the given extrinsics and intrinsics and saves the result here.  It is assumed that the extrinsics are the best for the given intrinsics.")
 //    ("visualize-distortion", "Visualize the distortion.  Extrinsics must be provided.")
     ("skip", bpo::value<int>()->default_value(20), "For use with --visualize-distortion.  Use every kth frame for accumulating statistics.")
@@ -38,7 +39,8 @@ int main(int argc, char** argv)
     cout << opts_desc << endl;
     return 1;
   }
-  
+
+  ROS_ASSERT(!(opts.count("discrete-intrinsics") && opts.count("intrinsics")));
   
   cout << "Loading StreamSequence at " << opts["sseq"].as<string>() << endl;
   cout << "Loading VeloSequence at " << opts["vseq"].as<string>() << endl;
@@ -63,11 +65,17 @@ int main(int argc, char** argv)
     cout << avv.model_.status("  ");
   }
 
+  if(opts.count("discrete-intrinsics")) {
+    avv.dddm_ = new DiscreteDepthDistortionModel;
+    avv.dddm_->load(opts["discrete-intrinsics"].as<string>());
+    cout << "Loaded discrete distortion model at " << opts["discrete-intrinsics"].as<string>() << endl;
+  }
+  
   if(opts.count("compute-extrinsics")) {
     ROS_ASSERT(!opts.count("extrinsics"));
     cout << "Computing extrinsics." << endl;
     avv.calibrate();
-    avv.saveExtrinsics();  // "extrinsics"
+    avv.saveExtrinsics(opts["compute-extrinsics"].as<string>());
     return 0;
   }    
 
@@ -76,7 +84,7 @@ int main(int argc, char** argv)
     ROS_ASSERT(!opts.count("intrinsics"));
     cout << "Computing depth distortion model." << endl;
     avv.fitModel();
-    avv.saveIntrinsics();  // "intrinsics"
+    avv.saveIntrinsics(opts["compute-intrinsics"].as<string>());
     return 0;
   }
 

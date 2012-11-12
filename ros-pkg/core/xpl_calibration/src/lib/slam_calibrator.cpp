@@ -45,9 +45,23 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx, double vgsize) const
 
     *map += *nonans;
     ++num_used_frames;
+    // Added intermediate filtering to handle memory overload on huge maps
+    if(num_used_frames % 250 == 0)
+    {
+      cout << "Filtering..." << endl;
+      HighResTimer hrt("filtering");
+      hrt.start();
+      pcl::VoxelGrid<rgbd::Point> vg;
+      vg.setLeafSize(vgsize, vgsize, vgsize);
+      Cloud::Ptr tmp(new Cloud);
+      vg.setInputCloud(map);
+      vg.filter(*tmp);
+      *map = *tmp;
+      hrt.stop();
+    }
   }
 
-  cout << "Unfiltered map has " << map->size() << " points, " << map->size() / (double)num_used_frames << " points per frame in the map." << endl;
+  //cout << "Unfiltered map has " << map->size() << " points, " << map->size() / (double)num_used_frames << " points per frame in the map." << endl;
   cout << "Filtering..." << endl;
   HighResTimer hrt("filtering");
   hrt.start();
@@ -70,7 +84,13 @@ size_t SlamCalibrator::size() const
   return trajectories_.size();
 }
 
-PrimeSenseModel SlamCalibrator::calibrate() const
+DiscreteDepthDistortionModel SlamCalibrator::calibrateDiscrete() const
+{
+  DepthDistortionLearner ddl = setupDepthDistortionLearner();
+  return ddl.fitDiscreteModel();
+}
+
+DepthDistortionLearner SlamCalibrator::setupDepthDistortionLearner() const
 {
   PrimeSenseModel initial_model = sseqs_[0]->model_;
   initial_model.resetDepthDistortionModel();
@@ -116,7 +136,14 @@ PrimeSenseModel SlamCalibrator::calibrate() const
   cv::imshow("coverage", cmap);
   cv::imwrite("coverage.png", cmap);
   cv::waitKey(100);
-  
+
+  return ddl;
+}
+
+PrimeSenseModel SlamCalibrator::calibrate() const
+{
+  DepthDistortionLearner ddl = setupDepthDistortionLearner();
+    
   cout << "Fitting models using " << ddl.size() << " frames." << endl;
   PrimeSenseModel model;
   // cout << "Fitting focal length." << endl;

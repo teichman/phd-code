@@ -143,6 +143,7 @@ int main(int argc, char** argv)
   vector<cv::KeyPoint> keypoints0, keypoints1;
   rgbd::Cloud::ConstPtr keycloud0, keycloud1;
   PrimeSenseSlam pss;
+  pss.sseq_ = sseq;
   if(opts.count("keypoints-per-frame"))
     pss.keypoints_per_frame_ = opts["keypoints-per-frame"].as<int>();
   PrimeSenseSlam::FeaturesConstPtr features0 = pss.getFeatures(frame0, keypoints0, keycloud0);
