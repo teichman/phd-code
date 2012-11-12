@@ -8,7 +8,8 @@
 
 
 % RECOMMENDED %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\documentclass[graybox]{svmult}
+%\documentclass[graybox]{svmult}
+\documentclass[journal]{IEEEtran}
 
 % choose options for [] as required from the list
 % in the Reference Guide
@@ -45,32 +46,28 @@
 \newcommand{\qqvga}{QQVGA\xspace}
 %\renewcommand{\todo}[1]{\textcolor{red}{[[#1]]}}
 %\newcommand{\todoCR}[1]{\textcolor{blue}{[[#1]]}}
-\renewcommand{\todo}[1]{\textcolor{red}{}}
-\newcommand{\todoCR}[1]{\textcolor{blue}{}}
+\renewcommand{\todo}[1]{}
+\newcommand{\todoCR}[1]{}
 
 
 \begin{document}
 
-\title*{Learning to Segment and Track in RGBD}
-\author{Alex Teichman, Jake Lussier, and Sebastian Thrun}
-\institute{Stanford University}
+\title{Learning to Segment and Track in RGBD}
+\author{Alex~Teichman, Jake~Lussier, and Sebastian~Thrun}
+%\institute{Stanford University}
 
 \maketitle
 % \thispagestyle{empty}
 
 %%%%%%%%% ABSTRACT
 
-\newcommand{\thisabs}{
+\begin{abstract}
 We consider the problem of segmenting and tracking deformable objects in color video with depth (RGBD) data available from commodity sensors such as the Asus Xtion Pro Live or Kinect.  We frame this problem with very few assumptions - no prior object model, no stationary sensor, no prior 3D map - thus making a solution potentially useful for a large number of applications, including semi-supervised learning, 3D model capture, and object recognition.
 
 Our approach makes use of a rich feature set, including local image appearance, depth discontinuities, optical flow, and surface normals to inform the segmentation decision in a conditional random field model.  In contrast to previous work in this field, the proposed method \emph{learns} how to best make use of these features from ground-truth segmented sequences.  We provide qualitative and quantitative analyses which demonstrate substantial improvement over the state of the art.
 
 This paper is an extended version of our previous work \cite{teichman2012a}.  Building on this, we show that it is possible to achieve an order of magnitude speedup and thus real-time performance ($\sim$20FPS) on a laptop computer by applying simple algorithmic optimizations to the original work.  This speedup comes at only a minor cost in overall accuracy and thus makes this approach applicable to a broader range of tasks. We demonstrate one such task: real-time, online, interactive segmentation to efficiently collect training data for an off-the-shelf object detector.
-
-}
-
-\abstract*{\thisabs}
-\abstract{\thisabs}
+\end{abstract}
 
 %%%%%%%%% BODY TEXT
 \section{Introduction}
@@ -175,40 +172,8 @@ The goal of MAP inference in this model is to choose the most likely segmentatio
 \end{align}
 During inference, the weights $w$ remain fixed.  The solution to this problem can be efficiently computed for $y \in \{-1, +1\}^n$ and submodular energy function $E$ using graph cuts \cite{boykov2001a}.
 
-\pagebreak
-
 \subsection{Learning}
 \label{sec:learning}
-
-Given a dataset of $(y_i, x_i)$ for $i=1 \dots m$, the goal of CRF learning is to choose the weights $w$ that will result in the lowest test error. While it would be desirable to learn the weights directly using the maximum likelihood approach
-\begin{align}
-  \maximize{w} \prod_m \Pr(y_m | x_m),
-\end{align}
-this is not possible to do exactly because of the presence of the partition function $Z(x) = \sum_{y} \exp(-E(y, x))$ in the gradient.  This function sums over all $2^n$ segmentations of an image with $n$ pixels.
-  
-Fortunately, there is an alternative approach known as the structural support vector machine \cite{taskar2005a, tsochantaridis2005a, szummer2008a}, which we now briefly review.  Solving the margin maximizing optimization problem
-\begin{equation}
-  \begin{aligned}
-    & \minimize{w, \xi} & & \frac{1}{2} ||w||^2 + \frac{C}{M} \sum_{m=1}^M \xi_m \label{eqn:nslack} \\
-    & \st & & \xi \geq 0 \\
-& & & E ( y, x_m ) - E ( y_m, x_m ) \geq \Delta (y_m, y) - \xi_m \quad \forall m, \forall y \in \mathcal{Y}
-  \end{aligned}
-\end{equation}
-would result in a good solution. Here, $C$ is a constant, $\Delta$ is a loss function, $\xi_m$ is a slack variable for training example $m$, and $\mathcal{Y}$ is the set of all possible labelings of an image. This problem, too, is intractable because it has exponentially many constraints.  However, one can iteratively build a small, greedy approximation to the exponential set of constraints such that the resulting weights $w$ are good.
-
-Further, one can transform (\ref{eqn:nslack}), known as the $n$-slack formulation, into the equivalent problem
-\begin{equation}
-  \begin{aligned}
-    & \minimize{w, \xi} & & \frac{1}{2} ||w||^2 + C\xi \\
-    & \st & & \xi \geq 0 \\
-    & & & \frac{1}{M} \sum_{m=1}^M E ( \hat{y}_m, x_m )
-    - E ( y_m, x_m ) \geq \frac{1}{M} \sum_{m=1}^M \Delta(y_m, \hat{y}_m) - \xi \\
-    & & & \quad \forall (\hat{y}_1, ..., \hat{y}_M) \in \mathcal{Y}^M,
-  \end{aligned}
-\end{equation}
-as described in \cite{joachims2009a}.  As before, while the number of constraints is exponential, one can build a small, greedy approximation that produces good results.  Known as the 1-slack formulation, this problem is equivalent and can be solved much more efficiently than (\ref{eqn:nslack}), often by one or two orders of magnitude.
-
-The goal is to learn the weights that will best segment an entire sequence given a single seed frame.  However, the segmenter operates on a single frame at a time, so our training dataset must be in the form of $(y, x)$ pairs. As will be discussed in Section~\ref{sec:energy}, some of the features are stateful, \ie they depend on previous segmentations.  This presents a minor complication.  At training time, we do not have access to a good choice of weights $w$, but the features depend on previous segmentations which in turn depend on the weights.  To resolve this, we adopt the simple strategy of generating features assuming that previous segmentations were equal to ground truth.  This dataset generation process is specified in Algorithm~\ref{alg:dataset}.
 
 \begin{algorithm}
   \caption{Training set generation}
@@ -229,7 +194,7 @@ The goal is to learn the weights that will best segment an entire sequence given
   \end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}[h]
+\begin{algorithm*}
   \caption{Structural SVM for learning to segment and track}
   \label{alg:ssvm}
   \begin{algorithmic}
@@ -256,7 +221,45 @@ The goal is to learn the weights that will best segment an entire sequence given
 \STATE $\mathcal{W} \leftarrow \mathcal{W} \cup \{(\hat{y}_1, \dots, \hat{y}_M\}$
 \UNTIL $\quad \frac{1}{M} \sum_{m = 1}^M \Delta(y_m, \hat{y}_m) - E ( \hat{y}_m, x_m) + E ( y_m, x_m ) \leq \xi + \epsilon$
   \end{algorithmic}
-\end{algorithm}
+\end{algorithm*}
+
+Given a dataset of $(y_i, x_i)$ for $i=1 \dots m$, the goal of CRF learning is to choose the weights $w$ that will result in the lowest test error. While it would be desirable to learn the weights directly using the maximum likelihood approach
+\begin{align}
+  \maximize{w} \prod_m \Pr(y_m | x_m),
+\end{align}
+this is not possible to do exactly because of the presence of the partition function $Z(x) = \sum_{y} \exp(-E(y, x))$ in the gradient.  This function sums over all $2^n$ segmentations of an image with $n$ pixels.
+
+Fortunately, there is an alternative approach known as the structural support vector machine \cite{taskar2005a, tsochantaridis2005a, szummer2008a}, which we now briefly review.  Solving the margin maximizing optimization problem of (\ref{eqn:nslack}) would result in a good solution. Here, $C$ is a constant, $\Delta$ is a loss function, $\xi_m$ is a slack variable for training example $m$, and $\mathcal{Y}$ is the set of all possible labelings of an image. This problem, too, is intractable because it has exponentially many constraints.  However, one can iteratively build a small, greedy approximation to the exponential set of constraints such that the resulting weights $w$ are good.
+
+Further, one can transform (\ref{eqn:nslack}), known as the $n$-slack formulation, into the equivalent problem (\ref{eqn:oneslack}) as described in \cite{joachims2009a}.  As before, while the number of constraints is exponential, one can build a small, greedy approximation that produces good results.  Known as the 1-slack formulation, this problem is equivalent and can be solved much more efficiently than (\ref{eqn:nslack}), often by one or two orders of magnitude.
+
+
+\begin{figure*}
+  % ensure that we have normalsize text
+  \normalsize
+
+  \begin{equation}
+    \begin{aligned}
+      & \minimize{w, \xi} & & \frac{1}{2} ||w||^2 + \frac{C}{M} \sum_{m=1}^M \xi_m \label{eqn:nslack} \\
+      & \st & & \xi \geq 0 \\
+      & & & E ( y, x_m ) - E ( y_m, x_m ) \geq \Delta (y_m, y) - \xi_m \quad \forall m, \forall y \in \mathcal{Y} \\
+    \end{aligned}
+  \end{equation}
+  
+  \begin{equation}
+    \begin{aligned}
+      & \minimize{w, \xi} & & \frac{1}{2} ||w||^2 + C\xi \label{eqn:oneslack} \\
+      & \st & & \xi \geq 0 \\
+      & & & \frac{1}{M} \sum_{m=1}^M E ( \hat{y}_m, x_m )
+      - E ( y_m, x_m ) \geq \frac{1}{M} \sum_{m=1}^M \Delta(y_m, \hat{y}_m) - \xi \quad \forall (\hat{y}_1, ..., \hat{y}_M) \in \mathcal{Y}^M
+    \end{aligned}
+  \end{equation}
+
+  \hrulefill
+  \vspace*{4pt}
+\end{figure*}
+
+The goal is to learn the weights that will best segment an entire sequence given a single seed frame.  However, the segmenter operates on a single frame at a time, so our training dataset must be in the form of $(y, x)$ pairs. As will be discussed in Section~\ref{sec:energy}, some of the features are stateful, \ie they depend on previous segmentations.  This presents a minor complication.  At training time, we do not have access to a good choice of weights $w$, but the features depend on previous segmentations which in turn depend on the weights.  To resolve this, we adopt the simple strategy of generating features assuming that previous segmentations were equal to ground truth.  This dataset generation process is specified in Algorithm~\ref{alg:dataset}.
 
 The structural SVM solver is detailed in Algorithm~\ref{alg:ssvm}.  Because the graph cuts solver assumes a submodular energy function, non-negative edge weights $w_i$ for all $i \in \Phi_{\mathcal{E}}$ are required.  As our node potentials are generally designed to produce values with the desired sign, we constrain them in Algorithm~\ref{alg:ssvm} to have non-negative weights as well.  The term $\Delta (y_m, y)$ is 0-1 loss, but a margin rescaling approach could easily be obtained by changing $\Delta$ to Hamming loss and making a small modification to the graph cuts solver during learning (see \cite{szummer2008a}). 
 
@@ -343,7 +346,6 @@ After alignment of the current frame to the previous frame using the same optica
 
 \textbf{Prior term} - To express a prior on background, we add a term for which $a_j = 0$ and $b_j = -1$.
 
-\pagebreak 
 \subsubsection{Edge potentials}
 
 Edge potentials capture the intuition that the foreground/background boundary is likely to be at an image gradient, color change, depth discontinuity, or surface normal change.  All take the form
@@ -384,8 +386,8 @@ where $p_j$ and $p_k$ are the neighboring 3D points, $n_k$ is the surface normal
 \textbf{Edge potential products} - Several combinations of the above are also provided, taking the form $a_{jk} = -|\prod_i a^{(i)}_{jk}|$, where $a^{(i)}_{jk}$ is the value from one of the above edge potentials.  Intuitively, this encodes an edge potential that is strong (\ie favors label equality) if all of the component edge potentials are strong.
 
 \begin{figure}
-  \includegraphics[width=7cm]{img/normals.pdf}
-  \sidecaption[t]
+  \centering
+  \includegraphics[width=\linewidth]{img/normals.pdf}
   \caption{While image appearance and depth information may sometimes provide little information about an object boundary, a change in surface normals can be informative. Surface normals are shown as small dark lines, seen from two angles to aid in depth perception.}
   \label{fig:normals}
 \end{figure}
@@ -399,18 +401,17 @@ We provide a quantitative analysis to demonstrate improvement over the state of 
 \subsection{Quantitative analysis}
 \label{sec:quant}
 
-As there is no work we are aware of which does segmentation and tracking of non-rigid objects using depth data or learning of the best general purpose segmenter, we compare against HoughTrack, discussed in Section~\ref{sec:prev_work}.  We used the implementation that accompanies \cite{godec2011a}.  To ensure a fair comparison, we modified the HoughTrack implementation to be initialized with a segmentation mask rather than a bounding box.
-
-No RGBD segmentation and tracking dataset currently exists, so we generated one containing 28 fully-labeled sequences with a total of about 4000 frames. Objects include, for example, a sheet of paper on a desk, cat, jacket, mug, laptop, and hat. In general, the dataset includes objects with different levels of rigidity, texture, and depth change from the surroundings. \todo{what is the right word for this?  \ie a poster flush to the wall vs a mug sticking up out of the desk} Ground truth was generated by hand labeling, assisted with an interactive version of the segmenter, similar to the interactive graph cuts work of \cite{boykov2001a}.
-
-\begin{figure}
+\begin{figure*}
   \centering
-  \includegraphics[width=\linewidth]{img/bargraph.pdf}
+  \includegraphics[width=0.8\linewidth]{img/bargraph.pdf}
   \caption{Comparison of our method with the most similar state-of-the-art work.}
   \label{fig:bargraph}
   \vspace{50pt}
-\end{figure}
-`
+\end{figure*}
+
+As there is no work we are aware of which does segmentation and tracking of non-rigid objects using depth data or learning of the best general purpose segmenter, we compare against HoughTrack, discussed in Section~\ref{sec:prev_work}.  We used the implementation that accompanies \cite{godec2011a}.  To ensure a fair comparison, we modified the HoughTrack implementation to be initialized with a segmentation mask rather than a bounding box.
+
+No RGBD segmentation and tracking dataset currently exists, so we generated one containing 28 fully-labeled sequences with a total of about 4000 frames. Objects include, for example, a sheet of paper on a desk, cat, jacket, mug, laptop, and hat. In general, the dataset includes objects with different levels of rigidity, texture, and depth change from the surroundings. \todo{what is the right word for this?  \ie a poster flush to the wall vs a mug sticking up out of the desk} Ground truth was generated by hand labeling, assisted with an interactive version of the segmenter, similar to the interactive graph cuts work of \cite{boykov2001a}.
 
 The dataset was split into a training set of about 500 frames over 10 sequences and a testing set of about 3500 frames over 18 sequences.  Training of our method was run once on the training set and the resulting segmenter was used to produce results for all testing sequences. HoughTrack has no training stage, and thus did not use the training set.  Testing results were produced for both by providing an initial segmentation for the first frame of each sequence, and all further frames were segmented without additional input.
 
@@ -447,7 +448,7 @@ Finally, the method we have presented learns how to combine a diverse set of fea
 \begin{figure*}
   \centering
   \vspace{1cm}
-  \includegraphics[width=\linewidth]{img/results-gs.pdf}
+  \includegraphics[width=0.8\linewidth]{img/results-gs.pdf}
   \caption{Visualization of results.  The first frame in each sequence (far left) is the seed frame.  Foreground points are shown in bold and color while background points are shown small and gray. Best viewed on-screen.}
   \label{fig:results}
   \vspace{50pt}
@@ -473,22 +474,12 @@ Concretely, at each timestep, a boundary mask is computed by dilating the backgr
 
 To show that this optimization does not adversely affect segmentation performance, we ran ten iterations comparing the optimized segmentation algorithm versus the original algorithm using the same experimental setup as Section~\ref{sec:quant}.  Quantitative results showing overall segmentation accuracy and runtimes are shown in Figure~\ref{fig:realtime}. Experiments were run using a multi-threaded implementation on a laptop with an i7-3820QM processor.  With use of the boundary mask and 50\% downsampling, it is possible to run the algorithm at $\sim$20FPS without sacrificing too much accuracy.
 
-\pagebreak
-
-\begin{figure}
+\begin{figure*}
   \centering
-  \includegraphics[width=\linewidth]{img/realtime.pdf}
+  \includegraphics[width=0.9\linewidth]{img/realtime.pdf}
   \caption{Test set normalized loss and average per-frame segmentation time compared with different levels of algorithmic optimization as discussed in Section~\ref{sec:realtime}.  Thirteen runs of each condition were made; error bars and annotations show one standard deviation for this dataset. While a 75\% downsampling induces too much error to be acceptable, 50\% downsampling appears to be a good trade-off for many applications.  Timing results for the original method differ from those presented in Section~\ref{sec:quant} because multithreading is enabled here. \todoCR{Reported stdevs should probably be for everything combined; when people think timing stdev they're going to think that's per-frame, and this plot is reporting per-full-test-run which has much lower stdev.}}
   \label{fig:realtime}
-\end{figure}
-
-\begin{figure}
-  \centering
-  \includegraphics[width=\linewidth]{img/timing.pdf}
-  \caption{Average frame segmentation timing breakdown for \vga and \qqvga resolutions using the boundary mask and 50\% downsampling of node potentials.  Feature computation dominates and the graph cuts solver does not preclude realtime operation even at \vga resolution.  Best viewed in color. \todoCR{Should probably collect a 640x480 dataset, make a scaled-down copy, and compute timing results for that data.  This way, you can make an exact comparison.  As it is, the two sets of sequences are not exactly the same.  The reported claims are supported by the current plot, but it'd be nice for one to be able to make the comparison between the two total times.}}
-  \label{fig:timing}
-\end{figure}
-
+\end{figure*}
 
 These results were all computed using \qqvga images.  While this may seem unreasonably small, it is actually acceptable for tasks that do not require high resolution boundaries.  For example, you might want to use the segmentation and tracking algorithm to collect training data for an object detector.  The detector might require \vga (\ie $640 \times 480$) data to produce good results, but computing the segmentation at \qqvga and scaling it up to the \vga image is acceptable.
 
@@ -503,31 +494,16 @@ In this section, we describe the application of our segmentation and tracking me
 
 The process, illustrated in Figure~\ref{fig:data_labeling}, only assumes the user is equipped with a laptop and an RGBD depth sensor.  For our experiments, we attached an ASUS Xtion Pro Live to the laptop of Section~\ref{sec:realtime}, shown in Figure~\ref{fig:rig}.
 
-\begin{figure}
-  \centering
-%  \includegraphics[width=\linewidth]{}
-  \caption{The realtime data labeling rig.}
-  \label{fig:rig}
-\end{figure}
-
 To begin, the user starts recording the RGBD sequence and provides some rough initial foreground and background labels. STRGEN uses the user input and the RGBD images to obtain an initial segmentation and then updates and propogates this segmentation downstream as more frames come in.  In the case of errant segmentations, the user provides in real time additional foreground and background labels, and STRGEN incorporates these as with the initial hints.  At the end of the process, the user is left with a collection of segmented objects instances.  Not all segmentations are perfect, but almost all bad segmentations are followed by a user correction.  Thus, we use the five second rule: All segmentations that were generated less than about five seconds before any user-generated segmentation hint are ignored in the collection of the dataset.
 
+\begin{figure}
+  \centering
+  \includegraphics[width=0.7\linewidth]{img/timing_vertical.pdf}
+  \caption{Average frame segmentation timing breakdown for \vga and \qqvga resolutions using the boundary mask and 50\% downsampling of node potentials.  Feature computation dominates and the graph cuts solver does not preclude realtime operation even at \vga resolution.  Best viewed in color. \todoCR{Should probably collect a 640x480 dataset, make a scaled-down copy, and compute timing results for that data.  This way, you can make an exact comparison.  As it is, the two sets of sequences are not exactly the same.  The reported claims are supported by the current plot, but it'd be nice for one to be able to make the comparison between the two total times.}}
+  \label{fig:timing}
+\end{figure}
+
 In Figure~\ref{fig:object_rec}, we demonstrate how these segmented examples can be used to construct an object detector.  We offer a small example in which we aim to detect a couch pillow in fifteen diverse scenes. Our method does not rely on any particular detection approach, but since we are interested in real-time detection, we feed our labeled pillow examples into the LINE-MOD template-matching framework described in Hinterstoisser et al \cite{hinterstoisser2011a}. At training time, LINE-MOD uses the depth and image cues to build templates (Figure~\ref{fig:object_rec}, upper-left). At testing time, LINE-MOD searches for those templates in the previously unseen images and identifies any ``detection'' as a template match with a response exceeding some threshold (0.75 in our experiment).  As can be seen in the illustration, we detect all objects while avoiding any false positives.
-
-
-\begin{figure}
-\centering
-        \includegraphics[width=\linewidth]{img/realtime_pipeline.png}
-\caption{\small{Example data labeling pipeline. The user records an RGBD sequence.  While recording, he or she provides some initial foreground / background segmentations, and STRGEN uses these to obtain an initial segmentation.  STRGEN then automatically labels all subsequent frames (middle column), unless the user provides additional information, in which case the input is incorporated as before.  The output is a set of segmented object examples. }}
-\label{fig:data_labeling}
-\end{figure}
-
-\begin{figure}
-\centering
-        \includegraphics[width=\linewidth]{img/pillow_detection.png}
-\caption{\small{Object detection example. Color and depth templates are extracted from pillow examples (such as those shown in Figure~\ref{fig:data_labeling}), and a set of unlabeled RGBD frames is provided.  An appropriate object detection method (LINE-MOD in our example) searches for the templates in the input frames and identifies ``detections'' as matches with responses exceeding some threshold (0.75 in this experiment). Note that given our cleanly segmented examples, LINE-MOD is able to accurately detect the object positions and somewhat reliably detect the object orientations.}}
-\label{fig:object_rec}
-\end{figure}
 
 \section{Conclusions}
 
@@ -537,6 +513,29 @@ We have presented a novel method of segmenting and tracking deformable objects i
 \bibliographystyle{ieee}
 \bibliography{tase2013}
 }
+
+\begin{figure}
+  \centering
+%  \includegraphics[width=\linewidth]{}
+  \caption{The realtime data labeling rig.}
+  \label{fig:rig}
+\end{figure}
+
+\begin{figure*}
+\centering
+        \includegraphics[width=0.8\linewidth]{img/realtime_pipeline.png}
+\caption{\small{Example data labeling pipeline. The user records an RGBD sequence.  While recording, he or she provides some initial foreground / background segmentations, and STRGEN uses these to obtain an initial segmentation.  STRGEN then automatically labels all subsequent frames (middle column), unless the user provides additional information, in which case the input is incorporated as before.  The output is a set of segmented object examples. }}
+\label{fig:data_labeling}
+\end{figure*}
+
+\begin{figure*}
+\centering
+        \includegraphics[width=0.8\linewidth]{img/pillow_detection.png}
+\caption{\small{Object detection example. Color and depth templates are extracted from pillow examples (such as those shown in Figure~\ref{fig:data_labeling}), and a set of unlabeled RGBD frames is provided.  An appropriate object detection method (LINE-MOD in our example) searches for the templates in the input frames and identifies ``detections'' as matches with responses exceeding some threshold (0.75 in this experiment). Note that given our cleanly segmented examples, LINE-MOD is able to accurately detect the object positions and somewhat reliably detect the object orientations.}}
+\label{fig:object_rec}
+\end{figure*}
+
+
 \end{document}
 
 This learning approach is essential to using a rich feature set, as hand-tuning the CRF weights is impractical.
