@@ -160,7 +160,7 @@ avi/secondpass: avi/done
 ############################################################
 
 avs/timing.pdf: $$(MAKE_ROOT)/plot_timing.py
-	python $< $(@D) $(MAKE_ROOT)/vga/rg
+	python $< $(@D) $(MAKE_ROOT)/vga/al
 
 avs/accuracy_vs_speed.pdf: 	avs/done \
 				$$(MAKE_ROOT)/plot_accuracy_vs_speed.py \
