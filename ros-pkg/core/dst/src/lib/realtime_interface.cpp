@@ -27,6 +27,8 @@ namespace dst
     initializeGrabber();
     pcds_.reserve(1000);
     imgs_.reserve(1000);
+    seed_imgs_.reserve(1000);
+    segmentations_.reserve(1000);
 
     img_view_.setDelegate((OpenCVViewDelegate*)this);
     img_view_.scale_ = scale;
@@ -94,6 +96,9 @@ namespace dst
     img_view_.updateImage(vis_);
     char key = img_view_.cvWaitKey(8);
     switch(key) {
+    case 's':
+      saveSequence();
+      break;
     case ' ':
       segmenting_ = !segmenting_;
       if(!segmenting_) {
@@ -108,6 +113,7 @@ namespace dst
 	pcd_queue_.clear();
 	pcds_.clear();
 	imgs_.clear();
+	seed_imgs_.clear();
 	segmentations_.clear();
 	pcd_results_.clear();
 
@@ -127,6 +133,28 @@ namespace dst
     unlock();
     
     needs_redraw_ = false;
+  }
+
+  void RealTimeInterface::saveSequence() const
+  {
+    ROS_ASSERT(!segmenting_);
+    ROS_ASSERT(imgs_.size() == seed_imgs_.size());
+    ROS_ASSERT(imgs_.size() == segmentations_.size());
+    ROS_ASSERT(imgs_.size() == pcds_.size());
+    
+    KinectSequence seq;
+    seq.images_ = imgs_;
+    seq.seed_images_ = seed_imgs_;
+    seq.segmentations_ = segmentations_;
+    seq.pointclouds_.resize(pcds_.size());
+    for(size_t i = 0; i < pcds_.size(); ++i)
+      seq.pointclouds_[i] = KinectCloud::Ptr(new KinectCloud(*pcds_[i]));
+    ostringstream oss;
+    time_t timestamp = time(0);
+    oss << "realtime_interface_sequence-" << timestamp;
+    string path = oss.str();
+    seq.save(path);
+    cout << "Saved KinectSequence to " << path << endl;
   }
   
   void RealTimeInterface::cloudCallback(const KinectCloud::ConstPtr& cloud)
@@ -274,6 +302,7 @@ namespace dst
 
     segmentations_.push_back(cv::Mat1b(size_, 127));
     pcd_results_.push_back(KinectCloud::Ptr(new KinectCloud()));
+    seed_imgs_.push_back(seed_.clone());
 
     hrt_.start();
 	
@@ -303,8 +332,9 @@ namespace dst
 
       seed_ = 127;
     }
-
     hrt_.stop();
+
+    
     // -- Visualize the segmentation.
     // double scale = 3;
     // cv::Size sz(segmentations_.back().cols * scale, segmentations_.back().rows * scale);

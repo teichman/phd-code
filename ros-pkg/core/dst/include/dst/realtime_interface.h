@@ -37,6 +37,7 @@ namespace dst
     pcl::visualization::CloudViewer cloud_viewer_;
     std::vector<KinectCloud::ConstPtr> pcds_;
     std::vector<cv::Mat3b> imgs_;
+    std::vector<cv::Mat1b> seed_imgs_;
     bool segmenting_;
     cv::Mat1b seed_;
     cv::Mat3b vis_;
@@ -58,6 +59,7 @@ namespace dst
     void segmentLatest();
     void processQueues();
     void drawVis();
+    void saveSequence() const;
   };
 
 }

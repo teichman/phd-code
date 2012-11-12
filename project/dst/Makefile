@@ -166,7 +166,7 @@ avs/accuracy_vs_speed.pdf: 	avs/done \
 				$$(MAKE_ROOT)/plot_accuracy_vs_speed.py \
 				$$(MAKE_ROOT)/common_plotting.py
 	cd $(@D) && \
-	for type in mask0_skip01 $(addprefix mask1_skip, 01 02 04 07 99); do \
+	for type in mask0_skip01 $(addprefix mask1_skip, 01 02 04); do \
 	echo $$type; \
 	cat `find -name testing_results.txt | sort | grep $$type` | grep 'Total time' | awk '{print $$NF}' > $${type}-times.txt; \
 	cat `find -name testing_results.txt | sort | grep $$type` | grep 'Overall mean' | awk '{print $$NF}' > $${type}-losses.txt; \
@@ -183,7 +183,7 @@ avs/done: #$$@/$$@-experiment_metadata.txt
 	mkdir mask0_skip01; cd mask0_skip01; \
 	MASK=0 SKIP=01 make -f $(MAKEFILE) testing_results.txt; \
 	cd ../; \
-	for skip in 01 02 04 07 10 15 20 99; do \
+	for skip in 01 02 04; do \
 	mkdir mask1_skip$${skip}; cd mask1_skip$${skip}; \
 	MASK=1 SKIP=$${skip} make -f $(MAKEFILE) testing_results.txt; \
 	cd ../; \

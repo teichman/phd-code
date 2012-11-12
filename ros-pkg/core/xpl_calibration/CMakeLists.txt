@@ -143,3 +143,7 @@ target_link_libraries(evaluate_frame_alignment ${PROJECT_NAME})
 rosbuild_add_executable(twiddle_frame_alignment src/prog/twiddle_frame_alignment.cpp)
 rosbuild_link_boost(twiddle_frame_alignment program_options filesystem)
 target_link_libraries(twiddle_frame_alignment ${PROJECT_NAME})
+
+#rosbuild_add_executable(avv_multiview_calibrator src/prog/avv_multiview_calibrator.cpp)
+#rosbuild_link_boost(avv_multiview_calibrator program_options filesystem)
+#target_link_libraries(avv_multiview_calibrator ${PROJECT_NAME})
