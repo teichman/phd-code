@@ -779,6 +779,7 @@ namespace dst
       current_idx_ = seq_->images_.size() - 1;
 
     needs_redraw_ = true;
+    cout << "Timestamp of pcd: " << seq_->pointclouds_[current_idx_]->header.stamp << endl;
   }
   
   void SequenceSegmentationViewController::mouseEvent(int event, int x, int y, int flags, void* param)
