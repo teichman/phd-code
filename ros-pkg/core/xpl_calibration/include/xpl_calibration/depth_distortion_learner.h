@@ -8,6 +8,7 @@
 #include <optimization/optimization.h>
 #include <bag_of_tricks/lockable.h>
 #include <xpl_calibration/mean_depth_error.h>
+#include <xpl_calibration/discrete_depth_distortion_model.h>
 
 class PixelStats
 {
@@ -137,6 +138,7 @@ public:
   //! For slam calibration, pcds are just pointers to the map.
   //! For velo calibration, each pcd is a separate velo pointcloud.
   void addFrame(rgbd::Frame frame, rgbd::Cloud::ConstPtr pcd, const Eigen::Affine3d& transform);
+  DiscreteDepthDistortionModel fitDiscreteModel();
   rgbd::PrimeSenseModel fitModel();
   rgbd::PrimeSenseModel fitFocalLength();
   void clear() { frames_.clear(); pcds_.clear(); transforms_.clear(); coverage_map_.clear(); }
