@@ -67,6 +67,12 @@ We consider the problem of segmenting and tracking deformable objects in color v
 Our approach makes use of a rich feature set, including local image appearance, depth discontinuities, optical flow, and surface normals to inform the segmentation decision in a conditional random field model.  In contrast to previous work in this field, the proposed method \emph{learns} how to best make use of these features from ground-truth segmented sequences.  We provide qualitative and quantitative analyses which demonstrate substantial improvement over the state of the art.
 
 This paper is an extended version of our previous work \cite{teichman2012a}.  Building on this, we show that it is possible to achieve an order of magnitude speedup and thus real-time performance ($\sim$20FPS) on a laptop computer by applying simple algorithmic optimizations to the original work.  This speedup comes at only a minor cost in overall accuracy and thus makes this approach applicable to a broader range of tasks. We demonstrate one such task: real-time, online, interactive segmentation to efficiently collect training data for an off-the-shelf object detector.
+
+\vspace{0.1in}
+\textit{Note to Practitioners} --- This work was motivated by a previous result from autonomous driving which showed that, so long as one can segment and track objects in advance of knowing what they are, it is possible to train accurate object detectors using a small number of hand-labeled examples combined with a large number of unlabeled examples \cite{teichman2011b}.  This key dependency of a model-free segmentation and tracking method was available because of the structure in the autonomous driving problem, but is not so freely available in more general environments.  This paper aims to make progress towards that goal.
+
+In the near term, the methods presented here can be used for real-time, online, interactive object segmentation.  This can ease the process of collecting training data for existing object recognition systems used in automation today. The biggest limitation of the current implementation is that object re-acquisition is not automatically handled.  In the long term, improved implementations that include this ability could be an integral part of semi-supervised object recognition systems which require few hand-labeled training examples and can produce accurate recognition results in part because of their use of multiple views in the prediction pipeline.
+
 \end{abstract}
 
 %%%%%%%%% BODY TEXT
@@ -172,6 +178,33 @@ The goal of MAP inference in this model is to choose the most likely segmentatio
 \end{align}
 During inference, the weights $w$ remain fixed.  The solution to this problem can be efficiently computed for $y \in \{-1, +1\}^n$ and submodular energy function $E$ using graph cuts \cite{boykov2001a}.
 
+\begin{figure*}
+  % ensure that we have normalsize text
+  \normalsize
+  \hrulefill
+  
+  \begin{equation}
+    \begin{aligned}
+      & \minimize{w, \xi} & & \frac{1}{2} ||w||^2 + \frac{C}{M} \sum_{m=1}^M \xi_m \label{eqn:nslack} \\
+      & \st & & \xi \geq 0 \\
+      & & & E ( y, x_m ) - E ( y_m, x_m ) \geq \Delta (y_m, y) - \xi_m \quad \forall m, \forall y \in \mathcal{Y} \\
+    \end{aligned}
+  \end{equation}
+  \vspace{0.2in}
+  \begin{equation}
+    \begin{aligned}
+      & \minimize{w, \xi} & & \frac{1}{2} ||w||^2 + C\xi \label{eqn:oneslack} \\
+      & \st & & \xi \geq 0 \\
+      & & & \frac{1}{M} \sum_{m=1}^M E ( \hat{y}_m, x_m )
+      - E ( y_m, x_m ) \geq \frac{1}{M} \sum_{m=1}^M \Delta(y_m, \hat{y}_m) - \xi \quad \forall (\hat{y}_1, ..., \hat{y}_M) \in \mathcal{Y}^M
+    \end{aligned}
+  \end{equation}
+
+  \hrulefill
+  \vspace*{4pt}
+\end{figure*}
+
+
 \subsection{Learning}
 \label{sec:learning}
 
@@ -233,31 +266,6 @@ Fortunately, there is an alternative approach known as the structural support ve
 
 Further, one can transform (\ref{eqn:nslack}), known as the $n$-slack formulation, into the equivalent problem (\ref{eqn:oneslack}) as described in \cite{joachims2009a}.  As before, while the number of constraints is exponential, one can build a small, greedy approximation that produces good results.  Known as the 1-slack formulation, this problem is equivalent and can be solved much more efficiently than (\ref{eqn:nslack}), often by one or two orders of magnitude.
 
-
-\begin{figure*}
-  % ensure that we have normalsize text
-  \normalsize
-
-  \begin{equation}
-    \begin{aligned}
-      & \minimize{w, \xi} & & \frac{1}{2} ||w||^2 + \frac{C}{M} \sum_{m=1}^M \xi_m \label{eqn:nslack} \\
-      & \st & & \xi \geq 0 \\
-      & & & E ( y, x_m ) - E ( y_m, x_m ) \geq \Delta (y_m, y) - \xi_m \quad \forall m, \forall y \in \mathcal{Y} \\
-    \end{aligned}
-  \end{equation}
-  
-  \begin{equation}
-    \begin{aligned}
-      & \minimize{w, \xi} & & \frac{1}{2} ||w||^2 + C\xi \label{eqn:oneslack} \\
-      & \st & & \xi \geq 0 \\
-      & & & \frac{1}{M} \sum_{m=1}^M E ( \hat{y}_m, x_m )
-      - E ( y_m, x_m ) \geq \frac{1}{M} \sum_{m=1}^M \Delta(y_m, \hat{y}_m) - \xi \quad \forall (\hat{y}_1, ..., \hat{y}_M) \in \mathcal{Y}^M
-    \end{aligned}
-  \end{equation}
-
-  \hrulefill
-  \vspace*{4pt}
-\end{figure*}
 
 The goal is to learn the weights that will best segment an entire sequence given a single seed frame.  However, the segmenter operates on a single frame at a time, so our training dataset must be in the form of $(y, x)$ pairs. As will be discussed in Section~\ref{sec:energy}, some of the features are stateful, \ie they depend on previous segmentations.  This presents a minor complication.  At training time, we do not have access to a good choice of weights $w$, but the features depend on previous segmentations which in turn depend on the weights.  To resolve this, we adopt the simple strategy of generating features assuming that previous segmentations were equal to ground truth.  This dataset generation process is specified in Algorithm~\ref{alg:dataset}.
 
