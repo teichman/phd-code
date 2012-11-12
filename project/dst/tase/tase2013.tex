@@ -496,35 +496,28 @@ Even at \vga, it is conceivable that real-time operation could be obtained with 
 
 \subsection{Use-case example: training object detectors}
 \label{sec:example}
-\todo{Update this section with realtime, online segmenter usage.  Show results using detection threshold rather than just the top result.}
 
-In this section, we describe the application of our segmentation and tracking method to the problem of data labeling in supervised object detection systems. Supervised object detection systems rely on well-segmented training data typically obtained from either meticulously rigged turntables or elaborate crowd-sourcing applications, as discussed in Section~\ref{sec:trainingintro}. In contrast, our method provides a means to accurately assign labels with minimal human involvement or environmental control.
+In this section, we describe the application of our segmentation and tracking method to the problem of data labeling in supervised object detection systems. Supervised object detection systems rely on well-segmented training data typically obtained from either meticulously rigged turntables or elaborate crowd-sourcing applications, as discussed in Section~\ref{sec:trainingintro}. In contrast, by sslightly modifying STRGEN to incorporate the user's segmentation hints as node potentials (discussed in Section~\ref{sec:npot}) throughout the sequence, we provide an interactive, real-time means to accurately assign labels with minimal human involvement or environmental control.
 
-Unlike the rest of this paper, here we allow additional segmentation hints to be provided by a user.  These are integrated into the model with the seed label node potential, discussed in Section~\ref{sec:npot}. \todo{seed label distance too?}  In previous sections, these node potentials exist only for the first frame; here we allow them to exist at other points during the sequence.
+The process, illustrated in Figure~\ref{fig:data_labeling}, only assumes the user is equipped with a laptop an RGBD depth sensor.  For our experiments, we attached an ASUS Xtion Pro to a tablet computer to make the acquisition and labeling as seemless as possible, but any approriate combination will do.
 
-As shown in Figure~\ref{fig:data_labeling}, the user simply provides rough background and foreground labels to the first frame and then runs STRGEN to obtain object segmentations for subsequent frames.  In the event of an errant segmentation (as in frame 132 in Figure~\ref{fig:data_labeling}), the user can interrupt the sequence segmentation, provide a few corrective mouse clicks, and then continue segmenting the sequence.  After comparatively much less time and effort, the user is left with a collection of cleanly segmented objects instances.
+To begin, the user starts recording the RGBD sequence and provides some rough initial foreground and background labels. STRGEN uses the user input and the RGBD images to obtain an initial segmentation and then updates and propogates this segmentation downstream as more frames come in.  This propogation proceeds uninterrupted until the user identifies an errant segmentation, in which case he or she provides (in real time) additional foreground and background labels, and STRGEN incorporates these again as with the initial hints.  At the end of the process, the user is left with a collection of cleanly segmented objects instances.
 
-In Figures~\ref{fig:object_rec} and~\ref{fig:single_threshold}, we demonstrate how these segmented examples can be used to reliably detect a coffee box and a pillow, respectively.  Our method does not rely on any particular  detection approach, but since we are interested in real-time detection, we feed our labeled examples into the efficient LINE-MOD template-matching framework described in Hinterstoisser et al \cite{hinterstoisser2011a}. At training time, LINE-MOD uses the depth and image cues to build the templates (coffee box templates shown in Figure~\ref{fig:object_rec}, upper-left). At testing time, LINE-MOD searches for those templates in the previously unseen images.  When detecting the coffee box, we take the template match with the highest response as the detection and show in Figure~\ref{fig:object_rec} that we effectively recover the coffee box position and pose amidst varying lighting, occlusion, etc.  For the pillow, we take all templates matches with reponses over a fixed threshold (0.75 in this case) as detections. As can be seen, we reliably detect all objects while avoiding any false positives. 
+In Figure~\ref{fig:object_rec}, we demonstrate how these segmented examples can be used to construct an object detector.  We offer a small example in which we aim to detect a couch pillow in fifteen diverse scenes. Our method does not rely on any particular detection approach, but since we are interested in real-time detection, we feed our labeled pillow examples into the efficient LINE-MOD template-matching framework described in Hinterstoisser et al \cite{hinterstoisser2011a}. At training time, LINE-MOD uses the depth and image cues to build templates (Figure~\ref{fig:object_rec}, upper-left). At testing time, LINE-MOD searches for those templates in the previously unseen images and identifies any ``detection'' as a template match with a response exceeding some threshold (0.75 in our experiment).  As can be seen in the illustration, we detect all objects while avoiding any false positives.
+
 
 \begin{figure}
 \centering
-        \includegraphics[width=\linewidth]{img/data_labeling.png}
-\caption{\small{Example data labeling pipeline. Given an input RGBD sequence, the user first provides coarse, sparse foreground (white) and background (black) labels.  STRGEN properly segments subsequent frames until frame 132, at which point some minor corrections are required. STRGEN resumes and runs on the remaining 60 frames with no problems. The pipeline output is a set of clearly accurate object segmentations. }}
+        \includegraphics[width=\linewidth]{img/realtime_pipeline.png}
+\caption{\small{Example data labeling pipeline. The user records an RGBD sequence.  While recording, he or she provides some initial foreground / background segmentations, and STRGEN uses these to obtain an initial segmentation.  STRGEN then automatically labels all subsequent frames (middle column), unless the user provides additional information, in which case the input is incorporated as before.  The output is a set of segmented object examples. }}
 \label{fig:data_labeling}
 \end{figure}
 
 \begin{figure}
 \centering
-        \includegraphics[width=\linewidth]{img/object_recognition.png}
-\caption{\small{Object detection example. Color and depth templates are extracted from coffee box examples (such as those shown in Figure~\ref{fig:data_labeling}), and a set of unlabeled RGBD frames is provided.  An appropriate object detection method (LINE-MOD in our example) searches for the templates in the input frames and identifies the highest scoring match (shown in red). Note that given our cleanly segmented examples, LINE-MOD is able to accurately detect the object in 15 diverse scenes, under mild occlusion, and in different lighting levels (even in the absence of light in the last example). The detection with the highest response is taken in this example.}}
+        \includegraphics[width=\linewidth]{img/pillow_detection.png}
+\caption{\small{Object detection example. Color and depth templates are extracted from pillow examples (such as those shown in Figure~\ref{fig:data_labeling}), and a set of unlabeled RGBD frames is provided.  An appropriate object detection method (LINE-MOD in our example) searches for the templates in the input frames and identifies ``detections'' as matches with responses exceeding some threshold (0.75 in this experiment). Note that given our cleanly segmented examples, LINE-MOD is able to accurately detect the object positions and somewhat reliably detect the object orientations.}}
 \label{fig:object_rec}
-\end{figure}
-
-\begin{figure}
-\centering
-        \includegraphics[width=\linewidth]{img/single_threshold.png}
-\caption{\small{A second object detection example where all templates matches with responses $\ge 0.75$ are labeled detections. We register no false positives and effectively recover all object occurrences, even when there are multple or zero instances.}}
-\label{fig:single_threshold}
 \end{figure}
 
 \section{Conclusions}
