@@ -5,7 +5,7 @@
 
 SHELL			:= /bin/bash
 REPO_ROOT		:= $(shell dirname $$(dirname $$(dirname $$(rospack find dst))))
-export NUM_THREADS	:= 40  # No longer comparing with HoughTrack on speed so we can bump up the number of threads.
+export NUM_THREADS	:= 12  # No longer comparing with HoughTrack on speed so we can bump up the number of threads.
 MAKE_ROOT		:= $(REPO_ROOT)/project/dst
 MAKEFILE		:= $(MAKE_ROOT)/Makefile
 
@@ -160,7 +160,7 @@ avi/secondpass: avi/done
 ############################################################
 
 avs/timing.pdf: $$(MAKE_ROOT)/plot_timing.py
-	python $< $(@D) $(MAKE_ROOT)/vga/rg
+	python $< $(@D) $(MAKE_ROOT)/vga/al
 
 avs/accuracy_vs_speed.pdf: 	avs/done \
 				$$(MAKE_ROOT)/plot_accuracy_vs_speed.py \

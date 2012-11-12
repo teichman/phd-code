@@ -8,6 +8,10 @@ using namespace dst;
 
 int main(int argc, char** argv)
 {
+  cout << "Starting daito." << endl;
+  cout << "Realtime, ONline, INteractive segementer" << endl;
+
+  
   namespace bpo = boost::program_options;
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
