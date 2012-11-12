@@ -287,7 +287,7 @@ Node potentials capture several aspects of shape, appearance, and motion.  All t
 \end{align}
 where $a_j$ and $b_j$ are functions of the data $x$, and $y_j = 1$ indicates that pixel $j$ has been assigned to the foreground.
 
-\textbf{Seed labels} - The first frame of every sequence provides a foreground/background segmentation.  Seed labels can also be used for algorithm-assisted human labeling, used here only in construction of the ground truth dataset.  Each pixel in the image can be labeled by the user as foreground or background, or left unlabeled.  Concretely, let $s_j \in \{-1,0,+1\}$ be the seed labels for each pixel.  Then, the potential is defined by
+\textbf{Seed labels} - The first frame of every sequence provides a foreground/background segmentation.  Seed label node potentials can also be used after the first frame as additional segmentation hints, used in this paper only for construction of the ground truth dataset and for the interactive experiment of Section~\ref{sec:example}.  Each pixel in the image can be labeled by the user as foreground or background, or left unlabeled.  Concretely, let $s_j \in \{-1,0,+1\}$ be the seed labels for each pixel.  Then, the potential is defined by
 \begin{align*}
   \phi_j(y, x) & =
   \left\{
@@ -497,13 +497,22 @@ Even at \vga, it is conceivable that real-time operation could be obtained with 
 \subsection{Use-case example: training object detectors}
 \label{sec:example}
 
-In this section, we describe the application of our segmentation and tracking method to the problem of data labeling in supervised object detection systems. Supervised object detection systems rely on well-segmented training data typically obtained from either meticulously rigged turntables or elaborate crowd-sourcing applications, as discussed in Section~\ref{sec:trainingintro}. In contrast, by sslightly modifying STRGEN to incorporate the user's segmentation hints as node potentials (discussed in Section~\ref{sec:npot}) throughout the sequence, we provide an interactive, real-time means to accurately assign labels with minimal human involvement or environmental control.
+\todoCR{Use of STRGEN as the problem name vs the specific implementation we are using here.}
 
-The process, illustrated in Figure~\ref{fig:data_labeling}, only assumes the user is equipped with a laptop an RGBD depth sensor.  For our experiments, we attached an ASUS Xtion Pro to a tablet computer to make the acquisition and labeling as seemless as possible, but any approriate combination will do.
+In this section, we describe the application of our segmentation and tracking method to the problem of data labeling in supervised object detection systems. Supervised object detection systems such as the popular LINE-MOD method rely on well-segmented training data typically obtained from either meticulously rigged turntables or elaborate crowd-sourcing applications, as discussed in Section~\ref{sec:trainingintro}. In contrast, by slightly modifying STRGEN to incorporate the user's segmentation hints as node potentials (discussed in Section~\ref{sec:npot}) throughout the sequence, we provide an interactive, real-time means to accurately collect segmented training examples with minimal environmental control.  Concretely, the original algorithm generated a node potential for seed labels on the first frame; here we simply allow these node potentials to be generated for subsequent frames as well.
 
-To begin, the user starts recording the RGBD sequence and provides some rough initial foreground and background labels. STRGEN uses the user input and the RGBD images to obtain an initial segmentation and then updates and propogates this segmentation downstream as more frames come in.  This propogation proceeds uninterrupted until the user identifies an errant segmentation, in which case he or she provides (in real time) additional foreground and background labels, and STRGEN incorporates these again as with the initial hints.  At the end of the process, the user is left with a collection of cleanly segmented objects instances.
+The process, illustrated in Figure~\ref{fig:data_labeling}, only assumes the user is equipped with a laptop and an RGBD depth sensor.  For our experiments, we attached an ASUS Xtion Pro Live to the laptop of Section~\ref{sec:realtime}, shown in Figure~\ref{fig:rig}.
 
-In Figure~\ref{fig:object_rec}, we demonstrate how these segmented examples can be used to construct an object detector.  We offer a small example in which we aim to detect a couch pillow in fifteen diverse scenes. Our method does not rely on any particular detection approach, but since we are interested in real-time detection, we feed our labeled pillow examples into the efficient LINE-MOD template-matching framework described in Hinterstoisser et al \cite{hinterstoisser2011a}. At training time, LINE-MOD uses the depth and image cues to build templates (Figure~\ref{fig:object_rec}, upper-left). At testing time, LINE-MOD searches for those templates in the previously unseen images and identifies any ``detection'' as a template match with a response exceeding some threshold (0.75 in our experiment).  As can be seen in the illustration, we detect all objects while avoiding any false positives.
+\begin{figure}
+  \centering
+%  \includegraphics[width=\linewidth]{}
+  \caption{The realtime data labeling rig.}
+  \label{fig:rig}
+\end{figure}
+
+To begin, the user starts recording the RGBD sequence and provides some rough initial foreground and background labels. STRGEN uses the user input and the RGBD images to obtain an initial segmentation and then updates and propogates this segmentation downstream as more frames come in.  In the case of errant segmentations, the user provides in real time additional foreground and background labels, and STRGEN incorporates these as with the initial hints.  At the end of the process, the user is left with a collection of segmented objects instances.  Not all segmentations are perfect, but almost all bad segmentations are followed by a user correction.  Thus, we use the five second rule: All segmentations that were generated less than about five seconds before any user-generated segmentation hint are ignored in the collection of the dataset.
+
+In Figure~\ref{fig:object_rec}, we demonstrate how these segmented examples can be used to construct an object detector.  We offer a small example in which we aim to detect a couch pillow in fifteen diverse scenes. Our method does not rely on any particular detection approach, but since we are interested in real-time detection, we feed our labeled pillow examples into the LINE-MOD template-matching framework described in Hinterstoisser et al \cite{hinterstoisser2011a}. At training time, LINE-MOD uses the depth and image cues to build templates (Figure~\ref{fig:object_rec}, upper-left). At testing time, LINE-MOD searches for those templates in the previously unseen images and identifies any ``detection'' as a template match with a response exceeding some threshold (0.75 in our experiment).  As can be seen in the illustration, we detect all objects while avoiding any false positives.
 
 
 \begin{figure}
@@ -523,8 +532,6 @@ In Figure~\ref{fig:object_rec}, we demonstrate how these segmented examples can 
 \section{Conclusions}
 
 We have presented a novel method of segmenting and tracking deformable objects in RGBD, making minimal assumptions about the input data.  We have shown this method makes a significant quantitative improvement over the most similar state-of-the-art work in segmentation and tracking of non-rigid objects, that real-time performance is feasible, and that an online and interactive version of the algorithm is suitable for collecting training examples of objects in unstructured environments.  A complete solution to this task would have far-reaching ramifications in robotics, computer vision, and graphics, opening the door for easier-to-train and more reliable object recognition, model capture, and tracking-based semi-supervised learning.  While there remains more work to be done before a completely robust solution is available for unasisted segmentation and tracking, we believe this approach to be a promising direction for future research.
-
-\pagebreak
 
 \small{
 \bibliographystyle{ieee}
