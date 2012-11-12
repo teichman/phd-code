@@ -28,6 +28,7 @@ os.system("cat " + vgapath + "/*-vga.txt | grep maxflow | grep milliseconds | aw
 vga_maxflow = np.loadtxt(tmpfile)
 os.system("cat " + vgapath + "/*-vga.txt | grep 'per frame on average' | awk '{sum += $1} END {print sum / NR}' > " + tmpfile)
 vga_total = np.loadtxt(tmpfile)
+print [vga_feature, vga_maxflow, vga_total]
 
 os.system("grep 'Total feature computation' `find " + avspath + " -name testing_results.txt-log.txt | grep mask1_skip02` | awk '{sum += $4} END {print sum / NR}' > " + tmpfile)
 qqvga_feature = np.loadtxt(tmpfile)
@@ -46,7 +47,7 @@ fig = plt.figure(figsize = (figw, figh))
 def timingPlot(ax, feat, gc, total):
     times = np.array([feat, gc, total - feat - gc])
     fracs = times / (feat + gc);
-    labels = [("%0.0f ms" % x) for x in times]
+    labels = [("%.1f ms" % x) for x in times]
     explode = [0.05, 0.05, 0.05]
     print fracs
     pie = ax.pie(fracs, explode=explode, labels=labels, autopct='', shadow=False, colors=('g', 'r', 'b'))
