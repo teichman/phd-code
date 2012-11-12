@@ -504,7 +504,7 @@ Unlike the rest of this paper, here we allow additional segmentation hints to be
 
 As shown in Figure~\ref{fig:data_labeling}, the user simply provides rough background and foreground labels to the first frame and then runs STRGEN to obtain object segmentations for subsequent frames.  In the event of an errant segmentation (as in frame 132 in Figure~\ref{fig:data_labeling}), the user can interrupt the sequence segmentation, provide a few corrective mouse clicks, and then continue segmenting the sequence.  After comparatively much less time and effort, the user is left with a collection of cleanly segmented objects instances.
 
-In Figure~\ref{fig:object_rec}, we demonstrate how these segmented examples can be used to construct an object detector. We offer a small example in which we aim to detect a coffee box in fifteen diverse scenes with varying lighting, occlusion, etc.  Our method does not rely on any particular  detection approach, but since we are interested in real-time detection, we feed our labeled coffee box examples into the efficient LINE-MOD template-matching framework described in Hinterstoisser et al \cite{hinterstoisser2011a}. At training time, LINE-MOD uses the depth and image cues to build the templates shown in the upper-left of Figure~\ref{fig:object_rec}. At testing time, LINE-MOD searches for those templates in the previously unseen images shown in the bottom left of Figure~\ref{fig:object_rec}.  As shown in the illustration, the highest rated match in each of the testing images effectively recovers the object position and pose.
+In Figures~\ref{fig:object_rec} and~\ref{fig:single_threshold}, we demonstrate how these segmented examples can be used to reliably detect a coffee box and a pillow, respectively.  Our method does not rely on any particular  detection approach, but since we are interested in real-time detection, we feed our labeled examples into the efficient LINE-MOD template-matching framework described in Hinterstoisser et al \cite{hinterstoisser2011a}. At training time, LINE-MOD uses the depth and image cues to build the templates (coffee box templates shown in Figure~\ref{fig:object_rec}, upper-left). At testing time, LINE-MOD searches for those templates in the previously unseen images.  When detecting the coffee box, we take the template match with the highest response as the detection and show in Figure~\ref{fig:object_rec} that we effectively recover the coffee box position and pose amidst varying lighting, occlusion, etc.  For the pillow, we take all templates matches with reponses over a fixed threshold (0.75 in this case) as detections. As can be seen, we reliably detect all objects while avoiding any false positives. 
 
 \begin{figure}
 \centering
@@ -516,8 +516,15 @@ In Figure~\ref{fig:object_rec}, we demonstrate how these segmented examples can 
 \begin{figure}
 \centering
         \includegraphics[width=\linewidth]{img/object_recognition.png}
-\caption{\small{Object detection example. Color and depth templates are extracted from coffee box examples (such as those shown in Figure~\ref{fig:data_labeling}), and a set of unlabeled RGBD frames is provided.  An appropriate object detection method (LINE-MOD in our example) searches for the templates in the input frames and identifies the highest scoring match (shown in red). Note that given our cleanly segmented examples, LINE-MOD is able to accurately detect the object in diverse scenes, under mild occlusion, and in different lighting levels (even in the absence of light in the last example).}}
+\caption{\small{Object detection example. Color and depth templates are extracted from coffee box examples (such as those shown in Figure~\ref{fig:data_labeling}), and a set of unlabeled RGBD frames is provided.  An appropriate object detection method (LINE-MOD in our example) searches for the templates in the input frames and identifies the highest scoring match (shown in red). Note that given our cleanly segmented examples, LINE-MOD is able to accurately detect the object in 15 diverse scenes, under mild occlusion, and in different lighting levels (even in the absence of light in the last example). The detection with the highest response is taken in this example.}}
 \label{fig:object_rec}
+\end{figure}
+
+\begin{figure}
+\centering
+        \includegraphics[width=\linewidth]{img/single_threshold.png}
+\caption{\small{A second object detection example where all templates matches with responses $\ge 0.75$ are labeled detections. We register no false positives and effectively recover all object occurrences, even when there are multple or zero instances.}}
+\label{fig:single_threshold}
 \end{figure}
 
 \section{Conclusions}

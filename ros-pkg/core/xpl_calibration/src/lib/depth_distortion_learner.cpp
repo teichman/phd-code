@@ -347,9 +347,9 @@ DiscreteDepthDistortionModel DepthDistortionLearner::fitDiscreteModel()
   CoverageMap2 cmap2(frames_[0].depth_->rows(), frames_[0].depth_->cols(), 0, 12, 12);
   DiscreteDepthDistortionModel dddm(initial_model_);
   
-// #ifndef VISUALIZE
-// #pragma omp parallel for
-// #endif 
+#ifndef VISUALIZE
+#pragma omp parallel for
+#endif 
   for(size_t i = 0; i < frames_.size(); i += DDL_INCR) {
     ScopedTimer st("total for frame");
     PrimeSenseModel localmodel = initial_model_;

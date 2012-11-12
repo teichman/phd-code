@@ -44,6 +44,7 @@ int main(int argc, char** argv)
   cout << "Using sequence / trajectory pairs: " << endl;
   vector<Trajectory> trajectories(trajectory_paths.size());
   vector<StreamSequence::ConstPtr> sseqs;
+  ROS_ASSERT(sequence_paths.size() == trajectory_paths.size());
   for(size_t i = 0; i < sequence_paths.size(); ++i) {
     cout << "  " << sequence_paths[i] << " ----- " << trajectory_paths[i] << endl;
 
