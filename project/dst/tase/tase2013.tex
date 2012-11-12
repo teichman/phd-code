@@ -478,7 +478,7 @@ To show that this optimization does not adversely affect segmentation performanc
 \begin{figure}
   \centering
   \includegraphics[width=\linewidth]{img/realtime.pdf}
-  \caption{Test set normalized loss and average per-frame segmentation time compared with different levels of algorithmic optimization as discussed in Section~\ref{sec:realtime}.  Ten runs of each condition were made; error bars and annotations show one standard deviation for this dataset. While a 75\% downsampling induces too much error to be acceptable, 50\% downsampling appears to be a good trade-off for many applications.  Timing results for the original method differ from those presented in Section~\ref{sec:quant} because multithreading is enabled here. \todoCR{Reported stdevs should probably be for everything combined; when people think timing stdev they're going to think that's per-frame, and this plot is reporting per-full-test-run which has much lower stdev.}}
+  \caption{Test set normalized loss and average per-frame segmentation time compared with different levels of algorithmic optimization as discussed in Section~\ref{sec:realtime}.  Thirteen runs of each condition were made; error bars and annotations show one standard deviation for this dataset. While a 75\% downsampling induces too much error to be acceptable, 50\% downsampling appears to be a good trade-off for many applications.  Timing results for the original method differ from those presented in Section~\ref{sec:quant} because multithreading is enabled here. \todoCR{Reported stdevs should probably be for everything combined; when people think timing stdev they're going to think that's per-frame, and this plot is reporting per-full-test-run which has much lower stdev.}}
   \label{fig:realtime}
 \end{figure}
 
