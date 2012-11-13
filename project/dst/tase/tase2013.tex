@@ -85,7 +85,7 @@ The availability of commodity depth sensors such as the Kinect opens the door fo
 \begin{figure}
   \centering
   \includegraphics[width=\linewidth]{img/mfst.pdf}
-  \caption{Definition of the model-free segmentation and tracking task which this paper addresses.  Given an initial seed labeling (first frame; cat on a coffee table), the goal is to produce a segmentation mask of the object over time (subsequent frames) without assuming the existence of a pre-trained object model.  Foreground points are shown bold and colored, background small and gray.}
+  \caption{Definition of the model-free segmentation and tracking task addressed in this paper.  Given an initial seed labeling (first frame; cat on a coffee table), the goal is to produce a segmentation mask of the object over time (subsequent frames) without a pre-trained object model.  Foreground points are shown bold and colored, background small and gray.}
   \label{fig:goal}
 \end{figure}
 
@@ -119,7 +119,7 @@ A solution to the STAC problem opens the door to a simple and effective method o
 
 \subsubsection{Long-term vision}
 
-The primary long-term motivation for this work is to enable object recognition systems that produce high-quality results, yet are trainable and usable by regular people using only modest amounts of effort. The success of STAC and TBSSL, given model-free segmentation and tracking, hint that this may be possible.  One option is to 1) collect a small number of training examples using a natural interface such as that of Figure~\ref{fig:usage}, 2) apply TBSSL to learn a high-quality classifier from large quantities of unlabeled data, and 3) run STAC to recognize objects using the learned classifier.  The primary missing component in this system or variations thereof is a high-accuracy and real-time solution to the general STRGEN problem.
+The primary long-term motivation for this work is to enable object recognition systems that produce high-quality results, yet are trainable and usable by regular people using only modest amounts of effort. The success of STAC and TBSSL, given model-free segmentation and tracking, hint that this may be possible.  One option is to (A) collect a small number of training examples using a natural interface such as that of Figure~\ref{fig:usage}, (B) apply TBSSL to learn a high-quality classifier from large quantities of unlabeled data, and (C) run STAC to recognize objects using the learned classifier.  The primary missing component in this system or variations thereof is a high-accuracy and real-time solution to the general STRGEN problem.
 
 \section{Previous work}
 \label{sec:prev_work}
@@ -230,12 +230,12 @@ The structural SVM solver is detailed in Algorithm~\ref{alg:ssvm}.  Because the 
   \label{alg:dataset}
   \begin{algorithmic}
     \STATE $\mathbb{S} = \{S : S = ((y_0, d_0), (y_1, d_1),                       \dots)\}$ is a set of sequences,
-\STATE $\qquad$ where $y_i$ is a ground truth segmentation and $d_i$ is an RGBD frame
+\STATE $\qquad$ where $y_i$ is a ground truth segmentation and $d_i$ \STATE $\qquad$ is an RGBD frame
 \STATE $\mathcal{D} = \emptyset$
 \FOR{$S \in \mathbb{S}$}
-\STATE Initialize stateful components, \eg the patch classifier that learns its model online
+\STATE Initialize stateful components, \eg the patch classifier that \STATE $\qquad$ learns its model online
 \FOR{$(y_i, d_i) \in S$}
-\STATE Update stateful components using $y_{i-1}$ as the previous segmentation
+\STATE Update stateful components using $y_{i-1}$ as the previous \STATE $\qquad$ segmentation
 \STATE Generate features $x$
 \STATE $\mathcal{D} := \mathcal{D} \cup \{(y_i, x)\}$
 \ENDFOR
@@ -259,8 +259,7 @@ The structural SVM solver is detailed in Algorithm~\ref{alg:ssvm}.  Because the 
     & \minimize{w, \xi} & & \frac{1}{2} ||w||^2 + C\xi \\
     & \st & & w \geq 0, \quad \xi \geq 0 \\
     & & & \frac{1}{M} \sum_{m=1}^M E ( \hat{y}_m, x_m )
-    - E ( y_m, x_m ) \geq \frac{1}{M} \sum_{m=1}^M \Delta(y_m, \hat{y}_m) - \xi \\
-    & & & \quad \forall (\hat{y}_1, ..., \hat{y}_M) \in \mathcal{W}
+    - E ( y_m, x_m ) \geq \frac{1}{M} \sum_{m=1}^M \Delta(y_m, \hat{y}_m) - \xi \quad \forall (\hat{y}_1, ..., \hat{y}_M) \in \mathcal{W} \\
   \end{aligned}
 \end{equation*}
 
@@ -448,7 +447,7 @@ Our approach is general enough to handle both objects with few visually distingu
 
 \subsubsection{Weaknesses and future work}
 
-As is typical in tracking tasks, stability versus permissiveness is a tradeoff.  In some cases, it is not well defined whether a recently-unoccluded, disconnected set of points near the foreground object should be part of the foreground or part of the background; this is a common cause of errors in the current implementation.  An example of this occurs in sequence (E), when the cat's head becomes self-occluded, then unoccluded, and the system cannot determine that these points should be assigned to foreground.  The error is then propagated.  Similarly, the girl's far arm in sequence (A) is lost after being occluded and then unoccluded.  Rapid motion appears to exacerbate this problem.  In general, it appears that more work is required to produce acceptable results on objects such as entire people which have many rapidly self-occluding and -unoccluding articulated parts.  While partial occlusion can be handled, as in sequence (F), the current implementation has no facility for re-acquisition if the target is completely lost.  Finally, thin parts of objects are often problematic, as it seems the edge potentials are not well connected enough in these areas.
+As is typical in tracking tasks, stability versus permissiveness is a tradeoff.  In some cases, it is not well defined whether a recently-unoccluded, disconnected set of points near the foreground object should be part of the foreground or part of the background; this is a common cause of errors in the current implementation.  An example of this occurs in sequence (E), when the cat's head becomes self-occluded, then unoccluded, and the system cannot determine that these points should be assigned to foreground.  The error is then propagated.  Similarly, the girl's far arm in sequence (A) is lost after being occluded and then unoccluded.  Rapid motion appears to exacerbate this problem.  In general, it appears that more work is required to produce acceptable results on objects such as entire people which have many rapidly self-occluding and self-unoccluding articulated parts.  While partial occlusion can be handled, as in sequence (F), the current implementation has no facility for re-acquisition if the target is completely lost.  Finally, thin parts of objects are often problematic, as it seems the edge potentials are not well connected enough in these areas.
 
 Fortunately, it is likely that improvements to node and edge potentials can resolve these limitations.  Using longer range edges (rather than a simple 2D grid connecting neighbors only) could improve performance on thin objects and quickly moving objects, and improvements in the image-appearance-based patch classifier could result in better segmentations of objects that self-occlude parts frequently.  A node potential based on LINE-MOD or a discriminative tracker such as \cite{kalal2010a} could solve the re-acquisition problem, and could be run on object parts rather than the object as a whole to enable usage on non-rigid objects.  This could be particularly helpful for parts of objects like arms which become briefly occluded and then unoccluded, but are disconnected in the 3D pointcloud from the rest of the person.
 
@@ -500,9 +499,9 @@ Even at \vga, it is conceivable that real-time operation could be obtained with 
 \subsection{Use-case example: training object detectors}
 \label{sec:example}
 
-In this section, we describe the application of our segmentation and tracking method to the problem of data labeling in supervised object detection systems such as LINE-MOD. Such systems rely on well-segmented training data typically obtained from either meticulously rigged turntables or elaborate crowd-sourcing applications, as discussed in Section~\ref{sec:trainingintro}. In contrast, by slightly modifying the presented implementation to incorporate the user's segmentation hints as node potentials (discussed in Section~\ref{sec:npot}) throughout the sequence, we provide an interactive, real-time means to accurately collect segmented training examples with minimal environmental control.  Concretely, the original algorithm generated a node potential for seed labels on the first frame; here we simply allow these node potentials to be generated for subsequent frames as well.
+In this section, we describe the application of our segmentation and tracking method to the problem of data labeling in supervised object detection systems such as LINE-MOD. Such systems rely on well-segmented training data typically obtained from either meticulously rigged turntables or elaborate crowd-sourcing applications, as discussed in Section~\ref{sec:trainingintro}. In contrast, by slightly modifying our STRGEN algorithm to incorporate the user's segmentation hints as node potentials (discussed in Section~\ref{sec:npot}) throughout the sequence, we provide an interactive, real-time means to accurately collect segmented training examples with minimal environmental control.  Concretely, the original algorithm generated a node potential for seed labels on the first frame; here we simply allow these node potentials to be generated for subsequent frames as well.
 
-The process, illustrated in Figure~\ref{fig:data_labeling}, only assumes the user is equipped with a laptop and an RGBD depth sensor.  For our experiments, we attached an Asus Xtion Pro Live to the laptop of Section~\ref{sec:realtime}. To begin, the user starts recording the RGBD sequence and provides some rough initial foreground and background labels. These are interpreted as node potentials by the STRGEN algorithm and the segmentation is propagated as additional frames stream in.  In the case of errant segmentations, the user provides in real time additional foreground and background labels, and the STRGEN algorithm incorporates these as with the initial hints.  At the end of the process, the user is left with a collection of segmented objects instances.  Not all segmentations are perfect, but almost all bad segmentations are followed by a user correction.  Thus, we use the five second rule: All segmentations that were generated less than about five seconds before any user-generated segmentation hint are ignored and the rest are added to the training set for LINE-MOD.  At this point, it would probably be beneficial to generate many artificial viewpoint variations and add these to the training set, as well; this step is bypassed for this small experiment.
+The process, illustrated in Figure~\ref{fig:data_labeling}, only assumes the user is equipped with a laptop and an RGBD depth sensor.  For our experiments, we attached an Asus Xtion Pro Live to the laptop of Section~\ref{sec:realtime}. To begin, the user starts recording the RGBD sequence and provides some rough initial foreground and background labels. These are interpreted as node potentials by the STRGEN algorithm and the segmentation is propagated as additional frames stream in.  In the case of errant segmentations, the user provides in real time additional foreground and background labels, and the STRGEN algorithm incorporates these as with the initial hints.  At the end of the process, the user is left with a collection of segmented objects instances.  Not all segmentations are perfect, but almost all bad segmentations are followed by a user correction.  Thus, we use the five second rule: All segmentations that were generated less than about five seconds before any user-generated segmentation hint are ignored and the rest are added to the training set.  At this point, it would probably be beneficial to generate many artificial viewpoint variations and add these to the training set, as well; this step is bypassed for this small experiment.
 
 \todoCR{We should report how many frames were in the training set and how many clicks were necessary.  It'd be much better if we could do the viewpoint variation thing so that the number is very small.}
 
@@ -525,14 +524,14 @@ We have presented a novel method of segmenting and tracking deformable objects i
 \begin{figure*}
 \centering
         \includegraphics[width=0.8\linewidth]{img/pillow_pipeline.png}
-\caption{\small{Example data labeling pipeline demonstrating one possible application of the presented algorithm.  Segmented objects are obtained while the raw data is being recorded.  Segmentation hints from the user generate node potentials in the CRF so the user can direct the segmentation at any time; without input, the segmenter makes use of only the other cues discussed in Section~\ref{sec:energy} to produce segmentation masks. The output is a set of segmented object examples suitable for training standard object detectors. }}
+\caption{\small{Example data labeling pipeline demonstrating one possible application of our STRGEN algorithm.  Segmented objects are obtained while the raw data is being recorded.  Segmentation hints from the user generate node potentials in the CRF so the user can direct the segmentation at any time; without input, the segmenter makes use of only the other cues discussed in Section~\ref{sec:energy} to produce segmentation masks. The output is a set of segmented object examples suitable for training standard object detectors. }}
 \label{fig:data_labeling}
 \end{figure*}
 
 \begin{figure*}
 \centering
         \includegraphics[width=0.8\linewidth]{img/pillow_detection.png}
-\caption{\small{Object detection example trained using the method in Figure~\ref{fig:data_labeling}. Color and depth templates are extracted from pillow examples collected using the presented algorithm.  An appropriate object detection method (LINE-MOD in our example) searches for the templates in previously-unseen test frames and identifies ``detections'' as matches with responses exceeding a threshold.}}
+\caption{\small{Object detection example trained using the method in Figure~\ref{fig:data_labeling}. Color and depth templates are extracted from segmented training objects; an appropriate object detection method (LINE-MOD in our example) searches for the templates in previously-unseen test frames and identifies ``detections'' as matches with responses exceeding a threshold.}}
 \label{fig:object_rec}
 \end{figure*}
 
