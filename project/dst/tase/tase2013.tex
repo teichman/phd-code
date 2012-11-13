@@ -507,7 +507,7 @@ The process, illustrated in Figure~\ref{fig:data_labeling}, only assumes the use
 \begin{figure}
   \centering
   \includegraphics[width=0.7\linewidth]{img/timing_vertical.pdf}
-  \caption{Average frame segmentation timing breakdown for \vga and \qqvga resolutions using the boundary mask and 50\% downsampling of node potentials.  Feature computation dominates and the graph cuts solver does not preclude realtime operation even at \vga resolution; thus, real-time segmentation at higher resolutions is conceivable with further optimizations to the feature set. Best viewed in color. \todoCR{Should probably collect a 640x480 dataset, make a scaled-down copy, and compute timing results for that data.  This way, you can make an exact comparison.  As it is, the two sets of sequences are not exactly the same.  The reported claims are supported by the current plot, but it'd be nice for one to be able to make the comparison between the two total times.}}
+  \caption{Average frame segmentation timing breakdown for \vga and \qqvga resolutions using the boundary mask and 50\% downsampling of node potentials.  Feature computation dominates and the graph cuts solver does not preclude real-time operation even at \vga resolution; thus, real-time segmentation at higher resolutions is conceivable with further optimizations to the feature set. Best viewed in color. \todoCR{Should probably collect a 640x480 dataset, make a scaled-down copy, and compute timing results for that data.  This way, you can make an exact comparison.  As it is, the two sets of sequences are not exactly the same.  The reported claims are supported by the current plot, but it'd be nice for one to be able to make the comparison between the two total times.}}
   \label{fig:timing}
 \end{figure}
 
@@ -515,17 +515,10 @@ In Figure~\ref{fig:object_rec}, we demonstrate how these segmented examples can 
 
 \section{Conclusions}
 
-We have presented a novel method of segmenting and tracking deformable objects in RGBD, making minimal assumptions about the input data.  We have shown this method makes a significant quantitative improvement over the most similar state-of-the-art work in segmentation and tracking of non-rigid objects, that real-time performance is feasible, and that an online and interactive version of the algorithm is suitable for collecting training examples of objects in unstructured environments.  A complete solution to this task would have far-reaching ramifications in robotics, computer vision, and graphics, opening the door for easier-to-train and more reliable object recognition, model capture, and tracking-based semi-supervised learning.  While there remains more work to be done before a completely robust solution is available for unasisted segmentation and tracking, we believe this approach to be a promising direction for future research.
+We have presented a novel method of segmenting and tracking deformable objects in RGBD, making minimal assumptions about the input data.  We have shown this method makes a significant quantitative improvement over the most similar state-of-the-art work in segmentation and tracking of non-rigid objects, that real-time performance is feasible, and that an online and interactive version of the algorithm is suitable for collecting training examples of objects in unstructured environments.  A complete solution to this task would have far-reaching ramifications in robotics, computer vision, and graphics, opening the door for easier-to-train and more reliable object recognition, model capture, and tracking-based semi-supervised learning.  While there remains more work to be done before a completely robust solution is available for unassisted segmentation and tracking, we believe this approach to be a promising direction for future research.
 
 \bibliographystyle{ieee}
 \bibliography{tase2013}
-
-\begin{figure}
-  \centering
-%  \includegraphics[width=\linewidth]{}
-  \caption{The realtime data labeling rig.}
-  \label{fig:rig}
-\end{figure}
 
 \begin{figure*}
 \centering
@@ -544,3 +537,11 @@ We have presented a novel method of segmenting and tracking deformable objects i
 
 \end{document}
 
+
+
+\begin{figure}
+  \centering
+%  \includegraphics[width=\linewidth]{}
+  \caption{The real-time data labeling rig.}
+  \label{fig:rig}
+\end{figure}
