@@ -36,12 +36,13 @@ os.system("grep maxflow `find " + avspath + " -name testing_results.txt-log.txt 
 qqvga_maxflow = np.loadtxt(tmpfile)
 os.system("grep 'Average time' `find " + avspath + " -name testing_results.txt | grep mask1_skip02` | awk '{sum += $NF} END {print sum / NR}' > " + tmpfile)
 qqvga_total = np.loadtxt(tmpfile)
+print [vga_feature, vga_maxflow, vga_total]
 
 os.system("rm " + tmpfile)
 
 # -- Setup.
-figw = 12
-figh = 4
+figh = 8
+figw = 4
 fig = plt.figure(figsize = (figw, figh))
 
 def timingPlot(ax, feat, gc, total):
@@ -56,17 +57,17 @@ def timingPlot(ax, feat, gc, total):
     return pie
 
 # -- Plot VGA results.
-vga_ax = fig.add_subplot(1, 3, 1, aspect='equal')
+vga_ax = fig.add_subplot(3, 1, 1, aspect='equal')
 timingPlot(vga_ax, vga_feature, vga_maxflow, vga_total)
 vga_ax.set_title("640 $\\times$ 480", bbox={'facecolor':'0.8', 'pad':10}, position=(0.5, -0.1))
 
 # -- Plot QQVGA results.
-qqvga_ax = fig.add_subplot(1, 3, 3, aspect='equal')
+qqvga_ax = fig.add_subplot(3, 1, 2, aspect='equal')
 pie = timingPlot(qqvga_ax, qqvga_feature, qqvga_maxflow, qqvga_total)
 qqvga_ax.set_title("160 $\\times$ 120", bbox={'facecolor':'0.8', 'pad':10}, position=(0.5, -0.1))
 
 # -- Legend.
-leg = fig.legend(pie[0], ("Features", "Graph cuts", "Other"), loc='center', bbox_to_anchor = (0.5, 0.5))
+leg = fig.legend(pie[0], ("Features", "Graph cuts", "Other"), loc='center', bbox_to_anchor = (0.5, 0.2))
 
 # -- Save.
 savefig(avspath + '/timing.png')
