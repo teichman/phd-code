@@ -61,17 +61,18 @@
 
 %%%%%%%%% ABSTRACT
 
+
 \begin{abstract}
-We consider the problem of segmenting and tracking deformable objects in color video with depth (RGBD) data available from commodity sensors such as the Asus Xtion Pro Live or Kinect.  We frame this problem with very few assumptions - no prior object model, no stationary sensor, no prior 3D map - thus making a solution potentially useful for a large number of applications, including semi-supervised learning, 3D model capture, and object recognition.
+We consider the problem of segmenting and tracking deformable objects in color video with depth (RGBD) data available from commodity sensors such as the Asus Xtion Pro Live or Microsoft Kinect.  We frame this problem with very few assumptions - no prior object model, no stationary sensor, no prior 3D map - thus making a solution potentially useful for a large number of applications, including semi-supervised learning, 3D model capture, and object recognition.
 
 Our approach makes use of a rich feature set, including local image appearance, depth discontinuities, optical flow, and surface normals to inform the segmentation decision in a conditional random field model.  In contrast to previous work in this field, the proposed method \emph{learns} how to best make use of these features from ground-truth segmented sequences.  We provide qualitative and quantitative analyses which demonstrate substantial improvement over the state of the art.
 
 This paper is an extended version of our previous work \cite{teichman2012a}.  Building on this, we show that it is possible to achieve an order of magnitude speedup and thus real-time performance ($\sim$20FPS) on a laptop computer by applying simple algorithmic optimizations to the original work.  This speedup comes at only a minor cost in overall accuracy and thus makes this approach applicable to a broader range of tasks. We demonstrate one such task: real-time, online, interactive segmentation to efficiently collect training data for an off-the-shelf object detector.
 
 \vspace{0.1in}
-\textit{Note to Practitioners} --- This work was motivated by a previous result from autonomous driving which showed that, so long as one can segment and track objects in advance of knowing what they are, it is possible to train accurate object detectors using a small number of hand-labeled examples combined with a large number of unlabeled examples \cite{teichman2011b}.  This key dependency of a model-free segmentation and tracking method was available because of the structure in the autonomous driving problem, but is not so freely available in more general environments.  This paper aims to make progress towards that goal.
+\textit{Note to Practitioners} --- The original motivation for this work derives from object recognition in autonomous driving, where it is desirable to identify objects such as cars and bicyclists in natural street scenes.  In previous work \cite{teichman2011b} it was shown that, so long as one can segment and track objects in advance of knowing what they are, it is possible to train accurate object detectors using a small number of hand-labeled examples combined with a large number of unlabeled examples.  The key dependency of a model-free segmentation and tracking method was available because of the structure in the autonomous driving problem. This paper aims to make these techniques applicable in more general environments.
 
-In the near term, the methods presented here can be used for real-time, online, interactive object segmentation.  This can ease the process of collecting training data for existing object recognition systems used in automation today. The biggest limitation of the current implementation is that object re-acquisition is not automatically handled.  In the long term, improved implementations that include this ability could be an integral part of semi-supervised object recognition systems which require few hand-labeled training examples and can produce accurate recognition results in part because of their use of multiple views in the prediction pipeline.
+In the near term, the methods presented here can be used for real-time, online, interactive object segmentation.  This can ease the process of collecting training data for existing object recognition systems used in automation today. In the long term, improved implementations could be an integral part of semi-supervised object recognition systems which require few hand-labeled training examples and can produce accurate recognition results.
 
 \end{abstract}
 
@@ -79,7 +80,7 @@ In the near term, the methods presented here can be used for real-time, online, 
 \section{Introduction}
 \label{sec:intro}
 
-The availability of commodity depth sensors such as the Kinect opens the door for a number of new approaches to important problems in robot perception.  In this paper, we consider the task of propagating an object segmentation mask through time. It is assumed that a single initial segmentation is given; in this work the initial segmentation is provided by human labeling, but this input could instead come from an automatic method depending on the application.  We do not assume the presence of a pre-trained object model (\ie as the Kinect models human joint angles), as that would preclude the system from segmenting and tracking arbitrary objects of interest.  As such, this task falls into the category of \emph{model-free} segmentation and tracking, \ie no prior class model is assumed.  Similarly, we do not assume the sensor is stationary or that a pre-built static environment map is available.  As ``model-free segmentation and tracking'' is somewhat unwieldy, we will sometimes refer to this task as STRGEN (sturgeon), for ``segmentation and tracking of generic objects''. \todo{Not settled on a name yet, but need something.  Happy to hear suggestions.}
+The availability of commodity depth sensors such as the Kinect opens the door for a number of new approaches to important problems in robot perception.  In this paper, we consider the task of propagating an object segmentation mask through time. It is assumed that a single initial segmentation is given; in this work the initial segmentation is provided by human labeling, but this input could instead come from an automatic method depending on the application.  We do not assume the presence of a pre-specified object model (\eg as the Kinect person tracker assumes a human skeleton and comes with a trained part classifier), as that would preclude the system from segmenting and tracking arbitrary objects of interest.  As such, this task falls into the category of \emph{model-free} segmentation and tracking, \ie no prior class model is assumed.  Similarly, we do not assume the sensor is stationary or that a pre-built static environment map is available.  As ``model-free segmentation and tracking'' is somewhat unwieldy, we will sometimes refer to this task as STRGEN (sturgeon), for ``segmentation and tracking of generic objects''. \todo{Not settled on a name yet, but need something.  Happy to hear suggestions.}
 
 \begin{figure}
   \centering
@@ -92,14 +93,14 @@ The availability of commodity depth sensors such as the Kinect opens the door fo
 \subsection{Example use cases and long-term vision}
 \label{sec:examples}
 
-There are several reasons a complete solution to the STRGEN task would be useful in robotics, computer vision, and graphics.  For example, this would make possible a generic and natural object selection interface which could be used for 3D model capture in unstructured environments.  In the following, however, we will focus primarily on the area of object recognition.
+There are several reasons a complete solution to the STRGEN task would be useful in robotics, computer vision, and graphics.  For example, this would make possible a generic and natural object selection interface which could be used for 3D model capture in unstructured environments.  In the following, however, we will focus primarily on the area of object recognition. In the first section we describe how our method can already be a useful part of a standard object detection pipeline; the following sections then outline potential future uses.
 
 \subsubsection{Training data collection for standard object detectors}
 \label{sec:trainingintro}
 
-Much work has been put into object detection methods using RGBD sensors.  While off-the-shelf object detections algorithms such as LINE-MOD \cite{hinterstoisser2011a} are often fast and effective at runtime, the collection of training data remains a hassle.  Typical approaches include turntables and crowdsourcing.  While the former allows for high-quality training examples for a full $360^{\circ}$ range of views, it also involves an appropriate rig, is limited to objects that can be easily placed in a rig, and must be repeatedly reconfigured for different perspectives.  The latter allows for unstructured environments and avoids the physical setup annoyances but also requires a well-designed web application and a data processing framework robust to noisy and incompatible responses. This approach also could be inapplicable to certain data sources due to privacy concerns.  Other data labeling approaches, such as iteratively placing objects in a scene and subtracting a known background, are rare as they often have disadvantages such as being slower to collect significant quantities of training data.
+Much work has been put into object detection methods using RGBD sensors.  While off-the-shelf object detection algorithms such as LINE-MOD \cite{hinterstoisser2011a} are often fast and effective at runtime, training data collection remains a hassle.  Typical approaches include turntables and crowdsourcing.  While the former allows for high-quality training examples for a full $360^{\circ}$ range of views, it also involves an appropriate rig, is limited to objects that can be easily placed in a rig, and must be repeatedly reconfigured for different perspectives.  The latter allows for unstructured environments and avoids the physical setup annoyances but also requires a well-designed web application and a data processing framework robust to noisy and incompatible responses. This approach also could be inapplicable to certain data sources due to privacy concerns.  Other data labeling approaches, such as iteratively placing objects in a scene and subtracting a known background, are rare as they often have disadvantages such as being slower to collect significant quantities of training data.
 
-Model-free segmentation and tracking enables training data collection which eliminates these disadvantages.  Using a handheld depth sensor and tablet, training data can be collected in unstructured environments by taking sparse labeling hints from the user and generating segmentations over time, providing new training examples with different object poses, view angles, lighting conditions, and so on, with little additional human effort.  Labeled, segmented objects can be collected in real time while the raw sensor data is recorded.  A prototype of such a system is shown in Figure~\ref{fig:usage}; see also Section~\ref{sec:example} for an experiment using a similar concept.
+Using a STRGEN algorithm for the collection of training data avoids these disadvantages. With a handheld depth sensor and laptop computer, training data can be collected in unstructured environments by taking sparse labeling hints from the user and generating segmentations over time, providing new training examples with different object poses, view angles, lighting conditions, and so on, with little additional human effort.  Labeled, segmented objects can be collected in real time while the raw sensor data is recorded.  A prototype of such a system is shown in Figure~\ref{fig:usage}; see also Section~\ref{sec:example} for an experiment using a similar concept.
 
 \begin{figure}
   \centering
@@ -107,8 +108,6 @@ Model-free segmentation and tracking enables training data collection which elim
   \caption{Example usage of model-free segmentation and tracking algorithm for object detector training set collection.  Initially, no object is being tracked.  A user provides sparse foreground and background hints as the RGBD data streams in.  Segmented objects are shown in red. \todoCR{Show pose changes, fix focus}}
   \label{fig:usage}
 \end{figure}
-
-As shown in Section~\ref{sec:example}, this application example is currently practical.  The examples that follow likely require improvements in segmentation accuracy or other research progress to become practical, but the obstacles in the path are probably not insurmountable.
 
 \subsubsection{Track classification}
 
@@ -120,7 +119,7 @@ A solution to the STAC problem opens the door to a simple and effective method o
 
 \subsubsection{Long-term vision}
 
-The primary long-term motivation for this work is to enable object recognition systems that produce high-quality results, yet are trainable and usable by regular people using only modest amounts of effort. The success of STAC and TBSSL given model-free segmentation and tracking hint that this may be possible.  One option is to A) collect a small number of training examples using a natural interface such as that of Figure~\ref{fig:usage}, B) apply TBSSL to learn a high-quality classifier from large quantities of unlabeled data, and C) run STAC to recognize objects using the learned classifier.  The primary missing component in this system or variations thereof is a high-accuracy and real-time solution to the general STRGEN problem.
+The primary long-term motivation for this work is to enable object recognition systems that produce high-quality results, yet are trainable and usable by regular people using only modest amounts of effort. The success of STAC and TBSSL, given model-free segmentation and tracking, hint that this may be possible.  One option is to 1) collect a small number of training examples using a natural interface such as that of Figure~\ref{fig:usage}, 2) apply TBSSL to learn a high-quality classifier from large quantities of unlabeled data, and 3) run STAC to recognize objects using the learned classifier.  The primary missing component in this system or variations thereof is a high-accuracy and real-time solution to the general STRGEN problem.
 
 \section{Previous work}
 \label{sec:prev_work}
@@ -141,7 +140,10 @@ We now briefly review previous work on related problems.
 
 \textbf{Model-based tracking} - For some tasks, it is appropriate to model a specific object that is to be tracked, either with an explicit 3D model as in \cite{prisacariu2009a} or with pre-trained statistical models that are specific to the particular object class.  Examples of the latter approach include the human pose tracking of the Kinect \cite{shotton2011a} and model-based car tracking in laser data for autonomous driving \cite{petrovskaya2009a}.
 
-It is worth noting that the line between model-free and model-based tracking is not sharp.  Because several of our intended applications revolve around training detectors for previously-unseen objects, we restrict ourselves to making use of object models that are learned on the fly.  It is entirely conceivably, however, that one could plug in a detailed pre-trained object model to our framework to produce higher accuracy results for that particular object.  Similarly, one could imagine using a SLAM system to generate a known background map which allows for background subtraction to aid in the segmentation process.  However, as this would prevent the segmentation algorithm from working in unmapped areas or on objects that are part of the static environment, we consider only background models that are learned on the fly and relative to the chosen foreground object.
+It is worth noting that the line between model-free and model-based tracking is not sharp.  Because several of our intended applications revolve around training detectors for previously-unseen objects, we restrict ourselves to making use of object models that are learned on the fly.  It is entirely conceivable, however, that one could plug in a detailed pre-trained object model to our framework to produce higher accuracy results for that particular object.
+
+Similarly, using a SLAM system to generate a known background map
+would improve the segmentation process by allowing for static background subtraction even with a moving sensor. However, a SLAM system would prevent the segmentation algorithm from working in unmapped areas or on objects that are part of the static environment, so we consider only background models that are learned on the fly and are relative to the chosen foreground object.
 
 \section{Approach}
 
@@ -403,7 +405,7 @@ where $p_j$ and $p_k$ are the neighboring 3D points, $n_k$ is the surface normal
 
 \section{Experiments}
 
-We provide a quantitative analysis to demonstrate improvement over the state of the art and a qualitative discussion the strengths and weaknesses of the current implementation.  All experiments use \qqvga (\ie $160 \times 120$) RGBD data.  The structural SVM of Algorithm~\ref{alg:ssvm} was implemented with standard interior point solver techniques.  The graph cuts solver of \cite{boykov2001a} was used for inference.
+We provide a quantitative analysis to demonstrate improvement over the state of the art and a qualitative discussion of the strengths and weaknesses of the current implementation.  All experiments use \qqvga (\ie $160 \times 120$) RGBD data.  The structural SVM of Algorithm~\ref{alg:ssvm} was implemented with standard interior point solver techniques.  The graph cuts solver of \cite{boykov2001a} was used for inference.
 
 
 \subsection{Quantitative analysis}
@@ -412,7 +414,7 @@ We provide a quantitative analysis to demonstrate improvement over the state of 
 \begin{figure*}
   \centering
   \includegraphics[width=0.8\linewidth]{img/bargraph.pdf}
-  \caption{Comparison of our method with the most similar state-of-the-art work.}
+  \caption{Comparison of our method with the most similar state-of-the-art work.  Hamming loss is absolute number of pixels wrong; normalized accuracy takes into account object size and has a maximum of one.  Total error reduction is about 65\%.}
   \label{fig:bargraph}
   \vspace{50pt}
 \end{figure*}
@@ -485,7 +487,7 @@ To show that this optimization does not adversely affect segmentation performanc
 \begin{figure*}
   \centering
   \includegraphics[width=0.9\linewidth]{img/realtime.pdf}
-  \caption{Test set normalized loss and average per-frame segmentation time compared with different levels of algorithmic optimization as discussed in Section~\ref{sec:realtime}.  Thirteen runs of each condition were made; error bars and annotations show one standard deviation for this dataset. While a 75\% downsampling induces too much error to be acceptable, 50\% downsampling appears to be a good trade-off for many applications.  Timing results for the original method differ from those presented in Section~\ref{sec:quant} because multithreading is enabled here. \todoCR{Reported stdevs should probably be for everything combined; when people think timing stdev they're going to think that's per-frame, and this plot is reporting per-full-test-run which has much lower stdev.}}
+  \caption{Test set normalized loss and average per-frame segmentation time compared with different levels of algorithmic optimization as discussed in Section~\ref{sec:realtime}.  Thirteen runs of each condition were made; error bars and annotations show one standard deviation for this dataset. While a 75\% downsampling induces too much error to be acceptable, 50\% downsampling appears to be a good trade-off for many applications.  Timing results for the original method differ from those presented in Section~\ref{sec:quant} because multithreading is enabled here. \todoCR{Also, sec:quant should report timing results from Aluminum, not Rg.} \todoCR{Reported stdevs should probably be for everything combined; when people think timing stdev they're going to think that's per-frame, and this plot is reporting per-full-test-run which has much lower stdev.}}
   \label{fig:realtime}
 \end{figure*}
 
@@ -496,18 +498,16 @@ Even at \vga, it is conceivable that real-time operation could be obtained with 
 \subsection{Use-case example: training object detectors}
 \label{sec:example}
 
-\todoCR{Use of STRGEN as the problem name vs the specific implementation we are using here.}
-
-In this section, we describe the application of our segmentation and tracking method to the problem of data labeling in supervised object detection systems. Supervised object detection systems such as the popular LINE-MOD method rely on well-segmented training data typically obtained from either meticulously rigged turntables or elaborate crowd-sourcing applications, as discussed in Section~\ref{sec:trainingintro}. In contrast, by slightly modifying STRGEN to incorporate the user's segmentation hints as node potentials (discussed in Section~\ref{sec:npot}) throughout the sequence, we provide an interactive, real-time means to accurately collect segmented training examples with minimal environmental control.  Concretely, the original algorithm generated a node potential for seed labels on the first frame; here we simply allow these node potentials to be generated for subsequent frames as well.
+In this section, we describe the application of our segmentation and tracking method to the problem of data labeling in supervised object detection systems. Supervised object detection systems such as the popular LINE-MOD method rely on well-segmented training data typically obtained from either meticulously rigged turntables or elaborate crowd-sourcing applications, as discussed in Section~\ref{sec:trainingintro}. In contrast, by slightly modifying the presented implementation to incorporate the user's segmentation hints as node potentials (discussed in Section~\ref{sec:npot}) throughout the sequence, we provide an interactive, real-time means to accurately collect segmented training examples with minimal environmental control.  Concretely, the original algorithm generated a node potential for seed labels on the first frame; here we simply allow these node potentials to be generated for subsequent frames as well.
 
 The process, illustrated in Figure~\ref{fig:data_labeling}, only assumes the user is equipped with a laptop and an RGBD depth sensor.  For our experiments, we attached an ASUS Xtion Pro Live to the laptop of Section~\ref{sec:realtime}, shown in Figure~\ref{fig:rig}.
 
-To begin, the user starts recording the RGBD sequence and provides some rough initial foreground and background labels. STRGEN uses the user input and the RGBD images to obtain an initial segmentation and then updates and propogates this segmentation downstream as more frames come in.  In the case of errant segmentations, the user provides in real time additional foreground and background labels, and STRGEN incorporates these as with the initial hints.  At the end of the process, the user is left with a collection of segmented objects instances.  Not all segmentations are perfect, but almost all bad segmentations are followed by a user correction.  Thus, we use the five second rule: All segmentations that were generated less than about five seconds before any user-generated segmentation hint are ignored in the collection of the dataset.
+To begin, the user starts recording the RGBD sequence and provides some rough initial foreground and background labels. These are interpreted as node potentials by the STRGEN algorithm and the segmentation is propagated as additional frames stream in.  In the case of errant segmentations, the user provides in real time additional foreground and background labels, and the STRGEN algorithm incorporates these as with the initial hints.  At the end of the process, the user is left with a collection of segmented objects instances.  Not all segmentations are perfect, but almost all bad segmentations are followed by a user correction.  Thus, we use the five second rule: All segmentations that were generated less than about five seconds before any user-generated segmentation hint are ignored and the rest are added to the training set for LINE-MOD.
 
 \begin{figure}
   \centering
   \includegraphics[width=0.7\linewidth]{img/timing_vertical.pdf}
-  \caption{Average frame segmentation timing breakdown for \vga and \qqvga resolutions using the boundary mask and 50\% downsampling of node potentials.  Feature computation dominates and the graph cuts solver does not preclude realtime operation even at \vga resolution.  Best viewed in color. \todoCR{Should probably collect a 640x480 dataset, make a scaled-down copy, and compute timing results for that data.  This way, you can make an exact comparison.  As it is, the two sets of sequences are not exactly the same.  The reported claims are supported by the current plot, but it'd be nice for one to be able to make the comparison between the two total times.}}
+  \caption{Average frame segmentation timing breakdown for \vga and \qqvga resolutions using the boundary mask and 50\% downsampling of node potentials.  Feature computation dominates and the graph cuts solver does not preclude realtime operation even at \vga resolution; thus, real-time segmentation at higher resolutions is conceivable with further optimizations to the feature set. Best viewed in color. \todoCR{Should probably collect a 640x480 dataset, make a scaled-down copy, and compute timing results for that data.  This way, you can make an exact comparison.  As it is, the two sets of sequences are not exactly the same.  The reported claims are supported by the current plot, but it'd be nice for one to be able to make the comparison between the two total times.}}
   \label{fig:timing}
 \end{figure}
 
@@ -531,121 +531,18 @@ We have presented a novel method of segmenting and tracking deformable objects i
 
 \begin{figure*}
 \centering
-        \includegraphics[width=0.8\linewidth]{img/realtime_pipeline.png}
-\caption{\small{Example data labeling pipeline. The user records an RGBD sequence.  While recording, he or she provides some initial foreground / background segmentations, and STRGEN uses these to obtain an initial segmentation.  STRGEN then automatically labels all subsequent frames (middle column), unless the user provides additional information, in which case the input is incorporated as before.  The output is a set of segmented object examples. }}
+        \includegraphics[width=0.8\linewidth]{img/pillow_pipeline.png}
+\caption{\small{Example data labeling pipeline demonstrating one possible application of the presented algorithm.  Segmented objects are obtained while the raw data is being recorded.  Segmentation hints from the user generate node potentials in the CRF so the user can direct the segmentation at any time; without input, the segmenter makes use of only the other cues discussed in Section~\ref{sec:energy} to produce segmentation masks. The output is a set of segmented object examples suitable for training standard object detectors. }}
 \label{fig:data_labeling}
 \end{figure*}
 
 \begin{figure*}
 \centering
         \includegraphics[width=0.8\linewidth]{img/pillow_detection.png}
-\caption{\small{Object detection example. Color and depth templates are extracted from pillow examples (such as those shown in Figure~\ref{fig:data_labeling}), and a set of unlabeled RGBD frames is provided.  An appropriate object detection method (LINE-MOD in our example) searches for the templates in the input frames and identifies ``detections'' as matches with responses exceeding some threshold (0.75 in this experiment). Note that given our cleanly segmented examples, LINE-MOD is able to accurately detect the object positions and somewhat reliably detect the object orientations.}}
+\caption{\small{Object detection example trained using the method in Figure~\ref{fig:data_labeling}. Color and depth templates are extracted from pillow examples collected using the presented algorithm.  An appropriate object detection method (LINE-MOD in our example) searches for the templates in previously-unseen test frames and identifies ``detections'' as matches with responses exceeding a threshold.}}
 \label{fig:object_rec}
 \end{figure*}
 
 
 \end{document}
 
-This learning approach is essential to using a rich feature set, as hand-tuning the CRF weights is impractical.
-
-Of those works that do consider this specific problem, none of them we are aware of use a learning approach to produce the best general-purpose tracker.
-
-
-In contrast, we use a learning approach to intelligently combine a large number of features, including those derived from depth information.  No previous work we are aware of on this task uses learning in this way for the segmentation and tracking task.  Learning specific object models on the fly is common, but learning how to combine many diverse features to generate the most effective general-purpose segmentation and tracking model is new.
-
-
-%  \caption{While image appearance and depth information may sometimes provide little information about on object boundary (for example, at the interface of a wooden object on a wooden table of the same color), a change in surface normals can be informative. Note this does not rely on any explicit ground plane detection but rather only local surface normal changes.  Surface normals are shown as small dark lines, seen from two angles to aid in depth perception.} 
-
-  This presents a new problem: naively adding features corresponding to these intuitions without combining them in an intelligent way will generally result in a poor model.
-
-
-In the past, rich and complex models that use many features were not possible to learn due to the intractability of computing the partition function present in computing the gradient.
-
-Our approach relies on a conditional random field for capturing rich feature sets, graph cuts for efficient prediction of foreground/background labels, and structural SVMs for learning the relative importances of each of the terms in the energy function.
-
-
-The goal is to segment and track an entire sequence correctly given a single seed frame.  However, this does not fit into the form required for efficient optimization via structural SVM, \ie predictions are required to be $\argmax_y w^T \Psi(y, x)$ for some unweighted feature function $\Psi(y, x)$; this is the case for segmenting a \emph{single} frame given the previous labeling, but the choice of $w$ affects $\Psi(y, x)$ on the next frame.  This is because features such as image appearance or frame-to-frame model fitting depend on the segmentation from the previous frame or frames.  To address this problem, we propose that the structural SVM learns the best parameters for segmenting the next frame assuming that all previous frames in the track have been segmented correctly.  This is important for correctly reasoning about potentials that accumulate state over the course of tracking.  For example, as the algorithm runs, each segmented frame is provided as training data to the patch classifier node potential.
-
-
-
-A training set of thirteen ground-truth sequences, encompassing about 2400 frames, was labeled using the inference method of Section~\ref{sec:inference} using a rough guess for the parameters plus human labeling to correct errors.  Training was done once, and the final trained segmenter was used to generate all results.  All sequence labelings shown in this paper are from the test dataset and thus were not seen at training time.  All test sequences were given a single seed labeling at the first frame and no other input.
-
-Unless otherwise specified, sequence numbers in the text are used to refer to sequences from Figure~\ref{fig:results} in order from top to bottom.
-
-
-This method does not use the available depth information or apply learning to combine multiple feature types.
-
-While we believe this direction to be a promising one, much work remains to be done.  The current implementation of the algorithm is still fragile when segmenting, for example, thin objects, quickly moving objects, and objects which frequently self-occlude parts. The current implementation also has no facility for re-acquiring targets after they have been lost.
-
-Additionally, speedups of the node and edge potentials would be beneficial as faster framerates and higher resolutions result in better segmentations.  Node and edge potentials that explicitly reason about occlusion would also likely be useful.
-
-eg \cite{kumar2011a}) viola2004a
-
-\begin{align*}
-  \phi_j(y, x) =
-  \left\{
-  \begin{array}{rl}
-    0 & \mbox{ if } y_j = 1 \\
-    -1 & \mbox{ if } y_j = -1.
-  \end{array}
-  \right.
-\end{align*}
-
-
-The remainder of this section discusses inference first, as it is a component of the learning algorithm, then learning, and finally the details of the energy function.
-
-  The work of \cite{babenko2009a} applies multiple instance learning to the same task.
-
-
-
-  \subsubsection{The importance of learning}
-
-\begin{figure}
-  \centering
-  \includegraphics[width=\linewidth]{img/random.pdf}
-  \caption{}
-  \label{fig:random}
-\end{figure}
-
-Could probably use a method like this for learning, but it's incredibly slow.  This took overnight \todo{actual time?}, vs an average training time of 2.6 minutes for the structural SVM when using the boundary mask and 50\% downsampling of selected features, as described \todo{here}.  \todo{You could probably be smarter about caching for the random evaluations.  If you cached all the features for all frames, assuming the previous segmentation was correct, then evaluated random weights, you could avoid the vast majority of computation.  This would be at least an order of magnitude faster, possibly more.  That still might be an order of magnitude or two slower than structural SVM training, but without knowing this it's not fair to compare the running times and claim that random evaluation is too slow.  All you can claim here is that most random weights suck.   ... it might even be that with early termination (total error greater best error so far means you stop evaluating these weights) random evaluation turns out to be a reasonable method of learning. }
-
-
-\begin{figure}
-  \centering
-  \includegraphics[width=0.3\linewidth]{img/front_and_back.pdf}
-  \caption{A real-time interactive segmentation and tracking interface is used to collect labeled examples of a cat; the segmented object is shown with a red border (best viewed on-screen).  Using the methods in this paper, a system such as this one could be used for training robotic object recognition systems or 3D model capture in unstructured environments.}
-  \label{fig:tricorder}
-\end{figure}
-
-and that no further information is provided other than the raw sensor data
-
-
-Instead, we add a new node potential which biases these regions towards the label they had from the previous segmentation.
-
-
-However, all these methods have at least one disadvantage such as a need for a calibrated data collection setup, slow collection rates, requirement of collecting data in a particular location, long turnaround time, quality control, or privacy issues.
-
-This problem is slightly different from the STRGEN problem described above in that segmentation hints from a user are allowed at any time.
-
-This same method could be used for 3D model-capture in unstructured environments, with all of the segmentation masks of a sequence being synthesized into one coherent object seen from all sides.
-
-While the STRGEN algorithm of this paper cannot perfectly segment and track all objects, the presence of a human in the loop makes this method practical for the collection of training examples in unstructured environments; see 
-
-
-the dataset includes rigid and non-rigid objects, and textured and non-textured objects.
-
-While this is currently too slow for real-time usage, almost all of this time is spent computing features and only about a millisecond is spent on the graph cuts solver.  This means real-time performance can be achieved with speedups of feature computation alone, most immediately by parallelization and by computing features only at the boundaries of the object where they are actually needed.  At \vga resolution, graph cuts alone typically takes about 30ms; however, one could employ a similar trick and run the graph cuts solver only for the nodes near the boundaries of the object, providing a potentially large savings.
-
-
-This approach is also altogether inapplicable for problems involving sensitive data.
-
-This can be accomplished without changing the graph cuts formulation by adding a new node potential.  In terms of the node potential definitions in Section~\ref{sec:npot}, we define $s_j$ to be 0 if pixel $j$ is not part of the boundary of the object, and to be the $\{-1, +1\}$ label from the previous segmentation otherwise.  Then the new node potential is
-\begin{align*}
-  \phi_j(y, x) & =
-  \left\{
-  \begin{array}{rl}
-    -1 & \mbox{ if } y_j = s_j \\
-    0 & \mbox{ otherwise.}
-  \end{array}
-  \right.
-\end{align*}
