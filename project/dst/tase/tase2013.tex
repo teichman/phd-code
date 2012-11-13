@@ -499,7 +499,7 @@ Even at \vga, it is conceivable that real-time operation could be obtained with 
 \subsection{Use-case example: training object detectors}
 \label{sec:example}
 
-In this section, we describe the application of our segmentation and tracking method to the problem of data labeling in supervised object detection systems such as LINE-MOD. Such systems rely on well-segmented training data typically obtained from either meticulously rigged turntables or elaborate crowd-sourcing applications, as discussed in Section~\ref{sec:trainingintro}. In contrast, by slightly modifying our STRGEN algorithm to incorporate the user's segmentation hints as node potentials (discussed in Section~\ref{sec:npot}) throughout the sequence, we provide an interactive, real-time means to accurately collect segmented training examples with minimal environmental control.  Concretely, the original algorithm generated a node potential for seed labels on the first frame; here we simply allow these node potentials to be generated for subsequent frames as well.
+In this section, we describe the application of our segmentation and tracking method to the problem of data labeling in supervised object detection systems such as LINE-MOD. Such systems rely on well-segmented training data typically obtained from either meticulously rigged turntables or elaborate crowd-sourcing applications, as discussed in Section~\ref{sec:trainingintro}. In contrast, by slightly modifying the STRGEN algorithm to incorporate the user's segmentation hints as node potentials (discussed in Section~\ref{sec:npot}) throughout the sequence, we provide an interactive, real-time means to accurately collect segmented training examples with minimal environmental control.  Concretely, the original algorithm generated a node potential for seed labels on the first frame; here we simply allow these node potentials to be generated for subsequent frames as well.
 
 The process, illustrated in Figure~\ref{fig:data_labeling}, only assumes the user is equipped with a laptop and an RGBD depth sensor.  For our experiments, we attached an Asus Xtion Pro Live to the laptop of Section~\ref{sec:realtime}. To begin, the user starts recording the RGBD sequence and provides some rough initial foreground and background labels. These are interpreted as node potentials by the STRGEN algorithm and the segmentation is propagated as additional frames stream in.  In the case of errant segmentations, the user provides in real time additional foreground and background labels, and the STRGEN algorithm incorporates these as with the initial hints.  At the end of the process, the user is left with a collection of segmented objects instances.  Not all segmentations are perfect, but almost all bad segmentations are followed by a user correction.  Thus, we use the five second rule: All segmentations that were generated less than about five seconds before any user-generated segmentation hint are ignored and the rest are added to the training set.  At this point, it would probably be beneficial to generate many artificial viewpoint variations and add these to the training set, as well; this step is bypassed for this small experiment.
 
@@ -512,19 +512,16 @@ The process, illustrated in Figure~\ref{fig:data_labeling}, only assumes the use
   \label{fig:timing}
 \end{figure}
 
-In Figure~\ref{fig:object_rec}, we demonstrate how these segmented examples can be used to construct an object detector.  We offer a small example in which we aim to detect a couch pillow in fifteen diverse scenes. Our method does not rely on any particular detection approach, but since we are interested in real-time detection, we feed our labeled pillow examples into the LINE-MOD template-matching framework described in Hinterstoisser et al \cite{hinterstoisser2011a}. At training time, LINE-MOD uses the depth and image cues to build templates (Figure~\ref{fig:object_rec}, upper-left). At testing time, LINE-MOD searches for those templates in the previously unseen images and identifies any ``detection'' as a template match with a response exceeding some threshold (0.75 in our experiment).  As can be seen in the illustration, we detect all objects while avoiding any false positives using a training set collected online with our STRGEN implementation.
+In Figure~\ref{fig:object_rec}, we demonstrate how these segmented examples can be used to construct an object detector.  We offer a small example in which we aim to detect a couch pillow in fifteen diverse scenes. Our method does not rely on any particular detection approach, but since we are interested in real-time detection, we feed our labeled pillow examples into the LINE-MOD template-matching framework described in Hinterstoisser et al \cite{hinterstoisser2011a}. At training time, LINE-MOD uses the depth and image cues to build templates (Figure~\ref{fig:object_rec}, upper-left). At testing time, LINE-MOD searches for those templates in the previously unseen images and identifies any ``detection'' as a template match with a response exceeding some threshold (0.75 in our experiment).  As can be seen in the illustration, we detect all objects while avoiding any false positives using a training set collected online with the STRGEN implementation.
 
 \section{Conclusions}
 
 We have presented a novel method of segmenting and tracking deformable objects in RGBD, making minimal assumptions about the input data.  We have shown this method makes a significant quantitative improvement over the most similar state-of-the-art work in segmentation and tracking of non-rigid objects, that real-time performance is feasible, and that an online and interactive version of the algorithm is suitable for collecting training examples of objects in unstructured environments.  A complete solution to this task would have far-reaching ramifications in robotics, computer vision, and graphics, opening the door for easier-to-train and more reliable object recognition, model capture, and tracking-based semi-supervised learning.  While there remains more work to be done before a completely robust solution is available for unassisted segmentation and tracking, we believe this approach to be a promising direction for future research.
 
-\bibliographystyle{ieee}
-\bibliography{tase2013}
-
 \begin{figure*}
 \centering
         \includegraphics[width=0.8\linewidth]{img/pillow_pipeline.png}
-\caption{\small{Example data labeling pipeline demonstrating one possible application of our STRGEN algorithm.  Segmented objects are obtained while the raw data is being recorded.  Segmentation hints from the user generate node potentials in the CRF so the user can direct the segmentation at any time; without input, the segmenter makes use of only the other cues discussed in Section~\ref{sec:energy} to produce segmentation masks. The output is a set of segmented object examples suitable for training standard object detectors. }}
+\caption{\small{Example data labeling pipeline demonstrating one possible application of the STRGEN algorithm.  Segmented objects are obtained while the raw data is being recorded.  Segmentation hints from the user generate node potentials in the CRF so the user can direct the segmentation at any time; without input, the segmenter makes use of only the other cues discussed in Section~\ref{sec:energy} to produce segmentation masks. The output is a set of segmented object examples suitable for training standard object detectors. }}
 \label{fig:data_labeling}
 \end{figure*}
 
@@ -534,6 +531,11 @@ We have presented a novel method of segmenting and tracking deformable objects i
 \caption{\small{Object detection example trained using the method in Figure~\ref{fig:data_labeling}. Color and depth templates are extracted from segmented training objects; an appropriate object detection method (LINE-MOD in our example) searches for the templates in previously-unseen test frames and identifies ``detections'' as matches with responses exceeding a threshold.}}
 \label{fig:object_rec}
 \end{figure*}
+
+
+%\IEEEtriggeratref{18}
+\bibliographystyle{ieee}
+\bibliography{tase2013}
 
 
 \end{document}
