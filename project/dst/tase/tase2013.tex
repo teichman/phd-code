@@ -210,6 +210,21 @@ During inference, the weights $w$ remain fixed.  The solution to this problem ca
 \subsection{Learning}
 \label{sec:learning}
 
+Given a dataset of $(y_i, x_i)$ for $i=1 \dots m$, the goal of CRF learning is to choose the weights $w$ that will result in the lowest test error. While it would be desirable to learn the weights directly using the maximum likelihood approach
+\begin{align}
+  \maximize{w} \prod_m \Pr(y_m | x_m),
+\end{align}
+this is not possible to do exactly because of the presence of the partition function $Z(x) = \sum_{y} \exp(-E(y, x))$ in the gradient.  This function sums over all $2^n$ segmentations of an image with $n$ pixels.
+
+Fortunately, there is an alternative approach known as the structural support vector machine \cite{taskar2005a, tsochantaridis2005a, szummer2008a}, which we now briefly review.  Solving the margin maximizing optimization problem of (\ref{eqn:nslack}) would result in a good solution. Here, $C$ is a constant, $\Delta$ is a loss function, $\xi_m$ is a slack variable for training example $m$, and $\mathcal{Y}$ is the set of all possible labelings of an image. This problem, too, is intractable because it has exponentially many constraints.  However, one can iteratively build a small, greedy approximation to the exponential set of constraints such that the resulting weights $w$ are good.
+
+Further, one can transform (\ref{eqn:nslack}), known as the $n$-slack formulation, into the equivalent problem (\ref{eqn:oneslack}) as described in \cite{joachims2009a}.  As before, while the number of constraints is exponential, one can build a small, greedy approximation that produces good results.  Known as the 1-slack formulation, this problem is equivalent and can be solved much more efficiently than (\ref{eqn:nslack}), often by one or two orders of magnitude.
+
+
+The goal is to learn the weights that will best segment an entire sequence given a single seed frame.  However, the segmenter operates on a single frame at a time, so our training dataset must be in the form of $(y, x)$ pairs. As will be discussed in Section~\ref{sec:energy}, some of the features are stateful, \ie they depend on previous segmentations.  This presents a minor complication.  At training time, we do not have access to a good choice of weights $w$, but the features depend on previous segmentations which in turn depend on the weights.  To resolve this, we adopt the simple strategy of generating features assuming that previous segmentations were equal to ground truth.  This dataset generation process is specified in Algorithm~\ref{alg:dataset}.
+
+The structural SVM solver is detailed in Algorithm~\ref{alg:ssvm}.  Because the graph cuts solver assumes a submodular energy function, non-negative edge weights $w_i$ for all $i \in \Phi_{\mathcal{E}}$ are required.  As our node potentials are generally designed to produce values with the desired sign, we constrain them in Algorithm~\ref{alg:ssvm} to have non-negative weights as well.  The term $\Delta (y_m, y)$ is 0-1 loss, but a margin rescaling approach could easily be obtained by changing $\Delta$ to Hamming loss and making a small modification to the graph cuts solver during learning (see \cite{szummer2008a}). 
+
 \begin{algorithm}
   \caption{Training set generation}
   \label{alg:dataset}
@@ -258,30 +273,9 @@ During inference, the weights $w$ remain fixed.  The solution to this problem ca
   \end{algorithmic}
 \end{algorithm*}
 
-Given a dataset of $(y_i, x_i)$ for $i=1 \dots m$, the goal of CRF learning is to choose the weights $w$ that will result in the lowest test error. While it would be desirable to learn the weights directly using the maximum likelihood approach
-\begin{align}
-  \maximize{w} \prod_m \Pr(y_m | x_m),
-\end{align}
-this is not possible to do exactly because of the presence of the partition function $Z(x) = \sum_{y} \exp(-E(y, x))$ in the gradient.  This function sums over all $2^n$ segmentations of an image with $n$ pixels.
-
-Fortunately, there is an alternative approach known as the structural support vector machine \cite{taskar2005a, tsochantaridis2005a, szummer2008a}, which we now briefly review.  Solving the margin maximizing optimization problem of (\ref{eqn:nslack}) would result in a good solution. Here, $C$ is a constant, $\Delta$ is a loss function, $\xi_m$ is a slack variable for training example $m$, and $\mathcal{Y}$ is the set of all possible labelings of an image. This problem, too, is intractable because it has exponentially many constraints.  However, one can iteratively build a small, greedy approximation to the exponential set of constraints such that the resulting weights $w$ are good.
-
-Further, one can transform (\ref{eqn:nslack}), known as the $n$-slack formulation, into the equivalent problem (\ref{eqn:oneslack}) as described in \cite{joachims2009a}.  As before, while the number of constraints is exponential, one can build a small, greedy approximation that produces good results.  Known as the 1-slack formulation, this problem is equivalent and can be solved much more efficiently than (\ref{eqn:nslack}), often by one or two orders of magnitude.
-
-
-The goal is to learn the weights that will best segment an entire sequence given a single seed frame.  However, the segmenter operates on a single frame at a time, so our training dataset must be in the form of $(y, x)$ pairs. As will be discussed in Section~\ref{sec:energy}, some of the features are stateful, \ie they depend on previous segmentations.  This presents a minor complication.  At training time, we do not have access to a good choice of weights $w$, but the features depend on previous segmentations which in turn depend on the weights.  To resolve this, we adopt the simple strategy of generating features assuming that previous segmentations were equal to ground truth.  This dataset generation process is specified in Algorithm~\ref{alg:dataset}.
-
-The structural SVM solver is detailed in Algorithm~\ref{alg:ssvm}.  Because the graph cuts solver assumes a submodular energy function, non-negative edge weights $w_i$ for all $i \in \Phi_{\mathcal{E}}$ are required.  As our node potentials are generally designed to produce values with the desired sign, we constrain them in Algorithm~\ref{alg:ssvm} to have non-negative weights as well.  The term $\Delta (y_m, y)$ is 0-1 loss, but a margin rescaling approach could easily be obtained by changing $\Delta$ to Hamming loss and making a small modification to the graph cuts solver during learning (see \cite{szummer2008a}). 
 
 \subsection{Energy function terms}
 \label{sec:energy}
-
-\begin{figure*}
-  \centering
-  \includegraphics[width=\linewidth]{img/features1.pdf}
-  \caption{Visualizations of selected edge and node potentials in the CRF.  Edge potentials are zoomed in to show fine structure.  Strong edge potentials are darker, while weaker edge potentials fade to original image color.  Node potentials expressing a preference for foreground are shown in red, for background in green, and for neither in black.  Top row: original image, canny edge potentials, color distance, depth edge potentials.  Bottom row: ICP, frame alignment bilateral filter, optical flow, and patch classifier node potentials.  Best viewed in color.}
-  \label{fig:features}
-\end{figure*}
 
 We now review the particular choice of energy function (\ref{eqn:energy}) that we use in our implementation. The particular choice of features can be modified or added to without substantially changing the underlying framework. See Figure~\ref{fig:features} for visualizations.  All node potentials are designed to be constrained to $[-1, +1]$, and all edge potentials to $[-1, 0]$.  While not strictly necessary, this aids in interpreting the weights learned by the structural SVM.
 
@@ -310,6 +304,14 @@ where $a_j$ and $b_j$ are functions of the data $x$, and $y_j = 1$ indicates tha
   \end{array}
   \right.
 \end{align*}
+
+\begin{figure*}
+  \centering
+  \includegraphics[width=\linewidth]{img/features1.pdf}
+  \caption{Visualizations of selected edge and node potentials in the CRF.  Edge potentials are zoomed in to show fine structure.  Strong edge potentials are darker, while weaker edge potentials fade to original image color.  Node potentials expressing a preference for foreground are shown in red, for background in green, and for neither in black.  Top row: original image, canny edge potentials, color distance, depth edge potentials.  Bottom row: ICP, frame alignment bilateral filter, optical flow, and patch classifier node potentials.  Best viewed in color.}
+  \label{fig:features}
+\end{figure*}
+
 
 \textbf{Optical flow} - Pixels in the current frame with optical flow vectors from the previous frame are likely to have the label of the originating pixel.  If no optical flow vector terminates at pixel $j$ in the current frame, let $f_j = 0$.  Otherwise, let $f_j$ be equal to the label of the originating pixel from the previous frame.  Then, the potential is defined by
 \begin{align*}
