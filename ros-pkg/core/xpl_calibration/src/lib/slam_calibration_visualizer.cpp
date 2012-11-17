@@ -66,9 +66,22 @@ void SlamCalibrationVisualizer::visualizationThreadFunction()
     
     lockWrite();
     if(needs_update_) {
-      cout << "updating" << endl;
       Cloud::Ptr pcd(new Cloud);
       *pcd = *map_;
+
+      // -- Add the raw sensor data from the current frame.
+      const Trajectory& traj = calibrator_->trajectories_[seq_idx_];
+      const StreamSequence& sseq = *calibrator_->sseqs_[seq_idx_];
+      if(traj.exists(frame_idx_)) {
+	Frame pose_frame;
+	sseq.readFrame(frame_idx_, &pose_frame);
+	Cloud pose_pcd;
+	sseq.model_.frameToCloud(pose_frame, &pose_pcd);
+	Affine3f transform = traj.get(frame_idx_).cast<float>();
+	pcl::transformPointCloud(pose_pcd, pose_pcd, transform);
+	*pcd += pose_pcd;
+      }
+      
       if(!vis_.updatePointCloud(pcd, "default"))
 	vis_.addPointCloud(pcd, "default");
       needs_update_ = false;
@@ -91,9 +104,9 @@ void SlamCalibrationVisualizer::keyboardCallback(const pcl::visualization::Keybo
       quitting_ = true;
     }
     else if(key == '>')
-      incrementSequenceIdx(1);
+      incrementFrameIdx(30);
     else if(key == '<')
-      incrementSequenceIdx(-1);
+      incrementFrameIdx(-30);
     else if(key == '.')
       incrementFrameIdx(1);
     else if(key == ',')
@@ -151,4 +164,5 @@ void SlamCalibrationVisualizer::incrementFrameIdx(int num)
   
   scopeLockWrite;
   frame_idx_ = (size_t)idx;
+  needs_update_ = true;
 }
