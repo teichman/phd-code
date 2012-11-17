@@ -32,11 +32,17 @@ SLAM_RUNS_xpl01		:= 	2a_backandforth \
 				2012-10-22_2a_backandforth_0 \
 				2012-10-22_2a_backandforth_1 \
 				2012-10-22_2a_backandforth_2 \
-				2012-10-22_2a_backandforth_4
+				2012-10-22_2a_backandforth_4 \
+				2012-11-16_2a_backandforth_5 \
+				2012-11-16_2a_backandforth_6 \
+				2012-11-16_2a_backandforth_7 \
+				2012-11-16_2a_backandforth_8
 
-# SLAM_RUNS_xpl01		:= 	2a_backandforth \
-# 				2a_loops_1 \
-# 				2a_loops_2
+#SLAM_RUNS_xpl01		:= 	2a_backandforth
+
+#SLAM_RUNS_xpl01		:= 	2012-10-22_2a_backandforth_4
+#				2012-10-22_2a_backandforth_2 \
+				2012-10-22_2a_backandforth_0
 
 # Data specifically for the 2012-11-06 run in which multiple sensor views were collected.
 AVV_MULTIVIEW_NAMES_xpl01	:= 	xpl01_straight-11-06-2012_00-08-08
@@ -106,24 +112,30 @@ $(1)-visualize-slam-intrinsics: $(1)/evaluation/extrinsics $(1)/evaluation/learn
 	--extrinsics $(1)/evaluation/extrinsics \
 	--intrinsics $(1)/evaluation/learned_model.psm
 
-$(1)-visualize-slam-discrete-intrinsics: $(1)/evaluation/discrete_extrinsics $(1)/evaluation/discrete_learned_model
-	rosrun xpl_calibration asus_vs_velo \
+# Visualize intrinsics with the default extrinsics
+#$(1)-visualize-slam-discrete-intrinsics: $(1)/evaluation/discrete_learned_model $(1)/asus_vs_velodyne/extrinsics # $(1)/evaluation/discrete_extrinsics
+#	rosrun xpl_calibration asus_vs_velo \
 	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
-	--extrinsics $(1)/evaluation/extrinsics \
+	--extrinsics $(1)/asus_vs_velodyne/extrinsics \
 	--discrete-intrinsics $(1)/evaluation/discrete_learned_model
 
+# Visualize intrinsics with the extrinsics learned specifically for this set of intrinsics.
+$(1)-visualize-slam-discrete-intrinsics: $(1)/evaluation/discrete_learned_model $(1)/evaluation/discrete_extrinsics
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--discrete-intrinsics $(1)/evaluation/discrete_learned_model \
+	--extrinsics $(1)/evaluation/discrete_extrinsics
+
 $(1)/evaluation/extrinsics: $(1)/evaluation/learned_model.psm
-	cd $$(@D) && \
 	rosrun xpl_calibration asus_vs_velo \
 	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
 	--intrinsics learned_model.psm \
 	--compute-extrinsics $$@
 
 $(1)/evaluation/discrete_extrinsics: $(1)/evaluation/discrete_learned_model
-	cd $$(@D) && \
 	rosrun xpl_calibration asus_vs_velo \
 	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
-	--discrete-intrinsics discrete_learned_model \
+	--discrete-intrinsics $$< \
 	--compute-extrinsics $$@;
 
 $(1)/evaluation/learned_model.psm: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt

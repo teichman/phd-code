@@ -397,6 +397,9 @@ DiscreteDepthDistortionModel DepthDistortionLearner::fitDiscreteModel()
     #endif
 
     dddm.accumulate(frames_[i], multipliers);
+
+    // Update cmap2
+    //cmap2.increment(ppt.v_, ppt.u_, (double)ppt.z_ * 0.001);
   }	
 
   string dir = ".ddl";
