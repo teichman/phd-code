@@ -12,7 +12,11 @@
 class SlamCalibrationVisualizer : public SharedLockable
 {
 public:
+  DiscreteDepthDistortionModel* dddm_;
+  
   SlamCalibrationVisualizer(SlamCalibrator::Ptr calibrator);
+  ~SlamCalibrationVisualizer() { if(dddm_) delete dddm_; }
+      
   void run();
   void setCamera(const std::string& camera_path);
   
@@ -25,9 +29,12 @@ protected:
   size_t seq_idx_;
   size_t frame_idx_;
   bool show_frame_;
+  bool use_distortion_model_;
+  bool color_frame_;
 
   void visualizationThreadFunction();
   void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie);
+  void pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie);
   void setSequenceIdx(size_t idx);
   void incrementSequenceIdx(int num);
   void incrementFrameIdx(int num);
