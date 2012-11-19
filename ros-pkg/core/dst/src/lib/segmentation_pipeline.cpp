@@ -135,9 +135,9 @@ namespace dst
 					       BIL_SIGMA_DIST, BIL_SIGMA_COLOR, 5.0, SKIP, SKIP);  
     
     SeedNPG* seed = new SeedNPG(&seed_ep_->outlet_);
-    SeedDistanceNPG* sd = new SeedDistanceNPG(&seed_ep_->outlet_,
-					      &depth_projector_->index_otl_,
-					      1.0);
+    // SeedDistanceNPG* sd = new SeedDistanceNPG(&seed_ep_->outlet_,
+    // 					      &depth_projector_->index_otl_,
+    // 					      1.0);
 
     LabelFlowNPG* label_flow = new LabelFlowNPG(&optflow->optflow_otl_, &previous_segmentation_ep_->outlet_);
 
@@ -175,7 +175,7 @@ namespace dst
     vector<NodePotentialGenerator*> node_generators;
     node_generators.push_back(seed);
     node_generators.push_back(bilateral);
-    node_generators.push_back(sd);
+    //node_generators.push_back(sd);
     node_generators.push_back(label_flow);
     node_generators.push_back(patch_classifier5);
     node_generators.push_back(distance_npg);

@@ -40,7 +40,7 @@ rosbuild_add_gtest(test_hrt src/test_hrt.cpp)
 rosbuild_add_gtest_build_flags(test_hrt)
 target_link_libraries(test_hrt ${PROJECT_NAME})
 
-#rosbuild_add_gtest(test_lockable src/test_lockable.cpp)
-#rosbuild_add_gtest_build_flags(test_lockable)
-#target_link_libraries(test_lockable ${PROJECT_NAME})
+rosbuild_add_gtest(test_lockable src/test_lockable.cpp)
+rosbuild_add_gtest_build_flags(test_lockable)
+target_link_libraries(test_lockable ${PROJECT_NAME})
 
