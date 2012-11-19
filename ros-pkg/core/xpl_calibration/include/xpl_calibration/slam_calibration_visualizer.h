@@ -24,6 +24,7 @@ protected:
   bool needs_update_;
   size_t seq_idx_;
   size_t frame_idx_;
+  bool show_frame_;
 
   void visualizationThreadFunction();
   void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie);

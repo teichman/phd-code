@@ -10,7 +10,8 @@ SlamCalibrationVisualizer::SlamCalibrationVisualizer(SlamCalibrator::Ptr calibra
   quitting_(false),
   needs_update_(false),
   seq_idx_(0),
-  frame_idx_(0)
+  frame_idx_(0),
+  show_frame_(true)
 {
   vis_.registerKeyboardCallback(&SlamCalibrationVisualizer::keyboardCallback, *this);
   vis_.setBackgroundColor(1, 1, 1);
@@ -70,16 +71,18 @@ void SlamCalibrationVisualizer::visualizationThreadFunction()
       *pcd = *map_;
 
       // -- Add the raw sensor data from the current frame.
-      const Trajectory& traj = calibrator_->trajectories_[seq_idx_];
-      const StreamSequence& sseq = *calibrator_->sseqs_[seq_idx_];
-      if(traj.exists(frame_idx_)) {
-	Frame pose_frame;
-	sseq.readFrame(frame_idx_, &pose_frame);
-	Cloud pose_pcd;
-	sseq.model_.frameToCloud(pose_frame, &pose_pcd);
-	Affine3f transform = traj.get(frame_idx_).cast<float>();
-	pcl::transformPointCloud(pose_pcd, pose_pcd, transform);
-	*pcd += pose_pcd;
+      if(show_frame_) { 
+	const Trajectory& traj = calibrator_->trajectories_[seq_idx_];
+	const StreamSequence& sseq = *calibrator_->sseqs_[seq_idx_];
+	if(traj.exists(frame_idx_)) {
+	  Frame pose_frame;
+	  sseq.readFrame(frame_idx_, &pose_frame);
+	  Cloud pose_pcd;
+	  sseq.model_.frameToCloud(pose_frame, &pose_pcd);
+	  Affine3f transform = traj.get(frame_idx_).cast<float>();
+	  pcl::transformPointCloud(pose_pcd, pose_pcd, transform);
+	  *pcd += pose_pcd;
+	}
       }
       
       if(!vis_.updatePointCloud(pcd, "default"))
@@ -111,6 +114,12 @@ void SlamCalibrationVisualizer::keyboardCallback(const pcl::visualization::Keybo
       incrementFrameIdx(1);
     else if(key == ',')
       incrementFrameIdx(-1);
+    else if(key == 's') {
+      scopeLockWrite;
+      show_frame_ = !show_frame_;
+      needs_update_ = true;
+      cout << "show_frame_: " << show_frame_ << endl;
+    }
   }
 }
 
