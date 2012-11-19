@@ -5,14 +5,19 @@ using namespace Eigen;
 using namespace rgbd;
 
 SlamCalibrationVisualizer::SlamCalibrationVisualizer(SlamCalibrator::Ptr calibrator) :
+  dddm_(NULL),
   calibrator_(calibrator),
   map_(new Cloud),
   quitting_(false),
   needs_update_(false),
   seq_idx_(0),
-  frame_idx_(0)
+  frame_idx_(0),
+  show_frame_(true),
+  use_distortion_model_(false),
+  color_frame_(false)
 {
   vis_.registerKeyboardCallback(&SlamCalibrationVisualizer::keyboardCallback, *this);
+  vis_.registerPointPickingCallback(&SlamCalibrationVisualizer::pointPickingCallback, *this);
   vis_.setBackgroundColor(1, 1, 1);
   
   // -- Set the viewpoint to be sensible for PrimeSense devices.
@@ -66,9 +71,36 @@ void SlamCalibrationVisualizer::visualizationThreadFunction()
     
     lockWrite();
     if(needs_update_) {
-      cout << "updating" << endl;
       Cloud::Ptr pcd(new Cloud);
       *pcd = *map_;
+
+      // -- Add the raw sensor data from the current frame.
+      if(show_frame_) { 
+	const Trajectory& traj = calibrator_->trajectories_[seq_idx_];
+	const StreamSequence& sseq = *calibrator_->sseqs_[seq_idx_];
+	if(traj.exists(frame_idx_)) {
+	  Frame pose_frame;
+	  sseq.readFrame(frame_idx_, &pose_frame);
+	  if(dddm_ && use_distortion_model_) {
+	    ScopedTimer st("Undistorting");
+	    dddm_->undistort(&pose_frame);
+	  }
+	  Cloud pose_pcd;
+	  sseq.model_.frameToCloud(pose_frame, &pose_pcd);
+	  if(!color_frame_) {
+	    for(size_t i = 0; i < pose_pcd.size(); ++i) {
+	      pose_pcd[i].r = 255;
+	      pose_pcd[i].g = 0;
+	      pose_pcd[i].b = 0;
+	    }
+	  }
+	  
+	  Affine3f transform = traj.get(frame_idx_).cast<float>();
+	  pcl::transformPointCloud(pose_pcd, pose_pcd, transform);
+	  *pcd += pose_pcd;
+	}
+      }
+      
       if(!vis_.updatePointCloud(pcd, "default"))
 	vis_.addPointCloud(pcd, "default");
       needs_update_ = false;
@@ -82,6 +114,27 @@ void SlamCalibrationVisualizer::visualizationThreadFunction()
   }
 }
 
+void SlamCalibrationVisualizer::pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie)
+{
+  scopeLockRead;
+
+  if(event.getPointIndex() == -1)
+    return;
+  const Trajectory& traj = calibrator_->trajectories_[seq_idx_];
+  if(!traj.exists(frame_idx_))
+    return;
+    
+  Point pt;
+  event.getPoint(pt.x, pt.y, pt.z);
+  cout << "Selected point: " << pt.x << ", " << pt.y << ", " << pt.z << endl;
+  vis_.removeAllShapes();
+  
+  Point origin;
+  Affine3f transform = traj.get(frame_idx_).cast<float>();
+  origin.getVector3fMap() = transform.translation();
+  vis_.addArrow<Point, Point>(origin, pt, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, "line");
+}
+
 void SlamCalibrationVisualizer::keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie)
 {
   if(event.keyDown()) {
@@ -91,13 +144,31 @@ void SlamCalibrationVisualizer::keyboardCallback(const pcl::visualization::Keybo
       quitting_ = true;
     }
     else if(key == '>')
-      incrementSequenceIdx(1);
+      incrementFrameIdx(30);
     else if(key == '<')
-      incrementSequenceIdx(-1);
+      incrementFrameIdx(-30);
     else if(key == '.')
       incrementFrameIdx(1);
     else if(key == ',')
       incrementFrameIdx(-1);
+    else if(key == 's') {
+      scopeLockWrite;
+      show_frame_ = !show_frame_;
+      needs_update_ = true;
+      cout << "show_frame_: " << show_frame_ << endl;
+    }
+    else if(key == 'm') {
+      scopeLockWrite;
+      use_distortion_model_ = !use_distortion_model_;
+      cout << "use_distortion_model_: " << use_distortion_model_ << endl;
+      if(use_distortion_model_ && !dddm_)
+	cout << "No distortion model provided." << endl;
+      needs_update_ = true;
+    }
+    else if(key == 'c') {
+      scopeLockWrite;
+      color_frame_ = !color_frame_;
+    }
   }
 }
 
@@ -150,5 +221,7 @@ void SlamCalibrationVisualizer::incrementFrameIdx(int num)
   }
   
   scopeLockWrite;
+  vis_.removeAllShapes();
   frame_idx_ = (size_t)idx;
+  needs_update_ = true;
 }
