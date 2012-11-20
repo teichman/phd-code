@@ -10,15 +10,11 @@ SlamCalibrator::SlamCalibrator(const PrimeSenseModel& model, double max_range) :
 {
 }
 
-rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx, double vgsize) const
+rgbd::Cloud::Ptr SlamCalibrator::buildMap(const StreamSequence& sseq, const Trajectory& traj, double max_range, double vgsize)
 {
-  ROS_ASSERT(idx < trajectories_.size());
-  ROS_ASSERT(trajectories_.size() == sseqs_.size());
-  ROS_DEBUG_STREAM("Building slam calibration map using max_range_ of " << max_range_);
+  ROS_DEBUG_STREAM("Building slam calibration map using max range of " << max_range);
+  ROS_WARN("SlamCalibrator::buildMap does not use distortion model.");
   
-  const Trajectory& traj = trajectories_[idx];
-  const StreamSequence& sseq = *sseqs_[idx];
-
   Cloud::Ptr map(new Cloud);
   int num_used_frames = 0;
   for(size_t i = 0; i < traj.size(); ++i) {
@@ -28,13 +24,9 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx, double vgsize) const
     cout << "Using frame " << i << " / " << traj.size() << endl;
     Frame frame;
     sseq.readFrame(i, &frame);
-
-    //HighResTimer hrt("undistort"); hrt.start();
-    model_.undistort(&frame);
-    //hrt.stop(); cout << hrt.reportMilliseconds() << endl;
     
     Cloud::Ptr tmp(new Cloud);
-    model_.frameToCloud(frame, tmp.get(), max_range_);
+    sseq.model_.frameToCloud(frame, tmp.get(), max_range);
     Cloud::Ptr nonans(new Cloud);
     nonans->reserve(tmp->size());
     for(size_t j = 0; j < tmp->size(); ++j)
@@ -61,7 +53,6 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx, double vgsize) const
     }
   }
 
-  //cout << "Unfiltered map has " << map->size() << " points, " << map->size() / (double)num_used_frames << " points per frame in the map." << endl;
   cout << "Filtering..." << endl;
   HighResTimer hrt("filtering");
   hrt.start();
@@ -76,6 +67,13 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx, double vgsize) const
   cout << "Filtered map has " << map->size() << " points." << endl;
 
   return map;
+}
+
+rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx, double vgsize) const
+{
+  ROS_ASSERT(idx < trajectories_.size());
+  ROS_ASSERT(trajectories_.size() == sseqs_.size());
+  return buildMap(*sseqs_[idx], trajectories_[idx], max_range_, vgsize);
 }
 
 size_t SlamCalibrator::size() const

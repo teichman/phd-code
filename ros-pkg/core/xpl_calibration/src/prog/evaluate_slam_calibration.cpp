@@ -1,15 +1,105 @@
 #include <boost/program_options.hpp>
 #include <xpl_calibration/slam_calibrator.h>
+#include <xpl_calibration/primesense_slam.h>
 
 using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 namespace bpo = boost::program_options;
+namespace bfs = boost::filesystem;
+
+void computeDistortion(const Frame& frame, const Frame& mapframe, double* total_error, double* count)
+{
+  ROS_ASSERT(frame.depth_->cols() == mapframe.depth_->cols());
+  ROS_ASSERT(frame.depth_->rows() == mapframe.depth_->rows());
+  
+  for(int x = 0; x < frame.depth_->cols(); ++x) {
+    for(int y = 0; y < frame.depth_->rows(); ++y) {
+      if(frame.depth_->coeffRef(y, x) == 0)
+	continue;
+      if(mapframe.depth_->coeffRef(y, x) == 0)
+	continue;
+      
+      *total_error += fabs((frame.depth_->coeffRef(y, x) - mapframe.depth_->coeffRef(y, x)) * 0.001);
+      (*count)++;
+    }
+  }
+}
+
+void evaluate(const DiscreteDepthDistortionModel& intrinsics,
+	      const StreamSequence& sseq, const Trajectory& traj,
+	      const string& eval_path)
+{
+  ROS_ASSERT(!bfs::exists(eval_path));
+  bfs::create_directory(eval_path);
+
+  // -- Build the map.
+  Cloud map = *SlamCalibrator::buildMap(sseq, traj, MAX_RANGE_MAP, 0.0025);
+  Cloud transformed;
+  
+  // -- For all poses, compute the distortion with and without the intrinsics.
+  double raw_total_error = 0;
+  double raw_count = 0;
+  double undistorted_total_error = 0;
+  double undistorted_count = 0;
+  
+  for(size_t i = 0; i < traj.size(); ++i) {
+    if(!traj.exists(i))
+      continue;
+
+    Frame frame;
+    sseq.readFrame(i, &frame);
+    Affine3f transform = traj.get(i).inverse().cast<float>();
+    pcl::transformPointCloud(map, transformed, transform);
+    Frame mapframe;
+    sseq.model_.cloudToFrame(transformed, &mapframe);
+
+    cv::imshow("mapframe", mapframe.depthImage());
+    cv::imshow("frame", frame.depthImage());
+    cv::waitKey(10);
+
+    computeDistortion(frame, mapframe, &raw_total_error, &raw_count);
+    intrinsics.undistort(&frame);
+    computeDistortion(frame, mapframe, &undistorted_total_error, &undistorted_count);
+  }
+
+  ofstream file;
+  file.open((eval_path + "/results.txt").c_str());
+  ROS_ASSERT(file.is_open());
+  file << "Raw total error: " << raw_total_error << endl;
+  file << "Raw count: " << raw_count << endl;
+  file << "Raw mean error: " << raw_total_error / raw_count << endl;
+  file << "Undistorted total error: " << undistorted_total_error << endl;
+  file << "Undistorted count: " << undistorted_count << endl;
+  file << "Undistorted mean error: " << undistorted_total_error / undistorted_count << endl;
+  file.close();
+}
+
+DiscreteDepthDistortionModel calibrateLOO(const vector<StreamSequence::ConstPtr>& sseqs,
+					  const vector<Trajectory>& trajectories,
+					  size_t idx)
+{
+  ROS_ASSERT(sseqs.size() == trajectories.size());
+  
+  vector<StreamSequence::ConstPtr> sseq_train;
+  vector<Trajectory> traj_train;
+  for(size_t i = 0; i < sseqs.size(); ++i) {
+    if(i == idx)
+      continue;
+    sseq_train.push_back(sseqs[i]);
+    traj_train.push_back(trajectories[i]);
+  }
+
+  SlamCalibrator calibrator(sseq_train[0]->model_, MAX_RANGE_MAP);
+  calibrator.trajectories_ = traj_train;
+  calibrator.sseqs_ = sseq_train;
+  return calibrator.calibrateDiscrete();
+}
+
 
 
 int main(int argc, char** argv)
 {
-
   vector<string> data_paths;
   string intrinsics_path;
   string output_path;
@@ -77,16 +167,15 @@ int main(int argc, char** argv)
   cout << "--------------------" << endl;
   cout << endl;
 
-  //bfs::create_directory(output_path);
+  bfs::create_directory(output_path);
   for(size_t i = 0; i < trajectories.size(); ++i) {
     ostringstream oss;
     oss << output_path << "/" << names[i];
     string eval_path = oss.str();
     cout << "Saving evaluation results to " << eval_path << endl;
     
-    //DiscreteDepthDistortionModel intrinsics = calibrateLOO(sseqs, trajectories, i);
-    //bfs::create_directory(eval_path);
-    //evaluate(intrinsics, *sseqs[i], eval_path);
+    DiscreteDepthDistortionModel intrinsics = calibrateLOO(sseqs, trajectories, i);
+    evaluate(intrinsics, *sseqs[i], trajectories[i], eval_path);
   }
 
   return 0;
