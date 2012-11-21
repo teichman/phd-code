@@ -219,6 +219,9 @@ $(foreach SENSOR,$(SENSORS),$(eval $(call SENSOR_RULE_GENERATOR,$(SENSOR))))
 # -- Enumeration of targets for each run of each sensor.
 define SENSOR_RUN_RULE_GENERATOR
 
+$(1)-visualize-intrinsics-on-map-$(2): $(1)/evaluation/slam_eval
+	cd $(1)/evaluation/slam_eval/$(2) && rosrun xpl_calibration visualize_slam_calibration --imodel intrinsics $(SLAM_DATA_PATH)/$(1)/$(2)/ ../../../slam_results/$(2)/submap_0.traj
+
 # Press j to take a screenshot from the angle you want.
 $(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam $(1)/slam_results/$(2)
 	#TODO dont only use first submap
