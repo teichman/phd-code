@@ -19,7 +19,7 @@ void Frustum::addExample(double ground_truth, double measurement)
   scopeLockWrite;
   
   double mult = ground_truth / measurement;
-  if(mult > MAX_MULT < MIN_MULT)
+  if(mult > MAX_MULT || mult < MIN_MULT)
     return;
   
   int idx = min(num_bins_ - 1, (int)floor(measurement / bin_depth_));
