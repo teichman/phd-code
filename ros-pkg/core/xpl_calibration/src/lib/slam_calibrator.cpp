@@ -4,9 +4,10 @@ using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 
-SlamCalibrator::SlamCalibrator(const PrimeSenseModel& model, double max_range) :
+SlamCalibrator::SlamCalibrator(const PrimeSenseModel& model, double max_range, double vgsize) :
   model_(model),
-  max_range_(max_range)
+  max_range_(max_range),
+  vgsize_(vgsize)
 {
 }
 
@@ -69,11 +70,11 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(const StreamSequence& sseq, const Traj
   return map;
 }
 
-rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx, double vgsize) const
+rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx) const
 {
   ROS_ASSERT(idx < trajectories_.size());
   ROS_ASSERT(trajectories_.size() == sseqs_.size());
-  return buildMap(*sseqs_[idx], trajectories_[idx], max_range_, vgsize);
+  return buildMap(*sseqs_[idx], trajectories_[idx], max_range_, vgsize_);
 }
 
 size_t SlamCalibrator::size() const
@@ -98,7 +99,7 @@ DepthDistortionLearner SlamCalibrator::setupDepthDistortionLearner() const
 
     const Trajectory& traj = trajectories_[i];
     const StreamSequence& sseq = *sseqs_[i];
-    rgbd::Cloud::Ptr map = buildMap(i, 0.01);
+    rgbd::Cloud::Ptr map = buildMap(i);
 
     for(size_t j = 0; j < traj.size(); ++j) {
       if(!traj.exists(j))

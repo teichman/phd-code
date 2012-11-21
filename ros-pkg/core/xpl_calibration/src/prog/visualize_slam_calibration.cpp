@@ -22,6 +22,7 @@ int main(int argc, char** argv)
     ("traj", bpo::value<string>(&trajectory_path)->required(), "Trajectory from slam.")
     ("imodel", bpo::value<string>(), "Optional discrete distortion model.")
     ("max-range", bpo::value<double>()->default_value(MAX_RANGE_MAP), "Maximum range to use when building the map from the given trajectory.")
+    ("vgsize", bpo::value<double>()->default_value(0.03), "Voxel grid cell size.")
     ;
 
   p.add("sseq", 1).add("traj", 1);
@@ -49,7 +50,9 @@ int main(int argc, char** argv)
   vector<StreamSequence::ConstPtr> sseqs;
   sseqs.push_back(sseq);
   
-  SlamCalibrator::Ptr calibrator(new SlamCalibrator(sseqs[0]->model_, opts["max-range"].as<double>()));
+  SlamCalibrator::Ptr calibrator(new SlamCalibrator(sseqs[0]->model_,
+						    opts["max-range"].as<double>(),
+						    opts["vgsize"].as<double>()));
   cout << "Using " << calibrator->max_range_ << " as max range." << endl;
   calibrator->trajectories_ = trajectories;
   calibrator->sseqs_ = sseqs;

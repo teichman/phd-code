@@ -38,6 +38,9 @@ SLAM_RUNS_xpl01		:= 	2a_backandforth \
 				2012-11-16_2a_backandforth_7 \
 				2012-11-16_2a_backandforth_8
 
+#SLAM_RUNS_xpl01		:=	2012-11-16_2a_backandforth_7 \
+				2012-11-16_2a_backandforth_8
+
 #SLAM_RUNS_xpl01		:= 	2a_backandforth
 
 #SLAM_RUNS_xpl01		:= 	2012-10-22_2a_backandforth_4
@@ -74,14 +77,23 @@ all:
 	git log -n1 >> $@
 	git diff >> $@
 
+
 # -- Enumeration of targets for each sensor.
 define SENSOR_RULE_GENERATOR
 
 # Now "trajectories" is a directory which contains all submaps and the posegraph
 TRAJDIRS_$(1) := $$(addprefix $(1)/slam_results/, $$(SLAM_RUNS_$(1)))
 TRAJECTORIES_SUB_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do find $$$${DIR} -name *.traj; done`
+TRAJECTORIES_ONLYFIRST_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do find $$$${DIR} -name *.traj | sort | head -n1; done`
 SLAM_RUNS_DUPL_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do \
 	for TRAJ in $$$$(ls $$$${DIR} | grep traj); do basename $$$${DIR} | xargs -I {} echo $(SLAM_DATA_PATH)/$(1)/{}; done; done`
+
+$(1)/evaluation/slam_eval: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
+	mkdir -p $$(@D)
+	rosrun xpl_calibration evaluate_slam_calibration \
+	--output $(1)/evaluation/slam_eval \
+	--sseqs $$(addprefix $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
+	--trajs $$(TRAJECTORIES_ONLYFIRST_$(1))
 
 $(1)-quantitative-evaluation: 	$(1)/evaluation/results-baseline.txt \
 				$(1)/evaluation/results-distortion_model_and_recalib.txt
