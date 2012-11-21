@@ -24,7 +24,7 @@ void computeDistortion(const Frame& frame, const Frame& mapframe, double* total_
       double meas = frame.depth_->coeffRef(y, x) * 0.001;
       double gt = mapframe.depth_->coeffRef(y, x) * 0.001;
       double mult = gt / meas;
-      if(mult > 1.2 || mult < 0.8)
+      if(mult > 1.25 || mult < 0.75)
 	continue;
       
       *total_error += fabs(meas - gt);

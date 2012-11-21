@@ -215,8 +215,8 @@ bool normalTest(const PrimeSenseModel& model, const DepthMat& mapdepth, int uc, 
 
 cv::Mat3b visualizeMultipliers(const MatrixXd& multipliers)
 {
-  double min_mult = 0.85;
-  double max_mult = 1.15;
+  double min_mult = 0.75;
+  double max_mult = 1.25;
   
   cv::Mat3b vis(cv::Size(multipliers.cols(), multipliers.rows()), cv::Vec3b(0, 0, 0));
   for(int y = 0; y < multipliers.rows(); ++y) {
@@ -272,8 +272,8 @@ void DepthDistortionLearner::computeMultiplierMap(const PrimeSenseModel& model,
     cv::erode(mask, mask, cv::Mat(), cv::Point(-1, -1), 15);
   }
             
-  double min_mult = 0.85;
-  double max_mult = 1.15;
+  double min_mult = 0.75;
+  double max_mult = 1.25;
 
   ProjectivePoint ppt;
   Point pt;
@@ -743,166 +743,3 @@ void CoverageMap::clear()
     for(size_t x = 0; x < cols(); ++x)
       bins_[y][x].clear();
 }
-
-
-
-
-// DescriptorAccumulator::DescriptorAccumulator(int rows, int cols, double scale, int bins_per_cell,
-// 					     double min_dist, double max_dist, uint64_t max_bytes) :
-//   rows_(rows),
-//   cols_(cols),
-//   scale_(0.05),
-//   min_dist_(0.8),
-//   max_dist_(10)
-// {
-//   PrimeSenseModel model;
-//   double bytes_per_descriptor = model.numFeatures() * sizeof(double);
-//   double max_descriptors = max_bytes / bytes_per_descriptor;
-//   double total_num_bins = (rows * scale) * (cols * scale) * bins_per_cell;
-//   double max_descriptors_per_bin = max_descriptors / total_num_bins;
-//   max_per_bin_ = max_descriptors_per_bin;
-//   ROS_DEBUG_STREAM("DescriptorAccumulator using " << max_per_bin_ << " descriptors per bin.");
-
-//   bins_.resize(rows * scale);
-//   ys_.resize(rows * scale);
-//   for(size_t y = 0; y < bins_.size(); ++y) {
-//     bins_[y].resize(cols * scale);
-//     ys_.resize(cols * scale);
-//     for(size_t x = 0; x < bins_[y].size(); ++x) {
-//       bins_[y][x].reserve(max_per_bin_);
-//       ys_.reserve(max_per_bin_);
-//     }
-//   }
-// }
-
-// void DescriptorAccumulator::addFrame(rgbd::Frame measurement, rgbd::Frame map)
-// {
-//   if(model_.hasDepthDistortionModel()) {
-//     ROS_FATAL("DescriptorAccumulator should not have a model_ with a depth distortion model already built in to it.");
-//     ROS_FATAL_STREAM(model_.weights_);
-//     abort();
-//   }
-
-//   double min_mult = 0.8;
-//   double max_mult = 1.2;
-  
-//   const DepthMat& depth = *measurement.depth_;
-//   const DepthMat& mapdepth = *map.depth_;
-//   ProjectivePoint ppt;
-//   Point pt;
-//   for(ppt.v_ = 0; ppt.v_ < depth.rows(); ++ppt.v_) {
-//     for(ppt.u_ = 0; ppt.u_ < depth.cols(); ++ppt.u_) {
-//       if(mapdepth(ppt.v_, ppt.u_) == 0 || depth(ppt.v_, ppt.u_) == 0)
-// 	continue;
-
-//       ppt.z_ = mapdepth(ppt.v_, ppt.u_);
-//       model_.project(ppt, &pt);
-//       double mapdist = pt.getVector3fMap().norm();
-//       ppt.z_ = depth(ppt.v_, ppt.u_);
-//       model_.project(ppt, &pt);
-//       double measdist = pt.getVector3fMap().norm();
-      
-//       // If the range is completely off, assume it's due to misalignment and not distortion.
-//       double mult = mapdist / measdist;
-//       if(mult > max_mult || mult < min_mult)
-// 	continue;
-
-//       VectorXd descriptor = model_.computeFeatures(ppt));
-      
-//       // -- Compute indices into the accumulator.
-//       int v = ((double)ppt.v_ / depth.rows()) * rows();
-//       int u = ((double)ppt.u_ / depth.cols()) * cols();
-//       if(u < 0)
-// 	u = 0;
-//       if(u >= (int)cols())
-// 	u = cols();
-//       if(v < 0)
-// 	v = 0;
-//       if(v >= (int)rows())
-// 	v = rows();
-
-//       cells_[v][u].addDescriptor(measdist, descriptor, mult);
-//   }
-//   }
-// }
-
-// cv::Mat3b DescriptorAccumulator::computeImage() const
-// {
-//   cv::Mat3b small(rows(), cols());
-//   for(size_t y = 0; y < rows(); ++y)
-//     for(size_t x = 0; x < cols(); ++x)
-//       small(y, x) = cells_[y][x].color();
-
-//   cv::Mat3b img;
-//   cv::resize(small, img, cv::Size(cols_, rows_), cv::INTER_NEAREST);
-//   return img;
-// }
-
-// cv::Vec3b DescriptorAccumulator::colorizeBin(const std::vector<Eigen::VectorXd>& bin) const
-// {
-//   int num_bins = 10;
-
-//   VectorXd counts = VectorXd::Zero(num_bins);
-//   double range = max_dist_ - min_dist_;
-//   double width = range / num_bins;
-//   for(size_t i = 0; i < bin.size(); ++i) {
-//     int idx = floor((bin[i] - min_dist_) / width);
-//     if(idx < 0)
-//       idx = 0;
-//     if(idx >= num_bins)
-//       idx = num_bins;
-//     ++counts(idx);
-//   }
-
-//   int filled_criterion = 20;
-//   int num_filled = 0;
-//   for(int i = 0; i < counts.rows(); ++i)
-//     if(counts(i) > filled_criterion)
-//       ++num_filled;
-
-//   double frac_filled = (double)num_filled / num_bins;
-//   return cv::Vec3b(0, 255 * frac_filled, 255 * (1.0 - frac_filled));
-// }
-
-// void DescriptorAccumulator::clear()
-// {
-//   for(size_t y = 0; y < rows(); ++y) 
-//     for(size_t x = 0; x < cols(); ++x)
-//       bins_[y][x].clear();
-// }
-
-
-// DescriptorAccumulatorCell::DescriptorAccumulatorCell(double min_dist, double max_dist, int num_bins, size_t max_per_bin) :
-//   min_dist_(min_dist),
-//   max_dist_(max_dist),
-//   num_bins_(num_bins),
-//   max_per_bin_(max_per_bin)
-// {
-//   width_ = (max_dist_ - min_dist_) / (double)num_bins_;
-// }
-
-// void DescriptorAccumulatorCell::addDescriptor(double measured_distance, const VectorXd& descriptor, double multiplier)
-// {
-//   int idx = floor((measured_distance - min_dist_) / width_);
-//   idx = min((int)bins_.size() - 1, max(0, idx));
-//   vector<VectorXd>& bin = bins_[idx];
-//   vector<double>& multipliers = multipliers_[idx];
-  
-//   // -- If this bin is full, replace one at random.
-//   //    Otherwise append.    
-//   if(bin.size() == max_per_bin_) {
-//     size_t idx = rand() % bin.size();
-//     bin[idx] = descriptor;
-//     multipliers[idx] = multiplier;
-//   }
-//   else {
-//     bin.push_back(descriptor);
-//     multipliers.push_back(multiplier);
-//   }
-// }
-
-// cv::Vec3b DescriptorAccumulatorCell::color() const
-// {
-  
-// } 
-
