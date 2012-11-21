@@ -27,25 +27,12 @@ AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
 SLAM_RUNS_xpl01		:= 	2a_backandforth \
-				2a_loops_1 \
-				2a_loops_2 \
 				2012-10-22_2a_backandforth_0 \
-				2012-10-22_2a_backandforth_1 \
 				2012-10-22_2a_backandforth_2 \
 				2012-10-22_2a_backandforth_4 \
-				2012-11-16_2a_backandforth_5 \
 				2012-11-16_2a_backandforth_6 \
 				2012-11-16_2a_backandforth_7 \
 				2012-11-16_2a_backandforth_8
-
-#SLAM_RUNS_xpl01		:=	2012-11-16_2a_backandforth_7 \
-				2012-11-16_2a_backandforth_8
-
-#SLAM_RUNS_xpl01		:= 	2a_backandforth
-
-#SLAM_RUNS_xpl01		:= 	2012-10-22_2a_backandforth_4
-#				2012-10-22_2a_backandforth_2 \
-				2012-10-22_2a_backandforth_0
 
 # Data specifically for the 2012-11-06 run in which multiple sensor views were collected.
 AVV_MULTIVIEW_NAMES_xpl01	:= 	xpl01_straight-11-06-2012_00-08-08
