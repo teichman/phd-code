@@ -4,6 +4,9 @@
 #include <rgbd_sequence/primesense_model.h>
 #include <bag_of_tricks/lockable.h>
 
+#define MAX_MULT 1.25
+#define MIN_MULT 0.75
+
 class Frustum : public Serializable, public SharedLockable
 {
 public:
@@ -16,8 +19,6 @@ public:
   void deserialize(std::istream& in);
   
 protected:
-  double max_mult_;
-  double min_mult_;
   double max_dist_;
   int num_bins_;
   double bin_depth_;

@@ -215,9 +215,6 @@ bool normalTest(const PrimeSenseModel& model, const DepthMat& mapdepth, int uc, 
 
 cv::Mat3b visualizeMultipliers(const MatrixXd& multipliers)
 {
-  double min_mult = 0.75;
-  double max_mult = 1.25;
-  
   cv::Mat3b vis(cv::Size(multipliers.cols(), multipliers.rows()), cv::Vec3b(0, 0, 0));
   for(int y = 0; y < multipliers.rows(); ++y) {
     for(int x = 0; x < multipliers.cols(); ++x) {
@@ -227,19 +224,19 @@ cv::Mat3b visualizeMultipliers(const MatrixXd& multipliers)
 	continue;
       }
       
-      if(m < min_mult) {
+      if(m < MIN_MULT) {
 	ROS_WARN_STREAM("Low multiplier of " << m);
 	vis(y, x) = cv::Vec3b(0, 0, 255);
       }
-      else if(m > max_mult) {
+      else if(m > MAX_MULT) {
 	ROS_WARN_STREAM("High multiplier of " << m);
 	vis(y, x) = cv::Vec3b(255, 0, 0);
       }
       else {
 	if(m < 1)
-	  vis(y, x)[2] = (1.0 - (m - min_mult) / (1.0 - min_mult)) * 255;
+	  vis(y, x)[2] = (1.0 - (m - MIN_MULT) / (1.0 - MIN_MULT)) * 255;
 	else
-	  vis(y, x)[0] = (m - 1.0) / (max_mult - 1.0) * 255;
+	  vis(y, x)[0] = (m - 1.0) / (MAX_MULT - 1.0) * 255;
       }
     }
   }
@@ -272,9 +269,6 @@ void DepthDistortionLearner::computeMultiplierMap(const PrimeSenseModel& model,
     cv::erode(mask, mask, cv::Mat(), cv::Point(-1, -1), 15);
   }
             
-  double min_mult = 0.75;
-  double max_mult = 1.25;
-
   ProjectivePoint ppt;
   Point pt;
   for(ppt.v_ = 0; ppt.v_ < depth.rows(); ++ppt.v_) {
@@ -312,7 +306,7 @@ void DepthDistortionLearner::computeMultiplierMap(const PrimeSenseModel& model,
       // If the range is completely off, assume it's due to misalignment and not distortion.
       // This is the only filter that should be on for the Velodyne data.
       double mult = mapdist / measdist;
-      if(mult > max_mult || mult < min_mult) {
+      if(mult > MAX_MULT || mult < MIN_MULT) {
 	//ROS_WARN_STREAM("Multiplier out of acceptable range: " << mult);
 	(*visualization)(ppt.v_, ppt.u_) = cv::Vec3b(127, 127, 127);
 	continue;
@@ -321,19 +315,19 @@ void DepthDistortionLearner::computeMultiplierMap(const PrimeSenseModel& model,
       multipliers->coeffRef(ppt.v_, ppt.u_) = mult;
 
       // Color the multiplier.
-    //   if(mult < min_mult) {
+    //   if(mult < MIN_MULT) {
     // 	ROS_WARN_STREAM("Low multiplier of " << mult);
     // 	(*visualization)(ppt.v_, ppt.u_) = cv::Vec3b(0, 0, 255);
     //   }
-    //   else if(mult > max_mult) {
+    //   else if(mult > MAX_MULT) {
     // 	ROS_WARN_STREAM("High multiplier of " << mult);
     // 	(*visualization)(ppt.v_, ppt.u_) = cv::Vec3b(255, 0, 0);
     //   }
     //   else {
     // 	if(mult < 1)
-    // 	  (*visualization)(ppt.v_, ppt.u_)[2] = (1.0 - (mult - min_mult) / (1.0 - min_mult)) * 255;
+    // 	  (*visualization)(ppt.v_, ppt.u_)[2] = (1.0 - (mult - MIN_MULT) / (1.0 - MIN_MULT)) * 255;
     // 	else
-    // 	  (*visualization)(ppt.v_, ppt.u_)[0] = (mult - 1.0) / (max_mult - 1.0) * 255;
+    // 	  (*visualization)(ppt.v_, ppt.u_)[0] = (mult - 1.0) / (MAX_MULT - 1.0) * 255;
     //   }
     }
   }
