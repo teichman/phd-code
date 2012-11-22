@@ -152,3 +152,7 @@ target_link_libraries(avv_multiview_calibrator ${PROJECT_NAME})
 rosbuild_add_executable(visualize_slam_calibration src/prog/visualize_slam_calibration.cpp)
 rosbuild_link_boost(visualize_slam_calibration program_options filesystem)
 target_link_libraries(visualize_slam_calibration ${PROJECT_NAME})
+
+rosbuild_add_executable(evaluate_slam_calibration src/prog/evaluate_slam_calibration.cpp)
+rosbuild_link_boost(evaluate_slam_calibration program_options filesystem)
+target_link_libraries(evaluate_slam_calibration ${PROJECT_NAME})

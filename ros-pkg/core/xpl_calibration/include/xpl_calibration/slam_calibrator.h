@@ -5,6 +5,7 @@
 #include <rgbd_sequence/stream_sequence.h>
 #include <xpl_calibration/trajectory.h>
 #include <xpl_calibration/depth_distortion_learner.h>
+#include <xpl_calibration/primesense_slam.h>
 
 class SlamCalibrator
 {
@@ -13,13 +14,13 @@ public:
 
   //! The model to use when projecting frames out into the map.
   rgbd::PrimeSenseModel model_;
-  //! meters
-  double max_range_;
   std::vector<Trajectory> trajectories_;
   std::vector<rgbd::StreamSequence::ConstPtr> sseqs_;
+  double max_range_;
 
-  SlamCalibrator(const rgbd::PrimeSenseModel& model, double max_range);
+  SlamCalibrator(const rgbd::PrimeSenseModel& model, double max_range = MAX_RANGE_MAP);
   rgbd::Cloud::Ptr buildMap(size_t idx, double vgsize) const;
+  static rgbd::Cloud::Ptr buildMap(const rgbd::StreamSequence& sseq, const Trajectory& traj, double max_range, double vgsize);
   size_t size() const;
   rgbd::PrimeSenseModel calibrate() const;
   DiscreteDepthDistortionModel calibrateDiscrete() const;
