@@ -6,7 +6,7 @@ using namespace Eigen;
 using namespace std;
 namespace gc = graphcuts;
 
-TEST(Model, serialization)
+TEST(Model, Serialization)
 {
   VectorXd epot_weights(3);
   epot_weights << 0, M_PI, 42.13;
@@ -21,11 +21,11 @@ TEST(Model, serialization)
   npot_names.addName("node_descriptor1");
 
   gc::Model model(epot_weights, npot_weights, epot_names, npot_names);
-  model.save("test/model");
+  model.save("test_model");
   cout << model << endl;
   
   gc::Model model2;
-  model2.load("test/model");
+  model2.load("test_model");
   cout << model2 << endl;
   
   EXPECT_TRUE(model.npot_names_ == model2.npot_names_);
