@@ -10,7 +10,7 @@
   <url>http://ros.org/wiki/maxflow</url>
 
   <export>
-    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -lmaxflow"/>
+    <cpp cflags="-isystem${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -lmaxflow"/>
   </export>
 
 </package>

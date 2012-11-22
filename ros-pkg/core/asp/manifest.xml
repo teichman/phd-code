@@ -1,0 +1,16 @@
+<package>
+  <description brief="asp">
+
+     asp
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/asp</url>
+  <depend package="pipeline3"/>
+  <depend package="graphcuts"/>
+
+</package>
+
+
