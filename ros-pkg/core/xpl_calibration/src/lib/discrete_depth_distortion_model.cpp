@@ -5,8 +5,6 @@ using namespace Eigen;
 using namespace rgbd;
 
 Frustum::Frustum(int smoothing, double bin_depth) :
-  max_mult_(1.4),
-  min_mult_(0.6),
   max_dist_(15),
   bin_depth_(bin_depth)
 {
@@ -21,7 +19,7 @@ void Frustum::addExample(double ground_truth, double measurement)
   scopeLockWrite;
   
   double mult = ground_truth / measurement;
-  if(mult > max_mult_ || mult < min_mult_)
+  if(mult > MAX_MULT || mult < MIN_MULT)
     return;
   
   int idx = min(num_bins_ - 1, (int)floor(measurement / bin_depth_));
@@ -36,7 +34,7 @@ void Frustum::addMultiplier(double measurement, double multiplier)
   scopeLockWrite;
   
   ROS_ASSERT(multiplier > 0);
-  if(multiplier > max_mult_ || multiplier < min_mult_)
+  if(multiplier > MAX_MULT || multiplier < MIN_MULT)
     return;
   
   int idx = min(num_bins_ - 1, (int)floor(measurement / bin_depth_));

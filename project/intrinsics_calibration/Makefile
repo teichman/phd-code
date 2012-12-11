@@ -27,22 +27,12 @@ AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
 SLAM_RUNS_xpl01		:= 	2a_backandforth \
-				2a_loops_1 \
-				2a_loops_2 \
 				2012-10-22_2a_backandforth_0 \
-				2012-10-22_2a_backandforth_1 \
 				2012-10-22_2a_backandforth_2 \
 				2012-10-22_2a_backandforth_4 \
-				2012-11-16_2a_backandforth_5 \
 				2012-11-16_2a_backandforth_6 \
 				2012-11-16_2a_backandforth_7 \
 				2012-11-16_2a_backandforth_8
-
-#SLAM_RUNS_xpl01		:= 	2a_backandforth
-
-#SLAM_RUNS_xpl01		:= 	2012-10-22_2a_backandforth_4
-#				2012-10-22_2a_backandforth_2 \
-				2012-10-22_2a_backandforth_0
 
 # Data specifically for the 2012-11-06 run in which multiple sensor views were collected.
 AVV_MULTIVIEW_NAMES_xpl01	:= 	xpl01_straight-11-06-2012_00-08-08
@@ -86,14 +76,23 @@ rss2013.pdf: 	$$(MAKE_ROOT)/rss2013/rss2013.tex
 	git log -n1 >> $@
 	git diff >> $@
 
+
 # -- Enumeration of targets for each sensor.
 define SENSOR_RULE_GENERATOR
 
 # Now "trajectories" is a directory which contains all submaps and the posegraph
 TRAJDIRS_$(1) := $$(addprefix $(1)/slam_results/, $$(SLAM_RUNS_$(1)))
 TRAJECTORIES_SUB_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do find $$$${DIR} -name *.traj; done`
+TRAJECTORIES_ONLYFIRST_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do find $$$${DIR} -name *.traj | sort | head -n1; done`
 SLAM_RUNS_DUPL_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do \
 	for TRAJ in $$$$(ls $$$${DIR} | grep traj); do basename $$$${DIR} | xargs -I {} echo $(SLAM_DATA_PATH)/$(1)/{}; done; done`
+
+$(1)/evaluation/slam_eval: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
+	mkdir -p $$(@D)
+	rosrun xpl_calibration evaluate_slam_calibration \
+	--output $(1)/evaluation/slam_eval \
+	--sseqs $$(addprefix $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
+	--trajs $$(TRAJECTORIES_ONLYFIRST_$(1))
 
 $(1)-quantitative-evaluation: 	$(1)/evaluation/results-baseline.txt \
 				$(1)/evaluation/results-distortion_model_and_recalib.txt
@@ -218,6 +217,9 @@ $(foreach SENSOR,$(SENSORS),$(eval $(call SENSOR_RULE_GENERATOR,$(SENSOR))))
 
 # -- Enumeration of targets for each run of each sensor.
 define SENSOR_RUN_RULE_GENERATOR
+
+$(1)-visualize-intrinsics-on-map-$(2): $(1)/evaluation/slam_eval
+	cd $(1)/evaluation/slam_eval/$(2) && rosrun xpl_calibration visualize_slam_calibration --imodel intrinsics $(SLAM_DATA_PATH)/$(1)/$(2)/ ../../../slam_results/$(2)/submap_0.traj
 
 # Press j to take a screenshot from the angle you want.
 $(1)/user_defined_camera-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam $(1)/slam_results/$(2)
