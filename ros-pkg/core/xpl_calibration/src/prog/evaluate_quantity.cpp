@@ -12,7 +12,9 @@ void computeDistortion(const Frame& frame, const Frame& mapframe, double* total_
 {
   ROS_ASSERT(frame.depth_->cols() == mapframe.depth_->cols());
   ROS_ASSERT(frame.depth_->rows() == mapframe.depth_->rows());
-  
+
+  double total_error_local = 0;
+  double count_local = 0;
   for(int x = 0; x < frame.depth_->cols(); ++x) {
     for(int y = 0; y < frame.depth_->rows(); ++y) {
 
@@ -26,31 +28,28 @@ void computeDistortion(const Frame& frame, const Frame& mapframe, double* total_
       double mult = gt / meas;
       if(mult > MAX_MULT || mult < MIN_MULT)
 	continue;
-      
-      *total_error += fabs(meas - gt);
-      (*count)++;
+
+      total_error_local += fabs(meas - gt);
+      ++count_local;
     }
   }
+
+  static boost::shared_mutex shared_mutex;
+  boost::unique_lock<boost::shared_mutex> lockable_unique_lock(shared_mutex);
+  *total_error += total_error_local;
+  *count += count_local;
 }
 
 void evaluate(const bpo::variables_map& opts,
 	      const DiscreteDepthDistortionModel& intrinsics,
-	      const StreamSequence& sseq, const Trajectory& traj,
-	      const string& eval_path)
+	      const Cloud& map,
+	      const StreamSequence& sseq,
+	      const Trajectory& traj,
+	      double* raw_total_error, double* raw_count,
+	      double* undistorted_total_error, double* undistorted_count)
 {
-  ROS_ASSERT(bfs::exists(eval_path));
-  intrinsics.save(eval_path + "/intrinsics");
-
-  // -- Build the map.
-  Cloud map = *SlamCalibrator::buildMap(sseq, traj, MAX_RANGE_MAP, opts["vgsize"].as<double>());
-  Cloud transformed;
-  
   // -- For all poses, compute the distortion with and without the intrinsics.
-  double raw_total_error = 0;
-  double raw_count = 0;
-  double undistorted_total_error = 0;
-  double undistorted_count = 0;
-  
+  #pragma omp parallel for
   for(size_t i = 0; i < traj.size(); ++i) {
     if(!traj.exists(i))
       continue;
@@ -58,19 +57,40 @@ void evaluate(const bpo::variables_map& opts,
     Frame frame;
     sseq.readFrame(i, &frame);
     Affine3f transform = traj.get(i).inverse().cast<float>();
+    Cloud transformed;
     pcl::transformPointCloud(map, transformed, transform);
     Frame mapframe;
     sseq.model_.cloudToFrame(transformed, &mapframe);
 
-    cv::imshow("mapframe", mapframe.depthImage());
-    cv::imshow("frame", frame.depthImage());
-    cv::waitKey(10);
+    // cv::imshow("mapframe", mapframe.depthImage());
+    // cv::imshow("frame", frame.depthImage());
+    // cv::waitKey(2);
 
-    computeDistortion(frame, mapframe, &raw_total_error, &raw_count);
+    computeDistortion(frame, mapframe, raw_total_error, raw_count);
     intrinsics.undistort(&frame);
-    computeDistortion(frame, mapframe, &undistorted_total_error, &undistorted_count);
+    computeDistortion(frame, mapframe, undistorted_total_error, undistorted_count);
   }
+}
 
+void evaluate(const bpo::variables_map& opts,
+	      const DiscreteDepthDistortionModel& intrinsics,
+	      const vector<Cloud>& maps,
+	      const vector<StreamSequence::ConstPtr>& sseqs,
+	      const vector<Trajectory>& trajectories,
+	      const string& eval_path)
+{
+  ROS_ASSERT(bfs::exists(eval_path));
+  intrinsics.save(eval_path + "/intrinsics");
+
+  double raw_total_error = 0;
+  double raw_count = 0;
+  double undistorted_total_error = 0;
+  double undistorted_count = 0;
+  for(size_t i = 0; i < sseqs.size(); ++i) { 
+    evaluate(opts, intrinsics, maps[i], *sseqs[i], trajectories[i],
+	     &raw_total_error, &raw_count,
+	     &undistorted_total_error, &undistorted_count);
+  }
   double raw_mean_error = raw_total_error / raw_count;
   double undistorted_mean_error = undistorted_total_error / undistorted_count;
   
@@ -185,6 +205,14 @@ int main(int argc, char** argv)
   vector<Trajectory> trajectories_test;
   vector<string> names_test;
   load(sseq_paths_test, traj_paths_test, &sseqs_test, &trajectories_test, &names_test);
+
+  // -- Build the test maps once.
+  cout << "Building test maps." << endl;
+  vector<Cloud> maps(sseqs_test.size());
+  for(size_t i = 0; i < maps.size(); ++i)
+    maps[i] = *SlamCalibrator::buildMap(*sseqs_test[i], trajectories_test[i], MAX_RANGE_MAP, opts["vgsize"].as<double>());
+  cout << "Done." << endl;
+  
   cout << endl;
   cout << "--------------------" << endl;
   cout << endl;
@@ -197,20 +225,20 @@ int main(int argc, char** argv)
     string ordering_path = oss.str();
     bfs::create_directory(ordering_path);
     
-    // Get a random ordering of the training data.
+    // -- Get a random ordering of the training data.
     vector<int> indices(sseqs_train.size());
     for(size_t j = 0; j < indices.size(); ++j)
       indices[j] = j;
     random_shuffle(indices.begin(), indices.end());
 
-    // Add datasets and evaluate in order.
+    // -- Add datasets and evaluate in order.
     for(size_t num_datasets = 1; num_datasets <= indices.size(); ++num_datasets) {
       ostringstream oss;
       oss << ordering_path << "/" << setw(3) << setfill('0') << num_datasets;
       string eval_path = oss.str();
       bfs::create_directory(eval_path);
 
-      // Set up the training subset.
+      // -- Set up the training subset.
       vector<StreamSequence::ConstPtr> sseqs_train_subset;
       vector<Trajectory> trajectories_train_subset;
       vector<string> names_train_subset;
@@ -220,32 +248,41 @@ int main(int argc, char** argv)
 	trajectories_train_subset.push_back(trajectories_train[idx]);
 	names_train_subset.push_back(names_train[idx]);
       }
-      vector<double> training_seconds(sseqs_train_subset.size());
-      double total_seconds = 0;
-      for(size_t j = 0; j < training_seconds.size(); ++j) {
-	double seconds = sseqs_train_subset[j]->timestamps_.back() - sseqs_train_subset[j]->timestamps_.front();
-	training_seconds[j] = seconds;
-	total_seconds += seconds;
-      }
 
-      // Save what data we're operating on.
+      // -- Save what data we're operating on.
+      VectorXd training_seconds(sseqs_train_subset.size());
+      for(int j = 0; j < training_seconds.size(); ++j)
+	training_seconds(j) = sseqs_train_subset[j]->timestamps_.back() - sseqs_train_subset[j]->timestamps_.front();
+      VectorXd testing_seconds(sseqs_test.size());
+      for(int j = 0; j < testing_seconds.size(); ++j)
+	testing_seconds(j) = sseqs_test[j]->timestamps_.back() - sseqs_test[j]->timestamps_.front();
+
       ofstream f;
       f.open((eval_path + "/info.txt").c_str());
       f << "== Training set ==" << endl;
       f << "  <name> <seconds>" << endl;
       for(size_t j = 0; j < names_train_subset.size(); ++j)
-	f << "  " << names_train_subset[j] << " " << training_seconds[j] << endl;
-      f << endl;
-      f << "Total number of seconds used for training data: " << total_seconds << endl;
+	f << "  " << names_train_subset[j] << " " << training_seconds(j) << endl;
       f << endl;
       f << "== Testing set ==" << endl;
+      f << "  <name> <seconds>" << endl;
       for(size_t j = 0; j < names_test.size(); ++j)
-	f << "  " << names_test[j] << endl;
-      f.close();
+	f << "  " << names_test[j] << " " << testing_seconds(j) << endl;
+      f << endl;
+      f << endl;
+      f << "Total seconds of data used for training: " << training_seconds.sum() << endl;
+      f << "Total seconds of data used for testing: " << testing_seconds.sum() << endl;
 
-      // Train and evaluate.
-      // DiscreteDepthDistortionModel intrinsics = calibrate(opts, sseqs_train_subset, trajectories_train_subset);
-      // evaluate(opts, intrinsics, sseqs_test, trajectories_test, eval_path);
+
+      // -- Train and evaluate.
+      HighResTimer hrt;
+      hrt.start();
+      DiscreteDepthDistortionModel intrinsics = calibrate(opts, sseqs_train_subset, trajectories_train_subset);
+      hrt.stop();
+      f << "Calibration time (seconds): " << hrt.getSeconds() << endl;
+      f.close();
+	    
+      evaluate(opts, intrinsics, maps, sseqs_test, trajectories_test, eval_path);
     }
   }
   
