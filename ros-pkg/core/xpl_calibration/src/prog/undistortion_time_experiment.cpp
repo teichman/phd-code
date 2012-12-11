@@ -15,14 +15,18 @@ int main(int argc, char** argv)
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
 
+  vector<string> sseq_paths;
+  size_t step;
+  
   opts_desc.add_options()
     ("help,h", "produce help message")
-    ("sseq", bpo::value<string>()->required(), "A StreamSequence.")
+    ("sseqs", bpo::value< vector<string> >(&sseq_paths)->required()->multitoken(), "StreamSequences.")
     ("intrinsics", bpo::value<string>()->required(), "A discrete depth distortion model to evaluate.")
-    ("max-num", bpo::value<size_t>()->default_value(50))
+    ("max-num", bpo::value<size_t>()->default_value(50), "Max number of frames per sequence.")
+    ("step", bpo::value<size_t>(&step)->default_value(10))
     ;
 
-  p.add("sseq", 1).add("intrinsics", 1);
+  p.add("intrinsics", 1);
      
   bpo::variables_map opts;
   bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
@@ -30,37 +34,33 @@ int main(int argc, char** argv)
   try { bpo::notify(opts); }
   catch(...) { badargs = true; }
   if(opts.count("help") || badargs) {
-    cout << "Usage: " << bfs::basename(argv[0]) << " SSEQ INTRINSICS" << endl;
+    cout << "Usage: " << bfs::basename(argv[0]) << " INTRINSICS --sseqs SSEQ [ SSEQ ... ]" << endl;
     cout << endl;
     cout << opts_desc << endl;
     return 1;
   }
 
-  StreamSequence sseq;
-  sseq.load(opts["sseq"].as<string>());
   DiscreteDepthDistortionModel dddm;
   dddm.load(opts["intrinsics"].as<string>());
 
-  // -- Load some frames.
-  vector<Frame> frames;
-  Frame frame;
-  size_t step = 10;
-  for(size_t i = 0; i < min(step * opts["max-num"].as<size_t>(), sseq.size()); i += step) {
-    sseq.readFrame(i, &frame);
-    frames.push_back(frame);
+  vector<double> times_std;
+  for(size_t i = 0; i < sseq_paths.size(); ++i) {
+    StreamSequence sseq;
+    sseq.load(sseq_paths[i]);
+    for(size_t j = 0; j < min(step * opts["max-num"].as<size_t>(), sseq.size()); j += step) {
+      Frame frame;
+      sseq.readFrame(i, &frame);    
+      HighResTimer hrt;
+      hrt.start();
+      dddm.undistort(&frame);
+      hrt.stop();
+      times_std.push_back(hrt.getMilliseconds());
+    }
   }
+
+  VectorXd times;
+  eigen_extensions::stdToEig(times_std, &times);
   
-  // -- Test undistortion time.
-  VectorXd times(frames.size());
-  //ProfilerStart("undistortion_time_experiment.prof");
-  for(size_t i = 0; i < frames.size(); ++i) {
-    HighResTimer hrt;
-    hrt.start();
-    dddm.undistort(&frames[i]);
-    hrt.stop();
-    times(i) = hrt.getMilliseconds();
-  }
-  //ProfilerStop();
   cout << "Evaluated undistortion time for " << times.rows() << " frames." << endl;
   cout << "Mean undistortion time (ms): " << times.sum() / times.rows() << endl;
   cout << "Standard deviation: " << eigen_extensions::stdev(times) << endl;
