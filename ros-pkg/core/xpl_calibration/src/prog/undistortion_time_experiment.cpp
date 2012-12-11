@@ -47,6 +47,7 @@ int main(int argc, char** argv)
   for(size_t i = 0; i < sseq_paths.size(); ++i) {
     StreamSequence sseq;
     sseq.load(sseq_paths[i]);
+    cout << sseq_paths[i] << endl;
     for(size_t j = 0; j < min(step * opts["max-num"].as<size_t>(), sseq.size()); j += step) {
       Frame frame;
       sseq.readFrame(i, &frame);    
@@ -60,7 +61,8 @@ int main(int argc, char** argv)
 
   VectorXd times;
   eigen_extensions::stdToEig(times_std, &times);
-  
+
+  cout << endl;
   cout << "Evaluated undistortion time for " << times.rows() << " frames." << endl;
   cout << "Mean undistortion time (ms): " << times.sum() / times.rows() << endl;
   cout << "Standard deviation: " << eigen_extensions::stdev(times) << endl;
