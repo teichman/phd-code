@@ -8,13 +8,14 @@ using namespace rgbd;
 namespace bpo = boost::program_options;
 namespace bfs = boost::filesystem;
 
-void computeDistortion(const Frame& frame, const Frame& mapframe, double* total_error, double* count)
+void computeDistortion(const Frame& frame, const Frame& mapframe,
+		       double* total_error, double* num_pts)
 {
   ROS_ASSERT(frame.depth_->cols() == mapframe.depth_->cols());
   ROS_ASSERT(frame.depth_->rows() == mapframe.depth_->rows());
 
   double total_error_local = 0;
-  double count_local = 0;
+  double num_pts_local = 0;
   for(int x = 0; x < frame.depth_->cols(); ++x) {
     for(int y = 0; y < frame.depth_->rows(); ++y) {
 
@@ -30,14 +31,14 @@ void computeDistortion(const Frame& frame, const Frame& mapframe, double* total_
 	continue;
 
       total_error_local += fabs(meas - gt);
-      ++count_local;
+      ++num_pts_local;
     }
   }
 
   static boost::shared_mutex shared_mutex;
   boost::unique_lock<boost::shared_mutex> lockable_unique_lock(shared_mutex);
   *total_error += total_error_local;
-  *count += count_local;
+  *num_pts += num_pts_local;
 }
 
 void evaluate(const bpo::variables_map& opts,
@@ -45,8 +46,8 @@ void evaluate(const bpo::variables_map& opts,
 	      const Cloud& map,
 	      const StreamSequence& sseq,
 	      const Trajectory& traj,
-	      double* raw_total_error, double* raw_count,
-	      double* undistorted_total_error, double* undistorted_count)
+	      double* raw_total_error, double* raw_num_pts,
+	      double* undistorted_total_error, double* undistorted_num_pts)
 {
   // -- For all poses, compute the distortion with and without the intrinsics.
   #pragma omp parallel for
@@ -66,9 +67,9 @@ void evaluate(const bpo::variables_map& opts,
     // cv::imshow("frame", frame.depthImage());
     // cv::waitKey(2);
 
-    computeDistortion(frame, mapframe, raw_total_error, raw_count);
+    computeDistortion(frame, mapframe, raw_total_error, raw_num_pts);
     intrinsics.undistort(&frame);
-    computeDistortion(frame, mapframe, undistorted_total_error, undistorted_count);
+    computeDistortion(frame, mapframe, undistorted_total_error, undistorted_num_pts);
   }
 }
 
@@ -82,26 +83,44 @@ void evaluate(const bpo::variables_map& opts,
   ROS_ASSERT(bfs::exists(eval_path));
   intrinsics.save(eval_path + "/intrinsics");
 
-  double raw_total_error = 0;
-  double raw_count = 0;
-  double undistorted_total_error = 0;
-  double undistorted_count = 0;
-  for(size_t i = 0; i < sseqs.size(); ++i) { 
-    evaluate(opts, intrinsics, maps[i], *sseqs[i], trajectories[i],
-	     &raw_total_error, &raw_count,
-	     &undistorted_total_error, &undistorted_count);
+  // -- Test undistortion time.
+  double count = 0;
+  HighResTimer hrt;
+  Frame frame;
+  for(size_t i = 0; i < min((size_t)500, sseqs[0]->size()); i += 10) {
+    sseqs[0]->readFrame(i, &frame);
+    hrt.start();
+    intrinsics.undistort(&frame);
+    hrt.stop();
+    ++count;
   }
-  double raw_mean_error = raw_total_error / raw_count;
-  double undistorted_mean_error = undistorted_total_error / undistorted_count;
+  double mean_undistortion_time_ms = hrt.getMilliseconds() / count;
+  cout << "Evaluated undistortion time for " << count << " frames." << endl;
+  cout << "Mean undistortion time (ms): " << mean_undistortion_time_ms << endl;
   
+  // -- Run quantitative evaluation on all maps.
+  double raw_total_error = 0;
+  double raw_num_pts = 0;
+  double undistorted_total_error = 0;
+  double undistorted_num_pts = 0;
+  for(size_t i = 0; i < sseqs.size(); ++i) {
+    evaluate(opts, intrinsics, maps[i], *sseqs[i], trajectories[i],
+	     &raw_total_error, &raw_num_pts,
+	     &undistorted_total_error, &undistorted_num_pts);
+  }
+  double raw_mean_error = raw_total_error / raw_num_pts;
+  double undistorted_mean_error = undistorted_total_error / undistorted_num_pts;
+  
+  // -- Save output.
   ofstream file;
   file.open((eval_path + "/results.txt").c_str());
   ROS_ASSERT(file.is_open());
+  file << "Mean undistortion time (ms): " << mean_undistortion_time_ms << endl;
   file << "Raw total error: " << raw_total_error << endl;
-  file << "Raw count: " << raw_count << endl;
+  file << "Raw num_pts: " << raw_num_pts << endl;
   file << "Raw mean error: " << raw_mean_error << endl;
   file << "Undistorted total error: " << undistorted_total_error << endl;
-  file << "Undistorted count: " << undistorted_count << endl;
+  file << "Undistorted num_pts: " << undistorted_num_pts << endl;
   file << "Undistorted mean error: " << undistorted_mean_error << endl;
   file << "Error reduction: " << (raw_mean_error - undistorted_mean_error) / raw_mean_error << endl;
   file.close();
@@ -251,28 +270,35 @@ int main(int argc, char** argv)
 
       // -- Save what data we're operating on.
       VectorXd training_seconds(sseqs_train_subset.size());
-      for(int j = 0; j < training_seconds.size(); ++j)
+      VectorXd training_frames(sseqs_train_subset.size());
+      for(int j = 0; j < training_seconds.size(); ++j) {
 	training_seconds(j) = sseqs_train_subset[j]->timestamps_.back() - sseqs_train_subset[j]->timestamps_.front();
+	training_frames(j) = trajectories_train_subset[j].numValid();
+      }
       VectorXd testing_seconds(sseqs_test.size());
-      for(int j = 0; j < testing_seconds.size(); ++j)
+      VectorXd testing_frames(sseqs_test.size());
+      for(int j = 0; j < testing_seconds.size(); ++j) {
 	testing_seconds(j) = sseqs_test[j]->timestamps_.back() - sseqs_test[j]->timestamps_.front();
+	testing_frames(j) = trajectories_test[j].numValid();
+      }
 
       ofstream f;
       f.open((eval_path + "/info.txt").c_str());
       f << "== Training set ==" << endl;
-      f << "  <name> <seconds>" << endl;
+      f << "  <name> <num_frames> <seconds>" << endl;
       for(size_t j = 0; j < names_train_subset.size(); ++j)
-	f << "  " << names_train_subset[j] << " " << training_seconds(j) << endl;
+	f << "  " << names_train_subset[j] << " " << training_frames(j) << " " << training_seconds(j) << endl;
       f << endl;
       f << "== Testing set ==" << endl;
-      f << "  <name> <seconds>" << endl;
+      f << "  <name> <num_frames> <seconds>" << endl;
       for(size_t j = 0; j < names_test.size(); ++j)
-	f << "  " << names_test[j] << " " << testing_seconds(j) << endl;
+	f << "  " << names_test[j] << " " << testing_frames(j) << " " << testing_seconds(j) << endl;
       f << endl;
       f << endl;
       f << "Total seconds of data used for training: " << training_seconds.sum() << endl;
+      f << "Total number of frames used for training: " << training_frames.sum() << endl;
       f << "Total seconds of data used for testing: " << testing_seconds.sum() << endl;
-
+      f << "Total number of frames used for testing: " << testing_frames.sum() << endl;
 
       // -- Train and evaluate.
       HighResTimer hrt;
