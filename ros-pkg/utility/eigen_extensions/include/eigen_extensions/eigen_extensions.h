@@ -13,6 +13,16 @@
 
 namespace eigen_extensions {
 
+  inline double stdev(const Eigen::VectorXd& vec)
+  {
+    double mean = vec.sum() / (double)vec.rows();
+    double total = 0;
+    for(int i = 0; i < vec.rows(); ++i)
+      total += (vec.coeffRef(i) - mean) * (vec.coeffRef(i) - mean);
+    double var = total / (double)vec.rows();
+    return sqrt(var);
+  }
+  
   template<class S, int T, int U>
   void save(const Eigen::Matrix<S, T, U>& mat, const std::string& filename);
 

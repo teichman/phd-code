@@ -51,19 +51,20 @@ int main(int argc, char** argv)
   }
   
   // -- Test undistortion time.
-  double count = 0;
-  HighResTimer hrt;
-  ProfilerStart("undistortion_time_experiment.prof");
-  hrt.start();
+  VectorXd times(frames.size());
+  //ProfilerStart("undistortion_time_experiment.prof");
   for(size_t i = 0; i < frames.size(); ++i) {
+    HighResTimer hrt;
+    hrt.start();
     dddm.undistort(&frames[i]);
-    ++count;
+    hrt.stop();
+    times(i) = hrt.getMilliseconds();
   }
-  hrt.stop();
-  ProfilerStop();
-  double mean_undistortion_time_ms = hrt.getMilliseconds() / count;
-  cout << "Evaluated undistortion time for " << count << " frames." << endl;
-  cout << "Mean undistortion time (ms): " << mean_undistortion_time_ms << endl;
+  //ProfilerStop();
+  cout << "Evaluated undistortion time for " << times.rows() << " frames." << endl;
+  cout << "Mean undistortion time (ms): " << times.sum() / times.rows() << endl;
+  cout << "Standard deviation: " << eigen_extensions::stdev(times) << endl;
+  cout << "Absolute maximum: " << times.maxCoeff() << endl;
 
   return 0;
 }
