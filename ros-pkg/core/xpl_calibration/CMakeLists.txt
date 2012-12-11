@@ -156,3 +156,7 @@ target_link_libraries(visualize_slam_calibration ${PROJECT_NAME})
 rosbuild_add_executable(evaluate_slam_calibration src/prog/evaluate_slam_calibration.cpp)
 rosbuild_link_boost(evaluate_slam_calibration program_options filesystem)
 target_link_libraries(evaluate_slam_calibration ${PROJECT_NAME})
+
+rosbuild_add_executable(evaluate_quantity src/prog/evaluate_quantity.cpp)
+rosbuild_link_boost(evaluate_quantity program_options filesystem)
+target_link_libraries(evaluate_quantity ${PROJECT_NAME})
