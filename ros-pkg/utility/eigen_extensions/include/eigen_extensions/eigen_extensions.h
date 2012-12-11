@@ -13,6 +13,13 @@
 
 namespace eigen_extensions {
 
+  inline void stdToEig(const std::vector<double>& std, Eigen::VectorXd* eig)
+  {
+    eig->resize(std.size());
+    for(size_t i = 0; i < std.size(); ++i)
+      eig->coeffRef(i) = std[i];
+  }
+  
   inline double stdev(const Eigen::VectorXd& vec)
   {
     double mean = vec.sum() / (double)vec.rows();
