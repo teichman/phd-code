@@ -5,7 +5,6 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-//#include <sensor_msgs/CameraInfo.h>
 #include <serializable/serializable.h>
 #include <dst/typedefs.h>
 

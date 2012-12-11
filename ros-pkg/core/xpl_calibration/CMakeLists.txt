@@ -148,3 +148,19 @@ target_link_libraries(twiddle_frame_alignment ${PROJECT_NAME})
 rosbuild_add_executable(avv_multiview_calibrator src/prog/avv_multiview_calibrator.cpp src/lib/asus_vs_velo_visualizer.cpp src/lib/avv_multiview_model.cpp)
 rosbuild_link_boost(avv_multiview_calibrator program_options filesystem)
 target_link_libraries(avv_multiview_calibrator ${PROJECT_NAME})
+
+rosbuild_add_executable(visualize_slam_calibration src/prog/visualize_slam_calibration.cpp)
+rosbuild_link_boost(visualize_slam_calibration program_options filesystem)
+target_link_libraries(visualize_slam_calibration ${PROJECT_NAME})
+
+rosbuild_add_executable(evaluate_slam_calibration src/prog/evaluate_slam_calibration.cpp)
+rosbuild_link_boost(evaluate_slam_calibration program_options filesystem)
+target_link_libraries(evaluate_slam_calibration ${PROJECT_NAME})
+
+rosbuild_add_executable(evaluate_quantity src/prog/evaluate_quantity.cpp)
+rosbuild_link_boost(evaluate_quantity program_options filesystem)
+target_link_libraries(evaluate_quantity ${PROJECT_NAME})
+
+rosbuild_add_executable(undistortion_time_experiment src/prog/undistortion_time_experiment.cpp)
+rosbuild_link_boost(undistortion_time_experiment program_options filesystem)
+target_link_libraries(undistortion_time_experiment ${PROJECT_NAME})
