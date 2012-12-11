@@ -44,13 +44,19 @@ void Frustum::addMultiplier(double measurement, double multiplier)
   multipliers_(idx) = total_multipliers_(idx) / counts_(idx);
 }
 
-void Frustum::undistort(rgbd::Point* pt) const
+void Frustum::undistort(double* z) const
 {
-  double dist = pt->getVector3fMap().norm();
-  int idx = min(num_bins_ - 1, (int)floor(dist / bin_depth_));
-  ROS_ASSERT(idx >= 0);
-  pt->getVector3fMap() *= multipliers_(idx);
+  int idx = min(num_bins_ - 1, (int)floor(*z / bin_depth_));
+  *z *= multipliers_.coeffRef(idx);
 }
+
+// void Frustum::undistort(rgbd::Point* pt) const
+// {
+//   double dist = pt->getVector3fMap().norm();
+//   int idx = min(num_bins_ - 1, (int)floor(dist / bin_depth_));
+//   ROS_ASSERT(idx >= 0);
+//   pt->getVector3fMap() *= multipliers_(idx);
+// }
 
 void Frustum::serialize(std::ostream& out) const
 {
@@ -118,15 +124,18 @@ void DiscreteDepthDistortionModel::undistort(Frame* frame) const
       if(frame->depth_->coeffRef(v, u) == 0)
 	continue;
 
-      ppt.v_ = v;
-      ppt.u_ = u;
-      ppt.z_ = frame->depth_->coeffRef(v, u);
-      psm_.project(ppt, &pt);
-      frustum(v, u).undistort(&pt);
-      psm_.project(pt, &ppt);
+      // ppt.v_ = v;
+      // ppt.u_ = u;
+      // ppt.z_ = frame->depth_->coeffRef(v, u);
+      // psm_.project(ppt, &pt);
+      // frustum(v, u).undistort(&pt);
+      // psm_.project(pt, &ppt);
+      // //ROS_ASSERT(ppt.u_ == u && ppt.v_ == v);  // TODO: PrimeSenseModel should project back to exactly the same spot.
+      // frame->depth_->coeffRef(v, u) = ppt.z_;
 
-      //ROS_ASSERT(ppt.u_ == u && ppt.v_ == v);  // TODO: PrimeSenseModel should project back to exactly the same spot.
-      frame->depth_->coeffRef(v, u) = ppt.z_;
+      double z = frame->depth_->coeffRef(v, u) * 0.001;
+      frustum(v, u).undistort(&z);
+      frame->depth_->coeffRef(v, u) = z * 1000;
     }
   }
 }
@@ -150,11 +159,13 @@ void DiscreteDepthDistortionModel::accumulate(const rgbd::Frame& measurement, co
       if(mult == 0)
 	continue;
       
-      ppt.z_ = measurement.depth_->coeffRef(ppt.v_, ppt.u_);
-      psm_.project(ppt, &pt);
-      double meas = pt.getVector3fMap().norm();
-      
-      frustum(ppt.v_, ppt.u_).addMultiplier(meas, mult);
+      // ppt.z_ = measurement.depth_->coeffRef(ppt.v_, ppt.u_);
+      // psm_.project(ppt, &pt);
+      // double meas = pt.getVector3fMap().norm();
+      // frustum(ppt.v_, ppt.u_).addMultiplier(meas, mult);
+
+      double z = measurement.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
+      frustum(ppt.v_, ppt.u_).addMultiplier(z, mult);
     }
   }
 }
@@ -175,14 +186,16 @@ void DiscreteDepthDistortionModel::accumulate(const Frame& ground_truth, const F
       if(measurement.depth_->coeffRef(ppt.v_, ppt.u_) == 0)
 	continue;
       
-      ppt.z_ = ground_truth.depth_->coeffRef(ppt.v_, ppt.u_);
-      psm_.project(ppt, &pt);
-      double gt = pt.getVector3fMap().norm();
+      // ppt.z_ = ground_truth.depth_->coeffRef(ppt.v_, ppt.u_);
+      // psm_.project(ppt, &pt);
+      // double gt = pt.getVector3fMap().norm();
+      // ppt.z_ = measurement.depth_->coeffRef(ppt.v_, ppt.u_);
+      // psm_.project(ppt, &pt);
+      // double meas = pt.getVector3fMap().norm();
+      // frustum(ppt.v_, ppt.u_).addExample(gt, meas);
 
-      ppt.z_ = measurement.depth_->coeffRef(ppt.v_, ppt.u_);
-      psm_.project(ppt, &pt);
-      double meas = pt.getVector3fMap().norm();
-      
+      double gt = ground_truth.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
+      double meas = measurement.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
       frustum(ppt.v_, ppt.u_).addExample(gt, meas);
     }
   }

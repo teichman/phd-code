@@ -11,10 +11,10 @@ class Frustum : public Serializable, public SharedLockable
 {
 public:
   Frustum(int smoothing = 1, double bin_depth = 1.0);
-  //! distance to origin, not z value.
+  //! z value, not distance to origin.
   void addExample(double ground_truth, double measurement);
   void addMultiplier(double measurement, double multiplier);
-  void undistort(rgbd::Point* pt) const;
+  void undistort(double* z) const;
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);
   

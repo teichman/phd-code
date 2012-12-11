@@ -19,6 +19,7 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("sseq", bpo::value<string>()->required(), "A StreamSequence.")
     ("intrinsics", bpo::value<string>()->required(), "A discrete depth distortion model to evaluate.")
+    ("max-num", bpo::value<size_t>()->default_value(50))
     ;
 
   p.add("sseq", 1).add("intrinsics", 1);
@@ -43,7 +44,8 @@ int main(int argc, char** argv)
   // -- Load some frames.
   vector<Frame> frames;
   Frame frame;
-  for(size_t i = 0; i < min((size_t)500, sseq.size()); i += 10) {
+  size_t step = 10;
+  for(size_t i = 0; i < min(step * opts["max-num"].as<size_t>(), sseq.size()); i += step) {
     sseq.readFrame(i, &frame);
     frames.push_back(frame);
   }
