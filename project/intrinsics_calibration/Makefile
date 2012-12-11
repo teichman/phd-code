@@ -57,6 +57,18 @@ AVV_MULTIVIEW_PATHS_xpl04	:=	$(AVV_PATH)/2012-11-06_primesense_vs_velo/xpl04_dow
 all:
 	@echo You should probably be more specific.
 
+############################################################
+# RSS 2013 paper
+############################################################
+
+rss2013.pdf: 	$$(MAKE_ROOT)/rss2013/rss2013.tex
+	cd $(MAKE_ROOT)/rss2013 && pdflatex rss2013
+	cd $(MAKE_ROOT)/rss2013 && bibtex rss2013
+	cd $(MAKE_ROOT)/rss2013 && pdflatex rss2013
+	cd $(MAKE_ROOT)/rss2013 && pdflatex rss2013
+	-cd $(MAKE_ROOT)/rss2013 && rm rss2013.{aux,bbl,blg,log,idx} latex_macros.aux
+	mv $(MAKE_ROOT)/rss2013/rss2013.pdf .
+
 
 ############################################################
 # Experiments
