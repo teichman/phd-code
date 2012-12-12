@@ -164,3 +164,7 @@ target_link_libraries(evaluate_quantity ${PROJECT_NAME})
 rosbuild_add_executable(undistortion_time_experiment src/prog/undistortion_time_experiment.cpp)
 rosbuild_link_boost(undistortion_time_experiment program_options filesystem)
 target_link_libraries(undistortion_time_experiment ${PROJECT_NAME})
+
+rosbuild_add_executable(focal_length_experiment src/prog/focal_length_experiment.cpp)
+rosbuild_link_boost(focal_length_experiment program_options filesystem)
+target_link_libraries(focal_length_experiment ${PROJECT_NAME})
