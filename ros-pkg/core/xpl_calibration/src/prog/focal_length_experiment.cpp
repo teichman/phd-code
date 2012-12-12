@@ -281,13 +281,14 @@ int main(int argc, char** argv)
     slam.run();
     vector<Trajectory> trajectories_train;
     trajectories_train.push_back(slam.trajs_[0]);
+    slam.trajs_[0].save(iter_path + "/trajectory");
+    sseqs_train[0]->model_.save(iter_path + "/model");
     
-    // // -- Optimize focal length based on map.
+    // -- Optimize focal length based on map.
     vector<StreamSequence::Ptr> sseqs_train_first;
     sseqs_train_first.push_back(sseqs_train[0]);
     prev_f = f;
     f = calibrate(opts, sseqs_train_first, trajectories_train);
-    //f -= 5;  // Very bad optimizer.
     
     // -- Stop if there is no change.
     double df = f - prev_f;
