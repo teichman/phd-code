@@ -1,6 +1,7 @@
 #ifndef DISCRETE_DEPTH_DISTORTION_MODEL_H
 #define DISCRETE_DEPTH_DISTORTION_MODEL_H
 
+#include <opencv2/imgproc/imgproc.hpp>
 #include <rgbd_sequence/primesense_model.h>
 #include <bag_of_tricks/lockable.h>
 
@@ -25,6 +26,8 @@ protected:
   Eigen::VectorXf counts_;
   Eigen::VectorXf total_multipliers_;
   Eigen::VectorXf multipliers_;
+
+  friend class DiscreteDepthDistortionModel;
 };
 
 class DiscreteDepthDistortionModel : public Serializable
@@ -38,6 +41,9 @@ public:
   void accumulate(const rgbd::Frame& measurement, const Eigen::MatrixXd& multipliers);
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);
+  //! Saves images to the directory found at path.
+  //! If path doesn't exist, it will be created.
+  void visualize(const std::string& path) const;
   
 protected:
   rgbd::PrimeSenseModel psm_;

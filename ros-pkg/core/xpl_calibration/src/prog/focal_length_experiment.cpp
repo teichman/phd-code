@@ -249,10 +249,15 @@ int main(int argc, char** argv)
   file.close();
   
   // -- Build the test maps once.
+  //    SlamCalibrator::buildMap uses the focal length in the sseq when projecting frames to clouds.
+  //    We want to use 525 here since this is the correct value, at least according to PrimeSense.
   cout << "Building test maps." << endl;
   vector<Cloud> maps_test(sseqs_test.size());
-  for(size_t i = 0; i < maps_test.size(); ++i)
+  for(size_t i = 0; i < maps_test.size(); ++i) {
+    ROS_ASSERT(sseqs_test[i]->model_.fx_ == 525);
+    ROS_ASSERT(sseqs_test[i]->model_.fy_ == 525);
     maps_test[i] = *SlamCalibrator::buildMap(*sseqs_test[i], trajectories_test[i], MAX_RANGE_MAP, opts["vgsize"].as<double>());
+  }
   cout << "Done." << endl;
   
   cout << endl;
