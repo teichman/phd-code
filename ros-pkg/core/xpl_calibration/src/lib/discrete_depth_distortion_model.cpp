@@ -349,7 +349,7 @@ void DiscreteDepthDistortionModel::visualize(const std::string& dir) const
 
   // -- Save a small version for easy loading.
   cv::Mat3b mega_scaled;
-  cv::resize(mega, mega_scaled, cv::Size(), 0.1, 0.1, cv::INTER_CUBIC);
+  cv::resize(mega, mega_scaled, cv::Size(), 0.2, 0.2, cv::INTER_CUBIC);
   oss.str("");
   oss << dir << "/mega_scaled.png";
   cv::imwrite(oss.str(), mega_scaled);
