@@ -38,6 +38,8 @@ public:
   DiscreteDepthDistortionModel() {}
   ~DiscreteDepthDistortionModel();
   DiscreteDepthDistortionModel(const rgbd::PrimeSenseModel& psm, int bin_width = 4, int bin_height = 3, double bin_depth = 1.0, int smoothing = 1);
+  DiscreteDepthDistortionModel(const DiscreteDepthDistortionModel& other);
+  DiscreteDepthDistortionModel& operator=(const DiscreteDepthDistortionModel& other);
   void undistort(rgbd::Frame* frame) const;
   void accumulate(const rgbd::Frame& ground_truth, const rgbd::Frame& measurement);
   void accumulate(const rgbd::Frame& measurement, const Eigen::MatrixXd& multipliers);
