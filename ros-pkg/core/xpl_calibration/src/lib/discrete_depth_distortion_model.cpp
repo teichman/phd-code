@@ -135,32 +135,29 @@ void DiscreteDepthDistortionModel::undistort(Frame* frame) const
 
   ProjectivePoint ppt;
   Point pt;
+  #pragma omp parallel for
   for(int v = 0; v < psm_.height_; ++v) {
     for(int u = 0; u < psm_.width_; ++u) {
       if(frame->depth_->coeffRef(v, u) == 0)
 	continue;
 
-      // ppt.v_ = v;
-      // ppt.u_ = u;
-      // ppt.z_ = frame->depth_->coeffRef(v, u);
-      // psm_.project(ppt, &pt);
-      // frustum(v, u).undistort(&pt);
-      // psm_.project(pt, &ppt);
-      // //ROS_ASSERT(ppt.u_ == u && ppt.v_ == v);  // TODO: PrimeSenseModel should project back to exactly the same spot.
-      // frame->depth_->coeffRef(v, u) = ppt.z_;
-
-      float z = frame->depth_->coeffRef(v, u) * 0.001;
-      int idx = frustum(v, u).index(z);
-      if(idx_cache_.coeffRef(v, u) == idx)
-	z *= multiplier_cache_.coeffRef(v, u);
-      else {
-	float mult;
-	frustum(v, u).undistort(idx, &z, &mult);
-	idx_cache_.coeffRef(v, u) = idx;
-	multiplier_cache_.coeffRef(v, u) = mult;
-      }
-      
+      // Non-caching version.
+      double z = frame->depth_->coeffRef(v, u) * 0.001;
+      frustum(v, u).undistort(&z);
       frame->depth_->coeffRef(v, u) = z * 1000;
+
+      // Caching version.
+      // float z = frame->depth_->coeffRef(v, u) * 0.001;
+      // int idx = frustum(v, u).index(z);
+      // if(idx_cache_.coeffRef(v, u) == idx)
+      // 	z *= multiplier_cache_.coeffRef(v, u);
+      // else {
+      // 	float mult;
+      // 	frustum(v, u).undistort(idx, &z, &mult);
+      // 	idx_cache_.coeffRef(v, u) = idx;
+      // 	multiplier_cache_.coeffRef(v, u) = mult;
+      // }
+      // frame->depth_->coeffRef(v, u) = z * 1000;
     }
   }
 }
