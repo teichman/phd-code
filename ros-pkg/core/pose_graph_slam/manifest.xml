@@ -9,11 +9,12 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/pose_graph_slam</url>
 
+  <!-- pcl_bleeding has to come first so that it gets used rather than the ros version -->
+  <depend package="pcl_bleeding"/>
   <depend package="g2o"/>
   <depend package="rosconsole"/>
   <depend package="serializable"/>
   <depend package="eigen_extensions"/>
-  <depend package="pcl_bleeding"/>
 
   <export>
     <cpp cflags="-I${prefix}/include"

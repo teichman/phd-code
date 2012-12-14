@@ -13,7 +13,7 @@
   <depend package="serializable"/>
   <depend package="opencv_bleeding"/>
   <depend package="bag_of_tricks"/>
-  <depend package="sensor_msgs"/>
+  <!-- depend package="sensor_msgs" /-->
   <depend package="roscpp"/>
   <depend package="eigen_extensions"/>
   <depend package="google-perftools"/>
