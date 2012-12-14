@@ -7,6 +7,7 @@
 #include <rgbd_sequence/stream_sequence.h>
 #include <xpl_calibration/trajectory.h>
 #include <xpl_calibration/frame_aligner.h>
+#include <xpl_calibration/discrete_depth_distortion_model.h>
 
 #define MAX_RANGE_MAP 2.0
 
@@ -20,6 +21,9 @@ public:
   rgbd::StreamSequence::ConstPtr sseq_;
   //! Should be running in the main thread if you want to see anything.
   FrameAlignmentVisualizer* fav_;
+  //! If not NULL, it will use these intrinsics when computing frame alignments.
+  //! PrimeSenseSlam will not delete this.
+  const DiscreteDepthDistortionModel* intrinsics_;
   
   // -- Params
   //! When choosing the next frame, advance by at least this much.

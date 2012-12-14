@@ -90,6 +90,32 @@ void Frustum::deserialize(std::istream& in)
   eigen_extensions::deserialize(in, &multipliers_);
 }
 
+DiscreteDepthDistortionModel::DiscreteDepthDistortionModel(const DiscreteDepthDistortionModel& other)
+{
+  *this = other;
+}
+
+DiscreteDepthDistortionModel& DiscreteDepthDistortionModel::operator=(const DiscreteDepthDistortionModel& other)
+{
+  psm_ = other.psm_;
+  width_ = other.width_;
+  height_ = other.height_;
+  bin_width_ = other.bin_width_;
+  bin_height_ = other.bin_height_;
+  bin_depth_ = other.bin_depth_;
+  num_bins_x_ = other.num_bins_x_;
+  num_bins_y_ = other.num_bins_y_;
+  idx_cache_ = other.idx_cache_;
+  multiplier_cache_ = other.multiplier_cache_;
+  
+  frustums_ = other.frustums_;
+  for(size_t i = 0; i < frustums_.size(); ++i)
+    for(size_t j = 0; j < frustums_[i].size(); ++j)
+      frustums_[i][j] = new Frustum(*other.frustums_[i][j]);
+
+  return *this;
+}
+
 DiscreteDepthDistortionModel::DiscreteDepthDistortionModel(const PrimeSenseModel& psm,
 							   int bin_width, int bin_height, double bin_depth,
 							   int smoothing) :
@@ -160,6 +186,11 @@ void DiscreteDepthDistortionModel::undistort(Frame* frame) const
       // frame->depth_->coeffRef(v, u) = z * 1000;
     }
   }
+}
+
+void DiscreteDepthDistortionModel::addExample(const ProjectivePoint& ppt, double ground_truth, double measurement)
+{
+  frustum(ppt.v_, ppt.u_).addExample(ground_truth, measurement);
 }
 
 void DiscreteDepthDistortionModel::accumulate(const rgbd::Frame& measurement, const Eigen::MatrixXd& multipliers)
@@ -349,7 +380,7 @@ void DiscreteDepthDistortionModel::visualize(const std::string& dir) const
 
   // -- Save a small version for easy loading.
   cv::Mat3b mega_scaled;
-  cv::resize(mega, mega_scaled, cv::Size(), 0.1, 0.1, cv::INTER_CUBIC);
+  cv::resize(mega, mega_scaled, cv::Size(), 0.2, 0.2, cv::INTER_CUBIC);
   oss.str("");
   oss << dir << "/mega_scaled.png";
   cv::imwrite(oss.str(), mega_scaled);
