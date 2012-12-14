@@ -168,3 +168,7 @@ target_link_libraries(undistortion_time_experiment ${PROJECT_NAME})
 rosbuild_add_executable(focal_length_experiment src/prog/focal_length_experiment.cpp)
 rosbuild_link_boost(focal_length_experiment program_options filesystem)
 target_link_libraries(focal_length_experiment ${PROJECT_NAME})
+
+rosbuild_add_executable(visualize_intrinsics src/prog/visualize_intrinsics.cpp)
+rosbuild_link_boost(visualize_intrinsics program_options filesystem)
+target_link_libraries(visualize_intrinsics ${PROJECT_NAME})

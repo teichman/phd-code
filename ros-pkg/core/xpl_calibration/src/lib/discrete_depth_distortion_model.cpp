@@ -3,9 +3,10 @@
 using namespace std;
 using namespace Eigen;
 using namespace rgbd;
+namespace bfs = boost::filesystem;
 
 Frustum::Frustum(int smoothing, double bin_depth) :
-  max_dist_(15),
+  max_dist_(10),
   bin_depth_(bin_depth)
 {
   num_bins_ = ceil(max_dist_ / bin_depth_);
@@ -44,10 +45,21 @@ void Frustum::addMultiplier(double measurement, double multiplier)
   multipliers_(idx) = total_multipliers_(idx) / counts_(idx);
 }
 
-void Frustum::undistort(double* z) const
+
+inline int Frustum::index(double z) const
 {
-  int idx = min(num_bins_ - 1, (int)floor(*z / bin_depth_));
-  *z *= multipliers_.coeffRef(idx);
+  return min(num_bins_ - 1, (int)floor(z / bin_depth_));
+}
+  
+inline void Frustum::undistort(double* z) const
+{
+  *z *= multipliers_.coeffRef(index(*z));
+}
+
+inline void Frustum::undistort(int idx, float* z, float* mult) const
+{
+  *mult = multipliers_.coeffRef(idx);
+  *z *= *mult;
 }
 
 // void Frustum::undistort(rgbd::Point* pt) const
@@ -91,6 +103,10 @@ DiscreteDepthDistortionModel::DiscreteDepthDistortionModel(const PrimeSenseModel
 
   num_bins_x_ = psm_.width_ / bin_width_;
   num_bins_y_ = psm_.height_ / bin_height_;
+  idx_cache_ = Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Ones(psm_.height_, psm_.width_) * -1;
+  multiplier_cache_ = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(psm_.height_, psm_.width_);
+  //multiplier_cache_ = MatrixXf::Zero(num_bins_y_, num_bins_x_);  // Why does this compile?
+  
   frustums_.resize(num_bins_y_);
   for(size_t i = 0; i < frustums_.size(); ++i) {
     frustums_[i].resize(num_bins_x_, NULL);
@@ -119,23 +135,29 @@ void DiscreteDepthDistortionModel::undistort(Frame* frame) const
 
   ProjectivePoint ppt;
   Point pt;
+  #pragma omp parallel for
   for(int v = 0; v < psm_.height_; ++v) {
     for(int u = 0; u < psm_.width_; ++u) {
       if(frame->depth_->coeffRef(v, u) == 0)
 	continue;
 
-      // ppt.v_ = v;
-      // ppt.u_ = u;
-      // ppt.z_ = frame->depth_->coeffRef(v, u);
-      // psm_.project(ppt, &pt);
-      // frustum(v, u).undistort(&pt);
-      // psm_.project(pt, &ppt);
-      // //ROS_ASSERT(ppt.u_ == u && ppt.v_ == v);  // TODO: PrimeSenseModel should project back to exactly the same spot.
-      // frame->depth_->coeffRef(v, u) = ppt.z_;
-
+      // Non-caching version.
       double z = frame->depth_->coeffRef(v, u) * 0.001;
       frustum(v, u).undistort(&z);
       frame->depth_->coeffRef(v, u) = z * 1000;
+
+      // Caching version.
+      // float z = frame->depth_->coeffRef(v, u) * 0.001;
+      // int idx = frustum(v, u).index(z);
+      // if(idx_cache_.coeffRef(v, u) == idx)
+      // 	z *= multiplier_cache_.coeffRef(v, u);
+      // else {
+      // 	float mult;
+      // 	frustum(v, u).undistort(idx, &z, &mult);
+      // 	idx_cache_.coeffRef(v, u) = idx;
+      // 	multiplier_cache_.coeffRef(v, u) = mult;
+      // }
+      // frame->depth_->coeffRef(v, u) = z * 1000;
     }
   }
 }
@@ -234,6 +256,103 @@ void DiscreteDepthDistortionModel::deserialize(std::istream& in)
       frustums_[y][x]->deserialize(in);
     }
   }
+
+  idx_cache_ = Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Ones(psm_.height_, psm_.width_) * -1;
+  multiplier_cache_ = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(psm_.height_, psm_.width_);
+}
+
+void DiscreteDepthDistortionModel::visualize(const std::string& dir) const
+{
+  if(!bfs::exists(dir))
+    bfs::create_directory(dir);
+  else
+    ROS_ASSERT(bfs::is_directory(dir));
+  
+  const Frustum& reference_frustum = *frustums_[0][0];
+  int num_layers = reference_frustum.num_bins_;
+
+  // -- Set up for combined imagery.
+  int horiz_divider = 10;
+  int vert_divider = 20;
+  cv::Mat3b mega(cv::Size(psm_.width_ * 2 + horiz_divider, psm_.height_ * num_layers + vert_divider * (num_layers + 2)), cv::Vec3b(0, 0, 0));
+  
+  for(int i = 0; i < num_layers; ++i) {
+    // -- Determine the path to save the image for this layer.
+    char buffer[50];
+    float mindepth = reference_frustum.bin_depth_ * i;
+    float maxdepth = reference_frustum.bin_depth_ * (i + 1);
+    sprintf(buffer, "%05.2f-%05.2f", mindepth, maxdepth);
+    ostringstream oss;
+    oss << dir << "/multipliers_" << buffer << ".png";
+
+    // -- Compute the multipliers visualization for this layer.
+    //    Multiplier of 1 is black, >1 is red, <1 is blue.  Think redshift.
+    cv::Mat3b mult(cv::Size(psm_.width_, psm_.height_), cv::Vec3b(0, 0, 0));
+    for(int y = 0; y < mult.rows; ++y) {
+      for(int x = 0; x < mult.cols; ++x) {
+	const Frustum& frustum = *frustums_[y / bin_height_][x / bin_width_];
+	float val = frustum.multipliers_(i);
+	if(val > 1)
+	  mult(y, x)[2] = min(255., 255 * (val - 1.0) / 0.25);
+	if(val < 1)
+	  mult(y, x)[0] = min(255., 255 * (1.0 - val) / 0.25);
+      }
+    }
+    cv::imwrite(oss.str(), mult);
+
+    // -- Compute the counts visualization for this layer.
+    //    0 is black, 100 is white.
+    cv::Mat3b count(cv::Size(psm_.width_, psm_.height_), cv::Vec3b(0, 0, 0));
+    for(int y = 0; y < count.rows; ++y) {
+      for(int x = 0; x < count.cols; ++x) {
+	const Frustum& frustum = *frustums_[y / bin_height_][x / bin_width_];
+	uchar val = min(255., (double)(255 * frustum.counts_(i) / 100));
+	count(y, x)[0] = val;
+	count(y, x)[1] = val;
+	count(y, x)[2] = val;
+      }
+    }
+    oss.str("");
+    oss << dir << "/counts_" << buffer << ".png";
+    cv::imwrite(oss.str(), count);
+
+    // -- Make images showing the two, side-by-side.
+    cv::Mat3b combined(cv::Size(psm_.width_ * 2 + horiz_divider, psm_.height_), cv::Vec3b(0, 0, 0));
+    for(int y = 0; y < combined.rows; ++y) {
+      for(int x = 0; x < combined.cols; ++x) {
+	if(x < count.cols)
+	  combined(y, x) = count(y, x);
+	else if(x > count.cols + horiz_divider)
+	  combined(y, x) = mult(y, x - count.cols - horiz_divider);
+      }
+    }
+    oss.str("");
+    oss << dir << "/combined_" << buffer << ".png";
+    cv::imwrite(oss.str(), combined);
+
+    // -- Append to the mega image.
+    for(int y = 0; y < combined.rows; ++y)
+      for(int x = 0; x < combined.cols; ++x)
+	mega(y + i * (combined.rows + vert_divider) + vert_divider, x) = combined(y, x);
+  }
+
+  // -- Add a white bar at the top and bottom for reference.
+  for(int y = 0; y < mega.rows; ++y)
+    if(y < vert_divider || y > mega.rows - vert_divider)
+      for(int x = 0; x < mega.cols; ++x)
+	mega(y, x) = cv::Vec3b(255, 255, 255);
+
+  // -- Save mega image.
+  ostringstream oss;
+  oss << dir << "/mega.png";
+  cv::imwrite(oss.str(), mega);
+
+  // -- Save a small version for easy loading.
+  cv::Mat3b mega_scaled;
+  cv::resize(mega, mega_scaled, cv::Size(), 0.1, 0.1, cv::INTER_CUBIC);
+  oss.str("");
+  oss << dir << "/mega_scaled.png";
+  cv::imwrite(oss.str(), mega_scaled);
 }
 
 Frustum& DiscreteDepthDistortionModel::frustum(int y, int x)
