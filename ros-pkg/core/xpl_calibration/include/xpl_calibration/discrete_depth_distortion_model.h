@@ -15,7 +15,9 @@ public:
   //! z value, not distance to origin.
   void addExample(double ground_truth, double measurement);
   void addMultiplier(double measurement, double multiplier);
+  int index(double z) const;
   void undistort(double* z) const;
+  void undistort(int idx, float* z, float* mult) const;
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);
   
@@ -54,6 +56,11 @@ protected:
   double bin_depth_;
   int num_bins_x_;
   int num_bins_y_;
+  // Gross.  I did it.  I used mutable.  This seems like a legitimate use though; the caches change
+  // when you call undistort(), but the actual distortion model isn't changing, and that's really what
+  // we want to capture with the idea of constness.
+  mutable Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> idx_cache_;
+  mutable Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> multiplier_cache_;
 
   //! frustums_[y][x]
   std::vector< std::vector<Frustum*> > frustums_;

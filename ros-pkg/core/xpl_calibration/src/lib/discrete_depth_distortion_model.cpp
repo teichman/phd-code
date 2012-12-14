@@ -45,10 +45,21 @@ void Frustum::addMultiplier(double measurement, double multiplier)
   multipliers_(idx) = total_multipliers_(idx) / counts_(idx);
 }
 
-void Frustum::undistort(double* z) const
+
+inline int Frustum::index(double z) const
 {
-  int idx = min(num_bins_ - 1, (int)floor(*z / bin_depth_));
-  *z *= multipliers_.coeffRef(idx);
+  return min(num_bins_ - 1, (int)floor(z / bin_depth_));
+}
+  
+inline void Frustum::undistort(double* z) const
+{
+  *z *= multipliers_.coeffRef(index(*z));
+}
+
+inline void Frustum::undistort(int idx, float* z, float* mult) const
+{
+  *mult = multipliers_.coeffRef(idx);
+  *z *= *mult;
 }
 
 // void Frustum::undistort(rgbd::Point* pt) const
@@ -92,6 +103,10 @@ DiscreteDepthDistortionModel::DiscreteDepthDistortionModel(const PrimeSenseModel
 
   num_bins_x_ = psm_.width_ / bin_width_;
   num_bins_y_ = psm_.height_ / bin_height_;
+  idx_cache_ = Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Ones(psm_.height_, psm_.width_) * -1;
+  multiplier_cache_ = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(psm_.height_, psm_.width_);
+  //multiplier_cache_ = MatrixXf::Zero(num_bins_y_, num_bins_x_);  // Why does this compile?
+  
   frustums_.resize(num_bins_y_);
   for(size_t i = 0; i < frustums_.size(); ++i) {
     frustums_[i].resize(num_bins_x_, NULL);
@@ -134,8 +149,17 @@ void DiscreteDepthDistortionModel::undistort(Frame* frame) const
       // //ROS_ASSERT(ppt.u_ == u && ppt.v_ == v);  // TODO: PrimeSenseModel should project back to exactly the same spot.
       // frame->depth_->coeffRef(v, u) = ppt.z_;
 
-      double z = frame->depth_->coeffRef(v, u) * 0.001;
-      frustum(v, u).undistort(&z);
+      float z = frame->depth_->coeffRef(v, u) * 0.001;
+      int idx = frustum(v, u).index(z);
+      if(idx_cache_.coeffRef(v, u) == idx)
+	z *= multiplier_cache_.coeffRef(v, u);
+      else {
+	float mult;
+	frustum(v, u).undistort(idx, &z, &mult);
+	idx_cache_.coeffRef(v, u) = idx;
+	multiplier_cache_.coeffRef(v, u) = mult;
+      }
+      
       frame->depth_->coeffRef(v, u) = z * 1000;
     }
   }
@@ -235,6 +259,9 @@ void DiscreteDepthDistortionModel::deserialize(std::istream& in)
       frustums_[y][x]->deserialize(in);
     }
   }
+
+  idx_cache_ = Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Ones(psm_.height_, psm_.width_) * -1;
+  multiplier_cache_ = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(psm_.height_, psm_.width_);
 }
 
 void DiscreteDepthDistortionModel::visualize(const std::string& dir) const
