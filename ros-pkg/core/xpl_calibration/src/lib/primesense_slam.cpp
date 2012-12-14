@@ -10,6 +10,7 @@ using namespace rgbd;
 
 PrimeSenseSlam::PrimeSenseSlam() :
   fav_(NULL),
+  intrinsics_(NULL),
   params_(defaultParams())
 {
   min_dt_ = params_.get<double>("min_dt");
@@ -30,13 +31,14 @@ void PrimeSenseSlam::_run()
     aligner.view_handler_ = fav_;
 #endif
 
-  ROS_WARN("PrimeSenseSlam does not use learned model.");
   pgs_ = PoseGraphSlam::Ptr(new PoseGraphSlam(sseq_->size()));
   Matrix6d covariance = Matrix6d::Identity() * 1e-3;  // TODO: Do something smarter with link covariances.
 
   Frame curr_frame, prev_frame;
   size_t prev_idx;
   sseq_->readFrame(0, &curr_frame);
+  if(intrinsics_)
+    intrinsics_->undistort(&curr_frame);
   size_t curr_idx = 0;
   vector<cv::KeyPoint> unused;
   rgbd::Cloud::ConstPtr unused2;
@@ -50,7 +52,6 @@ void PrimeSenseSlam::_run()
     while(dt < min_dt_) {
       ++curr_idx;
       if(curr_idx >= sseq_->size()) {
-      //if(curr_idx >= 200) {
 	done = true;
 	break;
       }
@@ -60,14 +61,18 @@ void PrimeSenseSlam::_run()
     cout << "---------- Searching for link between " << prev_idx << " and " << curr_idx
 	 << " / " << sseq_->size() << endl;
     cout << "           dt: " << dt << endl;
-    sseq_->readFrame(prev_idx, &prev_frame);  // TODO: This should not be necessary.
+    sseq_->readFrame(prev_idx, &prev_frame);  // TODO: This should not be necessary.      
     sseq_->readFrame(curr_idx, &curr_frame);
+    if(intrinsics_) {
+      intrinsics_->undistort(&prev_frame);
+      intrinsics_->undistort(&curr_frame);
+    }
     
     // -- Compute orb features for that frame.
     vector<cv::KeyPoint> curr_keypoints;
     rgbd::Cloud::ConstPtr curr_keycloud;
     FeaturesPtr curr_features = cacheFeatures(curr_frame, curr_idx, curr_keypoints, 
-        curr_keycloud);
+					      curr_keycloud);
     
     // -- Try to find link to most recent previous frame.
     //    Tries a wider search if not enough corresponding points to get a rough initial transform.
@@ -79,10 +84,9 @@ void PrimeSenseSlam::_run()
       fav_->setFrames(curr_frame, prev_frame);
     bool found = aligner.align(curr_frame, prev_frame,
     			       curr_keypoints, keypoint_cache_[prev_idx],
-                 curr_keycloud, keycloud_cache_[prev_idx],
+			       curr_keycloud, keycloud_cache_[prev_idx],
     			       curr_features, feature_cache_[prev_idx],
     			       true, &curr_to_prev);
-    // bool found = aligner.align(curr_frame, prev_frame, &curr_to_prev);
     if(found) {
       cout << "Added edge " << prev_idx << " -- " << curr_idx << endl;
       pgs_->addEdge(prev_idx, curr_idx, curr_to_prev, covariance);
@@ -109,48 +113,49 @@ void PrimeSenseSlam::_run()
       vector<vector<cv::Point2d> > correspondences0(max_attempts), correspondences1(max_attempts);
       vector<Eigen::Affine3d> guesses(max_attempts);
       omp_set_num_threads(OMP_THREADS);
-      #pragma omp parallel for
+#pragma omp parallel for
       for(size_t i = 0; i < max_attempts; ++i) {
-  if(num_rough_transforms >= max_rough_transforms)
-    continue;
+	if(num_rough_transforms >= max_rough_transforms)
+	  continue;
 	size_t idx = cached_frames_random[i];
 	ROS_DEBUG_STREAM("Checking for loop closure between " << idx << " and " << curr_idx);
-	//Frame old_frame;
-	//sseq_->readFrame(idx, &old_frame);
 
 	ROS_ASSERT(keypoint_cache_.count(idx));
 	ROS_ASSERT(feature_cache_.count(idx));
-  bool found = aligner.computeRoughTransform(
-      curr_keypoints, keypoint_cache_[idx],
-      curr_keycloud, keycloud_cache_[idx],
-      curr_features, feature_cache_[idx],
-      &(correspondences0[i]), &(correspondences1[i]), &(guesses[i]));
-  if(found) {
-    found_rough[i] = true;
-    #pragma omp critical
-    {++num_rough_transforms;}
-  }
+	bool found = aligner.computeRoughTransform(
+	  curr_keypoints, keypoint_cache_[idx],
+	  curr_keycloud, keycloud_cache_[idx],
+	  curr_features, feature_cache_[idx],
+	  &(correspondences0[i]), &(correspondences1[i]), &(guesses[i]));
+	if(found) {
+	  found_rough[i] = true;
+#pragma omp critical
+	  {++num_rough_transforms;}
+	}
       }
       size_t num_successful_loopclosures = 0;
       for(size_t i = 0; i < found_rough.size(); i++){
-  if(!found_rough[i]) continue;
+	if(!found_rough[i]) continue;
 	size_t idx = cached_frames_random[i];
 	ROS_DEBUG_STREAM("Densely aligning loop closure between " << idx << " and " << curr_idx);
-  Frame old_frame;
-  sseq_->readFrame(idx, &old_frame);
-    if(fav_)
-      fav_->setFrames(curr_frame, old_frame);
-    Eigen::Affine3d curr_to_old;
-    bool found = aligner.narrowGridSearch(
-        curr_frame, old_frame,
-        correspondences0[i], correspondences1[i], guesses[i], &curr_to_old);
-	  if(found) {
-	    cout << "Added edge " << idx << " -- " << curr_idx << endl;
-      pgs_->addEdge(idx, curr_idx, curr_to_old, covariance);
-      ++num_successful_loopclosures;
-      if(num_successful_loopclosures >= max_loopclosures_)
-        break;
-    }
+	Frame old_frame;
+	sseq_->readFrame(idx, &old_frame);
+	if(intrinsics_)
+	  intrinsics_->undistort(&old_frame);
+
+	if(fav_)
+	  fav_->setFrames(curr_frame, old_frame);
+	Eigen::Affine3d curr_to_old;
+	bool found = aligner.narrowGridSearch(
+	  curr_frame, old_frame,
+	  correspondences0[i], correspondences1[i], guesses[i], &curr_to_old);
+	if(found) {
+	  cout << "Added edge " << idx << " -- " << curr_idx << endl;
+	  pgs_->addEdge(idx, curr_idx, curr_to_old, covariance);
+	  ++num_successful_loopclosures;
+	  if(num_successful_loopclosures >= max_loopclosures_)
+	    break;
+	}
       }
     }
   }
