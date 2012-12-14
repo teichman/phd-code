@@ -25,6 +25,7 @@ public:
   size_t size() const;
   rgbd::PrimeSenseModel calibrate() const;
   DiscreteDepthDistortionModel calibrateDiscrete() const;
+  double calibrateFocalLength() const;
 
 protected:
   DepthDistortionLearner setupDepthDistortionLearner() const;

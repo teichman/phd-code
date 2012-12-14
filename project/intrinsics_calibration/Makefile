@@ -110,6 +110,16 @@ $(1)/evaluation/slam_eval_quantity: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.
 	--sseqs-test $$(addprefix $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_TESTING_$(1))) \
 	--trajs-test $$(TRAJECTORIES_ONLYFIRST_TESTING_$(1))
 
+$(1)/evaluation/focal_length: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
+	mkdir -p $$(@D)
+	rosrun xpl_calibration focal_length_experiment \
+	--initial-f 550 \
+	--output $$@ \
+	--sseqs-train $$(addprefix $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_TRAINING_$(1))) \
+	--trajs-train $$(TRAJECTORIES_ONLYFIRST_TRAINING_$(1)) \
+	--sseqs-test $$(addprefix $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_TESTING_$(1))) \
+	--trajs-test $$(TRAJECTORIES_ONLYFIRST_TESTING_$(1))
+
 $(1)-quantitative-evaluation: 	$(1)/evaluation/results-baseline.txt \
 				$(1)/evaluation/results-distortion_model_and_recalib.txt
 	@grep '^' $$^

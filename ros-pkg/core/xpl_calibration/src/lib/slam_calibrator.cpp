@@ -139,6 +139,15 @@ DepthDistortionLearner SlamCalibrator::setupDepthDistortionLearner() const
   return ddl;
 }
 
+double SlamCalibrator::calibrateFocalLength() const
+{
+  DepthDistortionLearner ddl = setupDepthDistortionLearner();
+  cout << "Fitting focal length using " << ddl.size() << " frames." << endl;
+  PrimeSenseModel model = ddl.fitFocalLength();
+  ROS_ASSERT(model.fx_ == model.fy_);
+  return model.fx_;
+}
+
 PrimeSenseModel SlamCalibrator::calibrate() const
 {
   DepthDistortionLearner ddl = setupDepthDistortionLearner();
