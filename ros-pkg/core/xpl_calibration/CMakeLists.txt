@@ -172,3 +172,7 @@ target_link_libraries(focal_length_experiment ${PROJECT_NAME})
 rosbuild_add_executable(visualize_intrinsics src/prog/visualize_intrinsics.cpp)
 rosbuild_link_boost(visualize_intrinsics program_options filesystem)
 target_link_libraries(visualize_intrinsics ${PROJECT_NAME})
+
+rosbuild_add_executable(iterative_calibration_experiment src/prog/iterative_calibration_experiment.cpp)
+rosbuild_link_boost(iterative_calibration_experiment program_options filesystem)
+target_link_libraries(iterative_calibration_experiment ${PROJECT_NAME})

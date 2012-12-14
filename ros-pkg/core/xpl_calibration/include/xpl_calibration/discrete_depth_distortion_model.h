@@ -43,6 +43,7 @@ public:
   void undistort(rgbd::Frame* frame) const;
   void accumulate(const rgbd::Frame& ground_truth, const rgbd::Frame& measurement);
   void accumulate(const rgbd::Frame& measurement, const Eigen::MatrixXd& multipliers);
+  void addExample(const rgbd::ProjectivePoint& ppt, double ground_truth, double measurement);
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);
   //! Saves images to the directory found at path.

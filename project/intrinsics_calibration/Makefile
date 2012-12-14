@@ -26,13 +26,15 @@ AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-0
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
-SLAM_RUNS_TRAINING_xpl01	:= 	2a_backandforth \
-					2012-10-22_2a_backandforth_0 \
-					2012-10-22_2a_backandforth_2 \
-					2012-10-22_2a_backandforth_4 \
-					2012-11-16_2a_backandforth_6
+# SLAM_RUNS_TRAINING_xpl01	:= 	2a_backandforth \
+# 					2012-10-22_2a_backandforth_0 \
+# 					2012-10-22_2a_backandforth_2 \
+# 					2012-10-22_2a_backandforth_4 \
+# 					2012-11-16_2a_backandforth_6
 SLAM_RUNS_TESTING_xpl01		:=	2012-11-16_2a_backandforth_7 \
 					2012-11-16_2a_backandforth_8
+SLAM_RUNS_TRAINING_xpl01	:= 	2012-10-22_2a_backandforth_2
+#SLAM_RUNS_TESTING_xpl01		:=	2012-11-16_2a_backandforth_7
 SLAM_RUNS_xpl01			:= 	$(SLAM_RUNS_TRAINING_xpl01) $(SLAM_RUNS_TESTING_xpl01)
 
 
@@ -93,6 +95,15 @@ TRAJECTORIES_ONLYFIRST_TESTING_$(1) := `for DIR in $$(TRAJDIRS_TESTING_$(1)); do
 TRAJECTORIES_SUB_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do find $$$${DIR} -name *.traj; done`
 SLAM_RUNS_DUPL_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do \
 	for TRAJ in $$$$(ls $$$${DIR} | grep traj); do basename $$$${DIR} | xargs -I {} echo $(SLAM_DATA_PATH)/$(1)/{}; done; done`
+
+$(1)/evaluation/iterative_calibration_experiment: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
+	mkdir -p $$(@D)
+	rosrun xpl_calibration iterative_calibration_experiment \
+	--output $$@ \
+	--sseqs-train $$(addprefix $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_TRAINING_$(1))) \
+	--trajs-train $$(TRAJECTORIES_ONLYFIRST_TRAINING_$(1)) \
+	--sseqs-test $$(addprefix $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_TESTING_$(1))) \
+	--trajs-test $$(TRAJECTORIES_ONLYFIRST_TESTING_$(1))
 
 $(1)/evaluation/slam_eval: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)

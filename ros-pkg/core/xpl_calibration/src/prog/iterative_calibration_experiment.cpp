@@ -124,25 +124,75 @@ void evaluate(const bpo::variables_map& opts,
 }
 
 DiscreteDepthDistortionModel calibrate(const bpo::variables_map& opts,
+				       const DiscreteDepthDistortionModel& prev_intrinsics,
 				       const vector<StreamSequence::ConstPtr>& sseqs,
-				       const vector<Trajectory>& trajectories,
-				       int skip_idx = -1)
+				       const vector<Trajectory>& trajectories)
 {
   ROS_ASSERT(sseqs.size() == trajectories.size());
-  
-  vector<StreamSequence::ConstPtr> sseq_train;
-  vector<Trajectory> traj_train;
-  for(size_t i = 0; i < sseqs.size(); ++i) {
-    if((int)i == skip_idx)
-      continue;
-    sseq_train.push_back(sseqs[i]);
-    traj_train.push_back(trajectories[i]);
-  }
 
-  SlamCalibrator calibrator(sseq_train[0]->model_, MAX_RANGE_MAP, opts["vgsize"].as<double>());
-  calibrator.trajectories_ = traj_train;
-  calibrator.sseqs_ = sseq_train;
-  return calibrator.calibrateDiscrete();
+  DiscreteDepthDistortionModel intrinsics(sseqs[0]->model_);
+  int desired_num_pairs = 1e4;
+  int num_pairs = 0;
+  while(num_pairs < desired_num_pairs) {
+    int idx = rand() % sseqs.size();
+    const StreamSequence& sseq = *sseqs[idx];
+    const Trajectory& traj = trajectories[idx];
+    
+    int idx2 = rand() % traj.size();
+    if(!traj.exists(idx2))
+      continue;
+    int idx3 = rand() % traj.size();
+    if(!traj.exists(idx3))
+      continue;
+
+    ++num_pairs;
+    cout << num_pairs << " / " << desired_num_pairs << endl;
+
+    Frame gtframe;
+    Frame measframe;
+    sseq.readFrame(idx2, &measframe);
+    sseq.readFrame(idx3, &gtframe);
+    prev_intrinsics.undistort(&gtframe);
+    
+    Affine3f transform = (traj.get(idx2).inverse() * traj.get(idx3)).cast<float>();
+    
+    // -- For all points which have both ground truth and measurements,
+    //    check if ground truth is reasonable and add a training example.
+    #pragma omp parallel for
+    for(int y = 0; y < gtframe.depth_->rows(); ++y) {
+      for(int x = 0; x < gtframe.depth_->cols(); ++x) {
+	if(gtframe.depth_->coeffRef(y, x) == 0)
+	  continue;
+
+	ProjectivePoint ppt;
+	ppt.u_ = x;
+	ppt.v_ = y;
+	ppt.z_ = gtframe.depth_->coeffRef(y, x);
+	
+	Point pt;
+	sseq.model_.project(ppt, &pt);
+	pt.getVector4fMap() = transform * pt.getVector4fMap();
+	sseq.model_.project(pt, &ppt);
+	if((ppt.u_ < 0) || (ppt.u_ >= sseq.model_.width_) ||
+	   (ppt.v_ < 0) || (ppt.v_ >= sseq.model_.height_) ||
+	   (measframe.depth_->coeffRef(ppt.v_, ppt.u_) == 0))
+	{
+	  continue;
+	}
+	
+	// Ignore ground truth points observed from further away than the measurement point.
+	double gt_orig = gtframe.depth_->coeffRef(y, x) * 0.001;
+	double meas = measframe.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
+	if(gt_orig > meas)
+	  continue;
+
+	double gt_proj = ppt.z_ * 0.001;
+	intrinsics.addExample(ppt, gt_proj, meas);
+      }
+    }
+  }
+  
+  return intrinsics;
 }
 
 void load(const vector<string>& sseq_paths, const vector<string>& traj_paths,
@@ -267,6 +317,7 @@ int main(int argc, char** argv)
   
   // -- Main loop.
   int iter = 0;
+  DiscreteDepthDistortionModel intrinsics(sseqs_train[0]->model_, 4, 3, 1, 1);  // Empty model to start with.  These numbers don't matter.
   while(true) {
     // -- Make a directory for this iteration.
     ostringstream oss;
@@ -282,10 +333,11 @@ int main(int argc, char** argv)
       slam.intrinsics_ = &intrinsics;
       slam.sseq_ = sseqs_train[i];
 
-      // slam.run();
-      // slam_.pgs_->save(iter_path + "/" + names_train[i] + "-graph");
-      slam.trajs_.push_back(trajectories_train[i]);  // Stub: just use the existing one.
-      slam.trajs_.push_back(trajectories_train[i]);  // Stub: just use the existing one.
+      slam.run();
+      slam.pgs_->save(iter_path + "/" + names_train[i] + "-graph");
+      // Stub: just use the existing one.
+      // slam.trajs_.push_back(trajectories_train[i]);  
+      // slam.trajs_.push_back(trajectories_train[i]);
 
       for(size_t j = 0; j < slam.trajs_.size(); ++j) { 
 	trajectories_train_current.push_back(slam.trajs_[j]);
@@ -298,7 +350,7 @@ int main(int argc, char** argv)
     }
 
     // -- Compute the intrinsics.
-    DiscreteDepthDistortionModel intrinsics = calibrate(opts, sseqs_train_current, trajectories_train_current);
+    intrinsics = calibrate(opts, intrinsics, sseqs_train_current, trajectories_train_current);
 
     // -- Evaluate.
     evaluate(opts, intrinsics, maps, sseqs_test, trajectories_test, iter_path);

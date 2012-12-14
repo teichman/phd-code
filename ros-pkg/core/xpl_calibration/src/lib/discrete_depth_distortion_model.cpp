@@ -188,6 +188,11 @@ void DiscreteDepthDistortionModel::undistort(Frame* frame) const
   }
 }
 
+void DiscreteDepthDistortionModel::addExample(const ProjectivePoint& ppt, double ground_truth, double measurement)
+{
+  frustum(ppt.v_, ppt.u_).addExample(ground_truth, measurement);
+}
+
 void DiscreteDepthDistortionModel::accumulate(const rgbd::Frame& measurement, const Eigen::MatrixXd& multipliers)
 {
   ROS_ASSERT(psm_.width_ == measurement.depth_->cols());
