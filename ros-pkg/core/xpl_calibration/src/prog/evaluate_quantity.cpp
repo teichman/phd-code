@@ -167,6 +167,10 @@ DiscreteDepthDistortionModel calibratePosePairs(const bpo::variables_map& opts,
 	if(gtframe.depth_->coeffRef(y, x) == 0)
 	  continue;
 
+	// Ignore ground truth points seen from more than 2m away.
+	if(gtframe.depth_->coeffRef(y, x) > 2000)
+	  continue;
+	
 	ProjectivePoint ppt;
 	ppt.u_ = x;
 	ppt.v_ = y;
@@ -189,6 +193,9 @@ DiscreteDepthDistortionModel calibratePosePairs(const bpo::variables_map& opts,
 	if(gt_orig > meas)
 	  continue;
 
+	// Ignore ground truth points seen from an oblique angle.
+	// TODO.
+	
 	double gt_proj = ppt.z_ * 0.001;
 	intrinsics.addExample(ppt, gt_proj, meas);
       }
