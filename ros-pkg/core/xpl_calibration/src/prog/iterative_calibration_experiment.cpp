@@ -329,12 +329,25 @@ int main(int argc, char** argv)
     vector<Trajectory> trajectories_train_current;
     vector<StreamSequence::ConstPtr> sseqs_train_current;
     for(size_t i = 0; i < sseqs_train.size(); ++i) {
+      // Run the SLAM solver.
       PrimeSenseSlam slam;
       slam.intrinsics_ = &intrinsics;
       slam.sseq_ = sseqs_train[i];
-
       slam.run();
+
+      // Do postprocessing.
+      double trans_threshold = PrimeSenseSlam::defaultParams().get<double>("edge_trans_threshold");
+      double rot_threshold = PrimeSenseSlam::defaultParams().get<double>("edge_rot_threshold");
+      slam.pgs_->solve();  // not clear this is necessary
+      slam.pgs_->pruneUnsatisfiedEdges(trans_threshold, rot_threshold, 25);
+      slam.pgs_->solve();
+      slam.pgs_->pruneAllSatisfiedEdges();
+      slam.pgs_->solve();
+      slam.populateTrajAndMaps();  // There might be separate submaps after pruning.
+
+      // Save graph for later inspection.
       slam.pgs_->save(iter_path + "/" + names_train[i] + "-graph");
+
       // Stub: just use the existing one.
       // slam.trajs_.push_back(trajectories_train[i]);  
       // slam.trajs_.push_back(trajectories_train[i]);
