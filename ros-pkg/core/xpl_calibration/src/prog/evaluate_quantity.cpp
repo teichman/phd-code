@@ -1,5 +1,6 @@
 #include <boost/program_options.hpp>
 #include <xpl_calibration/slam_calibrator.h>
+#include <xpl_calibration/depth_distortion_learner.h>
 #include <xpl_calibration/primesense_slam.h>
 
 using namespace std;
@@ -62,10 +63,6 @@ void evaluate(const bpo::variables_map& opts,
     pcl::transformPointCloud(map, transformed, transform);
     Frame mapframe;
     sseq.model_.cloudToFrame(transformed, &mapframe);
-
-    // cv::imshow("mapframe", mapframe.depthImage());
-    // cv::imshow("frame", frame.depthImage());
-    // cv::waitKey(2);
 
     computeDistortion(frame, mapframe, raw_total_error, raw_num_pts);
     intrinsics.undistort(&frame);
@@ -133,7 +130,7 @@ DiscreteDepthDistortionModel calibratePosePairs(const bpo::variables_map& opts,
   ROS_ASSERT(sseqs.size() == trajectories.size());
 
   DiscreteDepthDistortionModel intrinsics(sseqs[0]->model_);
-  int desired_num_pairs = 1e4;
+  int desired_num_pairs = 1e5;
   int num_pairs = 0;
   while(num_pairs < desired_num_pairs) {
     int idx = rand() % sseqs.size();
@@ -161,7 +158,9 @@ DiscreteDepthDistortionModel calibratePosePairs(const bpo::variables_map& opts,
     
     // -- For all points which have both ground truth and measurements,
     //    check if ground truth is reasonable and add a training example.
+    double theta_thresh = 45. * M_PI / 180.;
     #pragma omp parallel for
+    //MatrixXd multipliers = MatrixXd::Zero(gtframe.depth_->rows(), gtframe.depth_->cols());
     for(int y = 0; y < gtframe.depth_->rows(); ++y) {
       for(int x = 0; x < gtframe.depth_->cols(); ++x) {
 	if(gtframe.depth_->coeffRef(y, x) == 0)
@@ -178,6 +177,7 @@ DiscreteDepthDistortionModel calibratePosePairs(const bpo::variables_map& opts,
 	
 	Point pt;
 	sseq.model_.project(ppt, &pt);
+	Vector3f gt_ray = pt.getVector3fMap();
 	pt.getVector4fMap() = transform * pt.getVector4fMap();
 	sseq.model_.project(pt, &ppt);
 	if((ppt.u_ < 0) || (ppt.u_ >= sseq.model_.width_) ||
@@ -194,12 +194,31 @@ DiscreteDepthDistortionModel calibratePosePairs(const bpo::variables_map& opts,
 	  continue;
 
 	// Ignore ground truth points seen from an oblique angle.
-	// TODO.
+	// Vector3f meas_ray = pt.getVector3fMap();
+	// gt_ray.normalize();
+	// meas_ray.normalize();
+	// double theta = acos(gt_ray.dot(meas_ray));
+	// if(theta > theta_thresh)
+	//   continue;
 	
 	double gt_proj = ppt.z_ * 0.001;
 	intrinsics.addExample(ppt, gt_proj, meas);
+	//multipliers(ppt.v_, ppt.u_) = gt_proj / meas;
       }
     }
+
+    // -- Visualize the training data.
+    // cv::Mat3b vis = visualizeMultipliers(multipliers);
+    // cv::imshow("multipliers", vis);
+    // Cloud gtcloud;
+    // sseq.model_.frameToCloud(gtframe, &gtcloud);
+    // pcl::transformPointCloud(gtcloud, gtcloud, transform);
+    // Frame gtprojframe;
+    // sseq.model_.cloudToFrame(gtcloud, &gtprojframe);
+    // cv::imshow("projected reference frame", gtprojframe.depthImage());
+    // cv::imshow("reference frame", gtframe.depthImage());
+    // cv::imshow("measurement frame", measframe.depthImage());
+    // cv::waitKey();
   }
   
   return intrinsics;
