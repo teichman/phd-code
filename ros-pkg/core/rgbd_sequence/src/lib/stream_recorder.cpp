@@ -16,7 +16,7 @@ namespace rgbd
     device_id_(device_id),
     mode_(mode),
     grabber_(device_id_, mode, mode),
-    cloud_viewer_("PointCloud"+device_id_),
+    cloud_viewer_("PointCloud-" + device_id_),
     recording_(false),
     view_cloud_(view_cloud),
     calib_file_(calib_file),

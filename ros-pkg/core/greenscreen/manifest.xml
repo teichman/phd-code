@@ -1,0 +1,20 @@
+<package>
+  <description brief="greenscreen">
+
+     greenscreen
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/greenscreen</url>
+
+  <depend package="rgbd_sequence"/>
+  
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath ${prefix}/lib `rosboost-cfg --lflags system`"/>
+  </export>
+  
+</package>
+
+
