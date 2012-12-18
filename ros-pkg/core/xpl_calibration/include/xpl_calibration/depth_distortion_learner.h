@@ -132,5 +132,6 @@ protected:
   const Eigen::VectorXd* Y_;
 };
 
+cv::Mat3b visualizeMultipliers(const Eigen::MatrixXd& multipliers);
 
 #endif // DEPTH_DISTORTION_LEARNER_H
