@@ -224,10 +224,73 @@ DiscreteDepthDistortionModel calibratePosePairs(const bpo::variables_map& opts,
   return intrinsics;
 }
 
-DiscreteDepthDistortionModel calibrateMapBuilding(const bpo::variables_map& opts,
-						  const vector<StreamSequence::ConstPtr>& sseqs,
-						  const vector<Trajectory>& trajectories,
-						  int skip_idx = -1)
+DiscreteDepthDistortionModel calibrateMapBuildingAllPts(const bpo::variables_map& opts,
+							const vector<StreamSequence::ConstPtr>& sseqs,
+							const vector<Trajectory>& trajectories)
+{
+  ROS_ASSERT(sseqs.size() == trajectories.size());
+
+  DiscreteDepthDistortionModel intrinsics(sseqs[0]->model_);
+  for(size_t i = 0; i < sseqs.size(); ++i) {
+    const StreamSequence& sseq = *sseqs[i];
+    const Trajectory& traj = trajectories[i];
+    Cloud map = *SlamCalibrator::buildMap(sseq, traj, MAX_RANGE_MAP, opts["vgsize"].as<double>());
+
+    for(size_t j = 0; j < traj.size(); ++j) {
+      cout << j << " / " << traj.size() << endl;
+      if(!traj.exists(j))
+	continue;
+
+      Frame measframe;
+      sseq.readFrame(j, &measframe);
+      //MatrixXd multipliers = MatrixXd::Zero(measframe.depth_->rows(), measframe.depth_->cols());
+      Affine3f transform = traj.get(j).inverse().cast<float>();
+      #pragma omp parallel for
+      for(size_t k = 0; k < map.size(); ++k) {
+	if(!isFinite(map[k]))
+	  continue;
+
+	// Project the map point into the measurement frame.
+	Point pt;
+	pt.getVector4fMap() = transform * map[k].getVector4fMap();
+	ProjectivePoint ppt;
+	sseq.model_.project(pt, &ppt);
+
+	// Ignore points that project to outside the measurement frame
+	// and those for which the measurement frame has no data.
+	if((ppt.u_ < 0) || (ppt.u_ >= sseq.model_.width_) ||
+	   (ppt.v_ < 0) || (ppt.v_ >= sseq.model_.height_) ||
+	   (measframe.depth_->coeffRef(ppt.v_, ppt.u_) == 0))
+	{
+	  continue;
+	}
+
+	double measured_m = measframe.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
+	double map_m = ppt.z_ * 0.001;
+	double mult = map_m / measured_m;
+	if(mult > MAX_MULT || mult < MIN_MULT)
+	  continue;
+
+	intrinsics.addExample(ppt, map_m, measured_m);
+	// This will overwrite examples that fall in the same pixel, but that's good enough to make sure it's not entirely wrong.
+	//multipliers(ppt.v_, ppt.u_) = map_m / measured_m;  
+      }
+
+      // -- Visualize the training data.
+      // cv::Mat3b vis = visualizeMultipliers(multipliers);
+      // cv::imshow("multipliers", vis);
+      // cv::imshow("measurement frame", measframe.depthImage());
+      // cv::waitKey();
+    }
+  }
+  
+  return intrinsics;
+}
+
+DiscreteDepthDistortionModel calibrateMapBuildingOrig(const bpo::variables_map& opts,
+						      const vector<StreamSequence::ConstPtr>& sseqs,
+						      const vector<Trajectory>& trajectories,
+						      int skip_idx = -1)
 {
   ROS_ASSERT(sseqs.size() == trajectories.size());
   
@@ -401,8 +464,9 @@ int main(int argc, char** argv)
       // -- Train and evaluate.
       HighResTimer hrt;
       hrt.start();
-      //DiscreteDepthDistortionModel intrinsics = calibrate(opts, sseqs_train_subset, trajectories_train_subset);
-      DiscreteDepthDistortionModel intrinsics = calibratePosePairs(opts, sseqs_train_subset, trajectories_train_subset);
+      //DiscreteDepthDistortionModel intrinsics = calibrateMapBuildingOrig(opts, sseqs_train_subset, trajectories_train_subset);
+      //DiscreteDepthDistortionModel intrinsics = calibratePosePairs(opts, sseqs_train_subset, trajectories_train_subset);
+      DiscreteDepthDistortionModel intrinsics = calibrateMapBuildingAllPts(opts, sseqs_train_subset, trajectories_train_subset);
       hrt.stop();
       f << "Calibration time (seconds): " << hrt.getSeconds() << endl;
       f.close();
