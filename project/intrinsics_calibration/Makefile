@@ -26,15 +26,15 @@ AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-0
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
-# SLAM_RUNS_TRAINING_xpl01	:= 	2a_backandforth \
-# 					2012-10-22_2a_backandforth_0 \
-# 					2012-10-22_2a_backandforth_2 \
-# 					2012-10-22_2a_backandforth_4 \
-# 					2012-11-16_2a_backandforth_6
+SLAM_RUNS_TRAINING_xpl01	:= 	2a_backandforth \
+					2012-10-22_2a_backandforth_0 \
+					2012-10-22_2a_backandforth_2 \
+					2012-10-22_2a_backandforth_4 \
+					2012-11-16_2a_backandforth_6
 SLAM_RUNS_TESTING_xpl01		:=	2012-11-16_2a_backandforth_7 \
 					2012-11-16_2a_backandforth_8
 
-SLAM_RUNS_TRAINING_xpl01	:= 	2012-10-22_2a_backandforth_2
+#SLAM_RUNS_TRAINING_xpl01	:= 	2012-10-22_2a_backandforth_2
 #SLAM_RUNS_TESTING_xpl01		:=	2012-11-16_2a_backandforth_7
 
 SLAM_RUNS_xpl01			:= 	$(SLAM_RUNS_TRAINING_xpl01) $(SLAM_RUNS_TESTING_xpl01)
@@ -134,8 +134,15 @@ $(1)/evaluation/focal_length: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	--trajs-test $$(TRAJECTORIES_ONLYFIRST_TESTING_$(1)) | tee $$@-log.txt
 
 $(1)-quantitative-evaluation: 	$(1)/evaluation/results-baseline.txt \
-				$(1)/evaluation/results-distortion_model_and_recalib.txt
+				$(1)/evaluation/results-discrete_distortion_model_and_recalib.txt
 	@grep '^' $$^
+
+$(1)/evaluation/results-discrete_distortion_model_and_recalib.txt: $(1)/evaluation/discrete_learned_model $(1)/evaluation/discrete_extrinsics 
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--discrete-intrinsics $$< \
+	--extrinsics $(1)/evaluation/discrete_extrinsics \
+	--evaluate $$@
 
 $(1)/evaluation/results-distortion_model_and_recalib.txt: $(1)/evaluation/learned_model.psm $(1)/evaluation/extrinsics 
 	rosrun xpl_calibration asus_vs_velo \
