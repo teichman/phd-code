@@ -158,7 +158,7 @@ DiscreteDepthDistortionModel calibratePosePairs(const bpo::variables_map& opts,
     
     // -- For all points which have both ground truth and measurements,
     //    check if ground truth is reasonable and add a training example.
-    double theta_thresh = 45. * M_PI / 180.;
+    //double theta_thresh = 45. * M_PI / 180.;
     #pragma omp parallel for
     //MatrixXd multipliers = MatrixXd::Zero(gtframe.depth_->rows(), gtframe.depth_->cols());
     for(int y = 0; y < gtframe.depth_->rows(); ++y) {
@@ -177,7 +177,7 @@ DiscreteDepthDistortionModel calibratePosePairs(const bpo::variables_map& opts,
 	
 	Point pt;
 	sseq.model_.project(ppt, &pt);
-	Vector3f gt_ray = pt.getVector3fMap();
+	//Vector3f gt_ray = pt.getVector3fMap();
 	pt.getVector4fMap() = transform * pt.getVector4fMap();
 	sseq.model_.project(pt, &ppt);
 	if((ppt.u_ < 0) || (ppt.u_ >= sseq.model_.width_) ||
@@ -464,9 +464,9 @@ int main(int argc, char** argv)
       // -- Train and evaluate.
       HighResTimer hrt;
       hrt.start();
-      //DiscreteDepthDistortionModel intrinsics = calibrateMapBuildingOrig(opts, sseqs_train_subset, trajectories_train_subset);
+      DiscreteDepthDistortionModel intrinsics = calibrateMapBuildingOrig(opts, sseqs_train_subset, trajectories_train_subset);
       //DiscreteDepthDistortionModel intrinsics = calibratePosePairs(opts, sseqs_train_subset, trajectories_train_subset);
-      DiscreteDepthDistortionModel intrinsics = calibrateMapBuildingAllPts(opts, sseqs_train_subset, trajectories_train_subset);
+      //DiscreteDepthDistortionModel intrinsics = calibrateMapBuildingAllPts(opts, sseqs_train_subset, trajectories_train_subset);
       hrt.stop();
       f << "Calibration time (seconds): " << hrt.getSeconds() << endl;
       f.close();
