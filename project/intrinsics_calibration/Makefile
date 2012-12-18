@@ -239,7 +239,6 @@ $(1)-visualize-avv-extrinsics: $(1)/asus_vs_velodyne/extrinsics
 
 $(1)/asus_vs_velodyne/extrinsics:
 	mkdir -p $$(@D)
-	cd $$(@D) && \
 	rosrun xpl_calibration asus_vs_velo \
 	$$(AVV_PATH_$(1))-StreamSequence \
 	$$(AVV_PATH_$(1))-VeloSequence \
