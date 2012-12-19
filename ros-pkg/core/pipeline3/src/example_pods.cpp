@@ -185,6 +185,26 @@ namespace pipeline
       f << oss.str() << endl;
       f.close();
     }
-    
+
+    void AbstractPod::display(const Vec& vector) const
+    {
+      cout << "AbstractPod::display: " << endl;
+      for(size_t i = 0; i < vector.size(); ++i)
+	cout << vector[i] << " ";
+      cout << endl;
+    }
+
+    void ConcretePodA::compute()
+    {
+      *vals_ = *pull<VecConstPtr>("Vals");
+      push<VecConstPtr>("ChangedVals", vals_);
+    }
+
+    void ConcretePodB::compute()
+    {
+      *vals_ = *pull<VecConstPtr>("Vals");
+      push<VecConstPtr>("ChangedVals", vals_);
+    }
+
   } // namespace example
 } // namespace pipeline

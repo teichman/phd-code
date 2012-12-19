@@ -117,7 +117,51 @@ namespace pipeline
       void compute();
     };
 
-    
+    class AbstractPod : public Pod
+    {
+    public:
+      // Uncommenting this line causes a compilation error because the class is abstract.
+      // You should only DECLARE_POD for concrete classes.
+      // DECLARE_POD(AbstractPod);
+      AbstractPod(std::string name) :
+	Pod(name),
+	vals_(new Vec)
+      {
+	declareInput<VecConstPtr>("Vals");
+	declareOutput<VecConstPtr>("ChangedVals");
+      }
+
+      VecPtr vals_;
+      void display(const Vec& vector) const;
+      void debug() const { display(*vals_); }
+    };
+
+    // These derived classes will have the declared inputs and outputs of the base class.
+    class ConcretePodA : public AbstractPod
+    {
+    public:
+      DECLARE_POD(ConcretePodA);
+      ConcretePodA(std::string name) :
+	AbstractPod(name)
+      {
+      }
+
+      void compute();
+    };
+
+    class ConcretePodB : public AbstractPod
+    {
+    public:
+      DECLARE_POD(ConcretePodB);
+      ConcretePodB(std::string name) :
+	AbstractPod(name)
+      {
+	declareParam<bool>("Something", false);
+      }
+
+      void compute();
+    };
+      
   } 
 }
 
