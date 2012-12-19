@@ -5,7 +5,7 @@
 #include <optimization/nips.h>
 #include <optimization/common_functions.h>
 #include <eigen_extensions/eigen_extensions.h>
-#include <pipeline2/pipeline2.h>
+#include <bag_of_tricks/agent.h>
 #include <graphcuts/maxflow_inference.h>
 
 namespace graphcuts
@@ -45,7 +45,7 @@ namespace graphcuts
     double loss_;
   };
 
-  class ConstraintGenerator : public pipeline2::ComputeNode
+  class ConstraintGenerator : public Agent
   {
   public:
     Constraint con_;
@@ -54,10 +54,7 @@ namespace graphcuts
     ConstraintGenerator(const Model& model,
 			PotentialsCache::ConstPtr cache,
 			VecXiConstPtr labels);
-			
-    void _compute();
-    void _flush();
-    std::string _getName() const {return "ConstraintGenerator";}
+    void _run();
 
   protected:
     Model model_;

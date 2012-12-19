@@ -4,7 +4,6 @@ using namespace std;
 namespace bfs = boost::filesystem;
 namespace bpt = boost::posix_time;
 using namespace Eigen;
-using namespace pipeline2;
 
 namespace graphcuts
 {
@@ -46,21 +45,26 @@ namespace graphcuts
       double loss = 0;
 
       // -- Compute the most violating labeling for each framecache.
-      vector<ComputeNode*> nodes(caches.size(), NULL);
-      for(size_t i = 0; i < caches.size(); ++i)
-	nodes[i] = new ConstraintGenerator(model, caches[i], labels[i]);
-      Pipeline2 pl(num_threads_, nodes);
+      //    Could probably do this with omp but no point in switching it over now.
+      vector<ThreadPtr> threads;
+      vector<ConstraintGenerator> cgs;
       HighResTimer hrt("Computing most violating constraints");
       hrt.start();
-      pl.compute();
+      for(size_t i = 0; i < caches.size(); ++i) {
+	cgs.push_back(ConstraintGenerator(model, caches[i], labels[i]));
+	threads.push_back(cgs[i].launch());
+      }
+      for(size_t i = 0; i < threads.size(); ++i) {
+	threads[i]->join();
+      }
       hrt.stop();
 
       // -- Compute the one new constraint.
       Constraint c;
       c.loss_ = 0;
       c.dpsi_ = VectorXd::Zero(model.size());
-      for(size_t i = 0; i < nodes.size(); ++i) {
-	ConstraintGenerator& cg = *(ConstraintGenerator*)nodes[i];
+      for(size_t i = 0; i < cgs.size(); ++i) {
+	ConstraintGenerator& cg = cgs[i];
 	ROS_ASSERT(cg.hamming_loss_ >= 0);  // Make sure all nodes computed.
 	loss += cg.hamming_loss_ / (double)caches.size();
 	c.loss_ += cg.con_.loss_ / (double)caches.size(); // mean 0-1 loss
@@ -192,15 +196,14 @@ namespace graphcuts
   ConstraintGenerator::ConstraintGenerator(const Model& model,
 					   PotentialsCache::ConstPtr cache,
 					   VecXiConstPtr labels) :
-    ComputeNode(),
     hamming_loss_(-1),
     model_(model),
     cache_(cache),
     labels_(labels)
   {
   }
-     
-  void ConstraintGenerator::_compute()
+    
+  void ConstraintGenerator::_run()
   {
     MaxflowInference mfi(model_);
     VecXi seg;
@@ -224,12 +227,6 @@ namespace graphcuts
     
     con_.dpsi_ = dpsi;
     con_.loss_ = zero_one_loss;
-  }
-
-  void ConstraintGenerator::_flush()
-  {
-    con_ = Constraint();
-    hamming_loss_ = -1;
   }
 
   double hammingLoss(const Eigen::VectorXi& label,
