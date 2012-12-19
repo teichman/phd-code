@@ -94,15 +94,15 @@ private:
   std::vector<std::string> names_;
   std::map<std::string, size_t> indices_;
 
-  friend class NameTranslator2;
+  friend class NameTranslator;
 };
 
-class NameTranslator2
+class NameTranslator
 {
 public:
   static const int NO_ID = -1;
   
-  NameTranslator2(const NameMapping& old_mapping, const NameMapping& new_mapping);
+  NameTranslator(const NameMapping& old_mapping, const NameMapping& new_mapping);
   int toNew(size_t old) const;
   size_t newSize() const;
   size_t oldSize() const;
@@ -150,7 +150,7 @@ private:
   void initialize();
 };
 
-//! Abstract base class for classes that can have a NameTranslator2 applied to them.
+//! Abstract base class for classes that can have a NameTranslator applied to them.
 //! These classes do not necessarily store their NameMappings.
 //! For example, a Classification object is very lightweight - just a VectorXf with
 //! some convenience functions - and you wouldn't want to copy a NameMapping into it,
@@ -159,7 +159,7 @@ private:
 class NameTranslatable
 {
 public:
-  virtual void applyNameTranslator(const std::string& nmid, const NameTranslator2& translator);
+  virtual void applyNameTranslator(const std::string& nmid, const NameTranslator& translator);
   
 protected:
   //! Preceeding underscore implies this method is a custom implementation which is called
@@ -169,7 +169,7 @@ protected:
   //! Translation is allocation: Assume that this method will be called with an empty old mapping
   //! and a filled new mapping.  The derived object should allocate as necessary.
   //! See the translation convenience functions for std::vector and Eigen objects.
-  virtual void _applyNameTranslator(const std::string& nmid, const NameTranslator2& translator) = 0;
+  virtual void _applyNameTranslator(const std::string& nmid, const NameTranslator& translator) = 0;
 };
 
 //! Abstract base class for classes that should be NameTranslatable and should
@@ -182,7 +182,7 @@ public:
   void applyNameMapping(const std::string& nmid, const NameMapping& new_mapping);
   void applyNameMappings(const NameMappable& other);
   //! Unlike the NameTranslatable version, this will also copy in the new NameMapping.
-  void applyNameTranslator(const std::string& nmid, const NameTranslator2& translator);
+  void applyNameTranslator(const std::string& nmid, const NameTranslator& translator);
   
   const NameMapping& nameMapping(const std::string& nmid) const;
   const std::map<std::string, NameMapping>& nameMappings() const { return name_mappings_; }
@@ -203,7 +203,7 @@ private:
 };
 
 template<typename T>
-void NameTranslator2::translate(std::vector<T>* target, T init) const
+void NameTranslator::translate(std::vector<T>* target, T init) const
 {
   if(old_mapping_.empty() && !target->empty())
     NM_ABORT("applyNameMapping() must be called before initializing data that is name-mapped.");
@@ -221,7 +221,7 @@ void NameTranslator2::translate(std::vector<T>* target, T init) const
 }
 
 template<typename T, int R>
-void NameTranslator2::translate(Eigen::Matrix<T, R, 1>* target, T init) const
+void NameTranslator::translate(Eigen::Matrix<T, R, 1>* target, T init) const
 {
   ROS_ASSERT(newSize() > 0);
   if(old_mapping_.empty() && target->rows() > 0)
@@ -242,7 +242,7 @@ void NameTranslator2::translate(Eigen::Matrix<T, R, 1>* target, T init) const
 }
 
 template<typename T, int R, int C>
-void NameTranslator2::translateRows(Eigen::Matrix<T, R, C>* target, T init) const
+void NameTranslator::translateRows(Eigen::Matrix<T, R, C>* target, T init) const
 {
   ROS_ASSERT(newSize() > 0);
   if(old_mapping_.empty() && target->rows() > 0)
@@ -259,7 +259,7 @@ void NameTranslator2::translateRows(Eigen::Matrix<T, R, C>* target, T init) cons
 }
 
 template<typename T, int R, int C>
-void NameTranslator2::translateCols(Eigen::Matrix<T, R, C>* target, T init) const
+void NameTranslator::translateCols(Eigen::Matrix<T, R, C>* target, T init) const
 {
   ROS_ASSERT(newSize() > 0);
   if(old_mapping_.empty() && target->cols() > 0)

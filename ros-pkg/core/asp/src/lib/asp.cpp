@@ -16,7 +16,7 @@ void ASPWeights::deserialize(std::istream& in)
   eigen_extensions::deserialize(in, &eweights_);
 }
 
-void ASPWeights::_applyNameTranslator(const std::string& id, const NameTranslator2& translator)
+void ASPWeights::_applyNameTranslator(const std::string& id, const NameTranslator& translator)
 {
   ROS_ASSERT(id == "nmap" || id == "emap");
   if(id == "nmap")

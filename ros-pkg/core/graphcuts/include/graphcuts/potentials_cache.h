@@ -45,7 +45,7 @@ namespace graphcuts
 		      
   protected:
     //! "nmap" or "emap"
-    void _applyNameTranslator(const std::string& id, const NameTranslator2& translator);
+    void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
   };
 
 }

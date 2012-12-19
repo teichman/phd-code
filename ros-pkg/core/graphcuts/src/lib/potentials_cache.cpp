@@ -112,7 +112,7 @@ namespace graphcuts
     return psi;
   }
 
-  void PotentialsCache::_applyNameTranslator(const std::string& id, const NameTranslator2& translator)
+  void PotentialsCache::_applyNameTranslator(const std::string& id, const NameTranslator& translator)
   {
     ROS_ASSERT(id == "emap" || id == "nmap");
     if(id == "emap") {

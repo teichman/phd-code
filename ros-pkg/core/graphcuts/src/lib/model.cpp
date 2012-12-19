@@ -88,7 +88,7 @@ namespace graphcuts
     return weights;
   }
 
-  void Model::_applyNameTranslator(const std::string& id, const NameTranslator2& translator)
+  void Model::_applyNameTranslator(const std::string& id, const NameTranslator& translator)
   {
     ROS_ASSERT(id == "nmap" || id == "emap");
     if(id == "nmap")
