@@ -28,7 +28,6 @@ void DepthDistortionLearner::addFrame(Frame frame,
 
 PrimeSenseModel DepthDistortionLearner::fitFocalLength()
 {
-  ROS_WARN("DepthDistortionLearner::fitFocalLength currently does not use depth distortion model correction on frames_.");
   FocalLengthMDE::Ptr objective(new FocalLengthMDE(initial_model_, frames_, pcds_, transforms_, 0.1));
   GridSearch gs(1);
   gs.verbose_ = true;
@@ -397,13 +396,13 @@ DiscreteDepthDistortionModel DepthDistortionLearner::fitDiscreteModel()
     //cmap2.increment(ppt.v_, ppt.u_, (double)ppt.z_ * 0.001);
   }	
 
-  string dir = ".ddl";
-  if(!bfs::exists(dir))
-    bfs::create_directory(dir);
-  else
-    ROS_ASSERT(bfs::is_directory(dir));
-  cmap2.saveVisualizations(dir);
-  cout << "Saved coverage visualization to " << dir << endl;
+  // string dir = ".ddl";
+  // if(!bfs::exists(dir))
+  //   bfs::create_directory(dir);
+  // else
+  //   ROS_ASSERT(bfs::is_directory(dir));
+  // cmap2.saveVisualizations(dir);
+  // cout << "Saved coverage visualization to " << dir << endl;
   
   return dddm;
 }
