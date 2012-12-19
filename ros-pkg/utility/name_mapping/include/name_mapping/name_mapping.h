@@ -17,6 +17,25 @@
 #include <serializable/serializable.h>
 #include <name_mapping/name_mapping.h>
 
+// ROS console and assert seem good, but they pollute the valgrind output.
+// Maybe this will be resolved with a newer version of log4cxx:
+// http://comments.gmane.org/gmane.comp.apache.logging.log4cxx.user/2991
+
+//#include <ros/console.h>
+//#define PL_ABORT(x) ROS_FATAL_STREAM(x); abort();
+  
+// ... for now we'll just use our own thing.
+#define NM_ABORT(x)						\
+  do {								\
+    std::cerr << "\033[1;31m[NAME_MAPPING] " << std::endl	\
+	      << "file = " << __FILE__ << std::endl		\
+	      << "line = " << __LINE__ << std::endl		\
+	      << x						\
+	      << "\033[0m" << std::endl;			\
+    abort();							\
+  } while(0)
+
+
 class NameMapping : public Serializable
 {
 public:
@@ -186,6 +205,8 @@ private:
 template<typename T>
 void NameTranslator2::translate(std::vector<T>* target, T init) const
 {
+  if(old_mapping_.empty() && !target->empty())
+    NM_ABORT("applyNameMapping() must be called before initializing data that is name-mapped.");
   ROS_ASSERT(target->size() == 0 || target->size() == old_mapping_.size());  // Allow uninitialized data to become initialized.
   if(target->size() == 0) {
     target->resize(newSize(), init);
@@ -203,6 +224,8 @@ template<typename T, int R>
 void NameTranslator2::translate(Eigen::Matrix<T, R, 1>* target, T init) const
 {
   ROS_ASSERT(newSize() > 0);
+  if(old_mapping_.empty() && target->rows() > 0)
+    NM_ABORT("applyNameMapping() must be called before initializing data that is name-mapped.");
   ROS_ASSERT(target->rows() == 0 || target->rows() == (int)old_mapping_.size());  // Allow uninitialized data to become initialized.
   if(target->rows() == 0) {
     target->resize(newSize());
@@ -222,6 +245,8 @@ template<typename T, int R, int C>
 void NameTranslator2::translateRows(Eigen::Matrix<T, R, C>* target, T init) const
 {
   ROS_ASSERT(newSize() > 0);
+  if(old_mapping_.empty() && target->rows() > 0)
+    NM_ABORT("applyNameMapping() must be called before initializing data that is name-mapped.");
   ROS_ASSERT(target->rows() == (int)old_mapping_.size());
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> tmp(newSize(), target->cols());
   Eigen::Matrix<T, Eigen::Dynamic, 1> tmpvec;
@@ -237,6 +262,8 @@ template<typename T, int R, int C>
 void NameTranslator2::translateCols(Eigen::Matrix<T, R, C>* target, T init) const
 {
   ROS_ASSERT(newSize() > 0);
+  if(old_mapping_.empty() && target->cols() > 0)
+    NM_ABORT("applyNameMapping() must be called before initializing data that is name-mapped.");
   ROS_ASSERT(target->cols() == (int)old_mapping_.size());
   Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> tmp(target->rows(), newSize());
   Eigen::Matrix<T, Eigen::Dynamic, 1> tmpvec;

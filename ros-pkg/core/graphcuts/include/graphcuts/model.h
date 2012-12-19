@@ -8,26 +8,28 @@
 namespace graphcuts
 {
 
-  class Model : public Serializable
+  class Model : public Serializable, public NameMappable
   {
   public:
-    Eigen::VectorXd epot_weights_;
-    Eigen::VectorXd npot_weights_;
-    NameMapping epot_names_;
-    NameMapping npot_names_;
-
+    Eigen::VectorXd nweights_;
+    Eigen::VectorXd eweights_;
+    
     Model();
-    Model(const Eigen::VectorXd& epot_weights,
-	  const Eigen::VectorXd& npot_weights,
-	  const NameMapping& epot_names = NameMapping(),
-	  const NameMapping& npot_names = NameMapping());
+    Model(const Eigen::VectorXd& nweights,
+	  const Eigen::VectorXd& eweights,
+	  const NameMapping& nmap,
+	  const NameMapping& emap);
     void serialize(std::ostream& out) const;
     void deserialize(std::istream& in);
     //! Edge, then node potentials.
     double score(const Eigen::VectorXd& psi) const;
     //double score(const VectorXd& edge_psi, const Eigen::VectorXd& node_psi) const;
-    int size() const { return epot_weights_.rows() + npot_weights_.rows(); }
+    int size() const { return eweights_.rows() + nweights_.rows(); }
     Eigen::VectorXd concatenate() const;
+
+  protected:
+    //! "nmap" or "emap"
+    void _applyNameTranslator(const std::string& id, const NameTranslator2& translator);
   };
   
 }

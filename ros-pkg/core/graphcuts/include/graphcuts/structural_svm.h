@@ -22,6 +22,7 @@ namespace graphcuts
     int debug_level_;
     
     StructuralSVM(double c, double precision, int num_threads, int debug_level);
+    //! labels must all be in {-1, +1}^n.
     Model train(const std::vector<PotentialsCache::Ptr>& caches,
 		const std::vector<VecXiPtr>& labels) const;
 

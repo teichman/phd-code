@@ -9,21 +9,6 @@
 namespace gc = graphcuts;
 //namespace pl = pipeline;
 
-class ASPWeights : public Serializable, public NameMappable
-{
-public:
-  Eigen::VectorXd nweights_;
-  Eigen::VectorXd eweights_;
-
-  void serialize(std::ostream& out) const;
-  void deserialize(std::istream& in);
-  std::string status(const std::string& prefix = "") const;
-  
-protected:
-  //! "nmap" or "emap"
-  void _applyNameTranslator(const std::string& id, const NameTranslator2& translator);
-};
-
 class AbstractSegmentationPipeline
 {
 public:

@@ -26,20 +26,17 @@ namespace graphcuts
   {
     ROS_ASSERT(caches.size() == labels.size());
     ROS_ASSERT(!caches.empty());
-    for(size_t i = 1; i < caches.size(); ++i) { 
-      ROS_ASSERT(caches[i]->npot_names_ == caches[i-1]->npot_names_);
-      ROS_ASSERT(caches[i]->epot_names_ == caches[i-1]->epot_names_);
-    }
+    for(size_t i = 1; i < caches.size(); ++i)
+      ROS_ASSERT(caches[i]->nameMappingsAreEqual(*caches[i-1]));
     for(size_t i = 0; i < labels.size(); ++i)
       for(int j = 0; j < labels[i]->rows(); ++j)
-	ROS_ASSERT(labels[i]->coeffRef(j) == 0 || labels[i]->coeffRef(j) == 1);
+	ROS_ASSERT(labels[i]->coeffRef(j) == -1 || labels[i]->coeffRef(j) == 1);
     
     // Start slightly away from the boundary.
     Model model;
-    model.epot_weights_ = 0.001 * VectorXd::Ones(caches[0]->getNumEdgePotentials());
-    model.npot_weights_ = 0.001 * VectorXd::Ones(caches[0]->getNumNodePotentials());
-    model.epot_names_ = caches[0]->epot_names_;
-    model.npot_names_ = caches[0]->npot_names_;
+    model.applyNameMappings(*caches[0]);
+    model.eweights_ = 0.001 * VectorXd::Ones(caches[0]->numEdgePotentials());
+    model.nweights_ = 0.001 * VectorXd::Ones(caches[0]->numNodePotentials());
     double slack = 0.001;
     int iter = 0;
     vector<Constraint> constraints;
@@ -166,7 +163,7 @@ namespace graphcuts
     // -- Generate the non-negativity constraints for the edge weights
     //    and the slack variables.
     for(int i = 0; i < x.rows(); ++i) {
-      if(i < model->epot_weights_.rows() || i >= model->size()) { 
+      if(i < model->eweights_.rows() || i >= model->size()) { 
 	SMPtr A(new Eigen::SparseMatrix<double>(x.rows(), x.rows()));
 	A->finalize();
 	
@@ -186,8 +183,8 @@ namespace graphcuts
     VectorXd xstar = nips.solve(x, &ns);
     ROS_DEBUG_STREAM("Solving with Nesterov took " << ns << " steps, total.");
     *slack = xstar(xstar.rows() - 1);
-    model->epot_weights_ = xstar.head(model->epot_weights_.rows());
-    model->npot_weights_ = xstar.segment(model->epot_weights_.rows(), model->npot_weights_.rows());
+    model->eweights_ = xstar.head(model->eweights_.rows());
+    model->nweights_ = xstar.segment(model->eweights_.rows(), model->nweights_.rows());
 
     return objective->eval(xstar);
   }  
@@ -242,9 +239,12 @@ namespace graphcuts
     ROS_ASSERT(label.cols() == pred.cols());
 
     double loss = 0;
-    for(int i = 0; i < label.rows(); ++i)
-      if(label(i) != pred(i))
+    for(int i = 0; i < label.rows(); ++i) {
+      ROS_ASSERT(label.coeffRef(i) == -1 || label.coeffRef(i) == 1);
+      ROS_ASSERT(pred.coeffRef(i) == -1 || pred.coeffRef(i) == 1);
+      if(label.coeffRef(i) != pred.coeffRef(i))
 	++loss;
+    }
 
     return loss;
   }
@@ -255,9 +255,12 @@ namespace graphcuts
     ROS_ASSERT(label.rows() == pred.rows());
     ROS_ASSERT(label.cols() == pred.cols());
 
-    for(int i = 0; i < label.rows(); ++i)
-      if(label(i) != pred(i))
+    for(int i = 0; i < label.rows(); ++i) {
+      ROS_ASSERT(label.coeffRef(i) == -1 || label.coeffRef(i) == 1);
+      ROS_ASSERT(pred.coeffRef(i) == -1 || pred.coeffRef(i) == 1);
+      if(label.coeffRef(i) != pred.coeffRef(i))
 	return 1.0;
+    }
 
     return 0.0;
   }

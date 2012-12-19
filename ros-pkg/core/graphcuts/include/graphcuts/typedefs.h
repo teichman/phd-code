@@ -21,7 +21,7 @@ namespace graphcuts
   typedef boost::shared_ptr<DynamicSparseMat> DynamicSparseMatPtr;
   typedef boost::shared_ptr<const DynamicSparseMat> DynamicSparseMatConstPtr;
   
-  // Labels are 0 and 1.  TODO: This should probably be {-1, 0, +1} instead.
+  // Labels are {-1, 0, +1}.
   typedef Eigen::VectorXi VecXi;
   typedef boost::shared_ptr<Eigen::VectorXi> VecXiPtr;
   typedef boost::shared_ptr<const Eigen::VectorXi> VecXiConstPtr;

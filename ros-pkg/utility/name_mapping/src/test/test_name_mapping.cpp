@@ -146,7 +146,6 @@ string Foo::status() const
 Foo Foo::getTestMBObject()
 {
   Foo foo;
-
   NameMapping cmap;
   cmap.addName("car");
   cmap.addName("pedestrian");
