@@ -6,30 +6,51 @@ using namespace Eigen;
 using namespace std;
 namespace gc = graphcuts;
 
+TEST(Model, NameMapping)
+{
+  VectorXd eweights(3);
+  eweights << 0, M_PI, 42.13;
+  VectorXd nweights(2);
+  nweights << M_PI, 42.13;
+  NameMapping emap;
+  emap.addName("edge_descriptor0");
+  emap.addName("edge_descriptor1");
+  emap.addName("edge_descriptor2");
+  NameMapping nmap;
+  nmap.addName("node_descriptor0");
+  nmap.addName("node_descriptor1");
+
+  gc::Model m;
+  m.applyNameMapping("nmap", nmap);
+  m.applyNameMapping("emap", emap);
+  m.eweights_ = eweights;
+  m.nweights_ = nweights;
+  cout << m << endl;
+}
+
 TEST(Model, Serialization)
 {
-  VectorXd epot_weights(3);
-  epot_weights << 0, M_PI, 42.13;
-  NameMapping epot_names;
-  epot_names.addName("edge_descriptor0");
-  epot_names.addName("edge_descriptor1");
-  epot_names.addName("edge_descriptor2");
-  VectorXd npot_weights(2);
-  npot_weights << M_PI, 42.13;
-  NameMapping npot_names;
-  npot_names.addName("node_descriptor0");
-  npot_names.addName("node_descriptor1");
+  VectorXd eweights(3);
+  eweights << 0, M_PI, 42.13;
+  NameMapping emap;
+  emap.addName("edge_descriptor0");
+  emap.addName("edge_descriptor1");
+  emap.addName("edge_descriptor2");
+  VectorXd nweights(2);
+  nweights << M_PI, 42.13;
+  NameMapping nmap;
+  nmap.addName("node_descriptor0");
+  nmap.addName("node_descriptor1");
 
-  gc::Model model(epot_weights, npot_weights, epot_names, npot_names);
+  gc::Model model(nweights, eweights, nmap, emap);
   model.save("test_model");
   cout << model << endl;
   
   gc::Model model2;
   model2.load("test_model");
   cout << model2 << endl;
-  
-  EXPECT_TRUE(model.npot_names_ == model2.npot_names_);
-  EXPECT_TRUE(model.epot_names_ == model2.epot_names_);
+
+  EXPECT_TRUE(model.nameMappingsAreEqual(model2));
   EXPECT_TRUE(model.concatenate().rows() == model2.concatenate().rows());
   for(int i = 0; i < model2.concatenate().rows(); ++i)
     EXPECT_FLOAT_EQ(model.concatenate()(i), model2.concatenate()(i));
@@ -49,31 +70,34 @@ TEST(StructuralSVM, SanityCheck)
 
   // -- Generate data.
   gc::PotentialsCache::Ptr cache(new gc::PotentialsCache);
-
+  NameMapping nmap;
+  nmap.addName("GoodDescriptor");
+  nmap.addName("ReversedDescriptor");
+  cache->applyNameMapping("nmap", nmap);
+  NameMapping emap;
+  emap.addName("GoodEdge");
+  emap.addName("BadEdge");
+  cache->applyNameMapping("emap", emap);
+  
   gc::VecXiPtr label(new gc::VecXi(10));
-  *label << 0, 0, 0, 0, 0, 1, 1, 1, 1, 1;
+  *label << -1, -1, -1, -1, -1, 1, 1, 1, 1, 1;
 
   VectorXd good_sink(10);
   good_sink << 0, 0, 0, 0, 1, 0, 0, 0, 0, 0;
   VectorXd good_source(10);
   good_source << 0, 0, 0, 0, 0, 1, 0, 0, 0, 0;
-  cache->npot_names_.addName("GoodDescriptor");
-  cache->sink_.push_back(good_sink);
-  cache->source_.push_back(good_source);
-  cache->npot_names_.addName("ReversedDescriptor");
-  cache->sink_.push_back(-good_sink);
-  cache->source_.push_back(-good_source);
-
-  cache->epot_names_.addName("GoodEdge");
+  cache->sink_[0] = good_sink;
+  cache->source_[0] = good_source;
+  cache->sink_[1] = -good_sink;
+  cache->source_[1] = -good_source;
   gc::DynamicSparseMat good_edge(10, 10);
   for(int i = 1; i < good_edge.rows(); ++i)
     good_edge.coeffRef(i-1, i) = 1.0;
-  cache->edge_.push_back(gc::SparseMat(good_edge));
+  cache->edge_[0] = gc::SparseMat(good_edge);
 
-  cache->epot_names_.addName("BadEdge");
   gc::DynamicSparseMat bad_edge(10, 10);
   bad_edge.coeffRef(4, 5) = 100;
-  cache->edge_.push_back(bad_edge);
+  cache->edge_[1] = bad_edge;
 
   cache->symmetrizeEdges();
     
@@ -89,7 +113,7 @@ TEST(StructuralSVM, SanityCheck)
   gc::MaxflowInference mfi(model);
   VectorXi seg;
   mfi.segment(cache, &seg);
-  EXPECT_TRUE(cache->getNumNodes() == seg.rows());
+  EXPECT_TRUE(cache->numNodes() == seg.rows());
   cout << label->transpose() << endl;
   cout << seg.transpose() << endl;
 

@@ -12,7 +12,7 @@ namespace graphcuts
   //! Represents a function that maps segmentations to score vectors
   //! i.e. \Psi_x : seg -> R^n.
   //! w^T \Psi_x(y) is the score for segmentation y on frame with features x.
-  class PotentialsCache
+  class PotentialsCache : public NameMappable
   {
   public:
     typedef boost::shared_ptr<PotentialsCache> Ptr;
@@ -24,18 +24,17 @@ namespace graphcuts
     //! In order of weights.
     std::vector<Eigen::VectorXd> sink_;
     std::vector<Eigen::VectorXd> source_;
-    NameMapping epot_names_;
-    NameMapping npot_names_;
     
     long int bytes() const;
-    int getNumNodes() const;
-    int getNumPotentials() const;
-    int getNumNodePotentials() const;
-    int getNumEdgePotentials() const { return edge_.size(); }
+    int numNodes() const;
+    int numPotentials() const;
+    int numNodePotentials() const;
+    int numEdgePotentials() const { return edge_.size(); }
 
 
     //! weights.dot(psi()) is the score for a given segmentation.
     //! Concatenates edge, then node potentials.
+    //! seg must be in {-1, +1}^n.  Labels of "unknown", i.e. 0, are not allowed.
     Eigen::VectorXd psi(const Eigen::VectorXi& seg) const;
 
     void symmetrizeEdges();
@@ -44,6 +43,9 @@ namespace graphcuts
 		      Eigen::VectorXd* src,
 		      Eigen::VectorXd* snk) const;
 		      
+  protected:
+    //! "nmap" or "emap"
+    void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
   };
 
 }

@@ -18,7 +18,7 @@ namespace graphcuts
     return bytes;
   }
 
-  int PotentialsCache::getNumNodes() const
+  int PotentialsCache::numNodes() const
   {
     ROS_ASSERT(sink_.size() == source_.size());
     ROS_ASSERT(!sink_.empty());
@@ -31,12 +31,12 @@ namespace graphcuts
     return sink_[0].rows();
   }
   
-  int PotentialsCache::getNumPotentials() const
+  int PotentialsCache::numPotentials() const
   {
-    return getNumNodePotentials() + getNumEdgePotentials();
+    return numNodePotentials() + numEdgePotentials();
   }
 
-  int PotentialsCache::getNumNodePotentials() const
+  int PotentialsCache::numNodePotentials() const
   {
     ROS_ASSERT(sink_.size() == source_.size());
     return sink_.size();
@@ -58,8 +58,8 @@ namespace graphcuts
     ROS_ASSERT(src->rows() == snk->rows());
     ROS_ASSERT(src->rows() == edge->rows());
     ROS_ASSERT(src->rows() == edge->cols());
-    ROS_ASSERT(model.npot_weights_.rows() == getNumNodePotentials());
-    ROS_ASSERT(model.epot_weights_.rows() == getNumEdgePotentials());
+    ROS_ASSERT(model.nweights_.rows() == numNodePotentials());
+    ROS_ASSERT(model.eweights_.rows() == numEdgePotentials());
     ROS_ASSERT(src->rows() == edge->cols());
     ROS_ASSERT(!edge_.empty());
     ROS_ASSERT(!source_.empty());
@@ -69,18 +69,18 @@ namespace graphcuts
     snk->setZero();
     edge->setZero();
     for(size_t i = 0; i < source_.size(); ++i) { 
-      *src += model.npot_weights_(i) * source_[i];
-      *snk += model.npot_weights_(i) * sink_[i];
+      *src += model.nweights_(i) * source_[i];
+      *snk += model.nweights_(i) * sink_[i];
     }
 
     for(size_t i = 0; i < edge_.size(); ++i)
-      *edge += model.epot_weights_(i) * edge_[i];
+      *edge += model.eweights_(i) * edge_[i];
   }
 
   
   Eigen::VectorXd PotentialsCache::psi(const Eigen::VectorXi& seg) const
   {
-    VectorXd psi = VectorXd::Zero(getNumPotentials()); // edge, then node.
+    VectorXd psi = VectorXd::Zero(numPotentials()); // edge, then node.
     
     // -- Add up scores for edge potentials.
     for(size_t i = 0; i < edge_.size(); ++i) {
@@ -100,7 +100,7 @@ namespace graphcuts
       int idx = i + edge_.size();
       ROS_ASSERT(source_[i].size() == seg.rows());
       for(int j = 0; j < seg.rows(); ++j) {
-	if(seg(j) == 0)
+	if(seg(j) == -1)
 	  psi(idx) += sink_[i](j);
 	else if(seg(j) == 1)
 	  psi(idx) += source_[i](j);
@@ -111,5 +111,16 @@ namespace graphcuts
      
     return psi;
   }
-  
+
+  void PotentialsCache::_applyNameTranslator(const std::string& id, const NameTranslator& translator)
+  {
+    ROS_ASSERT(id == "emap" || id == "nmap");
+    if(id == "emap") {
+      translator.translate(&edge_, SparseMat());
+    }
+    else if(id == "nmap") {
+      translator.translate(&sink_, VectorXd());
+      translator.translate(&source_, VectorXd());
+    }
+  }
 }

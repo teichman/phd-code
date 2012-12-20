@@ -241,17 +241,17 @@ std::string NameMapping::status(const std::string& prefix) const
 
 
 /***********************************************************
- * NameTranslator2
+ * NameTranslator
  ************************************************************/
 
-NameTranslator2::NameTranslator2(const NameMapping& old_mapping, const NameMapping& new_mapping) :
+NameTranslator::NameTranslator(const NameMapping& old_mapping, const NameMapping& new_mapping) :
   old_mapping_(old_mapping),
   new_mapping_(new_mapping)
 {
   initialize();
 }
 
-std::string NameTranslator2::status(const std::string& prefix) const
+std::string NameTranslator::status(const std::string& prefix) const
 {
   ostringstream oss;
   oss << prefix << "Old mapping: " << endl;
@@ -271,7 +271,7 @@ std::string NameTranslator2::status(const std::string& prefix) const
   return oss.str();
 }
 
-void NameTranslator2::initialize()
+void NameTranslator::initialize()
 {
   old_to_new_.resize(old_mapping_.size());
   for(size_t i = 0; i < old_mapping_.size(); ++i) {
@@ -283,23 +283,23 @@ void NameTranslator2::initialize()
   }
 }
 
-int NameTranslator2::toNew(size_t old) const
+int NameTranslator::toNew(size_t old) const
 {
   ROS_ASSERT(old < old_to_new_.size());
   return old_to_new_[old];
 }
 
-size_t NameTranslator2::newSize() const
+size_t NameTranslator::newSize() const
 {
   return new_mapping_.size();
 }
 
-size_t NameTranslator2::oldSize() const
+size_t NameTranslator::oldSize() const
 {
   return old_mapping_.size();
 }
 
-void NameTranslator2::translate(int* target) const
+void NameTranslator::translate(int* target) const
 {
   ROS_ASSERT(target && (*target == NO_ID || old_mapping_.hasId(*target)));
   if(*target == NO_ID)
@@ -312,7 +312,7 @@ void NameTranslator2::translate(int* target) const
  * NameMappable
  ************************************************************/
 
-void NameTranslatable::applyNameTranslator(const std::string& nmid, const NameTranslator2& translator)
+void NameTranslatable::applyNameTranslator(const std::string& nmid, const NameTranslator& translator)
 {
   _applyNameTranslator(nmid, translator);
 }
@@ -322,7 +322,7 @@ void NameTranslatable::applyNameTranslator(const std::string& nmid, const NameTr
  * NameMappable
  ************************************************************/
 
-void NameMappable::applyNameTranslator(const std::string& nmid, const NameTranslator2& translator)
+void NameMappable::applyNameTranslator(const std::string& nmid, const NameTranslator& translator)
 {
   name_mappings_[nmid] = translator.newMapping();
   NameTranslatable::applyNameTranslator(nmid, translator);
@@ -340,7 +340,7 @@ void NameMappable::applyNameMapping(const std::string& nmid, const NameMapping& 
   // if(old_mapping == new_mapping)
   //   return;
 
-  NameTranslator2 translator(old_mapping, new_mapping);
+  NameTranslator translator(old_mapping, new_mapping);
   _applyNameTranslator(nmid, translator);
 }
 
