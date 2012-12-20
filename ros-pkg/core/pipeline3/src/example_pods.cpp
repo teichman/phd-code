@@ -181,7 +181,7 @@ namespace pipeline
 
       cout << oss.str() << endl;
 
-      ofstream f((getDebugPath() + "-histogram.txt").c_str());
+      ofstream f((debugBasePath() + "-histogram.txt").c_str());
       f << oss.str() << endl;
       f.close();
     }

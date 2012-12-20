@@ -156,7 +156,7 @@ namespace pipeline
   //   return oss.str();
   // }
   
-  string ComputeNode::getRunName(int width) const
+  string ComputeNode::runName(int width) const
   {
     ostringstream oss;
     oss << setw(width) << setfill('0') << num_times_computed_ << "-" << name_;

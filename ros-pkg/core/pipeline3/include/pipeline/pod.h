@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <boost/regex.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/filesystem.hpp>
 #include <bag_of_tricks/high_res_timer.h>
 #include <pipeline/params.h>
 #include <pipeline/outlet.h>
@@ -55,13 +56,19 @@ namespace pipeline
     //! Returns computation time in ms of the last run.
     double getComputationTime() const;
     int getNumTimesComputed() const;
-    //! Returns pod name with the number of times it has been run.
-    std::string getRunName(int width = 4) const;
     //! Returns a reasonable debug path for Pods to save output to.
     //! ".pipeline-debug/####-PodName"
-    std::string getDebugPath() const;
-
-
+    //! Creates the directory if necessary.
+    //! Typically, you'll use this in an overridden debug() function when
+    //! you want to save debugging output to, e.g. debugBasePath() + "-raw.png"
+    //! and debugBasePath() + "-overlay.png".
+    std::string debugBasePath() const;
+    //! Returns the name of the directory in which to save debugging information.
+    //! Creates this directory if necessary.
+    std::string debugDirectory() const;
+    //! Returns pod name with the number of times it has been run.
+    std::string runName(int width = 4) const;
+    
   protected:
     // ----------------------------------------
     // -- Methods to override with

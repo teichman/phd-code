@@ -85,7 +85,7 @@ namespace pipeline
     double getComputationTime() const;
     int getNumTimesComputed() const;
     //! Returns node name with the number of times it has been run.
-    std::string getRunName(int width = 4) const;
+    std::string runName(int width = 4) const;
     std::map<std::string, Outlet*> getInputs() const { return inputs_; }
     std::string printOutputs() const;
           

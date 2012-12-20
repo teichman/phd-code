@@ -1,6 +1,7 @@
 #include <pipeline/pod.h>
 
 using namespace std;
+namespace bfs = boost::filesystem;
 using boost::any;
 
 namespace pipeline
@@ -128,18 +129,24 @@ namespace pipeline
     ++num_times_computed_;
   }
   
-  string Pod::getRunName(int width) const
+  inline string Pod::runName(int width) const
   {
     ostringstream oss;
     oss << setw(width) << setfill('0') << num_times_computed_ << "-" << name_;
     return oss.str();
   }
 
-  string Pod::getDebugPath() const
+  inline string Pod::debugDirectory() const
   {
-    ostringstream oss;
-    oss << ".pipeline-debug/" << getRunName(4);
-    return oss.str();
+    string name = ".pipeline-debug";
+    if(!bfs::exists(name))
+      bfs::create_directory(name);
+    return name;
+  }
+
+  string Pod::debugBasePath() const
+  {
+    return debugDirectory() + "/" + runName(4);
   }
   
   bool Pod::ready() {
