@@ -26,6 +26,15 @@ AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-0
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
+# TODO: Collect a test sequence.
+SLAM_RUNS_TRAINING_xpl00	:= 	2012-12-19_2a_backandforth_0 \
+					2012-12-19_short_00 \
+					2012-12-19_short_01 \
+					2012-12-19_short_02 \
+					2012-12-19_short_03 
+SLAM_RUNS_TESTING_xpl00		:= 	2012-12-19_2a_backandforth_0
+SLAM_RUNS_xpl00			:= 	$(SLAM_RUNS_TRAINING_xpl00) $(SLAM_RUNS_TESTING_xpl00)
+
 SLAM_RUNS_TRAINING_xpl01	:= 	2a_backandforth \
 					2012-10-22_2a_backandforth_0 \
 					2012-10-22_2a_backandforth_2 \
@@ -33,11 +42,14 @@ SLAM_RUNS_TRAINING_xpl01	:= 	2a_backandforth \
 					2012-11-16_2a_backandforth_6
 SLAM_RUNS_TESTING_xpl01		:=	2012-11-16_2a_backandforth_7 \
 					2012-11-16_2a_backandforth_8
-
-#SLAM_RUNS_TRAINING_xpl01	:= 	2012-10-22_2a_backandforth_2
-#SLAM_RUNS_TESTING_xpl01		:=	2012-11-16_2a_backandforth_7
-
 SLAM_RUNS_xpl01			:= 	$(SLAM_RUNS_TRAINING_xpl01) $(SLAM_RUNS_TESTING_xpl01)
+
+SLAM_RUNS_TRAINING_xpl03	:= 	2012-12-19_xpl03_boardroom_0 \
+					2012-12-19_xpl03_boardroom_1 \
+					2012-12-19_xpl03_boardroom_2
+SLAM_RUNS_TESTING_xpl03		:= 	2012-12-19_xpl03_boardroom_3
+SLAM_RUNS_xpl03			:= 	$(SLAM_RUNS_TRAINING_xpl03) $(SLAM_RUNS_TESTING_xpl03)
+
 
 
 # Data specifically for the 2012-11-06 run in which multiple sensor views were collected.
