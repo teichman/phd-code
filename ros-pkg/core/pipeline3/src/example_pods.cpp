@@ -9,6 +9,7 @@ namespace pipeline
 
     void Sorter::compute()
     {
+      PL_ASSERT(numIncoming("Points") == 1);
       *sorted_ = *pull<VecConstPtr>("Points");
       sort(sorted_->begin(), sorted_->end());
       push<VecConstPtr>("Sorted", sorted_);
@@ -16,6 +17,7 @@ namespace pipeline
 
     void Summarizer::compute()
     {
+      PL_ASSERT(numIncoming("Points") > 0);
       const Vec& points = *pull<VecConstPtr>("Points");
 
       double mean, stdev, mean_neighbor_separation;

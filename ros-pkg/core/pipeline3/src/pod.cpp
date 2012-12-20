@@ -40,7 +40,7 @@ namespace pipeline
     for(it = outlets_.begin(); it != outlets_.end(); ++it)
       delete it->second;
   }
-  
+
   void Pod::registerPodType(std::string type_name, CreatorFnPtr fp)
   {
     creator_map_[type_name] = fp;
@@ -56,6 +56,25 @@ namespace pipeline
     return it->second(name, params);
   }
 
+  int Pod::numIncoming(std::string input_name) const
+  {
+    std::map<std::string, std::vector<const Outlet*> >::const_iterator it;
+    it = inputs_.find(input_name);
+    if(it == inputs_.end()) {
+      PL_ABORT(getClassName() << " \"" << name_
+	       << "\" tried to check if \"" << input_name
+	       << "\" has data, but this input has not been registered.");
+    }
+
+    const std::vector<const Outlet*>& outlets = it->second;
+    int num = 0;
+    for(size_t i = 0; i < outlets.size(); ++i)
+      if(outlets[i]->hasData())
+	++num;
+
+    return num;
+  }
+  
   bool Pod::trylock() {
     if(pthread_mutex_trylock(&mutex_) == EBUSY)
       return false;

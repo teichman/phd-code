@@ -76,15 +76,24 @@ namespace pipeline {
     addPods(getComponent(pod));
   }
 
-  void Pipeline::addPods(const std::vector<Pod*> pods)
+  void Pipeline::addPod(Pod* pod)
   {
-    for(size_t i = 0; i < pods.size(); ++i) { 
-      pods_.push_back(pods[i]);
-      pod_names_[pods[i]->getName()] = pods[i];
-    }
+    pod_names_[pod->getName()] = pod;
     assertCompleteness();
     assertNoDuplicates();
     PL_ASSERT(pods_.size() == pod_names_.size());
+  }
+
+  void Pipeline::addPods(const std::vector<Pod*> pods)
+  {
+    for(size_t i = 0; i < pods.size(); ++i) {
+      addPod(pods_[i]);
+      // pods_.push_back(pods[i]);
+      // pod_names_[pods[i]->getName()] = pods[i];
+    }
+    // assertCompleteness();
+    // assertNoDuplicates();
+    // PL_ASSERT(pods_.size() == pod_names_.size());
   }
   
   bool Pipeline::trylock() {

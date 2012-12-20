@@ -5,7 +5,8 @@
 #include <graphcuts/potentials_cache.h>
 #include <name_mapping/name_mapping.h>
 
-namespace asp {
+namespace asp
+{
   using namespace gc;
   using namespace pl;
 
@@ -13,12 +14,11 @@ namespace asp {
   typedef boost::shared_ptr<const Eigen::MatrixXf> MatrixXfConstPtr;
   
   //! Abstract Segmentation Pipeline.
-  class Asp
+  //! See test_asp.cpp for example usage.
+  class Asp : public Pipeline
   {
   public:
-    Pipeline pipeline_;
-
-    Asp();
+    Asp(int num_threads);
     virtual ~Asp() {};
 
     //! Names are automatically filled in based on Pipeline pod names.
@@ -35,6 +35,8 @@ namespace asp {
     //! Also, setModel() must have been called.
     //! segmentation will be resized if it is not the correct length.
     //! cache will be filled if it is not null.
+    //!
+    //! Also creates a debugging directory for output to go into.
     void segment(Eigen::VectorXi* segmentation, PotentialsCache* cache = NULL);
 
   protected:
@@ -42,26 +44,34 @@ namespace asp {
     //! and GraphCuts pods.  You then hook up your own things to this.
     void initializePipeline();
   };
-
+  
   class NodePotentialGenerator : public pl::Pod
   {
   public:
     NodePotentialGenerator(std::string name) :
-      Pod(name),
-      source_(new MatrixXf),
-      sink_(new MatrixXf)
+      Pod(name)
     {
-      declareInput<cv::Mat3b>("Image");
-      declareOutput<MatrixXfConstPtr>("SourcePotentials");
-      declareOutput<MatrixXfConstPtr>("SinkPotentials");
+      // If provided, this is used for writing the overlay debug image.
+      // Otherwise it will just write the raw debug image and skip the overlay.
+      declareInput<cv::Mat3b>("BackgroundImage");  
+      declareOutput<const Eigen::MatrixXf*>("Source");
+      declareOutput<const Eigen::MatrixXf*>("Sink");
     }
 
   protected:
-    MatrixXfConstPtr source_;
-    MatrixXfConstPtr sink_;
+    Eigen::MatrixXf source_;
+    Eigen::MatrixXf sink_;
 
-    //void displayNodePotentials(const cv::Mat3b background = cv::Mat3b()) const;
-    void displayNodePotentials() const;
+    //! Uses BackgroundImage to set the size of source_ and sink_ if necessary
+    //! and initialize their elements to zero.
+    //! This is typically called at the start of compute().
+    void initializeStorage();
+    
+    //! Displays node potentials in a common format.
+    //! Typically, you call this in debug().
+    //! Saves to disk as pod::debugBasePath() + "-raw.png" and
+    //! (if BackgroundImage is provided) as pod::debugBasePath() + "-overlay.png".
+    void writeNodePotentialVisualization() const;
   };
   
   class NodePotentialAggregator : public NodePotentialGenerator
@@ -71,12 +81,13 @@ namespace asp {
     NodePotentialAggregator(std::string name) :
       NodePotentialGenerator(name)
     {
-      declareInput<MatrixXfConstPtr>("UnweightedSourcePotentials");
-      declareInput<MatrixXfConstPtr>("UnweightedSinkPotentials");
+      declareInput<const MatrixXf*>("UnweightedSource");
+      declareInput<const MatrixXf*>("UnweightedSink");
     }
 
-    //! Checks that names match.
-    void setWeights(const Model& model);
+    NameMapping generateNameMapping() const;
+    //! Copy of model is translated using local name mapping.
+    void setWeights(Model model);
     //! Sets nmap names based on input pod names.
     //! Sets model->nweights_ to local nweights_.
     void fillModel(Model* model) const;
@@ -125,8 +136,11 @@ namespace asp {
     {
       declareInput<MatrixXfConstPtr>("AggregatedNodePotentials");
       declareInput<DynamicSparseMatConstPtr>("AggregatedEdgePotentials");
-      
     }
+
+  protected:
+    //! Saves image of final segmentation.
+    void debug() const;
   };
   
 }

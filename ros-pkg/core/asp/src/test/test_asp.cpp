@@ -3,53 +3,49 @@
 
 using namespace std;
 using namespace Eigen;
+using namespace asp;
 
-TEST(ASP, ASPWeights)
+//! Sets node potential randomly.
+class ExampleNPG : public NodePotentialGenerator
 {
-  ASPWeights weights;
+public:
+  DECLARE_POD(ExampleNPG);
+  ExampleNPG(std::string name) :
+    NodePotentialGenerator(name)
   {
-    NameMapping nmap;
-    nmap.addName("BilateralNP");
-    nmap.addName("DistanceNP");
-    nmap.addName("LabelFlowNP");
-    NameMapping emap;
-    emap.addName("DistanceEP");
-    emap.addName("SurfaceNormalEP");
-    weights.applyNameMapping("nmap", nmap);
-    weights.applyNameMapping("emap", emap);
   }
 
-  cout << weights.status("  ") << endl;
+  void compute();
+  void debug();
+};
 
-  for(int i = 0; i < weights.nweights_.rows(); ++i) 
-    weights.nweights_(i) = i+1.01234;
-  for(int i = 0; i < weights.eweights_.rows(); ++i) 
-    weights.eweights_(i) = i+1.01;
-  cout << weights.status("  ") << endl;
+void ExampleNPG::compute()
+{
+  initializeStorage();
 
-  {
-    NameMapping nmap;
-    nmap.addName("LabelFlowNP");
-    nmap.addName("DistanceNP");
-    nmap.addName("BilateralNP");  
-    NameMapping emap;
-    emap.addName("SurfaceNormalEP");
-    emap.addName("DistanceEP");
-    weights.applyNameMapping("nmap", nmap);
-    weights.applyNameMapping("emap", emap);
+  for(int y = 0; y < source_.rows(); ++y) {
+    for(int x = 0; x < source_.cols(); ++x) {
+      source_(y, x) = ((double)rand() / RAND_MAX) * 2.0 - 1.0;
+      sink_(y, x) = ((double)rand() / RAND_MAX) * 2.0 - 1.0;
+    }
   }
-  cout << weights.status("  ") << endl;
-  EXPECT_TRUE(weights.nweights_(weights.nameMapping("nmap").toId("BilateralNP")) == 1.01234);
-  EXPECT_TRUE(weights.eweights_(weights.nameMapping("emap").toId("SurfaceNormalEP")) == 2.01);
 
-  string filename = "asp_weights_test";
-  weights.save(filename);
+  push<const MatrixXf*>("Source", &source_);
+  push<const MatrixXf*>("Sink", &sink_);
+}
 
-  ASPWeights weights2;
-  weights2.load(filename);
-  cout << weights2.status("  ") << endl;
-  EXPECT_TRUE(weights2.nweights_(weights2.nameMapping("nmap").toId("BilateralNP")) == 1.01234);
-  EXPECT_TRUE(weights2.eweights_(weights2.nameMapping("emap").toId("SurfaceNormalEP")) == 2.01);
+void ExampleNPG::debug()
+{
+  writeNodePotentialVisualization();
+}
+
+TEST(NodePotentialGenerator, NodePotentialGenerator)
+{
+  Asp asp;
+  asp.addPod(new ExampleNPG("ExampleNPG0"));
+  asp.pod("ExampleNPG0")->registerInput("BackgroundImage",
+					asp.getPod("ImageEntryPoint"),
+					"Output");
 }
 
 int main(int argc, char** argv) {

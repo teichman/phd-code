@@ -14,9 +14,11 @@ namespace pipeline
     // -- Setup
     // ----------------------------------------
     Pipeline(int num_threads);
+    virtual ~Pipeline() {}
     //! Adds all Pods that are connected to pod.
     void addConnectedComponent(Pod* pod);
     void addPods(const std::vector<Pod*> pods);
+    void addPod(Pod* pod);
 
     // ----------------------------------------
     // -- Execution

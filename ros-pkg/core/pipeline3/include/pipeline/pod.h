@@ -94,8 +94,8 @@ namespace pipeline
     // ----------------------------------------
     // -- Input and output during compute()
     // ----------------------------------------
-    //! Gets the value of a param.
-    template<typename T> T param(const std::string& name) const;
+    //! Returns number of items you will get if you pull.
+    int numIncoming(std::string input_name) const;
     //! Pulls from exactly one output connected to an input.
     template<typename T> void pull(std::string input_name, T* dest) const;
     //! Pulls from exactly one output connected to an input.
@@ -104,6 +104,8 @@ namespace pipeline
     template<typename T> void pull(std::string input_name, std::vector<T>* dest) const;
     //! Pushes data to an output.
     template<typename T> void push(std::string output_name, T val);
+    //! Gets the value of a param.
+    template<typename T> T param(const std::string& name) const;
     
     // ----------------------------------------
     // -- Things you don't need to care about
