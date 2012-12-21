@@ -8,17 +8,25 @@ namespace pipeline
 {
 
   //! Class that represents the entire computation graph and manages its execution.
+  //! Pods added to a Pipeline will be deleted by that Pipeline.
   class Pipeline : public Serializable {
   public:
     // ----------------------------------------
     // -- Setup
     // ----------------------------------------
     Pipeline(int num_threads);
-    virtual ~Pipeline() {}
     //! Adds all Pods that are connected to pod.
     void addConnectedComponent(Pod* pod);
-    void addPods(const std::vector<Pod*> pods);
+    void addPods(const std::vector<Pod*>& pods);
     void addPod(Pod* pod);
+    void connect(std::string source_pod, std::string source_output,
+		 std::string sink_pod, std::string sink_input);
+    //! "Pod:Output -> Pod:Input"
+    //! TODO: Maybe allow only this method of making connections.
+    //! Then completeness is guaranteed.
+    //! Also, it's hard to misinterpret this, whereas it's easy to mix up
+    //! the ordering of any of the other ways of doing it.
+    void connect(std::string connection);
 
     // ----------------------------------------
     // -- Execution
@@ -74,7 +82,7 @@ namespace pipeline
     // ----------------------------------------
     // -- Things you don't need to care about
     // ----------------------------------------
-    ~Pipeline();
+    virtual ~Pipeline();
     void serialize(std::ostream& out) const;
     void deserialize(std::istream& in);
     void save(const std::string& path) const;

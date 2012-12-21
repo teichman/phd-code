@@ -74,28 +74,50 @@ namespace pipeline {
   void Pipeline::addConnectedComponent(Pod* pod)
   {
     addPods(getComponent(pod));
+    assertCompleteness();
   }
 
   void Pipeline::addPod(Pod* pod)
   {
+    pods_.push_back(pod);
     pod_names_[pod->getName()] = pod;
-    assertCompleteness();
+    //assertCompleteness();
     assertNoDuplicates();
     PL_ASSERT(pods_.size() == pod_names_.size());
   }
 
-  void Pipeline::addPods(const std::vector<Pod*> pods)
+  void Pipeline::addPods(const std::vector<Pod*>& pods)
   {
-    for(size_t i = 0; i < pods.size(); ++i) {
-      addPod(pods_[i]);
-      // pods_.push_back(pods[i]);
-      // pod_names_[pods[i]->getName()] = pods[i];
-    }
-    // assertCompleteness();
-    // assertNoDuplicates();
-    // PL_ASSERT(pods_.size() == pod_names_.size());
+    for(size_t i = 0; i < pods.size(); ++i)
+      addPod(pods[i]);
   }
   
+  void Pipeline::connect(std::string source_pod, std::string source_output,
+			 std::string sink_pod, std::string sink_input)
+  {
+    getPod(sink_pod)->registerInput(sink_input, getPod(source_pod), source_output);
+    assertCompleteness();
+  }
+  
+  void Pipeline::connect(std::string connection)
+  {
+    // TODO: Make this use explode()
+    
+    const string& c = connection;
+    string source_pod = c.substr(0, c.find_first_of(":"));
+    //cout << "source_pod: " << source_pod << endl;
+    string source_output = c.substr(c.find_first_of(":") + 1, c.find_first_of(" ") - c.find_first_of(":") - 1);
+    //cout << "source_output: " << source_output << endl;
+    string r = c.substr(c.find_first_of("-> ")).substr(4);
+    //cout << "r: " << r << endl;
+    string sink_pod = r.substr(0, r.find_first_of(":"));
+    //cout << "sink_pod: " << sink_pod << endl;
+    string sink_input = r.substr(r.find_first_of(":") + 1);
+    //cout << "sink_input: " << sink_input << endl;
+
+    connect(source_pod, source_output, sink_pod, sink_input);
+  }
+    
   bool Pipeline::trylock() {
     if(pthread_mutex_trylock(&mutex_) == EBUSY)
       return false;
@@ -122,7 +144,7 @@ namespace pipeline {
     while(!to_check.empty()) {
       Pod* active = to_check.front();
       to_check.pop();
-      found.insert(active); //Won't insert duplicates.
+      found.insert(active);  // Won't insert duplicates.
       for(size_t i = 0; i < active->children_.size(); ++i) {
 	to_check.push(active->children_[i]);
       }

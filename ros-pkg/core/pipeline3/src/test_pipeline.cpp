@@ -49,7 +49,7 @@ void registerPods()
   REGISTER_POD(ConcretePodB);
 }
 
-Pod* generateDefaultPipeline()
+void generateDefaultPipeline(Pipeline* pl)
 {
   EntryPoint<VecConstPtr>* ep0 = new EntryPoint<VecConstPtr>("View0");
   EntryPoint<VecConstPtr>* ep1 = new EntryPoint<VecConstPtr>("View1");
@@ -117,20 +117,21 @@ Pod* generateDefaultPipeline()
   da->registerInput("Elements", summarizer3, "Stdev");
   da->registerInput("Elements", summarizer3, "MeanNeighborSeparation");
 
-  ConcretePodA* cpa = new ConcretePodA("ConcretePodA");
-  cpa->registerInput("Vals", da, "Descriptor");
-  ConcretePodB* cpb = new ConcretePodB("ConcretePodB");
-  cpb->registerInput("Vals", da, "Descriptor");
-  cpb->setParam("Something", true);
-  
-  return ep0;
+  pl->addConnectedComponent(ep0);
+
+  pl->addPod(new ConcretePodA("ConcretePodA"));
+  pl->addPod(new ConcretePodB("ConcretePodB"));
+  pl->getPod("ConcretePodB")->setParam("Something", true);
+  pl->connect("DescriptorAssembler:Descriptor -> ConcretePodA:Vals");
+  pl->connect("DescriptorAssembler:Descriptor -> ConcretePodB:Vals");
 }
 
 TEST(Pipeline, Serialize)
 {
-  Pipeline pl(1);
-  pl.addConnectedComponent(generateDefaultPipeline());
   registerPods();
+  Pipeline pl(1);
+  generateDefaultPipeline(&pl);
+
   string filename = "example.pl";
   pl.save(filename);
   cout << "Serialized Pipeline specification to " << filename << endl;
@@ -321,9 +322,9 @@ TEST(Pipeline, OutputFlush)
 
 TEST(Pipeline, Debugging)
 {
-  Pipeline pl(10); 
-  pl.addConnectedComponent(generateDefaultPipeline());
   registerPods();
+  Pipeline pl(10);
+  generateDefaultPipeline(&pl);
 
   int num_points = 1e5;
   VecConstPtr v0 = generateVec(num_points);
