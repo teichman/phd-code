@@ -53,9 +53,15 @@ public:
 void ExampleEPG::compute()
 {
   initializeStorage();
-  DynamicSparseMat& edge = *edge_;
 
-  for(int y = 0; y < edge.rows()
+  for(int y = 0; y < edge_->rows(); ++y) {
+    if(rand() % 20 == 0) {
+      int x = rand() % edge_->cols();
+      edge_->coeffRef(y, x) = (double)rand() / RAND_MAX;
+    }
+  }
+
+  push<DynamicSparseMatConstPtr>("Edge", edge_);
 }
   
 void registerPods()
@@ -75,22 +81,19 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
   asp.connect("ImageEntryPoint:Output -> ExampleNPG1:BackgroundImage");
   asp.connect("ExampleNPG1:Source -> NodePotentialAggregator:UnweightedSource");
   asp.connect("ExampleNPG1:Sink -> NodePotentialAggregator:UnweightedSink");
-
-  Model model;
-  NameMapping nmap;
-  nmap.addName("ExampleNPG0");
-  nmap.addName("ExampleNPG1");
-  model.applyNameMapping("nmap", nmap);
-  model.nweights_ = VectorXd::Ones(2);
-  model.nweights_(0) = 0.1;
-  ((NodePotentialAggregator*)asp.getPod("NodePotentialAggregator"))->setWeights(model);
+  asp.addPod(new ExampleEPG("ExampleEPG0"));
+  asp.connect("ImageEntryPoint:Output -> ExampleEPG0:BackgroundImage");
+  asp.connect("ExampleEPG0:Edge -> EdgePotentialAggregator:UnweightedEdge");
+  asp.addPod(new ExampleEPG("ExampleEPG1"));
+  asp.connect("ImageEntryPoint:Output -> ExampleEPG1:BackgroundImage");
+  asp.connect("ExampleEPG1:Edge -> EdgePotentialAggregator:UnweightedEdge");
   
-  // Model model = asp.defaultModel();
-  // model.nweights_ << 1, 1;
-  // model.eweights_ << 1, 1;
-  // asp.setModel(model);
-  // cout << asp.model() << endl;
 
+  Model model = asp.defaultModel();
+  model.nweights_.setConstant(1);
+  model.eweights_.setConstant(1);
+  asp.setModel(model);
+  
   cv::Mat3b img(cv::Size(100, 100), cv::Vec3b(127, 127, 127));
   ((EntryPoint<cv::Mat3b>*)asp.getPod("ImageEntryPoint"))->setData(img);
   asp.setDebug(true);

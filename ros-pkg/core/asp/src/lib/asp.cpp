@@ -17,7 +17,35 @@ namespace asp
   {
     addPod(new EntryPoint<cv::Mat3b>("ImageEntryPoint"));
     addPod(new NodePotentialAggregator("NodePotentialAggregator"));
+    addPod(new EdgePotentialAggregator("EdgePotentialAggregator"));
     connect("ImageEntryPoint:Output -> NodePotentialAggregator:BackgroundImage");
+    connect("ImageEntryPoint:Output -> EdgePotentialAggregator:BackgroundImage");
+  }
+
+  Model Asp::defaultModel() const
+  {
+    Model mod = model();
+    mod.nweights_ = VectorXd::Zero(mod.nameMapping("nmap").size());
+    mod.eweights_ = VectorXd::Zero(mod.nameMapping("emap").size());
+    return mod;
+  }
+
+  Model Asp::model() const
+  {
+    Model mod;
+    NodePotentialAggregator* npa = (NodePotentialAggregator*)getPod("NodePotentialAggregator");
+    npa->fillModel(&mod);
+    EdgePotentialAggregator* epa = (EdgePotentialAggregator*)getPod("EdgePotentialAggregator");
+    epa->fillModel(&mod);
+    return mod;
+  }
+  
+  void Asp::setModel(const Model& mod)
+  {
+    NodePotentialAggregator* npa = (NodePotentialAggregator*)getPod("NodePotentialAggregator");
+    npa->setWeights(mod);
+    EdgePotentialAggregator* epa = (EdgePotentialAggregator*)getPod("EdgePotentialAggregator");
+    epa->setWeights(mod);
   }
   
   void NodePotentialGenerator::initializeStorage()
@@ -166,25 +194,34 @@ namespace asp
     return (x > 0) - (x < 0);
   }
 
-  void drawLine(cv::Point pt, const cv::Point& pt1, double potential, cv::Mat3b vis)
+  void drawLine(cv::Point2d pt, const cv::Point2d& pt1, double potential, cv::Mat3b vis)
   {
     if(pt1.x < 0 || pt1.x >= vis.cols)
       return;
     if(pt1.y < 0 || pt1.y >= vis.rows)
       return;
 
-    int dx = sign(pt1.x - pt.x);
-    int dy = sign(pt1.y - pt.y);
-    for(; (pt.x != pt1.x) || (pt.y != pt1.y); pt.x += dx, pt.y += dy) {
-      vis(pt)[0] = vis(pt)[0] * (1.0 - potential);
-      vis(pt)[1] = vis(pt)[1] * (1.0 - potential);
-      vis(pt)[2] = vis(pt)[2] * (1.0 - potential);
+    double max_x = max(pt.x, pt1.x);
+    double max_y = max(pt.y, pt1.y);
+    double min_x = min(pt.x, pt1.x);
+    double min_y = min(pt.y, pt1.y);
+    double dx = max_x - min_x;
+    double dy = max_y - min_y;
+    dx /= max(fabs(dx), fabs(dy));
+    dy /= max(fabs(dx), fabs(dy));
+    double x = max(0., min_x);
+    double y = max(0., min_y);
+    for(; x < max_x && y < max_y && x < vis.cols && y < vis.rows; x += dx, y += dy) {
+      vis(y, x)[0] = vis(y, x)[0] * (1.0 - potential);
+      vis(y, x)[1] = vis(y, x)[1] * (1.0 - potential);
+      vis(y, x)[2] = vis(y, x)[2] * (1.0 - potential);
     }
   }
 
   void EdgePotentialGenerator::writeEdgePotentialVisualization() const
   {
     cv::Mat3b img = pull<cv::Mat3b>("BackgroundImage");
+    ROS_ASSERT(img.rows > 0 && img.cols > 0);
     double scale = 7;
     cv::Size sz(img.cols * scale, img.rows * scale);
     cv::Mat3b vis;
@@ -206,20 +243,22 @@ namespace asp
     cout << getName() << ": range of edge weights is " << min << " to " << max << endl;
 
     // -- Draw non-zero edges.
-    ROS_ASSERT(img.rows == edge_->rows());
-    ROS_ASSERT(img.cols == edge_->cols());
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x) {
-	int idx0 = index(y, x);
+	int idx0 = index(y, x, img.cols);
+	// cout << "y: " << y << ", x: " << x << ", idx0: " << idx0 << endl;
+	// cout << normalized.rows() << " x " << normalized.cols() << endl;
 
 	DynamicSparseMat::InnerIterator it(normalized, idx0);
 	for(; it; ++it) {
 	  int idx1 = it.col();
 	  int y1 = idx1 / img.cols;
 	  int x1 = idx1 - y1 * img.cols;
+	  //cout << "idx1: " << idx1 << ", y1: " << y1 << ", x1: " << x1 << ", it.value: " << it.value() << endl;
 
 	  cv::Point pt(x*scale, y*scale);
 	  cv::Point pt1(x1*scale, y1*scale);
+	  //cout << "pt: " << pt << ", pt1: " << pt1 << endl;
 	  drawLine(pt, pt1, it.value(), vis);
 	}
       }

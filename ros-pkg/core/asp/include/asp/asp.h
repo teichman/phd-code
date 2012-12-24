@@ -123,7 +123,7 @@ namespace asp
     void initializeStorage(double reserve_per_node = 2);
 
     //! Common function so there is no confusion about the use of row-major.
-    int index(int row, int col) const { return col + row * edge_->cols(); }
+    int index(int row, int col, int width) const { return col + row * width; }
     void writeEdgePotentialVisualization() const;
   };
 
