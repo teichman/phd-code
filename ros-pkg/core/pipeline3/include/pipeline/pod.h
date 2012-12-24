@@ -106,6 +106,14 @@ namespace pipeline
     template<typename T> void push(std::string output_name, T val);
     //! Gets the value of a param.
     template<typename T> T param(const std::string& name) const;
+    //! Returns vector of "Pod:Output" strings telling what is connected to
+    //! input_name.
+    //! TODO: There needs to be a good way to refer to the output from another pod
+    //! that is being connected to the input to this pod. You can't just call it an
+    //! output or input.  Incoming and outgoing would work, but incoming is used above
+    //! to mean just those objects that you will receive rather than what pods are
+    //! connected.
+    std::vector<std::string> upstreamOutputNames(const std::string& input_name) const;
     
     // ----------------------------------------
     // -- Things you don't need to care about

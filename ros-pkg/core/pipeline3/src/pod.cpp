@@ -41,6 +41,23 @@ namespace pipeline
       delete it->second;
   }
 
+  std::vector<std::string> Pod::upstreamOutputNames(const std::string& input_name) const
+  {
+    std::map<std::string, std::vector<const Outlet*> >::const_iterator it;
+    it = inputs_.find(input_name);
+    if(it == inputs_.end()) {
+      PL_ABORT(getClassName() << " \"" << name_
+	       << "\" tried to check if \"" << input_name
+	       << "\" has data, but this input has not been registered.");
+    }
+
+    const vector<const Outlet*>& inputs = it->second;
+    vector<string> names;
+    for(size_t i = 0; i < inputs.size(); ++i)
+      names.push_back(inputs[i]->getPod()->getName());
+    return names;
+  }
+  
   void Pod::registerPodType(std::string type_name, CreatorFnPtr fp)
   {
     creator_map_[type_name] = fp;

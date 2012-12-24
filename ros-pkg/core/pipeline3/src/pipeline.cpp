@@ -34,8 +34,10 @@ namespace pipeline {
   void Pipeline::setDebug(bool debug)
   {
     debug_ = debug;
-    for(size_t i = 0; i < pods_.size(); ++i)
+    for(size_t i = 0; i < pods_.size(); ++i) {
+      cout << "Setting debug to " << debug << " for pod \"" << pods_[i]->getName() << "\"" << endl;
       pods_[i]->debug_ = debug;
+    }
 
     if(debug && !bfs::exists(".pipeline-debug"))
       bfs::create_directory(".pipeline-debug");

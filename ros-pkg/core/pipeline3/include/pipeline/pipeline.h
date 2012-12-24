@@ -26,6 +26,9 @@ namespace pipeline
     //! Then completeness is guaranteed.
     //! Also, it's hard to misinterpret this, whereas it's easy to mix up
     //! the ordering of any of the other ways of doing it.
+    //!
+    //! TODO: Also, it would probably make sense to allow colons and use something
+    //! else for the separator.  Maybe a slash.
     void connect(std::string connection);
 
     // ----------------------------------------

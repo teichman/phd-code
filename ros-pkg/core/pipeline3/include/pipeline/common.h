@@ -78,6 +78,7 @@ namespace pipeline
 // The type name must be alphanumeric with no spaces.
 // You'll probably want to use a typedef.
 
+// TODO: It'd be great to allow colons here, e.g. cv::Mat3b.
 #define DECLARE_POD_TEMPLATE(POD_TYPE)					\
   static Pod* create(std::string name, pipeline::Params params)		\
   {									\

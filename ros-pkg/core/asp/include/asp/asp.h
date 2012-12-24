@@ -1,17 +1,19 @@
 #ifndef ASP_H
 #define ASP_H
 
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <pipeline/pipeline.h>
 #include <graphcuts/potentials_cache.h>
 #include <name_mapping/name_mapping.h>
 
 namespace asp
 {
-  using namespace gc;
-  using namespace pl;
+  using namespace graphcuts;
+  using namespace pipeline;
 
-  typedef boost::shared_ptr<Eigen::MatrixXf> MatrixXfPtr;
-  typedef boost::shared_ptr<const Eigen::MatrixXf> MatrixXfConstPtr;
+  typedef boost::shared_ptr<Eigen::MatrixXd> MatrixXdPtr;
+  typedef boost::shared_ptr<const Eigen::MatrixXd> MatrixXdConstPtr;
   
   //! Abstract Segmentation Pipeline.
   //! See test_asp.cpp for example usage.
@@ -37,7 +39,8 @@ namespace asp
     //! cache will be filled if it is not null.
     //!
     //! Also creates a debugging directory for output to go into.
-    void segment(Eigen::VectorXi* segmentation, PotentialsCache* cache = NULL);
+    //! segmentation is 255 for fg, 0 for bg, 127 for unknown.
+    void segment(cv::Mat1b* segmentation, PotentialsCache* cache = NULL);
 
   protected:
     //! Initializes pipeline_ with NodePotentialAggregator, EdgePotentialAggregator, 
@@ -45,7 +48,7 @@ namespace asp
     void initializePipeline();
   };
   
-  class NodePotentialGenerator : public pl::Pod
+  class NodePotentialGenerator : public Pod
   {
   public:
     NodePotentialGenerator(std::string name) :
@@ -54,13 +57,13 @@ namespace asp
       // If provided, this is used for writing the overlay debug image.
       // Otherwise it will just write the raw debug image and skip the overlay.
       declareInput<cv::Mat3b>("BackgroundImage");  
-      declareOutput<const Eigen::MatrixXf*>("Source");
-      declareOutput<const Eigen::MatrixXf*>("Sink");
+      declareOutput<const Eigen::MatrixXd*>("Source");
+      declareOutput<const Eigen::MatrixXd*>("Sink");
     }
 
   protected:
-    Eigen::MatrixXf source_;
-    Eigen::MatrixXf sink_;
+    Eigen::MatrixXd source_;
+    Eigen::MatrixXd sink_;
 
     //! Uses BackgroundImage to set the size of source_ and sink_ if necessary
     //! and initialize their elements to zero.
@@ -81,8 +84,8 @@ namespace asp
     NodePotentialAggregator(std::string name) :
       NodePotentialGenerator(name)
     {
-      declareInput<const MatrixXf*>("UnweightedSource");
-      declareInput<const MatrixXf*>("UnweightedSink");
+      declareInput<const Eigen::MatrixXd*>("UnweightedSource");
+      declareInput<const Eigen::MatrixXd*>("UnweightedSink");
     }
 
     NameMapping generateNameMapping() const;
@@ -93,55 +96,77 @@ namespace asp
     void fillModel(Model* model) const;
     
   protected:
-    MatrixXfPtr aggregated_;
-    Eigen::VectorXf nweights_;
+    Eigen::MatrixXd aggregated_;
+    Eigen::VectorXd nweights_;
 
     void compute();
     void debug() const;
   };
   
-  class EdgePotentialGenerator : public pl::Pod
+  class EdgePotentialGenerator : public Pod
   {
   public:
     EdgePotentialGenerator(std::string name) :
       Pod(name),
       edge_(new DynamicSparseMat)
     {
-      declareInput<cv::Mat3b>("Image");
-      declareOutput<DynamicSparseMatConstPtr>("EdgePotentials");
+      declareInput<cv::Mat3b>("BackgroundImage");
+      declareOutput<DynamicSparseMatConstPtr>("Edge");
     }
 
     DynamicSparseMatPtr edge_;
 
     //! Allocates new sparse matrix if necessary; just sets to zero otherwise.
-    void initializeStorage(int num_nodes, double reserve_per_node = 2);
-    //void displayEdges(cv::Mat3b img) const;
-    void displayEdgePotentials() const;
+    //! Size is determined by BackgroundImage.
+    //! For efficiency, you should set reserve_per_node to higher than the expected
+    //! number of edges per node.
+    void initializeStorage(double reserve_per_node = 2);
+
+    //! Common function so there is no confusion about the use of row-major.
+    int index(int row, int col) const { return col + row * edge_->cols(); }
+    void writeEdgePotentialVisualization() const;
   };
 
   class EdgePotentialAggregator : public EdgePotentialGenerator
   {
   public:
-
-  protected:
-    void debug() const;
-  };
-
-  class GraphcutsPod : public pl::Pod
-  {
-  public:
-    DECLARE_POD(GraphcutsPod);
-    GraphcutsPod(std::string name) :
-      Pod(name)
+    DECLARE_POD(EdgePotentialAggregator);
+    EdgePotentialAggregator(std::string name) :
+      EdgePotentialGenerator(name)
     {
-      declareInput<MatrixXfConstPtr>("AggregatedNodePotentials");
-      declareInput<DynamicSparseMatConstPtr>("AggregatedEdgePotentials");
+      declareInput<DynamicSparseMatConstPtr>("UnweightedEdge");
     }
 
+    NameMapping generateNameMapping() const;
+    //! Copy of model is translated using local name mapping.
+    void setWeights(Model model);
+    //! Sets nmap names based on input pod names.
+    //! Sets model->nweights_ to local nweights_.
+    void fillModel(Model* model) const;
+    
   protected:
-    //! Saves image of final segmentation.
+    DynamicSparseMatPtr aggregated_;
+    Eigen::VectorXd eweights_;
+
+    void compute();
     void debug() const;
   };
+
+  // class GraphcutsPod : public Pod
+  // {
+  // public:
+  //   DECLARE_POD(GraphcutsPod);
+  //   GraphcutsPod(std::string name) :
+  //     Pod(name)
+  //   {
+  //     declareInput<MatrixXdConstPtr>("AggregatedNodePotentials");
+  //     declareInput<DynamicSparseMatConstPtr>("AggregatedEdgePotentials");
+  //   }
+
+  // protected:
+  //   //! Saves image of final segmentation.
+  //   void debug() const;
+  // };
   
 }
 

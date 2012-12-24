@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/asp</url>
   <depend package="pipeline3"/>
   <depend package="graphcuts"/>
+  <depend package="opencv_bleeding"/>
 
 </package>
 

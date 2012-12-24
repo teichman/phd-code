@@ -76,6 +76,7 @@ namespace pipeline
       void compute();
       //! This demonstrates another method of making Pod functionality available outside of a Pipeline.
       void _compute(const Vec& points, VecPtr* hist, VecPtr* lower_bounds);
+      //! Common mistake: not making this method const.  It will silently just not get called.
       void debug() const;
     };
     
