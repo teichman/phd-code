@@ -122,8 +122,6 @@ namespace asp
     //! number of edges per node.
     void initializeStorage(double reserve_per_node = 2);
 
-    //! Common function so there is no confusion about the use of row-major.
-    int index(int row, int col, int width) const { return col + row * width; }
     void writeEdgePotentialVisualization() const;
   };
 
@@ -152,22 +150,37 @@ namespace asp
     void debug() const;
   };
 
-  // class GraphcutsPod : public Pod
-  // {
-  // public:
-  //   DECLARE_POD(GraphcutsPod);
-  //   GraphcutsPod(std::string name) :
-  //     Pod(name)
-  //   {
-  //     declareInput<MatrixXdConstPtr>("AggregatedNodePotentials");
-  //     declareInput<DynamicSparseMatConstPtr>("AggregatedEdgePotentials");
-  //   }
+  class GraphcutsPod : public Pod
+  {
+  public:
+    DECLARE_POD(GraphcutsPod);
+    GraphcutsPod(std::string name) :
+      Pod(name)
+    {
+      declareInput<const Eigen::MatrixXd*>("AggregatedSourcePotentials");
+      declareInput<const Eigen::MatrixXd*>("AggregatedSinkPotentials");
+      declareInput<DynamicSparseMatConstPtr>("AggregatedEdgePotentials");
+      declareInput<cv::Mat3b>("BackgroundImage");
 
-  // protected:
-  //   //! Saves image of final segmentation.
-  //   void debug() const;
-  // };
+      // 255 <-> +1; 0 <-> -1; 127 <-> unknown.
+      declareOutput<cv::Mat1b>("Segmentation");
+
+      declareParam<int>("ExpectedNumEdges", 10);
+    }
+    
+  protected:
+    cv::Mat1b seg_;
+    
+    void compute();
+    //! Saves image of final segmentation.
+    void debug() const;
+  };
+
   
+  //! Common function so there is no confusion about the use of row-major.
+  int index(int row, int col, int width) { return col + row * width; }
+  void visualizeSegmentation(cv::Mat1b seg, cv::Mat3b img, cv::Mat3b vis);
+
 }
 
 #endif // ASP_H

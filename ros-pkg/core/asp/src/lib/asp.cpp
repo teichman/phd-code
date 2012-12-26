@@ -20,6 +20,11 @@ namespace asp
     addPod(new EdgePotentialAggregator("EdgePotentialAggregator"));
     connect("ImageEntryPoint:Output -> NodePotentialAggregator:BackgroundImage");
     connect("ImageEntryPoint:Output -> EdgePotentialAggregator:BackgroundImage");
+    addPod(new GraphcutsPod("GraphcutsPod"));
+    connect("NodePotentialAggregator:Source -> GraphcutsPod:AggregatedSourcePotentials");
+    connect("NodePotentialAggregator:Sink -> GraphcutsPod:AggregatedSinkPotentials");
+    connect("EdgePotentialAggregator:Edge -> GraphcutsPod:AggregatedEdgePotentials");
+    connect("ImageEntryPoint:Output -> GraphcutsPod:BackgroundImage");
   }
 
   Model Asp::defaultModel() const
@@ -313,4 +318,113 @@ namespace asp
     model->eweights_ = eweights_;
   }
 
+  void GraphcutsPod::compute()
+  {
+    const MatrixXd* source;
+    const MatrixXd* sink;
+    DynamicSparseMatConstPtr edge;
+    pull("AggregatedSourcePotentials", &source);
+    pull("AggregatedSinkPotentials", &sink);
+    pull("AggregatedEdgePotentials", &edge);
+
+    // TODO: Could probably do this just once.  Does it matter?
+    cv::Mat3b img = pull<cv::Mat3b>("BackgroundImage");
+    int num_nodes = img.rows * img.cols;
+    int max_num_edges = param<int>("ExpectedNumEdges") * img.rows * img.cols;
+    Graph3d graph(num_nodes, max_num_edges);
+    graph.add_node(num_nodes);
+
+    // -- Fill the graph with node potentials.
+    ROS_ASSERT(source->rows() == sink->rows());
+    ROS_ASSERT(source->cols() == sink->cols());
+    for(int i = 0; i < source->rows(); ++i) {
+      for(int j = 0; j < source->cols(); ++j) {
+	int idx = i * source->cols() + j;
+	graph.add_tweights(idx, source->coeffRef(i, j), sink->coeffRef(i, j));
+      }
+    }
+
+    // -- Fill the graph with edge potentials.
+    //    TODO: Should this use symmetric or asymmetric edge potentials?
+    SparseMatrix<double, Eigen::RowMajor> trans(edge->transpose());  // Unfortunately, yes.
+    SparseMatrix<double, Eigen::RowMajor> sym = (*edge + trans) / 2.0;
+    for(int i = 0; i < sym.outerSize(); ++i) {
+      for(SparseMatrix<double, RowMajor>::InnerIterator it(sym, i); it; ++it) {
+	if(it.col() <= it.row())
+	  continue;
+
+	ROS_WARN_STREAM_COND(it.value() < 0, "Edgepot weighted sum is negative: " << it.value());
+	ROS_FATAL_STREAM_COND(isnan(it.value()), "NaN in edgepot.");
+	graph.add_edge(it.col(), it.row(), it.value(), it.value());
+      }
+    }
+
+    // -- Compute the segmentation.
+    graph.maxflow();
+
+    // -- Pull it out from the maxflow library.
+    if(seg_.rows != source->rows() || seg_.cols != source->cols())
+      seg_ = cv::Mat1b(cv::Size(source->cols(), source->rows()));
+
+    for(int y = 0; y < seg_.rows; ++y) {
+      for(int x = 0; x < seg_.cols; ++x) {
+	int idx = index(y, x, seg_.cols);
+
+	if(graph.what_segment(idx, Graph3d::SINK) == Graph3d::SOURCE)
+	  seg_(y, x) = 255;
+	else if(graph.what_segment(idx, Graph3d::SOURCE) == Graph3d::SINK)
+	  seg_(y, x) = 0;
+	else
+	  seg_(y, x) = 127;
+      }
+    }
+
+    push<cv::Mat1b>("Segmentation", seg_);
+  }
+
+  void GraphcutsPod::debug() const
+  {
+    // -- Just the segmentation.
+    string seg_path = debugBasePath() + "-segmentation-raw.png";
+    cv::imwrite(seg_path, seg_);
+
+    // -- Overlay.
+    if(numIncoming("BackgroundImage") == 0)
+      return;
+
+    cv::Mat3b img = pull<cv::Mat3b>("BackgroundImage");
+    cv::Mat3b vis;
+    vis = img.clone();
+    ROS_ASSERT(vis.rows > 0 && vis.cols > 0);
+    visualizeSegmentation(seg_, img, vis);
+
+    string overlay_path = debugBasePath() + "-segmentation-outline.png";
+    cv::imwrite(overlay_path, vis);
+  }
+
+  void visualizeSegmentation(cv::Mat1b seg, cv::Mat3b img, cv::Mat3b vis)
+  {
+    // -- Dull the colors of the background.
+    cv::Mat3b dull_bg = img.clone();
+    for(int y = 0; y < seg.rows; ++y) { 
+      for(int x = 0; x < seg.cols; ++x) { 
+	if(seg(y, x) != 255) { 
+	  dull_bg(y, x)[0] *= 0.5; 
+	  dull_bg(y, x)[1] *= 0.5;
+	  dull_bg(y, x)[2] *= 0.5;
+	}
+      }
+    }
+
+    // -- Add a red border around the object.    
+    cv::Mat3b mask = dull_bg.clone();
+    cv::Mat1b dilation;
+    cv::dilate(seg, dilation, cv::Mat(), cv::Point(-1, -1), 4);
+    for(int y = 0; y < seg.rows; ++y) 
+      for(int x = 0; x < seg.cols; ++x)
+	if(dilation(y, x) == 255 && seg(y, x) != 255)
+	  mask(y, x) = cv::Vec3b(0, 0, 255);
+    cv::addWeighted(dull_bg, 0.5, mask, 0.5, 0.0, vis);
+  }
+  
 }  // namespace asp
