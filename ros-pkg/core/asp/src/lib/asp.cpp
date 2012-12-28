@@ -16,6 +16,7 @@ namespace asp
     Pipeline(num_threads)
   {
     addPod(new EntryPoint<cv::Mat3b>("ImageEntryPoint"));
+    addPod(new EntryPoint<cv::Mat1b>("SeedEntryPoint"));
     addPod(new NodePotentialAggregator("NodePotentialAggregator"));
     addPod(new EdgePotentialAggregator("EdgePotentialAggregator"));
     connect("ImageEntryPoint:Output -> NodePotentialAggregator:BackgroundImage");
@@ -25,6 +26,11 @@ namespace asp
     connect("NodePotentialAggregator:Sink -> GraphcutsPod:AggregatedSinkPotentials");
     connect("EdgePotentialAggregator:Edge -> GraphcutsPod:AggregatedEdgePotentials");
     connect("ImageEntryPoint:Output -> GraphcutsPod:BackgroundImage");
+    addPod(new SeedNPG("SeedNPG"));
+    connect("ImageEntryPoint:Output -> SeedNPG:BackgroundImage");
+    connect("SeedEntryPoint:Output -> SeedNPG:SeedImage");
+    connect("SeedNPG:Source -> NodePotentialAggregator:UnweightedSource");
+    connect("SeedNPG:Sink -> NodePotentialAggregator:UnweightedSink");
   }
 
   Model Asp::defaultModel() const
@@ -426,5 +432,30 @@ namespace asp
 	  mask(y, x) = cv::Vec3b(0, 0, 255);
     cv::addWeighted(dull_bg, 0.5, mask, 0.5, 0.0, vis);
   }
-  
+
+  void SeedNPG::compute()
+  {
+    cout << "SeedNPG::compute()" << endl;
+    initializeStorage();
+    
+    cv::Mat1b seed = pull<cv::Mat1b>("SeedImage");
+    for(int y = 0; y < seed.rows; ++y) {
+      for(int x = 0; x < seed.cols; ++x) {
+	if(seed(y, x) == 255)
+	  source_(y, x) = 1;
+	else if(seed(y, x) == 0)
+	  sink_(y, x) = 1;
+      }
+    }
+
+    push<const MatrixXd*>("Source", &source_);
+    push<const MatrixXd*>("Sink", &sink_);
+  }
+
+  void SeedNPG::debug() const
+  {
+    cout << "SeedNPG::debug()" << endl;
+    writeNodePotentialVisualization();
+  }
+
 }  // namespace asp

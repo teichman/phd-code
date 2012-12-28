@@ -176,6 +176,22 @@ namespace asp
     void debug() const;
   };
 
+  class SeedNPG : public NodePotentialGenerator
+  {
+  public:
+    DECLARE_POD(SeedNPG);
+    SeedNPG(std::string name) :
+      NodePotentialGenerator(name)
+    {
+      // 255 -> foreground
+      // 0 -> background
+      declareInput<cv::Mat1b>("SeedImage");
+    }
+
+  protected:
+    void compute();
+    void debug() const;
+  };
   
   //! Common function so there is no confusion about the use of row-major.
   int index(int row, int col, int width) { return col + row * width; }

@@ -6,6 +6,7 @@ using namespace Eigen;
 using namespace asp;
 
 typedef cv::Mat3b cvMat3b;
+typedef cv::Mat1b cvMat1b;
 
 //! Sets node potential randomly.
 class ExampleNPG : public NodePotentialGenerator
@@ -67,6 +68,7 @@ void ExampleEPG::compute()
 void registerPods()
 {
   REGISTER_POD_TEMPLATE(EntryPoint, cvMat3b);
+  REGISTER_POD_TEMPLATE(EntryPoint, cvMat1b);
 }
 
 TEST(NodePotentialGenerator, NodePotentialGenerator)
@@ -88,14 +90,22 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
   asp.connect("ImageEntryPoint:Output -> ExampleEPG1:BackgroundImage");
   asp.connect("ExampleEPG1:Edge -> EdgePotentialAggregator:UnweightedEdge");
   
-
   Model model = asp.defaultModel();
   model.nweights_.setConstant(1);
+  model.nweights_(model.nameMapping("nmap").toId("SeedNPG")) = 2;
   model.eweights_.setConstant(1);
   asp.setModel(model);
   
   cv::Mat3b img(cv::Size(100, 100), cv::Vec3b(127, 127, 127));
-  ((EntryPoint<cv::Mat3b>*)asp.getPod("ImageEntryPoint"))->setData(img);
+  asp.getPod< EntryPoint<cv::Mat3b> >("ImageEntryPoint")->setData(img);
+  cv::Mat1b seed(img.size(), 127);
+  for(int y = 45; y < 55; ++y)
+    for(int x = 45; x < 55; ++x)
+      seed(y, x) = 255;
+  for(int y = 15; y < 25; ++y)
+    for(int x = 15; x < 25; ++x)
+      seed(y, x) = 0;
+  asp.getPod< EntryPoint<cv::Mat1b> >("SeedEntryPoint")->setData(seed);
   asp.setDebug(true);
   asp.compute();
   // cv::Mat1b seg;
@@ -106,6 +116,8 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
   asp.setDebug(false);
   asp.compute();
   cout << asp.reportTiming() << endl;
+
+  asp.writeGraphviz("graphvis");
 }
 
 int main(int argc, char** argv) {
