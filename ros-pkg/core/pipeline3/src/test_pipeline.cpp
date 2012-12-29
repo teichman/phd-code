@@ -148,7 +148,7 @@ TEST(Pipeline, Serialize)
   pl.setInput("View2", v2);
   pl.compute();
   VecConstPtr descriptor;
-  pl.getOutput("DescriptorAssembler", "Descriptor", &descriptor);
+  pl.pull("DescriptorAssembler", "Descriptor", &descriptor);
   cout << pl.reportTiming() << endl;
 
   Pipeline pl2(10);
@@ -163,7 +163,7 @@ TEST(Pipeline, Serialize)
   pl2.setInput("View2", v2);
   pl2.compute();
   VecConstPtr descriptor2;
-  pl2.getOutput("DescriptorAssembler", "Descriptor", &descriptor2);
+  pl2.pull("DescriptorAssembler", "Descriptor", &descriptor2);
   cout << pl2.reportTiming() << endl;
 
   cout << "Output of the two runs: " << endl;
@@ -290,9 +290,9 @@ TEST(Pipeline, MultiCompute)
   pl.setInput("View1", v1);
   pl.setInput("View2", v2);
   pl.compute();
-  VecConstPtr descriptor = pl.getOutput<VecConstPtr>("DescriptorAssembler", "Descriptor");
+  VecConstPtr descriptor = pl.pull<VecConstPtr>("DescriptorAssembler:Descriptor");
   pl.compute();
-  VecConstPtr descriptor2 = pl.getOutput<VecConstPtr>("DescriptorAssembler", "Descriptor");
+  VecConstPtr descriptor2 = pl.pull<VecConstPtr>("DescriptorAssembler:Descriptor");
   EXPECT_TRUE(descriptor->size() == descriptor2->size());
   for(size_t i = 0; i < descriptor->size(); ++i)
     EXPECT_FLOAT_EQ(descriptor->at(i), descriptor2->at(i));
@@ -311,13 +311,13 @@ TEST(Pipeline, OutputFlush)
   pl.setInput("View1", v1);
   pl.setInput("View2", v2);
   pl.compute();
-  EXPECT_TRUE(pl.getOutput<VecConstPtr>("DescriptorAssembler", "Descriptor"));
+  EXPECT_TRUE(pl.pull<VecConstPtr>("DescriptorAssembler", "Descriptor"));
 
   pl.getPod("DescriptorAssembler")->disabled_ = true;
   pl.compute();
 
   // Running this test causes abort() because the outlet has no data.
-  // EXPECT_TRUE(!pl.getOutput<void*>("DescriptorAssembler", "Descriptor")); 
+  // EXPECT_TRUE(!pl.pull<void*>("DescriptorAssembler", "Descriptor")); 
 }
 
 TEST(Pipeline, Debugging)
@@ -372,7 +372,7 @@ TEST(Pipeline, OptionalInputs)
     pl.addConnectedComponent(ep0);
     pl.setInput<VecConstPtr>("View0", generateVec(100));
     pl.compute();
-    EXPECT_TRUE(pl.getOutput<VecConstPtr>("DescriptorAssembler", "Descriptor")->size() == 3);
+    EXPECT_TRUE(pl.pull<VecConstPtr>("DescriptorAssembler", "Descriptor")->size() == 3);
   }
 
   {
@@ -394,7 +394,7 @@ TEST(Pipeline, OptionalInputs)
     pl.setInput<VecConstPtr>("View0", generateVec(100));
     pl.compute();
 
-    EXPECT_TRUE(pl.getOutput<VecConstPtr>("DescriptorAssembler", "Descriptor")->size() == 40);
+    EXPECT_TRUE(pl.pull<VecConstPtr>("DescriptorAssembler", "Descriptor")->size() == 40);
   }
 }
 

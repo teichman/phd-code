@@ -1,12 +1,22 @@
 #ifndef PIPELINE_H
 #define PIPELINE_H
 
+#include <boost/algorithm/string.hpp>
 #include <pipeline/pod.h>
 #include <pipeline/common_pods.h>
 
 namespace pipeline
 {
 
+/*
+ * Todo list
+ *
+ * We need a name for Pod:Output.  "Address"?  "Port"?
+ * Pod:Output -> Pod:Input should have a name?  "Connection string"?
+ *
+ */
+ 
+  
   //! Class that represents the entire computation graph and manages its execution.
   //! Pods added to a Pipeline will be deleted by that Pipeline.
   class Pipeline : public Serializable {
@@ -41,11 +51,14 @@ namespace pipeline
     //! Calls reset() on all pods.
     void reset();
     //! Convenient way of pulling output from the Pipeline.
-    template<typename T> T getOutput(const std::string& pod_name, const std::string& output_name) const;
+    template<typename T> T pull(const std::string& pod_name, const std::string& output_name) const;
     //! Convenient way of pulling output from the Pipeline.
-    template<typename T> void getOutput(const std::string& pod_name,
-					const std::string& output_name,
-					T* dest) const;
+    //! "Pod:Output"
+    template<typename T> T pull(const std::string& address) const;
+    //! Convenient way of pulling output from the Pipeline.
+    template<typename T> void pull(const std::string& pod_name,
+				   const std::string& output_name,
+				   T* dest) const;
 
     // ----------------------------------------
     // -- Control
@@ -238,12 +251,19 @@ namespace pipeline
     return pipeline::getPod<T>(name, pods_);
   }
 
-  template<typename T> T Pipeline::getOutput(const std::string& pod_name, const std::string& outlet_name) const
+  template<typename T> T Pipeline::pull(const std::string& pod_name, const std::string& outlet_name) const
   {
     return getPod(pod_name)->getOutlet(outlet_name)->pull<T>();
   }
 
-  template<typename T> void Pipeline::getOutput(const std::string& pod_name,
+  template<typename T> T Pipeline::pull(const std::string& address) const
+  {
+    std::vector<std::string> tokens;
+    boost::split(tokens, address, boost::is_any_of(":"));
+    return pull<T>(tokens[0], tokens[1]);
+  }
+
+  template<typename T> void Pipeline::pull(const std::string& pod_name,
 						const std::string& outlet_name,
 						T* dest) const
   {
