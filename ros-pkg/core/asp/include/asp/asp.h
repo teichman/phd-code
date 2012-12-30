@@ -205,7 +205,7 @@ namespace asp
       declareParam<bool>("DiagonalGrid", false);
       declareParam<bool>("Web", true);
       declareParam<float>("WebMaxRadius", 10);  // In pixels.
-      declareParam<float>("WebPixelProbability", 0.01);
+      declareParam<int>("WebNumOutgoing", 2);
       
       declareInput<cv::Mat3b>("Image");
             
@@ -215,6 +215,10 @@ namespace asp
 
   protected:
     SparseMat structure_;
+    SparseMat diag_;
+    DynamicSparseMat web_;
+
+    
     void compute();
     void debug() const;
   };
@@ -222,8 +226,19 @@ namespace asp
   //! Common function so there is no confusion about the use of row-major.
   int index(int row, int col, int width) { return col + row * width; }
   void visualizeSegmentation(cv::Mat1b seg, cv::Mat3b img, cv::Mat3b vis);
-  void initializeSparseMat(int width, int height, double reserve_per_node, SparseMat* mat);
+  //void initializeSparseMat(int rows, int cols, double reserve_per_node, SparseMat* mat);
+  //void initializeSparseMat(int rows, int cols, double reserve_per_node, DynamicSparseMat* mat);
   cv::Mat3b drawEdgeVisualization(cv::Mat3b img, const SparseMat& edge);
+
+  template<typename T>
+  void initializeSparseMat(int rows, int cols, double reserve_per_node, T* mat)
+  {
+    if(mat->rows() != rows || mat->cols() != cols) { 
+      *mat = SparseMat(rows, cols);
+      mat->reserve((int)(reserve_per_node * cols * rows));
+    }
+    mat->setZero();
+  }
 }
 
 #endif // ASP_H

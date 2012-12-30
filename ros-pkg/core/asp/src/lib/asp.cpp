@@ -423,11 +423,12 @@ namespace asp
     if(param<bool>("DiagonalGrid"))
       reserve_per_pixel += 4;
     if(param<bool>("Web"))
-      reserve_per_pixel += param<float>("WebPixelProbability");
+      reserve_per_pixel += param<int>("WebNumOutgoing");
     initializeSparseMat(num_nodes, num_nodes, reserve_per_pixel, &structure_);
 
     // -- Generate edges.
     if(param<bool>("AxisAlignedGrid")) {
+      ScopedTimer st("AxisAlignedGrid");
       int idx = 0;
       for(int y = 0; y < img.rows; ++y) {
       	for(int x = 0; x < img.cols; ++x, ++idx) {
@@ -439,41 +440,48 @@ namespace asp
       }
     }
     if(param<bool>("DiagonalGrid")) {
-      // It'd be (much?) faster to do this combined with the above.
-      // Maybe make a separate matrix and add them at the end.
-      // int idx = 0;
-      // for(int y = 0; y < img.rows; ++y) {
-      // 	for(int x = 0; x < img.cols; ++x, ++idx) {
-      // 	  if(y < img.rows - 1) {
-      // 	    if(x < img.cols - 1)
-      // 	      structure_.insert(idx, index(y + 1, x + 1, img.cols)) = 1;
-      // 	    if(x > 0)
-      // 	      structure_.insert(idx, index(y + 1, x - 1, img.cols)) = 1;
-      // 	  }
-      // 	}
-      // }
+      ScopedTimer st("DiagonalGrid");
+      initializeSparseMat(structure_.rows(), structure_.cols(), 4, &diag_);
+      int idx = 0;
+      for(int y = 0; y < img.rows - 1; ++y) {
+      	for(int x = 0; x < img.cols; ++x, ++idx) {
+	  if(x > 0)
+	    diag_.insert(idx, index(y + 1, x - 1, img.cols)) = 1;
+	  if(x < img.cols - 1)
+	    diag_.insert(idx, index(y + 1, x + 1, img.cols)) = 1;
+      	}
+      }
+      structure_ += diag_;
     }
     if(param<bool>("Web")) {
-      DynamicSparseMat dyn(structure_.rows(), structure_.cols());
-      dyn.reserve(reserve_per_pixel * structure_.rows());
+      initializeSparseMat(structure_.rows(), structure_.cols(), param<int>("WebNumOutgoing"), &web_);
 
-      // dyn.coeffRef(index(0, 0, img.cols), index(50, 50, img.cols)) = 1;
-      // dyn.coeffRef(index(50, 50, img.cols), index(50, 75, img.cols)) = 1;
-      // dyn.coeffRef(index(25, 47, img.cols), index(50, 50, img.cols)) = 1;
-      // dyn.coeffRef(index(25, 75, img.cols), index(50, 50, img.cols)) = 1;
+      // web_.coeffRef(index(0, 0, img.cols), index(50, 50, img.cols)) = 1;
+      // web_.coeffRef(index(50, 50, img.cols), index(50, 75, img.cols)) = 1;
+      // web_.coeffRef(index(25, 47, img.cols), index(50, 50, img.cols)) = 1;
+      // web_.coeffRef(index(25, 75, img.cols), index(50, 50, img.cols)) = 1;
       // dyn.coeffRef(index(49, 80, img.cols), index(50, 50, img.cols)) = 1;
       // dyn.coeffRef(index(50, 50, img.cols), index(51, 80, img.cols)) = 1;
-            
+
+      // int y, x;
+      // int idx = index(50, 50, img.cols);
+      // x = 50;
+      // y = 55;
+      // for(int dx = -10; dx <= 10; ++dx)
+      // 	dyn.coeffRef(idx, index(y, x + dx, img.cols)) = 1;
+      // x = 50;
+      // y = 45;
+      // for(int dx = -10; dx <= 10; ++dx)
+      // 	dyn.coeffRef(index(y, x + dx, img.cols), idx) = 1;
+
       int idx = 0;
-      float pixel_probability = param<float>("WebPixelProbability");
+      int num_outgoing = param<int>("WebNumOutgoing");
       float max_radius = param<float>("WebMaxRadius");
       eigen_extensions::UniformSampler uniform;
       for(int y = 0; y < img.rows; ++y) {
       	for(int x = 0; x < img.cols; ++x, ++idx) {
-      	  if(uniform.sample() > pixel_probability)
-      	    continue;
-
-      	  while(true) {
+	  int num = 0;
+      	  while(num < num_outgoing) {
       	    double radius = uniform.sample() * max_radius;
       	    double theta = uniform.sample() * 2 * M_PI;
       	    int dx = radius * cos(theta);
@@ -487,15 +495,16 @@ namespace asp
 	    
       	    int idx0 = index(y0, x0, img.cols);
       	    if(idx < idx0)
-      	      dyn.coeffRef(idx, idx0) = 1;
+      	      web_.coeffRef(idx, idx0) = 1;
       	    else
-      	      dyn.coeffRef(idx0, idx) = 1;
-      	    break;
+      	      web_.coeffRef(idx0, idx) = 1;
+
+	    ++num;
       	  }
       	}
       }
 
-      structure_ += dyn;
+      structure_ += web_;
     }
 
     push<const SparseMat*>("EdgeStructure", &structure_);
@@ -513,15 +522,6 @@ namespace asp
     cv::Mat3b vis = drawEdgeVisualization(img, structure_);
     string overlay_path = debugBasePath() + ".png";
     cv::imwrite(overlay_path, vis);
-  }
-
-  void initializeSparseMat(int width, int height, double reserve_per_node, SparseMat* mat)
-  {
-    if(mat->rows() != height || mat->cols() != width) { 
-      *mat = SparseMat(width, height);
-      mat->reserve((int)(reserve_per_node * width * height));
-    }
-    mat->setZero();
   }
 
   int sign(int x)
@@ -568,7 +568,10 @@ namespace asp
     cv::Size sz(img.cols * scale, img.rows * scale);
     cv::Mat3b vis;
     cv::resize(img, vis, sz, cv::INTER_NEAREST);
-
+    for(int y = 0; y < vis.rows; ++y)
+      for(int x = 0; x < vis.cols; ++x)
+	vis(y, x) = img(floor(y / scale), floor(x / scale));
+	
     // -- Draw non-zero edges.
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x) {
