@@ -18,6 +18,11 @@ namespace pipeline
     PL_ASSERT(type_.empty());
     assertValidName(name);
   }
+
+  std::string Outlet::address() const
+  {
+    return pod_->getName() + ":" + name_;
+  }
   
   Pod::Pod(std::string name) :
     debug_(false),

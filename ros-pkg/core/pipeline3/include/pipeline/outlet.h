@@ -33,6 +33,7 @@ namespace pipeline
     void flush() { data_ = (void*)NULL; has_data_ = false; }
     Pod* pod() const { return pod_; }
     std::string getName() const { return name_; }
+    std::string address() const;
     bool hasData() const { return has_data_; }
     bool checkType(boost::any test) const { return (type_.type() == test.type()); }
     

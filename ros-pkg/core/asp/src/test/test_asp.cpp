@@ -76,14 +76,10 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
   registerPods();
   Asp asp(1);
 
-  // asp.addPod(new ExampleNPG("ExampleNPG0"));
-  // asp.connect("ImageEntryPoint:Output -> ExampleNPG0:Image");
-  // asp.connect("ExampleNPG0:Source -> NodePotentialAggregator:UnweightedSource");
-  // asp.connect("ExampleNPG0:Sink -> NodePotentialAggregator:UnweightedSink");
-  // asp.addPod(new ExampleNPG("ExampleNPG1"));
-  // asp.connect("ImageEntryPoint:Output -> ExampleNPG1:Image");
-  // asp.connect("ExampleNPG1:Source -> NodePotentialAggregator:UnweightedSource");
-  // asp.connect("ExampleNPG1:Sink -> NodePotentialAggregator:UnweightedSink");
+  asp.addPod(new ExampleNPG("ExampleNPG0"));
+  asp.connect("ImageEntryPoint:Output -> ExampleNPG0:Image");
+  asp.connect("ExampleNPG0:Source -> NodePotentialAggregator:UnweightedSource");
+  asp.connect("ExampleNPG0:Sink -> NodePotentialAggregator:UnweightedSink");
 
   asp.addPod(new EdgeStructureGenerator("GridESG"));
   asp.setParam("GridESG", "Grid", true);
@@ -120,6 +116,7 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
   Model model = asp.defaultModel();
   model.nweights_.setConstant(1);
   model.nweights_(model.nameMapping("nmap").toId("SeedNPG")) = 2;
+  model.nweights_(model.nameMapping("nmap").toId("ExampleNPG0")) = 0;
   model.eweights_.setConstant(1);
   model.eweights_(model.nameMapping("emap").toId("SmoothnessEPG0")) = 0.1;
   model.eweights_(model.nameMapping("emap").toId("SmoothnessEPG1")) = 0.1;
