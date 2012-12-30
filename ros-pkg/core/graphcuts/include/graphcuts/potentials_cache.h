@@ -22,8 +22,7 @@ namespace graphcuts
     //! In order of weights.
     std::vector<SparseMat> edge_;
     //! In order of weights.
-    std::vector<Eigen::VectorXd> sink_;
-    std::vector<Eigen::VectorXd> source_;
+    std::vector<Eigen::VectorXd> node_;
     
     long int bytes() const;
     int numNodes() const;
@@ -40,9 +39,8 @@ namespace graphcuts
     void symmetrizeEdges();
     void applyWeights(const Model& model,
 		      SparseMat* edge,
-		      Eigen::VectorXd* src,
-		      Eigen::VectorXd* snk) const;
-		      
+		      Eigen::VectorXd* node) const;
+      		      
   protected:
     //! "nmap" or "emap"
     void _applyNameTranslator(const std::string& id, const NameTranslator& translator);

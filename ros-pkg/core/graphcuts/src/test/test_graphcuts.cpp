@@ -82,14 +82,10 @@ TEST(StructuralSVM, SanityCheck)
   gc::VecXiPtr label(new gc::VecXi(10));
   *label << -1, -1, -1, -1, -1, 1, 1, 1, 1, 1;
 
-  VectorXd good_sink(10);
-  good_sink << 0, 0, 0, 0, 1, 0, 0, 0, 0, 0;
-  VectorXd good_source(10);
-  good_source << 0, 0, 0, 0, 0, 1, 0, 0, 0, 0;
-  cache->sink_[0] = good_sink;
-  cache->source_[0] = good_source;
-  cache->sink_[1] = -good_sink;
-  cache->source_[1] = -good_source;
+  VectorXd good_node(10);
+  good_node << 0, 0, 0, 0, -1, 1, 0, 0, 0, 0;
+  cache->node_[0] = good_node;
+  cache->node_[1] = -good_node;
   gc::DynamicSparseMat good_edge(10, 10);
   for(int i = 1; i < good_edge.rows(); ++i)
     good_edge.coeffRef(i-1, i) = 1.0;

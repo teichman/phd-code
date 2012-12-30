@@ -22,15 +22,13 @@ namespace asp
     connect("ImageEntryPoint:Output -> NodePotentialAggregator:Image");
     connect("ImageEntryPoint:Output -> EdgePotentialAggregator:Image");
     addPod(new GraphcutsPod("GraphcutsPod"));
-    connect("NodePotentialAggregator:Source -> GraphcutsPod:AggregatedSourcePotentials");
-    connect("NodePotentialAggregator:Sink -> GraphcutsPod:AggregatedSinkPotentials");
+    connect("NodePotentialAggregator:Node -> GraphcutsPod:AggregatedNodePotentials");
     connect("EdgePotentialAggregator:Edge -> GraphcutsPod:AggregatedEdgePotentials");
     connect("ImageEntryPoint:Output -> GraphcutsPod:Image");
     addPod(new SeedNPG("SeedNPG"));
     connect("ImageEntryPoint:Output -> SeedNPG:Image");
     connect("SeedEntryPoint:Output -> SeedNPG:SeedImage");
-    connect("SeedNPG:Source -> NodePotentialAggregator:UnweightedSource");
-    connect("SeedNPG:Sink -> NodePotentialAggregator:UnweightedSink");
+    connect("SeedNPG:Node -> NodePotentialAggregator:UnweightedNode");
   }
 
   Model Asp::defaultModel() const
@@ -62,13 +60,10 @@ namespace asp
   void NodePotentialGenerator::initializeStorage()
   {
     cv::Mat3b img = pull<cv::Mat3b>("Image");
-    if(source_.rows() != img.rows || source_.cols() != img.cols)
-      source_.resize(img.rows, img.cols);
-    if(sink_.rows() != img.rows || sink_.cols() != img.cols)
-      sink_.resize(img.rows, img.cols);
+    if(node_.rows() != img.rows || node_.cols() != img.cols)
+      node_.resize(img.rows, img.cols);
 
-    source_.setZero();
-    sink_.setZero();
+    node_.setZero();
   }
   
   void NodePotentialGenerator::writeNodePotentialVisualization() const
@@ -76,22 +71,18 @@ namespace asp
     // Node potentials should be in [-1, 1].
     // NodePotentialAggregator is exempted because that is after weighting and summing.
     if(!dynamic_cast<const NodePotentialAggregator*>(this)) {
-      ROS_ASSERT(source_.maxCoeff() <= 1);
-      ROS_ASSERT(source_.minCoeff() >= -1);
-      ROS_ASSERT(sink_.maxCoeff() <= 1);
-      ROS_ASSERT(sink_.minCoeff() >= -1);
+      ROS_ASSERT(node_.maxCoeff() <= 1);
+      ROS_ASSERT(node_.minCoeff() >= -1);
     }
     
     // -- Just the potentials.
     cv::Mat3b raw;
-    raw = cv::Mat3b(source_.rows(),
-		    source_.cols(),
-		    cv::Vec3b(0, 0, 0));
+    raw = cv::Mat3b(node_.rows(), node_.cols(), cv::Vec3b(0, 0, 0));
     
     for(int y = 0; y < raw.rows; ++y) { 
       for(int x = 0; x < raw.cols; ++x) {
 	// -1 for bg, +1 for fg.
-	double val = 2.0 * sigmoid(1.1 * (source_(y, x) - sink_(y, x))) - 1.0;
+	double val = 2.0 * sigmoid(1.1 * (node_(y, x))) - 1.0;
 	val = min(0.9, max(-0.9, val));
 	if(val < 0)
 	  raw(y, x)[1] = 255 * -val;
@@ -120,7 +111,7 @@ namespace asp
     ROS_ASSERT(vis.rows > 0 && vis.cols > 0);
     for(int y = 0; y < vis.rows; ++y) { 
       for(int x = 0; x < vis.cols; ++x) {
-	double val = sigmoid(5.0 * (source_(y, x) - sink_(y, x))); // 1.0 for foreground.
+	double val = sigmoid(5.0 * (node_(y, x))); // 1.0 for foreground.
 	val = min(0.9, max(0.1, val));
 	vis(y, x)[0] = vis(y, x)[0] * val;
 	vis(y, x)[1] = vis(y, x)[1] * val;
@@ -139,16 +130,9 @@ namespace asp
 
   NameMapping NodePotentialAggregator::generateNameMapping() const
   {
-    ROS_ASSERT(numIncoming("UnweightedSource") == numIncoming("UnweightedSink"));
-
-    vector<string> source_names = upstreamOutputNames("UnweightedSource");
-    vector<string> sink_names = upstreamOutputNames("UnweightedSink");
-    ROS_ASSERT(source_names.size() == sink_names.size());
-    for(size_t i = 0; i < source_names.size(); ++i)
-      ROS_ASSERT(source_names[i] == sink_names[i]);
-
+    vector<string> names = upstreamOutputNames("UnweightedNode");
     NameMapping nmap;
-    nmap.addNames(source_names);
+    nmap.addNames(names);
     return nmap;
   }
   
@@ -159,8 +143,7 @@ namespace asp
     ROS_ASSERT(nmap.size() == (size_t)model.nweights_.rows());
     model.applyNameMapping("nmap", generateNameMapping());
 
-    ROS_ASSERT(numIncoming("UnweightedSource") == numIncoming("UnweightedSink"));
-    vector<string> names = upstreamOutputNames("UnweightedSource");
+    vector<string> names = upstreamOutputNames("UnweightedNode");
     for(size_t i = 0; i < names.size(); ++i)
       ROS_ASSERT(names[i] == model.nameMapping("nmap").toName(i));
   
@@ -177,20 +160,13 @@ namespace asp
   {
     initializeStorage();
     
-    vector<const MatrixXd*> source;
-    pull("UnweightedSource", &source);
-    ROS_ASSERT((size_t)nweights_.rows() == source.size());
-    for(size_t i = 0; i < source.size(); ++i)
-      source_ += (*source[i]) * nweights_[i];
+    vector<const MatrixXd*> node;
+    pull("UnweightedNode", &node);
+    ROS_ASSERT((size_t)nweights_.rows() == node.size());
+    for(size_t i = 0; i < node.size(); ++i)
+      node_ += (*node[i]) * nweights_[i];
     
-    vector<const MatrixXd*> sink;
-    pull("UnweightedSink", &sink);
-    ROS_ASSERT((size_t)nweights_.rows() == sink.size());
-    for(size_t i = 0; i < sink.size(); ++i)
-      sink_ += (*sink[i]) * nweights_[i];
-
-    push<const MatrixXd*>("Source", &source_);
-    push<const MatrixXd*>("Sink", &sink_);
+    push<const MatrixXd*>("Node", &node_);
   }
 
   void NodePotentialAggregator::debug() const
@@ -282,11 +258,9 @@ namespace asp
 
   void GraphcutsPod::compute()
   {
-    const MatrixXd* source;
-    const MatrixXd* sink;
+    const MatrixXd* node;
     const SparseMat* edge;
-    pull("AggregatedSourcePotentials", &source);
-    pull("AggregatedSinkPotentials", &sink);
+    pull("AggregatedNodePotentials", &node);
     pull("AggregatedEdgePotentials", &edge);
 
     // TODO: Could probably do this just once.  Does it matter?
@@ -297,12 +271,10 @@ namespace asp
     graph.add_node(num_nodes);
 
     // -- Fill the graph with node potentials.
-    ROS_ASSERT(source->rows() == sink->rows());
-    ROS_ASSERT(source->cols() == sink->cols());
-    for(int i = 0; i < source->rows(); ++i) {
-      for(int j = 0; j < source->cols(); ++j) {
-	int idx = i * source->cols() + j;
-	graph.add_tweights(idx, source->coeffRef(i, j), sink->coeffRef(i, j));
+    for(int i = 0; i < node->rows(); ++i) {
+      for(int j = 0; j < node->cols(); ++j) {
+	int idx = i * node->cols() + j;
+	graph.add_tweights(idx, node->coeffRef(i, j), 0);
       }
     }
 
@@ -325,8 +297,8 @@ namespace asp
     graph.maxflow();
 
     // -- Pull it out from the maxflow library.
-    if(seg_.rows != source->rows() || seg_.cols != source->cols())
-      seg_ = cv::Mat1b(cv::Size(source->cols(), source->rows()));
+    if(seg_.rows != node->rows() || seg_.cols != node->cols())
+      seg_ = cv::Mat1b(cv::Size(node->cols(), node->rows()));
 
     for(int y = 0; y < seg_.rows; ++y) {
       for(int x = 0; x < seg_.cols; ++x) {
@@ -398,14 +370,13 @@ namespace asp
     for(int y = 0; y < seed.rows; ++y) {
       for(int x = 0; x < seed.cols; ++x) {
 	if(seed(y, x) == 255)
-	  source_(y, x) = 1;
+	  node_(y, x) = 1;
 	else if(seed(y, x) == 0)
-	  sink_(y, x) = 1;
+	  node_(y, x) = -1;
       }
     }
 
-    push<const MatrixXd*>("Source", &source_);
-    push<const MatrixXd*>("Sink", &sink_);
+    push<const MatrixXd*>("Node", &node_);
   }
 
   void SeedNPG::debug() const

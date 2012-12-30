@@ -58,15 +58,13 @@ namespace asp
       // If provided, this is used for writing the overlay debug image.
       // Otherwise it will just write the raw debug image and skip the overlay.
       declareInput<cv::Mat3b>("Image");  
-      declareOutput<const Eigen::MatrixXd*>("Source");
-      declareOutput<const Eigen::MatrixXd*>("Sink");
+      declareOutput<const Eigen::MatrixXd*>("Node");
     }
 
   protected:
-    Eigen::MatrixXd source_;
-    Eigen::MatrixXd sink_;
+    Eigen::MatrixXd node_;
 
-    //! Uses Image to set the size of source_ and sink_ if necessary
+    //! Uses Image to set the size of node_ if necessary
     //! and initialize their elements to zero.
     //! This is typically called at the start of compute().
     void initializeStorage();
@@ -86,8 +84,7 @@ namespace asp
     NodePotentialAggregator(std::string name) :
       NodePotentialGenerator(name)
     {
-      declareInput<const Eigen::MatrixXd*>("UnweightedSource");
-      declareInput<const Eigen::MatrixXd*>("UnweightedSink");
+      declareInput<const Eigen::MatrixXd*>("UnweightedNode");
     }
 
     NameMapping generateNameMapping() const;
@@ -159,8 +156,7 @@ namespace asp
     GraphcutsPod(std::string name) :
       Pod(name)
     {
-      declareInput<const Eigen::MatrixXd*>("AggregatedSourcePotentials");
-      declareInput<const Eigen::MatrixXd*>("AggregatedSinkPotentials");
+      declareInput<const Eigen::MatrixXd*>("AggregatedNodePotentials");
       declareInput<const SparseMat*>("AggregatedEdgePotentials");
       declareInput<cv::Mat3b>("Image");
 

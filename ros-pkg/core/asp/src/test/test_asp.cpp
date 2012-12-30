@@ -27,15 +27,11 @@ void ExampleNPG::compute()
   cout << "ExampleNPG::compute()" << endl;
   initializeStorage();
 
-  for(int y = 0; y < source_.rows(); ++y) {
-    for(int x = 0; x < source_.cols(); ++x) {
-      source_(y, x) = ((double)rand() / RAND_MAX) * 2.0 - 1.0;
-      sink_(y, x) = ((double)rand() / RAND_MAX) * 2.0 - 1.0;
-    }
-  }
+  for(int y = 0; y < node_.rows(); ++y)
+    for(int x = 0; x < node_.cols(); ++x)
+      node_(y, x) = ((double)rand() / RAND_MAX) * 2.0 - 1.0;
 
-  push<const MatrixXd*>("Source", &source_);
-  push<const MatrixXd*>("Sink", &sink_);
+  push<const MatrixXd*>("Node", &node_);
 }
 
 class ExampleEPG : public EdgePotentialGenerator
@@ -78,8 +74,7 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
 
   asp.addPod(new ExampleNPG("ExampleNPG0"));
   asp.connect("ImageEntryPoint:Output -> ExampleNPG0:Image");
-  asp.connect("ExampleNPG0:Source -> NodePotentialAggregator:UnweightedSource");
-  asp.connect("ExampleNPG0:Sink -> NodePotentialAggregator:UnweightedSink");
+  asp.connect("ExampleNPG0:Node -> NodePotentialAggregator:UnweightedNode");
 
   asp.addPod(new EdgeStructureGenerator("GridESG"));
   asp.setParam("GridESG", "Grid", true);
