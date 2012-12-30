@@ -3,6 +3,7 @@
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <eigen_extensions/random.h>
 #include <pipeline/pipeline.h>
 #include <graphcuts/potentials_cache.h>
 #include <name_mapping/name_mapping.h>
@@ -76,7 +77,8 @@ namespace asp
     //! (if BackgroundImage is provided) as pod::debugBasePath() + "-overlay.png".
     void writeNodePotentialVisualization() const;
   };
-  
+
+  // Unweighted node potential should be in [-1, 1].
   class NodePotentialAggregator : public NodePotentialGenerator
   {
   public:
@@ -102,7 +104,8 @@ namespace asp
     void compute();
     void debug() const;
   };
-  
+
+  // Unweighted edge potentials should be in [0, 1].
   class EdgePotentialGenerator : public Pod
   {
   public:
@@ -198,11 +201,11 @@ namespace asp
     EdgeStructureGenerator(std::string name):
       Pod(name)
     {
-      declareParam<bool>("AxisAlignedGrid", true);
+      declareParam<bool>("AxisAlignedGrid", false);
       declareParam<bool>("DiagonalGrid", false);
-      declareParam<bool>("Web", false);
+      declareParam<bool>("Web", true);
       declareParam<float>("WebMaxRadius", 10);  // In pixels.
-      declareParam<int>("WebOutgoingPerPixel", 2);
+      declareParam<float>("WebPixelProbability", 0.01);
       
       declareInput<cv::Mat3b>("Image");
             
