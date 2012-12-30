@@ -54,7 +54,7 @@ namespace pipeline
     const vector<const Outlet*>& inputs = it->second;
     vector<string> names;
     for(size_t i = 0; i < inputs.size(); ++i)
-      names.push_back(inputs[i]->getPod()->getName());
+      names.push_back(inputs[i]->pod()->getName());
     return names;
   }
   
@@ -333,7 +333,7 @@ namespace pipeline
       const vector<const Outlet*>& outlets = it->second;
       out << name << " <-";
       for(size_t i = 0; i < outlets.size(); ++i) { 
-	out << " " << outlets[i]->getPod()->getName() << ":" << outlets[i]->getName();
+	out << " " << outlets[i]->pod()->getName() << ":" << outlets[i]->getName();
       }
       out << endl;
     }

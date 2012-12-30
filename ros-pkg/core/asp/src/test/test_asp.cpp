@@ -100,7 +100,7 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
   for(int y = 0; y < img.rows; ++y)
     for(int x = 0; x < img.cols; ++x)
       img(y, x) = cv::Vec3b(rand() % 255, rand() % 255, rand() % 255);
-  asp.getPod< EntryPoint<cv::Mat3b> >("ImageEntryPoint")->setData(img);
+  asp.pod< EntryPoint<cv::Mat3b> >("ImageEntryPoint")->setData(img);
   cv::Mat1b seed(img.size(), 127);
   for(int y = 45; y < 55; ++y)
     for(int x = 45; x < 55; ++x)
@@ -108,7 +108,7 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
   for(int y = 15; y < 25; ++y)
     for(int x = 15; x < 25; ++x)
       seed(y, x) = 0;
-  asp.getPod< EntryPoint<cv::Mat1b> >("SeedEntryPoint")->setData(seed);
+  asp.pod< EntryPoint<cv::Mat1b> >("SeedEntryPoint")->setData(seed);
   asp.setDebug(true);
   asp.compute();
   // cv::Mat1b seg;

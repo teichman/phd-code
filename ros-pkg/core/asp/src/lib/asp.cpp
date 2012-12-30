@@ -32,8 +32,8 @@ namespace asp
     connect("SeedNPG:Source -> NodePotentialAggregator:UnweightedSource");
     connect("SeedNPG:Sink -> NodePotentialAggregator:UnweightedSink");
     addPod(new EdgeStructureGenerator("EdgeStructureGenerator"));
-    // EdgeStructureGenerator* esg = getPod<EdgeStructureGenerator>("EdgeStructureGenerator");
-    // esg->setParam("
+    setParam("EdgeStructureGenerator", "AxisAlignedGrid", true);
+    setParam("EdgeStructureGenerator", "Web", false);
     connect("ImageEntryPoint:Output -> EdgeStructureGenerator:Image");
   }
 
@@ -48,18 +48,18 @@ namespace asp
   Model Asp::model() const
   {
     Model mod;
-    NodePotentialAggregator* npa = (NodePotentialAggregator*)getPod("NodePotentialAggregator");
+    NodePotentialAggregator* npa = (NodePotentialAggregator*)pod("NodePotentialAggregator");
     npa->fillModel(&mod);
-    EdgePotentialAggregator* epa = (EdgePotentialAggregator*)getPod("EdgePotentialAggregator");
+    EdgePotentialAggregator* epa = (EdgePotentialAggregator*)pod("EdgePotentialAggregator");
     epa->fillModel(&mod);
     return mod;
   }
   
   void Asp::setModel(const Model& mod)
   {
-    NodePotentialAggregator* npa = (NodePotentialAggregator*)getPod("NodePotentialAggregator");
+    NodePotentialAggregator* npa = (NodePotentialAggregator*)pod("NodePotentialAggregator");
     npa->setWeights(mod);
-    EdgePotentialAggregator* epa = (EdgePotentialAggregator*)getPod("EdgePotentialAggregator");
+    EdgePotentialAggregator* epa = (EdgePotentialAggregator*)pod("EdgePotentialAggregator");
     epa->setWeights(mod);
   }
   

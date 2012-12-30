@@ -42,7 +42,8 @@ namespace pipeline
     //! TODO: Also, it would probably make sense to allow colons and use something
     //! else for the separator.  Maybe a slash.
     void connect(std::string connection);
-
+    template<typename T> void setParam(std::string pod_name, std::string param_name, T val);
+    
     // ----------------------------------------
     // -- Execution
     // ----------------------------------------
@@ -81,11 +82,11 @@ namespace pipeline
     // -- Pod access
     // ----------------------------------------
     //! Returns the Pod with the supplied name.
-    Pod* getPod(const std::string& name) const;
+    Pod* pod(const std::string& name) const;
     //! Returns the Pod of type T.  There must be exactly one.
-    template<typename T> T* getPod() const;
+    template<typename T> T* pod() const;
     //! Returns the Pod of type T with the supplied name.
-    template<typename T> T* getPod(const std::string& name) const;
+    template<typename T> T* pod(const std::string& name) const;
     //! Return all pods of type T for which the given the test function evaluates to true.
     template<typename T> std::vector<T*> filterPods(bool (*test)(T* pod) = NULL) const;
 
@@ -169,6 +170,12 @@ namespace pipeline
   /*****************************************
    * Function Templates
    ****************************************/
+
+  template<typename T>
+  inline void Pipeline::setParam(std::string pod_name, std::string param_name, T val)
+  {
+    pod(pod_name)->setParam(param_name, val);
+  }
   
   template<typename T>
   std::vector<T*> Pipeline::filterPods(bool (*test)(T* pod)) const
@@ -196,7 +203,7 @@ namespace pipeline
   
   //! Returns the one pod of type T.  There must be only one.
   template<typename T>
-  T* getPod(const std::vector<Pod*>& pods)
+  T* pod(const std::vector<Pod*>& pods)
   {
     std::vector<T*> passed;
     passed.reserve(pods.size());
@@ -208,24 +215,24 @@ namespace pipeline
     }
 
     if(!(passed.size() == 1 || passed.size() == 0)) {
-      PL_ABORT("Called getPod<T>(), but multiple Pods of type T were found."
-	       << " You probably need to use getPod<T>(name).");
+      PL_ABORT("Called pod<T>(), but multiple Pods of type T were found."
+	       << " You probably need to use pod<T>(name).");
     }
     if(passed.size() == 1)
       return passed[0];
     else {
-      PL_ABORT("Called getPod<T>(), but no Pods of type T were found.");
+      PL_ABORT("Called pod<T>(), but no Pods of type T were found.");
     }
     return NULL;
   }
-
+  
   template<typename T>
-  T* Pipeline::getPod() const
+  T* Pipeline::pod() const
   {
-    return pipeline::getPod<T>(pods_);
+    return pipeline::pod<T>(pods_);
   }
 
-  template<typename T> T* getPod(const std::string& name,
+  template<typename T> T* pod(const std::string& name,
 				  const std::vector<Pod*>& pods)
   {
     std::vector<T*> passed;
@@ -242,20 +249,20 @@ namespace pipeline
     if(passed.size() == 1)
       return passed[0];
     else {
-      PL_ABORT("Called getPod<T>(\"" << name << "\"), but no Pods of type T with this name were found." << std::endl
+      PL_ABORT("Called pod<T>(\"" << name << "\"), but no Pods of type T with this name were found." << std::endl
 	       << "Typeid of T is: " << typeid(T).name());
     }
     return NULL;
   }
 
-  template<typename T> T* Pipeline::getPod(const std::string& name) const
+  template<typename T> T* Pipeline::pod(const std::string& name) const
   {
-    return pipeline::getPod<T>(name, pods_);
+    return pipeline::pod<T>(name, pods_);
   }
 
   template<typename T> T Pipeline::pull(const std::string& pod_name, const std::string& outlet_name) const
   {
-    return getPod(pod_name)->getOutlet(outlet_name)->pull<T>();
+    return pod(pod_name)->getOutlet(outlet_name)->pull<T>();
   }
 
   template<typename T> T Pipeline::pull(const std::string& address) const
@@ -269,12 +276,12 @@ namespace pipeline
 						const std::string& outlet_name,
 						T* dest) const
   {
-    *dest = getPod(pod_name)->getOutlet(outlet_name)->pull<T>();
+    *dest = pod(pod_name)->getOutlet(outlet_name)->pull<T>();
   }
 
   template<typename T> void Pipeline::setInput(const std::string& pod_name, T data)
   {
-    getPod< EntryPoint<T> >(pod_name)->setData(data);
+    pod< EntryPoint<T> >(pod_name)->setData(data);
   }
   
 } // namespace pipeline

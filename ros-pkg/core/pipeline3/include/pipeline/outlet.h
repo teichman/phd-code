@@ -31,7 +31,7 @@ namespace pipeline
     template<typename T> void push(T data);
     template<typename T> void setType();
     void flush() { data_ = (void*)NULL; has_data_ = false; }
-    Pod* getPod() const { return pod_; }
+    Pod* pod() const { return pod_; }
     std::string getName() const { return name_; }
     bool hasData() const { return has_data_; }
     bool checkType(boost::any test) const { return (type_.type() == test.type()); }

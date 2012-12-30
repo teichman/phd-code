@@ -121,7 +121,7 @@ void generateDefaultPipeline(Pipeline* pl)
 
   pl->addPod(new ConcretePodA("ConcretePodA"));
   pl->addPod(new ConcretePodB("ConcretePodB"));
-  pl->getPod("ConcretePodB")->setParam("Something", true);
+  pl->pod("ConcretePodB")->setParam("Something", true);
   pl->connect("DescriptorAssembler:Descriptor -> ConcretePodA:Vals");
   pl->connect("DescriptorAssembler:Descriptor -> ConcretePodB:Vals");
 }
@@ -174,8 +174,8 @@ TEST(Pipeline, Serialize)
   for(size_t i = 0; i < descriptor->size(); ++i)
     EXPECT_FLOAT_EQ(descriptor->at(i), descriptor2->at(i));
 
-  uint64_t hash = pl.getPod("DescriptorAssembler")->getUniqueHash("Descriptor");
-  uint64_t hash2 = pl2.getPod("DescriptorAssembler")->getUniqueHash("Descriptor");
+  uint64_t hash = pl.pod("DescriptorAssembler")->getUniqueHash("Descriptor");
+  uint64_t hash2 = pl2.pod("DescriptorAssembler")->getUniqueHash("Descriptor");
   EXPECT_TRUE(hash == hash2);
 }
 
@@ -313,7 +313,7 @@ TEST(Pipeline, OutputFlush)
   pl.compute();
   EXPECT_TRUE(pl.pull<VecConstPtr>("DescriptorAssembler", "Descriptor"));
 
-  pl.getPod("DescriptorAssembler")->disabled_ = true;
+  pl.pod("DescriptorAssembler")->disabled_ = true;
   pl.compute();
 
   // Running this test causes abort() because the outlet has no data.

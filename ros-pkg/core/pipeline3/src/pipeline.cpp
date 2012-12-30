@@ -97,7 +97,7 @@ namespace pipeline {
   void Pipeline::connect(std::string source_pod, std::string source_output,
 			 std::string sink_pod, std::string sink_input)
   {
-    getPod(sink_pod)->registerInput(sink_input, getPod(source_pod), source_output);
+    pod(sink_pod)->registerInput(sink_input, pod(source_pod), source_output);
     assertCompleteness();
   }
   
@@ -647,13 +647,13 @@ namespace pipeline {
     addPods(pods);
   }
 
-  Pod* Pipeline::getPod(const std::string& name) const
+  Pod* Pipeline::pod(const std::string& name) const
   {
     PL_ASSERT(pod_names_.size() == pods_.size());
     map<string, Pod*>::const_iterator it;
     it = pod_names_.find(name);
     if(it == pod_names_.end()) {
-      PL_ABORT("Called getPod(\"" << name << "\"), but no Pod with that name exists.");
+      PL_ABORT("Called pod(\"" << name << "\"), but no Pod with that name exists.");
     }
     return it->second;
   }

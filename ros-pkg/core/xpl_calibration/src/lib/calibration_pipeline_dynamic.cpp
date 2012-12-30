@@ -25,10 +25,10 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
 					   Eigen::Affine3f* transform,
 					   double* sync)
 {
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fx", sseq0->model_.fx_);
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fy", sseq0->model_.fy_);
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cx", sseq0->model_.cx_);
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cy", sseq0->model_.cy_);
+  pl_.pod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fx", sseq0->model_.fx_);
+  pl_.pod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fy", sseq0->model_.fy_);
+  pl_.pod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cx", sseq0->model_.cx_);
+  pl_.pod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cy", sseq0->model_.cy_);
 
   cout << "Intrinsics: " << endl;
   cout << "fx: " << sseq0->model_.fx_ << endl;
