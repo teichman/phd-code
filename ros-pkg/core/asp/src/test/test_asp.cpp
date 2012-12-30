@@ -76,59 +76,73 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
   registerPods();
   Asp asp(1);
 
-  asp.addPod(new ExampleNPG("ExampleNPG0"));
-  asp.connect("ImageEntryPoint:Output -> ExampleNPG0:Image");
-  asp.connect("ExampleNPG0:Source -> NodePotentialAggregator:UnweightedSource");
-  asp.connect("ExampleNPG0:Sink -> NodePotentialAggregator:UnweightedSink");
-  asp.addPod(new ExampleNPG("ExampleNPG1"));
-  asp.connect("ImageEntryPoint:Output -> ExampleNPG1:Image");
-  asp.connect("ExampleNPG1:Source -> NodePotentialAggregator:UnweightedSource");
-  asp.connect("ExampleNPG1:Sink -> NodePotentialAggregator:UnweightedSink");
+  // asp.addPod(new ExampleNPG("ExampleNPG0"));
+  // asp.connect("ImageEntryPoint:Output -> ExampleNPG0:Image");
+  // asp.connect("ExampleNPG0:Source -> NodePotentialAggregator:UnweightedSource");
+  // asp.connect("ExampleNPG0:Sink -> NodePotentialAggregator:UnweightedSink");
+  // asp.addPod(new ExampleNPG("ExampleNPG1"));
+  // asp.connect("ImageEntryPoint:Output -> ExampleNPG1:Image");
+  // asp.connect("ExampleNPG1:Source -> NodePotentialAggregator:UnweightedSource");
+  // asp.connect("ExampleNPG1:Sink -> NodePotentialAggregator:UnweightedSink");
 
-  asp.addPod(new EdgeStructureGenerator("AxisAlignedESG"));
-  asp.setParam("AxisAlignedESG", "AxisAlignedGrid", true);
-  asp.connect("ImageEntryPoint:Output -> AxisAlignedESG:Image");
-  asp.addPod(new EdgeStructureGenerator("DiagonalGridESG"));
-  asp.setParam("DiagonalGridESG", "DiagonalGrid", true);
-  asp.connect("ImageEntryPoint:Output -> DiagonalGridESG:Image");
+  asp.addPod(new EdgeStructureGenerator("GridESG"));
+  asp.setParam("GridESG", "Grid", true);
+  asp.connect("ImageEntryPoint:Output -> GridESG:Image");
+  asp.addPod(new EdgeStructureGenerator("DiagonalESG"));
+  asp.setParam("DiagonalESG", "Diagonal", true);
+  asp.connect("ImageEntryPoint:Output -> DiagonalESG:Image");
   asp.addPod(new EdgeStructureGenerator("WebESG"));
   asp.setParam("WebESG", "Web", true);
   asp.connect("ImageEntryPoint:Output -> WebESG:Image");
   
-  asp.addPod(new ExampleEPG("ExampleEPG0"));
-  asp.connect("ImageEntryPoint:Output -> ExampleEPG0:Image");
-  asp.connect("ExampleEPG0:Edge -> EdgePotentialAggregator:UnweightedEdge");
-  asp.connect("AxisAlignedESG:EdgeStructure -> ExampleEPG0:EdgeStructure");
-  asp.addPod(new ExampleEPG("ExampleEPG1"));
-  asp.connect("ImageEntryPoint:Output -> ExampleEPG1:Image");
-  asp.connect("ExampleEPG1:Edge -> EdgePotentialAggregator:UnweightedEdge");
-  asp.connect("DiagonalGridESG:EdgeStructure -> ExampleEPG1:EdgeStructure");
-  asp.addPod(new ExampleEPG("ExampleEPG2"));
-  asp.connect("ImageEntryPoint:Output -> ExampleEPG2:Image");
-  asp.connect("ExampleEPG2:Edge -> EdgePotentialAggregator:UnweightedEdge");
-  asp.connect("WebESG:EdgeStructure -> ExampleEPG2:EdgeStructure");
-  asp.addPod(new SimpleColorDifferenceEPG("SimpleColorDifferenceEPG"));
-  asp.connect("ImageEntryPoint:Output -> SimpleColorDifferenceEPG:Image");
-  asp.connect("WebESG:EdgeStructure -> SimpleColorDifferenceEPG:EdgeStructure");
-  asp.connect("SimpleColorDifferenceEPG:Edge -> EdgePotentialAggregator:UnweightedEdge");
+  asp.addPod(new SmoothnessEPG("SmoothnessEPG0"));
+  asp.connect("ImageEntryPoint:Output -> SmoothnessEPG0:Image");
+  asp.connect("SmoothnessEPG0:Edge -> EdgePotentialAggregator:UnweightedEdge");
+  asp.connect("GridESG:EdgeStructure -> SmoothnessEPG0:EdgeStructure");
+  asp.addPod(new SmoothnessEPG("SmoothnessEPG1"));
+  asp.connect("ImageEntryPoint:Output -> SmoothnessEPG1:Image");
+  asp.connect("SmoothnessEPG1:Edge -> EdgePotentialAggregator:UnweightedEdge");
+  asp.connect("DiagonalESG:EdgeStructure -> SmoothnessEPG1:EdgeStructure");
+
+  asp.addPod(new SimpleColorDifferenceEPG("GridSimpleColorDifferenceEPG"));
+  asp.connect("ImageEntryPoint:Output -> GridSimpleColorDifferenceEPG:Image");
+  asp.connect("GridESG:EdgeStructure -> GridSimpleColorDifferenceEPG:EdgeStructure");
+  asp.connect("GridSimpleColorDifferenceEPG:Edge -> EdgePotentialAggregator:UnweightedEdge");
+  asp.addPod(new SimpleColorDifferenceEPG("DiagonalSimpleColorDifferenceEPG"));
+  asp.connect("ImageEntryPoint:Output -> DiagonalSimpleColorDifferenceEPG:Image");
+  asp.connect("DiagonalESG:EdgeStructure -> DiagonalSimpleColorDifferenceEPG:EdgeStructure");
+  asp.connect("DiagonalSimpleColorDifferenceEPG:Edge -> EdgePotentialAggregator:UnweightedEdge");
+  asp.addPod(new SimpleColorDifferenceEPG("WebSimpleColorDifferenceEPG"));
+  asp.connect("ImageEntryPoint:Output -> WebSimpleColorDifferenceEPG:Image");
+  asp.connect("WebESG:EdgeStructure -> WebSimpleColorDifferenceEPG:EdgeStructure");
+  asp.connect("WebSimpleColorDifferenceEPG:Edge -> EdgePotentialAggregator:UnweightedEdge");
   
   Model model = asp.defaultModel();
   model.nweights_.setConstant(1);
   model.nweights_(model.nameMapping("nmap").toId("SeedNPG")) = 2;
   model.eweights_.setConstant(1);
+  model.eweights_(model.nameMapping("emap").toId("SmoothnessEPG0")) = 0.1;
+  model.eweights_(model.nameMapping("emap").toId("SmoothnessEPG1")) = 0.1;
+  model.eweights_(model.nameMapping("emap").toId("WebSimpleColorDifferenceEPG")) = 0.3;
   asp.setModel(model);
+
+  cv::Mat3b img;
+  if(getenv("IMAGE_PATH"))
+    img = cv::imread(getenv("IMAGE_PATH"));
+  else {
+    img = cv::Mat3b(cv::Size(100, 100), cv::Vec3b(127, 127, 127));
+    for(int y = 0; y < img.rows; ++y)
+      for(int x = 0; x < img.cols; ++x)
+	img(y, x) = cv::Vec3b(rand() % 255, rand() % 255, rand() % 255);
+  }
   
-  cv::Mat3b img(cv::Size(100, 100), cv::Vec3b(127, 127, 127));
-  for(int y = 0; y < img.rows; ++y)
-    for(int x = 0; x < img.cols; ++x)
-      img(y, x) = cv::Vec3b(rand() % 255, rand() % 255, rand() % 255);
   asp.pod< EntryPoint<cv::Mat3b> >("ImageEntryPoint")->setData(img);
   cv::Mat1b seed(img.size(), 127);
-  for(int y = 45; y < 55; ++y)
-    for(int x = 45; x < 55; ++x)
+  for(int y = 0; y < 10; ++y)
+    for(int x = 0; x < 20; ++x)
       seed(y, x) = 255;
-  for(int y = 15; y < 25; ++y)
-    for(int x = 15; x < 25; ++x)
+  for(int y = 50; y < 80; ++y)
+    for(int x = 50; x < 80; ++x)
       seed(y, x) = 0;
   asp.pod< EntryPoint<cv::Mat1b> >("SeedEntryPoint")->setData(seed);
   asp.setDebug(true);

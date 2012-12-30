@@ -201,8 +201,7 @@ namespace asp
   void EdgePotentialGenerator::initializeStorage(double reserve_per_node)
   {
     cv::Mat3b img = pull<cv::Mat3b>("Image");
-    int num_nodes = img.rows * img.cols;
-    initializeSparseMat(num_nodes, num_nodes, reserve_per_node, &edge_);
+    initializeSparseMat(img.rows, img.cols, reserve_per_node, &edge_);
     
     // const SparseMat& structure = *pull<const SparseMat*>("EdgeStructure");
     // initializeSparseMat(structure.rows(), structure.cols(),
@@ -419,19 +418,18 @@ namespace asp
   {
     // -- Initialize the structure.
     cv::Mat3b img = pull<cv::Mat3b>("Image");
-    int num_nodes = img.rows * img.cols;
     double reserve_per_pixel = 0;
-    if(param<bool>("AxisAlignedGrid"))
+    if(param<bool>("Grid"))
       reserve_per_pixel += 4;
-    if(param<bool>("DiagonalGrid"))
+    if(param<bool>("Diagonal"))
       reserve_per_pixel += 4;
     if(param<bool>("Web"))
       reserve_per_pixel += param<int>("WebNumOutgoing");
-    initializeSparseMat(num_nodes, num_nodes, reserve_per_pixel, &structure_);
+    initializeSparseMat(img.rows, img.cols, reserve_per_pixel, &structure_);
 
     // -- Generate edges.
-    if(param<bool>("AxisAlignedGrid")) {
-      ScopedTimer st("AxisAlignedGrid");
+    if(param<bool>("Grid")) {
+      ScopedTimer st("Grid");
       int idx = 0;
       for(int y = 0; y < img.rows; ++y) {
       	for(int x = 0; x < img.cols; ++x, ++idx) {
@@ -442,9 +440,9 @@ namespace asp
       	}
       }
     }
-    if(param<bool>("DiagonalGrid")) {
-      ScopedTimer st("DiagonalGrid");
-      initializeSparseMat(structure_.rows(), structure_.cols(), 4, &diag_);
+    if(param<bool>("Diagonal")) {
+      ScopedTimer st("Diagonal");
+      initializeSparseMat(img.rows, img.cols, 4, &diag_);
       int idx = 0;
       for(int y = 0; y < img.rows - 1; ++y) {
       	for(int x = 0; x < img.cols; ++x, ++idx) {
@@ -457,7 +455,7 @@ namespace asp
       structure_ += diag_;
     }
     if(param<bool>("Web")) {
-      initializeSparseMat(structure_.rows(), structure_.cols(), param<int>("WebNumOutgoing"), &web_);
+      initializeSparseMat(img.rows, img.cols, param<int>("WebNumOutgoing"), &web_);
 
       // web_.coeffRef(index(0, 0, img.cols), index(50, 50, img.cols)) = 1;
       // web_.coeffRef(index(50, 50, img.cols), index(50, 75, img.cols)) = 1;
@@ -523,9 +521,9 @@ namespace asp
     
     cout << "EdgeStructureGenerator: " << structure_.nonZeros() << " edges with average weight of nonzeros of " << structure_.sum() / (structure_.nonZeros()) << endl;
 
-    MatrixXd dense(structure_);
-    cout << "Middle 20 x 20: " << endl;
-    cout << dense.block(dense.rows() / 2, dense.cols() / 2, 20, 20) << endl;
+    // MatrixXd dense(structure_);
+    // cout << "Middle 20 x 20: " << endl;
+    // cout << dense.block(dense.rows() / 2, dense.cols() / 2, 20, 20) << endl;
     
     cv::Mat3b img = pull<cv::Mat3b>("Image");
     cv::Mat3b vis = drawEdgeVisualization(img, structure_);

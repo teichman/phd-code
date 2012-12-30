@@ -202,8 +202,8 @@ namespace asp
     EdgeStructureGenerator(std::string name):
       Pod(name)
     {
-      declareParam<bool>("AxisAlignedGrid", false);
-      declareParam<bool>("DiagonalGrid", false);
+      declareParam<bool>("Grid", false);
+      declareParam<bool>("Diagonal", false);
       declareParam<bool>("Web", false);
       declareParam<float>("WebMaxRadius", 10);  // In pixels.
       declareParam<int>("WebNumOutgoing", 2);
@@ -270,12 +270,17 @@ namespace asp
   void visualizeSegmentation(cv::Mat1b seg, cv::Mat3b img, cv::Mat3b vis);
   cv::Mat3b drawEdgeVisualization(cv::Mat3b img, const SparseMat& edge);
 
+  //! This function is specifically for generating adjacency matrices for an image.
+  //! The matrix is (rows * cols) x (rows * cols).
+  //! rows and cols are the size of the image.
+  //! reserve_per_node is the number of edges you expect per pixel.
   template<typename T>
   void initializeSparseMat(int rows, int cols, double reserve_per_node, T* mat)
   {
-    if(mat->rows() != rows || mat->cols() != cols) { 
-      *mat = SparseMat(rows, cols);
-      mat->reserve((int)(reserve_per_node * cols * rows));
+    int num_pixels = rows * cols;
+    if(mat->rows() != num_pixels || mat->cols() != num_pixels) {
+      *mat = SparseMat(num_pixels, num_pixels);
+      mat->reserve((int)(reserve_per_node * num_pixels));
     }
     mat->setZero();
   }
