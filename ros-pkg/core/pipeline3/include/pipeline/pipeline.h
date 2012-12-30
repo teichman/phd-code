@@ -11,9 +11,11 @@ namespace pipeline
 /*
  * Todo list
  *
- * We need a name for Pod:Output.  "Address"?  "Port"?
- * Pod:Output -> Pod:Input should have a name?  "Connection string"?
- *
+ * - We need a name for Pod:Output.  "Address"?  "Port"?
+ * - Pod:Output -> Pod:Input should have a name?  "Connection string"?
+ * - It should be impossible to declare void debug() in a pod.  The right function is
+ *   void debug() const, and if you use the former it just never gets called and you
+ *   don't know why.
  */
  
   

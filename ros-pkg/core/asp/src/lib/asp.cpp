@@ -31,6 +31,10 @@ namespace asp
     connect("SeedEntryPoint:Output -> SeedNPG:SeedImage");
     connect("SeedNPG:Source -> NodePotentialAggregator:UnweightedSource");
     connect("SeedNPG:Sink -> NodePotentialAggregator:UnweightedSink");
+    addPod(new EdgeStructureGenerator("EdgeStructureGenerator"));
+    // EdgeStructureGenerator* esg = getPod<EdgeStructureGenerator>("EdgeStructureGenerator");
+    // esg->setParam("
+    connect("ImageEntryPoint:Output -> EdgeStructureGenerator:Image");
   }
 
   Model Asp::defaultModel() const
@@ -188,108 +192,44 @@ namespace asp
   {
     writeNodePotentialVisualization();
   }
-
+  
   void EdgePotentialGenerator::initializeStorage(double reserve_per_node)
   {
     cv::Mat3b img = pull<cv::Mat3b>("BackgroundImage");
     int num_nodes = img.rows * img.cols;
-    if(edge_->rows() != num_nodes || edge_->cols() != num_nodes) { 
-      *edge_ = DynamicSparseMat(num_nodes, num_nodes);
-      edge_->reserve((int)(reserve_per_node * num_nodes));
-    }
-    edge_->setZero();
-  }
-
-  int sign(int x)
-  {
-    return (x > 0) - (x < 0);
-  }
-
-  void drawLine(cv::Point2d pt, const cv::Point2d& pt1, double potential, cv::Mat3b vis)
-  {
-    if(pt1.x < 0 || pt1.x >= vis.cols)
-      return;
-    if(pt1.y < 0 || pt1.y >= vis.rows)
-      return;
-
-    double max_x = max(pt.x, pt1.x);
-    double max_y = max(pt.y, pt1.y);
-    double min_x = min(pt.x, pt1.x);
-    double min_y = min(pt.y, pt1.y);
-    double dx = max_x - min_x;
-    double dy = max_y - min_y;
-    dx /= max(fabs(dx), fabs(dy));
-    dy /= max(fabs(dx), fabs(dy));
-    double x = max(0., min_x);
-    double y = max(0., min_y);
-    for(; x < max_x && y < max_y && x < vis.cols && y < vis.rows; x += dx, y += dy) {
-      vis(y, x)[0] = vis(y, x)[0] * (1.0 - potential);
-      vis(y, x)[1] = vis(y, x)[1] * (1.0 - potential);
-      vis(y, x)[2] = vis(y, x)[2] * (1.0 - potential);
-    }
+    initializeSparseMat(num_nodes, num_nodes, reserve_per_node, &edge_);
   }
 
   void EdgePotentialGenerator::writeEdgePotentialVisualization() const
   {
     cv::Mat3b img = pull<cv::Mat3b>("BackgroundImage");
-    ROS_ASSERT(img.rows > 0 && img.cols > 0);
-    double scale = 7;
-    cv::Size sz(img.cols * scale, img.rows * scale);
-    cv::Mat3b vis;
-    cv::resize(img, vis, sz, cv::INTER_NEAREST);
-
-    DynamicSparseMat normalized = *edge_;
-    double max = -std::numeric_limits<double>::max();
-    double min =  std::numeric_limits<double>::max();
-    for(int i = 0; i < normalized.rows(); ++i) {
-      DynamicSparseMat::InnerIterator it(normalized, i);
+    cv::Mat3b vis = drawEdgeVisualization(img, edge_);
+    double minval = std::numeric_limits<double>::max();
+    double maxval = -std::numeric_limits<double>::max();
+    for(int i = 0; i < edge_.rows(); ++i) {
+      SparseMatrix<double, RowMajor>::InnerIterator it(edge_, i);
       for(; it; ++it) {
-	if(it.value() > max)
-	  max = it.value();
-	if(it.value() < min)
-	  min = it.value();
+	minval = min(minval, it.value());
+	maxval = max(maxval, it.value());
       }
     }
-    normalized /= max;
-    cout << getName() << ": range of edge weights is " << min << " to " << max << endl;
-
-    // -- Draw non-zero edges.
-    for(int y = 0; y < img.rows; ++y) {
-      for(int x = 0; x < img.cols; ++x) {
-	int idx0 = index(y, x, img.cols);
-	// cout << "y: " << y << ", x: " << x << ", idx0: " << idx0 << endl;
-	// cout << normalized.rows() << " x " << normalized.cols() << endl;
-
-	DynamicSparseMat::InnerIterator it(normalized, idx0);
-	for(; it; ++it) {
-	  int idx1 = it.col();
-	  int y1 = idx1 / img.cols;
-	  int x1 = idx1 - y1 * img.cols;
-	  //cout << "idx1: " << idx1 << ", y1: " << y1 << ", x1: " << x1 << ", it.value: " << it.value() << endl;
-
-	  cv::Point pt(x*scale, y*scale);
-	  cv::Point pt1(x1*scale, y1*scale);
-	  //cout << "pt: " << pt << ", pt1: " << pt1 << endl;
-	  drawLine(pt, pt1, it.value(), vis);
-	}
-      }
-    }
-
+    cout << getName() << ": range of edge weights is " << minval << " to " << maxval << endl;
     string overlay_path = debugBasePath() + ".png";
     cv::imwrite(overlay_path, vis);
   }
-
+  
   void EdgePotentialAggregator::compute()
   {
     initializeStorage();
 
-    vector<DynamicSparseMatConstPtr> unweighted;
+    vector<const SparseMat*> unweighted;
     pull("UnweightedEdge", &unweighted);
     ROS_ASSERT((size_t)eweights_.rows() == unweighted.size());
-    for(size_t i = 0; i < unweighted.size(); ++i)
-      *edge_ += eweights_(i) * (*unweighted[i]);
+    for(size_t i = 0; i < unweighted.size(); ++i) {
+      edge_ += eweights_(i) * (*unweighted[i]);
+    }
 
-    push<DynamicSparseMatConstPtr>("Edge", edge_);
+    push<const SparseMat*>("Edge", &edge_);
   }
 
   void EdgePotentialAggregator::debug() const
@@ -328,7 +268,7 @@ namespace asp
   {
     const MatrixXd* source;
     const MatrixXd* sink;
-    DynamicSparseMatConstPtr edge;
+    const SparseMat* edge;
     pull("AggregatedSourcePotentials", &source);
     pull("AggregatedSinkPotentials", &sink);
     pull("AggregatedEdgePotentials", &edge);
@@ -458,4 +398,150 @@ namespace asp
     writeNodePotentialVisualization();
   }
 
+  void EdgeStructureGenerator::compute()
+  {
+    // -- Initialize the structure.
+    cv::Mat3b img = pull<cv::Mat3b>("Image");
+    int num_nodes = img.rows * img.cols;
+    double reserve = 0;
+    if(param<bool>("AxisAlignedGrid"))
+      reserve += 4;
+    if(param<bool>("DiagonalGrid"))
+      reserve += 4;
+    if(param<bool>("Web"))
+      reserve += param<int>("WebOutgoingPerPixel");
+    initializeSparseMat(num_nodes, num_nodes, reserve, &structure_);
+
+    // -- Generate edges.
+
+    if(param<bool>("AxisAlignedGrid")) {
+      int idx = 0;
+      for(int y = 0; y < img.rows; ++y) {
+      	for(int x = 0; x < img.cols; ++x, ++idx) {
+	  if(x < img.cols - 1)
+      	    structure_.insert(idx, index(y, x + 1, img.cols)) = 1;
+      	  if(y < img.rows - 1)
+      	    structure_.insert(idx, index(y + 1, x, img.cols)) = 1;
+      	}
+      }
+    }
+    if(param<bool>("DiagonalGrid")) {
+      // It'd be (much?) faster to do this combined with the above.
+      // Maybe make a separate matrix and add them at the end.
+      // int idx = 0;
+      // for(int y = 0; y < img.rows; ++y) {
+      // 	for(int x = 0; x < img.cols; ++x, ++idx) {
+      // 	  if(y < img.rows - 1) {
+      // 	    if(x < img.cols - 1)
+      // 	      structure_.insert(idx, index(y + 1, x + 1, img.cols)) = 1;
+      // 	    if(x > 0)
+      // 	      structure_.insert(idx, index(y + 1, x - 1, img.cols)) = 1;
+      // 	  }
+      // 	}
+      // }
+    }
+    if(param<bool>("Web"))
+      abort();
+
+    push<const SparseMat*>("EdgeStructure", &structure_);
+  }
+
+  void EdgeStructureGenerator::debug() const
+  {
+    cout << "EdgeStructureGenerator: " << structure_.nonZeros() << " edges with average weight of nonzeros of " << structure_.sum() / (structure_.nonZeros()) << endl;
+      
+    
+    cv::Mat3b img = pull<cv::Mat3b>("Image");
+    cv::Mat3b vis = drawEdgeVisualization(img, structure_);
+    string overlay_path = debugBasePath() + ".png";
+    cv::imwrite(overlay_path, vis);
+  }
+
+  void initializeSparseMat(int width, int height, double reserve_per_node, SparseMat* mat)
+  {
+    if(mat->rows() != height || mat->cols() != width) { 
+      *mat = SparseMat(width, height);
+      mat->reserve((int)(reserve_per_node * width * height));
+    }
+    mat->setZero();
+  }
+
+  int sign(int x)
+  {
+    return (x > 0) - (x < 0);
+  }
+
+  void drawLine(cv::Point2d pt, const cv::Point2d& pt1, double potential, cv::Mat3b vis)
+  {
+    if(pt1.x < 0 || pt1.x >= vis.cols)
+      return;
+    if(pt1.y < 0 || pt1.y >= vis.rows)
+      return;
+
+    double max_x = max(pt.x, pt1.x);
+    double max_y = max(pt.y, pt1.y);
+    double min_x = min(pt.x, pt1.x);
+    double min_y = min(pt.y, pt1.y);
+    double dx = max_x - min_x;
+    double dy = max_y - min_y;
+    dx /= max(fabs(dx), fabs(dy));
+    dy /= max(fabs(dx), fabs(dy));
+    double x = max(0., min_x);
+    double y = max(0., min_y);
+    for(; x < max_x && y < max_y && x < vis.cols && y < vis.rows; x += dx, y += dy) {
+      vis(y, x)[0] = vis(y, x)[0] * (1.0 - potential);
+      vis(y, x)[1] = vis(y, x)[1] * (1.0 - potential);
+      vis(y, x)[2] = vis(y, x)[2] * (1.0 - potential);
+    }
+  }
+
+  cv::Mat3b drawEdgeVisualization(cv::Mat3b img, const SparseMat& edge)
+  {
+    ROS_ASSERT(img.rows > 0 && img.cols > 0);
+    double scale = 7;
+    cv::Size sz(img.cols * scale, img.rows * scale);
+    cv::Mat3b vis;
+    cv::resize(img, vis, sz, cv::INTER_NEAREST);
+
+    SparseMat normalized = edge;
+    double max = -std::numeric_limits<double>::max();
+    double min =  std::numeric_limits<double>::max();
+    for(int i = 0; i < normalized.rows(); ++i) {
+      SparseMat::InnerIterator it(normalized, i);
+      for(; it; ++it) {
+	if(it.value() > max)
+	  max = it.value();
+	if(it.value() < min)
+	  min = it.value();
+      }
+    }
+    normalized /= max;
+
+    // -- Draw non-zero edges.
+    for(int y = 0; y < img.rows; ++y) {
+      for(int x = 0; x < img.cols; ++x) {
+	int idx0 = index(y, x, img.cols);
+	// cout << "y: " << y << ", x: " << x << ", idx0: " << idx0 << endl;
+	// cout << normalized.rows() << " x " << normalized.cols() << endl;
+
+	SparseMat::InnerIterator it(normalized, idx0);
+	for(; it; ++it) {
+	  int idx1 = it.col();
+	  int y1 = idx1 / img.cols;
+	  int x1 = idx1 - y1 * img.cols;
+	  //cout << "idx1: " << idx1 << ", y1: " << y1 << ", x1: " << x1 << ", it.value: " << it.value() << endl;
+
+	  cv::Point pt(x*scale, y*scale);
+	  cv::Point pt1(x1*scale, y1*scale);
+	  //cout << "pt: " << pt << ", pt1: " << pt1 << endl;
+	  drawLine(pt, pt1, it.value(), vis);
+	}
+      }
+    }
+
+    return vis;
+  }
+  
 }  // namespace asp
+
+

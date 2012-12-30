@@ -107,14 +107,13 @@ namespace asp
   {
   public:
     EdgePotentialGenerator(std::string name) :
-      Pod(name),
-      edge_(new DynamicSparseMat)
+      Pod(name)
     {
       declareInput<cv::Mat3b>("BackgroundImage");
-      declareOutput<DynamicSparseMatConstPtr>("Edge");
+      declareOutput<const SparseMat*>("Edge");
     }
 
-    DynamicSparseMatPtr edge_;
+    SparseMat edge_;
 
     //! Allocates new sparse matrix if necessary; just sets to zero otherwise.
     //! Size is determined by BackgroundImage.
@@ -132,7 +131,7 @@ namespace asp
     EdgePotentialAggregator(std::string name) :
       EdgePotentialGenerator(name)
     {
-      declareInput<DynamicSparseMatConstPtr>("UnweightedEdge");
+      declareInput<const SparseMat*>("UnweightedEdge");
     }
 
     NameMapping generateNameMapping() const;
@@ -143,7 +142,6 @@ namespace asp
     void fillModel(Model* model) const;
     
   protected:
-    DynamicSparseMatPtr aggregated_;
     Eigen::VectorXd eweights_;
 
     void compute();
@@ -159,7 +157,7 @@ namespace asp
     {
       declareInput<const Eigen::MatrixXd*>("AggregatedSourcePotentials");
       declareInput<const Eigen::MatrixXd*>("AggregatedSinkPotentials");
-      declareInput<DynamicSparseMatConstPtr>("AggregatedEdgePotentials");
+      declareInput<const SparseMat*>("AggregatedEdgePotentials");
       declareInput<cv::Mat3b>("BackgroundImage");
 
       // 255 <-> +1; 0 <-> -1; 127 <-> unknown.
@@ -192,11 +190,37 @@ namespace asp
     void compute();
     void debug() const;
   };
+
+  class EdgeStructureGenerator : public Pod
+  {
+  public:
+    DECLARE_POD(EdgeStructureGenerator);
+    EdgeStructureGenerator(std::string name):
+      Pod(name)
+    {
+      declareParam<bool>("AxisAlignedGrid", true);
+      declareParam<bool>("DiagonalGrid", false);
+      declareParam<bool>("Web", false);
+      declareParam<float>("WebMaxRadius", 10);  // In pixels.
+      declareParam<int>("WebOutgoingPerPixel", 2);
+      
+      declareInput<cv::Mat3b>("Image");
+            
+      // Upper triangular.  EdgeStructure(i, j) != 0 means that the non-directional edge between i and j should be computed by downstream pods.
+      declareOutput<const SparseMat*>("EdgeStructure");
+    }
+
+  protected:
+    SparseMat structure_;
+    void compute();
+    void debug() const;
+  };
   
   //! Common function so there is no confusion about the use of row-major.
   int index(int row, int col, int width) { return col + row * width; }
   void visualizeSegmentation(cv::Mat1b seg, cv::Mat3b img, cv::Mat3b vis);
-
+  void initializeSparseMat(int width, int height, double reserve_per_node, SparseMat* mat);
+  cv::Mat3b drawEdgeVisualization(cv::Mat3b img, const SparseMat& edge);
 }
 
 #endif // ASP_H

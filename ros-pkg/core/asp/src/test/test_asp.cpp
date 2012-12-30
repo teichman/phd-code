@@ -55,14 +55,14 @@ void ExampleEPG::compute()
 {
   initializeStorage();
 
-  for(int y = 0; y < edge_->rows(); ++y) {
+  for(int y = 0; y < edge_.rows(); ++y) {
     if(rand() % 20 == 0) {
-      int x = rand() % edge_->cols();
-      edge_->coeffRef(y, x) = (double)rand() / RAND_MAX;
+      int x = rand() % edge_.cols();
+      edge_.insert(y, x) = (double)rand() / RAND_MAX;
     }
   }
 
-  push<DynamicSparseMatConstPtr>("Edge", edge_);
+  push<const SparseMat*>("Edge", &edge_);
 }
   
 void registerPods()
@@ -97,6 +97,9 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
   asp.setModel(model);
   
   cv::Mat3b img(cv::Size(100, 100), cv::Vec3b(127, 127, 127));
+  for(int y = 0; y < img.rows; ++y)
+    for(int x = 0; x < img.cols; ++x)
+      img(y, x) = cv::Vec3b(rand() % 255, rand() % 255, rand() % 255);
   asp.getPod< EntryPoint<cv::Mat3b> >("ImageEntryPoint")->setData(img);
   cv::Mat1b seed(img.size(), 127);
   for(int y = 45; y < 55; ++y)
@@ -118,6 +121,18 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
   cout << asp.reportTiming() << endl;
 
   asp.writeGraphviz("graphvis");
+}
+
+TEST(SparseMat, SparseMat)
+{
+  {
+    ScopedTimer st("SparseMat fill");
+    SparseMat mat(640, 480);
+    mat.reserve(64 * 48 * 2);
+    for(int y = 0; y < mat.rows(); y += 10)
+      for(int x = 0; x < mat.cols(); x += 10)
+	mat.insert(y, x) = 1;
+  }
 }
 
 int main(int argc, char** argv) {
