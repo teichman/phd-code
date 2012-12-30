@@ -54,12 +54,12 @@ public:
 void ExampleEPG::compute()
 {
   initializeStorage();
+  const SparseMat& structure = *pull<const SparseMat*>("EdgeStructure");
 
-  for(int y = 0; y < edge_.rows(); ++y) {
-    if(rand() % 20 == 0) {
-      int x = rand() % edge_.cols();
-      edge_.insert(y, x) = (double)rand() / RAND_MAX;
-    }
+  for(int i = 0; i < structure.rows(); ++i) {
+    SparseMat::InnerIterator it(structure, i);
+    for(; it; ++it)
+      edge_.insert(it.row(), it.col()) = (double)rand() / RAND_MAX;
   }
 
   push<const SparseMat*>("Edge", &edge_);
@@ -75,20 +75,42 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
 {
   registerPods();
   Asp asp(1);
+
   asp.addPod(new ExampleNPG("ExampleNPG0"));
-  asp.connect("ImageEntryPoint:Output -> ExampleNPG0:BackgroundImage");
+  asp.connect("ImageEntryPoint:Output -> ExampleNPG0:Image");
   asp.connect("ExampleNPG0:Source -> NodePotentialAggregator:UnweightedSource");
   asp.connect("ExampleNPG0:Sink -> NodePotentialAggregator:UnweightedSink");
   asp.addPod(new ExampleNPG("ExampleNPG1"));
-  asp.connect("ImageEntryPoint:Output -> ExampleNPG1:BackgroundImage");
+  asp.connect("ImageEntryPoint:Output -> ExampleNPG1:Image");
   asp.connect("ExampleNPG1:Source -> NodePotentialAggregator:UnweightedSource");
   asp.connect("ExampleNPG1:Sink -> NodePotentialAggregator:UnweightedSink");
+
+  asp.addPod(new EdgeStructureGenerator("AxisAlignedESG"));
+  asp.setParam("AxisAlignedESG", "AxisAlignedGrid", true);
+  asp.connect("ImageEntryPoint:Output -> AxisAlignedESG:Image");
+  asp.addPod(new EdgeStructureGenerator("DiagonalGridESG"));
+  asp.setParam("DiagonalGridESG", "DiagonalGrid", true);
+  asp.connect("ImageEntryPoint:Output -> DiagonalGridESG:Image");
+  asp.addPod(new EdgeStructureGenerator("WebESG"));
+  asp.setParam("WebESG", "Web", true);
+  asp.connect("ImageEntryPoint:Output -> WebESG:Image");
+  
   asp.addPod(new ExampleEPG("ExampleEPG0"));
-  asp.connect("ImageEntryPoint:Output -> ExampleEPG0:BackgroundImage");
+  asp.connect("ImageEntryPoint:Output -> ExampleEPG0:Image");
   asp.connect("ExampleEPG0:Edge -> EdgePotentialAggregator:UnweightedEdge");
+  asp.connect("AxisAlignedESG:EdgeStructure -> ExampleEPG0:EdgeStructure");
   asp.addPod(new ExampleEPG("ExampleEPG1"));
-  asp.connect("ImageEntryPoint:Output -> ExampleEPG1:BackgroundImage");
+  asp.connect("ImageEntryPoint:Output -> ExampleEPG1:Image");
   asp.connect("ExampleEPG1:Edge -> EdgePotentialAggregator:UnweightedEdge");
+  asp.connect("DiagonalGridESG:EdgeStructure -> ExampleEPG1:EdgeStructure");
+  asp.addPod(new ExampleEPG("ExampleEPG2"));
+  asp.connect("ImageEntryPoint:Output -> ExampleEPG2:Image");
+  asp.connect("ExampleEPG2:Edge -> EdgePotentialAggregator:UnweightedEdge");
+  asp.connect("WebESG:EdgeStructure -> ExampleEPG2:EdgeStructure");
+  asp.addPod(new SimpleColorDifferenceEPG("SimpleColorDifferenceEPG"));
+  asp.connect("ImageEntryPoint:Output -> SimpleColorDifferenceEPG:Image");
+  asp.connect("WebESG:EdgeStructure -> SimpleColorDifferenceEPG:EdgeStructure");
+  asp.connect("SimpleColorDifferenceEPG:Edge -> EdgePotentialAggregator:UnweightedEdge");
   
   Model model = asp.defaultModel();
   model.nweights_.setConstant(1);

@@ -19,20 +19,18 @@ namespace asp
     addPod(new EntryPoint<cv::Mat1b>("SeedEntryPoint"));
     addPod(new NodePotentialAggregator("NodePotentialAggregator"));
     addPod(new EdgePotentialAggregator("EdgePotentialAggregator"));
-    connect("ImageEntryPoint:Output -> NodePotentialAggregator:BackgroundImage");
-    connect("ImageEntryPoint:Output -> EdgePotentialAggregator:BackgroundImage");
+    connect("ImageEntryPoint:Output -> NodePotentialAggregator:Image");
+    connect("ImageEntryPoint:Output -> EdgePotentialAggregator:Image");
     addPod(new GraphcutsPod("GraphcutsPod"));
     connect("NodePotentialAggregator:Source -> GraphcutsPod:AggregatedSourcePotentials");
     connect("NodePotentialAggregator:Sink -> GraphcutsPod:AggregatedSinkPotentials");
     connect("EdgePotentialAggregator:Edge -> GraphcutsPod:AggregatedEdgePotentials");
-    connect("ImageEntryPoint:Output -> GraphcutsPod:BackgroundImage");
+    connect("ImageEntryPoint:Output -> GraphcutsPod:Image");
     addPod(new SeedNPG("SeedNPG"));
-    connect("ImageEntryPoint:Output -> SeedNPG:BackgroundImage");
+    connect("ImageEntryPoint:Output -> SeedNPG:Image");
     connect("SeedEntryPoint:Output -> SeedNPG:SeedImage");
     connect("SeedNPG:Source -> NodePotentialAggregator:UnweightedSource");
     connect("SeedNPG:Sink -> NodePotentialAggregator:UnweightedSink");
-    addPod(new EdgeStructureGenerator("EdgeStructureGenerator"));
-    connect("ImageEntryPoint:Output -> EdgeStructureGenerator:Image");
   }
 
   Model Asp::defaultModel() const
@@ -63,7 +61,7 @@ namespace asp
   
   void NodePotentialGenerator::initializeStorage()
   {
-    cv::Mat3b img = pull<cv::Mat3b>("BackgroundImage");
+    cv::Mat3b img = pull<cv::Mat3b>("Image");
     if(source_.rows() != img.rows || source_.cols() != img.cols)
       source_.resize(img.rows, img.cols);
     if(sink_.rows() != img.rows || sink_.cols() != img.cols)
@@ -113,10 +111,10 @@ namespace asp
     cout << "Wrote node potential visualization to " << raw_path << endl;
 
     // -- Overlay.
-    if(numIncoming("BackgroundImage") == 0)
+    if(numIncoming("Image") == 0)
       return;
 
-    cv::Mat3b img = pull<cv::Mat3b>("BackgroundImage");
+    cv::Mat3b img = pull<cv::Mat3b>("Image");
     cv::Mat3b vis;
     vis = img.clone();
     ROS_ASSERT(vis.rows > 0 && vis.cols > 0);
@@ -202,14 +200,19 @@ namespace asp
   
   void EdgePotentialGenerator::initializeStorage(double reserve_per_node)
   {
-    cv::Mat3b img = pull<cv::Mat3b>("BackgroundImage");
+    cv::Mat3b img = pull<cv::Mat3b>("Image");
     int num_nodes = img.rows * img.cols;
     initializeSparseMat(num_nodes, num_nodes, reserve_per_node, &edge_);
+    
+    // const SparseMat& structure = *pull<const SparseMat*>("EdgeStructure");
+    // initializeSparseMat(structure.rows(), structure.cols(),
+    // 			(double)structure.nonZeros() / (structure.rows() * structure.cols()),
+    // 			&edge_);
   }
 
   void EdgePotentialGenerator::writeEdgePotentialVisualization() const
   {
-    cv::Mat3b img = pull<cv::Mat3b>("BackgroundImage");
+    cv::Mat3b img = pull<cv::Mat3b>("Image");
     cv::Mat3b vis = drawEdgeVisualization(img, edge_);
     double minval = std::numeric_limits<double>::max();
     double maxval = -std::numeric_limits<double>::max();
@@ -288,7 +291,7 @@ namespace asp
     pull("AggregatedEdgePotentials", &edge);
 
     // TODO: Could probably do this just once.  Does it matter?
-    cv::Mat3b img = pull<cv::Mat3b>("BackgroundImage");
+    cv::Mat3b img = pull<cv::Mat3b>("Image");
     int num_nodes = img.rows * img.cols;
     int max_num_edges = param<int>("ExpectedNumEdges") * img.rows * img.cols;
     Graph3d graph(num_nodes, max_num_edges);
@@ -349,10 +352,10 @@ namespace asp
     cv::imwrite(seg_path, seg_);
 
     // -- Overlay.
-    if(numIncoming("BackgroundImage") == 0)
+    if(numIncoming("Image") == 0)
       return;
 
-    cv::Mat3b img = pull<cv::Mat3b>("BackgroundImage");
+    cv::Mat3b img = pull<cv::Mat3b>("Image");
     cv::Mat3b vis;
     vis = img.clone();
     ROS_ASSERT(vis.rows > 0 && vis.cols > 0);
@@ -506,12 +509,18 @@ namespace asp
 
       structure_ += web_;
     }
-
+    
     push<const SparseMat*>("EdgeStructure", &structure_);
   }
 
   void EdgeStructureGenerator::debug() const
   {
+    for(int i = 0; i < structure_.rows(); ++i) {
+      SparseMat::InnerIterator it(structure_, i);
+      for(; it; ++it)
+	ROS_ASSERT(it.col() >= it.row());
+    }
+    
     cout << "EdgeStructureGenerator: " << structure_.nonZeros() << " edges with average weight of nonzeros of " << structure_.sum() / (structure_.nonZeros()) << endl;
 
     MatrixXd dense(structure_);
@@ -524,6 +533,54 @@ namespace asp
     cv::imwrite(overlay_path, vis);
   }
 
+  void SimpleColorDifferenceEPG::compute()
+  {
+    cv::Mat3b img = pull<cv::Mat3b>("Image");
+    const SparseMat& structure = *pull<const SparseMat*>("EdgeStructure");
+    double sigma = param<double>("Sigma");
+
+    initializeStorage();
+    //edge_ = structure;
+    
+    int idx = 0;
+    for(int y = 0; y < img.rows; ++y) {
+      for(int x = 0; x < img.cols; ++x, ++idx) {
+	SparseMat::InnerIterator it(structure, idx);
+	for(; it; ++it) {
+	  int y1, x1;
+	  pixel(it.col(), img.cols, &y1, &x1);
+	  cv::Vec3b p = img(y, x);
+	  cv::Vec3b q = img(y1, x1);
+	  double norm = sqrt((p[0] - q[0])*(p[0] - q[0]) +
+			     (p[1] - q[1])*(p[1] - q[1]) +
+			     (p[2] - q[2])*(p[2] - q[2]));
+	  edge_.insert(it.row(), it.col()) = exp(-norm / sigma);  // TODO: Is there a faster way to fill this?
+	}
+      }
+    }
+
+    push<const SparseMat*>("Edge", &edge_);
+  }
+
+  void SimpleColorDifferenceEPG::debug() const
+  {
+    writeEdgePotentialVisualization();
+  }
+
+  void SmoothnessEPG::compute()
+  {
+    push("Edge", pull<const SparseMat*>("EdgeStructure"));
+  }
+
+  void SmoothnessEPG::debug() const
+  {
+  }
+
+    
+  /************************************************************
+   * Miscellaneous functions
+   ************************************************************/
+  
   int sign(int x)
   {
     return (x > 0) - (x < 0);
@@ -571,7 +628,18 @@ namespace asp
     for(int y = 0; y < vis.rows; ++y)
       for(int x = 0; x < vis.cols; ++x)
 	vis(y, x) = img(floor(y / scale), floor(x / scale));
-	
+
+    // -- Get min and max.
+    double minval = std::numeric_limits<double>::max();
+    double maxval = -std::numeric_limits<double>::max();
+    for(int i = 0; i < edge.rows(); ++i) {
+      SparseMatrix<double, RowMajor>::InnerIterator it(edge, i);
+      for(; it; ++it) {
+	minval = min(minval, it.value());
+	maxval = max(maxval, it.value());
+      }
+    }
+          
     // -- Draw non-zero edges.
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x) {
@@ -585,7 +653,7 @@ namespace asp
 
 	  cv::Point pt(x * scale + scale * 0.5, y * scale + scale * 0.5);
 	  cv::Point pt1(x1 * scale + scale * 0.5, y1 * scale + scale * 0.5);
-	  drawLine(pt, pt1, it.value(), vis);
+	  drawLine(pt, pt1, it.value() / maxval, vis);
 	}
       }
     }

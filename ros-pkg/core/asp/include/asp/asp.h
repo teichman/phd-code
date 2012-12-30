@@ -57,7 +57,7 @@ namespace asp
     {
       // If provided, this is used for writing the overlay debug image.
       // Otherwise it will just write the raw debug image and skip the overlay.
-      declareInput<cv::Mat3b>("BackgroundImage");  
+      declareInput<cv::Mat3b>("Image");  
       declareOutput<const Eigen::MatrixXd*>("Source");
       declareOutput<const Eigen::MatrixXd*>("Sink");
     }
@@ -66,7 +66,7 @@ namespace asp
     Eigen::MatrixXd source_;
     Eigen::MatrixXd sink_;
 
-    //! Uses BackgroundImage to set the size of source_ and sink_ if necessary
+    //! Uses Image to set the size of source_ and sink_ if necessary
     //! and initialize their elements to zero.
     //! This is typically called at the start of compute().
     void initializeStorage();
@@ -74,7 +74,7 @@ namespace asp
     //! Displays node potentials in a common format.
     //! Typically, you call this in debug().
     //! Saves to disk as pod::debugBasePath() + "-raw.png" and
-    //! (if BackgroundImage is provided) as pod::debugBasePath() + "-overlay.png".
+    //! (if Image is provided) as pod::debugBasePath() + "-overlay.png".
     void writeNodePotentialVisualization() const;
   };
 
@@ -112,17 +112,18 @@ namespace asp
     EdgePotentialGenerator(std::string name) :
       Pod(name)
     {
-      declareInput<cv::Mat3b>("BackgroundImage");
+      declareInput<cv::Mat3b>("Image");
+      declareInput<const SparseMat*>("EdgeStructure");
       declareOutput<const SparseMat*>("Edge");
     }
 
     SparseMat edge_;
 
     //! Allocates new sparse matrix if necessary; just sets to zero otherwise.
-    //! Size is determined by BackgroundImage.
+    //! Size is determined by Image.
     //! For efficiency, you should set reserve_per_node to higher than the expected
     //! number of edges per node.
-    void initializeStorage(double reserve_per_node = 2);
+    void initializeStorage(double reserve_per_node = 6);
 
     void writeEdgePotentialVisualization() const;
   };
@@ -161,7 +162,7 @@ namespace asp
       declareInput<const Eigen::MatrixXd*>("AggregatedSourcePotentials");
       declareInput<const Eigen::MatrixXd*>("AggregatedSinkPotentials");
       declareInput<const SparseMat*>("AggregatedEdgePotentials");
-      declareInput<cv::Mat3b>("BackgroundImage");
+      declareInput<cv::Mat3b>("Image");
 
       // 255 <-> +1; 0 <-> -1; 127 <-> unknown.
       declareOutput<cv::Mat1b>("Segmentation");
@@ -203,13 +204,15 @@ namespace asp
     {
       declareParam<bool>("AxisAlignedGrid", false);
       declareParam<bool>("DiagonalGrid", false);
-      declareParam<bool>("Web", true);
+      declareParam<bool>("Web", false);
       declareParam<float>("WebMaxRadius", 10);  // In pixels.
       declareParam<int>("WebNumOutgoing", 2);
       
       declareInput<cv::Mat3b>("Image");
             
-      // Upper triangular.  EdgeStructure(i, j) != 0 means that the non-directional edge between i and j should be computed by downstream pods.
+      // Upper triangular.  EdgeStructure(i, j) != 0 means that
+      // the non-directional edge between i and j should be
+      // computed by downstream pods.
       declareOutput<const SparseMat*>("EdgeStructure");
     }
 
@@ -217,17 +220,54 @@ namespace asp
     SparseMat structure_;
     SparseMat diag_;
     DynamicSparseMat web_;
-
     
     void compute();
     void debug() const;
   };
+
+  class SmoothnessEPG : public EdgePotentialGenerator
+  {
+  public:
+    DECLARE_POD(SmoothnessEPG);
+    SmoothnessEPG(std::string name) :
+      EdgePotentialGenerator(name)
+    {
+    }
+
+  protected:
+    void compute();
+    void debug() const;
+  };
+  
+  class SimpleColorDifferenceEPG : public EdgePotentialGenerator
+  {
+  public:
+    DECLARE_POD(SimpleColorDifferenceEPG);
+    SimpleColorDifferenceEPG(std::string name) :
+      EdgePotentialGenerator(name)
+    {
+      declareParam<double>("Sigma", 30);
+    }
+
+  protected:
+    void compute();
+    void debug() const;
+  };
+
+  
+  /************************************************************
+   * Miscellaneous functions
+   ************************************************************/
   
   //! Common function so there is no confusion about the use of row-major.
-  int index(int row, int col, int width) { return col + row * width; }
+  inline int index(int row, int col, int width) { return col + row * width; }
+  inline void pixel(int idx, int width, int* row, int* col)
+  {
+    *row = idx / width;
+    *col = idx - *row * width;
+  }
+  
   void visualizeSegmentation(cv::Mat1b seg, cv::Mat3b img, cv::Mat3b vis);
-  //void initializeSparseMat(int rows, int cols, double reserve_per_node, SparseMat* mat);
-  //void initializeSparseMat(int rows, int cols, double reserve_per_node, DynamicSparseMat* mat);
   cv::Mat3b drawEdgeVisualization(cv::Mat3b img, const SparseMat& edge);
 
   template<typename T>
