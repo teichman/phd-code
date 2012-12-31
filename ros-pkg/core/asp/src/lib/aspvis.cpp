@@ -1,11 +1,12 @@
 #include <asp/aspvis.h>
 
 using namespace std;
+namespace bfs = boost::filesystem;
 
 namespace asp
 {
 
-  AspVis::AspVis(Asp* asp, cv::Mat3b img, double scale) :
+  AspVis::AspVis(Asp* asp, cv::Mat3b img, double scale, string savedir) :
     asp_(asp),
     img_(img),
     img_view_("Image", scale),
@@ -15,7 +16,8 @@ namespace asp
     seed_radius_(2),
     seg_view_("Segmentation", scale),
     seg_(cv::Mat1b(img_.size(), 0)),
-    debug_(true)
+    debug_(true),
+    savedir_(savedir)
   {
     img_view_.setDelegate((OpenCVViewDelegate*)this);
     img_view_.message_scale_ = 0.25;
@@ -75,16 +77,27 @@ namespace asp
       needs_redraw_ = true;
       unlockWrite();
       break;
+    case 'C':
+      lockWrite();
+      seed_ = 127;
+      seg_ = 127;
+      needs_redraw_ = true;
+      unlockWrite();
+      break;
     case 'q':
       quit();
       break;
-    case 's':
+    case 'S':
+      save();
+      break;
+    case 'v':
       lockWrite();
       show_seed_ = !show_seed_;
       cout << "show_seed_: " << show_seed_ << endl;
       needs_redraw_ = true;
       unlockWrite();
-    case 'r':
+      break;
+    case 's':
       segment();
       break;
     case '+':
@@ -97,9 +110,29 @@ namespace asp
       --seed_radius_;
       seed_radius_ = max(0, seed_radius_);
       unlockWrite();
+      break;
     default:
       break;
     }
+  }
+
+  void AspVis::save()
+  {
+    time_t rawtime;
+    struct tm * timeinfo;
+    char buffer [80];
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    strftime(buffer, 80, "%Y.%m.%d-%H.%M.%S", timeinfo);
+    string basename = savedir_ + "/" + string(buffer);
+
+    if(!bfs::exists(savedir_))
+      bfs::create_directory(savedir_);
+    
+    cv::imwrite(basename + "-image.png", img_);
+    cv::imwrite(basename + "-seed.png", seed_);
+    cv::imwrite(basename + "-seg.png", seg_);
+    cout << "Saved to " << basename << "-*.png" << endl;
   }
 
   void AspVis::segment()

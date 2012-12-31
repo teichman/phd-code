@@ -33,6 +33,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 rosbuild_add_library(asp src/lib/asp.cpp src/lib/aspvis.cpp)
 rosbuild_add_gtest(test_asp src/test/test_asp.cpp)
 target_link_libraries(test_asp asp)
+rosbuild_link_boost(asp filesystem)
 
 rosbuild_add_executable(simple_segmenter src/prog/simple_segmenter.cpp)
 target_link_libraries(simple_segmenter asp)

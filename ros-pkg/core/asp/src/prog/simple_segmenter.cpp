@@ -14,6 +14,7 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("img", bpo::value<string>()->required(), "Image to segment")
     ("scale", bpo::value<double>()->default_value(1.0), "Scale factor to apply when visualizing")
+    ("savedir", bpo::value<string>()->default_value("."), "Where to save training data")
     ;
 
   p.add("img", 1);
@@ -33,7 +34,7 @@ int main(int argc, char** argv)
   cv::Mat3b img = cv::imread(opts["img"].as<string>());
   Asp asp(1);
   generateSimpleSegmentationPipeline(&asp);
-  AspVis vis(&asp, img, opts["scale"].as<double>());
+  AspVis vis(&asp, img, opts["scale"].as<double>(), opts["savedir"].as<string>());
   vis.run();
 
   return 0;
