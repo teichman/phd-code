@@ -48,7 +48,12 @@ namespace asp
     //! and GraphCuts pods.  You then hook up your own things to this.
     void initializePipeline();
   };
-  
+
+  // Unweighted node potentials should be in [-1, 1].
+  // This value represents the affinity for label +1.
+  // Affinity for label -1 is always set to zero.
+  // Set the node potential to be negative to express a desire for
+  // that pixel to be label -1, and positive for label +1.
   class NodePotentialGenerator : public Pod
   {
   public:
@@ -76,7 +81,6 @@ namespace asp
     void writeNodePotentialVisualization() const;
   };
 
-  // Unweighted node potential should be in [-1, 1].
   class NodePotentialAggregator : public NodePotentialGenerator
   {
   public:
@@ -205,6 +209,7 @@ namespace asp
       declareParam<int>("WebNumOutgoing", 2);
       
       declareInput<cv::Mat3b>("Image");
+      declareInput<cv::Mat1b>("Mask");
             
       // Upper triangular.  EdgeStructure(i, j) != 0 means that
       // the non-directional edge between i and j should be

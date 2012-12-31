@@ -15,6 +15,7 @@ namespace asp
   Asp::Asp(int num_threads) :
     Pipeline(num_threads)
   {
+    addPod(new EntryPoint<cv::Mat1b>("MaskEntryPoint"));
     addPod(new EntryPoint<cv::Mat3b>("ImageEntryPoint"));
     addPod(new EntryPoint<cv::Mat1b>("SeedEntryPoint"));
     addPod(new NodePotentialAggregator("NodePotentialAggregator"));
@@ -389,6 +390,9 @@ namespace asp
   {
     // -- Initialize the structure.
     cv::Mat3b img = pull<cv::Mat3b>("Image");
+    cv::Mat1b mask = pull<cv::Mat1b>("Mask");
+    ROS_ASSERT(img.rows == mask.rows && img.cols == mask.cols);
+    
     double reserve_per_pixel = 0;
     if(param<bool>("Grid"))
       reserve_per_pixel += 4;
@@ -404,6 +408,8 @@ namespace asp
       int idx = 0;
       for(int y = 0; y < img.rows; ++y) {
       	for(int x = 0; x < img.cols; ++x, ++idx) {
+	  if(mask(y, x) == 0)
+	    continue;
 	  if(x < img.cols - 1)
       	    structure_.insert(idx, index(y, x + 1, img.cols)) = 1;
       	  if(y < img.rows - 1)
@@ -417,6 +423,8 @@ namespace asp
       int idx = 0;
       for(int y = 0; y < img.rows - 1; ++y) {
       	for(int x = 0; x < img.cols; ++x, ++idx) {
+	  if(mask(y, x) == 0)
+	    continue;
 	  if(x > 0)
 	    diag_.insert(idx, index(y + 1, x - 1, img.cols)) = 1;
 	  if(x < img.cols - 1)
@@ -452,6 +460,9 @@ namespace asp
       eigen_extensions::UniformSampler uniform;
       for(int y = 0; y < img.rows; ++y) {
       	for(int x = 0; x < img.cols; ++x, ++idx) {
+	  if(mask(y, x) == 0)
+	    continue;
+	  
 	  int num = 0;
       	  while(num < num_outgoing) {
       	    double radius = uniform.sample() * max_radius;
@@ -460,8 +471,12 @@ namespace asp
       	    int dy = radius * sin(theta);
       	    int x0 = x + dx;
       	    int y0 = y + dy;
-      	    if(y0 < 0 || y0 >= img.rows || x0 < 0 || x0 >= img.cols || (dx == 0 && dy == 0))
+      	    if(y0 < 0 || y0 >= img.rows || x0 < 0 ||
+	       x0 >= img.cols || (dx == 0 && dy == 0) ||
+	       mask(y0, x0) == 0)
+	    {
       	      continue;
+	    }
 
       	    //cout << "radius: " << radius << ", theta: " << theta << ", dx: " << dx << ", dy: " << dy << endl;
 	    

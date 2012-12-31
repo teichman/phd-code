@@ -13,7 +13,8 @@ class Agent : public SharedLockable
 public:
   Agent() : SharedLockable(), quitting_(false), running_(false) {}
   virtual ~Agent() {}
-  
+
+  //! TODO: should probably be 'stop'.
   void quit() { scopeLockWrite; quitting_ = true; }
   bool running() { scopeLockRead; return running_; }
   void run() { running_ = true; _run(); running_ = false; }
