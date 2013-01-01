@@ -15,11 +15,11 @@ namespace asp
     typedef cv::Mat1b cvMat1b;
 
     //! Sets node potential randomly.
-    class ExampleNPG : public NodePotentialGenerator
+    class RandomNPG : public NodePotentialGenerator
     {
     public:
-      DECLARE_POD(ExampleNPG);
-      ExampleNPG(std::string name) :
+      DECLARE_POD(RandomNPG);
+      RandomNPG(std::string name) :
 	NodePotentialGenerator(name)
       {
       }
@@ -28,9 +28,8 @@ namespace asp
       void debug() const { writeNodePotentialVisualization(); }
     };
 
-    void ExampleNPG::compute()
+    void RandomNPG::compute()
     {
-      cout << "ExampleNPG::compute()" << endl;
       initializeStorage();
 
       for(int y = 0; y < node_.rows(); ++y)
@@ -40,11 +39,11 @@ namespace asp
       push<const MatrixXd*>("Node", &node_);
     }
 
-    class ExampleEPG : public EdgePotentialGenerator
+    class RandomEPG : public EdgePotentialGenerator
     {
     public:
-      DECLARE_POD(ExampleEPG);
-      ExampleEPG(std::string name) :
+      DECLARE_POD(RandomEPG);
+      RandomEPG(std::string name) :
 	EdgePotentialGenerator(name)
       {
       }
@@ -53,7 +52,7 @@ namespace asp
       void debug() const { writeEdgePotentialVisualization(); }
     };
 
-    void ExampleEPG::compute()
+    void RandomEPG::compute()
     {
       initializeStorage();
       const SparseMat& structure = *pull<const SparseMat*>("EdgeStructure");
@@ -76,9 +75,9 @@ namespace asp
     
     void generateSimpleSegmentationPipeline(Asp* asp)
     {
-      asp->addPod(new ExampleNPG("ExampleNPG0"));
-      asp->connect("ImageEntryPoint:Output -> ExampleNPG0:Image");
-      asp->connect("ExampleNPG0:Node -> NodePotentialAggregator:UnweightedNode");
+      asp->addPod(new RandomNPG("RandomNPG0"));
+      asp->connect("ImageEntryPoint:Output -> RandomNPG0:Image");
+      asp->connect("RandomNPG0:Node -> NodePotentialAggregator:UnweightedNode");
 
       asp->addPod(new EdgeStructureGenerator("GridESG"));
       asp->setParam("GridESG", "Grid", true);
@@ -119,7 +118,8 @@ namespace asp
       Model model = asp->defaultModel();
       model.nweights_.setConstant(1);
       model.nweights_(model.nameMapping("nmap").toId("SeedNPG")) = 2;
-      model.nweights_(model.nameMapping("nmap").toId("ExampleNPG0")) = 0;
+      model.nweights_(model.nameMapping("nmap").toId("RandomNPG0")) = 0;
+      model.nweights_(model.nameMapping("nmap").toId("PriorNPG")) = 0.01;
       model.eweights_.setConstant(1);
       model.eweights_(model.nameMapping("emap").toId("SmoothnessEPG0")) = 0.1;
       model.eweights_(model.nameMapping("emap").toId("SmoothnessEPG1")) = 0.1;

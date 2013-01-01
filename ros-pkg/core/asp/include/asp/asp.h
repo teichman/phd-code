@@ -39,10 +39,10 @@ namespace asp
     //! segmentation will be resized if it is not the correct length.
     //! cache will be filled if it is not null.
     //!
-    //! Also creates a debugging directory for output to go into.
-    //! segmentation is 255 for fg, 0 for bg, 127 for unknown.
-    void segment(cv::Mat1b* segmentation, PotentialsCache* cache = NULL);
-
+    //! seg_img is 255 for fg, 0 for bg, 127 for unknown.
+    //! cache and seg_vec and for training.  See graphcuts/structural_svm.h.
+    void segment(cv::Mat1b* seg_img, PotentialsCache* cache = NULL);
+		     
   protected:
     //! Initializes pipeline_ with NodePotentialAggregator, EdgePotentialAggregator, 
     //! and GraphCuts pods.  You then hook up your own things to this.
@@ -97,6 +97,7 @@ namespace asp
     //! Sets nmap names based on input pod names.
     //! Sets model->nweights_ to local nweights_.
     void fillModel(Model* model) const;
+    void fillPotentialsCache(PotentialsCache* pc) const;
     
   protected:
     Eigen::MatrixXd aggregated_;
@@ -145,6 +146,7 @@ namespace asp
     //! Sets nmap names based on input pod names.
     //! Sets model->nweights_ to local nweights_.
     void fillModel(Model* model) const;
+    void fillPotentialsCache(PotentialsCache* pc) const;
     
   protected:
     Eigen::VectorXd eweights_;
@@ -153,6 +155,20 @@ namespace asp
     void debug() const;
   };
 
+  class PriorNPG : public NodePotentialGenerator
+  {
+  public:
+    DECLARE_POD(PriorNPG);
+    PriorNPG(std::string name) :
+      NodePotentialGenerator(name)
+    {
+    }
+
+  protected:
+    void compute();
+    void debug() const { writeNodePotentialVisualization(); }
+  };
+  
   class GraphcutsPod : public Pod
   {
   public:
@@ -270,7 +286,8 @@ namespace asp
   
   void visualizeSegmentation(cv::Mat1b seg, cv::Mat3b img, cv::Mat3b vis);
   cv::Mat3b drawEdgeVisualization(cv::Mat3b img, const SparseMat& edge);
-
+  void imageToVectorSegmentation(cv::Mat1b seg_img, Eigen::VectorXi* seg_vec);
+  
   //! This function is specifically for generating adjacency matrices for an image.
   //! The matrix is (rows * cols) x (rows * cols).
   //! rows and cols are the size of the image.

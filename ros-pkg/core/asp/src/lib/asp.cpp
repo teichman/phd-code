@@ -30,6 +30,9 @@ namespace asp
     connect("ImageEntryPoint:Output -> SeedNPG:Image");
     connect("SeedEntryPoint:Output -> SeedNPG:SeedImage");
     connect("SeedNPG:Node -> NodePotentialAggregator:UnweightedNode");
+    addPod(new PriorNPG("PriorNPG"));
+    connect("ImageEntryPoint:Output -> PriorNPG:Image");
+    connect("PriorNPG:Node -> NodePotentialAggregator:UnweightedNode");
   }
 
   Model Asp::defaultModel() const
@@ -57,7 +60,18 @@ namespace asp
     EdgePotentialAggregator* epa = (EdgePotentialAggregator*)pod("EdgePotentialAggregator");
     epa->setWeights(mod);
   }
-  
+
+  void Asp::segment(cv::Mat1b* seg_img, PotentialsCache* pc)
+  {
+    compute();
+    *seg_img = pull<cv::Mat1b>("GraphcutsPod", "Segmentation");
+
+    if(pc) {     
+      pod<NodePotentialAggregator>()->fillPotentialsCache(pc);
+      pod<EdgePotentialAggregator>()->fillPotentialsCache(pc);
+    }
+  }
+
   void NodePotentialGenerator::initializeStorage()
   {
     cv::Mat3b img = pull<cv::Mat3b>("Image");
@@ -155,6 +169,23 @@ namespace asp
   {
     model->applyNameMapping("nmap", generateNameMapping());
     model->nweights_ = nweights_;
+  }
+
+  void NodePotentialAggregator::fillPotentialsCache(PotentialsCache* pc) const
+  {
+    pc->node_.clear();
+    pc->applyNameMapping("nmap", generateNameMapping());
+    
+    vector<const MatrixXd*> node;
+    pull("UnweightedNode", &node);
+    pc->node_.resize(node.size());
+    for(size_t i = 0; i < node.size(); ++i) {
+      pc->node_[i].resize(node[i]->rows() * node[i]->cols());
+      int idx = 0;
+      for(int y = 0; y < node[i]->rows(); ++y)
+	for(int x = 0; x < node[i]->cols(); ++x, ++idx)
+	  pc->node_[i].coeffRef(idx) = node[i]->coeffRef(y, x);
+    }
   }
 
   void NodePotentialAggregator::compute()
@@ -255,6 +286,18 @@ namespace asp
   {
     model->applyNameMapping("emap", generateNameMapping());
     model->eweights_ = eweights_;
+  }
+
+  void EdgePotentialAggregator::fillPotentialsCache(PotentialsCache* pc) const
+  {
+    pc->edge_.clear();
+    pc->applyNameMapping("emap", generateNameMapping());
+
+    vector<const SparseMat*> edge;
+    pull("UnweightedEdge", &edge);
+    pc->edge_.resize(edge.size());
+    for(size_t i = 0; i < edge.size(); ++i)
+      pc->edge_[i] = *edge[i];
   }
 
   void GraphcutsPod::compute()
@@ -364,7 +407,6 @@ namespace asp
 
   void SeedNPG::compute()
   {
-    cout << "SeedNPG::compute()" << endl;
     initializeStorage();
     
     cv::Mat1b seed = pull<cv::Mat1b>("SeedImage");
@@ -382,10 +424,16 @@ namespace asp
 
   void SeedNPG::debug() const
   {
-    cout << "SeedNPG::debug()" << endl;
     writeNodePotentialVisualization();
   }
 
+  void PriorNPG::compute()
+  {
+    initializeStorage();
+    node_.setConstant(-1);
+    push<const MatrixXd*>("Node", &node_);
+  }
+  
   void EdgeStructureGenerator::compute()
   {
     // -- Initialize the structure.
@@ -404,7 +452,6 @@ namespace asp
 
     // -- Generate edges.
     if(param<bool>("Grid")) {
-      ScopedTimer st("Grid");
       int idx = 0;
       for(int y = 0; y < img.rows; ++y) {
       	for(int x = 0; x < img.cols; ++x, ++idx) {
@@ -418,7 +465,6 @@ namespace asp
       }
     }
     if(param<bool>("Diagonal")) {
-      ScopedTimer st("Diagonal");
       initializeSparseMat(img.rows, img.cols, 4, &diag_);
       int idx = 0;
       for(int y = 0; y < img.rows - 1; ++y) {
@@ -644,6 +690,23 @@ namespace asp
 
     return vis;
   }
+
+  void imageToVectorSegmentation(cv::Mat1b seg_img, Eigen::VectorXi* seg_vec)
+  {
+    seg_vec->resize(seg_img.rows * seg_img.cols);
+    int idx = 0;
+    for(int y = 0; y < seg_img.rows; ++y) {
+      for(int x = 0; x < seg_img.cols; ++x, ++idx) {
+	if(seg_img(y, x) == 255)
+	  seg_vec->coeffRef(idx) = 1;
+	else if(seg_img(y, x) == 0)
+	  seg_vec->coeffRef(idx) = -1;
+	else
+	  seg_vec->coeffRef(idx) = 0;
+      }
+    }
+  }
+
   
 }  // namespace asp
 

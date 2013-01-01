@@ -146,7 +146,7 @@ namespace asp
     asp_->compute();
     cout << asp_->reportTiming() << endl;
 
-    seg_ = asp_->pull<cv::Mat1b>("GraphcutsPod", "Segmentation");
+    asp_->segment(&seg_);
     needs_redraw_ = true;
   }
 
