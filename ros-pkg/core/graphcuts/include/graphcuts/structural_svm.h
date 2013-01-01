@@ -60,6 +60,9 @@ namespace graphcuts
     Model model_;
     PotentialsCache::ConstPtr cache_;
     VecXiConstPtr labels_;
+
+    ConstraintGenerator& operator=(const ConstraintGenerator& other);
+    ConstraintGenerator(const ConstraintGenerator& other);
   };
 
   double hammingLoss(const Eigen::VectorXi& label,

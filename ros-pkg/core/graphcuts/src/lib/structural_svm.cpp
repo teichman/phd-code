@@ -47,12 +47,12 @@ namespace graphcuts
       // -- Compute the most violating labeling for each framecache.
       //    Could probably do this with omp but no point in switching it over now.
       vector<ThreadPtr> threads;
-      vector<ConstraintGenerator> cgs;
+      vector<ConstraintGenerator*> cgs;
       HighResTimer hrt("Computing most violating constraints");
       hrt.start();
       for(size_t i = 0; i < caches.size(); ++i) {
-	cgs.push_back(ConstraintGenerator(model, caches[i], labels[i]));
-	threads.push_back(cgs[i].launch());
+	cgs.push_back(new ConstraintGenerator(model, caches[i], labels[i]));
+	threads.push_back(cgs[i]->launch());
       }
       for(size_t i = 0; i < threads.size(); ++i) {
 	threads[i]->join();
@@ -64,11 +64,12 @@ namespace graphcuts
       c.loss_ = 0;
       c.dpsi_ = VectorXd::Zero(model.size());
       for(size_t i = 0; i < cgs.size(); ++i) {
-	ConstraintGenerator& cg = cgs[i];
+	ConstraintGenerator& cg = *cgs[i];
 	ROS_ASSERT(cg.hamming_loss_ >= 0);  // Make sure all nodes computed.
 	loss += cg.hamming_loss_ / (double)caches.size();
 	c.loss_ += cg.con_.loss_ / (double)caches.size(); // mean 0-1 loss
 	c.dpsi_ += cg.con_.dpsi_ / (double)caches.size(); // mean dpsi
+	delete cgs[i];
       }
       constraints.push_back(c);
       ROS_DEBUG_STREAM("Mean loss: " << loss);

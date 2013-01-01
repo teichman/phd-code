@@ -102,6 +102,8 @@ TEST(StructuralSVM, SanityCheck)
   vector<gc::VecXiPtr> labels;
   caches.push_back(cache);
   labels.push_back(label);
+  caches.push_back(cache);
+  labels.push_back(label);
   gc::Model model = ssvm.train(caches, labels);
   cout << model << endl;
 
