@@ -26,6 +26,26 @@ AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-0
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
+# These all sucked.
+# 2012-12-19_short_00 \
+# 2012-12-19_short_02 \
+# 2012-12-19_short_06 \
+# 2012-12-19_short_07 \
+# 2012-12-19_short_08 \
+# 2012-12-19_short_09 \
+# 2012-12-19_short_10 \
+# 2012-12-19_short_11
+SLAM_RUNS_TRAINING_xpl00	:=	2012-12-19_boardroom_0 \
+					2012-12-19_boardroom_1 \
+					2012-12-19_short_05
+
+SLAM_RUNS_TESTING_xpl00		:=	2012-12-19_short_01 \
+					2012-12-19_short_03 \
+					2012-12-19_short_04 \
+					2012-12-19_boardroom_2
+
+SLAM_RUNS_xpl00 := $(SLAM_RUNS_TRAINING_xpl00) $(SLAM_RUNS_TESTING_xpl00)
+
 SLAM_RUNS_TRAINING_xpl01	:= 	2a_backandforth \
 					2012-10-22_2a_backandforth_0 \
 					2012-10-22_2a_backandforth_2 \
