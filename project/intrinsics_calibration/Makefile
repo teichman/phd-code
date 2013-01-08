@@ -37,12 +37,16 @@ AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect
 # 2012-12-19_short_11
 SLAM_RUNS_TRAINING_xpl00	:=	2012-12-19_boardroom_0 \
 					2012-12-19_boardroom_1 \
-					2012-12-19_short_05
+					2012-12-19_short_05 \
+					2013-01-07_2a_backandforth_01 \
+					2013-01-07_boardroom_01
 
 SLAM_RUNS_TESTING_xpl00		:=	2012-12-19_short_01 \
 					2012-12-19_short_03 \
 					2012-12-19_short_04 \
-					2012-12-19_boardroom_2
+					2012-12-19_boardroom_2 \
+					2013-01-07_2a_backandforth_02 \
+					2013-01-07_boardroom_02
 
 SLAM_RUNS_xpl00 := $(SLAM_RUNS_TRAINING_xpl00) $(SLAM_RUNS_TESTING_xpl00)
 
