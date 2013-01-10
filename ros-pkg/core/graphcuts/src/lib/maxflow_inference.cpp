@@ -17,12 +17,12 @@ namespace graphcuts
 				 Eigen::VectorXi* seg) const
   {
     // -- Check for monkey business and allocate.
-    ROS_ASSERT(pc->getNumEdgePotentials() == model_.epot_weights_.rows());
-    ROS_ASSERT(pc->getNumNodePotentials() == model_.npot_weights_.rows());
+    ROS_ASSERT(pc->numEdgePotentials() == model_.eweights_.rows());
+    ROS_ASSERT(pc->numNodePotentials() == model_.nweights_.rows());
     ROS_ASSERT(pc->source_.size() == pc->sink_.size());
 
-    if(seg->rows() == 0)
-      *seg = VecXi::Zero(pc->source_[0].rows());
+    if(seg->rows() != pc->numNodes())
+      *seg = VecXi::Zero(pc->numNodes());
       
     for(size_t i = 0; i < pc->source_.size(); ++i) { 
       ROS_ASSERT(seg->rows() == pc->source_[i].rows());
@@ -70,7 +70,7 @@ namespace graphcuts
     // -- Fill the segmentation.
     for(int i = 0; i < seg->rows(); ++i) {
       if(graph.what_segment(i, Graph3d::SINK) == Graph3d::SINK)
-	seg->coeffRef(i) = 0;
+	seg->coeffRef(i) = -1;
       else
 	seg->coeffRef(i) = 1;
     }

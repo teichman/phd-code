@@ -64,7 +64,7 @@ TEST(NameMapping, Addition)
   EXPECT_TRUE(final.toName(3).compare("motorcyclist") == 0);
 }
 
-TEST(NameTranslator2, Translation)
+TEST(NameTranslator, Translation)
 {
   NameMapping initial;
   initial.addName("car");
@@ -75,11 +75,11 @@ TEST(NameTranslator2, Translation)
   final.addName("bicyclist");
   final.addName("car");
   
-  NameTranslator2 translator(initial, final);
+  NameTranslator translator(initial, final);
   cout << translator.status() << endl;
 
   EXPECT_TRUE(translator.toNew(0) == 1);
-  EXPECT_TRUE(translator.toNew(1) == NameTranslator2::NO_ID);
+  EXPECT_TRUE(translator.toNew(1) == NameTranslator::NO_ID);
 }
 
 class Foo : public NameMappable, public Serializable
@@ -98,10 +98,10 @@ public:
   void deserialize(std::istream& in);
 
 protected:
-  void _applyNameTranslator(const std::string& id, const NameTranslator2& translator);
+  void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
 };
 
-void Foo::_applyNameTranslator(const std::string& id, const NameTranslator2& translator)
+void Foo::_applyNameTranslator(const std::string& id, const NameTranslator& translator)
 {
   if(id == "cmap") {
     translator.translateRows(&eigen_labels_);
@@ -110,7 +110,7 @@ void Foo::_applyNameTranslator(const std::string& id, const NameTranslator2& tra
     for(size_t i = 0; i < labels_.size(); ++i) {
       if(labels_[i] == -1)
 	continue;
-      if(translator.toNew(labels_[i]) == NameTranslator2::NO_ID)
+      if(translator.toNew(labels_[i]) == NameTranslator::NO_ID)
 	labels_[i] = -1;
       else
 	labels_[i] = translator.toNew(labels_[i]);
@@ -146,7 +146,6 @@ string Foo::status() const
 Foo Foo::getTestMBObject()
 {
   Foo foo;
-
   NameMapping cmap;
   cmap.addName("car");
   cmap.addName("pedestrian");
@@ -294,7 +293,7 @@ TEST(Cast, Cast)
 class Label : public Eigen::VectorXf, public NameTranslatable
 {
 protected:
-  void _applyNameTranslator(const std::string& id, const NameTranslator2& translator)
+  void _applyNameTranslator(const std::string& id, const NameTranslator& translator)
   {
     translator.translate(this);
   }
@@ -317,7 +316,7 @@ public:
   }
   
 protected:
-  void _applyNameTranslator(const std::string& id, const NameTranslator2& translator)
+  void _applyNameTranslator(const std::string& id, const NameTranslator& translator)
   {
     ROS_ASSERT(id == "cmap");
     for(size_t i = 0; i < labels_.size(); ++i)
@@ -346,7 +345,7 @@ TEST(NameTranslatable, NameTranslatable)
   cmap2.addName("bike");
   cmap2.addName("train");
   cmap2.addName("ped");
-  NameTranslator2 translator(cmap, cmap2);
+  NameTranslator translator(cmap, cmap2);
   dataset.applyNameTranslator("cmap", translator);  // Make sure calling it directly also gets you the right implementation.
   EXPECT_TRUE(dataset.labels_[0].rows() == (int)cmap2.size());
   EXPECT_TRUE(dataset.labels_[0](2) == 0);

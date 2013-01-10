@@ -14,7 +14,8 @@ namespace graphcuts
     Model model_;
     
     MaxflowInference(const Model& model);
-    //! seg must be the right size.
+    //! seg is resized if necessary.
+    //! Output is in {-1, 0, +1}^n.
     void segment(PotentialsCache::ConstPtr potentials, Eigen::VectorXi* seg) const;
   };
   

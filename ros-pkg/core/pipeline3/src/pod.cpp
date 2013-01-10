@@ -50,7 +50,7 @@ namespace pipeline
     map<string, CreatorFnPtr>::const_iterator it;
     it = creator_map_.find(type_name);
     if(it == creator_map_.end()) {
-      PL_ABORT("Tried to create pod type \"" << type_name << "\", but it has not been registered.");
+      PL_ABORT("Tried to create pod type \"" << type_name << "\", but it has not been registered.  See the REGISTER_POD macro.");
     }
     return it->second(name, params);
   }

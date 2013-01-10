@@ -45,6 +45,8 @@ void registerPods()
   REGISTER_POD(Aggregator);
   REGISTER_POD(DescriptorAssembler);
   REGISTER_POD(HistogramGenerator);
+  REGISTER_POD(ConcretePodA);
+  REGISTER_POD(ConcretePodB);
 }
 
 Pod* generateDefaultPipeline()
@@ -115,6 +117,12 @@ Pod* generateDefaultPipeline()
   da->registerInput("Elements", summarizer3, "Stdev");
   da->registerInput("Elements", summarizer3, "MeanNeighborSeparation");
 
+  ConcretePodA* cpa = new ConcretePodA("ConcretePodA");
+  cpa->registerInput("Vals", da, "Descriptor");
+  ConcretePodB* cpb = new ConcretePodB("ConcretePodB");
+  cpb->registerInput("Vals", da, "Descriptor");
+  cpb->setParam("Something", true);
+  
   return ep0;
 }
 
