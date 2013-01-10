@@ -17,7 +17,8 @@ public:
   void addMultiplier(double measurement, double multiplier);
   int index(double z) const;
   void undistort(double* z) const;
-  void undistort(int idx, float* z, float* mult) const;
+//  void undistort(int idx, float* z, float* mult) const;
+  void interpolatedUndistort(double* z) const;
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);
   
