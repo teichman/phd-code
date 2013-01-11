@@ -38,7 +38,7 @@ class DiscreteDepthDistortionModel : public Serializable
 public:
   DiscreteDepthDistortionModel() {}
   ~DiscreteDepthDistortionModel();
-  DiscreteDepthDistortionModel(const rgbd::PrimeSenseModel& psm, int bin_width = 8, int bin_height = 6, double bin_depth = 1.0, int smoothing = 1);
+  DiscreteDepthDistortionModel(const rgbd::PrimeSenseModel& psm, int bin_width = 8, int bin_height = 6, double bin_depth = 2.0, int smoothing = 1);
   DiscreteDepthDistortionModel(const DiscreteDepthDistortionModel& other);
   DiscreteDepthDistortionModel& operator=(const DiscreteDepthDistortionModel& other);
   void undistort(rgbd::Frame* frame) const;

@@ -77,20 +77,17 @@ void Frustum::interpolatedUndistort(double* z) const
     return;
   }
 
-  double mult0 = multipliers_.coeffRef(idx0);
-  double mult1 = multipliers_.coeffRef(idx1);
-  double z0 = (idx0 + 1) * bin_depth_ - bin_depth_ / 2.0;
-  double z1 = (idx1 + 1) * bin_depth_ - bin_depth_ / 2.0;
-  ROS_ASSERT(z0 <= *z && z1 >= *z);
-  if(!(fabs(z1 - z0 - bin_depth_) < 1e-6)) {
-    cout << z0 << " " << z1 << " " << bin_depth_ << endl;
-    ROS_ASSERT(0);
-  }
+  double z0 = (idx0 + 1) * bin_depth_ - bin_depth_ * 0.5;
+  // ROS_ASSERT(z0 <= *z && z1 >= *z);
+  // if(!(fabs(z1 - z0 - bin_depth_) < 1e-6)) {
+  //   cout << z0 << " " << z1 << " " << bin_depth_ << endl;
+  //   ROS_ASSERT(0);
+  // }
 
   double coeff1 = (*z - z0) / bin_depth_;
-  ROS_ASSERT(coeff1 >= 0 && coeff1 <= 1);
+  //ROS_ASSERT(coeff1 >= 0 && coeff1 <= 1);
   double coeff0 = 1.0 - coeff1;
-  double mult = coeff0 * mult0 + coeff1 * mult1;
+  double mult = coeff0 * multipliers_.coeffRef(idx0) + coeff1 * multipliers_.coeffRef(idx1);
   *z *= mult;
 }
 
