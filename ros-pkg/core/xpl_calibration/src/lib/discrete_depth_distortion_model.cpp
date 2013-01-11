@@ -65,16 +65,29 @@ inline void Frustum::undistort(double* z) const
 void Frustum::interpolatedUndistort(double* z) const
 {
   int idx = index(*z);
-  if(idx == num_bins_ - 1) {
+  double start = bin_depth_ * idx;
+  int idx1;
+  if(*z - start < bin_depth_ / 2)
+    idx1 = idx;
+  else
+    idx1 = idx + 1;
+  int idx0 = idx1 - 1;
+  if(idx0 < 0 || idx1 >= num_bins_ || counts_(idx0) < 50 || counts_(idx1) < 50) {
     undistort(z);
     return;
   }
 
-  ROS_ASSERT(idx < multipliers_.rows() - 1 && idx >= 0);
-  double mult0 = multipliers_.coeffRef(idx);
-  double mult1 = multipliers_.coeffRef(idx + 1);
-  double start = bin_depth_ * idx;
-  double coeff1 = (*z - start) / bin_depth_;
+  double mult0 = multipliers_.coeffRef(idx0);
+  double mult1 = multipliers_.coeffRef(idx1);
+  double z0 = (idx0 + 1) * bin_depth_ - bin_depth_ / 2.0;
+  double z1 = (idx1 + 1) * bin_depth_ - bin_depth_ / 2.0;
+  ROS_ASSERT(z0 <= *z && z1 >= *z);
+  if(!(fabs(z1 - z0 - bin_depth_) < 1e-6)) {
+    cout << z0 << " " << z1 << " " << bin_depth_ << endl;
+    ROS_ASSERT(0);
+  }
+
+  double coeff1 = (*z - z0) / bin_depth_;
   ROS_ASSERT(coeff1 >= 0 && coeff1 <= 1);
   double coeff0 = 1.0 - coeff1;
   double mult = coeff0 * mult0 + coeff1 * mult1;
