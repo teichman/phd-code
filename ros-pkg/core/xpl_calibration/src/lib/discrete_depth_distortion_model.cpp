@@ -56,11 +56,44 @@ inline void Frustum::undistort(double* z) const
   *z *= multipliers_.coeffRef(index(*z));
 }
 
-inline void Frustum::undistort(int idx, float* z, float* mult) const
+// inline void Frustum::undistort(int idx, float* z, float* mult) const
+// {
+//   *mult = multipliers_.coeffRef(idx);
+//   *z *= *mult;
+// }
+
+void Frustum::interpolatedUndistort(double* z) const
 {
-  *mult = multipliers_.coeffRef(idx);
-  *z *= *mult;
+  int idx = index(*z);
+  double start = bin_depth_ * idx;
+  int idx1;
+  if(*z - start < bin_depth_ / 2)
+    idx1 = idx;
+  else
+    idx1 = idx + 1;
+  int idx0 = idx1 - 1;
+  if(idx0 < 0 || idx1 >= num_bins_ || counts_(idx0) < 50 || counts_(idx1) < 50) {
+    undistort(z);
+    return;
+  }
+
+  double z0 = (idx0 + 1) * bin_depth_ - bin_depth_ * 0.5;
+  // ROS_ASSERT(z0 <= *z && z1 >= *z);
+  // if(!(fabs(z1 - z0 - bin_depth_) < 1e-6)) {
+  //   cout << z0 << " " << z1 << " " << bin_depth_ << endl;
+  //   ROS_ASSERT(0);
+  // }
+
+  double coeff1 = (*z - z0) / bin_depth_;
+  //ROS_ASSERT(coeff1 >= 0 && coeff1 <= 1);
+  double coeff0 = 1.0 - coeff1;
+  double mult = coeff0 * multipliers_.coeffRef(idx0) + coeff1 * multipliers_.coeffRef(idx1);
+  *z *= mult;
 }
+
+// inline void Frustum::interpolatedUndistort(int idx, float* z, float* mult) const
+// {
+// }
 
 // void Frustum::undistort(rgbd::Point* pt) const
 // {
@@ -169,7 +202,8 @@ void DiscreteDepthDistortionModel::undistort(Frame* frame) const
 
       // Non-caching version.
       double z = frame->depth_->coeffRef(v, u) * 0.001;
-      frustum(v, u).undistort(&z);
+      //frustum(v, u).undistort(&z);
+      frustum(v, u).interpolatedUndistort(&z);
       frame->depth_->coeffRef(v, u) = z * 1000;
 
       // Caching version.
