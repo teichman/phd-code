@@ -7,7 +7,8 @@ using namespace asp::example;
 
 TEST(NodePotentialGenerator, NodePotentialGenerator)
 {
-  registerPods();
+  // Not needed unless we are serializing.
+  // registerPods();
   Asp asp(1);
   generateSimpleSegmentationPipeline(&asp);
   

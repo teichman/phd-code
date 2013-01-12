@@ -10,21 +10,28 @@ namespace asp
     using namespace std;
     using namespace Eigen;
     using namespace asp;
-    
-    typedef cv::Mat3b cvMat3b;
-    typedef cv::Mat1b cvMat1b;
 
-    //! Sets node potential randomly.
+    //! Anything that generates a node potential should inherit from
+    //! NodePotentialGenerator.
     class RandomNPG : public NodePotentialGenerator
     {
     public:
+      //! This is necessary for the Pipeline library to know how to work
+      //! with this type of Pod.
       DECLARE_POD(RandomNPG);
+
+      //! All Pods should have a constructor that only takes their name.
       RandomNPG(std::string name) :
 	NodePotentialGenerator(name)
       {
       }
 
+      //! This is the main computation that this pod does.
+      //! In this case we'll just set node potentials randomly.
       void compute();
+
+      //! The debug function is only called if debugging mode is on.
+      //! Here, we'll write out a nice visualization of the node potentials.
       void debug() const { writeNodePotentialVisualization(); }
     };
 
@@ -65,24 +72,26 @@ namespace asp
 
       push<const SparseMat*>("Edge", &edge_);
     }
-  
-    void registerPods()
-    {
-      REGISTER_POD_TEMPLATE(EntryPoint, cvMat3b);
-      REGISTER_POD_TEMPLATE(EntryPoint, cvMat1b);
-    }
-
     
     void generateSimpleSegmentationPipeline(Asp* asp)
     {
       asp->addPod(new RandomNPG("RandomNPG0"));
+      // When RandomNPG0 calls pull<cv::Mat3b>("Image"), it will get the img that
+      // ImageEntryPoint pushed to its "Output" port with push<cv::Mat3b>("Output", img).
       asp->connect("ImageEntryPoint:Output -> RandomNPG0:Image");
       asp->connect("RandomNPG0:Node -> NodePotentialAggregator:UnweightedNode");
 
+      // An EdgeStructureGenerator is just a way of saying what edges should be computed
+      // by downstream EdgePotentialGenerators.
       asp->addPod(new EdgeStructureGenerator("GridESG"));
+      // Because we want to be able to automatically twiddle with and then serialize
+      // and entire pipeline structure and the params of all pods in it, the pipeline
+      // library has special handling for pod params.
+      // This just says that our EdgeStructureGenerator is going to use a simple grid.
       asp->setParam("GridESG", "Grid", true);
       asp->connect("ImageEntryPoint:Output -> GridESG:Image");
       asp->connect("MaskEntryPoint:Output -> GridESG:Mask");
+      // We'll also add some other EdgeStructureGenerators that use different edge structures.
       asp->addPod(new EdgeStructureGenerator("DiagonalESG"));
       asp->setParam("DiagonalESG", "Diagonal", true);
       asp->connect("ImageEntryPoint:Output -> DiagonalESG:Image");
@@ -115,15 +124,24 @@ namespace asp
       asp->connect("WebESG:EdgeStructure -> WebSimpleColorDifferenceEPG:EdgeStructure");
       asp->connect("WebSimpleColorDifferenceEPG:Edge -> EdgePotentialAggregator:UnweightedEdge");
 
+      // For now, we'll just set some weights by hand.
+      // This shows how to generate a default model based on what inputs
+      // the NodePotentialAggregator and EdgePotentialAggregator see.
       Model model = asp->defaultModel();
       model.nweights_.setConstant(1);
+      // We can set weights of particular features without worrying about what position
+      // in the vector they are at.
+      // "nmap" stands for "node potential name mapping".
       model.nweights_(model.nameMapping("nmap").toId("SeedNPG")) = 2;
       model.nweights_(model.nameMapping("nmap").toId("RandomNPG0")) = 0;
       model.nweights_(model.nameMapping("nmap").toId("PriorNPG")) = 0.01;
       model.eweights_.setConstant(1);
+      // "emap" stands for "edge potential name mapping".
       model.eweights_(model.nameMapping("emap").toId("SmoothnessEPG0")) = 0.1;
       model.eweights_(model.nameMapping("emap").toId("SmoothnessEPG1")) = 0.1;
       model.eweights_(model.nameMapping("emap").toId("WebSimpleColorDifferenceEPG")) = 0.3;
+      // This sets the weights appropriately in the
+      // NodePotentialAggregator and EdgePotentialAggregator.
       asp->setModel(model);
     }
   }

@@ -60,13 +60,14 @@ namespace asp
     NodePotentialGenerator(std::string name) :
       Pod(name)
     {
-      // If provided, this is used for writing the overlay debug image.
-      // Otherwise it will just write the raw debug image and skip the overlay.
+      // Required for visualization and for initializeStorage().
       declareInput<cv::Mat3b>("Image");  
       declareOutput<const Eigen::MatrixXd*>("Node");
     }
 
   protected:
+    //! Values of the node potentials.
+    //! Fill this and push out a pointer to it in the compute() function.
     Eigen::MatrixXd node_;
 
     //! Uses Image to set the size of node_ if necessary
@@ -81,6 +82,9 @@ namespace asp
     void writeNodePotentialVisualization() const;
   };
 
+  //! All NodePotentialGenerators get connected to an object of this type.
+  //! It adds them together in a weighted combination and outputs the result
+  //! for graph cuts to use.
   class NodePotentialAggregator : public NodePotentialGenerator
   {
   public:
@@ -107,7 +111,7 @@ namespace asp
     void debug() const;
   };
 
-  // Unweighted edge potentials should be in [0, 1].
+  //! Unweighted edge potentials should be in [0, 1].
   class EdgePotentialGenerator : public Pod
   {
   public:
