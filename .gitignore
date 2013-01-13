@@ -10,3 +10,8 @@ ros-pkg/*/*/lib
 *.eig.txt
 *.pl
 *.cam
+*.eig
+*.eig.gz
+*.pyc
+*.pcd
+
