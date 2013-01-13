@@ -2,24 +2,24 @@
 
 using namespace std;
 
-void Serializable::load(const std::string& filename)
+void Serializable::load(const std::string& path)
 {
   ifstream f;
-  f.open(filename.c_str());
+  f.open(path.c_str());
   if(!f.is_open()) {
-    cerr << "Failed to open " << filename << endl;
+    cerr << "Failed to open " << path << endl;
     assert(f.is_open());
   }
   deserialize(f);
   f.close();
 }
 
-void Serializable::save(const std::string& filename) const
+void Serializable::save(const std::string& path) const
 {
   ofstream f;
-  f.open(filename.c_str());
+  f.open(path.c_str());
   if(!f.is_open()) {
-    cerr << "Failed to open " << filename << endl;
+    cerr << "Failed to open " << path << endl;
     assert(f.is_open());
   }
   serialize(f);
