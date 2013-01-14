@@ -12,12 +12,19 @@
 #define SHOW(x) #x << ": " << x
 
 // A std::map without the annoying const problem.
-// ... except it appears this doesn't really work unless the object you
-// call operator[] on is const.
+// The ACP is when you try to pass in a const map<T, S>& foo
+// to a function, then try to access foo[x] and the compiler
+// says you can't.  That's dumb.
+// 
+// Note this does *not* call the const operator[] unless the
+// object in question is const.  It seems like read operations
+// should always use the const version, but that's not what happens.
+// Fortunately, we don't really care about this.
 template<typename T, typename S>
 class Dictionary : public std::map<T, S>, public Serializable
 {
 public:
+  // Used briefly for testing purposes.
   //std::vector<int> leak_;
 
   const S& operator[](const T& key) const
