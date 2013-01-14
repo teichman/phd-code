@@ -22,14 +22,14 @@ public:
 
   const S& operator[](const T& key) const
   {
-    std::cout << "Calling const operator[]." << std::endl;
+    //std::cout << "Calling const operator[]." << std::endl;
     assert((std::map<T, S>::count(key)));
     return std::map<T, S>::find(key)->second;
   }
 
   S& operator[](const T& key)
   {
-    std::cout << "Calling non-const operator[]." << std::endl;
+    //std::cout << "Calling non-const operator[]." << std::endl;
     return std::map<T, S>::operator[](key);
   }
 
