@@ -12,6 +12,8 @@ if(len(sys.argv) != 2):
     print "Usage: plot_quantity_experiment.py QUANTITY_EXPERIMENT_DIR"
     sys.exit(1)
 
+cp.setup()
+
 path = sys.argv[1];
 tmpfile = ".python-asotehusntahoesuthasonethusaonte"
 
@@ -27,7 +29,9 @@ ax.set_ylabel('Error reduction')
 grid(True)
 
 ax.scatter(data[:, 0], data[:, 1], color='black', marker='x', s=40)
-ylim(-0.05, 0.2)
+#ylim(0, 0.25)
+#xlim(0, 400)
+ylim(0, 0.2)
 
 savefig(path + '/quantity_experiment.pdf')
 savefig(path + '/quantity_experiment.png')
