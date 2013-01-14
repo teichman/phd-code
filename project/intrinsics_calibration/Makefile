@@ -54,9 +54,12 @@ SLAM_RUNS_TRAINING_xpl01	:= 	2a_backandforth \
 					2012-12-19_xpl01_boardroom_0-upsidedown \
 					2012-12-19_xpl01_boardroom_1-upsidedown
 
+# Running out of memory....   These are fine to use, but I just can't afford it.
+# Yes.  Even with 80G.
+#					2012-11-16_2a_backandforth_8 \
+#					2012-10-22_2a_backandforth_0 \
+
 SLAM_RUNS_TESTING_xpl01		:=	2012-11-16_2a_backandforth_7 \
-					2012-11-16_2a_backandforth_8 \
-					2012-10-22_2a_backandforth_0 \
 					2012-11-16_2a_backandforth_6 \
 					2012-12-19_xpl01_boardroom_2 \
 					2012-10-22_2a_backandforth_4
