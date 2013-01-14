@@ -12,6 +12,8 @@
 #define SHOW(x) #x << ": " << x
 
 // A std::map without the annoying const problem.
+// ... except it appears this doesn't really work unless the object you
+// call operator[] on is const.
 template<typename T, typename S>
 class Dictionary : public std::map<T, S>, public Serializable
 {
@@ -20,12 +22,14 @@ public:
 
   const S& operator[](const T& key) const
   {
+    std::cout << "Calling const operator[]." << std::endl;
     assert((std::map<T, S>::count(key)));
     return std::map<T, S>::find(key)->second;
   }
 
   S& operator[](const T& key)
   {
+    std::cout << "Calling non-const operator[]." << std::endl;
     return std::map<T, S>::operator[](key);
   }
 
