@@ -26,6 +26,18 @@ AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-0
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
+SLAM_RUNS_TRAINING_kinect00	:=	2013-01-15_2a_medium_range_0
+SLAM_RUNS_TESTING_kinect00	:=	2013-01-15_2a_medium_range_1
+SLAM_RUNS_kinect00 := $(SLAM_RUNS_TRAINING_kinect00) $(SLAM_RUNS_TESTING_kinect00)
+
+SLAM_RUNS_TRAINING_kinect01	:=	2013-01-16_boardroom_0
+SLAM_RUNS_TESTING_kinect01	:=	2013-01-16_boardroom_1
+SLAM_RUNS_kinect01 := $(SLAM_RUNS_TRAINING_kinect01) $(SLAM_RUNS_TESTING_kinect01)
+
+SLAM_RUNS_TRAINING_kinect02	:=	2013-01-16_boardroom_0
+SLAM_RUNS_TESTING_kinect02	:=	2013-01-16_boardroom_1
+SLAM_RUNS_kinect02 := $(SLAM_RUNS_TRAINING_kinect02) $(SLAM_RUNS_TESTING_kinect02)
+
 # These all sucked.
 # 2012-12-19_short_00 \
 # 2012-12-19_short_02 \
@@ -95,6 +107,10 @@ rss2013.pdf: 	$$(MAKE_ROOT)/rss2013/rss2013.tex
 	-cd $(MAKE_ROOT)/rss2013 && rm rss2013.{aux,bbl,blg,log,idx} latex_macros.aux
 	mv $(MAKE_ROOT)/rss2013/rss2013.pdf .
 
+
+visualizations: kinect00/evaluation/discrete_learned_model-vis \
+		kinect01/evaluation/discrete_learned_model-vis \
+		kinect02/evaluation/discrete_learned_model-vis 
 
 ############################################################
 # Experiments
@@ -235,8 +251,9 @@ $(1)/evaluation/learned_model.psm: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.t
 	$$$$(for f in $$(TRAJECTORIES_SUB_$(1)); do echo --traj $$$$f; done) \
 	--omodel $$@ \
 	| tee $$@-log.txt
-	rm -rf $$(@D)/clams_coverage
-	mv .ddl $$(@D)/clams_coverage
+
+$(1)/evaluation/discrete_learned_model-vis: $(1)/evaluation/discrete_learned_model
+	rosrun xpl_calibration visualize_intrinsics $$< $$@
 
 $(1)/evaluation/discrete_learned_model: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
@@ -246,8 +263,6 @@ $(1)/evaluation/discrete_learned_model: $$(TRAJDIRS_$(1)) $$$$@-experiment_metad
 	$$$$(for f in $$(TRAJECTORIES_SUB_$(1)); do echo --traj $$$$f; done) \
 	--omodel $$@ \
 	| tee $$@-log.txt
-	rm -rf $$(@D)/clams_coverage
-	mv .ddl $$(@D)/clams_coverage
 
 $(1)-visualize-avv-intrinsics: $(1)/asus_vs_velodyne/extrinsics $(1)/asus_vs_velodyne/intrinsics
 	rosrun xpl_calibration asus_vs_velo \
