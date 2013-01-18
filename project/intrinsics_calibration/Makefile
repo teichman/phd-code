@@ -108,9 +108,9 @@ rss2013.pdf: 	$$(MAKE_ROOT)/rss2013/rss2013.tex
 	mv $(MAKE_ROOT)/rss2013/rss2013.pdf .
 
 
-visualizations: kinect00/evaluation/discrete_learned_model-vis \
-		kinect01/evaluation/discrete_learned_model-vis \
-		kinect02/evaluation/discrete_learned_model-vis 
+distortion-visualizations: 	kinect00/evaluation/discrete_learned_model-vis \
+				kinect01/evaluation/discrete_learned_model-vis \
+				kinect02/evaluation/discrete_learned_model-vis 
 
 ############################################################
 # Experiments

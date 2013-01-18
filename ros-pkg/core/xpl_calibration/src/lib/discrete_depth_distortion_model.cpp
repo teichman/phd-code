@@ -341,9 +341,9 @@ void DiscreteDepthDistortionModel::visualize(const std::string& dir) const
   int vert_divider = 20;
   cv::Mat3b mega(cv::Size(psm_.width_ * 2 + horiz_divider, psm_.height_ * num_layers + vert_divider * (num_layers + 2)), cv::Vec3b(0, 0, 0));
   vector<int> pub_layers;
+  pub_layers.push_back(1);
+  pub_layers.push_back(2);
   pub_layers.push_back(3);
-  pub_layers.push_back(5);
-  pub_layers.push_back(7);
   cv::Mat3b pub(cv::Size(psm_.width_, psm_.height_ * pub_layers.size() + vert_divider * (pub_layers.size() + 2)), cv::Vec3b(255, 255, 255));
   
   for(int i = 0; i < num_layers; ++i) {
