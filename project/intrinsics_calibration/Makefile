@@ -53,8 +53,7 @@ SLAM_RUNS_TRAINING_xpl00	:=	2012-12-19_boardroom_2 \
 					2013-01-07_2a_backandforth_01 \
 					2013-01-07_boardroom_01
 
-SLAM_RUNS_TESTING_xpl00		:=	2012-12-19_short_01 \
-					2012-12-19_short_03 \
+SLAM_RUNS_TESTING_xpl00		:=	2012-12-19_short_03 \
 					2012-12-19_short_04 \
 					2013-01-07_2a_backandforth_02 \
 					2013-01-07_boardroom_02
@@ -81,6 +80,21 @@ SLAM_RUNS_TESTING_xpl01		:=	2012-11-16_2a_backandforth_7 \
 
 SLAM_RUNS_xpl01			:= 	$(SLAM_RUNS_TRAINING_xpl01) $(SLAM_RUNS_TESTING_xpl01)
 
+SLAM_RUNS_TRAINING_xpl03	:=	2012-12-19_xpl03_boardroom_0 \
+					2012-12-19_xpl03_boardroom_1 \
+					2013-01-17_xpl03_boardroom_0 \
+					2013-01-17_xpl03_boardroom_1
+SLAM_RUNS_TESTING_xpl03		:=	2012-12-19_xpl03_boardroom_2 \
+					2012-12-19_xpl03_boardroom_3 \
+					2013-01-17_xpl03_boardroom_2
+
+SLAM_RUNS_xpl03 := $(SLAM_RUNS_TRAINING_xpl03) $(SLAM_RUNS_TESTING_xpl03)
+
+SLAM_RUNS_TRAINING_xpl05	:=	2013-01-16_boardroom_0 \
+					2013-01-16_boardroom_1
+SLAM_RUNS_TESTING_xpl05		:=	2013-01-16_boardroom_2 \
+					2013-01-16_boardroom_3
+SLAM_RUNS_xpl05 := $(SLAM_RUNS_TRAINING_xpl05) $(SLAM_RUNS_TESTING_xpl05)
 
 # Data specifically for the 2012-11-06 run in which multiple sensor views were collected.
 AVV_MULTIVIEW_NAMES_xpl01	:= 	xpl01_straight-11-06-2012_00-08-08
@@ -115,6 +129,9 @@ distortion-visualizations: 	kinect00/evaluation/discrete_learned_model-vis \
 slam-evals: 	kinect00/evaluation/slam_eval \
 		kinect01/evaluation/slam_eval \
 		kinect02/evaluation/slam_eval
+
+xpl-tmp-target:	xpl03/evaluation/slam_eval \
+		xpl05/evaluation/slam_eval
 
 ############################################################
 # Experiments
