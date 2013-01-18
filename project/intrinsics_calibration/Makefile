@@ -110,7 +110,11 @@ rss2013.pdf: 	$$(MAKE_ROOT)/rss2013/rss2013.tex
 
 distortion-visualizations: 	kinect00/evaluation/discrete_learned_model-vis \
 				kinect01/evaluation/discrete_learned_model-vis \
-				kinect02/evaluation/discrete_learned_model-vis 
+				kinect02/evaluation/discrete_learned_model-vis
+
+slam-evals: 	kinect00/evaluation/slam_eval \
+		kinect01/evaluation/slam_eval \
+		kinect02/evaluation/slam_eval
 
 ############################################################
 # Experiments
@@ -159,6 +163,7 @@ $(1)/evaluation/slam_eval: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	--output $(1)/evaluation/slam_eval \
 	--sseqs $$(addprefix $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
 	--trajs $$(TRAJECTORIES_ONLYFIRST_$(1))
+	cd $$(@D) && for file in `find -name intrinsics | sort`; do echo $$$$file; rosrun xpl_calibration visualize_intrinsics $$$$file $$$${file}-vis; done
 
 $(1)/evaluation/slam_eval_quantity/quantity_experiment.pdf: $(MAKE_ROOT)/plot_quantity_experiment.py $(1)/evaluation/slam_eval_quantity
 	python $$^
