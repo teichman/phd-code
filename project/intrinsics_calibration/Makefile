@@ -122,16 +122,19 @@ rss2013.pdf: 	$$(MAKE_ROOT)/rss2013/rss2013.tex
 	mv $(MAKE_ROOT)/rss2013/rss2013.pdf .
 
 
-distortion-visualizations: 	kinect00/evaluation/discrete_learned_model-vis \
+several-distortion-maps-vis: 	kinect00/evaluation/slam_eval \
+				kinect01/evaluation/slam_eval \
+				kinect02/evaluation/slam_eval \
+				xpl03/evaluation/slam_eval \
+				xpl05/evaluation/slam_eval \
+				kinect00/evaluation/discrete_learned_model-vis \
 				kinect01/evaluation/discrete_learned_model-vis \
-				kinect02/evaluation/discrete_learned_model-vis
+				kinect02/evaluation/discrete_learned_model-vis \
+				xpl03/evaluation/discrete_learned_model-vis \
+				xpl05/evaluation/discrete_learned_model-vis
 
-slam-evals: 	kinect00/evaluation/slam_eval \
-		kinect01/evaluation/slam_eval \
-		kinect02/evaluation/slam_eval
-
-xpl-tmp-target:	xpl03/evaluation/slam_eval \
-		xpl05/evaluation/slam_eval
+rg-several-distortion-maps-vis: xpl05/evaluation/discrete_learned_model-vis \
+				xpl05/evaluation/slam_eval
 
 ############################################################
 # Experiments
