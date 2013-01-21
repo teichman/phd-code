@@ -233,7 +233,7 @@ namespace asp
             
       // Upper triangular.  EdgeStructure(i, j) != 0 means that
       // the non-directional edge between i and j should be
-      // computed by downstream pods.
+      // computed by downstream Pods.
       declareOutput<const SparseMat*>("EdgeStructure");
     }
 
