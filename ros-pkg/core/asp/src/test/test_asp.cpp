@@ -5,12 +5,22 @@ using namespace std;
 using namespace Eigen;
 using namespace asp::example;
 
+void registerPods()
+{
+  typedef cv::Mat3b cvMat3b;
+  typedef cv::Mat1b cvMat1b;
+  REGISTER_POD_TEMPLATE(EntryPoint, cvMat3b);
+  REGISTER_POD_TEMPLATE(EntryPoint, cvMat1b);
+}
+
 TEST(NodePotentialGenerator, NodePotentialGenerator)
 {
-  // Not needed unless we are serializing.
-  // registerPods();
+  // registration is needed for serialization, which we're not using, *and* for
+  // producing nice error messages at runtime.
+  registerPods();
   Asp asp(1);
   generateSimpleSegmentationPipeline(&asp);
+  asp.addPod(new EntryPoint<cv::Mat1b>("UnusedEntryPoint"));  // This shouldn't cause a crash.
   
   cv::Mat3b img;
   if(getenv("IMAGE_PATH"))
@@ -21,13 +31,13 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
       for(int x = 0; x < img.cols; ++x)
 	img(y, x) = cv::Vec3b(rand() % 255, rand() % 255, rand() % 255);
   }
-  asp.pod< EntryPoint<cv::Mat3b> >("ImageEntryPoint")->setData(img);
+  asp.setInput("ImageEntryPoint", img);
   
   cv::Mat1b mask(img.size(), 255);
   for(int y = mask.rows / 2; y < mask.rows; ++y)
     for(int x = mask.cols / 2; x < mask.cols; ++x)
       mask(y, x) = 0;
-  asp.pod< EntryPoint<cv::Mat1b> >("MaskEntryPoint")->setData(mask);
+  asp.setInput("MaskEntryPoint", mask);
   
   cv::Mat1b seed(img.size(), 127);
   for(int y = 0; y < 10; ++y)
@@ -36,7 +46,7 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
   for(int y = 50; y < 80; ++y)
     for(int x = 10; x < 40; ++x)
       seed(y, x) = 0;
-  asp.pod< EntryPoint<cv::Mat1b> >("SeedEntryPoint")->setData(seed);
+  asp.setInput("SeedEntryPoint", seed);
   asp.setDebug(true);
   asp.compute();
 
