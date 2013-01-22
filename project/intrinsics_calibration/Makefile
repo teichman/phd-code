@@ -26,6 +26,8 @@ AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-0
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
+PLANARITY_LOG_xpl00	:= $(DATA_PATH)/planar_sequences/xpl00/2013-01-12_hewlett_0
+
 SLAM_RUNS_TRAINING_kinect00	:=	2013-01-15_2a_medium_range_0
 SLAM_RUNS_TESTING_kinect00	:=	2013-01-15_2a_medium_range_1
 SLAM_RUNS_kinect00 := $(SLAM_RUNS_TRAINING_kinect00) $(SLAM_RUNS_TESTING_kinect00)
@@ -136,6 +138,7 @@ several-distortion-maps-vis: 	kinect00/evaluation/slam_eval \
 rg-several-distortion-maps-vis: xpl05/evaluation/discrete_learned_model-vis \
 				xpl05/evaluation/slam_eval
 
+
 ############################################################
 # Experiments
 ############################################################
@@ -152,7 +155,6 @@ rg-several-distortion-maps-vis: xpl05/evaluation/discrete_learned_model-vis \
 	git log -n1 >> $@
 	git diff >> $@
 
-
 # -- Enumeration of targets for each sensor.
 define SENSOR_RULE_GENERATOR
 
@@ -167,6 +169,24 @@ TRAJECTORIES_ONLYFIRST_TESTING_$(1) := `for DIR in $$(TRAJDIRS_TESTING_$(1)); do
 TRAJECTORIES_SUB_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do find $$$${DIR} -name *.traj; done`
 SLAM_RUNS_DUPL_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do \
 	for TRAJ in $$$$(ls $$$${DIR} | grep traj); do basename $$$${DIR} | xargs -I {} echo $(SLAM_DATA_PATH)/$(1)/{}; done; done`
+
+$(1)/evaluation/planarity_experiment/raw.pdf: 	$(1)/evaluation/planarity_experiment/raw.txt \
+						$(MAKE_ROOT)/plot_planarity_experiment.py \
+						$$$$@-experiment_metadata.txt
+	python $(MAKE_ROOT)/plot_planarity_experiment.py $$<
+
+$(1)/evaluation/planarity_experiment/undistorted.pdf: 	$(1)/evaluation/planarity_experiment/undistorted.txt \
+							$(MAKE_ROOT)/plot_planarity_experiment.py \
+							$$$$@-experiment_metadata.txt
+	python $(MAKE_ROOT)/plot_planarity_experiment.py $$<
+
+$(1)/evaluation/planarity_experiment/raw.txt:  $$(PLANARITY_LOG_$(1)) $$$$@-experiment_metadata.txt
+	mkdir -p $$(@D)
+	rosrun xpl_calibration planarity_experiment $$< > $$@
+
+$(1)/evaluation/planarity_experiment/undistorted.txt:  $$(PLANARITY_LOG_$(1)) $(1)/evaluation/discrete_learned_model $$$$@-experiment_metadata.txt
+	mkdir -p $$(@D)
+	rosrun xpl_calibration planarity_experiment $$< --intrinsics $(1)/evaluation/discrete_learned_model > $$@
 
 $(1)/evaluation/iterative_calibration_experiment: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)

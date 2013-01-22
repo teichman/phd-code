@@ -8,7 +8,7 @@ using namespace Eigen;
 using namespace rgbd;
 
 bool process(const StreamSequence& sseq, size_t idx, DiscreteDepthDistortionModel* dddm,
-	     double* mean_range, double* rms)
+	     double* mean_range, double* error)
 {
   Frame frame;
   sseq.readFrame(idx, &frame);
@@ -68,13 +68,11 @@ bool process(const StreamSequence& sseq, size_t idx, DiscreteDepthDistortionMode
   *mean_range /= total;
   //cout << "Mean range: " << *mean_range << endl;
   
-  *rms = 0;
+  *error = 0;
   for(size_t i = 0; i < cloud.size(); ++i)
     if(isFinite(cloud[i]))
-      *rms += pow(normal.dot(cloud[i].getVector3fMap()) - mean_offset, 2);
-  *rms /= total;
-  *rms = sqrt(*rms);
-  //cout << "RMS: " << *rms << endl;
+      *error += fabs(normal.dot(cloud[i].getVector3fMap()) - mean_offset);
+  *error /= total;
 
   return true;
 }
