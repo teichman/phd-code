@@ -1,15 +1,19 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 #include <rgbd_sequence/stream_sequence.h>
+#include <xpl_calibration/discrete_depth_distortion_model.h>
 
 using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 
-bool process(const StreamSequence& sseq, size_t idx, double* mean_range, double* rms)
+bool process(const StreamSequence& sseq, size_t idx, DiscreteDepthDistortionModel* dddm,
+	     double* mean_range, double* rms)
 {
   Frame frame;
   sseq.readFrame(idx, &frame);
+  if(dddm)
+    dddm->undistort(&frame);
   Cloud cloud;
   sseq.model_.frameToCloud(frame, &cloud);
 
@@ -85,6 +89,7 @@ int main(int argc, char** argv)
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("sseq", bpo::value<string>()->required(), "StreamSequence, i.e. asus data.")
+    ("intrinsics", bpo::value<string>())
 //    ("output,o", bpo::value<string>()->default_value("planarity_experiment.txt"), "Where to save results")
     ;
 
@@ -107,10 +112,16 @@ int main(int argc, char** argv)
   StreamSequence sseq;
   sseq.load(opts["sseq"].as<string>());
 
+  DiscreteDepthDistortionModel* dddm = NULL;
+  if(opts.count("intrinsics")) {
+    dddm = new DiscreteDepthDistortionModel;
+    dddm->load(opts["intrinsics"].as<string>());
+  }
+  
   for(size_t i = 0; i < sseq.size(); i += 10) {
     double mean_range;
     double rms;
-    bool valid = process(sseq, i, &mean_range, &rms);
+    bool valid = process(sseq, i, dddm, &mean_range, &rms);
     if(valid)
       cout << mean_range << " " << rms << endl;
   }
