@@ -176,3 +176,7 @@ target_link_libraries(visualize_intrinsics ${PROJECT_NAME})
 rosbuild_add_executable(iterative_calibration_experiment src/prog/iterative_calibration_experiment.cpp)
 rosbuild_link_boost(iterative_calibration_experiment program_options filesystem)
 target_link_libraries(iterative_calibration_experiment ${PROJECT_NAME})
+
+rosbuild_add_executable(planarity_experiment src/prog/planarity_experiment.cpp)
+rosbuild_link_boost(planarity_experiment program_options filesystem)
+target_link_libraries(planarity_experiment ${PROJECT_NAME})
