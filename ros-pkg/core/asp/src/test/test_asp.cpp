@@ -49,6 +49,9 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
   asp.setInput("SeedEntryPoint", seed);
   asp.setDebug(true);
   asp.compute();
+  // Should see debugging output for each call.
+  asp.compute(); 
+  asp.compute();
 
   asp.setDebug(false);
   asp.compute();
