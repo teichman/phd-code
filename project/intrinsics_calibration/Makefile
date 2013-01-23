@@ -82,12 +82,12 @@ SLAM_RUNS_TESTING_xpl01		:=	2012-11-16_2a_backandforth_7 \
 
 SLAM_RUNS_xpl01			:= 	$(SLAM_RUNS_TRAINING_xpl01) $(SLAM_RUNS_TESTING_xpl01)
 
-SLAM_RUNS_TRAINING_xpl03	:=	2012-12-19_xpl03_boardroom_0 \
-					2012-12-19_xpl03_boardroom_1 \
-					2013-01-17_xpl03_boardroom_0 \
+#2012-12-19_xpl03_boardroom_0
+#2012-12-19_xpl03_boardroom_1
+SLAM_RUNS_TRAINING_xpl03	:=	2013-01-17_xpl03_boardroom_0 \
+					2012-12-19_xpl03_boardroom_3 \
 					2013-01-17_xpl03_boardroom_1
 SLAM_RUNS_TESTING_xpl03		:=	2012-12-19_xpl03_boardroom_2 \
-					2012-12-19_xpl03_boardroom_3 \
 					2013-01-17_xpl03_boardroom_2
 
 SLAM_RUNS_xpl03 := $(SLAM_RUNS_TRAINING_xpl03) $(SLAM_RUNS_TESTING_xpl03)
@@ -124,19 +124,33 @@ rss2013.pdf: 	$$(MAKE_ROOT)/rss2013/rss2013.tex
 	mv $(MAKE_ROOT)/rss2013/rss2013.pdf .
 
 
-several-distortion-maps-vis: 	kinect00/evaluation/slam_eval \
+.PHONY: several_distortion_maps
+several_distortion_maps:	kinect00/evaluation/slam_eval \
 				kinect01/evaluation/slam_eval \
 				kinect02/evaluation/slam_eval \
+				xpl00/evaluation/slam_eval \
+				xpl01/evaluation/slam_eval \
 				xpl03/evaluation/slam_eval \
-				xpl05/evaluation/slam_eval \
 				kinect00/evaluation/discrete_learned_model-vis \
 				kinect01/evaluation/discrete_learned_model-vis \
 				kinect02/evaluation/discrete_learned_model-vis \
+				xpl00/evaluation/discrete_learned_model-vis \
+				xpl01/evaluation/discrete_learned_model-vis \
 				xpl03/evaluation/discrete_learned_model-vis \
-				xpl05/evaluation/discrete_learned_model-vis
-
-rg-several-distortion-maps-vis: xpl05/evaluation/discrete_learned_model-vis \
+				xpl05/evaluation/discrete_learned_model-vis \
 				xpl05/evaluation/slam_eval
+
+
+	mkdir -p $@
+	for file in `find -name discrete_learned_model-vis | sort | grep -E 'kinect|xpl'`; do \
+	rsync -av $$file several_distortion_maps/$$(echo $$file | awk -F/ '{print $$2}'); \
+	done
+	cd $@ && \
+	mkdir -p cropped; \
+	for dir in `ls | grep -E 'kinect|xpl'`; do \
+	echo $$dir; \
+	convert $$dir/discrete_learned_model-vis/pub-01-02-03.png -crop 640x480+0+530 cropped/$$dir.png; \
+	done
 
 
 ############################################################
