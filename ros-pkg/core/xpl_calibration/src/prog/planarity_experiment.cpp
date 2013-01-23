@@ -8,7 +8,7 @@ using namespace Eigen;
 using namespace rgbd;
 
 bool process(const StreamSequence& sseq, size_t idx, DiscreteDepthDistortionModel* dddm,
-	     double* mean_range, double* error)
+	     double* mean_range, double* error, double* rms)
 {
   Frame frame;
   sseq.readFrame(idx, &frame);
@@ -36,37 +36,21 @@ bool process(const StreamSequence& sseq, size_t idx, DiscreteDepthDistortionMode
     if(isFinite(cloud[i]))
       X += ((cloud[i].getVector3fMap() - mean) * (cloud[i].getVector3fMap() - mean).transpose()).cast<double>();
 
-  //cout << X << endl;
-  //cout << endl;
-
   JacobiSVD<Matrix3d> svd(X, Eigen::ComputeFullU | Eigen::ComputeFullV);
-  Matrix3d U = svd.matrixU();
   Matrix3d V = svd.matrixV();
-  Vector3d svals = svd.singularValues();
-
-  //cout << U << endl;
-  //cout << endl;
-  //cout << svals.transpose() << endl;
-  //cout << endl;
-  //cout << V << endl;
-  //cout << endl;
-
   Vector3f normal = V.col(2).cast<float>();
-  //cout << "Normal: " << normal.transpose() << endl;
   
   double mean_offset = 0;
   for(size_t i = 0; i < cloud.size(); ++i)
     if(isFinite(cloud[i]))
       mean_offset += normal.dot(cloud[i].getVector3fMap());
   mean_offset /= total;
-  //cout << "mean_offset: " << mean_offset << endl;
 
   *mean_range = 0;
   for(size_t i = 0; i < cloud.size(); ++i)
     if(isFinite(cloud[i]))
       *mean_range += cloud[i].z;
   *mean_range /= total;
-  //cout << "Mean range: " << *mean_range << endl;
   
   *error = 0;
   for(size_t i = 0; i < cloud.size(); ++i)
@@ -74,6 +58,13 @@ bool process(const StreamSequence& sseq, size_t idx, DiscreteDepthDistortionMode
       *error += fabs(normal.dot(cloud[i].getVector3fMap()) - mean_offset);
   *error /= total;
 
+  *rms = 0;
+  for(size_t i = 0; i < cloud.size(); ++i)
+    if(isFinite(cloud[i]))
+      *rms += pow(normal.dot(cloud[i].getVector3fMap()) - mean_offset, 2);
+  *rms /= total;
+  *rms = sqrt(*rms);
+  
   return true;
 }
 
@@ -88,7 +79,6 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("sseq", bpo::value<string>()->required(), "StreamSequence, i.e. asus data.")
     ("intrinsics", bpo::value<string>())
-//    ("output,o", bpo::value<string>()->default_value("planarity_experiment.txt"), "Where to save results")
     ;
 
   p.add("sseq", 1);
@@ -116,12 +106,13 @@ int main(int argc, char** argv)
     dddm->load(opts["intrinsics"].as<string>());
   }
   
-  for(size_t i = 0; i < sseq.size(); i += 10) {
+  for(size_t i = 10; i < sseq.size(); i += 10) {
     double mean_range;
+    double error;
     double rms;
-    bool valid = process(sseq, i, dddm, &mean_range, &rms);
+    bool valid = process(sseq, i, dddm, &mean_range, &error, &rms);
     if(valid)
-      cout << mean_range << " " << rms << endl;
+      cout << mean_range << " " << error << " " << rms << endl;
   }
 
   return 0;

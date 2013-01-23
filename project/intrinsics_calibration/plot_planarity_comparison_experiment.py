@@ -21,13 +21,13 @@ undistorted = np.loadtxt(path + "/undistorted.txt")
 fig = plt.figure(figsize=(10,5))
 ax = fig.add_subplot(1, 1, 1)
 ax.set_xlabel('Distance (meters)')
-ax.set_ylabel('Mean error (meters)')
+ax.set_ylabel('RMS error (meters)')
 grid(True)
 
-ax.scatter(undistorted[:, 0], undistorted[:, 1], color='red', marker='o', s=40)
-ax.scatter(raw[:, 0], raw[:, 1], color='black', marker='x', s=40)
+ax.scatter(undistorted[:, 0], undistorted[:, 2], color='red', marker='o', s=40)
+ax.scatter(raw[:, 0], raw[:, 2], color='black', marker='x', s=40)
 
-ylim(0, max(float(np.amax(undistorted[:, 1])), float(np.amax(raw[:, 1]))) + 0.01)
+ylim(0, max(float(np.amax(undistorted[:, 2])), float(np.amax(raw[:, 2]))) + 0.01)
 
 savefig(path + '/comparison.pdf')
 savefig(path + '/comparison.png')
