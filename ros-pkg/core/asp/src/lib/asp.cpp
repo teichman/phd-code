@@ -618,6 +618,8 @@ namespace asp
 
   void drawLine(cv::Point2d pt, const cv::Point2d& pt1, double potential, cv::Mat3b vis)
   {
+    ROS_ASSERT(pt.x != pt1.x || pt.y != pt1.y);
+    
     if(pt1.x < 0 || pt1.x >= vis.cols)
       return;
     if(pt1.y < 0 || pt1.y >= vis.rows)
@@ -678,6 +680,10 @@ namespace asp
 	SparseMat::InnerIterator it(edge, idx0);
 	for(; it; ++it) {
 	  int idx1 = it.col();
+	  if(idx1 == idx0) {
+	    ROS_WARN_ONCE("At least one edge from a node to itself encountered in drawEdgeVisualization.");
+	    continue;
+	  }
 	  int y1 = idx1 / img.cols;
 	  int x1 = idx1 - y1 * img.cols;
 
