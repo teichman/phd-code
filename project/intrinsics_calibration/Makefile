@@ -187,11 +187,13 @@ $(1)/evaluation/planarity_experiment/undistorted.pdf: 	$(1)/evaluation/planarity
 							$$$$@-experiment_metadata.txt
 	python $(MAKE_ROOT)/plot_planarity_experiment.py $$<
 
-$(1)/evaluation/planarity_experiment/raw.txt:  $$(PLANARITY_LOG_$(1)) $$$$@-experiment_metadata.txt
+$(1)/evaluation/planarity_experiment/raw.txt:  $$(PLANARITY_LOG_$(1)) $$$$@-experiment_metadata.txt \
+						$(shell echo $$(rospack find xpl_calibration)/bin/planarity_experiment)
 	mkdir -p $$(@D)
 	rosrun xpl_calibration planarity_experiment $$< > $$@
 
-$(1)/evaluation/planarity_experiment/undistorted.txt:  $$(PLANARITY_LOG_$(1)) $(1)/evaluation/discrete_learned_model $$$$@-experiment_metadata.txt
+$(1)/evaluation/planarity_experiment/undistorted.txt:  $$(PLANARITY_LOG_$(1)) $(1)/evaluation/discrete_learned_model $$$$@-experiment_metadata.txt \
+							$(shell echo $$(rospack find xpl_calibration)/bin/planarity_experiment)
 	mkdir -p $$(@D)
 	rosrun xpl_calibration planarity_experiment $$< --intrinsics $(1)/evaluation/discrete_learned_model > $$@
 
