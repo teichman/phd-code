@@ -45,6 +45,7 @@ int main(int argc, char** argv)
   cout << "Mean fps: " << (double)sseq->size() / (sseq->timestamps_.back() - sseq->timestamps_.front()) << endl;
   cout << "Mean dt: " << mean_dt << endl;
   cout << "Max dt: " << max_dt << endl;
+  cout << "Total time (s): " << sseq->timestamps_.back() - sseq->timestamps_.front() << endl;
   cout << "--------------------" << endl;
   cout << "Sensor model: " << endl;
   cout << sseq->model_.status("  ");

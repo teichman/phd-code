@@ -3,8 +3,13 @@
 # -- Global settings.
 ############################################################
 
-.SECONDEXPANSION:	# Allows use of automatic vars in prerequisites.
-.SECONDARY:		# Prevents deletion of intermediate targets in a chain of implicit rules.
+# Allows use of automatic vars in prerequisites.
+.SECONDEXPANSION:	
+# Prevents deletion of intermediate targets in a chain of implicit rules.
+.PRECIOUS:
+# ... but if there's an error, the target should be deleted.
+# Otherwise, the next time you run make, it will try to proceed using that file!
+.DELETE_ON_ERROR:	
 
 export NUM_THREADS	:= 40
 #SHELL = $(warning ---------- Making $@$(if $?,. Newer prereqs: $?)) /bin/bash -x
@@ -26,8 +31,10 @@ AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-0
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
-PLANARITY_LOG_xpl00	:= $(DATA_PATH)/planar_sequences/xpl00/2013-01-24_hewlett_outside
-PLANARITY_LOG_xpl03	:= $(DATA_PATH)/planar_sequences/xpl03/2013-01-22_hewlett_outside
+PLANARITY_LOG_xpl00		:= $(DATA_PATH)/planar_sequences/xpl00/2013-01-24_hewlett_outside
+PLANARITY_TRAINING_xpl00	:= 2013-01-07_2a_backandforth_01 \
+					2012-12-19_boardroom_1 
+PLANARITY_LOG_xpl03		:= $(DATA_PATH)/planar_sequences/xpl03/2013-01-22_hewlett_outside
 
 SLAM_RUNS_TRAINING_kinect00	:=	2013-01-15_2a_medium_range_0
 SLAM_RUNS_TESTING_kinect00	:=	2013-01-15_2a_medium_range_1
@@ -185,11 +192,24 @@ TRAJECTORIES_SUB_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do find $$$${DIR} -name 
 SLAM_RUNS_DUPL_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do \
 	for TRAJ in $$$$(ls $$$${DIR} | grep traj); do basename $$$${DIR} | xargs -I {} echo $(SLAM_DATA_PATH)/$(1)/{}; done; done`
 
+PLANARITY_TRAJDIRS_TRAINING_$(1) := $$(addprefix $(1)/slam_results/, $$(PLANARITY_TRAINING_$(1)))
+PLANARITY_TRAJECTORIES_SUB_$(1) := `for DIR in $$(PLANARITY_TRAJDIRS_TRAINING_$(1)); do find $$$${DIR} -name *.traj; done`
+PLANARITY_SLAM_RUNS_DUPL_$(1) := `for DIR in $$(PLANARITY_TRAJDIRS_TRAINING_$(1)); do \
+	for TRAJ in $$$$(ls $$$${DIR} | grep traj); do basename $$$${DIR} | xargs -I {} echo $(SLAM_DATA_PATH)/$(1)/{}; done; done`
+
 $(1)/evaluation/planarity_experiment/comparison.pdf:	$(1)/evaluation/planarity_experiment/raw.txt \
 							$(1)/evaluation/planarity_experiment/undistorted.txt \
 							$(MAKE_ROOT)/common_plotting.py \
-							$(MAKE_ROOT)/plot_planarity_comparison_experiment.py
+							$(MAKE_ROOT)/plot_planarity_comparison_experiment.py \
+							$(1)/evaluation/planarity_experiment/training_time.txt
 	python $(MAKE_ROOT)/plot_planarity_comparison_experiment.py $$(@D)
+
+$(1)/evaluation/planarity_experiment/training_time.txt:
+	for seq in $$(PLANARITY_TRAINING_$(1)); do \
+	rosrun rgbd_sequence view_stream --only-stats $(SLAM_DATA_PATH)/$(1)/$$$$seq; \
+	done \
+	| grep 'Total time' | awk '{sum += $$$$NF} END {print sum}' \
+	> $$@
 
 $(1)/evaluation/planarity_experiment/raw.pdf: 	$(1)/evaluation/planarity_experiment/raw.txt \
 						$(MAKE_ROOT)/plot_planarity_experiment.py \
@@ -208,10 +228,20 @@ $(1)/evaluation/planarity_experiment/raw.txt:  $$(PLANARITY_LOG_$(1)) $$$$@-expe
 	mkdir -p $$(@D)
 	rosrun xpl_calibration planarity_experiment $$< > $$@
 
-$(1)/evaluation/planarity_experiment/undistorted.txt:  $$(PLANARITY_LOG_$(1)) $(1)/evaluation/discrete_learned_model $$$$@-experiment_metadata.txt \
-							$(shell echo $$(rospack find xpl_calibration)/bin/planarity_experiment)
+$(1)/evaluation/planarity_experiment/undistorted.txt:	$(1)/evaluation/planarity_experiment/intrinsics \
+							$(shell echo $$(rospack find xpl_calibration)/bin/planarity_experiment) \
+							$$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
-	rosrun xpl_calibration planarity_experiment $$< --intrinsics $(1)/evaluation/discrete_learned_model > $$@
+	rosrun xpl_calibration planarity_experiment $$(PLANARITY_LOG_$(1)) --intrinsics $(1)/evaluation/planarity_experiment/intrinsics > $$@
+
+$(1)/evaluation/planarity_experiment/intrinsics: $$(PLANARITY_TRAJDIRS_TRAINING_$(1)) $$$$@-experiment_metadata.txt
+	mkdir -p $$(@D)
+	rosrun xpl_calibration calibrate_slam \
+	--discrete \
+	$$$$(for f in $$(PLANARITY_SLAM_RUNS_DUPL_$(1)); do echo --sseq $$$$f; done) \
+	$$$$(for f in $$(PLANARITY_TRAJECTORIES_SUB_$(1)); do echo --traj $$$$f; done) \
+	--omodel $$@ \
+	| tee $$@-log.txt
 
 $(1)/evaluation/iterative_calibration_experiment: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
@@ -326,6 +356,24 @@ $(1)/evaluation/learned_model.psm: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.t
 
 $(1)/evaluation/discrete_learned_model-vis: $(1)/evaluation/discrete_learned_model
 	rosrun xpl_calibration visualize_intrinsics $$< $$@
+
+$(1)-stats-all-sequences:
+	for seq in $$(SLAM_RUNS_$(1)); do \
+	rosrun rgbd_sequence view_stream --only-stats $(SLAM_DATA_PATH)/$(1)/$$$$seq; \
+	done \
+	| grep 'Total time' | awk '{sum += $$$$NF} END {print sum}'
+
+$(1)-stats-training-sequences:
+	for seq in $$(SLAM_RUNS_TRAINING_$(1)); do \
+	rosrun rgbd_sequence view_stream --only-stats $(SLAM_DATA_PATH)/$(1)/$$$$seq; \
+	done \
+	| grep 'Total time' | awk '{sum += $$$$NF} END {print sum}'
+
+$(1)-stats-testing-sequences:
+	for seq in $$(SLAM_RUNS_TESTING_$(1)); do \
+	rosrun rgbd_sequence view_stream --only-stats $(SLAM_DATA_PATH)/$(1)/$$$$seq; \
+	done \
+	| grep 'Total time' | awk '{sum += $$$$NF} END {print sum}'
 
 $(1)/evaluation/discrete_learned_model: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
