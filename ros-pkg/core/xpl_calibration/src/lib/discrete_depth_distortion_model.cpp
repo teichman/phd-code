@@ -413,12 +413,12 @@ void DiscreteDepthDistortionModel::visualize(const std::string& dir) const
 	const Frustum& frustum = *frustums_[y / bin_height_][x / bin_width_];
 	float val = frustum.multipliers_(i);
 	if(val > 1) {
-	  pubmult(y, x)[0] = 255 - min(255., 255 * (val - 1.0) / 0.15);
-	  pubmult(y, x)[1] = 255 - min(255., 255 * (val - 1.0) / 0.15);
+	  pubmult(y, x)[0] = 255 - min(255., 255 * (val - 1.0) / 0.1);
+	  pubmult(y, x)[1] = 255 - min(255., 255 * (val - 1.0) / 0.1);
 	}
 	if(val < 1) {
-	  pubmult(y, x)[1] = 255 - min(255., 255 * (1.0 - val) / 0.15);
-	  pubmult(y, x)[2] = 255 - min(255., 255 * (1.0 - val) / 0.15);
+	  pubmult(y, x)[1] = 255 - min(255., 255 * (1.0 - val) / 0.1);
+	  pubmult(y, x)[2] = 255 - min(255., 255 * (1.0 - val) / 0.1);
 	}
       }
     }
