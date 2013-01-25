@@ -26,7 +26,7 @@ AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-0
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
-PLANARITY_LOG_xpl00	:= $(DATA_PATH)/planar_sequences/xpl00/2013-01-12_hewlett_0
+PLANARITY_LOG_xpl00	:= $(DATA_PATH)/planar_sequences/xpl00/2013-01-24_hewlett_outside
 PLANARITY_LOG_xpl03	:= $(DATA_PATH)/planar_sequences/xpl03/2013-01-22_hewlett_outside
 
 SLAM_RUNS_TRAINING_kinect00	:=	2013-01-15_2a_medium_range_0

@@ -39,8 +39,8 @@ Vector3f planeFitRANSAC(Cloud::ConstPtr cloud)
 {
   SampleConsensusModelPlane<Point>::Ptr scm(new SampleConsensusModelPlane<Point>(cloud));
   RandomSampleConsensus<Point> ransac(scm);  
-  ransac.setDistanceThreshold(0.1);
-  ransac.setMaxIterations(1000);
+  ransac.setDistanceThreshold(0.05);
+  ransac.setMaxIterations(2000);
   ransac.computeModel();
   vector<int> indices;
   ransac.getInliers(indices);
@@ -140,7 +140,7 @@ int main(int argc, char** argv)
     dddm->load(opts["intrinsics"].as<string>());
   }
   
-  for(size_t i = 10; i < sseq.size(); i += 15) {
+  for(size_t i = 10; i < sseq.size(); i += 5) {
     double mean_range;
     double error;
     double rms;
