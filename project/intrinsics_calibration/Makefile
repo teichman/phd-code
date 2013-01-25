@@ -27,6 +27,7 @@ AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
 PLANARITY_LOG_xpl00	:= $(DATA_PATH)/planar_sequences/xpl00/2013-01-12_hewlett_0
+PLANARITY_LOG_xpl03	:= $(DATA_PATH)/planar_sequences/xpl03/2013-01-22_hewlett_outside
 
 SLAM_RUNS_TRAINING_kinect00	:=	2013-01-15_2a_medium_range_0
 SLAM_RUNS_TESTING_kinect00	:=	2013-01-15_2a_medium_range_1
@@ -184,21 +185,31 @@ TRAJECTORIES_SUB_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do find $$$${DIR} -name 
 SLAM_RUNS_DUPL_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do \
 	for TRAJ in $$$$(ls $$$${DIR} | grep traj); do basename $$$${DIR} | xargs -I {} echo $(SLAM_DATA_PATH)/$(1)/{}; done; done`
 
+$(1)/evaluation/planarity_experiment/comparison.pdf:	$(1)/evaluation/planarity_experiment/raw.txt \
+							$(1)/evaluation/planarity_experiment/undistorted.txt \
+							$(MAKE_ROOT)/common_plotting.py \
+							$(MAKE_ROOT)/plot_planarity_comparison_experiment.py
+	python $(MAKE_ROOT)/plot_planarity_comparison_experiment.py $$(@D)
+
 $(1)/evaluation/planarity_experiment/raw.pdf: 	$(1)/evaluation/planarity_experiment/raw.txt \
 						$(MAKE_ROOT)/plot_planarity_experiment.py \
+						$(MAKE_ROOT)/common_plotting.py \
 						$$$$@-experiment_metadata.txt
 	python $(MAKE_ROOT)/plot_planarity_experiment.py $$<
 
 $(1)/evaluation/planarity_experiment/undistorted.pdf: 	$(1)/evaluation/planarity_experiment/undistorted.txt \
 							$(MAKE_ROOT)/plot_planarity_experiment.py \
+							$(MAKE_ROOT)/common_plotting.py \
 							$$$$@-experiment_metadata.txt
 	python $(MAKE_ROOT)/plot_planarity_experiment.py $$<
 
-$(1)/evaluation/planarity_experiment/raw.txt:  $$(PLANARITY_LOG_$(1)) $$$$@-experiment_metadata.txt
+$(1)/evaluation/planarity_experiment/raw.txt:  $$(PLANARITY_LOG_$(1)) $$$$@-experiment_metadata.txt \
+						$(shell echo $$(rospack find xpl_calibration)/bin/planarity_experiment)
 	mkdir -p $$(@D)
 	rosrun xpl_calibration planarity_experiment $$< > $$@
 
-$(1)/evaluation/planarity_experiment/undistorted.txt:  $$(PLANARITY_LOG_$(1)) $(1)/evaluation/discrete_learned_model $$$$@-experiment_metadata.txt
+$(1)/evaluation/planarity_experiment/undistorted.txt:  $$(PLANARITY_LOG_$(1)) $(1)/evaluation/discrete_learned_model $$$$@-experiment_metadata.txt \
+							$(shell echo $$(rospack find xpl_calibration)/bin/planarity_experiment)
 	mkdir -p $$(@D)
 	rosrun xpl_calibration planarity_experiment $$< --intrinsics $(1)/evaluation/discrete_learned_model > $$@
 

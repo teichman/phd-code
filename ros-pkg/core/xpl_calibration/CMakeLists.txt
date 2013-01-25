@@ -180,3 +180,7 @@ target_link_libraries(iterative_calibration_experiment ${PROJECT_NAME})
 rosbuild_add_executable(planarity_experiment src/prog/planarity_experiment.cpp)
 rosbuild_link_boost(planarity_experiment program_options filesystem)
 target_link_libraries(planarity_experiment ${PROJECT_NAME})
+
+rosbuild_add_executable(view_stream src/prog/view_stream.cpp)
+rosbuild_link_boost(view_stream program_options filesystem)
+target_link_libraries(view_stream ${PROJECT_NAME})

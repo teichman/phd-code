@@ -1,79 +1,104 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
+#include <pcl/sample_consensus/ransac.h>
+#include <pcl/sample_consensus/sac_model_plane.h>
 #include <rgbd_sequence/stream_sequence.h>
 #include <xpl_calibration/discrete_depth_distortion_model.h>
 
 using namespace std;
 using namespace Eigen;
+using namespace pcl;
 using namespace rgbd;
 
+Vector3f planeFitSVD(Cloud::ConstPtr cloud)
+{
+  double total = 0;
+  for(size_t i = 0; i < cloud->size(); ++i)
+    if(isFinite((*cloud)[i]))
+      ++total;
+  
+  Vector3f mean = Vector3f::Zero();
+  for(size_t i = 0; i < cloud->size(); ++i)
+    if(isFinite((*cloud)[i]))
+      mean += (*cloud)[i].getVector3fMap();
+  mean /= total;
+  
+  Matrix3d X = Matrix3d::Zero();
+  for(size_t i = 0; i < cloud->size(); ++i)
+    if(isFinite((*cloud)[i]))
+      X += (((*cloud)[i].getVector3fMap() - mean) * ((*cloud)[i].getVector3fMap() - mean).transpose()).cast<double>();
+
+  JacobiSVD<Matrix3d> svd(X, Eigen::ComputeFullU | Eigen::ComputeFullV);
+  Matrix3d V = svd.matrixV();
+  Vector3f normal = V.col(2).cast<float>();
+
+  return normal;
+}
+
+Vector3f planeFitRANSAC(Cloud::ConstPtr cloud)
+{
+  SampleConsensusModelPlane<Point>::Ptr scm(new SampleConsensusModelPlane<Point>(cloud));
+  RandomSampleConsensus<Point> ransac(scm);  
+  ransac.setDistanceThreshold(0.1);
+  ransac.setMaxIterations(1000);
+  ransac.computeModel();
+  vector<int> indices;
+  ransac.getInliers(indices);
+
+  Cloud::Ptr inliers(new Cloud);
+  inliers->reserve(indices.size());
+  for(size_t i = 0; i < indices.size(); ++i)
+    inliers->push_back((*cloud)[indices[i]]);
+
+  return planeFitSVD(inliers);
+}
+
 bool process(const StreamSequence& sseq, size_t idx, DiscreteDepthDistortionModel* dddm,
-	     double* mean_range, double* error)
+	     double* mean_range, double* error, double* rms)
 {
   Frame frame;
   sseq.readFrame(idx, &frame);
   if(dddm)
     dddm->undistort(&frame);
-  Cloud cloud;
-  sseq.model_.frameToCloud(frame, &cloud);
+  Cloud::Ptr cloud(new Cloud);
+  sseq.model_.frameToCloud(frame, cloud.get());
 
   double total = 0;
-  for(size_t i = 0; i < cloud.size(); ++i)
-    if(isFinite(cloud[i]))
+  for(size_t i = 0; i < cloud->size(); ++i)
+    if(isFinite((*cloud)[i]))
       ++total;
 
   if(total < 30000)
     return false;
 
-  Vector3f mean = Vector3f::Zero();
-  for(size_t i = 0; i < cloud.size(); ++i)
-    if(isFinite(cloud[i]))
-      mean += cloud[i].getVector3fMap();
-  mean /= total;
-  
-  Matrix3d X = Matrix3d::Zero();
-  for(size_t i = 0; i < cloud.size(); ++i)
-    if(isFinite(cloud[i]))
-      X += ((cloud[i].getVector3fMap() - mean) * (cloud[i].getVector3fMap() - mean).transpose()).cast<double>();
-
-  //cout << X << endl;
-  //cout << endl;
-
-  JacobiSVD<Matrix3d> svd(X, Eigen::ComputeFullU | Eigen::ComputeFullV);
-  Matrix3d U = svd.matrixU();
-  Matrix3d V = svd.matrixV();
-  Vector3d svals = svd.singularValues();
-
-  //cout << U << endl;
-  //cout << endl;
-  //cout << svals.transpose() << endl;
-  //cout << endl;
-  //cout << V << endl;
-  //cout << endl;
-
-  Vector3f normal = V.col(2).cast<float>();
-  //cout << "Normal: " << normal.transpose() << endl;
+  //Vector3f normal = planeFitSVD(cloud);
+  Vector3f normal = planeFitRANSAC(cloud);
   
   double mean_offset = 0;
-  for(size_t i = 0; i < cloud.size(); ++i)
-    if(isFinite(cloud[i]))
-      mean_offset += normal.dot(cloud[i].getVector3fMap());
+  for(size_t i = 0; i < cloud->size(); ++i)
+    if(isFinite((*cloud)[i]))
+      mean_offset += normal.dot((*cloud)[i].getVector3fMap());
   mean_offset /= total;
-  //cout << "mean_offset: " << mean_offset << endl;
 
   *mean_range = 0;
-  for(size_t i = 0; i < cloud.size(); ++i)
-    if(isFinite(cloud[i]))
-      *mean_range += cloud[i].z;
+  for(size_t i = 0; i < cloud->size(); ++i)
+    if(isFinite((*cloud)[i]))
+      *mean_range += (*cloud)[i].z;
   *mean_range /= total;
-  //cout << "Mean range: " << *mean_range << endl;
   
   *error = 0;
-  for(size_t i = 0; i < cloud.size(); ++i)
-    if(isFinite(cloud[i]))
-      *error += fabs(normal.dot(cloud[i].getVector3fMap()) - mean_offset);
+  for(size_t i = 0; i < cloud->size(); ++i)
+    if(isFinite((*cloud)[i]))
+      *error += fabs(normal.dot((*cloud)[i].getVector3fMap()) - mean_offset);
   *error /= total;
 
+  *rms = 0;
+  for(size_t i = 0; i < cloud->size(); ++i)
+    if(isFinite((*cloud)[i]))
+      *rms += pow(normal.dot((*cloud)[i].getVector3fMap()) - mean_offset, 2);
+  *rms /= total;
+  *rms = sqrt(*rms);
+  
   return true;
 }
 
@@ -88,7 +113,6 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("sseq", bpo::value<string>()->required(), "StreamSequence, i.e. asus data.")
     ("intrinsics", bpo::value<string>())
-//    ("output,o", bpo::value<string>()->default_value("planarity_experiment.txt"), "Where to save results")
     ;
 
   p.add("sseq", 1);
@@ -116,12 +140,13 @@ int main(int argc, char** argv)
     dddm->load(opts["intrinsics"].as<string>());
   }
   
-  for(size_t i = 0; i < sseq.size(); i += 10) {
+  for(size_t i = 10; i < sseq.size(); i += 15) {
     double mean_range;
+    double error;
     double rms;
-    bool valid = process(sseq, i, dddm, &mean_range, &rms);
+    bool valid = process(sseq, i, dddm, &mean_range, &error, &rms);
     if(valid)
-      cout << mean_range << " " << rms << endl;
+      cout << mean_range << " " << error << " " << rms << endl;
   }
 
   return 0;

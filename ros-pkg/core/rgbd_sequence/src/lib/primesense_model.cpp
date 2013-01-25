@@ -104,9 +104,9 @@ namespace rgbd
 	frame->img_(ppt.v_, ppt.u_)[0] = ppt.b_;
 	frame->img_(ppt.v_, ppt.u_)[1] = ppt.g_;
 	frame->img_(ppt.v_, ppt.u_)[2] = ppt.r_;
-  if(indexmap) {
-    (*indexmap)(ppt.v_, ppt.u_) = i;
-  }
+	if(indexmap) {
+	  (*indexmap)(ppt.v_, ppt.u_) = i;
+	}
       }
     }
   }
