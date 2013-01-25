@@ -31,11 +31,6 @@ AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-0
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
-PLANARITY_LOG_xpl00		:= $(DATA_PATH)/planar_sequences/xpl00/2013-01-24_hewlett_outside
-PLANARITY_TRAINING_xpl00	:= 2013-01-07_2a_backandforth_01 \
-					2012-12-19_boardroom_1 
-PLANARITY_LOG_xpl03		:= $(DATA_PATH)/planar_sequences/xpl03/2013-01-22_hewlett_outside
-
 SLAM_RUNS_TRAINING_kinect00	:=	2013-01-15_2a_medium_range_0
 SLAM_RUNS_TESTING_kinect00	:=	2013-01-15_2a_medium_range_1
 SLAM_RUNS_kinect00 := $(SLAM_RUNS_TRAINING_kinect00) $(SLAM_RUNS_TESTING_kinect00)
@@ -115,6 +110,12 @@ AVV_MULTIVIEW_PATHS_xpl01	:=	$(addprefix $(AVV_PATH)/2012-11-06_primesense_vs_ve
 AVV_MULTIVIEW_PATHS_xpl04	:=	$(AVV_PATH)/2012-11-06_primesense_vs_velo/xpl04_down-11-05-2012_23-47-23 \
 					$(AVV_PATH)/2012-11-06_primesense_vs_velo/xpl04_straight-11-06-2012_00-01-38 \
 					$(AVV_PATH)/2012-11-06_primesense_vs_velo/xpl04_up-11-05-2012_23-53-26
+
+PLANARITY_LOG_xpl00		:= $(DATA_PATH)/planar_sequences/xpl00/2013-01-24_hewlett_outside
+PLANARITY_TRAINING_xpl00	:= $(SLAM_RUNS_TESTING_xpl00)
+
+PLANARITY_LOG_xpl03		:= $(DATA_PATH)/planar_sequences/xpl03/2013-01-22_hewlett_outside
+
 
 all:
 	@echo You should probably be more specific.
@@ -196,6 +197,10 @@ PLANARITY_TRAJDIRS_TRAINING_$(1) := $$(addprefix $(1)/slam_results/, $$(PLANARIT
 PLANARITY_TRAJECTORIES_SUB_$(1) := `for DIR in $$(PLANARITY_TRAJDIRS_TRAINING_$(1)); do find $$$${DIR} -name *.traj; done`
 PLANARITY_SLAM_RUNS_DUPL_$(1) := `for DIR in $$(PLANARITY_TRAJDIRS_TRAINING_$(1)); do \
 	for TRAJ in $$$$(ls $$$${DIR} | grep traj); do basename $$$${DIR} | xargs -I {} echo $(SLAM_DATA_PATH)/$(1)/{}; done; done`
+
+
+$(1)-visualize-planarity-experiment:	$(1)/evaluation/planarity_experiment/intrinsics
+	rosrun xpl_calibration view_stream $$(PLANARITY_LOG_$(1)) --intrinsics $$<
 
 $(1)/evaluation/planarity_experiment/comparison.pdf:	$(1)/evaluation/planarity_experiment/raw.txt \
 							$(1)/evaluation/planarity_experiment/undistorted.txt \

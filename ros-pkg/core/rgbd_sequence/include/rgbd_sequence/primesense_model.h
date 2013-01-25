@@ -84,6 +84,12 @@ namespace rgbd
 		      double max_range = std::numeric_limits<double>::max()) const;
     void cloudToFrame(const Cloud& pcd, Frame* frame, IndexMap* indexmap = NULL) const;
     void cloudToDepthIndex(const Cloud& pcd, DepthIndex* dindex) const;
+    //! transform is applied to the map, then projected into a depth index.
+    //! The best depth estimate from the map corresponding to the measurement depth frame
+    //! will be returned.
+    void estimateMapDepth(const Cloud& map, const Eigen::Affine3f& transform,
+			  const Frame& frame, DepthMat* estimate) const;
+			  
     //! Applies depth distortion model to the depth data in frame.
     void undistort(Frame* frame) const;
     
