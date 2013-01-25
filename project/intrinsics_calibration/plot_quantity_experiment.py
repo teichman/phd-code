@@ -22,15 +22,13 @@ data = np.loadtxt(tmpfile)
 os.system("rm " + tmpfile)
 # print data
 
-fig = plt.figure(figsize=(10,6))
-ax = fig.add_subplot(1, 1, 1)
-ax.set_xlabel('Seconds of training data')
-ax.set_ylabel('Error reduction (\%)')
+fig = plt.figure(figsize=(10, 6))
+ax = fig.add_axes([0.1, 0.15, 0.85, 0.8])
+ax.set_xlabel('Seconds of training data', labelpad=20)
+ax.set_ylabel('Error reduction (\%)', labelpad=20)
 grid(True)
 
 ax.scatter(data[:, 0], 100 * data[:, 1], color='black', marker='x', s=40)
-#ylim(0, 0.25)
-#xlim(0, 400)
 ylim(0, np.amax(100 * data[:, 1]) * 1.1)
 
 savefig(path + '/quantity_experiment.pdf')

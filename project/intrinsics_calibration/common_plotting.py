@@ -19,10 +19,14 @@ def setup():
     fig_size =  [fig_width,fig_height]
     params = {'figure.figsize': fig_size}
     rcParams['lines.linewidth'] = 3
-    rcParams['font.size'] = 18
+    rcParams['font.size'] = 20
     rcParams['font.weight'] = 1000
     rcParams['text.usetex'] = True
     rcParams['font.family'] = 'serif'
     rcParams['font.serif'] = 'cmr10'
+#    rcParams['svg.fonttype'] = 'none'  # assume fonts are installed where the figure will be viewed
+#    rcParams['axes.labelpad'] = 16
     rcParams['axes.labelsize'] = 'large'
+    rcParams['xtick.labelsize'] = 'small'
+    rcParams['ytick.labelsize'] = 'small'
     rcParams.update(params)
