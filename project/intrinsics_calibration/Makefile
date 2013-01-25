@@ -92,10 +92,10 @@ SLAM_RUNS_TESTING_xpl03		:=	2012-12-19_xpl03_boardroom_2 \
 
 SLAM_RUNS_xpl03 := $(SLAM_RUNS_TRAINING_xpl03) $(SLAM_RUNS_TESTING_xpl03)
 
+# 					2013-01-16_boardroom_3  # Has bad image.
 SLAM_RUNS_TRAINING_xpl05	:=	2013-01-16_boardroom_0 \
 					2013-01-16_boardroom_1
-SLAM_RUNS_TESTING_xpl05		:=	2013-01-16_boardroom_2 \
-					2013-01-16_boardroom_3
+SLAM_RUNS_TESTING_xpl05		:=	2013-01-16_boardroom_2
 SLAM_RUNS_xpl05 := $(SLAM_RUNS_TRAINING_xpl05) $(SLAM_RUNS_TESTING_xpl05)
 
 # Data specifically for the 2012-11-06 run in which multiple sensor views were collected.
