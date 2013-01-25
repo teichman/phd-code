@@ -230,8 +230,10 @@ $(1)/evaluation/slam_eval: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	--trajs $$(TRAJECTORIES_ONLYFIRST_$(1))
 	cd $$(@D) && for file in `find -name intrinsics | sort`; do echo $$$$file; rosrun xpl_calibration visualize_intrinsics $$$$file $$$${file}-vis; done
 
-$(1)/evaluation/slam_eval_quantity/quantity_experiment.pdf: $(MAKE_ROOT)/plot_quantity_experiment.py $(1)/evaluation/slam_eval_quantity
-	python $$^
+$(1)/evaluation/slam_eval_quantity/quantity_experiment.pdf: 	$(MAKE_ROOT)/common_plotting.py \
+								$(MAKE_ROOT)/plot_quantity_experiment.py \
+								$(1)/evaluation/slam_eval_quantity
+	python $(MAKE_ROOT)/plot_quantity_experiment.py $(1)/evaluation/slam_eval_quantity
 
 $(1)/evaluation/slam_eval_quantity: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
