@@ -9,6 +9,8 @@ using namespace rgbd;
 namespace bpo = boost::program_options;
 namespace bfs = boost::filesystem;
 
+#define MAX_DEPTH_EVAL 7
+
 void computeDistortion(const Frame& frame, const Frame& mapframe,
 		       double* total_error, double* num_pts)
 {
@@ -23,6 +25,10 @@ void computeDistortion(const Frame& frame, const Frame& mapframe,
       if(frame.depth_->coeffRef(y, x) == 0)
 	continue;
       if(mapframe.depth_->coeffRef(y, x) == 0)
+	continue;
+      if(frame.depth_->coeffRef(y, x) * 0.001 > MAX_DEPTH_EVAL)
+	continue;
+      if(mapframe.depth_->coeffRef(y, x) * 0.001 > MAX_DEPTH_EVAL)
 	continue;
 
       double meas = frame.depth_->coeffRef(y, x) * 0.001;
