@@ -19,7 +19,10 @@ def setup():
     fig_size =  [fig_width,fig_height]
     params = {'figure.figsize': fig_size}
     rcParams['lines.linewidth'] = 3
-    rcParams['font.size'] = 14
+    rcParams['font.size'] = 18
+    rcParams['font.weight'] = 1000
     rcParams['text.usetex'] = True
     rcParams['font.family'] = 'serif'
+    rcParams['font.serif'] = 'cmr10'
+    rcParams['axes.labelsize'] = 'large'
     rcParams.update(params)

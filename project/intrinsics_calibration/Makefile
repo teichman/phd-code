@@ -171,19 +171,21 @@ TRAJECTORIES_SUB_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do find $$$${DIR} -name 
 SLAM_RUNS_DUPL_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do \
 	for TRAJ in $$$$(ls $$$${DIR} | grep traj); do basename $$$${DIR} | xargs -I {} echo $(SLAM_DATA_PATH)/$(1)/{}; done; done`
 
-
 $(1)/evaluation/planarity_experiment/comparison.pdf:	$(1)/evaluation/planarity_experiment/raw.txt \
 							$(1)/evaluation/planarity_experiment/undistorted.txt \
+							$(MAKE_ROOT)/common_plotting.py \
 							$(MAKE_ROOT)/plot_planarity_comparison_experiment.py
 	python $(MAKE_ROOT)/plot_planarity_comparison_experiment.py $$(@D)
 
 $(1)/evaluation/planarity_experiment/raw.pdf: 	$(1)/evaluation/planarity_experiment/raw.txt \
 						$(MAKE_ROOT)/plot_planarity_experiment.py \
+						$(MAKE_ROOT)/common_plotting.py \
 						$$$$@-experiment_metadata.txt
 	python $(MAKE_ROOT)/plot_planarity_experiment.py $$<
 
 $(1)/evaluation/planarity_experiment/undistorted.pdf: 	$(1)/evaluation/planarity_experiment/undistorted.txt \
 							$(MAKE_ROOT)/plot_planarity_experiment.py \
+							$(MAKE_ROOT)/common_plotting.py \
 							$$$$@-experiment_metadata.txt
 	python $(MAKE_ROOT)/plot_planarity_experiment.py $$<
 
