@@ -52,7 +52,7 @@ PrimeSenseModel DepthDistortionLearner::fitFocalLength()
   return model;
 }
 
-bool gaussianTest(const PrimeSenseModel& model, const DepthMat& mapdepth, const DepthIndex& dindex, int uc, int vc, double radius, cv::Mat3b* visualization, double* mean_dist)
+bool gaussianTest(const PrimeSenseModel& model, const DepthMat& mapdepth, const RangeIndex& rindex, int uc, int vc, double radius, cv::Mat3b* visualization, double* mean_dist)
 {
   Point pt_center, pt_ul, pt_lr;
   ProjectivePoint ppt, ppt_ul, ppt_lr;
@@ -84,7 +84,7 @@ bool gaussianTest(const PrimeSenseModel& model, const DepthMat& mapdepth, const 
   double num = 0;
   for(ppt.u_ = min_u; ppt.u_ <= max_u; ++ppt.u_) {
     for(ppt.v_ = min_v; ppt.v_ <= max_v; ++ppt.v_) {
-      const vector<double>& vals = dindex[ppt.v_][ppt.u_];
+      const vector<double>& vals = rindex[ppt.v_][ppt.u_];
       num += vals.size();
       for(size_t i = 0; i < vals.size(); ++i)
 	mean += vals[i];
@@ -96,7 +96,7 @@ bool gaussianTest(const PrimeSenseModel& model, const DepthMat& mapdepth, const 
   double var = 0;
   for(ppt.u_ = min_u; ppt.u_ <= max_u; ++ppt.u_) {
     for(ppt.v_ = min_v; ppt.v_ <= max_v; ++ppt.v_) {
-      const vector<double>& vals = dindex[ppt.v_][ppt.u_];
+      const vector<double>& vals = rindex[ppt.v_][ppt.u_];
       for(size_t i = 0; i < vals.size(); ++i)
 	var += (vals[i] - mean) * (vals[i] - mean);
     }
@@ -246,7 +246,7 @@ cv::Mat3b visualizeMultipliers(const MatrixXd& multipliers)
 void DepthDistortionLearner::computeMultiplierMap(const PrimeSenseModel& model,
 						  const DepthMat& depth,
 						  const DepthMat& mapdepth,
-						  const DepthIndex& dindex,
+						  const RangeIndex& rindex,
 						  Eigen::MatrixXd* multipliers,
 						  cv::Mat3b* visualization) const
 {
@@ -290,7 +290,7 @@ void DepthDistortionLearner::computeMultiplierMap(const PrimeSenseModel& model,
       // 	continue;
 
       double mean_dist = 0;
-      if(use_filters_ && !gaussianTest(model, mapdepth, dindex, ppt.u_, ppt.v_, 0.02, visualization, &mean_dist))
+      if(use_filters_ && !gaussianTest(model, mapdepth, rindex, ppt.u_, ppt.v_, 0.02, visualization, &mean_dist))
       	continue;
       
       ppt.z_ = mapdepth(ppt.v_, ppt.u_);
@@ -355,10 +355,10 @@ DiscreteDepthDistortionModel DepthDistortionLearner::fitDiscreteModel()
     hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 
     Frame mapframe;
-    DepthIndex dindex;
+    RangeIndex rindex;
     hrt.reset("projecting"); hrt.start();
     localmodel.cloudToFrame(transformed, &mapframe);
-    localmodel.cloudToDepthIndex(transformed, &dindex);
+    localmodel.cloudToRangeIndex(transformed, &rindex);
     hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 
     hrt.reset("Computing multiplier map"); hrt.start();
@@ -366,7 +366,7 @@ DiscreteDepthDistortionModel DepthDistortionLearner::fitDiscreteModel()
     const DepthMat& mapdepth = *mapframe.depth_;
     MatrixXd multipliers(depth.rows(), depth.cols());
     cv::Mat3b visualization(depth.rows(), depth.cols());
-    computeMultiplierMap(localmodel, depth, mapdepth, dindex, &multipliers, &visualization);
+    computeMultiplierMap(localmodel, depth, mapdepth, rindex, &multipliers, &visualization);
     hrt.stop(); cout << hrt.reportMilliseconds() << endl;
     
     #ifdef VISUALIZE
@@ -434,10 +434,10 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
     hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 
     Frame mapframe;
-    DepthIndex dindex;
+    RangeIndex rindex;
     hrt.reset("projecting"); hrt.start();
     localmodel.cloudToFrame(transformed, &mapframe);
-    localmodel.cloudToDepthIndex(transformed, &dindex);
+    localmodel.cloudToRangeIndex(transformed, &rindex);
     hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 
     hrt.reset("Computing multiplier map"); hrt.start();
@@ -445,7 +445,7 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
     const DepthMat& mapdepth = *mapframe.depth_;
     MatrixXd multipliers(depth.rows(), depth.cols());
     cv::Mat3b visualization(depth.rows(), depth.cols());
-    computeMultiplierMap(localmodel, depth, mapdepth, dindex, &multipliers, &visualization);
+    computeMultiplierMap(localmodel, depth, mapdepth, rindex, &multipliers, &visualization);
     hrt.stop(); cout << hrt.reportMilliseconds() << endl;
     
     #ifdef VISUALIZE

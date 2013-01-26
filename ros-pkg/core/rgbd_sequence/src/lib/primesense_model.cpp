@@ -39,9 +39,9 @@ namespace rgbd
     resetDepthDistortionModel();
   }
 
-  void PrimeSenseModel::cloudToDepthIndex(const Cloud& pcd, DepthIndex* dindex) const
+  void PrimeSenseModel::cloudToRangeIndex(const Cloud& pcd, RangeIndex* rindex) const
   {
-    DepthIndex& ind = *dindex;
+    RangeIndex& ind = *rindex;
     if((int)ind.size() != height_)
       ind.resize(height_);
     for(size_t y = 0; y < ind.size(); ++y)
@@ -61,7 +61,8 @@ namespace rgbd
       project(pcd[i], &ppt);
       if(ppt.z_ == 0 || !(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
 	continue;
-      ind[ppt.v_][ppt.u_].push_back(pcd[i].getVector3fMap().norm());
+      //ind[ppt.v_][ppt.u_].push_back(pcd[i].getVector3fMap().norm());
+      ind[ppt.v_][ppt.u_].push_back(pcd[i].z);
     }
   }
   
@@ -388,27 +389,29 @@ namespace rgbd
   }
 
   void PrimeSenseModel::estimateMapDepth(const Cloud& map, const Eigen::Affine3f& transform,
-					 const Frame& frame, DepthMat* estimate) const
+					 const Frame& measurement, double stdev_thresh,
+					 DepthMat* estimate) const
   {
     // -- Reallocate estimate if necessary.
-    if(estimate->rows() != frame.depth_->rows() ||
-       estimate->cols() != frame.depth_->cols())
+    if(estimate->rows() != measurement.depth_->rows() ||
+       estimate->cols() != measurement.depth_->cols())
     {
-      *estimate = DepthMat::Zero(frame.depth_->rows(), frame.depth_->cols());
+      *estimate = DepthMat(measurement.depth_->rows(), measurement.depth_->cols());
     }
+    estimate->setZero();
 
     // -- Get the depth index.
     Cloud transformed;
     transformPointCloud(map, transformed, transform);
-    DepthIndex dindex;
-    cloudToDepthIndex(transformed, &dindex);
+    RangeIndex rindex;
+    cloudToRangeIndex(transformed, &rindex);
 
     // -- Compute the edge-of-map mask.
     Frame naive_mapframe;
-    cloudToFrame(map, &naive_mapframe)
-    const DepthMat& measurement = *frame.depth_;
-    const DepthMat& naive_mapdepth = *naive_mapframe->depth_;
-    cv::Mat1b mask(measurement.rows(), measurement.cols());
+    cloudToFrame(transformed, &naive_mapframe);
+    const DepthMat& measurement_depth = *measurement.depth_;
+    const DepthMat& naive_mapdepth = *naive_mapframe.depth_;
+    cv::Mat1b mask(measurement_depth.rows(), measurement_depth.cols());
     mask = 0;
     for(int y = 0; y < mask.rows; ++y)
       for(int x = 0; x < mask.cols; ++x)
@@ -420,10 +423,10 @@ namespace rgbd
     // -- Main loop: for all points in the image...
     ProjectivePoint ppt;
     Point pt;
-    for(ppt.v_ = 0; ppt.v_ < measurement.rows(); ++ppt.v_) {
-      for(ppt.u_ = 0; ppt.u_ < measurement.cols(); ++ppt.u_) {
+    for(ppt.v_ = 0; ppt.v_ < measurement_depth.rows(); ++ppt.v_) {
+      for(ppt.u_ = 0; ppt.u_ < measurement_depth.cols(); ++ppt.u_) {
 	// -- Reject points with no data.
-	if(naive_mapdepth(ppt.v_, ppt.u_) == 0 || measurement(ppt.v_, ppt.u_) == 0) {
+	if(naive_mapdepth(ppt.v_, ppt.u_) == 0 || measurement_depth(ppt.v_, ppt.u_) == 0) {
 	  //(*visualization)(ppt.v_, ppt.u_) = cv::Vec3b(255, 255, 255);
 	  continue;
 	}
@@ -434,15 +437,22 @@ namespace rgbd
 	  continue;
 	}
 
+	// -- Find nearby points in the cone to get a good estimate of the map depth.
 	double radius = 0.02;
-	double mean, stdev;
-	coneFit(naive_mapdepth, dindex, ppt.u_, ppt.v_, radius, &mean, &stdev);
-	
+	double mean = 0;
+	double stdev = 0;
+	bool valid = coneFit(naive_mapdepth, rindex, ppt.u_, ppt.v_, radius, &mean, &stdev);
+	if(!valid)
+	  continue;
+	if(stdev > stdev_thresh)
+	  continue;
+
+	(*estimate)(ppt.v_, ppt.u_) = mean * 1000;
       }
     }
   }
 
-  void PrimeSenseModel::coneFit(const DepthMat& naive_mapdepth, const DepthIndex& dindex,
+  bool PrimeSenseModel::coneFit(const DepthMat& naive_mapdepth, const RangeIndex& rindex,
 				int uc, int vc, double radius,
 				double* mean, double* stdev) const
   {
@@ -472,28 +482,32 @@ namespace rgbd
     int min_v = ppt_ul.v_;
     int max_v = ppt_lr.v_;
 
-    double mean = 0;
+    *mean = 0;
     double num = 0;
     for(ppt.u_ = min_u; ppt.u_ <= max_u; ++ppt.u_) {
       for(ppt.v_ = min_v; ppt.v_ <= max_v; ++ppt.v_) {
-	const vector<double>& vals = dindex[ppt.v_][ppt.u_];
+	const vector<double>& vals = rindex[ppt.v_][ppt.u_];
 	num += vals.size();
 	for(size_t i = 0; i < vals.size(); ++i)
-	  mean += vals[i];
+	  *mean += vals[i];
       }
     }
-    ROS_ASSERT(num > 0);
-    mean /= num;
+    if(num == 0)
+      return false;
+    *mean /= num;
 
     double var = 0;
     for(ppt.u_ = min_u; ppt.u_ <= max_u; ++ppt.u_) {
       for(ppt.v_ = min_v; ppt.v_ <= max_v; ++ppt.v_) {
-	const vector<double>& vals = dindex[ppt.v_][ppt.u_];
+	const vector<double>& vals = rindex[ppt.v_][ppt.u_];
 	for(size_t i = 0; i < vals.size(); ++i)
-	  var += (vals[i] - mean) * (vals[i] - mean);
+	  var += (vals[i] - *mean) * (vals[i] - *mean);
       }
     }
     var /= num;
+    
+    *stdev = sqrt(var);
+    return true;
   }
   
   cv::Vec3b Frame::colorize(double depth, double min_range, double max_range) const
