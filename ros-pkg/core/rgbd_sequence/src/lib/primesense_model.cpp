@@ -428,6 +428,8 @@ namespace rgbd
 	// -- Reject points with no data.
 	if(measurement_depth(ppt.v_, ppt.u_) == 0)
 	  continue;
+	if(naive_mapdepth(ppt.v_, ppt.u_) == 0)
+	  continue;
 	
 	// -- Reject points on the edge of the map.
 	if(mask(ppt.v_, ppt.u_) == 0)

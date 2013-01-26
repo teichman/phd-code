@@ -10,8 +10,8 @@
 #include <serializable/serializable.h>
 #include <eigen_extensions/eigen_extensions.h>
 
-#define MAX_MULT 1.25
-#define MIN_MULT 0.75
+#define MAX_MULT 1.2
+#define MIN_MULT 0.8
 
 namespace rgbd
 {
