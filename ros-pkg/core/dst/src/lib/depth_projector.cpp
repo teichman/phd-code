@@ -168,7 +168,7 @@ namespace dst
     index_otl_.push(output);
   }
 
-  cv::Mat1b DepthProjector::visualizeDepthIndex(cv::Mat1i index) const
+  cv::Mat1b DepthProjector::visualizeRangeIndex(cv::Mat1i index) const
   { 
     cv::Mat1b indvis(index.size(), 0);
     for(int x = 0; x < indvis.cols; ++x) {
@@ -182,7 +182,7 @@ namespace dst
   
   void DepthProjector::_display() const
   {
-    cv::Mat1b indvis = visualizeDepthIndex(current_index_);
+    cv::Mat1b indvis = visualizeRangeIndex(current_index_);
     cv::imwrite("debug/" + getRunName() + "-depth_index.png", indvis);
   }
 

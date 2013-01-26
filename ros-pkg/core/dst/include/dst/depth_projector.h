@@ -51,7 +51,7 @@ namespace dst
 			 int spread,
 			 float min_range,
 			 float max_range) const;
-    cv::Mat1b visualizeDepthIndex(cv::Mat1i index) const;
+    cv::Mat1b visualizeRangeIndex(cv::Mat1i index) const;
 	
   protected:
     pipeline2::Outlet<cv::Mat3b>* img_otl_;

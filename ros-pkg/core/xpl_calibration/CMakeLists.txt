@@ -184,3 +184,7 @@ target_link_libraries(planarity_experiment ${PROJECT_NAME})
 rosbuild_add_executable(view_stream src/prog/view_stream.cpp)
 rosbuild_link_boost(view_stream program_options filesystem)
 target_link_libraries(view_stream ${PROJECT_NAME})
+
+rosbuild_add_executable(visualize_map_depth_estimation src/prog/visualize_map_depth_estimation.cpp)
+rosbuild_link_boost(visualize_map_depth_estimation program_options filesystem)
+target_link_libraries(visualize_map_depth_estimation ${PROJECT_NAME})

@@ -100,7 +100,7 @@ protected:
   void computeMultiplierMap(const rgbd::PrimeSenseModel& model,
 			    const rgbd::DepthMat& depth,
 			    const rgbd::DepthMat& mapdepth,
-			    const rgbd::DepthIndex& dindex,
+			    const rgbd::RangeIndex& rindex,
 			    Eigen::MatrixXd* multipliers,
 			    cv::Mat3b* visualization) const;
 };
