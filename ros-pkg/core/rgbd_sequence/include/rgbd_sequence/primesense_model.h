@@ -10,6 +10,9 @@
 #include <serializable/serializable.h>
 #include <eigen_extensions/eigen_extensions.h>
 
+#define MAX_MULT 1.25
+#define MIN_MULT 0.75
+
 namespace rgbd
 {
 
@@ -91,7 +94,7 @@ namespace rgbd
     //! The best depth estimate from the map corresponding to the measurement depth frame
     //! will be returned.
     void estimateMapDepth(const Cloud& map, const Eigen::Affine3f& transform,
-			  const Frame& measurement, double stdev_thresh,
+			  const Frame& measurement,
 			  DepthMat* estimate) const;
 			  
     //! Applies depth distortion model to the depth data in frame.
@@ -121,7 +124,7 @@ namespace rgbd
     //Eigen::VectorXd computeFeaturesMU(const ProjectivePoint& ppt) const;
     void computeFeaturesMUV(const ProjectivePoint& ppt, Eigen::VectorXd* features) const;
     bool coneFit(const DepthMat& naive_mapdepth, const RangeIndex& rindex,
-		 int uc, int vc, double radius,
+		 int uc, int vc, double radius, double measurement_depth,
 		 double* mean, double* stdev) const;
   };
     

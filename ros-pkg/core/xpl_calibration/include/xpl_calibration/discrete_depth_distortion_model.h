@@ -5,9 +5,6 @@
 #include <rgbd_sequence/primesense_model.h>
 #include <bag_of_tricks/lockable.h>
 
-#define MAX_MULT 1.2
-#define MIN_MULT 0.8
-
 class Frustum : public Serializable, public SharedLockable
 {
 public:

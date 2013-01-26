@@ -389,7 +389,7 @@ namespace rgbd
   }
 
   void PrimeSenseModel::estimateMapDepth(const Cloud& map, const Eigen::Affine3f& transform,
-					 const Frame& measurement, double stdev_thresh,
+					 const Frame& measurement,
 					 DepthMat* estimate) const
   {
     // -- Reallocate estimate if necessary.
@@ -426,22 +426,20 @@ namespace rgbd
     for(ppt.v_ = 0; ppt.v_ < measurement_depth.rows(); ++ppt.v_) {
       for(ppt.u_ = 0; ppt.u_ < measurement_depth.cols(); ++ppt.u_) {
 	// -- Reject points with no data.
-	if(naive_mapdepth(ppt.v_, ppt.u_) == 0 || measurement_depth(ppt.v_, ppt.u_) == 0) {
-	  //(*visualization)(ppt.v_, ppt.u_) = cv::Vec3b(255, 255, 255);
+	if(measurement_depth(ppt.v_, ppt.u_) == 0)
 	  continue;
-	}
 	
 	// -- Reject points on the edge of the map.
-	if(mask(ppt.v_, ppt.u_) == 0) {
-	  //(*visualization)(ppt.v_, ppt.u_) = cv::Vec3b(255, 255, 0);
+	if(mask(ppt.v_, ppt.u_) == 0)
 	  continue;
-	}
 
 	// -- Find nearby points in the cone to get a good estimate of the map depth.
 	double radius = 0.02;
 	double mean = 0;
 	double stdev = 0;
-	bool valid = coneFit(naive_mapdepth, rindex, ppt.u_, ppt.v_, radius, &mean, &stdev);
+	//double stdev_thresh = numeric_limits<double>::max();
+	double stdev_thresh = 0.03;
+	bool valid = coneFit(naive_mapdepth, rindex, ppt.u_, ppt.v_, radius, measurement_depth(ppt.v_, ppt.u_) * 0.001, &mean, &stdev);
 	if(!valid)
 	  continue;
 	if(stdev > stdev_thresh)
@@ -453,14 +451,14 @@ namespace rgbd
   }
 
   bool PrimeSenseModel::coneFit(const DepthMat& naive_mapdepth, const RangeIndex& rindex,
-				int uc, int vc, double radius,
+				int uc, int vc, double radius, double measurement_depth,
 				double* mean, double* stdev) const
   {
     Point pt_center, pt_ul, pt_lr;
     ProjectivePoint ppt, ppt_ul, ppt_lr;
     ppt.u_ = uc;
     ppt.v_ = vc;
-    ppt.z_ = naive_mapdepth(vc, uc);
+    ppt.z_ = (ushort)(measurement_depth * 1000);
     project(ppt, &pt_center);
 
     pt_ul = pt_center;
@@ -487,9 +485,13 @@ namespace rgbd
     for(ppt.u_ = min_u; ppt.u_ <= max_u; ++ppt.u_) {
       for(ppt.v_ = min_v; ppt.v_ <= max_v; ++ppt.v_) {
 	const vector<double>& vals = rindex[ppt.v_][ppt.u_];
-	num += vals.size();
-	for(size_t i = 0; i < vals.size(); ++i)
-	  *mean += vals[i];
+	for(size_t i = 0; i < vals.size(); ++i) {
+	  double mult = vals[i] / measurement_depth;
+	  if(mult > MIN_MULT && mult < MAX_MULT) {
+	    *mean += vals[i];
+	    ++num;
+	  }
+	}
       }
     }
     if(num == 0)
@@ -500,8 +502,11 @@ namespace rgbd
     for(ppt.u_ = min_u; ppt.u_ <= max_u; ++ppt.u_) {
       for(ppt.v_ = min_v; ppt.v_ <= max_v; ++ppt.v_) {
 	const vector<double>& vals = rindex[ppt.v_][ppt.u_];
-	for(size_t i = 0; i < vals.size(); ++i)
-	  var += (vals[i] - *mean) * (vals[i] - *mean);
+	for(size_t i = 0; i < vals.size(); ++i) {
+	  double mult = vals[i] / measurement_depth;
+	  if(mult > MIN_MULT && mult < MAX_MULT)
+	    var += (vals[i] - *mean) * (vals[i] - *mean);
+	}
       }
     }
     var /= num;

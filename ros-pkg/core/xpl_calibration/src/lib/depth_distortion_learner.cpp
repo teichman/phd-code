@@ -346,9 +346,10 @@ DiscreteDepthDistortionModel DepthDistortionLearner::fitDiscreteModel()
     
     cout << "Accumulating training set for depth distortion model fit, frame " << i << " / " << frames_.size() << endl;
 
-    double stdev_thresh = 0.03;
     DepthMat mapdepth;
-    localmodel.estimateMapDepth(*pcds_[i], transforms_[i].cast<float>(), frames_[i], stdev_thresh, &mapdepth);
+    //double stdev_thresh = 0.03;
+    //localmodel.estimateMapDepth(*pcds_[i], transforms_[i].cast<float>(), frames_[i], stdev_thresh, &mapdepth);
+    localmodel.estimateMapDepth(*pcds_[i], transforms_[i].cast<float>(), frames_[i], &mapdepth);
 
     const DepthMat& depth = *frames_[i].depth_;
     MatrixXd multipliers = MatrixXd::Zero(depth.rows(), depth.cols());
