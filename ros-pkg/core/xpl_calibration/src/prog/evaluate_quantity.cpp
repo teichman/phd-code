@@ -10,6 +10,7 @@ namespace bpo = boost::program_options;
 namespace bfs = boost::filesystem;
 
 #define MAX_DEPTH_EVAL 10
+//#define VISUALIZE
 
 void computeDistortion(const Frame& frame, const Frame& mapframe,
 		       double* total_error, double* num_pts)
@@ -19,6 +20,7 @@ void computeDistortion(const Frame& frame, const Frame& mapframe,
 
   double total_error_local = 0;
   double num_pts_local = 0;
+  cv::Mat3b vis(cv::Size(frame.depth_->cols(), frame.depth_->rows()), cv::Vec3b(0, 0, 0));
   for(int x = 0; x < frame.depth_->cols(); ++x) {
     for(int y = 0; y < frame.depth_->rows(); ++y) {
 
@@ -37,8 +39,11 @@ void computeDistortion(const Frame& frame, const Frame& mapframe,
       if(mult > MAX_MULT || mult < MIN_MULT)
 	continue;
 
-      total_error_local += fabs(meas - gt);
+      double err = fabs(meas - gt);
+      total_error_local += err;
       ++num_pts_local;
+
+      vis(y, x)[2] = 255 * (1.0 / (1 + exp(-err / 0.038)) - 0.5);
     }
   }
 
@@ -46,6 +51,13 @@ void computeDistortion(const Frame& frame, const Frame& mapframe,
   boost::unique_lock<boost::shared_mutex> lockable_unique_lock(shared_mutex);
   *total_error += total_error_local;
   *num_pts += num_pts_local;
+
+  #ifdef VISUALIZE
+  cv::imshow("Error", vis);
+  cv::imshow("Measurement", frame.depthImage());
+  cv::imshow("Map", mapframe.depthImage());
+  cv::waitKey(10);
+  #endif
 }
 
 void evaluate(const bpo::variables_map& opts,
@@ -57,7 +69,9 @@ void evaluate(const bpo::variables_map& opts,
 	      double* undistorted_total_error, double* undistorted_num_pts)
 {
   // -- For all poses, compute the distortion with and without the intrinsics.
+  #ifndef VISUALIZE
   #pragma omp parallel for
+  #endif
   for(size_t i = 0; i < traj.size(); ++i) {
     if(!traj.exists(i))
       continue;
@@ -65,10 +79,13 @@ void evaluate(const bpo::variables_map& opts,
     Frame frame;
     sseq.readFrame(i, &frame);
     Affine3f transform = traj.get(i).inverse().cast<float>();
-    Cloud transformed;
-    pcl::transformPointCloud(map, transformed, transform);
+    // Cloud transformed;
+    // pcl::transformPointCloud(map, transformed, transform);
+    // Frame mapframe;
+    // sseq.model_.cloudToFrame(transformed, &mapframe);
     Frame mapframe;
-    sseq.model_.cloudToFrame(transformed, &mapframe);
+    mapframe.depth_ = DepthMatPtr(new DepthMat);
+    sseq.model_.estimateMapDepth(map, transform, frame, mapframe.depth_.get());
 
     computeDistortion(frame, mapframe, raw_total_error, raw_num_pts);
     intrinsics.undistort(&frame);
