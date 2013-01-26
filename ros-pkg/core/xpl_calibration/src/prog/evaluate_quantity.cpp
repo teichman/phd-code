@@ -9,7 +9,7 @@ using namespace rgbd;
 namespace bpo = boost::program_options;
 namespace bfs = boost::filesystem;
 
-#define MAX_DEPTH_EVAL 7
+#define MAX_DEPTH_EVAL 10
 
 void computeDistortion(const Frame& frame, const Frame& mapframe,
 		       double* total_error, double* num_pts)
