@@ -31,6 +31,7 @@ grid(True)
 ax.scatter(data[:, 0], 100 * data[:, 1], color='black', marker='x', s=40)
 ylim(0, np.amax(100 * data[:, 1]) * 1.1)
 
+savefig(path + '/quantity_experiment.svg')
 savefig(path + '/quantity_experiment.pdf')
 savefig(path + '/quantity_experiment.png')
 
