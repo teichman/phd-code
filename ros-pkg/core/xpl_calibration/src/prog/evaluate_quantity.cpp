@@ -10,17 +10,20 @@ namespace bpo = boost::program_options;
 namespace bfs = boost::filesystem;
 
 #define MAX_DEPTH_EVAL 10
-//#define VISUALIZE
+#define VISUALIZE 0
 
 void computeDistortion(const Frame& frame, const Frame& mapframe,
-		       double* total_error, double* num_pts)
+		       double* total_squared_error, double* num_pts)
 {
+#if(VISUALIZE)
+  cv::Mat3b vis(cv::Size(frame.depth_->cols(), frame.depth_->rows()), cv::Vec3b(0, 0, 0));
+#endif
+
   ROS_ASSERT(frame.depth_->cols() == mapframe.depth_->cols());
   ROS_ASSERT(frame.depth_->rows() == mapframe.depth_->rows());
 
-  double total_error_local = 0;
+  double total_squared_error_local = 0;
   double num_pts_local = 0;
-  cv::Mat3b vis(cv::Size(frame.depth_->cols(), frame.depth_->rows()), cv::Vec3b(0, 0, 0));
   for(int x = 0; x < frame.depth_->cols(); ++x) {
     for(int y = 0; y < frame.depth_->rows(); ++y) {
 
@@ -39,25 +42,27 @@ void computeDistortion(const Frame& frame, const Frame& mapframe,
       if(mult > MAX_MULT || mult < MIN_MULT)
 	continue;
 
-      double err = fabs(meas - gt);
-      total_error_local += err;
+      double err = pow(meas - gt, 2);
+      total_squared_error_local += err;
       ++num_pts_local;
 
-      vis(y, x)[2] = 255 * (1.0 / (1 + exp(-err / 0.038)) - 0.5);
+#if(VISUALIZE)
+      vis(y, x)[2] = 255 * (1.0 / (1 + exp(-err / 0.07)) - 0.5);
+#endif
     }
   }
-
+  
   static boost::shared_mutex shared_mutex;
   boost::unique_lock<boost::shared_mutex> lockable_unique_lock(shared_mutex);
-  *total_error += total_error_local;
+  *total_squared_error += total_squared_error_local;
   *num_pts += num_pts_local;
 
-  #ifdef VISUALIZE
+#if(VISUALIZE)
   cv::imshow("Error", vis);
   cv::imshow("Measurement", frame.depthImage());
   cv::imshow("Map", mapframe.depthImage());
   cv::waitKey(10);
-  #endif
+#endif
 }
 
 void evaluate(const bpo::variables_map& opts,
@@ -65,17 +70,17 @@ void evaluate(const bpo::variables_map& opts,
 	      const Cloud& map,
 	      const StreamSequence& sseq,
 	      const Trajectory& traj,
-	      double* raw_total_error, double* raw_num_pts,
-	      double* undistorted_total_error, double* undistorted_num_pts)
+	      double* raw_total_squared_error, double* raw_num_pts,
+	      double* undistorted_total_squared_error, double* undistorted_num_pts)
 {
   // -- For all poses, compute the distortion with and without the intrinsics.
-  #ifndef VISUALIZE
-  #pragma omp parallel for
-  #endif
+#if(!VISUALIZE)
+#pragma omp parallel for
+#endif
   for(size_t i = 0; i < traj.size(); ++i) {
     if(!traj.exists(i))
       continue;
-
+    
     Frame frame;
     sseq.readFrame(i, &frame);
     Affine3f transform = traj.get(i).inverse().cast<float>();
@@ -87,9 +92,12 @@ void evaluate(const bpo::variables_map& opts,
     mapframe.depth_ = DepthMatPtr(new DepthMat);
     sseq.model_.estimateMapDepth(map, transform, frame, mapframe.depth_.get());
 
-    computeDistortion(frame, mapframe, raw_total_error, raw_num_pts);
+    computeDistortion(frame, mapframe, raw_total_squared_error, raw_num_pts);
     intrinsics.undistort(&frame);
-    computeDistortion(frame, mapframe, undistorted_total_error, undistorted_num_pts);
+#if(VISUALIZE)
+    cv::waitKey();
+#endif
+    computeDistortion(frame, mapframe, undistorted_total_squared_error, undistorted_num_pts);
   }
 }
 
@@ -119,30 +127,28 @@ void evaluate(const bpo::variables_map& opts,
   cout << "Mean undistortion time (ms): " << mean_undistortion_time_ms << endl;
   
   // -- Run quantitative evaluation on all maps.
-  double raw_total_error = 0;
+  double raw_total_squared_error = 0;
   double raw_num_pts = 0;
-  double undistorted_total_error = 0;
+  double undistorted_total_squared_error = 0;
   double undistorted_num_pts = 0;
   for(size_t i = 0; i < sseqs.size(); ++i) {
     evaluate(opts, intrinsics, maps[i], *sseqs[i], trajectories[i],
-	     &raw_total_error, &raw_num_pts,
-	     &undistorted_total_error, &undistorted_num_pts);
+	     &raw_total_squared_error, &raw_num_pts,
+	     &undistorted_total_squared_error, &undistorted_num_pts);
   }
-  double raw_mean_error = raw_total_error / raw_num_pts;
-  double undistorted_mean_error = undistorted_total_error / undistorted_num_pts;
+  double raw_rmse = sqrt(raw_total_squared_error / raw_num_pts);
+  double undistorted_rmse = sqrt(undistorted_total_squared_error / undistorted_num_pts);
   
   // -- Save output.
   ofstream file;
   file.open((eval_path + "/results.txt").c_str());
   ROS_ASSERT(file.is_open());
   file << "Mean undistortion time (ms): " << mean_undistortion_time_ms << endl;
-  file << "Raw total error: " << raw_total_error << endl;
   file << "Raw num_pts: " << raw_num_pts << endl;
-  file << "Raw mean error: " << raw_mean_error << endl;
-  file << "Undistorted total error: " << undistorted_total_error << endl;
+  file << "Raw RMSE: " << raw_rmse << endl;
   file << "Undistorted num_pts: " << undistorted_num_pts << endl;
-  file << "Undistorted mean error: " << undistorted_mean_error << endl;
-  file << "Error reduction: " << (raw_mean_error - undistorted_mean_error) / raw_mean_error << endl;
+  file << "Undistorted RMSE: " << undistorted_rmse << endl;
+  file << "Error reduction: " << (raw_rmse - undistorted_rmse) / raw_rmse << endl;
   file.close();
 }
 
