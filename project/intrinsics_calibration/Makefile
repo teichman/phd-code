@@ -74,11 +74,10 @@ SLAM_RUNS_TRAINING_xpl01	:= 	2a_backandforth \
 # Yes.  Even with 80G.
 #					2012-11-16_2a_backandforth_8 \
 #					2012-10-22_2a_backandforth_0 \
-
+# 					2012-10-22_2a_backandforth_4
 SLAM_RUNS_TESTING_xpl01		:=	2012-11-16_2a_backandforth_7 \
 					2012-11-16_2a_backandforth_6 \
-					2012-12-19_xpl01_boardroom_2 \
-					2012-10-22_2a_backandforth_4
+					2012-12-19_xpl01_boardroom_2
 
 #SLAM_RUNS_TRAINING_xpl01	:= 	2012-10-22_2a_backandforth_2
 #SLAM_RUNS_TESTING_xpl01		:=	2012-11-16_2a_backandforth_7
@@ -495,7 +494,7 @@ $(1)-remake-unrefined-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_u
 # 	cd $$(@D)/$(2) && mencoder "mf://slam-png/slam*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(2)-alignment.avi
 # 	cd $$(@D)/$(2) && mencoder "mf://montage-png/montage*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(2)-montage.avi
 
-$(1)/slam_results/$(2)_unrefined: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
+$(1)/slam_results/$(2)_unrefined: $(SLAM_DATA_PATH)/$(1)/$(2)
 	mkdir -p $$(@D)
 	rosrun xpl_calibration primesense_slam $$< --otraj $$@ --opcd $$@ --ograph $$@/graph.log --cam $(CAMERAS_PATH)/$(1)/$(2).cam
 
