@@ -22,7 +22,9 @@ int main(int argc, char** argv)
     ("traj", bpo::value<string>(&trajectory_path)->required(), "Trajectory from slam.")
     ("imodel", bpo::value<string>(), "Optional discrete distortion model.")
     ("max-range", bpo::value<double>()->default_value(MAX_RANGE_MAP), "Maximum range to use when building the map from the given trajectory.")
-    ("vgsize", bpo::value<double>()->default_value(0.03), "Voxel grid cell size.")
+    // This is different from DEFAULT_VGSIZE because otherwise there are two many points to display in the PCLVisualizer.
+    // OpenGL display lists come to mind...
+    ("vgsize", bpo::value<double>()->default_value(0.03), "Voxel grid cell size.")  
     ;
 
   p.add("sseq", 1).add("traj", 1);

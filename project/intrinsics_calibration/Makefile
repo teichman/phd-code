@@ -65,10 +65,12 @@ SLAM_RUNS_TESTING_xpl00		:=	2012-12-19_short_03 \
 
 SLAM_RUNS_xpl00 := $(SLAM_RUNS_TRAINING_xpl00) $(SLAM_RUNS_TESTING_xpl00)
 
-SLAM_RUNS_TRAINING_xpl01	:= 	2a_backandforth \
-					2012-10-22_2a_backandforth_2 \
-					2012-12-19_xpl01_boardroom_0-upsidedown \
-					2012-12-19_xpl01_boardroom_1-upsidedown
+
+# 2012-12-19_xpl01_boardroom_0-upsidedown is not so good.
+SLAM_RUNS_TRAINING_xpl01	:= 	2012-12-19_xpl01_boardroom_0-upsidedown \
+					2012-12-19_xpl01_boardroom_1-upsidedown \
+					2a_backandforth \
+					2012-10-22_2a_backandforth_2
 
 # Running out of memory....   These are fine to use, but I just can't afford it.
 #					2012-11-16_2a_backandforth_8 \

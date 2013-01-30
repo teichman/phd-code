@@ -10,8 +10,13 @@
 #include <serializable/serializable.h>
 #include <eigen_extensions/eigen_extensions.h>
 
+// Depth multipliers, used in PrimeSenseModel::estimateMapDepth and
+// all over the xpl_calibration package.
 #define MAX_MULT 1.2
 #define MIN_MULT 0.8
+
+// Voxel grid size.
+#define DEFAULT_VGSIZE 0.01
 
 namespace rgbd
 {

@@ -19,9 +19,9 @@ public:
   double max_range_;
   double vgsize_;
 
-  SlamCalibrator(const rgbd::PrimeSenseModel& model, double max_range = MAX_RANGE_MAP, double vgsize = 0.01);
+  SlamCalibrator(const rgbd::PrimeSenseModel& model, double max_range = MAX_RANGE_MAP, double vgsize = DEFAULT_VGSIZE);
   rgbd::Cloud::Ptr buildMap(size_t idx) const;
-  static rgbd::Cloud::Ptr buildMap(const rgbd::StreamSequence& sseq, const Trajectory& traj, double max_range, double vgsize);
+  static rgbd::Cloud::Ptr buildMap(const rgbd::StreamSequence& sseq, const Trajectory& traj, double max_range, double vgsize = DEFAULT_VGSIZE);
   size_t size() const;
   rgbd::PrimeSenseModel calibrate() const;
   DiscreteDepthDistortionModel calibrateDiscrete() const;

@@ -331,7 +331,7 @@ DiscreteDepthDistortionModel calibrateMapBuildingOrig(const bpo::variables_map& 
     sseq_train.push_back(sseqs[i]);
     traj_train.push_back(trajectories[i]);
   }
-
+  
   SlamCalibrator calibrator(sseq_train[0]->model_, MAX_RANGE_MAP, opts["vgsize"].as<double>());
   calibrator.trajectories_ = traj_train;
   calibrator.sseqs_ = sseq_train;
@@ -385,7 +385,7 @@ int main(int argc, char** argv)
     ("sseqs-test", bpo::value< vector<string> >(&sseq_paths_test)->required()->multitoken(), "StreamSequences.")
     ("trajs-test", bpo::value< vector<string> >(&traj_paths_test)->required()->multitoken(), "Trajectories.")
     ("output", bpo::value<string>(&output_path)->required(), "Directory to put results.  Must not exist; will be created.")
-    ("vgsize", bpo::value<double>()->default_value(0.01), "Size of voxel grid cells.")
+    ("vgsize", bpo::value<double>()->default_value(DEFAULT_VGSIZE), "Size of voxel grid cells.")
     ;
      
   bpo::variables_map opts;
