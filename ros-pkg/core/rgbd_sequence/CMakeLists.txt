@@ -30,6 +30,9 @@ rosbuild_add_library(rgbd_sequence
   src/lib/intrinsics_visualizer.cpp
   src/lib/stream_visualizer.cpp
   )
+# memory fragmentation is a problem for data quantity experiment?
+target_link_libraries(${PROJECT_NAME} tcmalloc)
+
 rosbuild_link_boost(rgbd_sequence system program_options)
 rosbuild_add_compile_flags(rgbd_sequence -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 #target_link_libraries(${PROJECT_NAME} another_library)
