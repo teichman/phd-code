@@ -122,7 +122,7 @@ void ObjectExtractor::debug() const
     }
 
     ostringstream oss;
-    oss << getDebugPath() << "-cloud" << setw(4) << setfill('0') << i << ".pcd";
+    oss << debugBasePath() << "-cloud" << setw(4) << setfill('0') << i << ".pcd";
     pcl::io::savePCDFileBinary(oss.str(), vis);
   }
 }

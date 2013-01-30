@@ -57,7 +57,7 @@ bool gaussianTest(const PrimeSenseModel& model, const DepthMat& mapdepth, const 
   ProjectivePoint ppt, ppt_ul, ppt_lr;
   ppt.u_ = uc;
   ppt.v_ = vc;
-  ppt.z_ = depth(vc, uc);
+  ppt.z_ = mapdepth(vc, uc);
   model.project(ppt, &pt_center);
 
   pt_ul = pt_center;

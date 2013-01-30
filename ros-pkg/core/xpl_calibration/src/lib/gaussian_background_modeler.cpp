@@ -62,11 +62,11 @@ void GaussianBackgroundModeler::compute()
 
 void GaussianBackgroundModeler::debug() const
 {
-  cv::imwrite(getDebugPath() + "-maxdistance.png", visualizeVector(max_distances_));
-  cv::imwrite(getDebugPath() + "-mindistance.png", visualizeVector(min_distances_));
-  cv::imwrite(getDebugPath() + "-means.png", visualizeVector(means_));
-  cv::imwrite(getDebugPath() + "-stdevs.png", visualizeVector(stdevs_));
-  cv::imwrite(getDebugPath() + "-counts.png", visualizeVector(counts_));
+  cv::imwrite(debugBasePath() + "-maxdistance.png", visualizeVector(max_distances_));
+  cv::imwrite(debugBasePath() + "-mindistance.png", visualizeVector(min_distances_));
+  cv::imwrite(debugBasePath() + "-means.png", visualizeVector(means_));
+  cv::imwrite(debugBasePath() + "-stdevs.png", visualizeVector(stdevs_));
+  cv::imwrite(debugBasePath() + "-counts.png", visualizeVector(counts_));
   
   double mean_width = 0;
   for(size_t i = 0; i < max_distances_.size(); ++i) {

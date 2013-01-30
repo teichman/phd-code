@@ -88,8 +88,8 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
   pl_.compute();
 
 
-  *transform = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "FinalTransform");
-  *sync = pl_.getOutput<double>("ObjectMatchingCalibrator", "SyncOffset");
+  *transform = *pl_.pull<const Affine3f*>("ObjectMatchingCalibrator", "FinalTransform");
+  *sync = pl_.pull<double>("ObjectMatchingCalibrator", "SyncOffset");
   cout << "Got sync offset of " << *sync << endl;
   cout << "transform: " << endl << transform->matrix() << endl;
 }

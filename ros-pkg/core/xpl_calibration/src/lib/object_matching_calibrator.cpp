@@ -253,7 +253,7 @@ void ObjectMatchingCalibrator::visualizeResult(const std::string& name, const Ei
     overlay += *seq0.pcds_[idx];
 
     ostringstream oss;
-    oss << getDebugPath() << "-" << name << "-overlay" << setw(4) << setfill('0') << i << ".pcd";
+    oss << debugBasePath() << "-" << name << "-overlay" << setw(4) << setfill('0') << i << ".pcd";
     pcl::io::savePCDFileBinary(oss.str(), overlay);
   }
 }
@@ -301,7 +301,7 @@ void ObjectMatchingCalibrator::visualizeInliers(const std::string& name, const E
     pcd->push_back(pt);
   }
 
-  pcl::io::savePCDFileBinary(getDebugPath() + "-" + name + ".pcd", *pcd);
+  pcl::io::savePCDFileBinary(debugBasePath() + "-" + name + ".pcd", *pcd);
 }
 
 void ObjectMatchingCalibrator::computeCentroids(const ObjectClouds& objects,
