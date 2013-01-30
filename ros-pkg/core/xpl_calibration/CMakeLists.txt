@@ -52,11 +52,14 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/link_visualizer.cpp
   src/lib/discrete_depth_distortion_model.cpp
   )
+
+# memory fragmentation is a problem for data quantity experiment?
+target_link_libraries(${PROJECT_NAME} tcmalloc)
+
 rosbuild_add_compile_flags(${PROJECT_NAME} -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 rosbuild_link_boost(${PROJECT_NAME} system program_options)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
+
+
 rosbuild_add_executable(calibrate_sequences src/prog/calibrate_sequences.cpp)
 target_link_libraries(calibrate_sequences ${PROJECT_NAME})
 

@@ -53,8 +53,6 @@ int main(int argc, char** argv)
     Frame mapframe;
     mapframe.depth_ = DepthMatPtr(new DepthMat(measurement.depth_->rows(), measurement.depth_->cols()));
     mapframe.depth_->setZero();
-//    double stdev_thresh = numeric_limits<double>::max();
-    //double stdev_thresh = 0.03;
     sseq.model_.estimateMapDepth(*map, transform, measurement, mapframe.depth_.get());
 				 
     cv::imshow("Map estimate", mapframe.depthImage());
@@ -65,7 +63,9 @@ int main(int argc, char** argv)
     sseq.model_.cloudToFrame(transformed, &naive_mapframe);
     cv::imshow("Naive map", naive_mapframe.depthImage());
 
-    cv::waitKey();
+    char key = cv::waitKey();
+    if(key == 'q')
+      break;
   }
     
   
