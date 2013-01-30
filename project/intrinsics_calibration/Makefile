@@ -71,7 +71,6 @@ SLAM_RUNS_TRAINING_xpl01	:= 	2a_backandforth \
 					2012-12-19_xpl01_boardroom_1-upsidedown
 
 # Running out of memory....   These are fine to use, but I just can't afford it.
-# Yes.  Even with 80G.
 #					2012-11-16_2a_backandforth_8 \
 #					2012-10-22_2a_backandforth_0 \
 # 					2012-10-22_2a_backandforth_4
@@ -263,6 +262,13 @@ $(1)/evaluation/slam_eval: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	--sseqs $$(addprefix $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
 	--trajs $$(TRAJECTORIES_ONLYFIRST_$(1))
 	cd $$(@D) && for file in `find -name intrinsics | sort`; do echo $$$$file; rosrun xpl_calibration visualize_intrinsics $$$$file $$$${file}-vis; done
+
+
+$(1)/evaluation/slam_eval_quantity/complexity.png:	$(MAKE_ROOT)/common_plotting.py
+#							$(1)/evaluation/slam_eval_quantity
+	cd $$(@D) && for file in `find -name info.txt | sort`; do \
+	echo `grep 'number of frames used for training' $$$$file | awk '{print $$$$NF}'` `grep 'Calibration time' $$$$file | awk '{print $$$$NF}'`; \
+	done | gnuplot -p -e "set term png; set output \"complexity.png\"; set xlabel \"Number of training frames\"; set ylabel \"Time (s)\"; plot \"-\" with points notitle"
 
 $(1)/evaluation/slam_eval_quantity/quantity_experiment.pdf: 	$(MAKE_ROOT)/common_plotting.py \
 								$(MAKE_ROOT)/plot_quantity_experiment.py \
