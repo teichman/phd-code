@@ -5,9 +5,6 @@
 #include <rgbd_sequence/primesense_model.h>
 #include <bag_of_tricks/lockable.h>
 
-#define MAX_MULT 1.2
-#define MIN_MULT 0.8
-
 class Frustum : public Serializable, public SharedLockable
 {
 public:
@@ -17,7 +14,8 @@ public:
   void addMultiplier(double measurement, double multiplier);
   int index(double z) const;
   void undistort(double* z) const;
-  void undistort(int idx, float* z, float* mult) const;
+//  void undistort(int idx, float* z, float* mult) const;
+  void interpolatedUndistort(double* z) const;
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);
   
@@ -37,7 +35,7 @@ class DiscreteDepthDistortionModel : public Serializable
 public:
   DiscreteDepthDistortionModel() {}
   ~DiscreteDepthDistortionModel();
-  DiscreteDepthDistortionModel(const rgbd::PrimeSenseModel& psm, int bin_width = 8, int bin_height = 6, double bin_depth = 1.0, int smoothing = 1);
+  DiscreteDepthDistortionModel(const rgbd::PrimeSenseModel& psm, int bin_width = 8, int bin_height = 6, double bin_depth = 2.0, int smoothing = 1);
   DiscreteDepthDistortionModel(const DiscreteDepthDistortionModel& other);
   DiscreteDepthDistortionModel& operator=(const DiscreteDepthDistortionModel& other);
   void undistort(rgbd::Frame* frame) const;

@@ -7,7 +7,6 @@ namespace bfs = boost::filesystem;
 
 #define DDL_INCR (getenv("DDL_INCR") ? atoi(getenv("DDL_INCR")) : 1)
 #define REGULARIZATION (getenv("REGULARIZATION") ? atof(getenv("REGULARIZATION")) : 0.0)
-//#define VISUALIZE
 
 DepthDistortionLearner::DepthDistortionLearner(const PrimeSenseModel& initial_model) :
   initial_model_(initial_model),
@@ -52,7 +51,7 @@ PrimeSenseModel DepthDistortionLearner::fitFocalLength()
   return model;
 }
 
-bool gaussianTest(const PrimeSenseModel& model, const DepthMat& mapdepth, const DepthMat depth, const DepthIndex& dindex, int uc, int vc, double radius, cv::Mat3b* visualization, double* mean_dist)
+bool gaussianTest(const PrimeSenseModel& model, const DepthMat& mapdepth, const RangeIndex& rindex, int uc, int vc, double radius, cv::Mat3b* visualization, double* mean_dist)
 {
   Point pt_center, pt_ul, pt_lr;
   ProjectivePoint ppt, ppt_ul, ppt_lr;
@@ -84,7 +83,7 @@ bool gaussianTest(const PrimeSenseModel& model, const DepthMat& mapdepth, const 
   double num = 0;
   for(ppt.u_ = min_u; ppt.u_ <= max_u; ++ppt.u_) {
     for(ppt.v_ = min_v; ppt.v_ <= max_v; ++ppt.v_) {
-      const vector<double>& vals = dindex[ppt.v_][ppt.u_];
+      const vector<double>& vals = rindex[ppt.v_][ppt.u_];
       num += vals.size();
       for(size_t i = 0; i < vals.size(); ++i)
 	mean += vals[i];
@@ -96,7 +95,7 @@ bool gaussianTest(const PrimeSenseModel& model, const DepthMat& mapdepth, const 
   double var = 0;
   for(ppt.u_ = min_u; ppt.u_ <= max_u; ++ppt.u_) {
     for(ppt.v_ = min_v; ppt.v_ <= max_v; ++ppt.v_) {
-      const vector<double>& vals = dindex[ppt.v_][ppt.u_];
+      const vector<double>& vals = rindex[ppt.v_][ppt.u_];
       for(size_t i = 0; i < vals.size(); ++i)
 	var += (vals[i] - mean) * (vals[i] - mean);
     }
@@ -247,7 +246,7 @@ cv::Mat3b visualizeMultipliers(const MatrixXd& multipliers)
 void DepthDistortionLearner::computeMultiplierMap(const PrimeSenseModel& model,
 						  const DepthMat& depth,
 						  const DepthMat& mapdepth,
-						  const DepthIndex& dindex,
+						  const RangeIndex& rindex,
 						  Eigen::MatrixXd* multipliers,
 						  cv::Mat3b* visualization) const
 {
@@ -291,7 +290,7 @@ void DepthDistortionLearner::computeMultiplierMap(const PrimeSenseModel& model,
       // 	continue;
 
       double mean_dist = 0;
-      if(use_filters_ && !gaussianTest(model, mapdepth, depth, dindex, ppt.u_, ppt.v_, 0.02, visualization, &mean_dist))
+      if(use_filters_ && !gaussianTest(model, mapdepth, rindex, ppt.u_, ppt.v_, 0.02, visualization, &mean_dist))
       	continue;
       
       ppt.z_ = mapdepth(ppt.v_, ppt.u_);
@@ -338,71 +337,33 @@ DiscreteDepthDistortionModel DepthDistortionLearner::fitDiscreteModel()
   ROS_ASSERT(frames_.size() == pcds_.size());
   ROS_ASSERT(frames_.size() == transforms_.size());
 
-  CoverageMap2 cmap2(frames_[0].depth_->rows(), frames_[0].depth_->cols(), 0, 12, 12);
   DiscreteDepthDistortionModel dddm(initial_model_);
   
-#ifndef VISUALIZE
 #pragma omp parallel for
-#endif 
   for(size_t i = 0; i < frames_.size(); i += DDL_INCR) {
     ScopedTimer st("total for frame");
     PrimeSenseModel localmodel = initial_model_;
     HighResTimer hrt;
     
     cout << "Accumulating training set for depth distortion model fit, frame " << i << " / " << frames_.size() << endl;
-    hrt.reset("transforming"); hrt.start();
-    rgbd::Cloud transformed;
-    pcl::transformPointCloud(*pcds_[i], transformed, transforms_[i].cast<float>());
-    hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 
-    Frame mapframe;
-    DepthIndex dindex;
-    hrt.reset("projecting"); hrt.start();
-    localmodel.cloudToFrame(transformed, &mapframe);
-    localmodel.cloudToDepthIndex(transformed, &dindex);
-    hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+    DepthMat mapdepth;
+    //double stdev_thresh = 0.03;
+    //localmodel.estimateMapDepth(*pcds_[i], transforms_[i].cast<float>(), frames_[i], stdev_thresh, &mapdepth);
+    localmodel.estimateMapDepth(*pcds_[i], transforms_[i].cast<float>(), frames_[i], &mapdepth);
 
-    hrt.reset("Computing multiplier map"); hrt.start();
     const DepthMat& depth = *frames_[i].depth_;
-    const DepthMat& mapdepth = *mapframe.depth_;
-    MatrixXd multipliers(depth.rows(), depth.cols());
-    cv::Mat3b visualization(depth.rows(), depth.cols());
-    computeMultiplierMap(localmodel, depth, mapdepth, dindex, &multipliers, &visualization);
-    hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+    MatrixXd multipliers = MatrixXd::Zero(depth.rows(), depth.cols());
+    for(int y = 0; y < depth.rows(); ++y) {
+      for(int x = 0; x < depth.cols(); ++x) {
+	if(mapdepth(y, x) == 0 || depth(y, x) == 0)
+	  continue;
+	multipliers(y, x) = (double)mapdepth(y, x) / (double)depth(y, x);
+      }
+    }
     
-    #ifdef VISUALIZE
-    cv::imshow("multipliers and filters", visualization);
-    cv::imshow("multipliers", visualizeMultipliers(multipliers));
-    cv::imshow("depth", frames_[i].depthImage());
-    cv::imshow("mapdepth", mapframe.depthImage());
-    cv::waitKey(10);
-    if(DDL_INCR != 1)
-      cv::waitKey();
-    string visdir = ".multipliers";
-    if(!bfs::exists(visdir))
-      bfs::create_directory(visdir);
-    ostringstream oss;
-    oss << visdir << "/" << setw(5) << setfill('0') << i;
-    string basename = oss.str();
-    cv::imwrite(basename + "-filters.png", visualization);
-    cv::imwrite(basename + "-multipliers.png", visualizeMultipliers(multipliers));
-    cv::imwrite(basename + "-depth.png", frames_[i].depthImage());
-    cv::imwrite(basename + "-mapdepth.png", mapframe.depthImage());
-    #endif
-
     dddm.accumulate(frames_[i], multipliers);
-
-    // Update cmap2
-    //cmap2.increment(ppt.v_, ppt.u_, (double)ppt.z_ * 0.001);
   }	
-
-  // string dir = ".ddl";
-  // if(!bfs::exists(dir))
-  //   bfs::create_directory(dir);
-  // else
-  //   ROS_ASSERT(bfs::is_directory(dir));
-  // cmap2.saveVisualizations(dir);
-  // cout << "Saved coverage visualization to " << dir << endl;
   
   return dddm;
 }
@@ -435,10 +396,10 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
     hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 
     Frame mapframe;
-    DepthIndex dindex;
+    RangeIndex rindex;
     hrt.reset("projecting"); hrt.start();
     localmodel.cloudToFrame(transformed, &mapframe);
-    localmodel.cloudToDepthIndex(transformed, &dindex);
+    localmodel.cloudToRangeIndex(transformed, &rindex);
     hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 
     hrt.reset("Computing multiplier map"); hrt.start();
@@ -446,7 +407,7 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
     const DepthMat& mapdepth = *mapframe.depth_;
     MatrixXd multipliers(depth.rows(), depth.cols());
     cv::Mat3b visualization(depth.rows(), depth.cols());
-    computeMultiplierMap(localmodel, depth, mapdepth, dindex, &multipliers, &visualization);
+    computeMultiplierMap(localmodel, depth, mapdepth, rindex, &multipliers, &visualization);
     hrt.stop(); cout << hrt.reportMilliseconds() << endl;
     
     #ifdef VISUALIZE

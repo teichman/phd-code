@@ -56,11 +56,44 @@ inline void Frustum::undistort(double* z) const
   *z *= multipliers_.coeffRef(index(*z));
 }
 
-inline void Frustum::undistort(int idx, float* z, float* mult) const
+// inline void Frustum::undistort(int idx, float* z, float* mult) const
+// {
+//   *mult = multipliers_.coeffRef(idx);
+//   *z *= *mult;
+// }
+
+void Frustum::interpolatedUndistort(double* z) const
 {
-  *mult = multipliers_.coeffRef(idx);
-  *z *= *mult;
+  int idx = index(*z);
+  double start = bin_depth_ * idx;
+  int idx1;
+  if(*z - start < bin_depth_ / 2)
+    idx1 = idx;
+  else
+    idx1 = idx + 1;
+  int idx0 = idx1 - 1;
+  if(idx0 < 0 || idx1 >= num_bins_ || counts_(idx0) < 50 || counts_(idx1) < 50) {
+    undistort(z);
+    return;
+  }
+
+  double z0 = (idx0 + 1) * bin_depth_ - bin_depth_ * 0.5;
+  // ROS_ASSERT(z0 <= *z && z1 >= *z);
+  // if(!(fabs(z1 - z0 - bin_depth_) < 1e-6)) {
+  //   cout << z0 << " " << z1 << " " << bin_depth_ << endl;
+  //   ROS_ASSERT(0);
+  // }
+
+  double coeff1 = (*z - z0) / bin_depth_;
+  //ROS_ASSERT(coeff1 >= 0 && coeff1 <= 1);
+  double coeff0 = 1.0 - coeff1;
+  double mult = coeff0 * multipliers_.coeffRef(idx0) + coeff1 * multipliers_.coeffRef(idx1);
+  *z *= mult;
 }
+
+// inline void Frustum::interpolatedUndistort(int idx, float* z, float* mult) const
+// {
+// }
 
 // void Frustum::undistort(rgbd::Point* pt) const
 // {
@@ -169,7 +202,8 @@ void DiscreteDepthDistortionModel::undistort(Frame* frame) const
 
       // Non-caching version.
       double z = frame->depth_->coeffRef(v, u) * 0.001;
-      frustum(v, u).undistort(&z);
+      //frustum(v, u).undistort(&z);
+      frustum(v, u).interpolatedUndistort(&z);
       frame->depth_->coeffRef(v, u) = z * 1000;
 
       // Caching version.
@@ -306,6 +340,11 @@ void DiscreteDepthDistortionModel::visualize(const std::string& dir) const
   int horiz_divider = 10;
   int vert_divider = 20;
   cv::Mat3b mega(cv::Size(psm_.width_ * 2 + horiz_divider, psm_.height_ * num_layers + vert_divider * (num_layers + 2)), cv::Vec3b(0, 0, 0));
+  vector<int> pub_layers;
+  pub_layers.push_back(1);
+  pub_layers.push_back(2);
+  pub_layers.push_back(3);
+  cv::Mat3b pub(cv::Size(psm_.width_, psm_.height_ * pub_layers.size() + vert_divider * (pub_layers.size() + 2)), cv::Vec3b(255, 255, 255));
   
   for(int i = 0; i < num_layers; ++i) {
     // -- Determine the path to save the image for this layer.
@@ -365,14 +404,39 @@ void DiscreteDepthDistortionModel::visualize(const std::string& dir) const
     for(int y = 0; y < combined.rows; ++y)
       for(int x = 0; x < combined.cols; ++x)
 	mega(y + i * (combined.rows + vert_divider) + vert_divider, x) = combined(y, x);
-  }
 
+    // -- Compute the publication multipliers visualization for this layer.
+    //    Multiplier of 1 is white, >1 is red, <1 is blue.  Think redshift.
+    cv::Mat3b pubmult(cv::Size(psm_.width_, psm_.height_), cv::Vec3b(255, 255, 255));
+    for(int y = 0; y < pubmult.rows; ++y) {
+      for(int x = 0; x < pubmult.cols; ++x) {
+	const Frustum& frustum = *frustums_[y / bin_height_][x / bin_width_];
+	float val = frustum.multipliers_(i);
+	if(val > 1) {
+	  pubmult(y, x)[0] = 255 - min(255., 255 * (val - 1.0) / 0.1);
+	  pubmult(y, x)[1] = 255 - min(255., 255 * (val - 1.0) / 0.1);
+	}
+	if(val < 1) {
+	  pubmult(y, x)[1] = 255 - min(255., 255 * (1.0 - val) / 0.1);
+	  pubmult(y, x)[2] = 255 - min(255., 255 * (1.0 - val) / 0.1);
+	}
+      }
+    }
+  
+    // -- Append to publication image.
+    for(size_t j = 0; j < pub_layers.size(); ++j)
+      if(pub_layers[j] == i)
+	for(int y = 0; y < pubmult.rows; ++y)
+	  for(int x = 0; x < pubmult.cols; ++x)
+	    pub(y + j * (pubmult.rows + vert_divider) + vert_divider, x) = pubmult(y, x);
+  }
+  
   // -- Add a white bar at the top and bottom for reference.
   for(int y = 0; y < mega.rows; ++y)
     if(y < vert_divider || y > mega.rows - vert_divider)
       for(int x = 0; x < mega.cols; ++x)
 	mega(y, x) = cv::Vec3b(255, 255, 255);
-
+  
   // -- Save mega image.
   ostringstream oss;
   oss << dir << "/mega.png";
@@ -384,8 +448,16 @@ void DiscreteDepthDistortionModel::visualize(const std::string& dir) const
   oss.str("");
   oss << dir << "/mega_scaled.png";
   cv::imwrite(oss.str(), mega_scaled);
-}
 
+  // -- Save publication image.
+  oss.str("");
+  oss << dir << "/pub";
+  for(size_t i = 0; i < pub_layers.size(); ++i)
+    oss << "-" << setw(2) << setfill('0') << pub_layers[i];
+  oss << ".png";
+  cv::imwrite(oss.str(), pub);
+}
+  
 Frustum& DiscreteDepthDistortionModel::frustum(int y, int x)
 {
   ROS_ASSERT(x >= 0 && x < psm_.width_);
