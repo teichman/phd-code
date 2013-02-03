@@ -41,9 +41,9 @@ int main(int argc, char** argv)
     mask = 0;
     for(size_t y = 0; y < pcd->height; ++y) {
       for(size_t x = 0; x < pcd->width; ++x) {
-	int idx = y * pcd->width + x;
-	if(!isnan((*pcd)[idx].z))
-	  mask(y, x) = min((double)(*pcd)[idx].z, 2.0) / 2.0 * 255;
+        int idx = y * pcd->width + x;
+        if(!isnan((*pcd)[idx].z))
+          mask(y, x) = min((double)(*pcd)[idx].z, 2.0) / 2.0 * 255;
       }
     }
     cv::imwrite(path + "/depth_" + id + ".png", mask);

@@ -151,18 +151,18 @@ int main(int argc, char** argv)
 
   Affine3d f0_to_f1;
   // bool found = aligner.align(frame0, frame1,
-  // 			     keypoints0, keypoints1,
-  // 			     features0, features1,
-  // 			     (bool)opts.count("consider-wide-search"), &f0_to_f1);
+  //                              keypoints0, keypoints1,
+  //                              features0, features1,
+  //                              (bool)opts.count("consider-wide-search"), &f0_to_f1);
   AlignerWrapper aw(&aligner, &frame0, &frame1, &keypoints0, &keypoints1, 
       keycloud0, keycloud1, features0, features1, (bool)opts.count("consider-wide-search"));
   ThreadPtr alignment_thread(new boost::thread(boost::bind(&AlignerWrapper::run, &aw, &f0_to_f1)));
   //ThreadPtr alignment_thread(new boost::thread(boost::bind(&FrameAligner::align, &aligner, 
   //               frame0, frame1,
-	//						   keypoints0, keypoints1,
+        //                                                   keypoints0, keypoints1,
   //               keycloud0, keycloud1,
-	//						   features0, features1,
-	//						   (bool)opts.count("consider-wide-search"), &f0_to_f1)));
+        //                                                   features0, features1,
+        //                                                   (bool)opts.count("consider-wide-search"), &f0_to_f1)));
   
   fav.run();
   alignment_thread->join();

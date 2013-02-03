@@ -7,19 +7,19 @@ namespace dst
 {
 
   IcpNPG::IcpNPG(pipeline2::Outlet<DepthProjector::Output>* index_otl,
-		 pipeline2::Outlet<KdTreeNode::Output>* kdtree_otl,
-		 pipeline2::Outlet<const Eigen::Affine3f*>* prev_to_curr_otl,
-		 pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
-		 pipeline2::Outlet<IndicesConstPtr>* pcd_indices_otl,
-		 float score_thresh,
-		 float distance_thresh,
-		 float fringe_radius,
-		 float sigma_dist,
-		 float sigma_color,
-		 float delta_transform_thresh,
-		 bool use_prev_bg,
-		 int skip,
-		 const std::vector<int>& lookback) :
+                 pipeline2::Outlet<KdTreeNode::Output>* kdtree_otl,
+                 pipeline2::Outlet<const Eigen::Affine3f*>* prev_to_curr_otl,
+                 pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
+                 pipeline2::Outlet<IndicesConstPtr>* pcd_indices_otl,
+                 float score_thresh,
+                 float distance_thresh,
+                 float fringe_radius,
+                 float sigma_dist,
+                 float sigma_color,
+                 float delta_transform_thresh,
+                 bool use_prev_bg,
+                 int skip,
+                 const std::vector<int>& lookback) :
     NodePotentialGenerator(),
     aligned_fg_otl_(this),
     aligned_fg_kdtree_otl_(this),
@@ -50,13 +50,13 @@ namespace dst
     max_buffer_size_ = 0;
     for(size_t i = 0; i < lookback_.size(); ++i)
       if(max_buffer_size_ < lookback_[i] + 1)
-	max_buffer_size_ = lookback_[i] + 1;
+        max_buffer_size_ = lookback_[i] + 1;
   }
 
   double IcpNPG::runICP(KdTree& curr_kdtree,
-			const KinectCloud& curr_cloud,
-			KinectCloud::Ptr curr_fg,
-			Affine3f* final_transform) const
+                        const KinectCloud& curr_cloud,
+                        KinectCloud::Ptr curr_fg,
+                        Affine3f* final_transform) const
   {
     vector<Point> world_points;
     world_points.reserve(curr_fg->size());
@@ -75,17 +75,17 @@ namespace dst
       model_points.clear();
       world_points.clear();
       for(size_t i = 0; i < curr_fg->size(); ++i) {
-	// indices.clear();
-	// distances.clear();
-	curr_kdtree.nearestKSearch(curr_fg->at(i), 1, indices, distances);
-	if(distances[0] > distance_thresh_)
-	  continue;
+        // indices.clear();
+        // distances.clear();
+        curr_kdtree.nearestKSearch(curr_fg->at(i), 1, indices, distances);
+        if(distances[0] > distance_thresh_)
+          continue;
 
-	++score;
-	//int idx = curr_kdtree.getIndices()->at(indices[0]);
-	int idx = indices[0];
-	world_points.push_back(curr_cloud[idx]);
-	model_points.push_back(curr_fg->at(i));
+        ++score;
+        //int idx = curr_kdtree.getIndices()->at(indices[0]);
+        int idx = indices[0];
+        world_points.push_back(curr_cloud[idx]);
+        model_points.push_back(curr_fg->at(i));
       }
       score /= (double)model_points.size();
 
@@ -99,9 +99,9 @@ namespace dst
       // cout << "delta_transform: " << delta_transform << endl;
       // cout << "score: " << score << endl;
       if(delta_transform < delta_transform_thresh_)
-	break;
+        break;
       if(iter > 100) // TODO: Parameterize.
-	break;
+        break;
       ++iter;
     }
     
@@ -109,15 +109,15 @@ namespace dst
   }
 
   void IcpNPG::addPotentials(const KinectCloud& object,
-			     const KinectCloud& curr_cloud,
-			     KdTree& curr_kdtree,
-			     Eigen::MatrixXd* potentials) const
+                             const KinectCloud& curr_cloud,
+                             KdTree& curr_kdtree,
+                             Eigen::MatrixXd* potentials) const
   {
     vector<int> indices(1);
     vector<float> distances(1);
     for(size_t i = 0; i < object.size(); ++i) {
       if(rand() % skip_ != 0)
-	continue;
+        continue;
       
       curr_kdtree.nearestKSearch(object[i], 1, indices, distances);
       //int idx = curr_kdtree.getIndices()->at(indices[0]);
@@ -193,10 +193,10 @@ namespace dst
       KinectCloud::Ptr curr_bg(new KinectCloud());
       curr_bg->reserve(prev_bg->size());
       if(lb == 1) {
-	*curr_bg = *prev_bg;
+        *curr_bg = *prev_bg;
       }
       else { 
-	pcl::transformPointCloud(*prev_bg, *curr_bg, old_to_prev_transform);
+        pcl::transformPointCloud(*prev_bg, *curr_bg, old_to_prev_transform);
       }
       // Use ICP transform from foreground object to make the final placement.
       pcl::transformPointCloud(*curr_bg, *curr_bg, final_transform);
@@ -230,7 +230,7 @@ namespace dst
     // -- Add potentials for specified previous objects.
     for(size_t i = 0; i < lookback_.size(); ++i)
       if((int)fg_buffer_.size() > lookback_[i])
-	computeForLookback(lookback_[i]);
+        computeForLookback(lookback_[i]);
     
     // -- Fill the outlets.
     source_otl_.push(&source_potentials_);
@@ -250,14 +250,14 @@ namespace dst
     prev_fg->reserve(prev_cloud.size());
     for(int y = 0; y < prev_seg.rows; ++y) {
       for(int x = 0; x < prev_seg.cols; ++x) {
-	if(prev_seg(y, x) != 255)
-	  continue;
+        if(prev_seg(y, x) != 255)
+          continue;
 
-	int idx = prev_index(y, x);
-	if(idx == -1)
-	  continue;
-	
-	prev_fg->push_back(prev_cloud[idx]);
+        int idx = prev_index(y, x);
+        if(idx == -1)
+          continue;
+        
+        prev_fg->push_back(prev_cloud[idx]);
       }
     }
 
@@ -277,42 +277,42 @@ namespace dst
       vector<bool> marked(prev_cloud.size(), false);
       int num_bg = 0;
       for(size_t i = 0; i < prev_fg->size(); ++i) {
-	indices.clear();
-	distances.clear();
-	prev_kdtree.radiusSearch(prev_fg->at(i), fringe_radius_, indices, distances);
+        indices.clear();
+        distances.clear();
+        prev_kdtree.radiusSearch(prev_fg->at(i), fringe_radius_, indices, distances);
 
-	for(size_t j = 0; j < indices.size(); ++j) {
-	  // if(indices[j] >= (int)prev_kdtree.getIndices()->size()) { 
-	  //   cout << "----" << endl;
-	  //   cout << indices.size() << endl;
-	  //   cout << prev_kdtree.getIndices()->size() << endl;
-	  //   cout << j << endl;
-	  //   cout << indices[j] << endl;
-	  //   cout << prev_rindex.size() << endl;
-	  // }  
+        for(size_t j = 0; j < indices.size(); ++j) {
+          // if(indices[j] >= (int)prev_kdtree.getIndices()->size()) { 
+          //   cout << "----" << endl;
+          //   cout << indices.size() << endl;
+          //   cout << prev_kdtree.getIndices()->size() << endl;
+          //   cout << j << endl;
+          //   cout << indices[j] << endl;
+          //   cout << prev_rindex.size() << endl;
+          // }  
 
-	  ///int idx = prev_kdtree.getIndices()->at(indices[j]);
-	  int idx = indices[j];
-	  if(marked[idx] || prev_seg(prev_rindex[idx]) != 0)
-	    continue;
+          ///int idx = prev_kdtree.getIndices()->at(indices[j]);
+          int idx = indices[j];
+          if(marked[idx] || prev_seg(prev_rindex[idx]) != 0)
+            continue;
 
-	  marked[idx] = true;
-	  ++num_bg;
-	}
+          marked[idx] = true;
+          ++num_bg;
+        }
       }
       
       KinectCloud::Ptr bg(new KinectCloud());
       bg->reserve(num_bg);
       for(size_t i = 0; i < marked.size(); ++i) {
-	if(!marked[i])
-	  continue;
-	bg->push_back(prev_cloud[i]);
+        if(!marked[i])
+          continue;
+        bg->push_back(prev_cloud[i]);
       }
 
       // Add to buffer.
       bg_buffer_.push_front(bg);
       if((int)bg_buffer_.size() == max_buffer_size_ + 1)
-	bg_buffer_.pop_back();
+        bg_buffer_.pop_back();
     }
   }
   

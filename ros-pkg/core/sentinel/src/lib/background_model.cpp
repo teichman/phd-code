@@ -56,7 +56,7 @@ void DepthHistogram::finalize()
   for(int idx = 0; idx < (int)num_nearby_.size(); ++idx)
     for(int i = idx - 1; i <= idx + 1; ++i)
       if(i >= 0 && i < (int)bins_.size())
-	num_nearby_[idx] = max(bins_[i], num_nearby_[idx]);
+        num_nearby_[idx] = max(bins_[i], num_nearby_[idx]);
 
   finalized_ = true;
 }
@@ -74,7 +74,7 @@ int DepthHistogram::getNumNearby(double z) const
 }
 
 BackgroundModel::BackgroundModel(int num_pixels, double min_pct,
-				 double max_depth, double res) :
+                                 double max_depth, double res) :
   min_pct_(min_pct),
   max_depth_(max_depth),
   res_(res),
@@ -96,7 +96,7 @@ void BackgroundModel::increment(const DepthMat& depth, int num)
   for(int y = 0; y < depth.rows(); ++y)
     for(int x = 0; x < depth.cols(); ++x, ++idx)
       if(depth(y, x) != 0)
-	histograms_[idx]->increment(depth(y, x) / 1000.0, num);
+        histograms_[idx]->increment(depth(y, x) / 1000.0, num);
 
   finalized_ = false;
 }

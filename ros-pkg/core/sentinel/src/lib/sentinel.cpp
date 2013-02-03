@@ -5,12 +5,12 @@ namespace bfs = boost::filesystem;
 using namespace rgbd;
 
 Sentinel::Sentinel(std::string name,
-		   double update_interval,
-		   double save_interval,
-		   int max_training_imgs,
-		   double threshold,
-		   const std::string& device_id,
-		   pcl::OpenNIGrabber::Mode mode) :
+                   double update_interval,
+                   double save_interval,
+                   int max_training_imgs,
+                   double threshold,
+                   const std::string& device_id,
+                   pcl::OpenNIGrabber::Mode mode) :
   grabber_(device_id, mode, mode),
   model_((mode == pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz) ? 320*240 : 640*480),
   update_interval_(update_interval),
@@ -20,8 +20,8 @@ Sentinel::Sentinel(std::string name,
   dir_(".sentinel-" + name)
 {
   boost::function<void(const boost::shared_ptr<openni_wrapper::Image>&,
-		       const boost::shared_ptr<openni_wrapper::DepthImage>&,
-		       float)> rgbd_cb;
+                       const boost::shared_ptr<openni_wrapper::DepthImage>&,
+                       float)> rgbd_cb;
   rgbd_cb = boost::bind(&Sentinel::rgbdCallback, this, _1, _2, _3);
   grabber_.registerCallback(rgbd_cb);
 
@@ -42,8 +42,8 @@ void Sentinel::run()
 }
 
 void Sentinel::rgbdCallback(const boost::shared_ptr<openni_wrapper::Image>& oni_rgb,
-			    const boost::shared_ptr<openni_wrapper::DepthImage>& oni_depth,
-			    float f_inv)
+                            const boost::shared_ptr<openni_wrapper::DepthImage>& oni_depth,
+                            float f_inv)
 {
   double depth_timestamp = (double)oni_depth->getTimeStamp() / (double)1e6;
   double image_timestamp = (double)oni_rgb->getTimeStamp() / (double)1e6;
@@ -54,7 +54,7 @@ void Sentinel::rgbdCallback(const boost::shared_ptr<openni_wrapper::Image>& oni_
   double thresh = 1.1 * (1.0 / 60.0);
   if(fabs(depth_timestamp - image_timestamp) > thresh) {
     ROS_WARN_STREAM("rgbdCallback got an rgbd pair with timestamp delta of "
-		    << depth_timestamp - image_timestamp);
+                    << depth_timestamp - image_timestamp);
   }
 
   DepthMatPtr depth = StreamRecorder::oniDepthToEigenPtr(oni_depth);
@@ -90,9 +90,9 @@ void Sentinel::process(DepthMatConstPtr depth, cv::Mat3b img, double ts)
   for(int y = 0; y < depth->rows(); ++y) {
     for(int x = 0; x < depth->cols(); ++x, ++idx) {
       if(depth->coeff(y, x) == 0)
-	continue;
+        continue;
       if(!model_.isBackground(idx, depth->coeff(y, x) / 1000.0))
-	mask_(y, x) = 255;
+        mask_(y, x) = 255;
     }
   }
 
@@ -106,8 +106,8 @@ void Sentinel::process(DepthMatConstPtr depth, cv::Mat3b img, double ts)
   for(int y = 0; y < depth->rows(); ++y) { 
     for(int x = 0; x < depth->cols(); ++x, ++idx) { 
       if(mask_(y, x) == 255) { 
-	++num_fg;
-	vis_(y, x)[2] = 255;
+        ++num_fg;
+        vis_(y, x)[2] = 255;
       }
     }
   }
@@ -187,7 +187,7 @@ cv::Mat1b Sentinel::depthMatToCV(const DepthMat& depth) const
   for(int y = 0; y < vis.rows; ++y) {
     for(int x = 0; x < vis.cols; ++x) {
       if(depth(y, x) != 0)
-	vis(y, x) = 255 * (1.0 - fmin(max_dist, depth(y, x) / 1000.0) / max_dist);
+        vis(y, x) = 255 * (1.0 - fmin(max_dist, depth(y, x) / 1000.0) / max_dist);
     }
   }
 

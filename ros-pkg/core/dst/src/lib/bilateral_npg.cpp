@@ -6,14 +6,14 @@ namespace dst
 {
 
   BilateralNPG::BilateralNPG(pipeline2::Outlet<KdTreeNode::Output>* kdtree_otl,
-			     pipeline2::Outlet<KinectCloud::ConstPtr>* transformed_otl,
-			     pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
-			     pipeline2::Outlet<DepthProjector::Output>* index_otl,
-			     pipeline2::Outlet<cv::Mat1b>* mask_otl,
-			     double sigma_dist,
-			     double sigma_color,
-    			     double sigma_img_dist,
-			     int skip, int neighbor_skip) :
+                             pipeline2::Outlet<KinectCloud::ConstPtr>* transformed_otl,
+                             pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
+                             pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                             pipeline2::Outlet<cv::Mat1b>* mask_otl,
+                             double sigma_dist,
+                             double sigma_color,
+                                 double sigma_img_dist,
+                             int skip, int neighbor_skip) :
     NodePotentialGenerator(),
     kdtree_otl_(kdtree_otl),
     transformed_otl_(transformed_otl),
@@ -36,7 +36,7 @@ namespace dst
 
   inline
   double BilateralNPG::computeTerm(const pcl::PointXYZRGB& curr_pt,
-				   const pcl::PointXYZRGB& prev_pt) const
+                                   const pcl::PointXYZRGB& prev_pt) const
   {
     double dr = curr_pt.r - prev_pt.r;
     double dg = curr_pt.g - prev_pt.g;
@@ -54,9 +54,9 @@ namespace dst
 
   inline
   double BilateralNPG::computeTerm(const cv::Point2i& curr_pt,
-				   const cv::Vec3b& curr_color,
-				   const cv::Point2i& prev_pt,
-				   const cv::Vec3b& prev_color) const
+                                   const cv::Vec3b& curr_color,
+                                   const cv::Point2i& prev_pt,
+                                   const cv::Vec3b& prev_color) const
   {
     double db = curr_color[0] - prev_color[0];
     double dg = curr_color[1] - prev_color[1];
@@ -69,52 +69,52 @@ namespace dst
   }
 
   void BilateralNPG::getNeighborhood(cv::Mat3b img,
-				     const cv::Point2i& pt,
-				     double radius,
-				     std::vector<cv::Point2i>* neighborhood) const
+                                     const cv::Point2i& pt,
+                                     double radius,
+                                     std::vector<cv::Point2i>* neighborhood) const
   {
     int d = ceil(radius);
     for(int y = pt.y - d; y <= pt.y + d; ++y) {
       if(y < 0)
-	continue;
+        continue;
       if(y >= img.rows)
-	continue;
+        continue;
       
       for(int x = pt.x - d; x <= pt.x + d; ++x) {
-	if(x < 0)
-	  continue;
-	if(x >= img.cols)
-	  continue;
+        if(x < 0)
+          continue;
+        if(x >= img.cols)
+          continue;
 
-	double dx = x - pt.x;
-	double dy = y - pt.y;
-	double dist = dx*dx + dy*dy;
-	if(dist > radius*radius)
-	  continue;
-	
-	neighborhood->push_back(cv::Point2i(x, y));
+        double dx = x - pt.x;
+        double dy = y - pt.y;
+        double dist = dx*dx + dy*dy;
+        if(dist > radius*radius)
+          continue;
+        
+        neighborhood->push_back(cv::Point2i(x, y));
       }
     }
   }
-				     
+                                     
   
   inline
   double BilateralNPG::computeBilateralNoDepth(const cv::Point2i& curr_pt,
-					       cv::Mat3b curr_img,
-					       cv::Mat3b prev_img,
-					       cv::Mat1b prev_seg)
+                                               cv::Mat3b curr_img,
+                                               cv::Mat3b prev_img,
+                                               cv::Mat1b prev_seg)
   {
     ImageRegionIterator it(curr_img.size(), img_radius_);
     double numerator = 0;
     double denominator = 0;
     for(it.setCenter(curr_pt); !it.done(); ++it) {
       double z = computeTerm(curr_pt, curr_img(curr_pt),
-			     *it, prev_img(*it));
+                             *it, prev_img(*it));
       double label = 0.0;
       if(prev_seg(*it) == 0)
-	label = -1.0;
+        label = -1.0;
       else if(prev_seg(*it) == 255)
-	label = 1.0;
+        label = 1.0;
       
       numerator += z * label;
       denominator += z;
@@ -126,10 +126,10 @@ namespace dst
   
   inline
   double BilateralNPG::computeBilateral(const pcl::PointXYZRGB& curr_pt,
-					KdTree& prev_kdtree,
-					const std::vector<cv::Point2i>& prev_rindex,
-					cv::Mat1b prev_seg,
-					const KinectCloud& prev_pcd)
+                                        KdTree& prev_kdtree,
+                                        const std::vector<cv::Point2i>& prev_rindex,
+                                        cv::Mat1b prev_seg,
+                                        const KinectCloud& prev_pcd)
   {
     double radius = 0.075; // TODO: Switch BilateralNPG over to using the depth index rather than kdtree.
     indices_.clear();
@@ -145,17 +145,17 @@ namespace dst
       int idx = indices_[i];
       cv::Point2i prev_img_pt = prev_rindex[idx];
       if(prev_img_pt.x == -1 && prev_img_pt.y == -1)
-	continue;
+        continue;
 
       if(rand() % neighbor_skip_ != 0)
-      	continue;
+              continue;
       
       double label = 0;
       if(prev_seg(prev_img_pt) == 255)
-	label = 1.0;
+        label = 1.0;
       else if(prev_seg(prev_img_pt) == 0)
-	label = -1.0;
-	    
+        label = -1.0;
+            
       const pcl::PointXYZRGB& prev_pt = prev_pcd[idx];
       double z = computeTerm(curr_pt, prev_pt);
       denominator += z;
@@ -182,7 +182,7 @@ namespace dst
     //    or if the kdtree wasn't build (no pts in mask).
     if(!kdtree_otl_->pull().previous_kdtree_) {
       if(debug_)
-	cout << "BilateralNPG: no kdtree, skipping." << endl;
+        cout << "BilateralNPG: no kdtree, skipping." << endl;
       return;
     }
     KdTree& prev_kdtree = *kdtree_otl_->pull().previous_kdtree_;
@@ -215,25 +215,25 @@ namespace dst
     // -- Find all nearest neighbors, compute filter.
     for(int y = 0; y < curr_index.rows; ++y) {
       for(int x = 0; x < curr_index.cols; ++x) {
-	if((rand() % skip_) != 0 || mask(y, x) != 255)
-	  continue;
-	
-	int idx = curr_index(y, x);
-	double potential = 0;
-	if(idx != -1) {
-	  //cout << idx << " " << y << " " << x << " " << curr_index.cols * y + x << endl; // TODO: depth index vs ordered pointcloud.
-	  potential = computeBilateral(transformed[idx], prev_kdtree,
-				       prev_rindex, prev_seg, prev_pcd);
-	}
-	else {
-	  // cv::Point2i curr_pt(x, y);
-	  // potential = computeBilateralNoDepth(curr_pt, curr_img,
-	  // 				      prev_img, prev_seg);
-	}
-	if(potential > 0)
-	  source_potentials_(y, x) = potential;
-	else
-	  sink_potentials_(y, x) = -potential;
+        if((rand() % skip_) != 0 || mask(y, x) != 255)
+          continue;
+        
+        int idx = curr_index(y, x);
+        double potential = 0;
+        if(idx != -1) {
+          //cout << idx << " " << y << " " << x << " " << curr_index.cols * y + x << endl; // TODO: depth index vs ordered pointcloud.
+          potential = computeBilateral(transformed[idx], prev_kdtree,
+                                       prev_rindex, prev_seg, prev_pcd);
+        }
+        else {
+          // cv::Point2i curr_pt(x, y);
+          // potential = computeBilateralNoDepth(curr_pt, curr_img,
+          //                                       prev_img, prev_seg);
+        }
+        if(potential > 0)
+          source_potentials_(y, x) = potential;
+        else
+          sink_potentials_(y, x) = -potential;
       }
     }
 

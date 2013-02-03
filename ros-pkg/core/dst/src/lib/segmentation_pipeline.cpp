@@ -28,27 +28,27 @@ namespace dst
     previous_segmentation_ep_  = new EntryPoint<cv::Mat1b>("PreviousSegmentation");
     cloud_ep_ = new EntryPoint<KinectCloud::ConstPtr>("Cloud");
     previous_cloud_ep_ = new EntryPoint<KinectCloud::ConstPtr>("PreviousCloud");
-    graph_ep_ = new EntryPoint<Graph3dPtr>("Graph");						   
+    graph_ep_ = new EntryPoint<Graph3dPtr>("Graph");                                                   
 
     boundary_mask_node_ = new BoundaryMaskNode(&previous_segmentation_ep_->outlet_,
-					       &cloud_ep_->outlet_,
-					       &previous_cloud_ep_->outlet_,
-					       &image_ep_->outlet_,
-					       &seed_ep_->outlet_, 12, 0.2);
+                                               &cloud_ep_->outlet_,
+                                               &previous_cloud_ep_->outlet_,
+                                               &image_ep_->outlet_,
+                                               &seed_ep_->outlet_, 12, 0.2);
 
     depth_projector_ = new DepthProjector(&image_ep_->outlet_, &cloud_ep_->outlet_);
     OpticalFlowNode* optflow = new OpticalFlowNode(&depth_projector_->index_otl_);
-						   						   
+                                                                                                      
     KdTreeNode* kdtree = new KdTreeNode(&cloud_ep_->outlet_,
-					&boundary_mask_node_->pcd_indices_otl_, 0.03);
+                                        &boundary_mask_node_->pcd_indices_otl_, 0.03);
     scene_alignment_node_ = new SceneAlignmentNode(&optflow->optflow_otl_,
-						   &depth_projector_->index_otl_);
-								 
+                                                   &depth_projector_->index_otl_);
+                                                                 
     normals_node_ = new OrganizedSurfaceNormalNode(&cloud_ep_->outlet_,
-						   &boundary_mask_node_->mask_otl_, 1);
+                                                   &boundary_mask_node_->mask_otl_, 1);
     ForegroundKdTreeNode* fg_kdtree_node;
     fg_kdtree_node = new ForegroundKdTreeNode(&previous_segmentation_ep_->outlet_,
-					      &depth_projector_->index_otl_);
+                                              &depth_projector_->index_otl_);
     
     
     // ----------------------------------------
@@ -60,13 +60,13 @@ namespace dst
     // ROS_DEBUG_STREAM("DEPG_SIGMA_NORM: " << DEPG_SIGMA_NORM);
     // ROS_DEBUG_STREAM("DEPG_SIGMA_EUC: " << DEPG_SIGMA_EUC);
     DepthEPG* depth = new DepthEPG(&depth_projector_->index_otl_,
-				   &normals_node_->normals_otl_,
-				   &boundary_mask_node_->mask_otl_,
-				   1, DEPG_SIGMA_NORM, DEPG_SIGMA_EUC);
+                                   &normals_node_->normals_otl_,
+                                   &boundary_mask_node_->mask_otl_,
+                                   1, DEPG_SIGMA_NORM, DEPG_SIGMA_EUC);
     SurfaceNormalEPG* normal_epg = new SurfaceNormalEPG(&normals_node_->normals_otl_,
-    							&depth_projector_->index_otl_,
-							&boundary_mask_node_->mask_otl_,
-    							&image_ep_->outlet_, 0.32);
+                                                            &depth_projector_->index_otl_,
+                                                        &boundary_mask_node_->mask_otl_,
+                                                            &image_ep_->outlet_, 0.32);
 
     // Edge products.
 
@@ -106,12 +106,12 @@ namespace dst
     
     VectorXd eweights = VectorXd::Ones(edge_generators.size());
     edge_aggregator_ = new EdgePotentialAggregator(&graph_ep_->outlet_,
-						   &image_ep_->outlet_,
-						   &depth_projector_->index_otl_,
-						   edge_generators,
-						   eweights,
-						   true,
-						   NULL);
+                                                   &image_ep_->outlet_,
+                                                   &depth_projector_->index_otl_,
+                                                   edge_generators,
+                                                   eweights,
+                                                   true,
+                                                   NULL);
 
     // ----------------------------------------
     // -- Node potentials.
@@ -119,25 +119,25 @@ namespace dst
 
     
     // SceneAlignmentNPG* sanpg = new SceneAlignmentNPG(&scene_alignment->transformed_otl_,
-    // 						     &kdtree->kdtree_otl_,
-    // 						     &previous_segmentation_ep_->outlet_,
-    // 						     &depth_projector_->index_otl_);
+    //                                                      &kdtree->kdtree_otl_,
+    //                                                      &previous_segmentation_ep_->outlet_,
+    //                                                      &depth_projector_->index_otl_);
 
     // SKIP: 1, 3, 5
     // sigma_dist: 0.005, 0.01, 0.05
     // sigma_color: 50.0, 5.0, 100.0
     
     BilateralNPG* bilateral = new BilateralNPG(&kdtree->kdtree_otl_,
-					       &scene_alignment_node_->transformed_otl_,
-					       &previous_segmentation_ep_->outlet_,
-					       &depth_projector_->index_otl_,
-					       &boundary_mask_node_->mask_otl_,
-					       BIL_SIGMA_DIST, BIL_SIGMA_COLOR, 5.0, SKIP, SKIP);  
+                                               &scene_alignment_node_->transformed_otl_,
+                                               &previous_segmentation_ep_->outlet_,
+                                               &depth_projector_->index_otl_,
+                                               &boundary_mask_node_->mask_otl_,
+                                               BIL_SIGMA_DIST, BIL_SIGMA_COLOR, 5.0, SKIP, SKIP);  
     
     SeedNPG* seed = new SeedNPG(&seed_ep_->outlet_);
     // SeedDistanceNPG* sd = new SeedDistanceNPG(&seed_ep_->outlet_,
-    // 					      &depth_projector_->index_otl_,
-    // 					      1.0);
+    //                                               &depth_projector_->index_otl_,
+    //                                               1.0);
 
     LabelFlowNPG* label_flow = new LabelFlowNPG(&optflow->optflow_otl_, &previous_segmentation_ep_->outlet_);
 
@@ -146,32 +146,32 @@ namespace dst
     IntegralImageNode* integral_node = new IntegralImageNode(&intensity_node->outlet_);
     HSVImageNode* hsv_node = new HSVImageNode(&image_ep_->outlet_);
     PatchClassifierNPG* patch_classifier5 = new PatchClassifierNPG(&image_ep_->outlet_,
-								   &intensity_node->outlet_,
-								   &integral_node->outlet_,
-								   &hsv_node->outlet_,
-								   &previous_segmentation_ep_->outlet_,
-								   &boundary_mask_node_->mask_otl_,
-								   7, SKIP); // 1 results in small variance.
+                                                                   &intensity_node->outlet_,
+                                                                   &integral_node->outlet_,
+                                                                   &hsv_node->outlet_,
+                                                                   &previous_segmentation_ep_->outlet_,
+                                                                   &boundary_mask_node_->mask_otl_,
+                                                                   7, SKIP); // 1 results in small variance.
 
     DistanceNPG* distance_npg = new DistanceNPG(&scene_alignment_node_->transformed_otl_,
-						&fg_kdtree_node->kdtree_otl_,
-						&image_ep_->outlet_,
-						&boundary_mask_node_->pcd_indices_otl_,
-						0.15);
-						    
+                                                &fg_kdtree_node->kdtree_otl_,
+                                                &image_ep_->outlet_,
+                                                &boundary_mask_node_->pcd_indices_otl_,
+                                                0.15);
+                                                    
     IcpNPG* icp_npg0 = new IcpNPG(&depth_projector_->index_otl_,
-    				  &kdtree->kdtree_otl_,
-    				  &scene_alignment_node_->prev_to_curr_otl_,
-    				  &previous_segmentation_ep_->outlet_,
-    				  &boundary_mask_node_->pcd_indices_otl_,
-    				  0.75, 0.05, 0.05, 0.02, 75, 0.001, true, SKIP);
+                                      &kdtree->kdtree_otl_,
+                                      &scene_alignment_node_->prev_to_curr_otl_,
+                                      &previous_segmentation_ep_->outlet_,
+                                      &boundary_mask_node_->pcd_indices_otl_,
+                                      0.75, 0.05, 0.05, 0.02, 75, 0.001, true, SKIP);
 
     PriorNPG* prior_npg = new PriorNPG(&image_ep_->outlet_);
 
     TemplateMatcherNPG* template_matcher = new TemplateMatcherNPG(&depth_projector_->index_otl_,
-								  &image_ep_->outlet_,
-								  &boundary_mask_node_->mask_otl_);
-								  
+                                                                  &image_ep_->outlet_,
+                                                                  &boundary_mask_node_->mask_otl_);
+                                                                  
     vector<NodePotentialGenerator*> node_generators;
     node_generators.push_back(seed);
     node_generators.push_back(bilateral);
@@ -189,12 +189,12 @@ namespace dst
     nweights(0) = 10;
     nweights(node_generators.size() - 1) = 0.0001;
     node_aggregator_ = new NodePotentialAggregator(&graph_ep_->outlet_,
-						   &seed_ep_->outlet_,
-						   &image_ep_->outlet_,
-						   &depth_projector_->index_otl_,
-						   edge_aggregator_,
-						   node_generators,
-						   nweights);
+                                                   &seed_ep_->outlet_,
+                                                   &image_ep_->outlet_,
+                                                   &depth_projector_->index_otl_,
+                                                   edge_aggregator_,
+                                                   node_generators,
+                                                   nweights);
     
     pipeline_.addComponent(image_ep_);
   }
@@ -232,8 +232,8 @@ namespace dst
     ROS_ASSERT(weights.rows() == getEdgeWeights().rows() + getNodeWeights().rows());
     for(int i = 0; i < getEdgeWeights().rows(); ++i) {
       if(weights(i) < 0.0) {
-	//ROS_DEBUG_STREAM_ONCE(30, "Weight " << i << " = " << weights(i) << ", clipping to zero.");
-	weights(i) = 0;
+        //ROS_DEBUG_STREAM_ONCE(30, "Weight " << i << " = " << weights(i) << ", clipping to zero.");
+        weights(i) = 0;
       }
     }
     setWeights(weights, verbose);
@@ -275,24 +275,24 @@ namespace dst
     for(size_t i = 0; i < seq->segmentations_.size(); ++i) {
       // Run segmentation.
       if(i == 0) {
-	run(seq->seed_images_[i],
-	    seq->images_[i],
-	    seq->pointclouds_[i],
-	    cv::Mat3b(),
-	    cv::Mat1b(),
-	    KinectCloud::Ptr(),
-	    throwaway_img_seg, // Don't overwrite ground truth.
-	    seg_pcd);
+        run(seq->seed_images_[i],
+            seq->images_[i],
+            seq->pointclouds_[i],
+            cv::Mat3b(),
+            cv::Mat1b(),
+            KinectCloud::Ptr(),
+            throwaway_img_seg, // Don't overwrite ground truth.
+            seg_pcd);
       }
       else { 
-	run(empty_seed,
-	    seq->images_[i],
-	    seq->pointclouds_[i],
-	    seq->images_[i-1],
-	    seq->segmentations_[i-1], // Pass in ground truth as prev seg.
-	    seq->pointclouds_[i-1],
-	    throwaway_img_seg, // Don't overwrite ground truth.
-	    seg_pcd);
+        run(empty_seed,
+            seq->images_[i],
+            seq->pointclouds_[i],
+            seq->images_[i-1],
+            seq->segmentations_[i-1], // Pass in ground truth as prev seg.
+            seq->pointclouds_[i-1],
+            throwaway_img_seg, // Don't overwrite ground truth.
+            seg_pcd);
       }
 
       // Get out the potentials.
@@ -300,9 +300,9 @@ namespace dst
 
       // Debugging
       if(VISUALIZE && NUM_GC_THREADS == 1) { 
-	cv::imshow("OracleSegmentation", throwaway_img_seg);
-	cv::imshow("Depth index", cache->framecaches_.back()->depth_index_);
-	cv::waitKey(50);
+        cv::imshow("OracleSegmentation", throwaway_img_seg);
+        cv::imshow("Depth index", cache->framecaches_.back()->depth_index_);
+        cv::waitKey(50);
       }
     }
     
@@ -320,8 +320,8 @@ namespace dst
   }
 
   cv::Mat1b SegmentationPipeline::findMostViolating(const FramePotentialsCache& fc,
-						    cv::Mat1b labels,
-						    bool hamming)
+                                                    cv::Mat1b labels,
+                                                    bool hamming)
   {
     ROS_ASSERT(fc.depth_index_.rows > 0);
 
@@ -336,17 +336,17 @@ namespace dst
     ROS_ASSERT((size_t)node_weights.rows() == fc.source_potentials_.size());
     ROS_ASSERT((size_t)node_weights.rows() == fc.sink_potentials_.size());
     MatrixXd srcpot = MatrixXd::Zero(fc.source_potentials_[0].rows(),
-				     fc.source_potentials_[0].cols());
+                                     fc.source_potentials_[0].cols());
     for(size_t i = 0; i < fc.source_potentials_.size(); ++i)
       srcpot += node_weights(i) * fc.source_potentials_[i];
 
     MatrixXd snkpot = MatrixXd::Zero(fc.sink_potentials_[0].rows(),
-				     fc.sink_potentials_[0].cols());
+                                     fc.sink_potentials_[0].cols());
     for(size_t i = 0; i < fc.sink_potentials_.size(); ++i)
       snkpot += node_weights(i) * fc.sink_potentials_[i];
 
     SparseMatrix<double, Eigen::RowMajor> epot(fc.edge_potentials_[0].rows(),
-					       fc.edge_potentials_[0].cols());
+                                               fc.edge_potentials_[0].cols());
     VectorXd edge_weights = getEdgeWeights();
     ROS_ASSERT((size_t)edge_weights.rows() == fc.edge_potentials_.size());
     for(size_t i = 0; i < fc.edge_potentials_.size(); ++i)
@@ -355,16 +355,16 @@ namespace dst
     // -- Add the node potentials corresponding to the Hamming loss.
     if(hamming) { 
       for(int y = 0; y < labels.rows; ++y) {
-	for(int x = 0; x < labels.cols; ++x) {
-	  
-	  if(fc.depth_index_(y, x) == -1)
-	    continue;
-	  
-	  if(labels(y, x) == 255)
-	    snkpot(y, x) += 1.0;
-	  else if(labels(y, x) == 0)
-	    srcpot(y, x) += 1.0;
-	}
+        for(int x = 0; x < labels.cols; ++x) {
+          
+          if(fc.depth_index_(y, x) == -1)
+            continue;
+          
+          if(labels(y, x) == 255)
+            snkpot(y, x) += 1.0;
+          else if(labels(y, x) == 0)
+            srcpot(y, x) += 1.0;
+        }
       }
     }
 
@@ -373,8 +373,8 @@ namespace dst
     ROS_ASSERT(srcpot.cols() == snkpot.cols());
     for(int i = 0; i < srcpot.rows(); ++i) {
       for(int j = 0; j < srcpot.cols(); ++j) {
-	int idx = i * srcpot.cols() + j;
-	graph_->add_tweights(idx, srcpot(i, j), snkpot(i, j));
+        int idx = i * srcpot.cols() + j;
+        graph_->add_tweights(idx, srcpot(i, j), snkpot(i, j));
       }
     }
 
@@ -386,10 +386,10 @@ namespace dst
     SparseMatrix<double, Eigen::RowMajor> sym = (epot + trans) / 2.0;
     for(int i = 0; i < sym.outerSize(); ++i) {
       for(SparseMatrix<double, RowMajor>::InnerIterator it(sym, i); it; ++it) {
-	if(it.col() <= it.row())
-	  continue;
-	
-	graph_->add_edge(it.col(), it.row(), it.value(), it.value());
+        if(it.col() <= it.row())
+          continue;
+        
+        graph_->add_edge(it.col(), it.row(), it.value(), it.value());
       }
     }
 
@@ -409,25 +409,25 @@ namespace dst
     bool error = false;
     for(int x = 0; x < indvis.cols; ++x) {
       for(int y = 0; y < indvis.rows; ++y) {
-	if(fc.depth_index_(y, x) != -1)
-	  indvis(y, x) = 255;
+        if(fc.depth_index_(y, x) != -1)
+          indvis(y, x) = 255;
 
-	if(!((labels(y, x) == 127 && pred(y, x) == 127) ||
-	     (labels(y, x) == 255 && pred(y, x) == 255) ||
-	     (labels(y, x) == 0 && pred(y, x) == 0) ||
-	     (labels(y, x) == 0 && pred(y, x) == 255) ||
-	     (labels(y, x) == 255 && pred(y, x) == 0)))
-	{
-	  ROS_ERROR_STREAM("label: " << (int)labels(y, x) << ", pred: " << (int)pred(y, x) << flush);
-	  error = true;
-	}
-	
-	// TODO: Investigate why this fails when training on the test set.  label 127, pred 0.  1/31.
-	// ROS_ASSERT((labels(y, x) == 127 && pred(y, x) == 127) ||
-	// 	   (labels(y, x) == 255 && pred(y, x) == 255) ||
-	// 	   (labels(y, x) == 0 && pred(y, x) == 0) ||
-	// 	   (labels(y, x) == 0 && pred(y, x) == 255) ||
-	// 	   (labels(y, x) == 255 && pred(y, x) == 0));
+        if(!((labels(y, x) == 127 && pred(y, x) == 127) ||
+             (labels(y, x) == 255 && pred(y, x) == 255) ||
+             (labels(y, x) == 0 && pred(y, x) == 0) ||
+             (labels(y, x) == 0 && pred(y, x) == 255) ||
+             (labels(y, x) == 255 && pred(y, x) == 0)))
+        {
+          ROS_ERROR_STREAM("label: " << (int)labels(y, x) << ", pred: " << (int)pred(y, x) << flush);
+          error = true;
+        }
+        
+        // TODO: Investigate why this fails when training on the test set.  label 127, pred 0.  1/31.
+        // ROS_ASSERT((labels(y, x) == 127 && pred(y, x) == 127) ||
+        //            (labels(y, x) == 255 && pred(y, x) == 255) ||
+        //            (labels(y, x) == 0 && pred(y, x) == 0) ||
+        //            (labels(y, x) == 0 && pred(y, x) == 255) ||
+        //            (labels(y, x) == 255 && pred(y, x) == 0));
       }
     }
     if(VISUALIZE) { 
@@ -436,16 +436,16 @@ namespace dst
       cv::imshow("most violating", pred);
       cv::waitKey(50);
       if(error)
-	cv::waitKey();
+        cv::waitKey();
     }
     
     return pred;
   }
 
   cv::Mat3b SegmentationPipeline::getZBuffer(const KinectCloud& cloud,
-					     int spread,
-					     float min_range,
-					     float max_range) const
+                                             int spread,
+                                             float min_range,
+                                             float max_range) const
   {
     return depth_projector_->getZBuffer(cloud, spread, min_range, max_range);
   }
@@ -461,7 +461,7 @@ namespace dst
     if(debug) {
       ROS_ASSERT(!bfs::exists("debug") || bfs::is_directory("debug"));
       if(!bfs::exists("debug"))
-	bfs::create_directory("debug");
+        bfs::create_directory("debug");
     }
   }
 
@@ -476,13 +476,13 @@ namespace dst
   }
   
   void SegmentationPipeline::run(cv::Mat1b seed,
-				 cv::Mat3b image,
-				 KinectCloud::ConstPtr cloud,
-				 cv::Mat3b prev_image,
-				 cv::Mat1b prev_seg,
-				 KinectCloud::ConstPtr prev_cloud,
-				 cv::Mat1b img_seg,
-				 KinectCloud::Ptr pcd_seg)
+                                 cv::Mat3b image,
+                                 KinectCloud::ConstPtr cloud,
+                                 cv::Mat3b prev_image,
+                                 cv::Mat1b prev_seg,
+                                 KinectCloud::ConstPtr prev_cloud,
+                                 cv::Mat1b img_seg,
+                                 KinectCloud::Ptr pcd_seg)
   {
     ROS_ASSERT(img_seg.rows == image.rows);
     ROS_ASSERT(img_seg.cols == image.cols);
@@ -494,7 +494,7 @@ namespace dst
     // std::vector<int> indices;
     // pcl::removeNaNFromPointCloud(*cloud, *cleaned, indices);
     // cout << "Cleaned is (wxh) " <<  cleaned->width << " x "
-    // 	 << cleaned->height << endl;
+    //          << cleaned->height << endl;
     // cout << "Number of points: " << cleaned->points.size() << endl;
     // cout << "is_dense: " << cleaned->is_dense << endl;
     // cout << "sensor origin: " << cleaned->sensor_origin_.transpose() << endl;
@@ -542,8 +542,8 @@ namespace dst
     ROS_ASSERT(srcpot.cols() == snkpot.cols());
     for(int i = 0; i < srcpot.rows(); ++i) {
       for(int j = 0; j < srcpot.cols(); ++j) {
-	int idx = i * srcpot.cols() + j;
-	graph_->add_tweights(idx, srcpot(i, j), snkpot(i, j));
+        int idx = i * srcpot.cols() + j;
+        graph_->add_tweights(idx, srcpot(i, j), snkpot(i, j));
       }
     }
     
@@ -556,12 +556,12 @@ namespace dst
     SparseMatrix<double, Eigen::RowMajor> sym = (epot + trans) / 2.0;
     for(int i = 0; i < sym.outerSize(); ++i) {
       for(SparseMatrix<double, RowMajor>::InnerIterator it(sym, i); it; ++it) {
-	if(it.col() <= it.row())
-	  continue;
+        if(it.col() <= it.row())
+          continue;
 
-	ROS_WARN_STREAM_COND(it.value() < 0, "Edgepot weighted sum is negative: " << it.value());
-	ROS_FATAL_STREAM_COND(isnan(it.value()), "NaN in edgepot.");
-	graph_->add_edge(it.col(), it.row(), it.value(), it.value());
+        ROS_WARN_STREAM_COND(it.value() < 0, "Edgepot weighted sum is negative: " << it.value());
+        ROS_FATAL_STREAM_COND(isnan(it.value()), "NaN in edgepot.");
+        graph_->add_edge(it.col(), it.row(), it.value(), it.value());
       }
     }
     
@@ -573,15 +573,15 @@ namespace dst
       cout << hrt.reportMilliseconds() << endl;
     
     generateSegmentationFromGraph(*graph_, 
-				  depth_projector_->index_otl_.pull().current_index_,
-				  img_seg, cloud, pcd_seg);
+                                  depth_projector_->index_otl_.pull().current_index_,
+                                  img_seg, cloud, pcd_seg);
   }
   
   void SegmentationPipeline::generateSegmentationFromGraph(Graph3d& graph,
-							   cv::Mat1i index,
-							   cv::Mat1b img_seg,
-							   KinectCloud::ConstPtr cloud,
-							   KinectCloud::Ptr pcd_seg) const
+                                                           cv::Mat1i index,
+                                                           cv::Mat1b img_seg,
+                                                           KinectCloud::ConstPtr cloud,
+                                                           KinectCloud::Ptr pcd_seg) const
   {
     ROS_ASSERT(img_seg.rows == index.rows);
     ROS_ASSERT(img_seg.cols == index.cols);
@@ -591,28 +591,28 @@ namespace dst
       pcd_seg->clear();
     for(int y = 0; y < img_seg.rows; ++y) {
       for(int x = 0; x < img_seg.cols; ++x) {
-	int img_idx = getIdx(y, x, img_seg.cols);
-	int pcd_idx = index(y, x);
+        int img_idx = getIdx(y, x, img_seg.cols);
+        int pcd_idx = index(y, x);
 
-	// If no depth information, don't say anything.
-	// NPA & EPA should have disconnected these pixels entirely.
-	if(pcd_idx == -1) {
-	  
-	  ROS_ASSERT((graph.what_segment(img_idx, Graph<double, double, double>::SINK) == Graph<double, double, double>::SINK));
+        // If no depth information, don't say anything.
+        // NPA & EPA should have disconnected these pixels entirely.
+        if(pcd_idx == -1) {
+          
+          ROS_ASSERT((graph.what_segment(img_idx, Graph<double, double, double>::SINK) == Graph<double, double, double>::SINK));
 
-		     
-	  img_seg(y, x) = 127;
-	}
-	else { 
-	  if(graph.what_segment(img_idx, Graph<double, double, double>::SINK)
-	     == Graph<double, double, double>::SOURCE) {
-	    img_seg(y, x) = 255;
-	    if(pcd_seg)
-	      pcd_seg->push_back(cloud->at(pcd_idx));
-	  }
-	  else
-	    img_seg(y, x) = 0;
-	}
+                     
+          img_seg(y, x) = 127;
+        }
+        else { 
+          if(graph.what_segment(img_idx, Graph<double, double, double>::SINK)
+             == Graph<double, double, double>::SOURCE) {
+            img_seg(y, x) = 255;
+            if(pcd_seg)
+              pcd_seg->push_back(cloud->at(pcd_idx));
+          }
+          else
+            img_seg(y, x) = 0;
+        }
       }
     }
   }

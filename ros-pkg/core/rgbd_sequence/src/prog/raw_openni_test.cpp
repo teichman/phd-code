@@ -221,9 +221,9 @@ int main(int argc, char** argv)
     
     for(int y = 0; y < dimg.rows; ++y) { 
       for(int x = 0; x < dimg.cols; ++x) {
-    	dimg(y, x) = 255.0 * dmd(x, y) / 5000.0;  // dmd is in millimeters.
-    	if(dimg(y, x) > 255.0)
-    	  dimg(y, x) = 0;
+            dimg(y, x) = 255.0 * dmd(x, y) / 5000.0;  // dmd is in millimeters.
+            if(dimg(y, x) > 255.0)
+              dimg(y, x) = 0;
       }
     }
     cv::imshow("Depth Image", dimg);
@@ -234,14 +234,14 @@ int main(int argc, char** argv)
 
     if(opts.count("write")) {
       {
-	ostringstream oss;
-	oss << "depth" << setw(5) << setfill('0') << iters << ".png";
-	cv::imwrite(oss.str(), dimg);
+        ostringstream oss;
+        oss << "depth" << setw(5) << setfill('0') << iters << ".png";
+        cv::imwrite(oss.str(), dimg);
       }
       {
-	ostringstream oss;
-	oss << "rgb" << setw(5) << setfill('0') << iters << ".png";
-	cv::imwrite(oss.str(), cimg);
+        ostringstream oss;
+        oss << "rgb" << setw(5) << setfill('0') << iters << ".png";
+        cv::imwrite(oss.str(), cimg);
       }
     }
     

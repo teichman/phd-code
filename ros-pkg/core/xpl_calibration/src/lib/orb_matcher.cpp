@@ -49,38 +49,38 @@ void OrbMatcher::compute()
     for(size_t j = 0; j < matches0.size(); ++j) {
       pcl::PointXYZRGB t0 = getPoint(keypoints1[matches0[j]], *cloud1);
       if(isnan(t0.x))
-	continue;
+        continue;
       
       for(size_t k = 0; k < matches1.size(); ++k) {
-	pcl::PointXYZRGB t1 = getPoint(keypoints1[matches1[k]], *cloud1);
-	if(isnan(t1.x))
-	  continue;
-	if(fabs(pcl::euclideanDistance(t0, t1) - d01) > param<double>("DistanceThresh"))
-	  continue;
+        pcl::PointXYZRGB t1 = getPoint(keypoints1[matches1[k]], *cloud1);
+        if(isnan(t1.x))
+          continue;
+        if(fabs(pcl::euclideanDistance(t0, t1) - d01) > param<double>("DistanceThresh"))
+          continue;
 
 
-	for(size_t l = 0; l < matches2.size(); ++l) {
-	  pcl::PointXYZRGB t2 = getPoint(keypoints1[matches2[l]], *cloud1);
-	  if(isnan(t2.x))
-	    continue;
-	  if(fabs(pcl::euclideanDistance(t0, t2) - d02) > param<double>("DistanceThresh"))
-	    continue;
-	  if(fabs(pcl::euclideanDistance(t1, t2) - d12) > param<double>("DistanceThresh"))
-	    continue;
+        for(size_t l = 0; l < matches2.size(); ++l) {
+          pcl::PointXYZRGB t2 = getPoint(keypoints1[matches2[l]], *cloud1);
+          if(isnan(t2.x))
+            continue;
+          if(fabs(pcl::euclideanDistance(t0, t2) - d02) > param<double>("DistanceThresh"))
+            continue;
+          if(fabs(pcl::euclideanDistance(t1, t2) - d12) > param<double>("DistanceThresh"))
+            continue;
 
-	  pcl::TransformationFromCorrespondences tfc;
-	  tfc.add(t0.getVector3fMap(), r0.getVector3fMap());
-	  tfc.add(t1.getVector3fMap(), r1.getVector3fMap());
-	  tfc.add(t2.getVector3fMap(), r2.getVector3fMap());
+          pcl::TransformationFromCorrespondences tfc;
+          tfc.add(t0.getVector3fMap(), r0.getVector3fMap());
+          tfc.add(t1.getVector3fMap(), r1.getVector3fMap());
+          tfc.add(t2.getVector3fMap(), r2.getVector3fMap());
 
-	  Affine3f transform = tfc.getTransformation();
-	  if((transform * t0.getVector3fMap() - r0.getVector3fMap()).norm() > 0.1 ||
-	     (transform * t1.getVector3fMap() - r1.getVector3fMap()).norm() > 0.1 ||
-	     (transform * t2.getVector3fMap() - r2.getVector3fMap()).norm() > 0.1)
-	    continue;
+          Affine3f transform = tfc.getTransformation();
+          if((transform * t0.getVector3fMap() - r0.getVector3fMap()).norm() > 0.1 ||
+             (transform * t1.getVector3fMap() - r1.getVector3fMap()).norm() > 0.1 ||
+             (transform * t2.getVector3fMap() - r2.getVector3fMap()).norm() > 0.1)
+            continue;
 
-	  transforms_.push_back(transform);
-	}
+          transforms_.push_back(transform);
+        }
       }
     }
   }
@@ -110,7 +110,7 @@ void OrbMatcher::compute()
       distances.clear();
       kdtree0.nearestKSearch(transformed_keypoint_cloud1_[j], 1, indices, distances);
       if(distances.size() != 0 && distances[0] < param<double>("DistanceThresh"))
-	++num_inliers;
+        ++num_inliers;
     }
 
     //cout << "min num inliers: " << (int)(param<double>("MinInlierPercent") * valid.size()) << endl;
@@ -143,9 +143,9 @@ void OrbMatcher::debug() const
   for(int y = 0; y < vis.rows; ++y) {
     for(int x = 0; x < vis.cols; ++x) {
       if(x < img0.cols)
-	vis(y, x) = img0(y, x);
+        vis(y, x) = img0(y, x);
       else
-	vis(y, x) = img1(y, x - img0.cols);
+        vis(y, x) = img1(y, x - img0.cols);
     }
   }
 
@@ -158,6 +158,6 @@ void OrbMatcher::debug() const
       cv::line(vis, keypoints1[matches_[i][j]].pt + offset, keypoints0[i].pt, cv::Scalar(255, 0, 0));
     }
   }
-	  
+          
   cv::imwrite(getDebugPath() + "-matches.png", vis);
 }

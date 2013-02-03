@@ -15,11 +15,11 @@ namespace dst
     typedef std::vector< std::vector< std::vector<double> > > Hist;
     
     ColorHistogramNPG(pipeline2::Outlet<cv::Mat3b>* image_otl,
-		      pipeline2::Outlet<cv::Mat1b>* seed_otl,
-		      pipeline2::Outlet<cv::Mat3b>* prev_image_otl,
-		      pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
-		      double smoothing = 1.0,
-		      int num_bins = 8);
+                      pipeline2::Outlet<cv::Mat1b>* seed_otl,
+                      pipeline2::Outlet<cv::Mat3b>* prev_image_otl,
+                      pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
+                      double smoothing = 1.0,
+                      int num_bins = 8);
     //! The default behavior is to accumulate color information over time.
     //! You must call this method if accumulation is not desired.
     void clearHistograms();
@@ -37,7 +37,7 @@ namespace dst
 
     void initializeHistogram(Hist* hist) const;
     void fillHistogram(cv::Mat1b seed, cv::Mat3b img,
-		       int label, Hist* hist) const;
+                       int label, Hist* hist) const;
     int getIdx(uchar val) const;
     void _compute();
     void _display() const;

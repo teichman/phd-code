@@ -6,7 +6,7 @@ using namespace pcl;
 using namespace rgbd;
 
 OrganizedConnectedComponents::OrganizedConnectedComponents(size_t min_inliers,
-							   double distance_thresh) :
+                                                           double distance_thresh) :
   min_inliers_(min_inliers),
   distance_thresh_(distance_thresh)
 {
@@ -31,7 +31,7 @@ void OrganizedConnectedComponents::compute(const Cloud& pcd)
     else if(assignments_[i] == UNTOUCHED) { 
       bool found = findComponent(pcd, i, num_components);
       if(found)
-	++num_components;
+        ++num_components;
     }
   }
 
@@ -41,7 +41,7 @@ void OrganizedConnectedComponents::compute(const Cloud& pcd)
     int num = 0;
     for(size_t j = 0; j < assignments_.size(); ++j)
       if(assignments_[j] == (int)i)
-	++num;
+        ++num;
     indices_[i].reserve(num);
   }
   
@@ -56,8 +56,8 @@ void OrganizedConnectedComponents::compute(const Cloud& pcd)
 }
 
 bool OrganizedConnectedComponents::findComponent(const Cloud& pcd,
-						 size_t center_idx,
-						 int new_id)
+                                                 size_t center_idx,
+                                                 int new_id)
 {
   queue<size_t> que;
   que.push(center_idx);
@@ -92,8 +92,8 @@ bool OrganizedConnectedComponents::findComponent(const Cloud& pcd,
 }
 
 void OrganizedConnectedComponents::getNeighbors(const Cloud& pcd,
-						size_t center_idx,
-						vector<int>* indices)
+                                                size_t center_idx,
+                                                vector<int>* indices)
 {
   int center_y = center_idx / pcd.width;
   int center_x = center_idx - center_y * pcd.width;

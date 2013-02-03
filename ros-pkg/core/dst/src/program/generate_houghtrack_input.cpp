@@ -33,14 +33,14 @@ int main(int argc, char** argv)
   for(int y = 0; y < seg.rows; ++y) {
     for(int x = 0; x < seg.cols; ++x) {
       if(seg(y, x) == 255) {
-	if(x < minx)
-	  minx = x;
-	if(x > maxx)
-	  maxx = x;
-	if(y < miny)
-	  miny = y;
-	if(y > maxy)
-	  maxy = y;
+        if(x < minx)
+          minx = x;
+        if(x > maxx)
+          maxx = x;
+        if(y < miny)
+          miny = y;
+        if(y > maxy)
+          maxy = y;
       }
     }
   }

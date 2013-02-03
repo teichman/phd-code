@@ -21,15 +21,15 @@ namespace dst
     pipeline2::Outlet<const Eigen::Affine3f*> prev_to_curr_otl_;
     
     SceneAlignmentNode(pipeline2::Outlet<OpticalFlowNode::Output>* optflow_otl,
-		       pipeline2::Outlet<DepthProjector::Output>* index_otl,
-		       double distance_threshold = 0.02,
-		       double edge_threshold = 0.1,
-		       int num_samples = 200);
-		       
+                       pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                       double distance_threshold = 0.02,
+                       double edge_threshold = 0.1,
+                       int num_samples = 200);
+                       
 
     //! Finds a transform T * model = world.
     static Eigen::Affine3f computeTransform(const std::vector<pcl::PointXYZRGB>& world_points,
-					    const std::vector<pcl::PointXYZRGB>& model_points);
+                                            const std::vector<pcl::PointXYZRGB>& model_points);
     
   protected:
     pipeline2::Outlet<OpticalFlowNode::Output>* optflow_otl_;
@@ -50,15 +50,15 @@ namespace dst
     int best_score_;
 
     void get3DPoints(const std::vector<cv::Point2i>& img_pts,
-		     const std::vector<bool>& valid,
-		     cv::Mat1i index,
-		     KinectCloud::ConstPtr pcd,
-		     std::vector<pcl::PointXYZRGB>* pts) const;
+                     const std::vector<bool>& valid,
+                     cv::Mat1i index,
+                     KinectCloud::ConstPtr pcd,
+                     std::vector<pcl::PointXYZRGB>* pts) const;
     double scoreTransform(const Eigen::Affine3f& trans,
-			  std::vector<pcl::PointXYZRGB>* curr_inliers,
-			  std::vector<pcl::PointXYZRGB>* prev_inliers) const;
+                          std::vector<pcl::PointXYZRGB>* curr_inliers,
+                          std::vector<pcl::PointXYZRGB>* prev_inliers) const;
     void sampleCorrespondences(std::vector<pcl::PointXYZRGB>* prev,
-			       std::vector<pcl::PointXYZRGB>* curr) const;
+                               std::vector<pcl::PointXYZRGB>* curr) const;
     void _compute();
     void _display() const;
     void _flush();

@@ -9,7 +9,7 @@ AVVMultiviewModel::AVVMultiviewModel() :
 }
 
 rgbd::Cloud::Ptr AVVMultiviewModel::filterVelo(const VeloToAsusCalibration& extrinsics,
-					       rgbd::Cloud::ConstPtr velo) const
+                                               rgbd::Cloud::ConstPtr velo) const
 {
   Point pt;
   pt.x = 0;
@@ -60,7 +60,7 @@ DiscreteDepthDistortionModel AVVMultiviewModel::learnDiscreteDistortionModel() c
       double dt;
       size_t idx = sseq.seek(sseq.timestamps_[0] + extrinsics.offset_ + vseq.timestamps_[i], &dt);
       if(dt > 0.01)
-	continue;
+        continue;
       
       cout << "Adding frame " << i << endl;
       Frame frame;
@@ -92,7 +92,7 @@ rgbd::PrimeSenseModel AVVMultiviewModel::learnDistortionModel() const
       double dt;
       size_t idx = sseq.seek(sseq.timestamps_[0] + extrinsics.offset_ + vseq.timestamps_[i], &dt);
       if(dt > 0.01)
-	continue;
+        continue;
       
       cout << "Adding frame " << i << endl;
       Frame frame;
@@ -117,8 +117,8 @@ rgbd::PrimeSenseModel AVVMultiviewModel::learnDistortionModel() const
 // }
 
 // void AVVMultiviewModel::updateCalibrator(const StreamSequence& sseq, const VeloSequence& vseq,
-// 					 const VeloToAsusCalibration& extrinsics,
-// 					 VeloToAsusCalibrator* calibrator) const
+//                                          const VeloToAsusCalibration& extrinsics,
+//                                          VeloToAsusCalibrator* calibrator) const
 // {
 //   // -- Choose Velodyne keyframes.
 //   int max_num_keyframes = 3000;

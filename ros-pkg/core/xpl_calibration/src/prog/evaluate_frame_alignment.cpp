@@ -60,10 +60,10 @@ void evaluate(string path, PrimeSenseModel model, const bpo::variables_map& opts
   HighResTimer hrt("alignment");
   hrt.start();
   bool found = aligner.align(frame0, frame1,
-  			     keypoints0, keypoints1,
+                               keypoints0, keypoints1,
              keycloud0, keycloud1,
-  			     features0, features1,
-  			     true, &f0_to_f1);
+                               features0, features1,
+                               true, &f0_to_f1);
   hrt.stop();
   ostringstream oss;
   oss << eval->individual_results_ << endl;

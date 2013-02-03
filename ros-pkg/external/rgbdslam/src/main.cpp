@@ -56,11 +56,11 @@ void gui_connections(Graphical_UI* gui, GraphManager* graph_mgr, OpenNIListener*
     QObject::connect(gui, SIGNAL(pruneEdgesWithErrorAbove(float)), graph_mgr, SLOT(pruneEdgesWithErrorAbove(float)));
     if (ParameterServer::instance()->get<bool>("use_glwidget") && gui->getGLViewer() != NULL) {
       GLViewer* glv = gui->getGLViewer();
-	    QObject::connect(graph_mgr, SIGNAL(setPointCloud(pointcloud_type *, QMatrix4x4)), glv, SLOT(addPointCloud(pointcloud_type *, QMatrix4x4))); //, Qt::DirectConnection);
-	    QObject::connect(graph_mgr, SIGNAL(setGraphEdges(QList<QPair<int, int> >*)), glv, SLOT(setEdges(QList<QPair<int, int> >*)));
-	    QObject::connect(graph_mgr, SIGNAL(updateTransforms(QList<QMatrix4x4>*)), glv, SLOT(updateTransforms(QList<QMatrix4x4>*)));
+            QObject::connect(graph_mgr, SIGNAL(setPointCloud(pointcloud_type *, QMatrix4x4)), glv, SLOT(addPointCloud(pointcloud_type *, QMatrix4x4))); //, Qt::DirectConnection);
+            QObject::connect(graph_mgr, SIGNAL(setGraphEdges(QList<QPair<int, int> >*)), glv, SLOT(setEdges(QList<QPair<int, int> >*)));
+            QObject::connect(graph_mgr, SIGNAL(updateTransforms(QList<QMatrix4x4>*)), glv, SLOT(updateTransforms(QList<QMatrix4x4>*)));
       QObject::connect(graph_mgr, SIGNAL(deleteLastNode()), glv, SLOT(deleteLastNode()));
-	    QObject::connect(graph_mgr, SIGNAL(resetGLViewer()),  glv, SLOT(reset()));
+            QObject::connect(graph_mgr, SIGNAL(resetGLViewer()),  glv, SLOT(reset()));
       if(!ParameterServer::instance()->get<bool>("store_pointclouds")) {
           QObject::connect(glv, SIGNAL(cloudRendered(pointcloud_type const *)), graph_mgr, SLOT(cloudRendered(pointcloud_type const *))); // 
       }
@@ -98,7 +98,7 @@ int main(int argc, char** argv)
 
 
   Graphical_UI* gui = NULL;
-	if (app.type() == QApplication::GuiClient){
+        if (app.type() == QApplication::GuiClient){
       gui = new Graphical_UI();
       gui->show();
       gui_connections(gui, &graph_mgr, &listener);

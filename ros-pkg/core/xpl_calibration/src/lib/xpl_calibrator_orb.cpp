@@ -21,8 +21,8 @@ pcl::PointXYZRGB XplCalibratorOrb::getPoint(const cv::KeyPoint& keypoint, const 
 }
 
 pcl::PointXYZRGB XplCalibratorOrb::samplePoint(const std::vector<cv::KeyPoint>& keypoints,
-					 const Cloud& pcd,
-					 int* idx = NULL) const
+                                         const Cloud& pcd,
+                                         int* idx = NULL) const
 {
   for(int i = 0; i < 1000; ++i) { 
     size_t kpidx = rand() % keypoints.size();
@@ -42,7 +42,7 @@ pcl::PointXYZRGB XplCalibratorOrb::samplePoint(const std::vector<cv::KeyPoint>& 
 }
 
 Eigen::Affine3f XplCalibratorOrb::calibrate(Sequence::ConstPtr refseq,
-					    Sequence::ConstPtr tarseq) const
+                                            Sequence::ConstPtr tarseq) const
 {
   Cloud::Ptr ref = refseq->pcds_[0];
   Cloud::Ptr tar = tarseq->pcds_[0];
@@ -95,20 +95,20 @@ Eigen::Affine3f XplCalibratorOrb::calibrate(Sequence::ConstPtr refseq,
     cv::Mat3b vis(sz);
     for(int y = 0; y < vis.rows; ++y) {
       for(int x = 0; x < vis.cols; ++x) {
-	if(x < ref_img.cols)
-	  vis(y, x) = ref_img(y, x);
-	else
-	  vis(y, x) = tar_img(y, x - ref_img.cols);
+        if(x < ref_img.cols)
+          vis(y, x) = ref_img(y, x);
+        else
+          vis(y, x) = tar_img(y, x - ref_img.cols);
       }
     }
 
     for(size_t i = 0; i < matches.size(); ++i) {
       for(size_t j = 0; j < matches[i].size(); ++j) {
-	cv::Point2f offset(ref_img.cols, 0);
-	cv::line(vis, tar_keypoints[matches[i][j]].pt + offset, ref_keypoints[i].pt, cv::Scalar(255, 0, 0));
+        cv::Point2f offset(ref_img.cols, 0);
+        cv::line(vis, tar_keypoints[matches[i][j]].pt + offset, ref_keypoints[i].pt, cv::Scalar(255, 0, 0));
       }
     }
-	  
+          
     cv::imshow("matches", vis);
     cv::waitKey();
   }
@@ -168,39 +168,39 @@ Eigen::Affine3f XplCalibratorOrb::calibrate(Sequence::ConstPtr refseq,
     for(size_t j = 0; j < matches0.size(); ++j) {
       pcl::PointXYZRGB t0 = getPoint(tar_keypoints[matches0[j]], *tar);
       if(isnan(t0.x))
-	continue;
+        continue;
       
       for(size_t k = 0; k < matches1.size(); ++k) {
-	pcl::PointXYZRGB t1 = getPoint(tar_keypoints[matches1[k]], *tar);
-	if(isnan(t1.x))
-	  continue;
-	if(fabs(pcl::euclideanDistance(t0, t1) - d01) > thresh)
-	  continue;
+        pcl::PointXYZRGB t1 = getPoint(tar_keypoints[matches1[k]], *tar);
+        if(isnan(t1.x))
+          continue;
+        if(fabs(pcl::euclideanDistance(t0, t1) - d01) > thresh)
+          continue;
 
 
-	for(size_t l = 0; l < matches2.size(); ++l) {
-	  pcl::PointXYZRGB t2 = getPoint(tar_keypoints[matches2[l]], *tar);
-	  if(isnan(t2.x))
-	    continue;
-	  if(fabs(pcl::euclideanDistance(t0, t2) - d02) > thresh)
-	    continue;
-	  if(fabs(pcl::euclideanDistance(t1, t2) - d12) > thresh)
-	    continue;
+        for(size_t l = 0; l < matches2.size(); ++l) {
+          pcl::PointXYZRGB t2 = getPoint(tar_keypoints[matches2[l]], *tar);
+          if(isnan(t2.x))
+            continue;
+          if(fabs(pcl::euclideanDistance(t0, t2) - d02) > thresh)
+            continue;
+          if(fabs(pcl::euclideanDistance(t1, t2) - d12) > thresh)
+            continue;
 
-	  TransformationFromCorrespondences tfc;
-	  tfc.add(t0.getVector3fMap(), r0.getVector3fMap());
-	  tfc.add(t1.getVector3fMap(), r1.getVector3fMap());
-	  tfc.add(t2.getVector3fMap(), r2.getVector3fMap());
+          TransformationFromCorrespondences tfc;
+          tfc.add(t0.getVector3fMap(), r0.getVector3fMap());
+          tfc.add(t1.getVector3fMap(), r1.getVector3fMap());
+          tfc.add(t2.getVector3fMap(), r2.getVector3fMap());
 
-	  Affine3f transform = tfc.getTransformation();
-	  if((transform * t0.getVector3fMap() - r0.getVector3fMap()).norm() > 0.1 ||
-	     (transform * t1.getVector3fMap() - r1.getVector3fMap()).norm() > 0.1 ||
-	     (transform * t2.getVector3fMap() - r2.getVector3fMap()).norm() > 0.1)
-	    continue;
+          Affine3f transform = tfc.getTransformation();
+          if((transform * t0.getVector3fMap() - r0.getVector3fMap()).norm() > 0.1 ||
+             (transform * t1.getVector3fMap() - r1.getVector3fMap()).norm() > 0.1 ||
+             (transform * t2.getVector3fMap() - r2.getVector3fMap()).norm() > 0.1)
+            continue;
 
-	  tv.candidates_.push_back(transform);
-	  //cout << "Added candidate transform.  Total: " << tv.candidates_.size() << endl;
-	}
+          tv.candidates_.push_back(transform);
+          //cout << "Added candidate transform.  Total: " << tv.candidates_.size() << endl;
+        }
       }
     }
   }

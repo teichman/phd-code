@@ -13,7 +13,7 @@ namespace bfs = boost::filesystem;
 #define VISUALIZE 0
 
 void computeDistortion(const Frame& frame, const Frame& mapframe,
-		       double* total_squared_error, double* num_pts)
+                       double* total_squared_error, double* num_pts)
 {
 #if(VISUALIZE)
   cv::Mat3b vis(cv::Size(frame.depth_->cols(), frame.depth_->rows()), cv::Vec3b(0, 0, 0));
@@ -28,19 +28,19 @@ void computeDistortion(const Frame& frame, const Frame& mapframe,
     for(int y = 0; y < frame.depth_->rows(); ++y) {
 
       if(frame.depth_->coeffRef(y, x) == 0)
-	continue;
+        continue;
       if(mapframe.depth_->coeffRef(y, x) == 0)
-	continue;
+        continue;
       if(frame.depth_->coeffRef(y, x) * 0.001 > MAX_DEPTH_EVAL)
-	continue;
+        continue;
       if(mapframe.depth_->coeffRef(y, x) * 0.001 > MAX_DEPTH_EVAL)
-	continue;
+        continue;
 
       double meas = frame.depth_->coeffRef(y, x) * 0.001;
       double gt = mapframe.depth_->coeffRef(y, x) * 0.001;
       double mult = gt / meas;
       if(mult > MAX_MULT || mult < MIN_MULT)
-	continue;
+        continue;
 
       double err = pow(meas - gt, 2);
       total_squared_error_local += err;
@@ -66,12 +66,12 @@ void computeDistortion(const Frame& frame, const Frame& mapframe,
 }
 
 void evaluate(const bpo::variables_map& opts,
-	      const DiscreteDepthDistortionModel& intrinsics,
-	      const Cloud& map,
-	      const StreamSequence& sseq,
-	      const Trajectory& traj,
-	      double* raw_total_squared_error, double* raw_num_pts,
-	      double* undistorted_total_squared_error, double* undistorted_num_pts)
+              const DiscreteDepthDistortionModel& intrinsics,
+              const Cloud& map,
+              const StreamSequence& sseq,
+              const Trajectory& traj,
+              double* raw_total_squared_error, double* raw_num_pts,
+              double* undistorted_total_squared_error, double* undistorted_num_pts)
 {
   // -- For all poses, compute the distortion with and without the intrinsics.
 #if(!VISUALIZE)
@@ -102,11 +102,11 @@ void evaluate(const bpo::variables_map& opts,
 }
 
 void evaluate(const bpo::variables_map& opts,
-	      const DiscreteDepthDistortionModel& intrinsics,
-	      const vector<Cloud>& maps,
-	      const vector<StreamSequence::ConstPtr>& sseqs,
-	      const vector<Trajectory>& trajectories,
-	      const string& eval_path)
+              const DiscreteDepthDistortionModel& intrinsics,
+              const vector<Cloud>& maps,
+              const vector<StreamSequence::ConstPtr>& sseqs,
+              const vector<Trajectory>& trajectories,
+              const string& eval_path)
 {
   ROS_ASSERT(bfs::exists(eval_path));
   intrinsics.save(eval_path + "/intrinsics");
@@ -133,8 +133,8 @@ void evaluate(const bpo::variables_map& opts,
   double undistorted_num_pts = 0;
   for(size_t i = 0; i < sseqs.size(); ++i) {
     evaluate(opts, intrinsics, maps[i], *sseqs[i], trajectories[i],
-	     &raw_total_squared_error, &raw_num_pts,
-	     &undistorted_total_squared_error, &undistorted_num_pts);
+             &raw_total_squared_error, &raw_num_pts,
+             &undistorted_total_squared_error, &undistorted_num_pts);
   }
   double raw_rmse = sqrt(raw_total_squared_error / raw_num_pts);
   double undistorted_rmse = sqrt(undistorted_total_squared_error / undistorted_num_pts);
@@ -153,8 +153,8 @@ void evaluate(const bpo::variables_map& opts,
 }
 
 DiscreteDepthDistortionModel calibratePosePairs(const bpo::variables_map& opts,
-						const vector<StreamSequence::ConstPtr>& sseqs,
-						const vector<Trajectory>& trajectories)
+                                                const vector<StreamSequence::ConstPtr>& sseqs,
+                                                const vector<Trajectory>& trajectories)
 {
   ROS_ASSERT(sseqs.size() == trajectories.size());
 
@@ -192,47 +192,47 @@ DiscreteDepthDistortionModel calibratePosePairs(const bpo::variables_map& opts,
     //MatrixXd multipliers = MatrixXd::Zero(gtframe.depth_->rows(), gtframe.depth_->cols());
     for(int y = 0; y < gtframe.depth_->rows(); ++y) {
       for(int x = 0; x < gtframe.depth_->cols(); ++x) {
-	if(gtframe.depth_->coeffRef(y, x) == 0)
-	  continue;
+        if(gtframe.depth_->coeffRef(y, x) == 0)
+          continue;
 
-	// Ignore ground truth points seen from more than 2m away.
-	if(gtframe.depth_->coeffRef(y, x) > 2000)
-	  continue;
-	
-	ProjectivePoint ppt;
-	ppt.u_ = x;
-	ppt.v_ = y;
-	ppt.z_ = gtframe.depth_->coeffRef(y, x);
-	
-	Point pt;
-	sseq.model_.project(ppt, &pt);
-	//Vector3f gt_ray = pt.getVector3fMap();
-	pt.getVector4fMap() = transform * pt.getVector4fMap();
-	sseq.model_.project(pt, &ppt);
-	if((ppt.u_ < 0) || (ppt.u_ >= sseq.model_.width_) ||
-	   (ppt.v_ < 0) || (ppt.v_ >= sseq.model_.height_) ||
-	   (measframe.depth_->coeffRef(ppt.v_, ppt.u_) == 0))
-	{
-	  continue;
-	}
-	
-	// Ignore ground truth points observed from further away than the measurement point.
-	double gt_orig = gtframe.depth_->coeffRef(y, x) * 0.001;
-	double meas = measframe.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
-	if(gt_orig > meas)
-	  continue;
+        // Ignore ground truth points seen from more than 2m away.
+        if(gtframe.depth_->coeffRef(y, x) > 2000)
+          continue;
+        
+        ProjectivePoint ppt;
+        ppt.u_ = x;
+        ppt.v_ = y;
+        ppt.z_ = gtframe.depth_->coeffRef(y, x);
+        
+        Point pt;
+        sseq.model_.project(ppt, &pt);
+        //Vector3f gt_ray = pt.getVector3fMap();
+        pt.getVector4fMap() = transform * pt.getVector4fMap();
+        sseq.model_.project(pt, &ppt);
+        if((ppt.u_ < 0) || (ppt.u_ >= sseq.model_.width_) ||
+           (ppt.v_ < 0) || (ppt.v_ >= sseq.model_.height_) ||
+           (measframe.depth_->coeffRef(ppt.v_, ppt.u_) == 0))
+        {
+          continue;
+        }
+        
+        // Ignore ground truth points observed from further away than the measurement point.
+        double gt_orig = gtframe.depth_->coeffRef(y, x) * 0.001;
+        double meas = measframe.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
+        if(gt_orig > meas)
+          continue;
 
-	// Ignore ground truth points seen from an oblique angle.
-	// Vector3f meas_ray = pt.getVector3fMap();
-	// gt_ray.normalize();
-	// meas_ray.normalize();
-	// double theta = acos(gt_ray.dot(meas_ray));
-	// if(theta > theta_thresh)
-	//   continue;
-	
-	double gt_proj = ppt.z_ * 0.001;
-	intrinsics.addExample(ppt, gt_proj, meas);
-	//multipliers(ppt.v_, ppt.u_) = gt_proj / meas;
+        // Ignore ground truth points seen from an oblique angle.
+        // Vector3f meas_ray = pt.getVector3fMap();
+        // gt_ray.normalize();
+        // meas_ray.normalize();
+        // double theta = acos(gt_ray.dot(meas_ray));
+        // if(theta > theta_thresh)
+        //   continue;
+        
+        double gt_proj = ppt.z_ * 0.001;
+        intrinsics.addExample(ppt, gt_proj, meas);
+        //multipliers(ppt.v_, ppt.u_) = gt_proj / meas;
       }
     }
 
@@ -254,8 +254,8 @@ DiscreteDepthDistortionModel calibratePosePairs(const bpo::variables_map& opts,
 }
 
 DiscreteDepthDistortionModel calibrateMapBuildingAllPts(const bpo::variables_map& opts,
-							const vector<StreamSequence::ConstPtr>& sseqs,
-							const vector<Trajectory>& trajectories)
+                                                        const vector<StreamSequence::ConstPtr>& sseqs,
+                                                        const vector<Trajectory>& trajectories)
 {
   ROS_ASSERT(sseqs.size() == trajectories.size());
 
@@ -268,7 +268,7 @@ DiscreteDepthDistortionModel calibrateMapBuildingAllPts(const bpo::variables_map
     for(size_t j = 0; j < traj.size(); ++j) {
       cout << j << " / " << traj.size() << endl;
       if(!traj.exists(j))
-	continue;
+        continue;
 
       Frame measframe;
       sseq.readFrame(j, &measframe);
@@ -276,33 +276,33 @@ DiscreteDepthDistortionModel calibrateMapBuildingAllPts(const bpo::variables_map
       Affine3f transform = traj.get(j).inverse().cast<float>();
       #pragma omp parallel for
       for(size_t k = 0; k < map.size(); ++k) {
-	if(!isFinite(map[k]))
-	  continue;
+        if(!isFinite(map[k]))
+          continue;
 
-	// Project the map point into the measurement frame.
-	Point pt;
-	pt.getVector4fMap() = transform * map[k].getVector4fMap();
-	ProjectivePoint ppt;
-	sseq.model_.project(pt, &ppt);
+        // Project the map point into the measurement frame.
+        Point pt;
+        pt.getVector4fMap() = transform * map[k].getVector4fMap();
+        ProjectivePoint ppt;
+        sseq.model_.project(pt, &ppt);
 
-	// Ignore points that project to outside the measurement frame
-	// and those for which the measurement frame has no data.
-	if((ppt.u_ < 0) || (ppt.u_ >= sseq.model_.width_) ||
-	   (ppt.v_ < 0) || (ppt.v_ >= sseq.model_.height_) ||
-	   (measframe.depth_->coeffRef(ppt.v_, ppt.u_) == 0))
-	{
-	  continue;
-	}
+        // Ignore points that project to outside the measurement frame
+        // and those for which the measurement frame has no data.
+        if((ppt.u_ < 0) || (ppt.u_ >= sseq.model_.width_) ||
+           (ppt.v_ < 0) || (ppt.v_ >= sseq.model_.height_) ||
+           (measframe.depth_->coeffRef(ppt.v_, ppt.u_) == 0))
+        {
+          continue;
+        }
 
-	double measured_m = measframe.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
-	double map_m = ppt.z_ * 0.001;
-	double mult = map_m / measured_m;
-	if(mult > MAX_MULT || mult < MIN_MULT)
-	  continue;
+        double measured_m = measframe.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
+        double map_m = ppt.z_ * 0.001;
+        double mult = map_m / measured_m;
+        if(mult > MAX_MULT || mult < MIN_MULT)
+          continue;
 
-	intrinsics.addExample(ppt, map_m, measured_m);
-	// This will overwrite examples that fall in the same pixel, but that's good enough to make sure it's not entirely wrong.
-	//multipliers(ppt.v_, ppt.u_) = map_m / measured_m;  
+        intrinsics.addExample(ppt, map_m, measured_m);
+        // This will overwrite examples that fall in the same pixel, but that's good enough to make sure it's not entirely wrong.
+        //multipliers(ppt.v_, ppt.u_) = map_m / measured_m;  
       }
 
       // -- Visualize the training data.
@@ -317,9 +317,9 @@ DiscreteDepthDistortionModel calibrateMapBuildingAllPts(const bpo::variables_map
 }
 
 DiscreteDepthDistortionModel calibrateMapBuildingOrig(const bpo::variables_map& opts,
-						      const vector<StreamSequence::ConstPtr>& sseqs,
-						      const vector<Trajectory>& trajectories,
-						      int skip_idx = -1)
+                                                      const vector<StreamSequence::ConstPtr>& sseqs,
+                                                      const vector<Trajectory>& trajectories,
+                                                      int skip_idx = -1)
 {
   ROS_ASSERT(sseqs.size() == trajectories.size());
   
@@ -339,9 +339,9 @@ DiscreteDepthDistortionModel calibrateMapBuildingOrig(const bpo::variables_map& 
 }
 
 void load(const vector<string>& sseq_paths, const vector<string>& traj_paths,
-	  vector<StreamSequence::ConstPtr>* sseqs,
-	  vector<Trajectory>* trajectories,
-	  vector<string>* names)
+          vector<StreamSequence::ConstPtr>* sseqs,
+          vector<Trajectory>* trajectories,
+          vector<string>* names)
 {
   ROS_ASSERT(sseq_paths.size() == traj_paths.size());
   for(size_t i = 0; i < sseq_paths.size(); ++i) {
@@ -452,24 +452,24 @@ int main(int argc, char** argv)
       vector<Trajectory> trajectories_train_subset;
       vector<string> names_train_subset;
       for(size_t n = 0; n < num_datasets; ++n) {
-	size_t idx = indices[n];
-	sseqs_train_subset.push_back(sseqs_train[idx]);
-	trajectories_train_subset.push_back(trajectories_train[idx]);
-	names_train_subset.push_back(names_train[idx]);
+        size_t idx = indices[n];
+        sseqs_train_subset.push_back(sseqs_train[idx]);
+        trajectories_train_subset.push_back(trajectories_train[idx]);
+        names_train_subset.push_back(names_train[idx]);
       }
 
       // -- Save what data we're operating on.
       VectorXd training_seconds(sseqs_train_subset.size());
       VectorXd training_frames(sseqs_train_subset.size());
       for(int j = 0; j < training_seconds.size(); ++j) {
-	training_seconds(j) = sseqs_train_subset[j]->timestamps_.back() - sseqs_train_subset[j]->timestamps_.front();
-	training_frames(j) = trajectories_train_subset[j].numValid();
+        training_seconds(j) = sseqs_train_subset[j]->timestamps_.back() - sseqs_train_subset[j]->timestamps_.front();
+        training_frames(j) = trajectories_train_subset[j].numValid();
       }
       VectorXd testing_seconds(sseqs_test.size());
       VectorXd testing_frames(sseqs_test.size());
       for(int j = 0; j < testing_seconds.size(); ++j) {
-	testing_seconds(j) = sseqs_test[j]->timestamps_.back() - sseqs_test[j]->timestamps_.front();
-	testing_frames(j) = trajectories_test[j].numValid();
+        testing_seconds(j) = sseqs_test[j]->timestamps_.back() - sseqs_test[j]->timestamps_.front();
+        testing_frames(j) = trajectories_test[j].numValid();
       }
 
       ofstream f;
@@ -477,12 +477,12 @@ int main(int argc, char** argv)
       f << "== Training set ==" << endl;
       f << "  <name> <num_frames> <seconds>" << endl;
       for(size_t j = 0; j < names_train_subset.size(); ++j)
-	f << "  " << names_train_subset[j] << " " << training_frames(j) << " " << training_seconds(j) << endl;
+        f << "  " << names_train_subset[j] << " " << training_frames(j) << " " << training_seconds(j) << endl;
       f << endl;
       f << "== Testing set ==" << endl;
       f << "  <name> <num_frames> <seconds>" << endl;
       for(size_t j = 0; j < names_test.size(); ++j)
-	f << "  " << names_test[j] << " " << testing_frames(j) << " " << testing_seconds(j) << endl;
+        f << "  " << names_test[j] << " " << testing_frames(j) << " " << testing_seconds(j) << endl;
       f << endl;
       f << endl;
       f << "Total seconds of data used for training: " << training_seconds.sum() << endl;
@@ -499,7 +499,7 @@ int main(int argc, char** argv)
       hrt.stop();
       f << "Calibration time (seconds): " << hrt.getSeconds() << endl;
       f.close();
-	    
+            
       evaluate(opts, intrinsics, maps, sseqs_test, trajectories_test, eval_path);
     }
   }

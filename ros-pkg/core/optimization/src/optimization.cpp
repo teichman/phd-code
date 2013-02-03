@@ -4,8 +4,8 @@ using namespace Eigen;
 using namespace std;
 
 BisectionSolver::BisectionSolver(ScalarFunction* objective, VectorFunction* gradient,
-				 double tol, double min, double max,
-				 int max_num_iters, bool debug) :
+                                 double tol, double min, double max,
+                                 int max_num_iters, bool debug) :
   objective_(objective),
   gradient_(gradient),
   tol_(tol),
@@ -52,9 +52,9 @@ double BisectionSolver::solve()
     if(debug_) {
       double obj = objective_->eval(x);
       cout << "Step " << step << ", left = " << left << ", right = "
-	   << right << ", x = " << x.transpose() << ", gradient = " << grad
-	   << ", objective = " << obj
-	   << ", tol = " << tol_ << endl;
+           << right << ", x = " << x.transpose() << ", gradient = " << grad
+           << ", objective = " << obj
+           << ", tol = " << tol_ << endl;
     }
     ++step;
   }
@@ -63,13 +63,13 @@ double BisectionSolver::solve()
 }
 
 NesterovGradientSolver::NesterovGradientSolver(ScalarFunction* objective,
-					       VectorFunction* gradient,
-					       double tol,
-					       double alpha,
-					       double beta,
-					       int max_num_iters,
-					       double initial_stepsize,
-					       bool debug) :
+                                               VectorFunction* gradient,
+                                               double tol,
+                                               double alpha,
+                                               double beta,
+                                               int max_num_iters,
+                                               double initial_stepsize,
+                                               bool debug) :
   objective_(objective),
   gradient_(gradient),
   hessian_(NULL),
@@ -137,11 +137,11 @@ VectorXd NesterovGradientSolver::solve(const VectorXd& init) {
       MatrixXd hess = hessian_->eval(x);
       double nonzeros = 0;
       for(int i = 0; i < hess.rows(); ++i)
-	for(int j = 0; j < hess.cols(); ++j)
-	  if(fabs(hess(i, j)) > 1e-12)
-	    ++nonzeros;
+        for(int j = 0; j < hess.cols(); ++j)
+          if(fabs(hess(i, j)) > 1e-12)
+            ++nonzeros;
       cout << "Sparsity of the Hessian: " << nonzeros / (double)(hess.rows() * hess.cols()) << endl;
-	 
+         
       Eigen::JacobiSVD<MatrixXd> svd(hess);
       VectorXd vals = svd.singularValues();
       cout << "Singular values: " << endl << vals.transpose() << endl;
@@ -178,9 +178,9 @@ VectorXd NesterovGradientSolver::solve(const VectorXd& init) {
 
     if(debug_) {
       cout << "Nesterov Step " << k << ", gradient norm " << norm
-	   << ", objective " << setprecision(12) << objective_x
-	   << ", (x - x_prev).norm() " << setprecision(6) << (x - x_prev).norm()
-	   << ", " << num_backtracks << " backtracks." << endl;
+           << ", objective " << setprecision(12) << objective_x
+           << ", (x - x_prev).norm() " << setprecision(6) << (x - x_prev).norm()
+           << ", " << num_backtracks << " backtracks." << endl;
     }
 
     // -- Stop if we're done.
@@ -209,14 +209,14 @@ VectorXd NesterovGradientSolver::solve(const VectorXd& init) {
  ****************************************/
 
 NewtonSolver::NewtonSolver(ScalarFunction* objective,
-			   VectorFunction* gradient,
-			   MatrixFunction* hessian,
-			   double tol,
-			   double alpha,
-			   double beta,
-			   double stepsize,
-			   int debug,
-			   int max_iters) :
+                           VectorFunction* gradient,
+                           MatrixFunction* hessian,
+                           double tol,
+                           double alpha,
+                           double beta,
+                           double stepsize,
+                           int debug,
+                           int max_iters) :
   objective_(objective),
   gradient_(gradient),
   hessian_(hessian),
@@ -321,13 +321,13 @@ VectorXd NewtonSolver::solve(VectorXd x) {
 
 
 GradientSolver::GradientSolver(ScalarFunction* objective,
-			       VectorFunction* gradient,
-			       double tol,
-			       double alpha,
-			       double beta,
-			       int max_num_iters,
-			       double initial_stepsize,
-			       bool debug) :
+                               VectorFunction* gradient,
+                               double tol,
+                               double alpha,
+                               double beta,
+                               int max_num_iters,
+                               double initial_stepsize,
+                               bool debug) :
   objective_(objective),
   gradient_(gradient),
   tol_(tol),
@@ -340,11 +340,11 @@ GradientSolver::GradientSolver(ScalarFunction* objective,
 }
 
 double GradientSolver::backtracking(double t,
-				    const VectorXd& x,
-				    const VectorXd& grad,
-				    const VectorXd& direction,
-				    double objective,
-				    int* num_backtracks)
+                                    const VectorXd& x,
+                                    const VectorXd& grad,
+                                    const VectorXd& direction,
+                                    double objective,
+                                    int* num_backtracks)
 {
   assert(beta_ < 1 && beta_ > 0);
   assert(alpha_ > 0 && alpha_ <= 0.5);
@@ -401,11 +401,11 @@ VectorXd GradientSolver::solve(const VectorXd& init) {
     if(num_backtracks == 0)
       mult *= 2;
     double stepsize = backtracking(mult * initial_stepsize_,
-				   x,
-				   gradient,
-				   -gradient,
-				   objective,
-				   &num_backtracks);
+                                   x,
+                                   gradient,
+                                   -gradient,
+                                   objective,
+                                   &num_backtracks);
 
     x += -stepsize * gradient;
 
@@ -417,9 +417,9 @@ VectorXd GradientSolver::solve(const VectorXd& init) {
     if(debug_) {
       //cout << "Step " << k << ", gradient norm " << norm << ", objective " << objective_x << endl;
       cout << "Gradient Step " << k << ", gradient norm " << gradient.norm()
-	   << ", objective " << setprecision(12) << objective
-	   << ", (x - x_prev).norm() " << setprecision(6) << (x - x_prev).norm() << endl;
-	//<< ", x = " << x.transpose() << endl;
+           << ", objective " << setprecision(12) << objective
+           << ", (x - x_prev).norm() " << setprecision(6) << (x - x_prev).norm() << endl;
+        //<< ", x = " << x.transpose() << endl;
       //      cout << "Step " << k << ", gradient norm " << norm << ", objective " << objective_x << ", (x - x_prev).norm() " << (x - x_prev).norm() << endl;
     }
 

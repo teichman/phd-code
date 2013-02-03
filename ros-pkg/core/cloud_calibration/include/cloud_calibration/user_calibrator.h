@@ -81,7 +81,7 @@ namespace cloud_calibration {
       OpenCVView view_;
       UserCalibratorController controller_;
   };
-}		/* -----  end of namespace cloud_calibration  ----- */
+}                /* -----  end of namespace cloud_calibration  ----- */
 
 #endif 
 

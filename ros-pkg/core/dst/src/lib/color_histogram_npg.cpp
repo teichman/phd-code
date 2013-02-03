@@ -8,11 +8,11 @@ namespace dst
 {
 
   ColorHistogramNPG::ColorHistogramNPG(pipeline2::Outlet<cv::Mat3b>* image_otl,
-				       pipeline2::Outlet<cv::Mat1b>* seed_otl,
-				       pipeline2::Outlet<cv::Mat3b>* prev_image_otl,
-				       pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
-				       double smoothing,
-				       int num_bins) :
+                                       pipeline2::Outlet<cv::Mat1b>* seed_otl,
+                                       pipeline2::Outlet<cv::Mat3b>* prev_image_otl,
+                                       pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
+                                       double smoothing,
+                                       int num_bins) :
     NodePotentialGenerator(),
     image_otl_(image_otl),
     seed_otl_(seed_otl),
@@ -56,9 +56,9 @@ namespace dst
     for(size_t i = 0; i < hr.size(); ++i) {
       hr[i].resize(num_bins_);
       for(size_t j = 0; j < hr[i].size(); ++j) { 
-	hr[i][j].resize(num_bins_);
-	for(size_t k = 0; k < hr[i][j].size(); ++k)
-	  hr[i][j][k] = smoothing_;
+        hr[i][j].resize(num_bins_);
+        for(size_t k = 0; k < hr[i][j].size(); ++k)
+          hr[i][j][k] = smoothing_;
       }
     }
   }
@@ -97,16 +97,16 @@ namespace dst
     //    This might be slow because Eigen is col-major.
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x) {
-	int b = img.at<cv::Vec3b>(y, x)[0];
-	int g = img.at<cv::Vec3b>(y, x)[1];
-	int r = img.at<cv::Vec3b>(y, x)[2];
-	double num_src = source_hist_[getIdx(b)][getIdx(g)][getIdx(r)];
-	double num_snk = sink_hist_[getIdx(b)][getIdx(g)][getIdx(r)];
-	double p = num_src / (num_snk + num_src); // probability of being source
-	// source_potentials_(y, x) = -log(1.0 - p); // high cost to cut this node if p is close to one.
-	// sink_potentials_(y, x) = -log(p);
-	source_potentials_(y, x) = p;
-	sink_potentials_(y, x) = 1.0 - p;
+        int b = img.at<cv::Vec3b>(y, x)[0];
+        int g = img.at<cv::Vec3b>(y, x)[1];
+        int r = img.at<cv::Vec3b>(y, x)[2];
+        double num_src = source_hist_[getIdx(b)][getIdx(g)][getIdx(r)];
+        double num_snk = sink_hist_[getIdx(b)][getIdx(g)][getIdx(r)];
+        double p = num_src / (num_snk + num_src); // probability of being source
+        // source_potentials_(y, x) = -log(1.0 - p); // high cost to cut this node if p is close to one.
+        // sink_potentials_(y, x) = -log(p);
+        source_potentials_(y, x) = p;
+        sink_potentials_(y, x) = 1.0 - p;
       }
     }
 
@@ -121,17 +121,17 @@ namespace dst
   }
 
   void ColorHistogramNPG::fillHistogram(cv::Mat1b seed, cv::Mat3b img,
-					int label, Hist* hist) const
+                                        int label, Hist* hist) const
   {
     for(int y = 0; y < seed.rows; ++y) {
       for(int x = 0; x < seed.cols; ++x) {
-	int l = seed.at<uchar>(y, x);
-	if(l == label) {
-	  int b = img.at<cv::Vec3b>(y, x)[0];
-	  int g = img.at<cv::Vec3b>(y, x)[1];
-	  int r = img.at<cv::Vec3b>(y, x)[2];
-	  ++(*hist)[getIdx(b)][getIdx(g)][getIdx(r)];
-	}
+        int l = seed.at<uchar>(y, x);
+        if(l == label) {
+          int b = img.at<cv::Vec3b>(y, x)[0];
+          int g = img.at<cv::Vec3b>(y, x)[1];
+          int r = img.at<cv::Vec3b>(y, x)[2];
+          ++(*hist)[getIdx(b)][getIdx(g)][getIdx(r)];
+        }
       }
     }
   }

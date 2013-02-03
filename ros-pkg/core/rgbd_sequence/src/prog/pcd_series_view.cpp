@@ -43,13 +43,13 @@ int main(int argc, char** argv)
       return 0;
     else { 
       while(true) {
-	if(g_pressed) {
-	  g_pressed = false;
-	  break;
-	}
-	
-	if(vis.wasStopped(1))
-	  return 0;
+        if(g_pressed) {
+          g_pressed = false;
+          break;
+        }
+        
+        if(vis.wasStopped(1))
+          return 0;
       }
     }
   }

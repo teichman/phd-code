@@ -9,9 +9,9 @@ namespace graphcuts
 {
 
   StructuralSVM::StructuralSVM(double c,
-			       double precision,
-			       int num_threads,
-			       int debug_level) :
+                               double precision,
+                               int num_threads,
+                               int debug_level) :
     c_(c),
     precision_(precision),
     num_threads_(num_threads),
@@ -20,8 +20,8 @@ namespace graphcuts
   }
   
   Model StructuralSVM::train(const std::vector<PotentialsCache::Ptr>& caches,
-			     const std::vector<VecXiPtr>& labels) const
-						   
+                             const std::vector<VecXiPtr>& labels) const
+                                                   
   {
     ROS_ASSERT(caches.size() == labels.size());
     ROS_ASSERT(!caches.empty());
@@ -29,7 +29,7 @@ namespace graphcuts
       ROS_ASSERT(caches[i]->nameMappingsAreEqual(*caches[i-1]));
     for(size_t i = 0; i < labels.size(); ++i)
       for(int j = 0; j < labels[i]->rows(); ++j)
-	ROS_ASSERT(labels[i]->coeffRef(j) == -1 || labels[i]->coeffRef(j) == 1);
+        ROS_ASSERT(labels[i]->coeffRef(j) == -1 || labels[i]->coeffRef(j) == 1);
     
     // Start slightly away from the boundary.
     Model model;
@@ -51,11 +51,11 @@ namespace graphcuts
       HighResTimer hrt("Computing most violating constraints");
       hrt.start();
       for(size_t i = 0; i < caches.size(); ++i) {
-	cgs.push_back(ConstraintGenerator(model, caches[i], labels[i]));
-	threads.push_back(cgs[i].launch());
+        cgs.push_back(ConstraintGenerator(model, caches[i], labels[i]));
+        threads.push_back(cgs[i].launch());
       }
       for(size_t i = 0; i < threads.size(); ++i) {
-	threads[i]->join();
+        threads[i]->join();
       }
       hrt.stop();
 
@@ -64,11 +64,11 @@ namespace graphcuts
       c.loss_ = 0;
       c.dpsi_ = VectorXd::Zero(model.size());
       for(size_t i = 0; i < cgs.size(); ++i) {
-	ConstraintGenerator& cg = cgs[i];
-	ROS_ASSERT(cg.hamming_loss_ >= 0);  // Make sure all nodes computed.
-	loss += cg.hamming_loss_ / (double)caches.size();
-	c.loss_ += cg.con_.loss_ / (double)caches.size(); // mean 0-1 loss
-	c.dpsi_ += cg.con_.dpsi_ / (double)caches.size(); // mean dpsi
+        ConstraintGenerator& cg = cgs[i];
+        ROS_ASSERT(cg.hamming_loss_ >= 0);  // Make sure all nodes computed.
+        loss += cg.hamming_loss_ / (double)caches.size();
+        c.loss_ += cg.con_.loss_ / (double)caches.size(); // mean 0-1 loss
+        c.dpsi_ += cg.con_.dpsi_ / (double)caches.size(); // mean dpsi
       }
       constraints.push_back(c);
       ROS_DEBUG_STREAM("Mean loss: " << loss);
@@ -78,8 +78,8 @@ namespace graphcuts
       ROS_DEBUG_STREAM("loss - margin: " << c.loss_ - margin);
       ROS_DEBUG_STREAM("Slack: " << slack);
       if(c.loss_ - margin <= slack + 1e-6) {
-	ROS_DEBUG_STREAM("Breaking because the newly added constraint is already satisfied.");
-	break;
+        ROS_DEBUG_STREAM("Breaking because the newly added constraint is already satisfied.");
+        break;
       }
       
       // -- Run the solver.
@@ -87,7 +87,7 @@ namespace graphcuts
       hrt.reset("Learning new weights");
       hrt.start();
       updateModel(constraints, &model, &slack);
-		    
+                    
       hrt.stop();
       ROS_DEBUG_STREAM(hrt.report() << flush);
       cout << model << endl;
@@ -99,8 +99,8 @@ namespace graphcuts
   }
 
   double StructuralSVM::updateModel(const std::vector<Constraint>& constraints,
-				    Model* model, double* slack) const
-				      
+                                    Model* model, double* slack) const
+                                      
   {
     // -- Warm start from previous solution.
     VectorXd x = VectorXd::Zero(model->size() + 1);
@@ -112,9 +112,9 @@ namespace graphcuts
       const Constraint& c = constraints[i];
       double& sl = x.coeffRef(model->size());
       if(model->score(c.dpsi_) < c.loss_ - sl) { 
-	// Strict equality won't work with this solver,
-	// so add a bit to the minimum amount of slack.
-	sl = c.loss_ - model->score(c.dpsi_) + 1.0;
+        // Strict equality won't work with this solver,
+        // so add a bit to the minimum amount of slack.
+        sl = c.loss_ - model->score(c.dpsi_) + 1.0;
       }
     }
     
@@ -130,7 +130,7 @@ namespace graphcuts
     b->startVec(0);
     for(int i = 0; i < x.rows(); ++i)
       if(i >= model->size())
-	b->insertBack(i) = c_;
+        b->insertBack(i) = c_;
     b->finalize();
 
     SparseQuadraticFunction::Ptr objective(new SparseQuadraticFunction(A, b, 0));
@@ -145,8 +145,8 @@ namespace graphcuts
     int restart = 0;
     ROS_DEBUG_STREAM("Solving with tolerance " << precision_);
     NesterovInteriorPointSolver nips(objective, gradient,
-				     initial_mu, precision_, alpha, beta,
-				     max_num_iters, stepsize, restart, debug_level_);
+                                     initial_mu, precision_, alpha, beta,
+                                     max_num_iters, stepsize, restart, debug_level_);
 
     // -- Generate the margin constraints.
     for(size_t i = 0; i < constraints.size(); ++i) {
@@ -156,7 +156,7 @@ namespace graphcuts
       SVPtr b(new Eigen::SparseVector<double>(x.rows()));
       b->startVec(0);
       for(int j = 0; j < model->size(); ++j)
-	b->insertBack(j) = -constraints[i].dpsi_(j);
+        b->insertBack(j) = -constraints[i].dpsi_(j);
       b->insertBack(model->size()) = -1;
 
       SparseQuadraticFunction::Ptr c(new SparseQuadraticFunction(A, b, constraints[i].loss_));
@@ -168,17 +168,17 @@ namespace graphcuts
     //    and the slack variables.
     for(int i = 0; i < x.rows(); ++i) {
       if(i < model->eweights_.rows() || i >= model->size()) { 
-	SMPtr A(new Eigen::SparseMatrix<double>(x.rows(), x.rows()));
-	A->finalize();
-	
-	SVPtr b(new Eigen::SparseVector<double>(x.rows()));
-	b->startVec(0);
-	b->insertBack(i) = -1.0;
-	b->finalize();
+        SMPtr A(new Eigen::SparseMatrix<double>(x.rows(), x.rows()));
+        A->finalize();
+        
+        SVPtr b(new Eigen::SparseVector<double>(x.rows()));
+        b->startVec(0);
+        b->insertBack(i) = -1.0;
+        b->finalize();
 
-	SparseQuadraticFunction::Ptr c(new SparseQuadraticFunction(A, b, 0));
-	SparseLinearFunction::Ptr gc(new SparseLinearFunction(A, b));
-	nips.addConstraint(c, gc);
+        SparseQuadraticFunction::Ptr c(new SparseQuadraticFunction(A, b, 0));
+        SparseLinearFunction::Ptr gc(new SparseLinearFunction(A, b));
+        nips.addConstraint(c, gc);
       }
     }
 
@@ -194,8 +194,8 @@ namespace graphcuts
   }  
   
   ConstraintGenerator::ConstraintGenerator(const Model& model,
-					   PotentialsCache::ConstPtr cache,
-					   VecXiConstPtr labels) :
+                                           PotentialsCache::ConstPtr cache,
+                                           VecXiConstPtr labels) :
     hamming_loss_(-1),
     model_(model),
     cache_(cache),
@@ -221,16 +221,16 @@ namespace graphcuts
     // The segmentation provided by MaxflowInference should have the
     // lowest score possible for these weights.
     ROS_FATAL_STREAM_COND(pred_score < gt_score,
-			  "Prediction score (" << pred_score
-			  << ") is less than ground truth score ("
-			  << gt_score << ")!");
+                          "Prediction score (" << pred_score
+                          << ") is less than ground truth score ("
+                          << gt_score << ")!");
     
     con_.dpsi_ = dpsi;
     con_.loss_ = zero_one_loss;
   }
 
   double hammingLoss(const Eigen::VectorXi& label,
-		     const Eigen::VectorXi& pred)
+                     const Eigen::VectorXi& pred)
   {
     ROS_ASSERT(label.rows() == pred.rows());
     ROS_ASSERT(label.cols() == pred.cols());
@@ -240,14 +240,14 @@ namespace graphcuts
       ROS_ASSERT(label.coeffRef(i) == -1 || label.coeffRef(i) == 1);
       ROS_ASSERT(pred.coeffRef(i) == -1 || pred.coeffRef(i) == 1);
       if(label.coeffRef(i) != pred.coeffRef(i))
-	++loss;
+        ++loss;
     }
 
     return loss;
   }
 
   double zeroOneLoss(const Eigen::VectorXi& label,
-		     const Eigen::VectorXi& pred)
+                     const Eigen::VectorXi& pred)
   {
     ROS_ASSERT(label.rows() == pred.rows());
     ROS_ASSERT(label.cols() == pred.cols());
@@ -256,7 +256,7 @@ namespace graphcuts
       ROS_ASSERT(label.coeffRef(i) == -1 || label.coeffRef(i) == 1);
       ROS_ASSERT(pred.coeffRef(i) == -1 || pred.coeffRef(i) == 1);
       if(label.coeffRef(i) != pred.coeffRef(i))
-	return 1.0;
+        return 1.0;
     }
 
     return 0.0;

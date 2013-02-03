@@ -7,10 +7,10 @@ namespace dst
 {
 
   SurfaceNormalEPG::SurfaceNormalEPG(pipeline2::Outlet<Normals::Ptr>* normals_otl,
-				     pipeline2::Outlet<DepthProjector::Output>* index_otl,
-				     pipeline2::Outlet<cv::Mat1b>* mask_otl,
-				     pipeline2::Outlet<cv::Mat3b>* image_otl,
-				     double sigma) :
+                                     pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                                     pipeline2::Outlet<cv::Mat1b>* mask_otl,
+                                     pipeline2::Outlet<cv::Mat3b>* image_otl,
+                                     double sigma) :
     EdgePotentialGenerator(),
     normals_otl_(normals_otl),
     index_otl_(index_otl),
@@ -51,17 +51,17 @@ namespace dst
       ROS_ASSERT(!isnan(normals->at(idx1).normal[i]));
       dot += normals->at(idx0).normal[i] * normals->at(idx1).normal[i];
       if(isnan(dot)) {
-	ROS_FATAL_STREAM("normals->at(idx0): " << normals->at(idx0));
-	ROS_FATAL_STREAM("normals->at(idx1): " << normals->at(idx1));
-	ROS_FATAL_STREAM("normals->at(idx0).normal[i]: " << normals->at(idx0).normal[i]);
-	ROS_FATAL_STREAM("normals->at(idx1).normal[i]: " << normals->at(idx1).normal[i]);
-	ROS_FATAL_STREAM("normals->at(idx0).normal[i] * normals->at(idx1).normal[i]: " << normals->at(idx0).normal[i] * normals->at(idx1).normal[i]);
-	ROS_FATAL_STREAM("dot: " << dot);
-	ROS_ASSERT(idx0 > 0 && idx0 < (int)normals->size());
-	ROS_ASSERT(idx1 > 0 && idx1 < (int)normals->size());
-	ROS_ASSERT(normals->size() == sz_start);
+        ROS_FATAL_STREAM("normals->at(idx0): " << normals->at(idx0));
+        ROS_FATAL_STREAM("normals->at(idx1): " << normals->at(idx1));
+        ROS_FATAL_STREAM("normals->at(idx0).normal[i]: " << normals->at(idx0).normal[i]);
+        ROS_FATAL_STREAM("normals->at(idx1).normal[i]: " << normals->at(idx1).normal[i]);
+        ROS_FATAL_STREAM("normals->at(idx0).normal[i] * normals->at(idx1).normal[i]: " << normals->at(idx0).normal[i] * normals->at(idx1).normal[i]);
+        ROS_FATAL_STREAM("dot: " << dot);
+        ROS_ASSERT(idx0 > 0 && idx0 < (int)normals->size());
+        ROS_ASSERT(idx1 > 0 && idx1 < (int)normals->size());
+        ROS_ASSERT(normals->size() == sz_start);
 
-	ROS_ASSERT(!isnan(dot));
+        ROS_ASSERT(!isnan(dot));
       }
     }
     
@@ -110,11 +110,11 @@ namespace dst
     cv::Mat1b mask = mask_otl_->pull();
     for(int y = 0; y < index.rows; ++y) {
       for(int x = 0; x < index.cols; ++x) {
-	int idx = getIdx(y, x, index.cols);
-	potentials_.startVec(idx);
-	if(mask(y, x) != 255 || index(y, x) == -1)
-	  continue;
-	fillPotentials(y, x, idx);
+        int idx = getIdx(y, x, index.cols);
+        potentials_.startVec(idx);
+        if(mask(y, x) != 255 || index(y, x) == -1)
+          continue;
+        fillPotentials(y, x, idx);
       }
     }
     potentials_.finalize();

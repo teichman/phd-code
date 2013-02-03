@@ -217,16 +217,16 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
       if(fabs(pcl::euclideanDistance(t1, t2) - d12) > ransac_max_inlier_dist_)
           continue;
       //Otherwise generate transformation from correspondence
-	    pcl::TransformationFromCorrespondences tfc;
-	    tfc.add(t0.getVector3fMap(), r0.getVector3fMap());
-	    tfc.add(t1.getVector3fMap(), r1.getVector3fMap());
-	    tfc.add(t2.getVector3fMap(), r2.getVector3fMap());
+            pcl::TransformationFromCorrespondences tfc;
+            tfc.add(t0.getVector3fMap(), r0.getVector3fMap());
+            tfc.add(t1.getVector3fMap(), r1.getVector3fMap());
+            tfc.add(t2.getVector3fMap(), r2.getVector3fMap());
 
       Eigen::Affine3f trans = tfc.getTransformation();
-	    if((trans * t0.getVector3fMap() - r0.getVector3fMap()).norm() > 0.01 ||
-	       (trans * t1.getVector3fMap() - r1.getVector3fMap()).norm() > 0.01 ||
-	       (trans * t2.getVector3fMap() - r2.getVector3fMap()).norm() > 0.01)
-	      continue;
+            if((trans * t0.getVector3fMap() - r0.getVector3fMap()).norm() > 0.01 ||
+               (trans * t1.getVector3fMap() - r1.getVector3fMap()).norm() > 0.01 ||
+               (trans * t2.getVector3fMap() - r2.getVector3fMap()).norm() > 0.01)
+              continue;
       candidates.push_back(trans);
     }
     cout << "Have " << candidates.size() << " candidates after RANSAC, before inlier check" << endl;
@@ -352,10 +352,10 @@ bool LoopCloser::getInitHypotheses(const rgbd::Frame &frame, size_t t, vector<si
         case MDE:
           {
           Frame frame_prev; sseq_->readFrame(old_t, &frame_prev);
-	  ROS_WARN("LoopCloser::getInitHypotheses using default rather than learned model.");
-	  vector<cv::Point2d> keypoints, keypoints_prev;  // TODO
+          ROS_WARN("LoopCloser::getInitHypotheses using default rather than learned model.");
+          vector<cv::Point2d> keypoints, keypoints_prev;  // TODO
           FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(sseq_->model_, sseq_->model_, frame, 
-							   frame_prev, keypoints, keypoints_prev, max_z_, 0.25));
+                                                           frame_prev, keypoints, keypoints_prev, max_z_, 0.25));
           double rx, ry, rz, tx, ty, tz;
           generateXYZYPR(trans_refined.inverse(), rx, ry, rz, tx, ty, tz);
           Eigen::ArrayXd trans_array(6); trans_array << rx, ry, rz, tx, ty, tz;
@@ -588,7 +588,7 @@ Eigen::Affine3f LoopCloser::alignFrames(const rgbd::Frame &frame0, const rgbd::F
   ROS_WARN_ONCE("LoopCloser does not use learned model.");
   vector<cv::Point2d> keypoints0, keypoints1;  // TODO
   FrameAlignmentMDE::Ptr mde(new FrameAlignmentMDE(sseq_->model_, sseq_->model_, frame0, frame1,
-						   keypoints0, keypoints1, max_z_, 0.25));
+                                                   keypoints0, keypoints1, max_z_, 0.25));
 
   GridSearch gs(6);
   gs.verbose_ = false;

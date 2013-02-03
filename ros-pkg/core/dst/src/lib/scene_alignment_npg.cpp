@@ -7,11 +7,11 @@ namespace dst
 {
 
   SceneAlignmentNPG::SceneAlignmentNPG(pipeline2::Outlet<KinectCloud::ConstPtr>* transformed_otl,
-				       pipeline2::Outlet<KdTreeNode::Output>* kdtree_otl,
-				       pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
-				       pipeline2::Outlet<DepthProjector::Output>* index_otl,
-				       int num_neighbors,
-				       double sigma) :
+                                       pipeline2::Outlet<KdTreeNode::Output>* kdtree_otl,
+                                       pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
+                                       pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                                       int num_neighbors,
+                                       double sigma) :
     NodePotentialGenerator(),
     transformed_otl_(transformed_otl),
     kdtree_otl_(kdtree_otl),
@@ -56,11 +56,11 @@ namespace dst
     labels_.resize(prev_pcd->size(), 127);
     for(int y = 0; y < prev_index.rows; ++y) { 
       for(int x = 0; x < prev_index.cols; ++x) {
-	int idx = prev_index(y, x);
-	if(idx == -1)
-	  continue;
-	ROS_ASSERT(idx >= 0 && (size_t)idx < prev_pcd->size());
-	labels_[idx] = prev_seg(y, x);
+        int idx = prev_index(y, x);
+        if(idx == -1)
+          continue;
+        ROS_ASSERT(idx >= 0 && (size_t)idx < prev_pcd->size());
+        labels_[idx] = prev_seg(y, x);
       }
     }
 
@@ -73,11 +73,11 @@ namespace dst
     imgpts_.resize(curr_pcd->size(), cv::Point2i(-1, -1));
     for(int y = 0; y < curr_index.rows; ++y) {
       for(int x = 0; x < curr_index.cols; ++x) {
-	int idx = curr_index(y, x);
-	if(idx == -1)
-	  continue;
-	ROS_ASSERT(idx >= 0 && (size_t)idx < curr_pcd->size());
-	imgpts_[idx] = cv::Point2i(x, y);
+        int idx = curr_index(y, x);
+        if(idx == -1)
+          continue;
+        ROS_ASSERT(idx >= 0 && (size_t)idx < curr_pcd->size());
+        imgpts_[idx] = cv::Point2i(x, y);
       }
     }
     
@@ -97,25 +97,25 @@ namespace dst
     vector<float> distances(num_neighbors_);
     for(size_t i = 0; i < transformed_pcd->size(); ++i) {
       if(imgpts_[i].x == -1 && imgpts_[i].y == -1)
-	continue;
+        continue;
 
       int num_found = prev_kdtree.nearestKSearch(transformed_pcd->at(i), num_neighbors_, indices, distances); // TODO: not const.  Is this thread safe?
       
       //prev_kdtree.radiusSearch(transformed_pcd->at(i), radius_, indices, distances, 5);
       if(num_found == 0)
-	continue;
+        continue;
       
       //cout << indices[0] << " " << distances[0] << " " << labels_[indices[0]] << " " << imgpts_[indices[0]] << endl;
       int prev_idx = indices[0];
       if(labels_[prev_idx] == 255) {
-	ROS_ASSERT(imgpts_[i].x >= 0 && imgpts_[i].y >= 0);
-	source_potentials_(imgpts_[i].y, imgpts_[i].x) = exp(-distances[0] / sigma_);
-	sink_potentials_(imgpts_[i].y, imgpts_[i].x) = 0.0;
+        ROS_ASSERT(imgpts_[i].x >= 0 && imgpts_[i].y >= 0);
+        source_potentials_(imgpts_[i].y, imgpts_[i].x) = exp(-distances[0] / sigma_);
+        sink_potentials_(imgpts_[i].y, imgpts_[i].x) = 0.0;
       }
       else if(labels_[prev_idx] == 0) {
-	ROS_ASSERT(imgpts_[i].x >= 0 && imgpts_[i].y >= 0);
-	source_potentials_(imgpts_[i].y, imgpts_[i].x) = 0.0;
-	sink_potentials_(imgpts_[i].y, imgpts_[i].x) = exp(-distances[0] / sigma_);
+        ROS_ASSERT(imgpts_[i].x >= 0 && imgpts_[i].y >= 0);
+        source_potentials_(imgpts_[i].y, imgpts_[i].x) = 0.0;
+        sink_potentials_(imgpts_[i].y, imgpts_[i].x) = exp(-distances[0] / sigma_);
       }
     }
 

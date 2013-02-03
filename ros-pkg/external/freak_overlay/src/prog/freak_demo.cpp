@@ -1,14 +1,14 @@
 //  demo.cpp
 //
-//	Here is an example on how to use the descriptor presented in the following paper:
-//	A. Alahi, R. Ortiz, and P. Vandergheynst. FREAK: Fast Retina Keypoint. In IEEE Conference on Computer Vision and Pattern Recognition, 2012.
+//        Here is an example on how to use the descriptor presented in the following paper:
+//        A. Alahi, R. Ortiz, and P. Vandergheynst. FREAK: Fast Retina Keypoint. In IEEE Conference on Computer Vision and Pattern Recognition, 2012.
 //  CVPR 2012 Open Source Award winner
 //
-//	Copyright (C) 2011-2012  Signal processing laboratory 2, EPFL,
-//	Kirell Benzi (kirell.benzi@epfl.ch),
-//	Raphael Ortiz (raphael.ortiz@a3.epfl.ch),
-//	Alexandre Alahi (alexandre.alahi@epfl.ch)
-//	and Pierre Vandergheynst (pierre.vandergheynst@epfl.ch)
+//        Copyright (C) 2011-2012  Signal processing laboratory 2, EPFL,
+//        Kirell Benzi (kirell.benzi@epfl.ch),
+//        Raphael Ortiz (raphael.ortiz@a3.epfl.ch),
+//        Alexandre Alahi (alexandre.alahi@epfl.ch)
+//        and Pierre Vandergheynst (pierre.vandergheynst@epfl.ch)
 //
 //  Redistribution and use in source and binary forms, with or without modification,
 //  are permitted provided that the following conditions are met:

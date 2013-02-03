@@ -14,8 +14,8 @@ namespace dst
   int sign(int x);
 
   std::string generateFilename(const boost::filesystem::path& dir,
-			       const std::string& basename,
-			       int width = 4);
+                               const std::string& basename,
+                               int width = 4);
   
 }
 

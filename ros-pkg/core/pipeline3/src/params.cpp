@@ -16,32 +16,32 @@ namespace pipeline
       any a = it->second;
       bool success = false;
       try {
-	any_cast<string>(a);
-	out << "string " << name << " " << any_cast<string>(a) << endl;
-	success = true;
+        any_cast<string>(a);
+        out << "string " << name << " " << any_cast<string>(a) << endl;
+        success = true;
       }
       catch(boost::bad_any_cast& e) {}
       try {
-	any_cast<int>(a);
-	out << "int " << name << " " << any_cast<int>(a) << endl;
-	success = true;
+        any_cast<int>(a);
+        out << "int " << name << " " << any_cast<int>(a) << endl;
+        success = true;
       }
       catch(boost::bad_any_cast& e) {}
       try {
-	any_cast<double>(a);
-	out << "double " << name << " " << any_cast<double>(a) << endl;
-	success = true;
+        any_cast<double>(a);
+        out << "double " << name << " " << any_cast<double>(a) << endl;
+        success = true;
       }
       catch(boost::bad_any_cast& e) {}
       try {
-	any_cast<bool>(a);
-	out << "bool " << name << " " << any_cast<bool>(a) << endl;
-	success = true;
+        any_cast<bool>(a);
+        out << "bool " << name << " " << any_cast<bool>(a) << endl;
+        success = true;
       }
       catch(boost::bad_any_cast& e) {}
 
       if(!success) { 
-	PL_ABORT("Tried to serialize Param field \"" << name << "\", but Params does not know how to serialize its data type.");
+        PL_ABORT("Tried to serialize Param field \"" << name << "\", but Params does not know how to serialize its data type.");
       }
     }
   }
@@ -62,27 +62,27 @@ namespace pipeline
       in >> name;
       
       if(type.compare("string") == 0) {
-	string val;
-	in >> val;
-	set<string>(name, val);
+        string val;
+        in >> val;
+        set<string>(name, val);
       }
       else if(type.compare("int") == 0) {
-	int val;
-	in >> val;
-	set<int>(name, val);
+        int val;
+        in >> val;
+        set<int>(name, val);
       }
       else if(type.compare("double") == 0) {
-	double val;
-	in >> val;
-	set<double>(name, val);
+        double val;
+        in >> val;
+        set<double>(name, val);
       }
       else if(type.compare("bool") == 0) {
-	bool val;
-	in >> val;
-	set<bool>(name, val);
+        bool val;
+        in >> val;
+        set<bool>(name, val);
       }
       else {
-	PL_ABORT("Deserialization failed: type \"" << type << "\" not recognized.");
+        PL_ABORT("Deserialization failed: type \"" << type << "\" not recognized.");
       }
       getline(in, buf);
     }
@@ -100,26 +100,26 @@ namespace pipeline
     for(it = storage_.begin(); it != storage_.end(); ++it) {
       string name = it->first;
       if(other.storage_.find(name) == other.storage_.end())
-	PL_ABORT("Tried to compare two Params objects with different fields.");
+        PL_ABORT("Tried to compare two Params objects with different fields.");
 
       if(isType<double>(name)) {
-	if(get<double>(name) != other.get<double>(name))
-	  return false;
+        if(get<double>(name) != other.get<double>(name))
+          return false;
       }
       else if(isType<string>(name)) {
-	if(get<string>(name) != other.get<string>(name))
-	  return false;
+        if(get<string>(name) != other.get<string>(name))
+          return false;
       }
       else if(isType<int>(name)) {
-	if(get<int>(name) != other.get<int>(name))
-	  return false;
+        if(get<int>(name) != other.get<int>(name))
+          return false;
       }
       else if(isType<bool>(name)) {
-	if(get<bool>(name) != other.get<bool>(name))
-	  return false;
+        if(get<bool>(name) != other.get<bool>(name))
+          return false;
       }
       else
-	PL_ABORT("Unknown Param type.");
+        PL_ABORT("Unknown Param type.");
     }
     return true;
   }
@@ -130,34 +130,34 @@ namespace pipeline
     for(it = storage_.begin(); it != storage_.end(); ++it) {
       string name = it->first;
       if(other.storage_.find(name) == other.storage_.end())
-	PL_ABORT("Tried to compare two Params objects with different fields.");
+        PL_ABORT("Tried to compare two Params objects with different fields.");
 
       if(isType<double>(name)) {
-	if(get<double>(name) < other.get<double>(name))
-	  return true;
-	if(get<double>(name) > other.get<double>(name))
-	  return false;
+        if(get<double>(name) < other.get<double>(name))
+          return true;
+        if(get<double>(name) > other.get<double>(name))
+          return false;
       }
       else if(isType<string>(name)) {
-	if(get<string>(name) < other.get<string>(name))
-	  return true;
-	if(get<string>(name) > other.get<string>(name))
-	  return false;
+        if(get<string>(name) < other.get<string>(name))
+          return true;
+        if(get<string>(name) > other.get<string>(name))
+          return false;
       }
       else if(isType<int>(name)) {
-	if(get<int>(name) < other.get<int>(name))
-	  return true;
-	if(get<int>(name) > other.get<int>(name))
-	  return false;
+        if(get<int>(name) < other.get<int>(name))
+          return true;
+        if(get<int>(name) > other.get<int>(name))
+          return false;
       }
       else if(isType<bool>(name)) {
-	if((int)get<bool>(name) < (int)other.get<bool>(name))
-	  return true;
-	if((int)get<bool>(name) > (int)other.get<bool>(name))
-	  return false;
+        if((int)get<bool>(name) < (int)other.get<bool>(name))
+          return true;
+        if((int)get<bool>(name) > (int)other.get<bool>(name))
+          return false;
       }
       else
-	PL_ABORT("Unknown Param type.");
+        PL_ABORT("Unknown Param type.");
     }
     return false;
   }

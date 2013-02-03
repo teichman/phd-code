@@ -11,10 +11,10 @@ using namespace rgbd;
 // Takes points from frame0, turns them in to lines in the coordinate system of frame1, then finds how far keypoints in frame1 are
 // from the lines they should lie on.
 void keypointError(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, const std::vector<cv::Point2d> correspondences0,
-		   const Eigen::Affine3f& f0_to_f1,
-		   const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1, const std::vector<cv::Point2d>& correspondences1,
-		   double keypoint_hinge,
-		   double* keypoint_error, double* keypoint_error_count)
+                   const Eigen::Affine3f& f0_to_f1,
+                   const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1, const std::vector<cv::Point2d>& correspondences1,
+                   double keypoint_hinge,
+                   double* keypoint_error, double* keypoint_error_count)
 {
   ROS_ASSERT(correspondences0.size() == correspondences1.size());
 
@@ -100,9 +100,9 @@ void keypointError(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, cons
 }
 
 FrameAlignmentMDE::FrameAlignmentMDE(const pipeline::Params& params,
-				     const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
-				     rgbd::Frame frame0, rgbd::Frame frame1,
-				     const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1) :
+                                     const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
+                                     rgbd::Frame frame0, rgbd::Frame frame1,
+                                     const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1) :
   count_(NULL),
   depth_error_(NULL),
   params_(params),
@@ -223,7 +223,7 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
   if(params_.get<double>("cn_weight") > 0)
     meanDepthMultiplierAndCNError(model0_, frame0_, transformed, transformed_frame, color_names_, &garbage, &cn_error, &cn_count, params_.get<double>("max_range"));
   // keypointError(model0_, frame0_, correspondences0_, f0_to_f1, model1_, frame1_, correspondences1_,
-  // 		params_.get<double>("keypoint_hinge"), &keypoint_error, &keypoint_error_count);
+  //                 params_.get<double>("keypoint_hinge"), &keypoint_error, &keypoint_error_count);
   
   transformAndDecimate(pcd0_, f0_to_f1, indices_, &transformed); 
   model1_.cloudToFrame(transformed, &transformed_frame, &indexmap);
@@ -237,7 +237,7 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
     meanDepthMultiplierAndCNError(model1_, frame1_, transformed, transformed_frame, color_names_, &garbage, &cn_error, &cn_count, params_.get<double>("max_range"));
 
   // keypointError(model1_, frame1_, correspondences1_, f0_to_f1.inverse(), model0_, frame0_, correspondences0_,
-  // 		params_.get<double>("keypoint_hinge"), &keypoint_error, &keypoint_error_count);
+  //                 params_.get<double>("keypoint_hinge"), &keypoint_error, &keypoint_error_count);
 
   // int min_correspondences = 20;
   // if(keypoint_error_count < min_correspondences) {
@@ -289,9 +289,9 @@ double FrameAlignmentMDE::eval(const Eigen::VectorXd& x) const
 }
 
 void transformAndDecimate(const rgbd::Cloud& in,
-			  const Eigen::Affine3f& transform,
-			  const std::vector<size_t>& indices,
-			  rgbd::Cloud* out)
+                          const Eigen::Affine3f& transform,
+                          const std::vector<size_t>& indices,
+                          rgbd::Cloud* out)
 {
 #ifdef TIMING
   ScopedTimer st("transformAndDecimate");
@@ -311,8 +311,8 @@ void transformAndDecimate(const rgbd::Cloud& in,
 }
 
 SequenceAlignmentMDE::SequenceAlignmentMDE(const PrimeSenseModel& model,
-					   const std::vector<Frame>& frames,
-					   const std::vector<Cloud::ConstPtr>& pcds) :
+                                           const std::vector<Frame>& frames,
+                                           const std::vector<Cloud::ConstPtr>& pcds) :
   model_(model),
   frames_(frames),
   pcds_(pcds),
@@ -371,10 +371,10 @@ double SequenceAlignmentMDE::eval(const Eigen::VectorXd& x) const
 }
 
 FocalLengthMDE::FocalLengthMDE(const PrimeSenseModel& model,
-			       const std::vector<Frame>& frames,
-			       const std::vector<Cloud::ConstPtr>& pcds,
-			       const std::vector<Eigen::Affine3d>& transforms,
-			       double fraction) :
+                               const std::vector<Frame>& frames,
+                               const std::vector<Cloud::ConstPtr>& pcds,
+                               const std::vector<Eigen::Affine3d>& transforms,
+                               double fraction) :
   model_(model),
   frames_(frames),
   pcds_(pcds),
@@ -420,8 +420,8 @@ double FocalLengthMDE::eval(const Eigen::VectorXd& x) const
 }
 
 void meanDepthError(const rgbd::PrimeSenseModel& model,
-		    const Frame &frame, const rgbd::Cloud& pcd, const Frame &gt,
-		    double* val, double* count, double max_range)
+                    const Frame &frame, const rgbd::Cloud& pcd, const Frame &gt,
+                    double* val, double* count, double max_range)
 {
   //ScopedTimer st("meanDepthError total");
   ROS_ASSERT(frame.depth_->rows() == model.height_);
@@ -448,20 +448,20 @@ void meanDepthError(const rgbd::PrimeSenseModel& model,
       // -- Both ground truth and measurement must have data.
       double gtz = gt.depth_->coeffRef(ppt.v_, ppt.u_);
       if(gtz == 0)
-	continue;
+        continue;
       double z = frame.depth_->coeffRef(ppt.v_, ppt.u_);
       if(z == 0)
-	continue;
+        continue;
       
       // -- Ignore measured points beyond max_range.
       if(z > max_range_mm)
-      	continue;
+              continue;
 
       // -- Ignore points for which both are far away.
       // if(frame.depth_->coeffRef(ppt.v_, ppt.u_) > max_range * 1000 &&
-      // 	 gt.depth_->coeffRef(ppt.v_, ppt.u_) > max_range * 1000)
+      //          gt.depth_->coeffRef(ppt.v_, ppt.u_) > max_range * 1000)
       // {
-      // 	continue;
+      //         continue;
       // }
 
 
@@ -486,10 +486,10 @@ void meanDepthError(const rgbd::PrimeSenseModel& model,
 }
 
 void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
-			    const Frame &frame, const rgbd::Cloud& pcd,
+                            const Frame &frame, const rgbd::Cloud& pcd,
           const Frame &gt,
-			    double* depth_error, double* color_error,
-			    double* count, double max_range)
+                            double* depth_error, double* color_error,
+                            double* count, double max_range)
 {
   ROS_ASSERT(frame.depth_->rows() == model.height_);
   ROS_ASSERT(frame.depth_->cols() == model.width_);
@@ -517,14 +517,14 @@ void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
       // -- Both ground truth and measurement must have data.
       double gtz = gt.depth_->coeffRef(ppt.v_, ppt.u_);
       if(gtz == 0)
-	continue;
+        continue;
       double z = frame.depth_->coeffRef(ppt.v_, ppt.u_);
       if(z == 0)
-	continue;
+        continue;
       
       // -- Ignore measured points beyond max_range.
       if(z > max_range_mm)
-      	continue;
+              continue;
 
       // -- Count up z error.
       depth_error_mm += fabs(z - gtz);
@@ -533,10 +533,10 @@ void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
       cv::Vec3b gtc = gt.img_(ppt.v_, ppt.u_);
       cv::Vec3b c = frame.img_(ppt.v_, ppt.u_);
       local_color_error += sqrt((gtc[0] - c[0]) * (gtc[0] - c[0]) +
-      				(gtc[1] - c[1]) * (gtc[1] - c[1]) +
-      				(gtc[2] - c[2]) * (gtc[2] - c[2]));
+                                      (gtc[1] - c[1]) * (gtc[1] - c[1]) +
+                                      (gtc[2] - c[2]) * (gtc[2] - c[2]));
       //local_color_error += fabs((double)gtc[0] - c[0]) + fabs((double)gtc[1] - c[1]) + fabs((double)gtc[2] - c[2]);
-	      
+              
       ++(*count);
     }
   }
@@ -549,10 +549,10 @@ void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
 }
 
 void meanDepthMultiplierAndColorError(const rgbd::PrimeSenseModel& model,
-				      const Frame &frame, const rgbd::Cloud& pcd,
+                                      const Frame &frame, const rgbd::Cloud& pcd,
               const Frame &gt,
-				      double* depth_error, double* color_error,
-				      double* count, double max_range)
+                                      double* depth_error, double* color_error,
+                                      double* count, double max_range)
 {
   ROS_ASSERT(frame.depth_->rows() == model.height_);
   ROS_ASSERT(frame.depth_->cols() == model.width_);
@@ -580,14 +580,14 @@ void meanDepthMultiplierAndColorError(const rgbd::PrimeSenseModel& model,
       // -- Both ground truth and measurement must have data.
       double gtz = gt.depth_->coeffRef(ppt.v_, ppt.u_);
       if(gtz == 0)
-	continue;
+        continue;
       double z = frame.depth_->coeffRef(ppt.v_, ppt.u_);
       if(z == 0)
-	continue;
+        continue;
       
       // -- Ignore measured points beyond max_range.
       if(z > max_range_mm)
-      	continue;
+              continue;
 
       // -- Count up z error.
       local_depth_error += fabs(1.0 - z / gtz);
@@ -596,10 +596,10 @@ void meanDepthMultiplierAndColorError(const rgbd::PrimeSenseModel& model,
       cv::Vec3b gtc = gt.img_(ppt.v_, ppt.u_);
       cv::Vec3b c = frame.img_(ppt.v_, ppt.u_);
       local_color_error += sqrt((gtc[0] - c[0]) * (gtc[0] - c[0]) +
-      				(gtc[1] - c[1]) * (gtc[1] - c[1]) +
-      				(gtc[2] - c[2]) * (gtc[2] - c[2]));
+                                      (gtc[1] - c[1]) * (gtc[1] - c[1]) +
+                                      (gtc[2] - c[2]) * (gtc[2] - c[2]));
       //local_color_error += fabs((double)gtc[0] - c[0]) + fabs((double)gtc[1] - c[1]) + fabs((double)gtc[2] - c[2]);
-	      
+              
       ++(*count);
     }
   }
@@ -612,12 +612,12 @@ void meanDepthMultiplierAndColorError(const rgbd::PrimeSenseModel& model,
 }
 
 void meanDepthMultiplierAndHueError(const rgbd::PrimeSenseModel& model,
-				      const Frame &frame, const rgbd::Cloud& pcd,
+                                      const Frame &frame, const rgbd::Cloud& pcd,
               const Frame &gt, const IndexMap &indexmap,
               const cv::Mat3f &hsv_frame, const cv::Mat3f &hsv_pcd,
               const std::vector<size_t> &cloud_indices, 
-				      double* depth_error, double* color_error,
-				      double* count, double max_range)
+                                      double* depth_error, double* color_error,
+                                      double* count, double max_range)
 {
   ROS_ASSERT(frame.depth_->rows() == model.height_);
   ROS_ASSERT(frame.depth_->cols() == model.width_);
@@ -646,14 +646,14 @@ void meanDepthMultiplierAndHueError(const rgbd::PrimeSenseModel& model,
       // -- Both ground truth and measurement must have data.
       double gtz = gt.depth_->coeffRef(ppt.v_, ppt.u_);
       if(gtz == 0)
-	continue;
+        continue;
       double z = frame.depth_->coeffRef(ppt.v_, ppt.u_);
       if(z == 0)
-	continue;
+        continue;
       
       // -- Ignore measured points beyond max_range.
       if(z > max_range_mm)
-      	continue;
+              continue;
 
       // -- Count up z error.
       local_depth_error += fabs(1.0 - z / gtz);
@@ -671,7 +671,7 @@ void meanDepthMultiplierAndHueError(const rgbd::PrimeSenseModel& model,
       float avg_sat = (gth[1]+h[1])/2.;
       local_color_error += avg_sat * hdiff;
       //local_color_error += fabs((double)gtc[0] - c[0]) + fabs((double)gtc[1] - c[1]) + fabs((double)gtc[2] - c[2]);
-	      
+              
       ++(*count);
     }
   }
@@ -684,12 +684,12 @@ void meanDepthMultiplierAndHueError(const rgbd::PrimeSenseModel& model,
 }
 
 void meanDepthMultiplierAndEdgeError(const rgbd::PrimeSenseModel& model,
-				      const Frame &frame, const rgbd::Cloud& pcd,
+                                      const Frame &frame, const rgbd::Cloud& pcd,
               const Frame &gt, const IndexMap &indexmap,
               const cv::Mat1b &edge_frame, const cv::Mat1b &edge_pcd,
               const std::vector<size_t> &cloud_indices, 
-				      double* depth_error, double* color_error,
-				      double* count, double max_range)
+                                      double* depth_error, double* color_error,
+                                      double* count, double max_range)
 {
   ROS_ASSERT(frame.depth_->rows() == model.height_);
   ROS_ASSERT(frame.depth_->cols() == model.width_);
@@ -718,14 +718,14 @@ void meanDepthMultiplierAndEdgeError(const rgbd::PrimeSenseModel& model,
       // -- Both ground truth and measurement must have data.
       double gtz = gt.depth_->coeffRef(ppt.v_, ppt.u_);
       if(gtz == 0)
-	continue;
+        continue;
       double z = frame.depth_->coeffRef(ppt.v_, ppt.u_);
       if(z == 0)
-	continue;
+        continue;
       
       // -- Ignore measured points beyond max_range.
       if(z > max_range_mm)
-      	continue;
+              continue;
 
       // -- Count up z error.
       local_depth_error += fabs(1.0 - z / gtz);
@@ -739,7 +739,7 @@ void meanDepthMultiplierAndEdgeError(const rgbd::PrimeSenseModel& model,
       uint8_t e = edge_frame(ppt.v_, ppt.u_);
       local_color_error += fabs((double)gte - e);
       //local_color_error += fabs((double)gtc[0] - c[0]) + fabs((double)gtc[1] - c[1]) + fabs((double)gtc[2] - c[2]);
-	      
+              
       ++(*count);
     }
   }
@@ -752,11 +752,11 @@ void meanDepthMultiplierAndEdgeError(const rgbd::PrimeSenseModel& model,
 }
 
 void meanDepthMultiplierAndCNError(const rgbd::PrimeSenseModel& model,
-				      const Frame &frame, const rgbd::Cloud& pcd,
+                                      const Frame &frame, const rgbd::Cloud& pcd,
               const Frame &gt,
               const Eigen::MatrixXf &color_names_lookup,
-				      double* depth_error, double* color_error,
-				      double* count, double max_range)
+                                      double* depth_error, double* color_error,
+                                      double* count, double max_range)
 {
   ROS_ASSERT(frame.depth_->rows() == model.height_);
   ROS_ASSERT(frame.depth_->cols() == model.width_);
@@ -784,14 +784,14 @@ void meanDepthMultiplierAndCNError(const rgbd::PrimeSenseModel& model,
       // -- Both ground truth and measurement must have data.
       double gtz = gt.depth_->coeffRef(ppt.v_, ppt.u_);
       if(gtz == 0)
-	continue;
+        continue;
       double z = frame.depth_->coeffRef(ppt.v_, ppt.u_);
       if(z == 0)
-	continue;
+        continue;
       
       // -- Ignore measured points beyond max_range.
       if(z > max_range_mm)
-      	continue;
+              continue;
 
       // -- Count up z error.
       local_depth_error += fabs(1.0 - z / gtz);
@@ -803,10 +803,10 @@ void meanDepthMultiplierAndCNError(const rgbd::PrimeSenseModel& model,
       size_t idx = c[2]/8 + 32*(c[1]/8) + 32*32*(c[0]/8);
       local_color_error += (color_names_lookup.row(gtidx) - color_names_lookup.row(idx)).norm();
       //local_color_error += sqrt((gtc[0] - c[0]) * (gtc[0] - c[0]) +
-      //				(gtc[1] - c[1]) * (gtc[1] - c[1]) +
-      //				(gtc[2] - c[2]) * (gtc[2] - c[2]));
+      //                                (gtc[1] - c[1]) * (gtc[1] - c[1]) +
+      //                                (gtc[2] - c[2]) * (gtc[2] - c[2]));
       //local_color_error += fabs((double)gtc[0] - c[0]) + fabs((double)gtc[1] - c[1]) + fabs((double)gtc[2] - c[2]);
-	      
+              
       ++(*count);
     }
   }

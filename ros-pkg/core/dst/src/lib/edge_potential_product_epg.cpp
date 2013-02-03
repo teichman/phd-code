@@ -7,7 +7,7 @@ namespace dst
 {
 
   EdgePotentialProduct::EdgePotentialProduct(pipeline2::Outlet<cv::Mat3b>* img_otl,
-					     const std::vector<EdgePotentialGenerator*>& generators) :
+                                             const std::vector<EdgePotentialGenerator*>& generators) :
     EdgePotentialGenerator(),
     img_otl_(img_otl),
     generators_(generators)

@@ -15,7 +15,7 @@ namespace dst
     pipeline2::Outlet<KinectCloud::ConstPtr> pcd_otl_;
     
     ForegroundKdTreeNode(pipeline2::Outlet<cv::Mat1b>* seg_otl,
-			 pipeline2::Outlet<DepthProjector::Output>* index_otl);
+                         pipeline2::Outlet<DepthProjector::Output>* index_otl);
     
     
   protected:

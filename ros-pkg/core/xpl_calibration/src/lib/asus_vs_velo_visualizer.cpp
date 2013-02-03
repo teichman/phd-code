@@ -189,9 +189,9 @@ void AsusVsVeloVisualizer::updateDisplay(int velo_idx, const Eigen::Affine3f& tr
     sseq_->readFrame(asus_idx_, &frame);
     if(unwarp_) {
       if(dddm_)
-	dddm_->undistort(&frame);
+        dddm_->undistort(&frame);
       else
-	model_.undistort(&frame);
+        model_.undistort(&frame);
 
       model_.frameToCloud(frame, asus_.get());
     }
@@ -261,8 +261,8 @@ void AsusVsVeloVisualizer::run()
     updateVeloBounds();
     updateDisplay(velo_idx_, cal_.veloToAsus(), cal_.offset_);
     cout << "velo: " << velo_->header.stamp.toSec() << " " << vseq_->timestamps_[velo_idx_]
-	 << ", asus: " << sseq_->timestamps_[asus_idx_] - sseq_start_
-	 << ", velo + offset - asus: " << velo_->header.stamp.toSec() + cal_.offset_ - (sseq_->timestamps_[asus_idx_] - sseq_start_) << endl;
+         << ", asus: " << sseq_->timestamps_[asus_idx_] - sseq_start_
+         << ", velo + offset - asus: " << velo_->header.stamp.toSec() + cal_.offset_ - (sseq_->timestamps_[asus_idx_] - sseq_start_) << endl;
       
     char key = vw_.waitKey();
     switch(key) {
@@ -278,8 +278,8 @@ void AsusVsVeloVisualizer::run()
     case 'm':
       unwarp_ = !unwarp_;
       if(dddm_ == NULL && (model_.fx_ == 0 || !model_.hasDepthDistortionModel())) {
-	cout << "Cannot unwarp without a learned depth distortion model." << endl;
-	unwarp_ = false;
+        cout << "Cannot unwarp without a learned depth distortion model." << endl;
+        unwarp_ = false;
       }
       cout << "unwarp_: " << unwarp_ << endl;
       break;
@@ -511,9 +511,9 @@ VeloToAsusCalibrator AsusVsVeloVisualizer::setupCalibrator()
       sseq_->readFrame(indices[j], &frames[j]);
       // Very important: get the best extrinsics using the given depth distortion model.
       if(dddm_)
-	dddm_->undistort(&frames[j]);
+        dddm_->undistort(&frames[j]);
       else
-	model_.undistort(&frames[j]);  
+        model_.undistort(&frames[j]);  
       frames[j].timestamp_ -= sseq_start_;
     }
     calibrator.frames_.insert(calibrator.frames_.end(), frames.begin(), frames.end());
@@ -700,44 +700,44 @@ void AsusVsVeloVisualizer::fitFocalLength()
 //     for(size_t y = 0; y < ddl_.statistics_.size(); ++y)  {
 //       ROS_ASSERT((int)ddl_.statistics_[y].size() == width);
 //       for(size_t x = 0; x < ddl_.statistics_[y].size(); ++x) {
-// 	for(size_t i = 0; i < ddl_.statistics_[y][x].asus_.size(); ++i) { 
-// 	  double range = ddl_.statistics_[y][x].velo_[i];
-// 	  int range_bin = (max_range - range) / bin_size;
-// 	  if(range_bin >= num_range_bins || range_bin < 0)
-// 	    continue;
-	  
-// 	  double mult = range / ddl_.statistics_[y][x].asus_[i];
-// 	  counts(range_bin, x) += 1;
-// 	  mean(range_bin, x) += mult;
-// 	}
+//         for(size_t i = 0; i < ddl_.statistics_[y][x].asus_.size(); ++i) { 
+//           double range = ddl_.statistics_[y][x].velo_[i];
+//           int range_bin = (max_range - range) / bin_size;
+//           if(range_bin >= num_range_bins || range_bin < 0)
+//             continue;
+          
+//           double mult = range / ddl_.statistics_[y][x].asus_[i];
+//           counts(range_bin, x) += 1;
+//           mean(range_bin, x) += mult;
+//         }
 //       }
 //     }
 //     mean /= counts;
 //     for(int y = 0; y < mean.rows(); ++y)
 //       for(int x = 0; x < mean.cols(); ++x)
-// 	if(isnan(mean(y, x)))
-// 	  mean(y, x) = 1;
+//         if(isnan(mean(y, x)))
+//           mean(y, x) = 1;
         
 //     Eigen::ArrayXXd stdev(num_range_bins, width);
 //     stdev.setZero();
 //     for(size_t y = 0; y < ddl_.statistics_.size(); ++y)  { 
 //       for(size_t x = 0; x < ddl_.statistics_[y].size(); ++x) {
-// 	for(size_t i = 0; i < ddl_.statistics_[y][x].asus_.size(); ++i) { 
-// 	  double range = ddl_.statistics_[y][x].velo_[i];
-// 	  int range_bin = (max_range - range) / bin_size;
-// 	  if(range_bin >= num_range_bins || range_bin < 0)
-// 	    continue;
-	  
-// 	  double mult = range / ddl_.statistics_[y][x].asus_[i];
-// 	  stdev(range_bin, x) += pow(mult - mean(range_bin, x), 2);
-// 	}
+//         for(size_t i = 0; i < ddl_.statistics_[y][x].asus_.size(); ++i) { 
+//           double range = ddl_.statistics_[y][x].velo_[i];
+//           int range_bin = (max_range - range) / bin_size;
+//           if(range_bin >= num_range_bins || range_bin < 0)
+//             continue;
+          
+//           double mult = range / ddl_.statistics_[y][x].asus_[i];
+//           stdev(range_bin, x) += pow(mult - mean(range_bin, x), 2);
+//         }
 //       }
 //     }
 //     stdev = (stdev / counts).sqrt();
 //     for(int y = 0; y < stdev.rows(); ++y)
 //       for(int x = 0; x < stdev.cols(); ++x)
-// 	if(isnan(stdev(y, x)))
-// 	  stdev(y, x) = 0;
+//         if(isnan(stdev(y, x)))
+//           stdev(y, x) = 0;
 
 //     mpliExport(max_range);
 //     mpliExport(bin_size);

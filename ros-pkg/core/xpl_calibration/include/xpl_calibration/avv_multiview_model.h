@@ -22,5 +22,5 @@ public:
 protected:
   bool veloYawValid(double yaw) const;
   rgbd::Cloud::Ptr filterVelo(const VeloToAsusCalibration& extrinsics,
-			      rgbd::Cloud::ConstPtr velo) const;
+                              rgbd::Cloud::ConstPtr velo) const;
 };

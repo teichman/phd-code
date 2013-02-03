@@ -52,7 +52,7 @@ public:
   //! Computes transform that will move target to reference.
   //! T * target = reference.
   Eigen::Affine3f calibrate(rgbd::Sequence::ConstPtr reference,
-			    rgbd::Sequence::ConstPtr target) const;
+                            rgbd::Sequence::ConstPtr target) const;
 
 protected:
   double distance_thresh_;
@@ -64,30 +64,30 @@ protected:
   double granularity_;
 
   double computeLoss(const rgbd::Cloud& ref,
-		     const pcl::PointCloud<pcl::Normal>& ref_normals,
-		     pcl::search::KdTree<pcl::PointXYZRGB>& ref_tree,
-		     const rgbd::Cloud& tar) const;
+                     const pcl::PointCloud<pcl::Normal>& ref_normals,
+                     pcl::search::KdTree<pcl::PointXYZRGB>& ref_tree,
+                     const rgbd::Cloud& tar) const;
   
   bool computeTransform(const Junction& ref,
-			const Junction& tar,
-			Eigen::Affine3f* transform) const;
+                        const Junction& tar,
+                        Eigen::Affine3f* transform) const;
   
   void findJunctions(const rgbd::Cloud& pcd,
-		     const pcl::PointCloud<pcl::Normal>& normals,
-		     std::vector<Junction>* junctions) const;
+                     const pcl::PointCloud<pcl::Normal>& normals,
+                     std::vector<Junction>* junctions) const;
 
   void applyTranslation(const rgbd::Cloud& src,
-			const Eigen::Vector3f& translation,
-			rgbd::Cloud* dst) const;
+                        const Eigen::Vector3f& translation,
+                        rgbd::Cloud* dst) const;
 
   cv::Mat3b visualizeJunctions(const std::vector<Junction>& junctions,
-			       cv::Mat3b img) const;
+                               cv::Mat3b img) const;
 
   void fineTuneAlignment(const rgbd::Cloud& ref,
-			 pcl::search::KdTree<pcl::PointXYZRGB>& ref_tree,
-			 const pcl::PointCloud<pcl::Normal>& ref_normals,
-			 const rgbd::Cloud& tar,
-			 Eigen::Affine3f* transform) const;
+                         pcl::search::KdTree<pcl::PointXYZRGB>& ref_tree,
+                         const pcl::PointCloud<pcl::Normal>& ref_normals,
+                         const rgbd::Cloud& tar,
+                         Eigen::Affine3f* transform) const;
     
 };
 

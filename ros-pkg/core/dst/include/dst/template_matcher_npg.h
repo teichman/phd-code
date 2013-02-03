@@ -11,8 +11,8 @@ namespace dst
   {
   public:
     TemplateMatcherNPG(pipeline2::Outlet<DepthProjector::Output>* index_otl,
-		       pipeline2::Outlet<cv::Mat3b>* img_otl,
-		       pipeline2::Outlet<cv::Mat1b>* mask_otl);
+                       pipeline2::Outlet<cv::Mat3b>* img_otl,
+                       pipeline2::Outlet<cv::Mat1b>* mask_otl);
 
   protected:
     pipeline2::Outlet<DepthProjector::Output>* index_otl_;

@@ -82,7 +82,7 @@ TEST(Dictionary, Dictionary)
   cout << dict << endl;
   EXPECT_TRUE(dict["foo"] == (*dptr)["foo"]);
   EXPECT_TRUE(dict["bar"] == (*dptr)["bar"]);
-	        
+                
   // This test only applied when Dictionary was just a map.  Now it's also Serializable.
   // 
   // This would be a memory leak if Dictionary had members that map did not.

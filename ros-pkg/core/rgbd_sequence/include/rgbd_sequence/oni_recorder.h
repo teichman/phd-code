@@ -23,9 +23,9 @@ namespace rgbd
     //! type \in {"xpl", "kinect"}
     //! id is the device number.
     OniRecorder(const std::string& type,
-		int id,
-		const std::string& mode = "VGA",
-		bool registered = false);
+                int id,
+                const std::string& mode = "VGA",
+                bool registered = false);
     void run();
 
   protected:

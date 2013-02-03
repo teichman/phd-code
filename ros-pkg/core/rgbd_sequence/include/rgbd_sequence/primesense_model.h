@@ -92,16 +92,16 @@ namespace rgbd
     //! Does *not* apply the depth distortion model.
     //! The only way to apply the depth distortion model is to call undistort.
     void frameToCloud(const Frame& frame, Cloud* pcd,
-		      double max_range = std::numeric_limits<double>::max()) const;
+                      double max_range = std::numeric_limits<double>::max()) const;
     void cloudToFrame(const Cloud& pcd, Frame* frame, IndexMap* indexmap = NULL) const;
     void cloudToRangeIndex(const Cloud& pcd, RangeIndex* rindex) const;
     //! transform is applied to the map, then projected into a depth index.
     //! The best depth estimate from the map corresponding to the measurement depth frame
     //! will be returned.
     void estimateMapDepth(const Cloud& map, const Eigen::Affine3f& transform,
-			  const Frame& measurement,
-			  DepthMat* estimate) const;
-			  
+                          const Frame& measurement,
+                          DepthMat* estimate) const;
+                          
     //! Applies depth distortion model to the depth data in frame.
     void undistort(Frame* frame) const;
     
@@ -129,8 +129,8 @@ namespace rgbd
     //Eigen::VectorXd computeFeaturesMU(const ProjectivePoint& ppt) const;
     void computeFeaturesMUV(const ProjectivePoint& ppt, Eigen::VectorXd* features) const;
     bool coneFit(const DepthMat& naive_mapdepth, const RangeIndex& rindex,
-		 int uc, int vc, double radius, double measurement_depth,
-		 double* mean, double* stdev) const;
+                 int uc, int vc, double radius, double measurement_depth,
+                 double* mean, double* stdev) const;
   };
     
 }

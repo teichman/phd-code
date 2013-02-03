@@ -11,7 +11,7 @@ namespace dst
   {
   public:
     EdgePotentialProduct(pipeline2::Outlet<cv::Mat3b>* img_otl,
-			 const std::vector<EdgePotentialGenerator*>& generators);
+                         const std::vector<EdgePotentialGenerator*>& generators);
 
   protected:
     pipeline2::Outlet<cv::Mat3b>* img_otl_;

@@ -40,10 +40,10 @@ namespace dst
     Eigen::VectorXd trainRobust();
     Eigen::VectorXd trainRobust2();
     void precache(std::vector<FramePotentialsCache::Ptr>* caches,
-		  std::vector<cv::Mat1b>* labels) const;
+                  std::vector<cv::Mat1b>* labels) const;
     Eigen::VectorXd runSolver(const std::vector<FramePotentialsCache::Ptr>& caches,
-			      const std::vector<cv::Mat1b>& labels,
-			      std::vector<Constraint>* constraints = NULL) const;
+                              const std::vector<cv::Mat1b>& labels,
+                              std::vector<Constraint>* constraints = NULL) const;
   protected:
     double c_;
     double precision_;
@@ -51,14 +51,14 @@ namespace dst
 
     int getNumWeights() const { SegmentationPipeline sp(1); return sp.getWeights().rows(); } 
     Eigen::VectorXd runNSlackSolver(const std::vector<FramePotentialsCache::Ptr>& caches,
-				    const std::vector<cv::Mat1b>& labels) const;
+                                    const std::vector<cv::Mat1b>& labels) const;
     Eigen::VectorXd runOneSlackSolver(const std::vector<FramePotentialsCache::Ptr>& caches,
-				      const std::vector<cv::Mat1b>& labels,
-				      std::vector<Constraint>* constraints) const;
+                                      const std::vector<cv::Mat1b>& labels,
+                                      std::vector<Constraint>* constraints) const;
 
     void addConstraint(const SegmentationPipeline& sp, int id,
-		       cv::Mat1b label, cv::Mat1b ymv, double loss,
-		       std::vector<Constraint>* constraints) const;
+                       cv::Mat1b label, cv::Mat1b ymv, double loss,
+                       std::vector<Constraint>* constraints) const;
       
     double loss(cv::Mat1b label, cv::Mat1b pred, bool hamming) const;
     double fgNormalizedHammingLoss(cv::Mat1b label, cv::Mat1b pred) const;
@@ -67,10 +67,10 @@ namespace dst
     static double* eigToQPO(const Eigen::VectorXd& eig);
     static double* eigToQPO(const Eigen::MatrixXd& eig);
     double updateWeights2(const std::vector<Constraint>& constraints,
-			  int num_tr_ex,
-			  int num_edge_weights,
-			  Eigen::VectorXd* weights,
-			  Eigen::VectorXd* slacks) const;
+                          int num_tr_ex,
+                          int num_edge_weights,
+                          Eigen::VectorXd* weights,
+                          Eigen::VectorXd* slacks) const;
     
     friend class ConstraintGenerator;
   };
@@ -83,10 +83,10 @@ namespace dst
     double normalized_loss_;
     
     ConstraintGenerator(const StructSVM* svm,
-			const Eigen::VectorXd& weights,
-			int tr_ex_id,
-			FramePotentialsCache::Ptr cache,
-			cv::Mat1b labels);
+                        const Eigen::VectorXd& weights,
+                        int tr_ex_id,
+                        FramePotentialsCache::Ptr cache,
+                        cv::Mat1b labels);
     void _compute();
     //void _display() const;
     void _flush();

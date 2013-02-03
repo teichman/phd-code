@@ -8,8 +8,8 @@ namespace dst
 {
 
   OrganizedSurfaceNormalNode::OrganizedSurfaceNormalNode(pipeline2::Outlet<KinectCloud::ConstPtr>* pcd_otl,
-							 pipeline2::Outlet<cv::Mat1b>* mask_otl,
-							 int radius) :
+                                                         pipeline2::Outlet<cv::Mat1b>* mask_otl,
+                                                         int radius) :
     ComputeNode(),
     normals_otl_(this),
     pcd_otl_(pcd_otl),
@@ -26,9 +26,9 @@ namespace dst
   }
 
   void OrganizedSurfaceNormalNode::computeNormal(const KinectCloud& pcd,
-						 const pcl::PointXYZRGB& center,
-  						 const std::vector<int>& indices,
-  						 pcl::Normal* normal)
+                                                 const pcl::PointXYZRGB& center,
+                                                   const std::vector<int>& indices,
+                                                   pcl::Normal* normal)
   {
     weights_.clear();
     weights_.resize(indices.size(), 0);
@@ -44,8 +44,8 @@ namespace dst
     for(size_t i = 0; i < indices.size(); ++i) {
       const Vector3f& pt = pcd[indices[i]].getVector3fMap();
       if(isnan(pt(0)) || isnan(pt(1)) || isnan(pt(2))) {
-	valid_[i] = false;
-  	continue;
+        valid_[i] = false;
+          continue;
       }
 
       double dist = pcl::euclideanDistance(pcd[indices[i]], center);
@@ -72,31 +72,31 @@ namespace dst
     Matrix3f X = Matrix3f::Zero();
     for(size_t i = 0; i < indices.size(); ++i) {
       if(!valid_[i])
-	continue;
+        continue;
       Vector3f pt = weights_[i] * (pcd[indices[i]].getVector3fMap() - center.getVector3fMap());
       //Vector3f pt = weights_[i] * (pcd[indices[i]].getVector3fMap() - mean);
       X += pt * pt.transpose();
     }
 
     pcl::solvePlaneParameters(X, 
-			      normal->normal[0],
-			      normal->normal[1],
-			      normal->normal[2],
-			      normal->curvature);
+                              normal->normal[0],
+                              normal->normal[1],
+                              normal->normal[2],
+                              normal->curvature);
     
     pcl::flipNormalTowardsViewpoint(center, 0, 0, 0,
-				    normal->normal[0],
-				    normal->normal[1],
-				    normal->normal[2]);
+                                    normal->normal[0],
+                                    normal->normal[1],
+                                    normal->normal[2]);
 
     // hrt.stop();
     // cout << hrt.report() << endl;
   }
   
   void OrganizedSurfaceNormalNode::computeNormal(const KinectCloud& pcd,
-						 const pcl::PointXYZRGB& pt,
-						 const cv::Point2i& img_pt,
-						 pcl::Normal* normal)
+                                                 const pcl::PointXYZRGB& pt,
+                                                 const cv::Point2i& img_pt,
+                                                 pcl::Normal* normal)
   {
     indices_.clear();
     inliers_.clear();
@@ -105,10 +105,10 @@ namespace dst
     for(it.setCenter(img_pt); !it.done(); ++it) {
       int idx = it.index();
       // if(idx % 2 != 0)
-      // 	continue;
+      //         continue;
       
       if(isnan(pcd[idx].z))
-	continue;
+        continue;
 
       indices_.push_back(it.index());
     }
@@ -125,12 +125,12 @@ namespace dst
     cv::Mat1b mask = mask_otl_->pull();
     for(size_t y = 0; y < pcd->height; ++y) {
       for(size_t x = 0; x < pcd->width; ++x) {
-	if(mask(y, x) != 255)
-	  continue;
-	
-	int idx = y * pcd->width + x;
-	cv::Point2i img_pt(x, y);
-	computeNormal(*pcd, pcd->at(idx), img_pt, &normals_->at(idx));
+        if(mask(y, x) != 255)
+          continue;
+        
+        int idx = y * pcd->width + x;
+        cv::Point2i img_pt(x, y);
+        computeNormal(*pcd, pcd->at(idx), img_pt, &normals_->at(idx));
       }
     }
       
@@ -138,7 +138,7 @@ namespace dst
   }
 
   void OrganizedSurfaceNormalNode::normalToColor(const pcl::Normal& p,
-						 cv::Vec3b* color) const
+                                                 cv::Vec3b* color) const
   {
     cv::Vec3b& c = *color;
     if(!isfinite(p.normal[0]) || !isfinite(p.normal[1]) || !isfinite(p.normal[2])) { 
@@ -158,13 +158,13 @@ namespace dst
     normals_->resize(pcd.size());
     for(size_t y = 0; y < pcd.height; ++y) {
       for(size_t x = 0; x < pcd.width; ++x) {
-	int idx = y * pcd.width + x;
-	cv::Point2i img_pt(x, y);
-	if(pcd.at(idx).x != pcd.at(idx).x) { // this will only occur if it's 'nan'
-	  continue;
-	}
-	computeNormal(pcd, pcd.at(idx), img_pt, &normals_->at(idx));
-	normalToColor(normals_->at(idx), &vis(y, x));
+        int idx = y * pcd.width + x;
+        cv::Point2i img_pt(x, y);
+        if(pcd.at(idx).x != pcd.at(idx).x) { // this will only occur if it's 'nan'
+          continue;
+        }
+        computeNormal(pcd, pcd.at(idx), img_pt, &normals_->at(idx));
+        normalToColor(normals_->at(idx), &vis(y, x));
       }
     }
     normals_otl_.push(normals_);
@@ -178,11 +178,11 @@ namespace dst
 
     for(int y = 0; y < vis.rows; ++y) {
       for(int x = 0; x < vis.cols; ++x) {
-	int idx = y * pcd.width + x;
-	if(isnan(pcd[idx].x))
-	  continue;
+        int idx = y * pcd.width + x;
+        if(isnan(pcd[idx].x))
+          continue;
 
-	normalToColor(normals_->at(idx), &vis(y, x));
+        normalToColor(normals_->at(idx), &vis(y, x));
       }
     }
 

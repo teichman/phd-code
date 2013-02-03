@@ -45,7 +45,7 @@ namespace dst
   //! path can point to a directory of sequences or a single sequence.
   //! sequences does not have to be empty.
   void loadSequences(const std::string& path,
-		     std::vector<KinectSequence::Ptr>* sequences);
+                     std::vector<KinectSequence::Ptr>* sequences);
   void visualizeSeedLabels(cv::Mat1b seed, cv::Mat3b img, cv::Mat3b vis);
   void visualizeSegmentation(cv::Mat1b seg, cv::Mat3b img, cv::Mat3b vis);
 }

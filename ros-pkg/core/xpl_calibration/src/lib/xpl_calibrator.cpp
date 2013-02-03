@@ -54,8 +54,8 @@ XplCalibrator::XplCalibrator() :
 }
 
 void XplCalibrator::findJunctions(const Cloud& pcd,
-				  const PointCloud<Normal>& normals,
-				  vector<Junction>* junctions) const
+                                  const PointCloud<Normal>& normals,
+                                  vector<Junction>* junctions) const
 {
   // -- Find planes.
   // Choose a reasonable number of min inliers for whatever resolution.
@@ -78,12 +78,12 @@ void XplCalibrator::findJunctions(const Cloud& pcd,
     for(iri.setCenter(i); !iri.done(); ++iri) {
       int p2 = pf.assignments_[iri.index()];
       if(p2 < 0 || p2 == p1)
-	continue;
+        continue;
       
       double dist = pcl::euclideanDistance(pcd[iri.index()], pcd[i]);
       double angle = acos(fabs(pf.normals_[p1].dot(pf.normals_[p2])));
       if(dist < distance_thresh_ && angle > min_angle_)
-	adj.insert(pair<int, int>(min(p1, p2), max(p1, p2)));
+        adj.insert(pair<int, int>(min(p1, p2), max(p1, p2)));
     }
   }
     
@@ -109,13 +109,13 @@ void XplCalibrator::findJunctions(const Cloud& pcd,
     junc.max_ = -numeric_limits<double>::max();
     for(size_t i = 0; i < pcd.size(); ++i) {
       if(pf.assignments_[i] == p1 || pf.assignments_[i] == p2) { 
-	++num;
-	double val = junc.creasedir_.dot(pcd[i].getVector3fMap());
-	c += val;
-	if(val < junc.min_)
-	  junc.min_ = val;
-	if(val > junc.max_)
-	  junc.max_= val;
+        ++num;
+        double val = junc.creasedir_.dot(pcd[i].getVector3fMap());
+        c += val;
+        if(val < junc.min_)
+          junc.min_ = val;
+        if(val > junc.max_)
+          junc.max_= val;
       }
     }
     c /= num;
@@ -131,16 +131,16 @@ void XplCalibrator::findJunctions(const Cloud& pcd,
     num = 0;
     for(size_t i = 0; i < pcd.size(); ++i) {
       if(pf.assignments_[i] == p1) {
-	++num;
-	b(0) += junc.normal1_.dot(pcd[i].getVector3fMap());
+        ++num;
+        b(0) += junc.normal1_.dot(pcd[i].getVector3fMap());
       }
     }
     b(0) /= num;
     num = 0;
     for(size_t i = 0; i < pcd.size(); ++i) {
       if(pf.assignments_[i] == p2) {
-	++num;
-	b(1) += junc.normal2_.dot(pcd[i].getVector3fMap());
+        ++num;
+        b(1) += junc.normal2_.dot(pcd[i].getVector3fMap());
       }
     }
     b(1) /= num;
@@ -157,7 +157,7 @@ void XplCalibrator::findJunctions(const Cloud& pcd,
 }
 
 cv::Mat3b XplCalibrator::visualizeJunctions(const std::vector<Junction>& junctions,
-					    cv::Mat3b img) const
+                                            cv::Mat3b img) const
 {
   cv::Mat3b vis = img.clone();
   for(size_t i = 0; i < junctions.size(); ++i)
@@ -168,7 +168,7 @@ cv::Mat3b XplCalibrator::visualizeJunctions(const std::vector<Junction>& junctio
 
 
 Eigen::Affine3f XplCalibrator::calibrate(Sequence::ConstPtr refseq,
-					 Sequence::ConstPtr tarseq) const
+                                         Sequence::ConstPtr tarseq) const
 {
   vector<Junction> ref_junctions;
   vector<Junction> tar_junctions;
@@ -247,81 +247,81 @@ Eigen::Affine3f XplCalibrator::calibrate(Sequence::ConstPtr refseq,
       cout << "Trying " << i << " " << j << endl;
       
       for(int k = 0; k < 2; ++k) { 
-	Junction& rj = ref_junctions[i];
-	Junction tj = tar_junctions[j];
-	if(k == 1)
-	  tj.swap();
+        Junction& rj = ref_junctions[i];
+        Junction tj = tar_junctions[j];
+        if(k == 1)
+          tj.swap();
 
-	if(VISUALIZE) {
-	  cv::Mat3b refvis = refseq->imgs_[0].clone();
-	  cv::line(refvis, rj.img_centroid1_, rj.img_centroid2_, cv::Scalar(255, 0, 0));
-	  cv::imshow("ref junction", refvis);
-	  
-	  cv::Mat3b tarvis = tarseq->imgs_[0].clone();
-	  cv::line(tarvis, tj.img_centroid1_, tj.img_centroid2_, cv::Scalar(255, 0, 0));
-	  cv::imshow("tar junction", tarvis);
-	  
-	  cv::waitKey(20);
-	}
-      	
-	Affine3f base_transform;
-	bool valid = computeTransform(rj, tj, &base_transform);
-	if(!valid) {
-	  if(VISUALIZE)
-	    cout << "Transform not valid.  Points probably did not line up.  Continuing." << endl;
-	  continue;
-	}
-	
-	Cloud base_transformed;
-	transformPointCloud(*tar, base_transformed, base_transform);
+        if(VISUALIZE) {
+          cv::Mat3b refvis = refseq->imgs_[0].clone();
+          cv::line(refvis, rj.img_centroid1_, rj.img_centroid2_, cv::Scalar(255, 0, 0));
+          cv::imshow("ref junction", refvis);
+          
+          cv::Mat3b tarvis = tarseq->imgs_[0].clone();
+          cv::line(tarvis, tj.img_centroid1_, tj.img_centroid2_, cv::Scalar(255, 0, 0));
+          cv::imshow("tar junction", tarvis);
+          
+          cv::waitKey(20);
+        }
+              
+        Affine3f base_transform;
+        bool valid = computeTransform(rj, tj, &base_transform);
+        if(!valid) {
+          if(VISUALIZE)
+            cout << "Transform not valid.  Points probably did not line up.  Continuing." << endl;
+          continue;
+        }
+        
+        Cloud base_transformed;
+        transformPointCloud(*tar, base_transformed, base_transform);
 
-	// Get the min and max.
-	double ref_min = numeric_limits<double>::max();
-	double ref_max = -numeric_limits<double>::max();
-	for(size_t l = 0; l < ref->size(); ++l) {
-	  double val = rj.creasedir_.dot(ref->at(l).getVector3fMap());
-	  if(val > ref_max)
-	    ref_max = val;
-	  if(val < ref_min)
-	    ref_min = val;
-	}
-	double tar_min = numeric_limits<double>::max();
-	double tar_max = -numeric_limits<double>::max();
-	for(size_t l = 0; l < base_transformed.size(); ++l) {
-	  double val = rj.creasedir_.dot(base_transformed[l].getVector3fMap());
-	  if(val > tar_max)
-	    tar_max = val;
-	  if(val < tar_min)
-	    tar_min = val;
-	}
+        // Get the min and max.
+        double ref_min = numeric_limits<double>::max();
+        double ref_max = -numeric_limits<double>::max();
+        for(size_t l = 0; l < ref->size(); ++l) {
+          double val = rj.creasedir_.dot(ref->at(l).getVector3fMap());
+          if(val > ref_max)
+            ref_max = val;
+          if(val < ref_min)
+            ref_min = val;
+        }
+        double tar_min = numeric_limits<double>::max();
+        double tar_max = -numeric_limits<double>::max();
+        for(size_t l = 0; l < base_transformed.size(); ++l) {
+          double val = rj.creasedir_.dot(base_transformed[l].getVector3fMap());
+          if(val > tar_max)
+            tar_max = val;
+          if(val < tar_min)
+            tar_min = val;
+        }
 
-	// Search over possible translations.
-	double lower_limit = ref_min - tar_max;
-	double upper_limit = ref_max - tar_min;
-	double range = upper_limit - lower_limit;
-	for(double offset = lower_limit + 0.25 * range; offset <= upper_limit - 0.25 * range; offset += granularity_) {
-	  Vector3f translation = offset * rj.creasedir_;
-	  Affine3f transform = base_transform;
-	  transform.translation() += translation;
-	  transformPointCloud(*tar, transformed, transform);
-	  //applyTranslation(base_transformed, translation, &transformed);
-	  double loss = computeLoss(*ref, *ref_normals, *ref_tree, transformed);
+        // Search over possible translations.
+        double lower_limit = ref_min - tar_max;
+        double upper_limit = ref_max - tar_min;
+        double range = upper_limit - lower_limit;
+        for(double offset = lower_limit + 0.25 * range; offset <= upper_limit - 0.25 * range; offset += granularity_) {
+          Vector3f translation = offset * rj.creasedir_;
+          Affine3f transform = base_transform;
+          transform.translation() += translation;
+          transformPointCloud(*tar, transformed, transform);
+          //applyTranslation(base_transformed, translation, &transformed);
+          double loss = computeLoss(*ref, *ref_normals, *ref_tree, transformed);
 
-	  if(loss < best_loss) {
-	    best_loss = loss;
-	    best_transform = transform;
-	  }
+          if(loss < best_loss) {
+            best_loss = loss;
+            best_transform = transform;
+          }
 
-	  if(VISUALIZE) { 
-	    overlay->clear();
-	    *overlay = *ref;
-	    *overlay += transformed;
-	    vis.showCloud(overlay);
-	    vis.wasStopped(1);
-	    cout << "Loss: " << loss << endl;
-	    //cin.ignore();
-	  }
-	}	
+          if(VISUALIZE) { 
+            overlay->clear();
+            *overlay = *ref;
+            *overlay += transformed;
+            vis.showCloud(overlay);
+            vis.wasStopped(1);
+            cout << "Loss: " << loss << endl;
+            //cin.ignore();
+          }
+        }        
       }
     }
   }
@@ -356,10 +356,10 @@ Eigen::Affine3f XplCalibrator::calibrate(Sequence::ConstPtr refseq,
 }
 
 void XplCalibrator::fineTuneAlignment(const Cloud& ref,
-				      search::KdTree<pcl::PointXYZRGB>& ref_tree,
-				      const PointCloud<Normal>& ref_normals,
-				      const Cloud& tar,
-				      Eigen::Affine3f* transform) const
+                                      search::KdTree<pcl::PointXYZRGB>& ref_tree,
+                                      const PointCloud<Normal>& ref_normals,
+                                      const Cloud& tar,
+                                      Eigen::Affine3f* transform) const
 {
 
   vector<int> indices(1);
@@ -377,7 +377,7 @@ void XplCalibrator::fineTuneAlignment(const Cloud& ref,
       distances.clear();
       ref_tree.nearestKSearch(working[i], 1, indices, distances);
       if(indices.empty() || distances[0] > 0.03)
-	continue;
+        continue;
       
       tfc.add(working[i].getVector3fMap(), ref[indices[0]].getVector3fMap());
     }
@@ -407,9 +407,9 @@ void XplCalibrator::applyTranslation(const Cloud& src, const Vector3f& translati
 }
 
 double XplCalibrator::computeLoss(const Cloud& ref,
-				  const PointCloud<Normal>& ref_normals,
-				  pcl::search::KdTree<pcl::PointXYZRGB>& ref_tree,
-				  const Cloud& tar) const
+                                  const PointCloud<Normal>& ref_normals,
+                                  pcl::search::KdTree<pcl::PointXYZRGB>& ref_tree,
+                                  const Cloud& tar) const
 {
   double score = 0;
   double max_term = 0.1;

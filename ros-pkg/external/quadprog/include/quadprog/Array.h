@@ -41,16 +41,16 @@ public:
   Vector(const T* a, const unsigned int n); // Initialize to array 
   Vector(const Vector &rhs); // copy constructor 
   ~Vector(); // destructor
-	
+        
   inline void set(const T* a, const unsigned int n);
   Vector<T> extract(const std::set<unsigned int>& indexes) const;
   inline T& operator[](const unsigned int& i); //i-th element 
   inline const T& operator[](const unsigned int& i) const; 
-	
+        
   inline unsigned int size() const;
   inline void resize(const unsigned int n);
   inline void resize(const T& a, const unsigned int n);
-	
+        
   Vector<T>& operator=(const Vector<T>& rhs); //assignment 
   Vector<T>& operator=(const T& a); //assign a to every element 
   inline Vector<T>& operator+=(const Vector<T>& rhs);
@@ -103,7 +103,7 @@ Vector<T>::Vector(const Vector<T>& rhs)
   : v(new T[rhs.n])
 { 
   this->n = rhs.n;
-  for (unsigned int	i = 0; i < n; i++) 
+  for (unsigned int        i = 0; i < n; i++) 
     v[i] = rhs[i]; 
 } 
 
@@ -144,7 +144,7 @@ inline Vector<T>& Vector<T>::operator=(const Vector<T>& rhs)
     { 
       resize(rhs.n);
       for (unsigned int i = 0; i < n; i++) 
-	v[i] = rhs[i]; 
+        v[i] = rhs[i]; 
     } 
   return *this; 
 } 
@@ -188,14 +188,14 @@ inline Vector<T> Vector<T>::extract(const std::set<unsigned int>& indexes) const
 {
   Vector<T> tmp(indexes.size());
   unsigned int i = 0;
-	
+        
   for (std::set<unsigned int>::const_iterator el = indexes.begin(); el != indexes.end(); el++)
     {
       if (*el >= n)
-	throw std::logic_error("Error extracting subvector: the indexes are out of vector bounds");
+        throw std::logic_error("Error extracting subvector: the indexes are out of vector bounds");
       tmp[i++] = v[*el];
     }
-	
+        
   return tmp;
 }
 
@@ -206,7 +206,7 @@ inline Vector<T>& Vector<T>::operator+=(const Vector<T>& rhs)
     throw std::logic_error("Operator+=: vectors have different sizes");
   for (unsigned int i = 0; i < n; i++)
     v[i] += rhs[i];
-	
+        
   return *this;
 }
 
@@ -216,7 +216,7 @@ inline Vector<T>& Vector<T>::operator+=(const T& a)
 {
   for (unsigned int i = 0; i < n; i++)
     v[i] += a;
-	
+        
   return *this;
 }
 
@@ -234,7 +234,7 @@ inline Vector<T> operator+(const Vector<T>& lhs, const Vector<T>& rhs)
   Vector<T> tmp(lhs.size());
   for (unsigned int i = 0; i < lhs.size(); i++)
     tmp[i] = lhs[i] + rhs[i];
-	
+        
   return tmp;
 }
 
@@ -244,7 +244,7 @@ inline Vector<T> operator+(const Vector<T>& lhs, const T& a)
   Vector<T> tmp(lhs.size());
   for (unsigned int i = 0; i < lhs.size(); i++)
     tmp[i] = lhs[i] + a;
-		
+                
   return tmp;
 }
 
@@ -254,7 +254,7 @@ inline Vector<T> operator+(const T& a, const Vector<T>& rhs)
   Vector<T> tmp(rhs.size());
   for (unsigned int i = 0; i < rhs.size(); i++)
     tmp[i] = a + rhs[i];
-		
+                
   return tmp;
 }
 
@@ -265,7 +265,7 @@ inline Vector<T>& Vector<T>::operator-=(const Vector<T>& rhs)
     throw std::logic_error("Operator-=: vectors have different sizes");
   for (unsigned int i = 0; i < n; i++)
     v[i] -= rhs[i];
-	
+        
   return *this;
 }
 
@@ -275,7 +275,7 @@ inline Vector<T>& Vector<T>::operator-=(const T& a)
 {
   for (unsigned int i = 0; i < n; i++)
     v[i] -= a;
-	
+        
   return *this;
 }
 
@@ -293,7 +293,7 @@ inline Vector<T> operator-(const Vector<T>& lhs, const Vector<T>& rhs)
   Vector<T> tmp(lhs.size());
   for (unsigned int i = 0; i < lhs.size(); i++)
     tmp[i] = lhs[i] - rhs[i];
-	
+        
   return tmp;
 }
 
@@ -303,7 +303,7 @@ inline Vector<T> operator-(const Vector<T>& lhs, const T& a)
   Vector<T> tmp(lhs.size());
   for (unsigned int i = 0; i < lhs.size(); i++)
     tmp[i] = lhs[i] - a;
-		
+                
   return tmp;
 }
 
@@ -313,7 +313,7 @@ inline Vector<T> operator-(const T& a, const Vector<T>& rhs)
   Vector<T> tmp(rhs.size());
   for (unsigned int i = 0; i < rhs.size(); i++)
     tmp[i] = a - rhs[i];
-		
+                
   return tmp;
 }
 
@@ -324,7 +324,7 @@ inline Vector<T>& Vector<T>::operator*=(const Vector<T>& rhs)
     throw std::logic_error("Operator*=: vectors have different sizes");
   for (unsigned int i = 0; i < n; i++)
     v[i] *= rhs[i];
-	
+        
   return *this;
 }
 
@@ -334,7 +334,7 @@ inline Vector<T>& Vector<T>::operator*=(const T& a)
 {
   for (unsigned int i = 0; i < n; i++)
     v[i] *= a;
-	
+        
   return *this;
 }
 
@@ -346,7 +346,7 @@ inline Vector<T> operator*(const Vector<T>& lhs, const Vector<T>& rhs)
   Vector<T> tmp(lhs.size());
   for (unsigned int i = 0; i < lhs.size(); i++)
     tmp[i] = lhs[i] * rhs[i];
-	
+        
   return tmp;
 }
 
@@ -356,7 +356,7 @@ inline Vector<T> operator*(const Vector<T>& lhs, const T& a)
   Vector<T> tmp(lhs.size());
   for (unsigned int i = 0; i < lhs.size(); i++)
     tmp[i] = lhs[i] * a;
-		
+                
   return tmp;
 }
 
@@ -366,7 +366,7 @@ inline Vector<T> operator*(const T& a, const Vector<T>& rhs)
   Vector<T> tmp(rhs.size());
   for (unsigned int i = 0; i < rhs.size(); i++)
     tmp[i] = a * rhs[i];
-		
+                
   return tmp;
 }
 
@@ -377,7 +377,7 @@ inline Vector<T>& Vector<T>::operator/=(const Vector<T>& rhs)
     throw std::logic_error("Operator/=: vectors have different sizes");
   for (unsigned int i = 0; i < n; i++)
     v[i] /= rhs[i];
-	
+        
   return *this;
 }
 
@@ -387,7 +387,7 @@ inline Vector<T>& Vector<T>::operator/=(const T& a)
 {
   for (unsigned int i = 0; i < n; i++)
     v[i] /= a;
-	
+        
   return *this;
 }
 
@@ -399,7 +399,7 @@ inline Vector<T> operator/(const Vector<T>& lhs, const Vector<T>& rhs)
   Vector<T> tmp(lhs.size());
   for (unsigned int i = 0; i < lhs.size(); i++)
     tmp[i] = lhs[i] / rhs[i];
-	
+        
   return tmp;
 }
 
@@ -409,7 +409,7 @@ inline Vector<T> operator/(const Vector<T>& lhs, const T& a)
   Vector<T> tmp(lhs.size());
   for (unsigned int i = 0; i < lhs.size(); i++)
     tmp[i] = lhs[i] / a;
-		
+                
   return tmp;
 }
 
@@ -419,7 +419,7 @@ inline Vector<T> operator/(const T& a, const Vector<T>& rhs)
   Vector<T> tmp(rhs.size());
   for (unsigned int i = 0; i < rhs.size(); i++)
     tmp[i] = a / rhs[i];
-		
+                
   return tmp;
 }
 
@@ -431,7 +431,7 @@ inline Vector<T> operator^(const Vector<T>& lhs, const Vector<T>& rhs)
   Vector<T> tmp(lhs.size());
   for (unsigned int i = 0; i < lhs.size(); i++)
     tmp[i] = pow(lhs[i], rhs[i]);
-	
+        
   return tmp;
 }
 
@@ -441,7 +441,7 @@ inline Vector<T> operator^(const Vector<T>& lhs, const T& a)
   Vector<T> tmp(lhs.size());
   for (unsigned int i = 0; i < lhs.size(); i++)
     tmp[i] = pow(lhs[i], a);
-		
+                
   return tmp;
 }
 
@@ -451,7 +451,7 @@ inline Vector<T> operator^(const T& a, const Vector<T>& rhs)
   Vector<T> tmp(rhs.size());
   for (unsigned int i = 0; i < rhs.size(); i++)
     tmp[i] = pow(a, rhs[i]);
-		
+                
   return tmp;
 }
 
@@ -462,7 +462,7 @@ inline Vector<T>& Vector<T>::operator^=(const Vector<T>& rhs)
     throw std::logic_error("Operator^=: vectors have different sizes");
   for (unsigned int i = 0; i < n; i++)
     v[i] = pow(v[i], rhs[i]);
-		
+                
   return *this;
 }
 
@@ -471,7 +471,7 @@ inline Vector<T>& Vector<T>::operator^=(const T& a)
 {
   for (unsigned int i = 0; i < n; i++)
     v[i] = pow(v[i], a);
-		
+                
   return *this;
 }
 
@@ -551,7 +551,7 @@ inline std::ostream& operator<<(std::ostream& os, const Vector<T>& v)
   for (unsigned int i = 0; i < v.size() - 1; i++)
     os << std::setw(20) << std::setprecision(16) << v[i] << ", ";
   os << std::setw(20) << std::setprecision(16) << v[v.size() - 1] << std::endl;
-	
+        
   return os;
 }
 
@@ -564,7 +564,7 @@ std::istream& operator>>(std::istream& is, Vector<T>& v)
   v.resize(elements);
   for (unsigned int i = 0; i < elements; i++)
     is >> v[i] >> comma;
-	
+        
   return is;
 }
 
@@ -607,7 +607,7 @@ inline T sum(const Vector<T>& v)
   T tmp = (T)0;
   for (unsigned int i = 0; i < v.size(); i++)
     tmp += v[i];
-	
+        
   return tmp;
 }
 
@@ -617,7 +617,7 @@ inline T prod(const Vector<T>& v)
   T tmp = (T)1;
   for (unsigned int i = 0; i < v.size(); i++)
     tmp *= v[i];
-	
+        
   return tmp;
 }
 
@@ -652,7 +652,7 @@ inline T var(const Vector<T>& v, bool sample_correction = false)
   T sum = (T)0, ssum = (T)0;
   unsigned int n = v.size();
   for (unsigned int i = 0; i < n; i++)
-    {	
+    {        
       sum += v[i];
       ssum += (v[i] * v[i]);
     }
@@ -668,7 +668,7 @@ inline T max(const Vector<T>& v)
   T value = v[0];
   for (unsigned int i = 1; i < v.size(); i++)
     value = std::max(v[i], value);
-	
+        
   return value;
 }
 
@@ -678,7 +678,7 @@ inline T min(const Vector<T>& v)
   T value = v[0];
   for (unsigned int i = 1; i < v.size(); i++)
     value = std::min(v[i], value);
-	
+        
   return value;
 }
 
@@ -689,7 +689,7 @@ inline unsigned int index_max(const Vector<T>& v)
   for (unsigned int i = 1; i < v.size(); i++)
     if (v[i] > v[max])
       max = i;
-	
+        
   return max;
 }
 
@@ -700,7 +700,7 @@ inline unsigned int index_min(const Vector<T>& v)
   for (unsigned int i = 1; i < v.size(); i++)
     if (v[i] < v[min])
       min = i;
-	
+        
   return min;
 }
 
@@ -713,7 +713,7 @@ inline T dot_prod(const Vector<T>& a, const Vector<T>& b)
     throw std::logic_error("Dotprod error: the vectors are not the same size");
   for (unsigned int i = 0; i < a.size(); i++)
     sum += a[i] * b[i];
-	
+        
   return sum;
 }
 
@@ -727,7 +727,7 @@ inline Vector<T> exp(const Vector<T>& v)
   Vector<T> tmp(v.size());
   for (unsigned int i = 0; i < v.size(); i++)
     tmp[i] = exp(v[i]);
-	
+        
   return tmp;
 }
 
@@ -737,7 +737,7 @@ inline Vector<T> log(const Vector<T>& v)
   Vector<T> tmp(v.size());
   for (unsigned int i = 0; i < v.size(); i++)
     tmp[i] = log(v[i]);
-	
+        
   return tmp;
 }
 
@@ -747,7 +747,7 @@ inline Vector<T> sqrt(const Vector<T>& v)
   Vector<T> tmp(v.size());
   for (unsigned int i = 0; i < v.size(); i++)
     tmp[i] = sqrt(v[i]);
-	
+        
   return tmp;
 }
 
@@ -757,7 +757,7 @@ inline Vector<T> pow(const Vector<T>& v, double a)
   Vector<T> tmp(v.size());
   for (unsigned int i = 0; i < v.size(); i++)
     tmp[i] = pow(v[i], a);
-	
+        
   return tmp;
 }
 
@@ -767,7 +767,7 @@ inline Vector<T> abs(const Vector<T>& v)
   Vector<T> tmp(v.size());
   for (unsigned int i = 0; i < v.size(); i++)
     tmp[i] = (T)fabs(v[i]);
-	
+        
   return tmp;
 }
 
@@ -777,7 +777,7 @@ inline Vector<T> sign(const Vector<T>& v)
   Vector<T> tmp(v.size());
   for (unsigned int i = 0; i < v.size(); i++)
     tmp[i] = v[i] > 0 ? +1 : v[i] == 0 ? 0 : -1;
-	
+        
   return tmp;
 }
 
@@ -789,8 +789,8 @@ inline unsigned int partition(Vector<T>& v, unsigned int begin, unsigned int end
   while (j <= end) 
     {
       if (v[j] < pivot) {
-	std::swap(v[i], v[j]);
-	i++;
+        std::swap(v[i], v[j]);
+        i++;
       }
       j++;
     }
@@ -798,7 +798,7 @@ inline unsigned int partition(Vector<T>& v, unsigned int begin, unsigned int end
   v[i - 1] = pivot;
   return i - 2;
 }
-	
+        
 
 template <typename T>
 inline void quicksort(Vector<T>& v, unsigned int begin, unsigned int end)
@@ -825,28 +825,28 @@ template <typename T>
 inline Vector<double> rank(const Vector<T>& v)
 {
   Vector<T> tmp(v);
-  Vector<double> tmp_rank(0.0, v.size());	
-	
+  Vector<double> tmp_rank(0.0, v.size());        
+        
   for (unsigned int i = 0; i < tmp.size(); i++)
     {
       unsigned int smaller = 0, equal = 0;
       for (unsigned int j = 0; j < tmp.size(); j++)
-	if (i == j)
-	  continue;
-	else
-	  if (tmp[j] < tmp[i])
-	    smaller++;
-	  else if (tmp[j] == tmp[i])
-	    equal++;
+        if (i == j)
+          continue;
+        else
+          if (tmp[j] < tmp[i])
+            smaller++;
+          else if (tmp[j] == tmp[i])
+            equal++;
       tmp_rank[i] = smaller + 1;
       if (equal > 0)
-	{
-	  for (unsigned int j = 1; j <= equal; j++)
-	    tmp_rank[i] += smaller + 1 + j;
-	  tmp_rank[i] /= (double)(equal + 1);
-	}
+        {
+          for (unsigned int j = 1; j <= equal; j++)
+            tmp_rank[i] += smaller + 1 + j;
+          tmp_rank[i] /= (double)(equal + 1);
+        }
     }
-	
+        
   return tmp_rank;
 }
 
@@ -864,21 +864,21 @@ public:
   Matrix(const T* a, const unsigned int n, const unsigned int m); // Initialize to array 
   Matrix(const Matrix<T>& rhs); // Copy constructor
   ~Matrix(); // destructor
-	
+        
   inline T* operator[](const unsigned int& i) { return v[i]; } // Subscripting: row i
   inline const T* operator[](const unsigned int& i) const { return v[i]; }; // const subsctipting
-	
+        
   inline void resize(const unsigned int n, const unsigned int m);
   inline void resize(const T& a, const unsigned int n, const unsigned int m);
-	
-	
+        
+        
   inline Vector<T> extractRow(const unsigned int i) const; 
   inline Vector<T> extractColumn(const unsigned int j) const;
   inline Vector<T> extractDiag() const;
   inline Matrix<T> extractRows(const std::set<unsigned int>& indexes) const;
   inline Matrix<T> extractColumns(const std::set<unsigned int>& indexes) const;
   inline Matrix<T> extract(const std::set<unsigned int>& r_indexes, const std::set<unsigned int>& c_indexes) const;
-	
+        
   inline void set(const T* a, unsigned int n, unsigned int m);
   inline void set(const std::set<unsigned int>& r_indexes, const std::set<unsigned int>& c_indexes, const Matrix<T>& m);
   inline void setRow(const unsigned int index, const Vector<T>& v);
@@ -887,11 +887,11 @@ public:
   inline void setColumn(const unsigned int index, const Vector<T>& v);
   inline void setColumn(const unsigned int index, const Matrix<T>& v);
   inline void setColumns(const std::set<unsigned int>& indexes, const Matrix<T>& m);
-	
-	
+        
+        
   inline unsigned int nrows() const { return n; } // number of rows
   inline unsigned int ncols() const { return m; } // number of columns
-	
+        
   inline Matrix<T>& operator=(const Matrix<T>& rhs); // Assignment operator
   inline Matrix<T>& operator=(const T& a); // Assign to every element value a
   inline Matrix<T>& operator+=(const Matrix<T>& rhs);
@@ -968,11 +968,11 @@ Matrix<T>::Matrix(MType t, const T& a, const T& o, unsigned int n, unsigned int 
     {
     case DIAG:
       for (i = 0; i < n; i++) 
-	for (j = 0; j < m; j++) 
-	  if (i != j)
-	    v[i][j] = o; 
-	  else
-	    v[i][j] = a;
+        for (j = 0; j < m; j++) 
+          if (i != j)
+            v[i][j] = o; 
+          else
+            v[i][j] = a;
       break;
     default:
       throw std::logic_error("Matrix type not supported");
@@ -992,11 +992,11 @@ Matrix<T>::Matrix(MType t, const Vector<T>& a, const T& o, unsigned int n, unsig
     {
     case DIAG:
       for (i = 0; i < n; i++) 
-	for (j = 0; j < m; j++) 
-	  if (i != j)
-	    v[i][j] = o; 
-	  else
-	    v[i][j] = a[i];
+        for (j = 0; j < m; j++) 
+          if (i != j)
+            v[i][j] = o; 
+          else
+            v[i][j] = a[i];
       break;
     default:
       throw std::logic_error("Matrix type not supported");
@@ -1025,7 +1025,7 @@ Matrix<T>::~Matrix()
     delete[] (v); 
   } 
 }
-				
+                                
 template <typename T> 
 inline Matrix<T>& Matrix<T>::operator=(const Matrix<T> &rhs) 
 // postcondition: normal assignment via copying has been performed; 
@@ -1037,8 +1037,8 @@ inline Matrix<T>& Matrix<T>::operator=(const Matrix<T> &rhs)
     {
       resize(rhs.n, rhs.m);
       for (i = 0; i < n; i++) 
-	for (j = 0; j < m; j++) 
-	  v[i][j] = rhs[i][j]; 
+        for (j = 0; j < m; j++) 
+          v[i][j] = rhs[i][j]; 
     } 
   return *this; 
 } 
@@ -1090,7 +1090,7 @@ inline Vector<T> Matrix<T>::extractRow(const unsigned int i) const
   if (i >= n)
     throw std::logic_error("Error in extractRow: trying to extract a row out of matrix bounds");
   Vector<T> tmp(v[i], m);
-	
+        
   return tmp;
 }
 
@@ -1101,10 +1101,10 @@ inline Vector<T> Matrix<T>::extractColumn(const unsigned int j) const
   if (j >= m)
     throw std::logic_error("Error in extractRow: trying to extract a row out of matrix bounds");
   Vector<T> tmp(n);
-	
+        
   for (i = 0; i < n; i++)
     tmp[i] = v[i][j];
-	
+        
   return tmp;
 }
 
@@ -1114,12 +1114,12 @@ inline Vector<T> Matrix<T>::extractDiag() const
   register unsigned int d = std::min(n, m), i;
   
   Vector<T> tmp(d);
-	
+        
   for (i = 0; i < d; i++)
     tmp[i] = v[i][i];
-	
+        
   return tmp;
-	
+        
 }
 
 template <typename T> 
@@ -1127,18 +1127,18 @@ inline Matrix<T> Matrix<T>::extractRows(const std::set<unsigned int>& indexes) c
 {
   Matrix<T> tmp(indexes.size(), m);
   register unsigned int i = 0, j;
-	
+        
   for (std::set<unsigned int>::const_iterator el = indexes.begin(); el != indexes.end(); el++)
     {
       for (j = 0; j < m; j++)
-	{
-	  if (*el >= n)
-	    throw std::logic_error("Error extracting rows: the indexes are out of matrix bounds");
-	  tmp[i][j] = v[*el][j];
-	}
+        {
+          if (*el >= n)
+            throw std::logic_error("Error extracting rows: the indexes are out of matrix bounds");
+          tmp[i][j] = v[*el][j];
+        }
       i++;
     }
-	
+        
   return tmp;
 }
 
@@ -1147,18 +1147,18 @@ inline Matrix<T> Matrix<T>::extractColumns(const std::set<unsigned int>& indexes
 {
   Matrix<T> tmp(n, indexes.size());
   register unsigned int i, j = 0;
-	
+        
   for (std::set<unsigned int>::const_iterator el = indexes.begin(); el != indexes.end(); el++)
     {
       for (i = 0; i < n; i++)
-	{
-	  if (*el >= m)
-	    throw std::logic_error("Error extracting columns: the indexes are out of matrix bounds");
-	  tmp[i][j] = v[i][*el];
-	}
+        {
+          if (*el >= m)
+            throw std::logic_error("Error extracting columns: the indexes are out of matrix bounds");
+          tmp[i][j] = v[i][*el];
+        }
       j++;
     }
-	
+        
   return tmp;
 }
 
@@ -1167,28 +1167,28 @@ inline Matrix<T> Matrix<T>::extract(const std::set<unsigned int>& r_indexes, con
 {
   Matrix<T> tmp(r_indexes.size(), c_indexes.size());
   register unsigned int i = 0, j;
-	
+        
   for (std::set<unsigned int>::const_iterator r_el = r_indexes.begin(); r_el != r_indexes.end(); r_el++)
     {
       if (*r_el >= n)
-	throw std::logic_error("Error extracting submatrix: the indexes are out of matrix bounds");
+        throw std::logic_error("Error extracting submatrix: the indexes are out of matrix bounds");
       j = 0;
       for (std::set<unsigned int>::const_iterator c_el = c_indexes.begin(); c_el != c_indexes.end(); c_el++)
-	{
-	  if (*c_el >= m)
-	    throw std::logic_error("Error extracting rows: the indexes are out of matrix bounds");
-	  tmp[i][j] = v[*r_el][*c_el];
-	  j++;
-	}
+        {
+          if (*c_el >= m)
+            throw std::logic_error("Error extracting rows: the indexes are out of matrix bounds");
+          tmp[i][j] = v[*r_el][*c_el];
+          j++;
+        }
       i++;
     }
-	
+        
   return tmp;
 }
 
 template <typename T> 
 inline void Matrix<T>::setRow(unsigned int i, const Vector<T>& a)
-{	
+{        
   if (i >= n)
     throw std::logic_error("Error in setRow: trying to set a row out of matrix bounds");
   if (this->m != a.size())
@@ -1199,7 +1199,7 @@ inline void Matrix<T>::setRow(unsigned int i, const Vector<T>& a)
 
 template <typename T> 
 inline void Matrix<T>::setRow(unsigned int i, const Matrix<T>& a)
-{	
+{        
   if (i >= n)
     throw std::logic_error("Error in setRow: trying to set a row out of matrix bounds");
   if (this->m != a.ncols())
@@ -1214,24 +1214,24 @@ template <typename T>
 inline void Matrix<T>::setRows(const std::set<unsigned int>& indexes, const Matrix<T>& m)
 {
   unsigned int i = 0;
-	
+        
   if (indexes.size() != m.nrows() || this->m != m.ncols())
     throw std::logic_error("Error setting matrix rows: ranges are not compatible");
   for (std::set<unsigned int>::const_iterator el = indexes.begin(); el != indexes.end(); el++)
     {
       for (unsigned int j = 0; j < ncols(); j++)
-	{
-	  if (*el >= n)
-	    throw std::logic_error("Error in setRows: trying to set a row out of matrix bounds");
-	  v[*el][j] = m[i][j];
-	}
+        {
+          if (*el >= n)
+            throw std::logic_error("Error in setRows: trying to set a row out of matrix bounds");
+          v[*el][j] = m[i][j];
+        }
       i++;
     }
 }
 
 template <typename T> 
 inline void Matrix<T>::setColumn(unsigned int j, const Vector<T>& a)
-{	
+{        
   if (j >= m)
     throw std::logic_error("Error in setColumn: trying to set a column out of matrix bounds");
   if (this->n != a.size())
@@ -1242,7 +1242,7 @@ inline void Matrix<T>::setColumn(unsigned int j, const Vector<T>& a)
 
 template <typename T> 
 inline void Matrix<T>::setColumn(unsigned int j, const Matrix<T>& a)
-{	
+{        
   if (j >= m)
     throw std::logic_error("Error in setColumn: trying to set a column out of matrix bounds");
   if (this->n != a.nrows())
@@ -1258,17 +1258,17 @@ template <typename T>
 inline void Matrix<T>::setColumns(const std::set<unsigned int>& indexes, const Matrix<T>& a)
 {
   unsigned int j = 0;
-	
+        
   if (indexes.size() != a.ncols() || this->n != a.nrows())
     throw std::logic_error("Error setting matrix columns: ranges are not compatible");
   for (std::set<unsigned int>::const_iterator el = indexes.begin(); el != indexes.end(); el++)
     {
       for (unsigned int i = 0; i < nrows(); i++)
-	{
-	  if (*el >= m)
-	    throw std::logic_error("Error in setColumns: trying to set a column out of matrix bounds");
-	  v[i][*el] = a[i][j];
-	}
+        {
+          if (*el >= m)
+            throw std::logic_error("Error in setColumns: trying to set a column out of matrix bounds");
+          v[i][*el] = a[i][j];
+        }
       j++;
     }
 }
@@ -1279,19 +1279,19 @@ inline void Matrix<T>::set(const std::set<unsigned int>& r_indexes, const std::s
   unsigned int i = 0, j;
   if (c_indexes.size() != a.ncols() || r_indexes.size() != a.nrows())
     throw std::logic_error("Error setting matrix elements: ranges are not compatible");
-	
+        
   for (std::set<unsigned int>::const_iterator r_el = r_indexes.begin(); r_el != r_indexes.end(); r_el++)
     {
       if (*r_el >= n)
-	throw std::logic_error("Error in set: trying to set a row out of matrix bounds");
+        throw std::logic_error("Error in set: trying to set a row out of matrix bounds");
       j = 0;
       for (std::set<unsigned int>::const_iterator c_el = c_indexes.begin(); c_el != c_indexes.end(); c_el++)
-	{
-	  if (*c_el >= m)
-	    throw std::logic_error("Error in set: trying to set a column out of matrix bounds");
-	  v[*r_el][*c_el] = a[i][j];
-	  j++;
-	}
+        {
+          if (*c_el >= m)
+            throw std::logic_error("Error in set: trying to set a column out of matrix bounds");
+          v[*r_el][*c_el] = a[i][j];
+          j++;
+        }
       i++;
     }
 }
@@ -1323,7 +1323,7 @@ Matrix<T> operator+(const Matrix<T>& lhs, const Matrix<T>& rhs)
   for (unsigned int i = 0; i < lhs.nrows(); i++)
     for (unsigned int j = 0; j < lhs.ncols(); j++)
       tmp[i][j] = lhs[i][j] + rhs[i][j];
-	
+        
   return tmp;
 }
 
@@ -1334,7 +1334,7 @@ Matrix<T> operator+(const Matrix<T>& lhs, const T& a)
   for (unsigned int i = 0; i < lhs.nrows(); i++)
     for (unsigned int j = 0; j < lhs.ncols(); j++)
       tmp[i][j] = lhs[i][j] + a;
-	
+        
   return tmp;
 }
 
@@ -1345,7 +1345,7 @@ Matrix<T> operator+(const T& a, const Matrix<T>& rhs)
   for (unsigned int i = 0; i < rhs.nrows(); i++)
     for (unsigned int j = 0; j < rhs.ncols(); j++)
       tmp[i][j] = a + rhs[i][j];
-	
+        
   return tmp;
 }
 
@@ -1357,7 +1357,7 @@ inline Matrix<T>& Matrix<T>::operator+=(const Matrix<T>& rhs)
   for (unsigned int i = 0; i < n; i++)
     for (unsigned int j = 0; j < m; j++)
       v[i][j] += rhs[i][j];
-	
+        
   return *this;
 }
 
@@ -1367,13 +1367,13 @@ inline Matrix<T>& Matrix<T>::operator+=(const T& a)
   for (unsigned int i = 0; i < n; i++)
     for (unsigned int j = 0; j < m; j++)
       v[i][j] += a;
-	
+        
   return *this;
 }
 
 template <typename T>
 Matrix<T> operator-(const Matrix<T>& rhs)
-{	
+{        
   return (T)(-1) * rhs;
 }
 
@@ -1386,7 +1386,7 @@ Matrix<T> operator-(const Matrix<T>& lhs, const Matrix<T>& rhs)
   for (unsigned int i = 0; i < lhs.nrows(); i++)
     for (unsigned int j = 0; j < lhs.ncols(); j++)
       tmp[i][j] = lhs[i][j] - rhs[i][j];
-	
+        
   return tmp;
 }
 
@@ -1397,7 +1397,7 @@ Matrix<T> operator-(const Matrix<T>& lhs, const T& a)
   for (unsigned int i = 0; i < lhs.nrows(); i++)
     for (unsigned int j = 0; j < lhs.ncols(); j++)
       tmp[i][j] = lhs[i][j] - a;
-	
+        
   return tmp;
 }
 
@@ -1408,7 +1408,7 @@ Matrix<T> operator-(const T& a, const Matrix<T>& rhs)
   for (unsigned int i = 0; i < rhs.nrows(); i++)
     for (unsigned int j = 0; j < rhs.ncols(); j++)
       tmp[i][j] = a - rhs[i][j];
-	
+        
   return tmp;
 }
 
@@ -1420,7 +1420,7 @@ inline Matrix<T>& Matrix<T>::operator-=(const Matrix<T>& rhs)
   for (unsigned int i = 0; i < n; i++)
     for (unsigned int j = 0; j < m; j++)
       v[i][j] -= rhs[i][j];
-	
+        
   return *this;
 }
 
@@ -1430,7 +1430,7 @@ inline Matrix<T>& Matrix<T>::operator-=(const T& a)
   for (unsigned int i = 0; i < n; i++)
     for (unsigned int j = 0; j < m; j++)
       v[i][j] -= a;
-	
+        
   return *this;
 }
 
@@ -1443,7 +1443,7 @@ Matrix<T> operator*(const Matrix<T>& lhs, const Matrix<T>& rhs)
   for (unsigned int i = 0; i < lhs.nrows(); i++)
     for (unsigned int j = 0; j < lhs.ncols(); j++)
       tmp[i][j] = lhs[i][j] * rhs[i][j];
-	
+        
   return tmp;
 }
 
@@ -1454,7 +1454,7 @@ Matrix<T> operator*(const Matrix<T>& lhs, const T& a)
   for (unsigned int i = 0; i < lhs.nrows(); i++)
     for (unsigned int j = 0; j < lhs.ncols(); j++)
       tmp[i][j] = lhs[i][j] * a;
-	
+        
   return tmp;
 }
 
@@ -1465,7 +1465,7 @@ Matrix<T> operator*(const T& a, const Matrix<T>& rhs)
   for (unsigned int i = 0; i < rhs.nrows(); i++)
     for (unsigned int j = 0; j < rhs.ncols(); j++)
       tmp[i][j] = a * rhs[i][j];
-	
+        
   return tmp;
 }
 
@@ -1477,7 +1477,7 @@ inline Matrix<T>& Matrix<T>::operator*=(const Matrix<T>& rhs)
   for (unsigned int i = 0; i < n; i++)
     for (unsigned int j = 0; j < m; j++)
       v[i][j] *= rhs[i][j];
-	
+        
   return *this;
 }
 
@@ -1487,7 +1487,7 @@ inline Matrix<T>& Matrix<T>::operator*=(const T& a)
   for (unsigned int i = 0; i < n; i++)
     for (unsigned int j = 0; j < m; j++)
       v[i][j] *= a;
-	
+        
   return *this;
 }
 
@@ -1500,7 +1500,7 @@ Matrix<T> operator/(const Matrix<T>& lhs, const Matrix<T>& rhs)
   for (unsigned int i = 0; i < lhs.nrows(); i++)
     for (unsigned int j = 0; j < lhs.ncols(); j++)
       tmp[i][j] = lhs[i][j] / rhs[i][j];
-	
+        
   return tmp;
 }
 
@@ -1511,7 +1511,7 @@ Matrix<T> operator/(const Matrix<T>& lhs, const T& a)
   for (unsigned int i = 0; i < lhs.nrows(); i++)
     for (unsigned int j = 0; j < lhs.ncols(); j++)
       tmp[i][j] = lhs[i][j] / a;
-	
+        
   return tmp;
 }
 
@@ -1522,7 +1522,7 @@ Matrix<T> operator/(const T& a, const Matrix<T>& rhs)
   for (unsigned int i = 0; i < rhs.nrows(); i++)
     for (unsigned int j = 0; j < rhs.ncols(); j++)
       tmp[i][j] = a / rhs[i][j];
-	
+        
   return tmp;
 }
 
@@ -1534,7 +1534,7 @@ inline Matrix<T>& Matrix<T>::operator/=(const Matrix<T>& rhs)
   for (unsigned int i = 0; i < n; i++)
     for (unsigned int j = 0; j < m; j++)
       v[i][j] /= rhs[i][j];
-	
+        
   return *this;
 }
 
@@ -1544,7 +1544,7 @@ inline Matrix<T>& Matrix<T>::operator/=(const T& a)
   for (unsigned int i = 0; i < n; i++)
     for (unsigned int j = 0; j < m; j++)
       v[i][j] /= a;
-	
+        
   return *this;
 }
 
@@ -1555,7 +1555,7 @@ Matrix<T> operator^(const Matrix<T>& lhs, const T& a)
   for (unsigned int i = 0; i < lhs.nrows(); i++)
     for (unsigned int j = 0; j < lhs.ncols(); j++)
       tmp[i][j] = pow(lhs[i][j], a);
-	
+        
   return tmp;
 }
 
@@ -1567,7 +1567,7 @@ inline Matrix<T>& Matrix<T>::operator^=(const Matrix<T>& rhs)
   for (unsigned int i = 0; i < n; i++)
     for (unsigned int j = 0; j < m; j++)
       v[i][j] = pow(v[i][j], rhs[i][j]);
-	
+        
   return *this;
 }
 
@@ -1578,7 +1578,7 @@ inline Matrix<T>& Matrix<T>::operator^=(const T& a)
   for (unsigned int i = 0; i < n; i++)
     for (unsigned int j = 0; j < m; j++)
       v[i][j] = pow(v[i][j], a);
-	
+        
   return *this;
 }
 
@@ -1601,7 +1601,7 @@ inline bool operator==(const Matrix<T>& a, const Matrix<T>& b)
   for (unsigned i = 0; i < a.nrows(); i++)
     for (unsigned j = 0; j < a.ncols(); j++)
       if (a[i][j] != b[i][j])
-	return false;
+        return false;
   return true;
 }
 
@@ -1613,7 +1613,7 @@ inline bool operator!=(const Matrix<T>& a, const Matrix<T>& b)
   for (unsigned i = 0; i < a.nrows(); i++)
     for (unsigned j = 0; j < a.ncols(); j++)
       if (a[i][j] != b[i][j])
-	return true;
+        return true;
   return false;
 }
 
@@ -1629,10 +1629,10 @@ std::ostream& operator<<(std::ostream& os, const Matrix<T>& m)
   for (unsigned int i = 0; i < m.nrows(); i++)
     {
       for (unsigned int j = 0; j < m.ncols() - 1; j++)
-	os << std::setw(20) << std::setprecision(16) << m[i][j] << ", ";
+        os << std::setw(20) << std::setprecision(16) << m[i][j] << ", ";
       os << std::setw(20) << std::setprecision(16) << m[i][m.ncols() - 1] << std::endl;
     }
-	
+        
   return os;
 }
 
@@ -1646,7 +1646,7 @@ std::istream& operator>>(std::istream& is, Matrix<T>& m)
   for (unsigned int i = 0; i < rows; i++)
     for (unsigned int j = 0; j < cols; j++)
       is >> m[i][j] >> comma;
-	
+        
   return is;
 }
 
@@ -1681,7 +1681,7 @@ void svd(const Matrix<T>& A, Matrix<T>& U, Vector<T>& W, Matrix<T>& V)
   V.resize(n, n);
   T anorm, c, f, g, h, s, scale, x, y, z;
   g = scale = anorm = (T)0.0;
-	
+        
   // Householder reduction to bidiagonal form
   for (i = 0; i < n; i++)
     {
@@ -1689,87 +1689,87 @@ void svd(const Matrix<T>& A, Matrix<T>& U, Vector<T>& W, Matrix<T>& V)
       rv1[i] = scale * g;
       g = s = scale = (T)0.0;
       if (i < m)
-	{
-	  for (k = i; k < m; k++)
-	    scale += fabs(U[k][i]);
-	  if (scale != (T)0.0)
-	    {
-	      for (k = i; k < m; k++)
-		{
-		  U[k][i] /= scale;
-		  s += U[k][i] * U[k][i];
-		}
-	      f = U[i][i];
-	      g = -sign(f) * sqrt(s);
-	      h = f * g - s;
-	      U[i][i] = f - g;
-	      for (j = l; j < n; j++)
-		{
-		  s = (T)0.0;
-		  for (k = i; k < m; k++)
-		    s += U[k][i] * U[k][j];
-		  f = s / h;
-		  for (k = i; k < m; k++)
-		    U[k][j] += f * U[k][i];
-		}
-	      for (k = i; k < m; k++)
-		U[k][i] *= scale;
-	    }
-	}
+        {
+          for (k = i; k < m; k++)
+            scale += fabs(U[k][i]);
+          if (scale != (T)0.0)
+            {
+              for (k = i; k < m; k++)
+                {
+                  U[k][i] /= scale;
+                  s += U[k][i] * U[k][i];
+                }
+              f = U[i][i];
+              g = -sign(f) * sqrt(s);
+              h = f * g - s;
+              U[i][i] = f - g;
+              for (j = l; j < n; j++)
+                {
+                  s = (T)0.0;
+                  for (k = i; k < m; k++)
+                    s += U[k][i] * U[k][j];
+                  f = s / h;
+                  for (k = i; k < m; k++)
+                    U[k][j] += f * U[k][i];
+                }
+              for (k = i; k < m; k++)
+                U[k][i] *= scale;
+            }
+        }
       W[i] = scale * g;
       g = s = scale = (T)0.0;
       if (i < m && i != n - 1)
-	{
-	  for (k = l; k < n; k++)
-	    scale += fabs(U[i][k]);
-	  if (scale != (T)0.0)
-	    {
-	      for (k = l; k < n; k++)
-		{
-		  U[i][k] /= scale;
-		  s += U[i][k] * U[i][k];					
-		}
-	      f = U[i][l];
-	      g = -sign(f) * sqrt(s);
-	      h = f * g - s;
-	      U[i][l] = f - g;
-	      for (k = l; k <n; k++)
-		rv1[k] = U[i][k] / h;
-	      for (j = l; j < m; j++)
-		{
-		  s = (T)0.0;
-		  for (k = l; k < n; k++)
-		    s += U[j][k] * U[i][k];
-		  for (k = l; k < n; k++)
-		    U[j][k] += s * rv1[k];
-		}
-	      for (k = l; k < n; k++)
-		U[i][k] *= scale;
-	    }
-	}
+        {
+          for (k = l; k < n; k++)
+            scale += fabs(U[i][k]);
+          if (scale != (T)0.0)
+            {
+              for (k = l; k < n; k++)
+                {
+                  U[i][k] /= scale;
+                  s += U[i][k] * U[i][k];                                        
+                }
+              f = U[i][l];
+              g = -sign(f) * sqrt(s);
+              h = f * g - s;
+              U[i][l] = f - g;
+              for (k = l; k <n; k++)
+                rv1[k] = U[i][k] / h;
+              for (j = l; j < m; j++)
+                {
+                  s = (T)0.0;
+                  for (k = l; k < n; k++)
+                    s += U[j][k] * U[i][k];
+                  for (k = l; k < n; k++)
+                    U[j][k] += s * rv1[k];
+                }
+              for (k = l; k < n; k++)
+                U[i][k] *= scale;
+            }
+        }
       anorm = std::max(anorm, fabs(W[i]) + fabs(rv1[i]));
     }
   // Accumulation of right-hand transformations
   for (i = n - 1; i >= 0; i--)
     {
       if (i < n - 1) 
-	{
-	  if (g != (T)0.0)
-	    {
-	      for (j = l; j < n; j++)
-		V[j][i] = (U[i][j] / U[i][l]) / g;
-	      for (j = l; j < n; j++)
-		{
-		  s = (T)0.0;
-		  for (k = l; k < n; k++)
-		    s += U[i][k] * V[k][j];
-		  for (k = l; k < n; k++)
-		    V[k][j] += s * V[k][i];
-		}
-	    }
-	  for (j = l; j < n; j++)
-	    V[i][j] = V[j][i] = (T)0.0;
-	}
+        {
+          if (g != (T)0.0)
+            {
+              for (j = l; j < n; j++)
+                V[j][i] = (U[i][j] / U[i][l]) / g;
+              for (j = l; j < n; j++)
+                {
+                  s = (T)0.0;
+                  for (k = l; k < n; k++)
+                    s += U[i][k] * V[k][j];
+                  for (k = l; k < n; k++)
+                    V[k][j] += s * V[k][i];
+                }
+            }
+          for (j = l; j < n; j++)
+            V[i][j] = V[j][i] = (T)0.0;
+        }
       V[i][i] = (T)1.0;
       g = rv1[i];
       l = i;
@@ -1780,137 +1780,137 @@ void svd(const Matrix<T>& A, Matrix<T>& U, Vector<T>& W, Matrix<T>& V)
       l = i + 1;
       g = W[i];
       for (j = l; j < n; j++)
-	U[i][j] = (T)0.0;
+        U[i][j] = (T)0.0;
       if (g != (T)0.0)
-	{
-	  g = (T)1.0 / g;
-	  for (j = l; j < n; j++)
-	    {
-	      s = (T)0.0;
-	      for (k = l; k < m; k++)
-		s += U[k][i] * U[k][j];
-	      f = (s / U[i][i]) * g;
-	      for (k = i; k < m; k++)
-		U[k][j] += f * U[k][i];
-	    }
-	  for (j = i; j < m; j++)
-	    U[j][i] *= g;
-	}
+        {
+          g = (T)1.0 / g;
+          for (j = l; j < n; j++)
+            {
+              s = (T)0.0;
+              for (k = l; k < m; k++)
+                s += U[k][i] * U[k][j];
+              f = (s / U[i][i]) * g;
+              for (k = i; k < m; k++)
+                U[k][j] += f * U[k][i];
+            }
+          for (j = i; j < m; j++)
+            U[j][i] *= g;
+        }
       else
-	for (j = i; j < m; j++)
-	  U[j][i] = (T)0.0;
+        for (j = i; j < m; j++)
+          U[j][i] = (T)0.0;
       U[i][i]++;
     }
   // Diagonalization of the bidiagonal form: loop over singular values, and over allowed iterations.
   for (k = n - 1; k >= 0; k--)
     {
       for (unsigned int its = 0; its < max_its; its++)
-	{
-	  flag = true;
-	  for (l = k; l >= 0; l--) // FIXME: in NR it was l >= 1 but there subscripts start from one
-	    { // Test for splitting
-	      nm = l - 1; // Note that rV[0] is always zero
-	      if ((T)(fabs(rv1[l]) + anorm) == anorm)
-		{
-		  flag = false;
-		  break;
-		}
-	      if ((T)(fabs(W[nm]) + anorm) == anorm)
-		break;
-	    }
-	  if (flag)
-	    {
-	      // Cancellation of rv1[l], if l > 0 FIXME: it was l > 1 in NR
-	      c = (T)0.0;
-	      s = (T)1.0;
-	      for (i = l; i <= k; i++)
-		{
-		  f = s * rv1[i];
-		  rv1[i] *= c;
-		  if ((T)(fabs(f) + anorm) == anorm)
-		    break;
-		  g = W[i];
-		  h = dist(f, g);
-		  W[i] = h;
-		  h = (T)1.0 / h;
-		  c = g * h;
-		  s = -f * h;
-		  for (j = 0; j < m; j++)
-		    {
-		      y = U[j][nm];
-		      z = U[j][i];
-		      U[j][nm] = y * c + z * s;
-		      U[j][i] = z * c - y * s;
-		    }
-		}
-	    }
-	  z = W[k];
-	  if (l == k)
-	    {  // Convergence
-	      if (z < (T)0.0)
-		{ // Singular value is made nonnegative
-		  W[k] = -z;
-		  for (j = 0; j < n; j++)
-		    V[j][k] = -V[j][k];
-		}
-	      break;
-	    }
-	  if (its == max_its)
-	    throw std::logic_error("Error svd: no convergence in the maximum number of iterations");
-	  x = W[l];
-	  nm = k - 1;
-	  y = W[nm];
-	  g = rv1[nm];
-	  h = rv1[k];
-	  f = ((y - z) * (y + z) + (g - h) * (g + h)) / (2.0 * h * y);
-	  g = dist(f, (T)1.0);
-	  f = ((x - z) * (x + z) + h * ((y / (f + sign(f)*fabs(g))) - h)) / x;
-	  c = s = (T)1.0; // Next QR transformation
-	  for (j = l; j <= nm; j++)
-	    {
-	      i = j + 1;
-	      g = rv1[i];
-	      y = W[i];
-	      h = s * g;
-	      g *= c;
-	      z = dist(f, h);
-	      rv1[j] = z;
-	      c = f / z;
-	      s = h / z;
-	      f = x * c + g * s;
-	      g = g * c - x * s;
-	      h = y * s;
-	      y *= c;
-	      for (jj = 0; jj < n; jj++)
-		{
-		  x = V[jj][j];
-		  z = V[jj][i];
-		  V[jj][j] = x * c + z * s;
-		  V[jj][i] = z * c - x * s;
-		}
-	      z = dist(f, h);
-	      W[j] = z; 
-	      if (z != 0) // Rotation can be arbitrary if z = 0
-		{
-		  z = (T)1.0 / z;
-		  c = f * z;
-		  s = h * z;
-		}
-	      f = c * g + s * y;
-	      x = c * y - s * g;
-	      for (jj = 0; jj < m; jj++)
-		{
-		  y = U[jj][j];
-		  z = U[jj][i];
-		  U[jj][j] = y * c + z * s;
-		  U[jj][i] = z * c - y * s;
-		}
-	    }
-	  rv1[l] = (T)0.0;
-	  rv1[k] = f;
-	  W[k] = x;
-	}
-    }	
+        {
+          flag = true;
+          for (l = k; l >= 0; l--) // FIXME: in NR it was l >= 1 but there subscripts start from one
+            { // Test for splitting
+              nm = l - 1; // Note that rV[0] is always zero
+              if ((T)(fabs(rv1[l]) + anorm) == anorm)
+                {
+                  flag = false;
+                  break;
+                }
+              if ((T)(fabs(W[nm]) + anorm) == anorm)
+                break;
+            }
+          if (flag)
+            {
+              // Cancellation of rv1[l], if l > 0 FIXME: it was l > 1 in NR
+              c = (T)0.0;
+              s = (T)1.0;
+              for (i = l; i <= k; i++)
+                {
+                  f = s * rv1[i];
+                  rv1[i] *= c;
+                  if ((T)(fabs(f) + anorm) == anorm)
+                    break;
+                  g = W[i];
+                  h = dist(f, g);
+                  W[i] = h;
+                  h = (T)1.0 / h;
+                  c = g * h;
+                  s = -f * h;
+                  for (j = 0; j < m; j++)
+                    {
+                      y = U[j][nm];
+                      z = U[j][i];
+                      U[j][nm] = y * c + z * s;
+                      U[j][i] = z * c - y * s;
+                    }
+                }
+            }
+          z = W[k];
+          if (l == k)
+            {  // Convergence
+              if (z < (T)0.0)
+                { // Singular value is made nonnegative
+                  W[k] = -z;
+                  for (j = 0; j < n; j++)
+                    V[j][k] = -V[j][k];
+                }
+              break;
+            }
+          if (its == max_its)
+            throw std::logic_error("Error svd: no convergence in the maximum number of iterations");
+          x = W[l];
+          nm = k - 1;
+          y = W[nm];
+          g = rv1[nm];
+          h = rv1[k];
+          f = ((y - z) * (y + z) + (g - h) * (g + h)) / (2.0 * h * y);
+          g = dist(f, (T)1.0);
+          f = ((x - z) * (x + z) + h * ((y / (f + sign(f)*fabs(g))) - h)) / x;
+          c = s = (T)1.0; // Next QR transformation
+          for (j = l; j <= nm; j++)
+            {
+              i = j + 1;
+              g = rv1[i];
+              y = W[i];
+              h = s * g;
+              g *= c;
+              z = dist(f, h);
+              rv1[j] = z;
+              c = f / z;
+              s = h / z;
+              f = x * c + g * s;
+              g = g * c - x * s;
+              h = y * s;
+              y *= c;
+              for (jj = 0; jj < n; jj++)
+                {
+                  x = V[jj][j];
+                  z = V[jj][i];
+                  V[jj][j] = x * c + z * s;
+                  V[jj][i] = z * c - x * s;
+                }
+              z = dist(f, h);
+              W[j] = z; 
+              if (z != 0) // Rotation can be arbitrary if z = 0
+                {
+                  z = (T)1.0 / z;
+                  c = f * z;
+                  s = h * z;
+                }
+              f = c * g + s * y;
+              x = c * y - s * g;
+              for (jj = 0; jj < m; jj++)
+                {
+                  y = U[jj][j];
+                  z = U[jj][i];
+                  U[jj][j] = y * c + z * s;
+                  U[jj][i] = z * c - y * s;
+                }
+            }
+          rv1[l] = (T)0.0;
+          rv1[k] = f;
+          W[k] = x;
+        }
+    }        
 }
 
 template <typename T>
@@ -1925,7 +1925,7 @@ Matrix<T> pinv(const Matrix<T>& A)
       e.reset(i);
       tmp.setColumn(i, dot_prod(dot_prod(dot_prod(V, Matrix<double>(DIAG, 1.0 / W, 0.0, W.size(), W.size())), t(U)), e));
     }
-		
+                
   return tmp;
 }
 
@@ -1939,16 +1939,16 @@ int lu(const Matrix<T>& A, Matrix<T>& LU, Vector<unsigned int>& index)
   Vector<T> d(n);
   LU = A;
   index.resize(n);
-	
+        
   ex = 1;
   for (i = 0; i < n; i++)
     {
       index[i] = i;
       val = (T)0.0;
       for (j = 0; j < n; j++)
-	val = std::max(val, (T)fabs(LU[i][j]));
+        val = std::max(val, (T)fabs(LU[i][j]));
       if (val == (T)0.0)
-	std::logic_error("Error in LU decomposition: matrix was singular");
+        std::logic_error("Error in LU decomposition: matrix was singular");
       d[i] = val;
     }
 
@@ -1957,35 +1957,35 @@ int lu(const Matrix<T>& A, Matrix<T>& LU, Vector<unsigned int>& index)
       p = k;
       val = fabs(LU[k][k]) / d[k];
       for (i = k + 1; i < n; i++)
-	{
-	  tmp = fabs(LU[i][k]) / d[i];
-	  if (tmp > val)
-	    {
-	      val = tmp;
-	      p = i;
-	    }
-	}
+        {
+          tmp = fabs(LU[i][k]) / d[i];
+          if (tmp > val)
+            {
+              val = tmp;
+              p = i;
+            }
+        }
       if (val == (T)0.0)
-	std::logic_error("Error in LU decomposition: matrix was singular");
+        std::logic_error("Error in LU decomposition: matrix was singular");
       if (p > k)
-	{
-	  ex = -ex;
-	  std::swap(index[k], index[p]);
-	  std::swap(d[k], d[p]);
-	  for (j = 0; j < n; j++)
-	    std::swap(LU[k][j], LU[p][j]);
-	}
-		
+        {
+          ex = -ex;
+          std::swap(index[k], index[p]);
+          std::swap(d[k], d[p]);
+          for (j = 0; j < n; j++)
+            std::swap(LU[k][j], LU[p][j]);
+        }
+                
       for (i = k + 1; i < n; i++)
-	{
-	  LU[i][k] /= LU[k][k];
-	  for (j = k + 1; j < n; j++)
-	    LU[i][j] -= LU[i][k] * LU[k][j];
-	}
+        {
+          LU[i][k] /= LU[k][k];
+          for (j = k + 1; j < n; j++)
+            LU[i][j] -= LU[i][k] * LU[k][j];
+        }
     }
   if (LU[n - 1][n - 1] == (T)0.0)
     std::logic_error("Error in LU decomposition: matrix was singular");
-		
+                
   return ex;
 }
 
@@ -2000,15 +2000,15 @@ Vector<T> lu_solve(const Matrix<T>& LU, const Vector<T>& b, Vector<unsigned int>
   Vector<T> x((T)0.0, n);
   int i, j, p;
   T sum;
-	
+        
   p = index[0];
   x[0] = b[p];
-	
+        
   for (i = 1; i < n; i++)
     {
       sum = (T)0.0;
       for (j = 0; j < i; j++)
-	sum += LU[i][j] * x[j];
+        sum += LU[i][j] * x[j];
       p = index[i];
       x[i] = b[p] - sum;
     }
@@ -2017,7 +2017,7 @@ Vector<T> lu_solve(const Matrix<T>& LU, const Vector<T>& b, Vector<unsigned int>
     {
       sum = (T)0.0;
       for (j = i + 1; j < n; j++)
-	sum += LU[i][j] * x[j];
+        sum += LU[i][j] * x[j];
       x[i] = (x[i] - sum) / LU[i][i];
     }
   return x;
@@ -2033,11 +2033,11 @@ template <typename T>
 Matrix<T> lu_inverse(const Matrix<T>& A)
 {
   if (A.ncols() != A.nrows())
-    throw std::logic_error("Error in LU invert: matrix must be squared");	
+    throw std::logic_error("Error in LU invert: matrix must be squared");        
   unsigned int n = A.ncols();
   Matrix<T> A1(n, n), LU;
   Vector<unsigned int> index;
-	
+        
   lu(A, LU, index);
   CanonicalBaseVector<T> e(0, n);
   for (unsigned i = 0; i < n; i++)
@@ -2045,7 +2045,7 @@ Matrix<T> lu_inverse(const Matrix<T>& A)
       e.reset(i);
       A1.setColumn(i, lu_solve(LU, e, index));
     }
-	
+        
   return A1;
 }
 
@@ -2053,13 +2053,13 @@ template <typename T>
 T lu_det(const Matrix<T>& A)
 {
   if (A.ncols() != A.nrows())
-    throw std::logic_error("Error in LU determinant: matrix must be squared");	
+    throw std::logic_error("Error in LU determinant: matrix must be squared");        
   unsigned int d;
   Matrix<T> LU;
   Vector<unsigned int> index;
-	
+        
   d = lu(A, LU, index);
-	
+        
   return d * prod(LU.extractDiag());
 }
 
@@ -2071,25 +2071,25 @@ void cholesky(const Matrix<T> A, Matrix<T>& LL)
   register int i, j, k, n = A.ncols();
   register double sum;
   LL = A;
-	
+        
   for (i = 0; i < n; i++)
     {
       for (j = i; j < n; j++)
-	{
-	  sum = LL[i][j];
-	  for (k = i - 1; k >= 0; k--)
-	    sum -= LL[i][k] * LL[j][k];
-	  if (i == j) 
-	    {
-	      if (sum <= 0.0)
-		throw std::logic_error("Error in Cholesky decomposition: matrix is not postive definite");
-	      LL[i][i] = ::std::sqrt(sum);
-	    }
-	  else
-	    LL[j][i] = sum / LL[i][i];
-	}
+        {
+          sum = LL[i][j];
+          for (k = i - 1; k >= 0; k--)
+            sum -= LL[i][k] * LL[j][k];
+          if (i == j) 
+            {
+              if (sum <= 0.0)
+                throw std::logic_error("Error in Cholesky decomposition: matrix is not postive definite");
+              LL[i][i] = ::std::sqrt(sum);
+            }
+          else
+            LL[j][i] = sum / LL[i][i];
+        }
       for (k = i + 1; k < n; k++)
-	LL[i][k] = LL[k][i];
+        LL[i][k] = LL[k][i];
     } 
 }
 
@@ -2098,7 +2098,7 @@ Matrix<T> cholesky(const Matrix<T> A)
 {
   Matrix<T> LL;
   cholesky(A, LL);
-	
+        
   return LL;
 }
 
@@ -2111,12 +2111,12 @@ Vector<T> cholesky_solve(const Matrix<T>& LL, const Vector<T>& b)
   if (b.size() != n)
     throw std::logic_error("Error in Cholesky decomposition: b vector must be of the same dimensions of LU matrix");
   Vector<T> x, y;
-	
+        
   /* Solve L * y = b */
   forward_elimination(LL, y, b);
   /* Solve L^T * x = y */
   backward_elimination(LL, x, y);
-	
+        
   return x;
 }
 
@@ -2135,13 +2135,13 @@ void forward_elimination(const Matrix<T>& L, Vector<T>& y, const Vector<T> b)
     throw std::logic_error("Error in Forward elimination: b vector must be of the same dimensions of L matrix");
   register int i, j, n = b.size();
   y.resize(n);
-	
+        
   y[0] = b[0] / L[0][0];
   for (i = 1; i < n; i++)
     {
       y[i] = b[i];
       for (j = 0; j < i; j++)
-	y[i] -= L[i][j] * y[j];
+        y[i] -= L[i][j] * y[j];
       y[i] = y[i] / L[i][i];
     }
 }
@@ -2151,7 +2151,7 @@ Vector<T> forward_elimination(const Matrix<T>& L, const Vector<T> b)
 {
   Vector<T> y;
   forward_elimination(L, y, b);
-	
+        
   return y;
 }
 
@@ -2164,13 +2164,13 @@ void backward_elimination(const Matrix<T>& U, Vector<T>& x, const Vector<T>& y)
     throw std::logic_error("Error in Backward elimination: b vector must be of the same dimensions of U matrix");
   register int i, j, n = y.size();
   x.resize(n);
-	
+        
   x[n - 1] = y[n - 1] / U[n - 1][n - 1];
   for (i = n - 2; i >= 0; i--)
     {
       x[i] = y[i];
       for (j = i + 1; j < n; j++)
-	x[i] -= U[i][j] * x[j];
+        x[i] -= U[i][j] * x[j];
       x[i] = x[i] / U[i][i];
     }
 }
@@ -2180,7 +2180,7 @@ Vector<T> backward_elimination(const Matrix<T>& U, const Vector<T> y)
 {
   Vector<T> x;
   forward_elimination(U, x, y);
-	
+        
   return x;
 }
 
@@ -2271,10 +2271,10 @@ Vector<T> mean(const Matrix<T>& m)
   for (unsigned int j = 0; j < m.ncols(); j++)
     {
       for (unsigned int i = 0; i < m.nrows(); i++)
-	res[j] += m[i][j];
+        res[j] += m[i][j];
       res[j] /= m.nrows();
     }
-	
+        
   return res;
 }
 
@@ -2285,10 +2285,10 @@ Vector<T> r_mean(const Matrix<T>& m)
   for (unsigned int i = 0; i < m.nrows(); i++)
     {
       for (unsigned int j = 0; j < m.ncols(); j++)
-	res[i] += m[i][j];
+        res[i] += m[i][j];
       res[i] /= m.nrows();
     }
-	
+        
   return res;
 }
 
@@ -2309,19 +2309,19 @@ Vector<T> var(const Matrix<T>& m, bool sample_correction = false)
   unsigned int n = m.nrows();
   double sum, ssum;
   for (unsigned int j = 0; j < m.ncols(); j++)
-    {	
+    {        
       sum = (T)0.0; ssum = (T)0.0;
       for (unsigned int i = 0; i < m.nrows(); i++)
-	{
-	  sum += m[i][j];
-	  ssum += (m[i][j] * m[i][j]);
-	}
+        {
+          sum += m[i][j];
+          ssum += (m[i][j] * m[i][j]);
+        }
       if (!sample_correction)
-	res[j] = (ssum / n) - (sum / n) * (sum / n);
+        res[j] = (ssum / n) - (sum / n) * (sum / n);
       else
-	res[j] = n * ((ssum / n) - (sum / n) * (sum / n)) / (n - 1);		 
+        res[j] = n * ((ssum / n) - (sum / n) * (sum / n)) / (n - 1);                 
     }
-	
+        
   return res;
 }
 
@@ -2338,19 +2338,19 @@ Vector<T> r_var(const Matrix<T>& m, bool sample_correction = false)
   double sum, ssum;
   unsigned int n = m.ncols();
   for (unsigned int i = 0; i < m.nrows(); i++)
-    {	
+    {        
       sum = 0.0; ssum = 0.0;
       for (unsigned int j = 0; j < m.ncols(); j++)
-	{
-	  sum += m[i][j];
-	  ssum += (m[i][j] * m[i][j]);
-	}
+        {
+          sum += m[i][j];
+          ssum += (m[i][j] * m[i][j]);
+        }
       if (!sample_correction)
-	res[i] = (ssum / n) - (sum / n) * (sum / n);
+        res[i] = (ssum / n) - (sum / n) * (sum / n);
       else
-	res[i] = n * ((ssum / n) - (sum / n) * (sum / n)) / (n - 1);
+        res[i] = n * ((ssum / n) - (sum / n) * (sum / n)) / (n - 1);
     }
-	
+        
   return res;
 }
 
@@ -2369,10 +2369,10 @@ Vector<T> max(const Matrix<T>& m)
     {
       value = m[0][j];
       for (unsigned int i = 1; i < m.nrows(); i++)
-	value = std::max(m[i][j], value);
+        value = std::max(m[i][j], value);
       res[j] = value;
     }
-	
+        
   return res;
 }
 
@@ -2385,10 +2385,10 @@ Vector<T> r_max(const Matrix<T>& m)
     {
       value = m[i][0];
       for (unsigned int j = 1; j < m.ncols(); j++)
-	value = std::max(m[i][j], value);
+        value = std::max(m[i][j], value);
       res[i] = value;
     }
-	
+        
   return res;
 }
 
@@ -2401,10 +2401,10 @@ Vector<T> min(const Matrix<T>& m)
     {
       value = m[0][j];
       for (unsigned int i = 1; i < m.nrows(); i++)
-	value = std::min(m[i][j], value);
+        value = std::min(m[i][j], value);
       res[j] = value;
     }
-	
+        
   return res;
 }
 
@@ -2417,10 +2417,10 @@ Vector<T> r_min(const Matrix<T>& m)
     {
       value = m[i][0];
       for (unsigned int j = 1; j < m.ncols(); j++)
-	value = std::min(m[i][j], value);
+        value = std::min(m[i][j], value);
       res[i] = value;
     }
-	
+        
   return res;
 }
 
@@ -2434,11 +2434,11 @@ template <typename T>
 Matrix<T> exp(const Matrix<T>&m)
 {
   Matrix<T> tmp(m.nrows(), m.ncols());
-	
+        
   for (unsigned int i = 0; i < m.nrows(); i++)
     for (unsigned int j = 0; j < m.ncols(); j++)
       tmp[i][j] = exp(m[i][j]);
-	
+        
   return tmp;
 }
 
@@ -2446,11 +2446,11 @@ template <typename T>
 Matrix<T> sqrt(const Matrix<T>&m)
 {
   Matrix<T> tmp(m.nrows(), m.ncols());
-	
+        
   for (unsigned int i = 0; i < m.nrows(); i++)
     for (unsigned int j = 0; j < m.ncols(); j++)
       tmp[i][j] = sqrt(m[i][j]);
-	
+        
   return tmp;
 }
 
@@ -2465,7 +2465,7 @@ Matrix<T> kron(const Vector<T>& b, const Vector<T>& a)
   for (unsigned int i = 0; i < b.size(); i++)
     for (unsigned int j = 0; j < a.size(); j++)
       tmp[i][j] = a[j] * b[i];
-	
+        
   return tmp;
 }
 
@@ -2476,7 +2476,7 @@ Matrix<T> t(const Matrix<T>& a)
   for (unsigned int i = 0; i < a.nrows(); i++)
     for (unsigned int j = 0; j < a.ncols(); j++)
       tmp[j][i] = a[i][j];
-	
+        
   return tmp;
 }
 
@@ -2489,11 +2489,11 @@ Matrix<T> dot_prod(const Matrix<T>& a, const Matrix<T>& b)
   for (unsigned int i = 0; i < tmp.nrows(); i++)
     for (unsigned int j = 0; j < tmp.ncols(); j++)
       {
-	tmp[i][j] = (T)0;
-	for (unsigned int k = 0; k < a.ncols(); k++)
-	  tmp[i][j] += a[i][k] * b[k][j];
+        tmp[i][j] = (T)0;
+        for (unsigned int k = 0; k < a.ncols(); k++)
+          tmp[i][j] += a[i][k] * b[k][j];
       }
-			
+                        
   return tmp;
 }
 
@@ -2507,9 +2507,9 @@ Matrix<T> dot_prod(const Matrix<T>& a, const Vector<T>& b)
     {
       tmp[i][0] = (T)0;
       for (unsigned int k = 0; k < a.ncols(); k++)
-	tmp[i][0] += a[i][k] * b[k];
+        tmp[i][0] += a[i][k] * b[k];
     }
-		
+                
   return tmp;
 }
 
@@ -2523,9 +2523,9 @@ Matrix<T> dot_prod(const Vector<T>& a, const Matrix<T>& b)
     {
       tmp[0][j] = (T)0;
       for (unsigned int k = 0; k < a.size(); k++)
-	tmp[0][j] += a[k] * b[k][j];
+        tmp[0][j] += a[k] * b[k][j];
     }
-		
+                
   return tmp;
 }
 

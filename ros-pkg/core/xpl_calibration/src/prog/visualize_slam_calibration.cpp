@@ -53,8 +53,8 @@ int main(int argc, char** argv)
   sseqs.push_back(sseq);
   
   SlamCalibrator::Ptr calibrator(new SlamCalibrator(sseqs[0]->model_,
-						    opts["max-range"].as<double>(),
-						    opts["vgsize"].as<double>()));
+                                                    opts["max-range"].as<double>(),
+                                                    opts["vgsize"].as<double>()));
   cout << "Using " << calibrator->max_range_ << " as max range." << endl;
   calibrator->trajectories_ = trajectories;
   calibrator->sseqs_ = sseqs;

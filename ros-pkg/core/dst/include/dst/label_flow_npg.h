@@ -11,7 +11,7 @@ namespace dst
   {
   public:
     LabelFlowNPG(pipeline2::Outlet<OpticalFlowNode::Output>* optflow_otl,
-		 pipeline2::Outlet<cv::Mat1b>* prev_seg_otl);
+                 pipeline2::Outlet<cv::Mat1b>* prev_seg_otl);
 
   protected:
     pipeline2::Outlet<OpticalFlowNode::Output>* optflow_otl_;

@@ -6,8 +6,8 @@ namespace dst
 {
 
   KdTreeNode::KdTreeNode(pipeline2::Outlet<KinectCloud::ConstPtr>* pcd_otl,
-			 pipeline2::Outlet<IndicesConstPtr>* pcd_indices_otl,
-			 double radius) :
+                         pipeline2::Outlet<IndicesConstPtr>* pcd_indices_otl,
+                         double radius) :
     ComputeNode(),
     kdtree_otl_(this),
     pcd_otl_(pcd_otl),

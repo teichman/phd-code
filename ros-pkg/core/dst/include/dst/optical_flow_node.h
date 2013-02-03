@@ -34,9 +34,9 @@ namespace dst
     
     OpticalFlowNode(pipeline2::Outlet<DepthProjector::Output>* index_otl);
     static void safePointRound(const cv::Size& sz,
-			       const cv::Point2f& fpt,
-			       cv::Point2i* ipt);
-			       
+                               const cv::Point2f& fpt,
+                               cv::Point2i* ipt);
+                               
   protected:
     pipeline2::Outlet<DepthProjector::Output>* index_otl_;
     int max_corners_;

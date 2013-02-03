@@ -39,10 +39,10 @@ namespace graphcuts
 
     void symmetrizeEdges();
     void applyWeights(const Model& model,
-		      SparseMat* edge,
-		      Eigen::VectorXd* src,
-		      Eigen::VectorXd* snk) const;
-		      
+                      SparseMat* edge,
+                      Eigen::VectorXd* src,
+                      Eigen::VectorXd* snk) const;
+                      
   protected:
     //! "nmap" or "emap"
     void _applyNameTranslator(const std::string& id, const NameTranslator& translator);

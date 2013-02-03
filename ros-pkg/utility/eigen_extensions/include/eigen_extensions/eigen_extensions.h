@@ -169,14 +169,14 @@ namespace eigen_extensions {
     for(IndexType i = 0; i < mat.outerSize(); ++i) {
       int num = 0;
       for(InnerIterator it(mat, i); it; ++it)
-	++num;
+        ++num;
       strm.write((const char*)&num, sizeof(num));
       
       for(InnerIterator it(mat, i); it; ++it) {
-	int idx = it.index();
-	ScalarType buf = it.value();
-	strm.write((const char*)&idx, sizeof(idx));
-	strm.write((const char*)&buf, sizeof(buf));
+        int idx = it.index();
+        ScalarType buf = it.value();
+        strm.write((const char*)&idx, sizeof(idx));
+        strm.write((const char*)&buf, sizeof(buf));
       }
     }
   }
@@ -210,9 +210,9 @@ namespace eigen_extensions {
       strm.read((char*)&num, sizeof(int));
       int idx;
       for(int j = 0; j < num; ++j) {
-	strm.read((char*)&idx, sizeof(idx));
-	strm.read((char*)&buf, sizeof(buf));
-	mat->insertBackByOuterInner(i, idx) = buf;
+        strm.read((char*)&idx, sizeof(idx));
+        strm.read((char*)&buf, sizeof(buf));
+        mat->insertBackByOuterInner(i, idx) = buf;
       }
     }
     mat->finalize();
@@ -268,7 +268,7 @@ namespace eigen_extensions {
       getline(strm, line);
       std::istringstream iss(line);
       for(int x = 0; x < cols; ++x) {
-	iss >> mat->coeffRef(y, x);
+        iss >> mat->coeffRef(y, x);
       }
     }
   }

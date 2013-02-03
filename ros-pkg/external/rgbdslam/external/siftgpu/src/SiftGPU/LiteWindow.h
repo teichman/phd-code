@@ -6,9 +6,9 @@
 #if defined(WINDOW_PREFER_GLUT)
 
 #ifdef __APPLE__
-	#include "GLUT/glut.h"
+        #include "GLUT/glut.h"
 #else
-	#include "GL/glut.h"
+        #include "GL/glut.h"
 #endif
 //for apple, use GLUT to create the window..
 class LiteWindow
@@ -21,41 +21,41 @@ public:
     void MakeCurrent()      {  glutSetWindow(glut_id);    }
     void Create(int x = -1, int y = -1, const char* display = NULL)
     {
-	    static int _glut_init_called = 0;
+            static int _glut_init_called = 0;
         if(glut_id != 0) return;
 
-	    //see if there is an existing window
-	    if(_glut_init_called) glut_id = glutGetWindow();
+            //see if there is an existing window
+            if(_glut_init_called) glut_id = glutGetWindow();
 
-	    //create one if no glut window exists
-	    if(glut_id != 0) return;
+            //create one if no glut window exists
+            if(glut_id != 0) return;
 
-	    if(_glut_init_called == 0)
-	    {
-		    int argc = 1;
-		    char * argv[4] = { "-iconic", 0 , 0, 0};
+            if(_glut_init_called == 0)
+            {
+                    int argc = 1;
+                    char * argv[4] = { "-iconic", 0 , 0, 0};
             if(display) 
             {
                 argc = 3;
                 argv[1] = "-display";
                 argv[2] = (char*) display;
             }
-		    glutInit(&argc, argv);
-		    glutInitDisplayMode (GLUT_RGBA ); 
-		    _glut_init_called = 1; 
-	    }
-	    if(x != -1) glutInitWindowPosition(x, y);
+                    glutInit(&argc, argv);
+                    glutInitDisplayMode (GLUT_RGBA ); 
+                    _glut_init_called = 1; 
+            }
+            if(x != -1) glutInitWindowPosition(x, y);
         if(display || x != -1) std::cout << "Using display ["
             << (display? display : "\0" )<< "] at (" << x << "," << y << ")\n";
-	    glut_id = glutCreateWindow ("SIFT_GPU_GLUT");
-	    glutHideWindow();
+            glut_id = glutCreateWindow ("SIFT_GPU_GLUT");
+            glutHideWindow();
     }
 };
 #elif defined( _WIN32)
 
 #ifndef _INC_WINDOWS
 #ifndef WIN32_LEAN_AND_MEAN
-	#define WIN32_LEAN_AND_MEAN
+        #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
 #endif 

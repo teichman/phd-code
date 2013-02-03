@@ -81,7 +81,7 @@ string mpliToPython(const MatrixXd& mat) {
     for(int j = 0; j < mat.cols(); ++j) { 
       oss << mat(i, j);
       if(j != mat.cols() - 1)
-	oss << ", ";
+        oss << ", ";
     }
     oss << "]";
     if(i != mat.rows() - 1)

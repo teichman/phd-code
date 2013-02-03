@@ -56,7 +56,7 @@ VectorXf fitPlane(Cloud::ConstPtr pcd, double tol)
     Cloud::Ptr chopped(new Cloud);
     for(size_t i = 0; i < pcd->size(); ++i)
       if(fabs(coefs.dot(pcd->at(i).getVector4fMap()) + coefs(3)) > tol)
-	chopped->push_back(pcd->at(i));
+        chopped->push_back(pcd->at(i));
     return fitPlane(chopped, tol);
   }
     

@@ -60,8 +60,8 @@ void SlamVisualizer::setCamera(const std::string& camera_path)
 }
 
 void SlamVisualizer::run(StreamSequence::ConstPtr sseq,
-			 const std::string& opcd_path,
-			 const std::string& otraj_path)
+                         const std::string& opcd_path,
+                         const std::string& otraj_path)
 {
   sseq_ = sseq;
   // Initialize loop closure
@@ -129,8 +129,8 @@ void SlamVisualizer::slamThreadFunction()
     while(dt < min_dt_) {
       ++curr_idx;
       if(curr_idx >= sseq_->size()) {
-	done = true;
-	break;
+        done = true;
+        break;
       }
       dt = sseq_->timestamps_[curr_idx] - prev_frame_.timestamp_;
       //cout << "Searching: " << curr_idx << " " << prev_idx << " " << dt << endl;
@@ -142,7 +142,7 @@ void SlamVisualizer::slamThreadFunction()
     frame_text_ = oss.str();
     //unlockWrite();
     cout << "---------- Searching for link between " << prev_idx << " and " << curr_idx
-	 << " / " << sseq_->size() << endl;
+         << " / " << sseq_->size() << endl;
     cout << "           dt: " << dt << endl;
     sseq_->readFrame(prev_idx, &prev_frame_);
     sseq_->readFrame(curr_idx, &curr_frame_);
@@ -255,7 +255,7 @@ void SlamVisualizer::slamThreadFunction()
     traj.resize(slam_->numNodes());
     for(size_t i = 0; i < slam_->numNodes(); ++i) {
       if(slam_->numEdges(i) == 0)
-	continue;
+        continue;
       traj.set(i, slam_->transform(i));
     }
     traj.save(otraj_path_);
@@ -317,7 +317,7 @@ void SlamVisualizer::visualizationThreadFunction()
 
         *vis += *curr_pcd_transformed_;
       if(!vis_.updatePointCloud(vis, "default"))
-	vis_.addPointCloud(vis, "default");
+        vis_.addPointCloud(vis, "default");
       int xpos = 20; int ypos = 10; int fontsize = 25;
       string toshow = frame_text_;
       if(!GRIDSEARCH_VIS) toshow += " (WARNING: MAP NOT BEING REBUILT. MAY BE SIGNIFICANTLY OFF IN VIS)";
@@ -355,14 +355,14 @@ void SlamVisualizer::visualizationThreadFunction()
       // -- Assemble the montage.
       cv::Mat3b montage(slam.rows, slam.cols + prev_depthimage_scaled.cols);
       for(int y = 0; y < slam.rows; ++y)
-	for(int x = 0; x < slam.cols; ++x)
-	  montage(y, x) = slam(y, x);
+        for(int x = 0; x < slam.cols; ++x)
+          montage(y, x) = slam(y, x);
       for(int y = 0; y < prev_depthimage_scaled.rows; ++y)
-	for(int x = 0; x < prev_depthimage_scaled.cols; ++x)
-	  montage(y, x + slam.cols) = prev_depthimage_scaled(y, x);
+        for(int x = 0; x < prev_depthimage_scaled.cols; ++x)
+          montage(y, x + slam.cols) = prev_depthimage_scaled(y, x);
       for(int y = 0; y < curr_depthimage_scaled.rows; ++y)
-	for(int x = 0; x < curr_depthimage_scaled.cols; ++x)
-	  montage(y + prev_depthimage_scaled.rows, x + slam.cols) = curr_depthimage_scaled(y, x);
+        for(int x = 0; x < curr_depthimage_scaled.cols; ++x)
+          montage(y + prev_depthimage_scaled.rows, x + slam.cols) = curr_depthimage_scaled(y, x);
 
       // -- Save.
       oss.clear();

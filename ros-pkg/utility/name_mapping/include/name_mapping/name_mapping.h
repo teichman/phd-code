@@ -25,14 +25,14 @@
 //#define PL_ABORT(x) ROS_FATAL_STREAM(x); abort();
   
 // ... for now we'll just use our own thing.
-#define NM_ABORT(x)						\
-  do {								\
-    std::cerr << "\033[1;31m[NAME_MAPPING] " << std::endl	\
-	      << "file = " << __FILE__ << std::endl		\
-	      << "line = " << __LINE__ << std::endl		\
-	      << x						\
-	      << "\033[0m" << std::endl;			\
-    abort();							\
+#define NM_ABORT(x)                                                \
+  do {                                                                \
+    std::cerr << "\033[1;31m[NAME_MAPPING] " << std::endl        \
+              << "file = " << __FILE__ << std::endl                \
+              << "line = " << __LINE__ << std::endl                \
+              << x                                                \
+              << "\033[0m" << std::endl;                        \
+    abort();                                                        \
   } while(0)
 
 
@@ -76,8 +76,8 @@ public:
   //! Returns a human-readable diff.
   std::string diff(const NameMapping& other) const;
   void diff(const NameMapping& other,
-  	    std::vector<std::string>* here_but_not_there,
-  	    std::vector<std::string>* there_but_not_here) const;
+              std::vector<std::string>* here_but_not_there,
+              std::vector<std::string>* there_but_not_here) const;
   //! Returns true if this NameMapping is equal to other.  (Permutations are different.)
   bool operator==(const NameMapping& other) const;
   bool operator!=(const NameMapping& other) const;

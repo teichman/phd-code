@@ -6,7 +6,7 @@ namespace dst
 {
   
   LabelFlowNPG::LabelFlowNPG(pipeline2::Outlet<OpticalFlowNode::Output>* optflow_otl,
-			     pipeline2::Outlet<cv::Mat1b>* prev_seg_otl) :
+                             pipeline2::Outlet<cv::Mat1b>* prev_seg_otl) :
     NodePotentialGenerator(),
     optflow_otl_(optflow_otl),
     prev_seg_otl_(prev_seg_otl)
@@ -52,18 +52,18 @@ namespace dst
     // -- Compute potentials.
     for(size_t i = 0; i < status.size(); ++i) {
       if(status[i] == 0)
-	continue;
+        continue;
 
       int label = prev_seg(prev_points[i].y, prev_points[i].x);
       ROS_ASSERT(edge_scores[i] >= 0 && edge_scores[i] <= 1.0);
       
       if(label == 255) { 
-	source_potentials_(points[i].y, points[i].x) = 1.0 - edge_scores[i];
-	sink_potentials_(points[i].y, points[i].x) = 0.0;
+        source_potentials_(points[i].y, points[i].x) = 1.0 - edge_scores[i];
+        sink_potentials_(points[i].y, points[i].x) = 0.0;
       }
       else if(label == 0) { 
-    	source_potentials_(points[i].y, points[i].x) = 0.0;
-	sink_potentials_(points[i].y, points[i].x) = 1.0 - edge_scores[i];
+            source_potentials_(points[i].y, points[i].x) = 0.0;
+        sink_potentials_(points[i].y, points[i].x) = 1.0 - edge_scores[i];
       }
     }
 

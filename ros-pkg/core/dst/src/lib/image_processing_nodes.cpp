@@ -59,9 +59,9 @@ namespace dst
     // There must be a one-liner for this.
     for(int y = 0; y < rgb.rows; ++y) {
       for(int x = 0; x < rgb.cols; ++x) { 
-    	rgb3f_(y, x)[0] = (float)rgb(y, x)[0] / 255.0;
-    	rgb3f_(y, x)[1] = (float)rgb(y, x)[1] / 255.0;
-    	rgb3f_(y, x)[2] = (float)rgb(y, x)[2] / 255.0;
+            rgb3f_(y, x)[0] = (float)rgb(y, x)[0] / 255.0;
+            rgb3f_(y, x)[1] = (float)rgb(y, x)[1] / 255.0;
+            rgb3f_(y, x)[2] = (float)rgb(y, x)[2] / 255.0;
       }
     }
     // hsv_ will be ([0,360], [0,1], [0,1]).
@@ -72,12 +72,12 @@ namespace dst
     // cv::cvtColor(rgb, hsv_, CV_BGR2HSV_FULL);
     // for( int y = 0; y < hsv_.rows; ++y ){
     //   for( int x = 0; x < hsv_.cols; ++x ){
-    // 	cv::Vec3b vrgb = rgb(y, x);
-    // 	cv::Vec3f vhsv = hsv_(y, x);
-    // 	cv::Vec3f vrgb3f = rgb3f_(y, x);
-    // 	cerr << (int)vrgb[0] << " " << (int)vrgb[1] << " " << (int)vrgb[2] << ",\t";
-    // 	cerr << vrgb3f[0] << " " << vrgb3f[1] << " " << vrgb3f[2] << ",\t";
-    // 	cerr << vhsv[0] << " " << vhsv[1] << " " << vhsv[2] << endl;
+    //         cv::Vec3b vrgb = rgb(y, x);
+    //         cv::Vec3f vhsv = hsv_(y, x);
+    //         cv::Vec3f vrgb3f = rgb3f_(y, x);
+    //         cerr << (int)vrgb[0] << " " << (int)vrgb[1] << " " << (int)vrgb[2] << ",\t";
+    //         cerr << vrgb3f[0] << " " << vrgb3f[1] << " " << vrgb3f[2] << ",\t";
+    //         cerr << vhsv[0] << " " << vhsv[1] << " " << vhsv[2] << endl;
     //   }
     // }
     

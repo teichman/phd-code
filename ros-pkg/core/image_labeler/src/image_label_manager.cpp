@@ -176,15 +176,15 @@ int ImageLabelManager::getNumberOfLabelsForClass(const std::string& class_name) 
   for(size_t i = 0; i < labels_.size(); ++i) {
     for(size_t j = 0; j < labels_[i].size(); ++j) {
       if(labels_[i][j].class_name_.compare(class_name) == 0)
-	++count;
+        ++count;
     }
   }
   return count;
 }
 
 void ImageLabelManager::addLabeledImage(const std::string& filename,
-					IplImage* img,
-					std::vector<Label> labels)
+                                        IplImage* img,
+                                        std::vector<Label> labels)
 {
   assert(img);
   cvSaveImage((getImagesPath() + "/" + filename).c_str(), img);
@@ -197,7 +197,7 @@ void ImageLabelManager::addLabeledImage(const std::string& filename,
 }
 
 void ImageLabelManager::setLabelsForImage(int id,
-					  const std::vector<Label>& labels)
+                                          const std::vector<Label>& labels)
 {
   assert(id >= 0 && id < size());
   labels_[id] = labels;
@@ -280,9 +280,9 @@ void ImageLabelManager::drawLabels(IplImage* img, const std::vector<Label>& labe
   for(size_t i = 0; i < labels.size(); ++i) {
     Label const& l = labels[i];
     cvRectangle(img,
-		cvPoint(l.x_, l.y_),
-		cvPoint(l.x_ + l.width_, l.y_ + l.height_),
-		getColor(l.class_name_), 3);
+                cvPoint(l.x_, l.y_),
+                cvPoint(l.x_ + l.width_, l.y_ + l.height_),
+                getColor(l.class_name_), 3);
   }
 }
 
