@@ -53,9 +53,9 @@ protected:
   double best_obj_;
 
   void appendVariations(int id, const Eigen::ArrayXd& orig,
-			std::vector<Eigen::ArrayXd>* xs) const;
+                        std::vector<Eigen::ArrayXd>* xs) const;
   void makeGrid(const std::vector<int>& variables,
-		std::vector<Eigen::ArrayXd>* xs) const;
+                std::vector<Eigen::ArrayXd>* xs) const;
   
 };
 

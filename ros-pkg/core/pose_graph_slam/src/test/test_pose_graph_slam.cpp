@@ -33,14 +33,14 @@ TEST(PoseGraphSlam, MultiLinkOdometryOnly)
   Matrix6d covariance = Matrix6d::Identity();
 
   pgs.addEdge(0, 1,
-	      (Affine3d)Translation3d(Eigen::Vector3d(0, 1, 0)),
-	      covariance);
+              (Affine3d)Translation3d(Eigen::Vector3d(0, 1, 0)),
+              covariance);
   pgs.addEdge(1, 2,
-	      Translation3d(Eigen::Vector3d(0, 1, 0)) * Affine3d(AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))),
-	      covariance);
+              Translation3d(Eigen::Vector3d(0, 1, 0)) * Affine3d(AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))),
+              covariance);
   pgs.addEdge(2, 3,
-	      Translation3d(Eigen::Vector3d(0, 1, 0)) * Affine3d(AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))),
-	      covariance);  
+              Translation3d(Eigen::Vector3d(0, 1, 0)) * Affine3d(AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))),
+              covariance);  
   pgs.solve();
 
   Eigen::Vector3d translation;
@@ -78,14 +78,14 @@ TEST(PoseGraphSlam, MultiLinkOdometryOnly)
   EXPECT_TRUE((transformed - expected).norm() < 1e-3);
 
   Affine3d transform2to0 = (Translation3d(Eigen::Vector3d(0, 1, 0))
-			    * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0)));
+                            * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0)));
   cout << transform2to0.matrix() << endl << endl;
   cout << pgs.transform(2).matrix() << endl << endl;
   EXPECT_TRUE((pgs.transform(2).matrix() - transform2to0.matrix()).norm() < 1e-3);
 
   Affine3d transform3to0 = (Translation3d(Eigen::Vector3d(0, 1, 0))
-			    * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))
-			    * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0)));
+                            * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))
+                            * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0)));
   cout << transform3to0.matrix() << endl << endl;
   cout << pgs.transform(3).matrix() << endl << endl;
   EXPECT_TRUE((pgs.transform(3).matrix() - transform3to0.matrix()).norm() < 1e-3);
@@ -172,24 +172,24 @@ TEST(PoseGraphSlam, Subgraphs)
   Matrix6d covariance = Matrix6d::Identity();
   //Even
   pgs.addEdge(0, 2,
-	      (Affine3d)Translation3d(Eigen::Vector3d(0, 1, 0)),
-	      covariance);
+              (Affine3d)Translation3d(Eigen::Vector3d(0, 1, 0)),
+              covariance);
   pgs.addEdge(2, 4,
-	      Translation3d(Eigen::Vector3d(0, 1, 0)) * Affine3d(AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))),
-	      covariance);
+              Translation3d(Eigen::Vector3d(0, 1, 0)) * Affine3d(AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))),
+              covariance);
   pgs.addEdge(4, 6,
-	      Translation3d(Eigen::Vector3d(0, 1, 0)) * Affine3d(AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))),
-	      covariance);  
+              Translation3d(Eigen::Vector3d(0, 1, 0)) * Affine3d(AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))),
+              covariance);  
   //Odd
   pgs.addEdge(1, 3,
-	      (Affine3d)Translation3d(Eigen::Vector3d(0, 1, 0)),
-	      covariance);
+              (Affine3d)Translation3d(Eigen::Vector3d(0, 1, 0)),
+              covariance);
   pgs.addEdge(3, 5,
-	      Translation3d(Eigen::Vector3d(0, 1, 0)) * Affine3d(AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))),
-	      covariance);
+              Translation3d(Eigen::Vector3d(0, 1, 0)) * Affine3d(AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))),
+              covariance);
   pgs.addEdge(5, 7,
-	      Translation3d(Eigen::Vector3d(0, 1, 0)) * Affine3d(AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))),
-	      covariance);  
+              Translation3d(Eigen::Vector3d(0, 1, 0)) * Affine3d(AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))),
+              covariance);  
   size_t minsize = 2;
   int numsubgraphs = pgs.solve(2);
   EXPECT_TRUE(numsubgraphs == 2);
@@ -229,14 +229,14 @@ TEST(PoseGraphSlam, Subgraphs)
   EXPECT_TRUE((transformed - expected).norm() < 1e-3);
 
   Affine3d transform4to0 = (Translation3d(Eigen::Vector3d(0, 1, 0))
-			    * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0)));
+                            * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0)));
   cout << transform4to0.matrix() << endl << endl;
   cout << pgs.transform(4).matrix() << endl << endl;
   EXPECT_TRUE((pgs.transform(4).matrix() - transform4to0.matrix()).norm() < 1e-3);
 
   Affine3d transform6to0 = (Translation3d(Eigen::Vector3d(0, 1, 0))
-			    * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))
-			    * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0)));
+                            * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))
+                            * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0)));
   cout << transform6to0.matrix() << endl << endl;
   cout << pgs.transform(6).matrix() << endl << endl;
   EXPECT_TRUE((pgs.transform(6).matrix() - transform6to0.matrix()).norm() < 1e-3);
@@ -261,14 +261,14 @@ TEST(PoseGraphSlam, Subgraphs)
   EXPECT_TRUE((transformed - expected).norm() < 1e-3);
 
   Affine3d transform5to1 = (Translation3d(Eigen::Vector3d(0, 1, 0))
-			    * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0)));
+                            * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0)));
   cout << transform5to1.matrix() << endl << endl;
   cout << pgs.transform(5).matrix() << endl << endl;
   EXPECT_TRUE((pgs.transform(5).matrix() - transform5to1.matrix()).norm() < 1e-3);
 
   Affine3d transform7to1 = (Translation3d(Eigen::Vector3d(0, 1, 0))
-			    * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))
-			    * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0)));
+                            * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))
+                            * Translation3d(Eigen::Vector3d(0, 1, 0)) * AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0)));
   cout << transform7to1.matrix() << endl << endl;
   cout << pgs.transform(7).matrix() << endl << endl;
   EXPECT_TRUE((pgs.transform(7).matrix() - transform7to1.matrix()).norm() < 1e-3);
@@ -286,8 +286,8 @@ TEST(PoseGraphSlam, Subgraphs)
   pgs.transform(9,&root); EXPECT_TRUE(root < 0);
   //Try adding island
   pgs.addEdge(8, 9,
-	      Translation3d(Eigen::Vector3d(0, 1, 0)) * Affine3d(AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))),
-	      covariance);  
+              Translation3d(Eigen::Vector3d(0, 1, 0)) * Affine3d(AngleAxis<double>(M_PI / 4, Eigen::Vector3d(1, 0, 0))),
+              covariance);  
   numsubgraphs = pgs.solve();
   EXPECT_EQ(numsubgraphs, 3);
   pgs.transform(9,&root); EXPECT_EQ(root, 8);

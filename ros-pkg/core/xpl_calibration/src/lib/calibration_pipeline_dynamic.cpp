@@ -21,9 +21,9 @@ CalibrationPipelineDynamic::CalibrationPipelineDynamic(int num_threads, std::str
 }
 
 void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
-					   rgbd::StreamSequence::ConstPtr sseq1,
-					   Eigen::Affine3f* transform,
-					   double* sync)
+                                           rgbd::StreamSequence::ConstPtr sseq1,
+                                           Eigen::Affine3f* transform,
+                                           double* sync)
 {
   pl_.pod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fx", sseq0->model_.fx_);
   pl_.pod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fy", sseq0->model_.fy_);

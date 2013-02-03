@@ -38,7 +38,7 @@ void OpenCVView::updateImage(IplImage* img)
   else {
     if(!resized_) { 
       resized_ = cvCreateImage(cvSize(img->width * scale_, img->height * scale_),
-			       img->depth, img->nChannels);
+                               img->depth, img->nChannels);
     }
     cvResize(img, resized_);
     cvShowImage(title_.c_str(), resized_);

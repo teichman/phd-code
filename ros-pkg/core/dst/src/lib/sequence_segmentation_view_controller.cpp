@@ -14,7 +14,7 @@ namespace dst
 {
 
   SequenceSegmentationViewController::SequenceSegmentationViewController(KinectSequence::Ptr seq,
-									 SegmentationPipeline::Ptr sp) :
+                                                                         SegmentationPipeline::Ptr sp) :
     OpenCVViewDelegate(),
     Lockable(),
     seq_(seq),
@@ -73,11 +73,11 @@ namespace dst
     if(event.keyDown()) {
       //cout << event.getKeySym() << endl;
       if(event.getKeySym().size() == 1)
-	handleKeypress(event.getKeySym());
+        handleKeypress(event.getKeySym());
       else if(event.getKeySym().compare("period") == 0)
-	handleKeypress('.');
+        handleKeypress('.');
       else if(event.getKeySym().compare("comma") == 0)
-	handleKeypress(',');
+        handleKeypress(',');
     }
   }
   
@@ -86,10 +86,10 @@ namespace dst
     KinectCloud::Ptr fg(new KinectCloud);
     for(int y = 0; y < seg.rows; ++y) {
       for(int x = 0; x < seg.cols; ++x) {
-	if(seg(y, x) == 255) {
-	  int idx = y * seg.cols + x;
-	  fg->push_back(cloud[idx]);
-	}
+        if(seg(y, x) == 255) {
+          int idx = y * seg.cols + x;
+          fg->push_back(cloud[idx]);
+        }
       }
     }
     return fg;
@@ -127,13 +127,13 @@ namespace dst
     while(true) {
       vis_.spinOnce(5);
       if(needs_redraw_)
-	draw();
+        draw();
 
       char key = img_view_.cvWaitKey(30);
       handleKeypress(key);
 
       if(quitting_)
-	break;
+        break;
     }
   }
 
@@ -151,8 +151,8 @@ namespace dst
     // cv::Mat1b seed = seq_->seed_images_[current_idx_];
     // for(int y = 0; y < seed.rows; ++y) {
     //   for(int x = 0; x < seed.cols; ++x) {
-    // 	if(seed(y, x) == 127)
-    // 	  seed(y, x) = 0;
+    //         if(seed(y, x) == 127)
+    //           seed(y, x) = 0;
     needs_redraw_ = true;
   }
   
@@ -217,7 +217,7 @@ namespace dst
       cout << "Really quit? " << endl;
       cin >> retval;
       if(retval.compare("y") == 0)
-	quitting_ = true;
+        quitting_ = true;
       break;
     case ',':
       advance(-1);
@@ -267,101 +267,101 @@ namespace dst
     case SEED:
       switch(key) {
       case 'D':
-	toggleDebug();
-	break;
+        toggleDebug();
+        break;
       case 'i':
-	segmentImage();
-	break;
+        segmentImage();
+        break;
       case 't':
-	++vis_type_;
-	if(vis_type_ > 2)
-	  vis_type_ = 0;
-       	needs_redraw_ = true;
-	break;
+        ++vis_type_;
+        if(vis_type_ > 2)
+          vis_type_ = 0;
+               needs_redraw_ = true;
+        break;
       case 's':
-	segmentSequence();
-	break;
+        segmentSequence();
+        break;
       case 'R':
-	segmentSequence(current_idx_);
-	break;
+        segmentSequence(current_idx_);
+        break;
       case 'S':
-	saveSequence();
-	break;
+        saveSequence();
+        break;
       case 'L':
-	cout << "Using segmentation as seed image." << endl;
-	useSegmentationAsSeed();
-	break;
+        cout << "Using segmentation as seed image." << endl;
+        useSegmentationAsSeed();
+        break;
       case '+':
-	++seed_radius_;
-	cout << "Seed radius: " << seed_radius_ << endl;
-	break;
+        ++seed_radius_;
+        cout << "Seed radius: " << seed_radius_ << endl;
+        break;
       case '-':
-	--seed_radius_;
-	if(seed_radius_ < 0)
-	  seed_radius_ = 0;
-	cout << "Seed radius: " << seed_radius_ << endl;
-	break;
+        --seed_radius_;
+        if(seed_radius_ < 0)
+          seed_radius_ = 0;
+        cout << "Seed radius: " << seed_radius_ << endl;
+        break;
       case 'C':
-	clearHelperSeedLabels();
-	cout << "Cleared seed labels for all frames but the first." << endl;
-	break;
+        clearHelperSeedLabels();
+        cout << "Cleared seed labels for all frames but the first." << endl;
+        break;
       case 'c':
-	seq_->seed_images_[current_idx_] = 127;
-	needs_redraw_ = true;
-	break;
+        seq_->seed_images_[current_idx_] = 127;
+        needs_redraw_ = true;
+        break;
       case 'e':
-	extractConnectedComponent();
-	break;
+        extractConnectedComponent();
+        break;
       case 'E':
-	for(current_idx_ = 0; current_idx_ < (int)seq_->segmentations_.size(); ++current_idx_) {
-	  cout << current_idx_ << " / " << seq_->segmentations_.size() << endl;
-	  useSegmentationAsSeed();
-	  extractConnectedComponent();
-	  segmentImage();
-	}
-	--current_idx_;
-	break;
+        for(current_idx_ = 0; current_idx_ < (int)seq_->segmentations_.size(); ++current_idx_) {
+          cout << current_idx_ << " / " << seq_->segmentations_.size() << endl;
+          useSegmentationAsSeed();
+          extractConnectedComponent();
+          segmentImage();
+        }
+        --current_idx_;
+        break;
       case 'm':
-	*background_model_ += *seq_->pointclouds_[current_idx_];
-	cout << "Background model now has " << background_model_->size() << " points." << endl;
-	break;
+        *background_model_ += *seq_->pointclouds_[current_idx_];
+        cout << "Background model now has " << background_model_->size() << " points." << endl;
+        break;
       case 'M':
-	background_model_->clear();
-	cout << "Background model cleared." << endl;
-	break;
+        background_model_->clear();
+        cout << "Background model cleared." << endl;
+        break;
       case 'b':
-	segmentUsingBackgroundModel();
-	break;
+        segmentUsingBackgroundModel();
+        break;
       case 'B':
-	segmentAllUsingBackgroundModel();
-	break;
+        segmentAllUsingBackgroundModel();
+        break;
       case '*':
-	cluster_tol_ *= 2.0;
-	cout << "Cluster tolerance: " << cluster_tol_ << endl;
-	break;
+        cluster_tol_ *= 2.0;
+        cout << "Cluster tolerance: " << cluster_tol_ << endl;
+        break;
       case '/':
-	cluster_tol_ /= 2.0;
-	cout << "Cluster tolerance: " << cluster_tol_ << endl;
-	break;
+        cluster_tol_ /= 2.0;
+        cout << "Cluster tolerance: " << cluster_tol_ << endl;
+        break;
       case 'p':
-	extractPlane();
-	break;
+        extractPlane();
+        break;
       default:
-	break;
+        break;
       }
       break;
       
     case RAW:
       switch(key) {
       case 'v':
-	cout << "Cloud is (wxh) " <<  seq_->pointclouds_[current_idx_]->width << " x "
-	     << seq_->pointclouds_[current_idx_]->height << endl;
-	cout << "Number of points: " << seq_->pointclouds_[current_idx_]->points.size() << endl;
-	cout << "is_dense: " << seq_->pointclouds_[current_idx_]->is_dense << endl;
-	cout << "sensor origin: " << seq_->pointclouds_[current_idx_]->sensor_origin_.transpose() << endl;
-	break;
+        cout << "Cloud is (wxh) " <<  seq_->pointclouds_[current_idx_]->width << " x "
+             << seq_->pointclouds_[current_idx_]->height << endl;
+        cout << "Number of points: " << seq_->pointclouds_[current_idx_]->points.size() << endl;
+        cout << "is_dense: " << seq_->pointclouds_[current_idx_]->is_dense << endl;
+        cout << "sensor origin: " << seq_->pointclouds_[current_idx_]->sensor_origin_.transpose() << endl;
+        break;
       default:
-	break;
+        break;
       }
     default:
       break;
@@ -378,11 +378,11 @@ namespace dst
     vector<int> indices;
     for(size_t i = 0; i < cloud.size(); ++i) {
       if(!isFinite(cloud[i]))
-	continue;
+        continue;
       int y = (int)i / cloud.width;
       int x = (int)i - y * cloud.width;
       if(seed(y, x) == 0)
-	indices.push_back(i);
+        indices.push_back(i);
     }
     if(indices.empty()) {
       cout << "No bg pts." << endl;
@@ -415,10 +415,10 @@ namespace dst
     int num = 0;
     for(size_t i = 0; i < cloud.size(); ++i) {
       if(fabs(coefs.dot(cloud[i].getVector4fMap())) < tol) { 
-	int y = (int)i / cloud.width;
-	int x = (int)i - y * cloud.width;
-	seed(y, x) = 0;
-	++num;
+        int y = (int)i / cloud.width;
+        int x = (int)i - y * cloud.width;
+        seed(y, x) = 0;
+        ++num;
       }
     }
     cout << "Total num inliers set to bg: " << num << endl;
@@ -460,7 +460,7 @@ namespace dst
     KinectCloud& pcd = *seq_->pointclouds_[current_idx_];
     for(size_t i = 0; i < pcd.size(); ++i) {
       if(isnan(pcd[i].x))
-	continue;
+        continue;
       
       indices.clear();
       distances.clear();
@@ -469,9 +469,9 @@ namespace dst
       int y = i / pcd.width;
       int x = i - y * pcd.width;
       if(indices.empty())
-	seed(y, x) = 255;
+        seed(y, x) = 255;
       else
-	seed(y, x) = 0;
+        seed(y, x) = 0;
     }
 
     extractConnectedComponent();
@@ -489,8 +489,8 @@ namespace dst
       int y = (int)i / cloud.width;
       int x = (int)i - y * cloud.width;
       if(seed(y, x) == 255 && isFinite(cloud[i])) { 
-	fg->push_back(cloud[i]);
-	indices.push_back(i);
+        fg->push_back(cloud[i]);
+        indices.push_back(i);
       }
     }
     if(fg->empty()) {
@@ -517,22 +517,22 @@ namespace dst
     for(size_t i = 0; i < cluster_indices.size(); ++i) {
       vector<int>& ind = cluster_indices[i].indices;
       if((int)ind.size() > maxnum) {
-	maxnum = ind.size();
-	biggest = i;
+        maxnum = ind.size();
+        biggest = i;
       }
     }
     
     // -- Unlabel all points not in the biggest cluster.
     for(size_t i = 0; i < cluster_indices.size(); ++i) {
       if((int)i == biggest)
-	continue;
+        continue;
       
       vector<int>& ind = cluster_indices[i].indices;
       for(size_t j = 0; j < ind.size(); ++j) {
-	int idx = indices[ind[j]]; // Indexes into the original cloud.
-	int y = idx / cloud.width;
-	int x = idx - y * cloud.width;
-	seed(y, x) = 0; // Explicitly set these to background.
+        int idx = indices[ind[j]]; // Indexes into the original cloud.
+        int y = idx / cloud.width;
+        int x = idx - y * cloud.width;
+        seed(y, x) = 0; // Explicitly set these to background.
       }
     }
 
@@ -589,19 +589,19 @@ namespace dst
   {
     for(int y = 0; y < seg_vis_.rows; ++y) {
       for(int x = 0; x < seg_vis_.cols; ++x) {
-	switch(seq_->segmentations_[current_idx_](y, x)) {
-	case 127:
-	  seg_vis_(y, x) = cv::Vec3b(127, 127, 127);
-	  break;
-	case 0:
-	  seg_vis_(y, x) = cv::Vec3b(0, 0, 0);
-	  break;
-	case 255:
-	  seg_vis_(y, x) = cv::Vec3b(255, 255, 255); //seq_->images_[current_idx_](y, x);
-	  break;
-	default:
-	  break;
-	}
+        switch(seq_->segmentations_[current_idx_](y, x)) {
+        case 127:
+          seg_vis_(y, x) = cv::Vec3b(127, 127, 127);
+          break;
+        case 0:
+          seg_vis_(y, x) = cv::Vec3b(0, 0, 0);
+          break;
+        case 255:
+          seg_vis_(y, x) = cv::Vec3b(255, 255, 255); //seq_->images_[current_idx_](y, x);
+          break;
+        default:
+          break;
+        }
       }
     }
   }
@@ -622,19 +622,19 @@ namespace dst
     
     for(int y = 0; y < seed_vis_.rows; ++y) {
       for(int x = 0; x < seed_vis_.cols; ++x) {
-	switch(seq_->seed_images_[current_idx_](y, x)) {
-	case 127:
-	  seed_vis_(y, x) = vis(y, x);
-	  break;
-	case 0:
-	  seed_vis_(y, x) = cv::Vec3b(0, 0, 0);
-	  break;
-	case 255:
-	  seed_vis_(y, x) = cv::Vec3b(255, 255, 255);
-	  break;
-	default:
-	  break;
-	}
+        switch(seq_->seed_images_[current_idx_](y, x)) {
+        case 127:
+          seed_vis_(y, x) = vis(y, x);
+          break;
+        case 0:
+          seed_vis_(y, x) = cv::Vec3b(0, 0, 0);
+          break;
+        case 255:
+          seed_vis_(y, x) = cv::Vec3b(255, 255, 255);
+          break;
+        default:
+          break;
+        }
       }
     }
   }
@@ -645,13 +645,13 @@ namespace dst
 
     sp_->reset();
     sp_->run(seq_->seed_images_[current_idx_],
-	    seq_->images_[current_idx_],
-	    seq_->pointclouds_[current_idx_],
-	    cv::Mat3b(),
-	    cv::Mat1b(),
-	    KinectCloud::Ptr(),
-	    seq_->segmentations_[current_idx_],
-	    segmented_pcds_[current_idx_]);
+            seq_->images_[current_idx_],
+            seq_->pointclouds_[current_idx_],
+            cv::Mat3b(),
+            cv::Mat1b(),
+            KinectCloud::Ptr(),
+            seq_->segmentations_[current_idx_],
+            segmented_pcds_[current_idx_]);
     needs_redraw_ = true;
   }
 
@@ -671,68 +671,68 @@ namespace dst
     for(; current_idx_ < (int)seq_->images_.size(); ++current_idx_) {
       // First in the sequence doesn't get passed in 'prev' data.
       if(current_idx_ == 0) {
-	sp_->run(seq_->seed_images_[current_idx_],
-		seq_->images_[current_idx_],
-		seq_->pointclouds_[current_idx_],
-		cv::Mat3b(),
-		cv::Mat1b(),
-		KinectCloud::Ptr(),
-		seq_->segmentations_[current_idx_],
-		segmented_pcds_[current_idx_]);
+        sp_->run(seq_->seed_images_[current_idx_],
+                seq_->images_[current_idx_],
+                seq_->pointclouds_[current_idx_],
+                cv::Mat3b(),
+                cv::Mat1b(),
+                KinectCloud::Ptr(),
+                seq_->segmentations_[current_idx_],
+                segmented_pcds_[current_idx_]);
       }
       else if(current_idx_ == idx) {
-	sp_->run(seq_->segmentations_[current_idx_].clone(),  // Seed it with the segmentation previously computed.
-		 seq_->images_[current_idx_],
-		 seq_->pointclouds_[current_idx_],
-		 cv::Mat3b(),
-		 cv::Mat1b(),
-		 KinectCloud::Ptr(),
-		 seq_->segmentations_[current_idx_],
-		 segmented_pcds_[current_idx_]);
+        sp_->run(seq_->segmentations_[current_idx_].clone(),  // Seed it with the segmentation previously computed.
+                 seq_->images_[current_idx_],
+                 seq_->pointclouds_[current_idx_],
+                 cv::Mat3b(),
+                 cv::Mat1b(),
+                 KinectCloud::Ptr(),
+                 seq_->segmentations_[current_idx_],
+                 segmented_pcds_[current_idx_]);
       }
       else {
-	ROS_ASSERT(seq_->pointclouds_[current_idx_ - 1]);
-	ROS_ASSERT(seq_->pointclouds_[current_idx_]);
-	sp_->run(seq_->seed_images_[current_idx_],
-		 seq_->images_[current_idx_],
-		 seq_->pointclouds_[current_idx_],
-		 seq_->images_[current_idx_-1],
-		 seq_->segmentations_[current_idx_-1],
-		 seq_->pointclouds_[current_idx_-1],
-		 seq_->segmentations_[current_idx_],
-		 segmented_pcds_[current_idx_]);
+        ROS_ASSERT(seq_->pointclouds_[current_idx_ - 1]);
+        ROS_ASSERT(seq_->pointclouds_[current_idx_]);
+        sp_->run(seq_->seed_images_[current_idx_],
+                 seq_->images_[current_idx_],
+                 seq_->pointclouds_[current_idx_],
+                 seq_->images_[current_idx_-1],
+                 seq_->segmentations_[current_idx_-1],
+                 seq_->pointclouds_[current_idx_-1],
+                 seq_->segmentations_[current_idx_],
+                 segmented_pcds_[current_idx_]);
       }
 
       draw();
       int wait_time = 10;
       if(sp_->getDebug()) {
-	cout << "Press s to stop, any other key to continue." << endl;
-	//wait_time = 0;
-	
-	string filename;
-	filename = generateFilename("debug", "segmented_pointcloud.pcd", 4);
-	// Writer fails if there are no points?
-	if(segmented_pcds_[current_idx_]->size() == 0) {
-	  pcl::PointXYZRGB pt;
-	  pt.x = 0; pt.y = 0; pt.z = -20;
-	  segmented_pcds_[current_idx_]->push_back(pt);
-	  segmented_pcds_[current_idx_]->push_back(pt);
-	  segmented_pcds_[current_idx_]->push_back(pt);
-	}
-	pcl::io::savePCDFileBinary(filename, *segmented_pcds_[current_idx_]);
-	filename = generateFilename("debug", "original_pointcloud.pcd", 4);
-	pcl::io::savePCDFileBinary(filename, *seq_->pointclouds_[current_idx_]);
-	filename = generateFilename("debug", "segmentation_mask.png", 4);
-	cv::imwrite(filename, seq_->segmentations_[current_idx_]);
-	filename = generateFilename("debug", "original_image.png", 4);
-	cv::imwrite(filename, seq_->images_[current_idx_]);
-	filename = generateFilename("debug", "segmented_image.png", 4);
-	cv::imwrite(filename, seg_vis_);
+        cout << "Press s to stop, any other key to continue." << endl;
+        //wait_time = 0;
+        
+        string filename;
+        filename = generateFilename("debug", "segmented_pointcloud.pcd", 4);
+        // Writer fails if there are no points?
+        if(segmented_pcds_[current_idx_]->size() == 0) {
+          pcl::PointXYZRGB pt;
+          pt.x = 0; pt.y = 0; pt.z = -20;
+          segmented_pcds_[current_idx_]->push_back(pt);
+          segmented_pcds_[current_idx_]->push_back(pt);
+          segmented_pcds_[current_idx_]->push_back(pt);
+        }
+        pcl::io::savePCDFileBinary(filename, *segmented_pcds_[current_idx_]);
+        filename = generateFilename("debug", "original_pointcloud.pcd", 4);
+        pcl::io::savePCDFileBinary(filename, *seq_->pointclouds_[current_idx_]);
+        filename = generateFilename("debug", "segmentation_mask.png", 4);
+        cv::imwrite(filename, seq_->segmentations_[current_idx_]);
+        filename = generateFilename("debug", "original_image.png", 4);
+        cv::imwrite(filename, seq_->images_[current_idx_]);
+        filename = generateFilename("debug", "segmented_image.png", 4);
+        cv::imwrite(filename, seg_vis_);
       }
       
       char key = img_view_.cvWaitKey(wait_time);
       if(key == 's')
-	break;
+        break;
     }
     cout << "Sequence segmentation ended." << endl;
 
@@ -745,9 +745,9 @@ namespace dst
     // bool flag = true;
     // for(size_t i = 1; flag && i < seq_->seed_images_.size(); ++i)
     //   for(int y = 0; flag && y < seq_->seed_images_[i].rows; ++y)
-    // 	for(int x = 0; flag && x < seq_->seed_images_[i].cols; ++x)
-    // 	  if(seq_->seed_images_[i](y, x) != 127)
-    // 	    flag = false;
+    //         for(int x = 0; flag && x < seq_->seed_images_[i].cols; ++x)
+    //           if(seq_->seed_images_[i](y, x) != 127)
+    //             flag = false;
     
     // if(!flag) { 
     //   cout << "This will clear all seed labels except those in the first frame." << endl;
@@ -755,8 +755,8 @@ namespace dst
     //   string retval;
     //   cin >> retval;
     //   if(retval.compare("y") != 0) {
-    // 	cout << "Aborted." << endl;
-    // 	return;
+    //         cout << "Aborted." << endl;
+    //         return;
     //   }
     //   clearHelperSeedLabels();
     //   draw();
@@ -793,13 +793,13 @@ namespace dst
     // -- Left click to add to source.
     if(flags & CV_EVENT_FLAG_LBUTTON) {
       for(int i = x - seed_radius_; i <= x + seed_radius_; ++i) { 
-	for(int j = y - seed_radius_; j <= y + seed_radius_; ++j) {
-	  if(i >= 0 && i < seed_vis_.cols &&
-	     j >= 0 && j < seed_vis_.rows) {
+        for(int j = y - seed_radius_; j <= y + seed_radius_; ++j) {
+          if(i >= 0 && i < seed_vis_.cols &&
+             j >= 0 && j < seed_vis_.rows) {
 
-	    seq_->seed_images_[current_idx_](j, i) = 255;
-	  }
-	}
+            seq_->seed_images_[current_idx_](j, i) = 255;
+          }
+        }
       }
       needs_redraw_ = true;
     }
@@ -807,13 +807,13 @@ namespace dst
     // -- Right click to add to sink.
     else if(flags & CV_EVENT_FLAG_RBUTTON) {
       for(int i = x - seed_radius_; i <= x + seed_radius_; ++i) { 
-	for(int j = y - seed_radius_; j <= y + seed_radius_; ++j) {
-	  if(i >= 0 && i < seed_vis_.cols &&
-	     j >= 0 && j < seed_vis_.rows) { 
+        for(int j = y - seed_radius_; j <= y + seed_radius_; ++j) {
+          if(i >= 0 && i < seed_vis_.cols &&
+             j >= 0 && j < seed_vis_.rows) { 
 
-	    seq_->seed_images_[current_idx_](j, i) = 0;
-	  }
-	}
+            seq_->seed_images_[current_idx_](j, i) = 0;
+          }
+        }
       }
       needs_redraw_ = true;
     }

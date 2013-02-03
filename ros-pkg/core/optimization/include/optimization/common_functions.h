@@ -51,7 +51,7 @@ public:
   Eigen::VectorXd const* b_;
 
   ObjectiveMELSparse(Eigen::SparseMatrix<double, Eigen::ColMajor> const* A,
-		     Eigen::VectorXd const* b);
+                     Eigen::VectorXd const* b);
   double eval(const Eigen::VectorXd& x) const;
 };
 
@@ -62,7 +62,7 @@ public:
   Eigen::VectorXd* b_;
   
   GradientMELSparse(Eigen::SparseMatrix<double, Eigen::ColMajor>* A,
-		    Eigen::VectorXd* b);
+                    Eigen::VectorXd* b);
   Eigen::VectorXd eval(const Eigen::VectorXd& x) const;
 };
 
@@ -76,7 +76,7 @@ public:
   Eigen::VectorXd const* b_;
 
   ObjectiveMLSSparse(Eigen::SparseMatrix<double, Eigen::ColMajor> const* A,
-		     Eigen::VectorXd const* b);
+                     Eigen::VectorXd const* b);
   double eval(const Eigen::VectorXd& x) const;
 };
 
@@ -87,7 +87,7 @@ public:
   Eigen::VectorXd* b_;
   
   GradientMLSSparse(Eigen::SparseMatrix<double, Eigen::ColMajor>* A,
-		    Eigen::VectorXd* b);
+                    Eigen::VectorXd* b);
   Eigen::VectorXd eval(const Eigen::VectorXd& x) const;
 };
 
@@ -98,7 +98,7 @@ public:
   Eigen::VectorXd* b_;
 
   HessianMLSSparse(Eigen::SparseMatrix<double, Eigen::ColMajor>* A,
-		   Eigen::VectorXd* b);
+                   Eigen::VectorXd* b);
   Eigen::MatrixXd eval(const Eigen::VectorXd& x) const;
 };
 

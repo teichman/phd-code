@@ -33,18 +33,18 @@ namespace pipeline
       *mean = 0;
       *mean_neighbor_separation = 0;
       for(size_t i = 0; i < points.size(); ++i) {
-	if(i > 0) { 
-	  assert(points[i] >= points[i-1]);
-	  *mean_neighbor_separation += points[i] - points[i-1];
-	}
-	*mean += points[i];
+        if(i > 0) { 
+          assert(points[i] >= points[i-1]);
+          *mean_neighbor_separation += points[i] - points[i-1];
+        }
+        *mean += points[i];
       }
       *mean_neighbor_separation /= (double)points.size();
       *mean /= (double)points.size();
       
       *stdev = 0;
       for(size_t i = 0; i < points.size(); ++i)
-	*stdev += (points[i] - *mean) * (points[i] - *mean);
+        *stdev += (points[i] - *mean) * (points[i] - *mean);
 
       *stdev /= (double)points.size();
     }
@@ -58,28 +58,28 @@ namespace pipeline
 
       size_t num_points = 0;
       for(size_t i = 0; i < point_sets.size(); ++i)
-	num_points += point_sets[i]->size();
+        num_points += point_sets[i]->size();
 
       aggregated_->reserve(num_points);
       vector<size_t> index(point_sets.size(), 0);
       while(true) {
-	int sel = -1;
-	double min = numeric_limits<double>::max();
-	for(size_t i = 0; i < point_sets.size(); ++i) {
-	  if(index[i] == point_sets[i]->size())
-	    continue;
-	  double val = point_sets[i]->at(index[i]);
-	  if(val < min) { 
-	    min = val;
-	    sel = i;
-	  }
-	}
+        int sel = -1;
+        double min = numeric_limits<double>::max();
+        for(size_t i = 0; i < point_sets.size(); ++i) {
+          if(index[i] == point_sets[i]->size())
+            continue;
+          double val = point_sets[i]->at(index[i]);
+          if(val < min) { 
+            min = val;
+            sel = i;
+          }
+        }
 
-	if(sel == -1)
-	  break;
-	
-	aggregated_->push_back(min);
-	++index[sel];
+        if(sel == -1)
+          break;
+        
+        aggregated_->push_back(min);
+        ++index[sel];
       }
 
       assert(aggregated_->size() == num_points);
@@ -94,7 +94,7 @@ namespace pipeline
       vector<VecConstPtr> subvectors;
       pull("SubVectors", &subvectors);
       for(size_t i = 0; i < subvectors.size(); ++i)
-	descriptor_->insert(descriptor_->end(), subvectors[i]->begin(), subvectors[i]->end());
+        descriptor_->insert(descriptor_->end(), subvectors[i]->begin(), subvectors[i]->end());
       
       push<VecConstPtr>("Descriptor", descriptor_);
     }
@@ -121,25 +121,25 @@ namespace pipeline
 
       lower_bounds_->reserve(num_bins);
       for(int i = 0; i < num_bins; ++i)
-	lower_bounds_->push_back((double)i * bin_width);
+        lower_bounds_->push_back((double)i * bin_width);
 
       // -- Accumulate counts.
       hist_->resize(num_bins, 0);
       for(size_t i = 0; i < points.size(); ++i) {
-	if(i > 0)
-	  assert(points[i] >= points[i-1]);
+        if(i > 0)
+          assert(points[i] >= points[i-1]);
 
-	int bin = floor((points[i] - min) / bin_width);
-	if(bin >= 0 && bin < (int)hist_->size()) { 
-	  ++hist_->at(bin);
-	  ++num_points_;
-	}
+        int bin = floor((points[i] - min) / bin_width);
+        if(bin >= 0 && bin < (int)hist_->size()) { 
+          ++hist_->at(bin);
+          ++num_points_;
+        }
       }
 
       // -- Normalize if desired.
       if(param<bool>("Normalize"))
-	for(size_t i = 0; i < hist_->size(); ++i)
-	  hist_->at(i) /= num_points_;
+        for(size_t i = 0; i < hist_->size(); ++i)
+          hist_->at(i) /= num_points_;
 
       *hist = hist_;
       *lower_bounds = lower_bounds_;
@@ -157,28 +157,28 @@ namespace pipeline
       // -- If normalizing, check that histogram sums to one.
       double sum = 0;
       for(size_t i = 0; i < hist_->size(); ++i)
-	sum += hist_->at(i);
+        sum += hist_->at(i);
       cout << "Sum of histogram elements: " << sum << endl;
       if(param<bool>("Normalize")) {
-	assert(fabs(sum - 1.0) < 1e-4);
+        assert(fabs(sum - 1.0) < 1e-4);
       }
 
       // -- Get a histogram with maximum value of 1.
       Vec hist = *hist_;
       double maxval = 0;
       for(size_t i = 0; i < hist.size(); ++i)
-	maxval = fmax(maxval, hist[i]);
+        maxval = fmax(maxval, hist[i]);
       for(size_t i = 0; i < hist.size(); ++i)
-	hist[i] /= maxval;
+        hist[i] /= maxval;
 
       // -- Print histogram to screen.
       ostringstream oss;
       oss << "0 ---------- " << maxval << endl;
       for(size_t i = 0; i < hist.size(); ++i) {
-	oss << " |";
-	for(double j = 0; j < hist[i]; j += 0.1)
-	  oss << "*";
-	oss << endl;
+        oss << " |";
+        for(double j = 0; j < hist[i]; j += 0.1)
+          oss << "*";
+        oss << endl;
       }
 
       cout << oss.str() << endl;
@@ -192,7 +192,7 @@ namespace pipeline
     {
       cout << "AbstractPod::display: " << endl;
       for(size_t i = 0; i < vector.size(); ++i)
-	cout << vector[i] << " ";
+        cout << vector[i] << " ";
       cout << endl;
     }
 

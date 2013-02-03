@@ -15,7 +15,7 @@ namespace multi_sequence
     //! 640x480: OpenNI_VGA_30Hz
     //! 160x120: OpenNI_QQVGA_30Hz
     MultiRecorder(const std::vector<std::string> &device_ids,
-	     pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz);
+             pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz);
     void cloudCallback(const Cloud::ConstPtr& cloud, size_t idx);
     void imageCallback(const boost::shared_ptr<openni_wrapper::Image>& image, size_t idx);
     void irCallback(const boost::shared_ptr<openni_wrapper::IRImage>& oni_img);

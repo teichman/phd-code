@@ -18,12 +18,12 @@ int main(int argc, char** argv)
       cv::Mat1b seed = seq.seed_images_[j];
       bool flag = false;
       for(int y = 0; y < seed.rows; ++y)
-	for(int x = 0; x < seed.cols; ++x)
-	  if(seed(y, x) != 127)
-	    flag = true;
+        for(int x = 0; x < seed.cols; ++x)
+          if(seed(y, x) != 127)
+            flag = true;
 
       if(flag)
-	++num_seed_frames;
+        ++num_seed_frames;
     }
   }
 

@@ -99,7 +99,7 @@ void Inspector::updateDepth(const openni_wrapper::DepthImage& oni)
   for(size_t y = 0; y < oni.getHeight(); ++y) {
     for(size_t x = 0; x < oni.getWidth(); ++x, ++i) {
       if(data[i] == oni.getNoSampleValue() || data[i] == oni.getShadowValue())
-	continue;
+        continue;
       frame_.depth_->coeffRef(y, x) = data[i];
     }
   }
@@ -129,7 +129,7 @@ void Inspector::updateDepth(const openni_wrapper::DepthImage& oni)
   // for(int y = 0; y < frame_.depth_->rows(); ++y) {
   //   for(int x = 0; x < frame_.depth_->cols(); ++x) {
   //     if(frame_.depth_->coeffRef(y, x) == 0)
-  // 	continue;
+  //         continue;
       
   //     double maxdist = 10;
   //     double mindist = 1;

@@ -32,7 +32,7 @@ namespace pipeline
     void addPods(const std::vector<Pod*>& pods);
     void addPod(Pod* pod);
     void connect(std::string source_pod, std::string source_output,
-		 std::string sink_pod, std::string sink_input);
+                 std::string sink_pod, std::string sink_input);
     //! "Pod:Output -> Pod:Input"
     //! TODO: Maybe allow only this method of making connections.
     //! Then completeness is guaranteed.
@@ -60,8 +60,8 @@ namespace pipeline
     template<typename T> T pull(const std::string& address) const;
     //! Convenient way of pulling output from the Pipeline.
     template<typename T> void pull(const std::string& pod_name,
-				   const std::string& output_name,
-				   T* dest) const;
+                                   const std::string& output_name,
+                                   T* dest) const;
 
     // ----------------------------------------
     // -- Control
@@ -191,9 +191,9 @@ namespace pipeline
     for(size_t i = 0; i < pods.size(); ++i) {
       T* casted = dynamic_cast<T*>(pods[i]);
       if(!casted)
-	continue;
+        continue;
       if(test && !test(casted))
-	continue;
+        continue;
     
       passed.push_back(casted);
     }
@@ -210,13 +210,13 @@ namespace pipeline
     for(size_t i = 0; i < pods.size(); ++i) {
       T* casted = dynamic_cast<T*>(pods[i]);
       if(!casted)
-	continue;
+        continue;
       passed.push_back(casted);
     }
 
     if(!(passed.size() == 1 || passed.size() == 0)) {
       PL_ABORT("Called pod<T>(), but multiple Pods of type T were found."
-	       << " You probably need to use pod<T>(name).");
+               << " You probably need to use pod<T>(name).");
     }
     if(passed.size() == 1)
       return passed[0];
@@ -233,13 +233,13 @@ namespace pipeline
   }
 
   template<typename T> T* pod(const std::string& name,
-				  const std::vector<Pod*>& pods)
+                                  const std::vector<Pod*>& pods)
   {
     std::vector<T*> passed;
     for(size_t i = 0; i < pods.size(); ++i) {
       T* casted = dynamic_cast<T*>(pods[i]);
       if(!casted || casted->getName().compare(name) != 0)
-	continue;
+        continue;
       
       passed.push_back(casted);
     }
@@ -250,7 +250,7 @@ namespace pipeline
       return passed[0];
     else {
       PL_ABORT("Called pod<T>(\"" << name << "\"), but no Pods of type T with this name were found." << std::endl
-	       << "Typeid of T is: " << typeid(T).name());
+               << "Typeid of T is: " << typeid(T).name());
     }
     return NULL;
   }
@@ -273,8 +273,8 @@ namespace pipeline
   }
 
   template<typename T> void Pipeline::pull(const std::string& pod_name,
-						const std::string& outlet_name,
-						T* dest) const
+                                                const std::string& outlet_name,
+                                                T* dest) const
   {
     *dest = pod(pod_name)->getOutlet(outlet_name)->pull<T>();
   }

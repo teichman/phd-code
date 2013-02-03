@@ -102,9 +102,9 @@ int main(int argc, char** argv)
 
   // -- Run structural SVM training.
   StructuralSVM ssvm(opts["ssvm-c"].as<double>(),
-		     opts["ssvm-precision"].as<double>(),
-		     opts["ssvm-num-threads"].as<int>(),
-		     opts["ssvm-debug-level"].as<int>());
+                     opts["ssvm-precision"].as<double>(),
+                     opts["ssvm-num-threads"].as<int>(),
+                     opts["ssvm-debug-level"].as<int>());
 
   Model model = ssvm.train(caches, labels);
   cout << "Learned new model: " << endl;
@@ -112,6 +112,6 @@ int main(int argc, char** argv)
 
   model.save(opts["model-output"].as<string>());
   cout << "Saved to " << opts["model-output"].as<string>() << endl;
-		       
+                       
   return 0;
 }

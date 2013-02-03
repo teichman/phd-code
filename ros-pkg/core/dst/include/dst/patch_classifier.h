@@ -17,7 +17,7 @@ namespace dst
   public:
     PatchClassifierData();
     PatchClassifierData(cv::Mat3b bgr, cv::Mat1b intensity,
-			cv::Mat1i integral, cv::Mat3f hsv);
+                        cv::Mat1i integral, cv::Mat3f hsv);
     cv::Mat3b bgr_;
     cv::Mat1b intensity_;
     cv::Mat1i integral_;
@@ -179,12 +179,12 @@ namespace dst
   {
   public:
     PatchClassifierNPG(pipeline2::Outlet<cv::Mat3b>* img_otl,
-		       pipeline2::Outlet<cv::Mat1b>* intensity_otl,
-		       pipeline2::Outlet<cv::Mat1i>* integral_otl,
-		       pipeline2::Outlet<cv::Mat3f>* hsv_otl,
-		       pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
-		       pipeline2::Outlet<cv::Mat1b>* mask_otl,
-		       int radius, int skip);
+                       pipeline2::Outlet<cv::Mat1b>* intensity_otl,
+                       pipeline2::Outlet<cv::Mat1i>* integral_otl,
+                       pipeline2::Outlet<cv::Mat3f>* hsv_otl,
+                       pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
+                       pipeline2::Outlet<cv::Mat1b>* mask_otl,
+                       int radius, int skip);
     
   protected:
     pipeline2::Outlet<cv::Mat3b>* img_otl_;

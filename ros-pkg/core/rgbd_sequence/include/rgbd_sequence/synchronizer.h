@@ -60,8 +60,8 @@ namespace rgbd
 
     for(int i = timestamps1_.size() - 1; i >= 0; --i) {
       if(fabs(timestamps1_[i] - timestamp0) < max_dt_) {
-	update(timestamps0_.size() - 1, i);
-	break;
+        update(timestamps0_.size() - 1, i);
+        break;
       }
     }
   }
@@ -74,8 +74,8 @@ namespace rgbd
 
     for(int i = timestamps0_.size() - 1; i >= 0; --i) {
       if(fabs(timestamps0_[i] - timestamp1) < max_dt_) {
-	update(i, timestamps1_.size() - 1);
-	break;
+        update(i, timestamps1_.size() - 1);
+        break;
       }
     }
   }
@@ -103,9 +103,9 @@ namespace rgbd
       return ts0_;
     else {
       if(isnan(ts0_))
-	return timestamps0_.back();
+        return timestamps0_.back();
       else
-	return std::max(ts0_, timestamps0_.back());
+        return std::max(ts0_, timestamps0_.back());
     }
   }
 
@@ -116,9 +116,9 @@ namespace rgbd
       return ts1_;
     else {
       if(isnan(ts1_))
-	return timestamps1_.back();
+        return timestamps1_.back();
       else
-	return std::max(ts1_, timestamps1_.back());
+        return std::max(ts1_, timestamps1_.back());
     }
   }
 

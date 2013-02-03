@@ -27,9 +27,9 @@ void ObjectExtractor::compute()
 }
 
 void ObjectExtractor::extractObjectsFromFrame(const rgbd::Cloud& pcd,
-					      const std::vector<int>& fg_indices,
-					      std::vector<rgbd::Cloud::ConstPtr>* objects,
-					      std::vector< std::vector<int> >* object_indices) const
+                                              const std::vector<int>& fg_indices,
+                                              std::vector<rgbd::Cloud::ConstPtr>* objects,
+                                              std::vector< std::vector<int> >* object_indices) const
 {
   ROS_ASSERT(object_indices->empty());
   ROS_ASSERT(objects->empty());
@@ -49,7 +49,7 @@ void ObjectExtractor::extractObjectsFromFrame(const rgbd::Cloud& pcd,
 
   // -- Compute connected components.
   OrganizedConnectedComponents occ(param<int>("MinClusterPoints"),
-				   param<double>("ClusterTolerance"));
+                                   param<double>("ClusterTolerance"));
   occ.compute(*fg);
   
   // -- Add each cluster as an object.
@@ -72,17 +72,17 @@ void ObjectExtractor::extractObjectsFromFrame(const rgbd::Cloud& pcd,
       Point pt = fg->at(ind[j]);
       obj->push_back(pt);
       if(pt.x < min_x)
-	min_x = pt.x;
+        min_x = pt.x;
       if(pt.x > max_x)
-	max_x = pt.x;
+        max_x = pt.x;
       if(pt.y < min_y)
-	min_y = pt.y;
+        min_y = pt.y;
       if(pt.y > max_y)
-	max_y = pt.y;
+        max_y = pt.y;
       if(pt.z < min_z)
-	min_z = pt.z;
+        min_z = pt.z;
       if(pt.z > max_z)
-	max_z = pt.z;
+        max_z = pt.z;
     }
 
     if(max_x - min_x > min_sz ||
@@ -111,13 +111,13 @@ void ObjectExtractor::debug() const
       double g = (rand() % 256);
       double b = (rand() % 256);
       for(size_t k = 0; k < object_indices_[i][j].size(); ++k) {
-	ROS_ASSERT(object_indices_[i][j][k] < (int)vis.size());
-	ROS_ASSERT(object_indices_[i][j][k] >= 0);
-	
-	int idx = object_indices_[i][j][k];
-	vis[idx].r = r;
-	vis[idx].g = g;
-	vis[idx].b = b;
+        ROS_ASSERT(object_indices_[i][j][k] < (int)vis.size());
+        ROS_ASSERT(object_indices_[i][j][k] >= 0);
+        
+        int idx = object_indices_[i][j][k];
+        vis[idx].r = r;
+        vis[idx].g = g;
+        vis[idx].b = b;
       }
     }
 
@@ -126,4 +126,4 @@ void ObjectExtractor::debug() const
     pcl::io::savePCDFileBinary(oss.str(), vis);
   }
 }
-					      
+                                              

@@ -20,9 +20,9 @@ namespace pipeline
       string name = it->first;
       ROS_ASSERT(params1.exists(name));
       if(rand() % 2 == 0)
-	params.storage_[name] = params0.storage_.find(name)->second;
+        params.storage_[name] = params0.storage_.find(name)->second;
       else
-	params.storage_[name] = params1.storage_.find(name)->second;
+        params.storage_[name] = params1.storage_.find(name)->second;
     }
     return params;
   }
@@ -72,7 +72,7 @@ namespace pipeline
     BOOST_FOREACH(const bfs::path& p, make_pair(it, eod)) {
       string path = rootpath_ + "/" + p.leaf();
       if(bfs::is_directory(path))
-	paths.push_back(path);
+        paths.push_back(path);
     }
     sort(paths.begin(), paths.end());
 
@@ -125,17 +125,17 @@ namespace pipeline
     while(true) {
       // -- Check if it's time to stop.
       if(max_hours > 0 && hrt.getHours() > max_hours) {
-	cout << "Twiddler is out of time; finishing." << endl;
-	break;
+        cout << "Twiddler is out of time; finishing." << endl;
+        break;
       }
 
       // -- Get another parameter variation.
       Params variation = generateParamVariation(best_params);
       if(results_.count(variation)) {
-	++num_duplicates;
-	if(num_duplicates > 100)
-	  break;
-	continue;
+        ++num_duplicates;
+        if(num_duplicates > 100)
+          break;
+        continue;
       }
       num_duplicates = 0;
 
@@ -149,11 +149,11 @@ namespace pipeline
       Results results = evaluate(variation, evalpath);
       results_[variation] = results;
       if(objective(results) < objective(best_results)) {
-	best_params = variation;
-	best_results = results;
-	best_params.save(rootpath_ + "/best_params.txt");
-	best_results.save(rootpath_ + "/best_results.txt");
-	improvementHook(best_params, best_results, evalpath);
+        best_params = variation;
+        best_results = results;
+        best_params.save(rootpath_ + "/best_params.txt");
+        best_results.save(rootpath_ + "/best_results.txt");
+        improvementHook(best_params, best_results, evalpath);
       }
 
       // TODO: add to ordering
@@ -162,7 +162,7 @@ namespace pipeline
       results.save(evalpath + "/results.txt");
 
       if(done(results))
-	break;
+        break;
     }
   }
 

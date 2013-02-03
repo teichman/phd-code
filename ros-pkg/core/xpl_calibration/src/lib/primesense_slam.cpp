@@ -52,14 +52,14 @@ void PrimeSenseSlam::_run()
     while(dt < min_dt_) {
       ++curr_idx;
       if(curr_idx >= sseq_->size()) {
-	done = true;
-	break;
+        done = true;
+        break;
       }
       dt = sseq_->timestamps_[curr_idx] - prev_frame.timestamp_;
     }
     if(done) break;
     cout << "---------- Searching for link between " << prev_idx << " and " << curr_idx
-	 << " / " << sseq_->size() << endl;
+         << " / " << sseq_->size() << endl;
     cout << "           dt: " << dt << endl;
     sseq_->readFrame(prev_idx, &prev_frame);  // TODO: This should not be necessary.      
     sseq_->readFrame(curr_idx, &curr_frame);
@@ -72,7 +72,7 @@ void PrimeSenseSlam::_run()
     vector<cv::KeyPoint> curr_keypoints;
     rgbd::Cloud::ConstPtr curr_keycloud;
     FeaturesPtr curr_features = cacheFeatures(curr_frame, curr_idx, curr_keypoints, 
-					      curr_keycloud);
+                                              curr_keycloud);
     
     // -- Try to find link to most recent previous frame.
     //    Tries a wider search if not enough corresponding points to get a rough initial transform.
@@ -83,10 +83,10 @@ void PrimeSenseSlam::_run()
     if(fav_)
       fav_->setFrames(curr_frame, prev_frame);
     bool found = aligner.align(curr_frame, prev_frame,
-    			       curr_keypoints, keypoint_cache_[prev_idx],
-			       curr_keycloud, keycloud_cache_[prev_idx],
-    			       curr_features, feature_cache_[prev_idx],
-    			       true, &curr_to_prev);
+                                   curr_keypoints, keypoint_cache_[prev_idx],
+                               curr_keycloud, keycloud_cache_[prev_idx],
+                                   curr_features, feature_cache_[prev_idx],
+                                   true, &curr_to_prev);
     if(found) {
       cout << "Added edge " << prev_idx << " -- " << curr_idx << endl;
       pgs_->addEdge(prev_idx, curr_idx, curr_to_prev, covariance);
@@ -97,11 +97,11 @@ void PrimeSenseSlam::_run()
       vector<size_t> cached_frames_random;
       ROS_ASSERT(!cached_frames_.empty() && cached_frames_.back() == curr_idx);
       if(cached_frames_.size() > 1)
-	ROS_ASSERT(cached_frames_[cached_frames_.size() - 2] == prev_idx);
+        ROS_ASSERT(cached_frames_[cached_frames_.size() - 2] == prev_idx);
       cached_frames_random.insert(cached_frames_random.end(), cached_frames_.begin(), cached_frames_.end() - 2);
       if(!cached_frames_random.empty()) {
-	ROS_ASSERT(cached_frames_random.back() != curr_idx);
-	ROS_ASSERT(cached_frames_random.back() != prev_idx);
+        ROS_ASSERT(cached_frames_random.back() != curr_idx);
+        ROS_ASSERT(cached_frames_random.back() != prev_idx);
       }
       random_shuffle(cached_frames_random.begin(), cached_frames_random.end());
       size_t num_rough_transforms = 0;
@@ -115,47 +115,47 @@ void PrimeSenseSlam::_run()
       omp_set_num_threads(OMP_THREADS);
 #pragma omp parallel for
       for(size_t i = 0; i < max_attempts; ++i) {
-	if(num_rough_transforms >= max_rough_transforms)
-	  continue;
-	size_t idx = cached_frames_random[i];
-	ROS_DEBUG_STREAM("Checking for loop closure between " << idx << " and " << curr_idx);
+        if(num_rough_transforms >= max_rough_transforms)
+          continue;
+        size_t idx = cached_frames_random[i];
+        ROS_DEBUG_STREAM("Checking for loop closure between " << idx << " and " << curr_idx);
 
-	ROS_ASSERT(keypoint_cache_.count(idx));
-	ROS_ASSERT(feature_cache_.count(idx));
-	bool found = aligner.computeRoughTransform(
-	  curr_keypoints, keypoint_cache_[idx],
-	  curr_keycloud, keycloud_cache_[idx],
-	  curr_features, feature_cache_[idx],
-	  &(correspondences0[i]), &(correspondences1[i]), &(guesses[i]));
-	if(found) {
-	  found_rough[i] = true;
+        ROS_ASSERT(keypoint_cache_.count(idx));
+        ROS_ASSERT(feature_cache_.count(idx));
+        bool found = aligner.computeRoughTransform(
+          curr_keypoints, keypoint_cache_[idx],
+          curr_keycloud, keycloud_cache_[idx],
+          curr_features, feature_cache_[idx],
+          &(correspondences0[i]), &(correspondences1[i]), &(guesses[i]));
+        if(found) {
+          found_rough[i] = true;
 #pragma omp critical
-	  {++num_rough_transforms;}
-	}
+          {++num_rough_transforms;}
+        }
       }
       size_t num_successful_loopclosures = 0;
       for(size_t i = 0; i < found_rough.size(); i++){
-	if(!found_rough[i]) continue;
-	size_t idx = cached_frames_random[i];
-	ROS_DEBUG_STREAM("Densely aligning loop closure between " << idx << " and " << curr_idx);
-	Frame old_frame;
-	sseq_->readFrame(idx, &old_frame);
-	if(intrinsics_)
-	  intrinsics_->undistort(&old_frame);
+        if(!found_rough[i]) continue;
+        size_t idx = cached_frames_random[i];
+        ROS_DEBUG_STREAM("Densely aligning loop closure between " << idx << " and " << curr_idx);
+        Frame old_frame;
+        sseq_->readFrame(idx, &old_frame);
+        if(intrinsics_)
+          intrinsics_->undistort(&old_frame);
 
-	if(fav_)
-	  fav_->setFrames(curr_frame, old_frame);
-	Eigen::Affine3d curr_to_old;
-	bool found = aligner.narrowGridSearch(
-	  curr_frame, old_frame,
-	  correspondences0[i], correspondences1[i], guesses[i], &curr_to_old);
-	if(found) {
-	  cout << "Added edge " << idx << " -- " << curr_idx << endl;
-	  pgs_->addEdge(idx, curr_idx, curr_to_old, covariance);
-	  ++num_successful_loopclosures;
-	  if(num_successful_loopclosures >= max_loopclosures_)
-	    break;
-	}
+        if(fav_)
+          fav_->setFrames(curr_frame, old_frame);
+        Eigen::Affine3d curr_to_old;
+        bool found = aligner.narrowGridSearch(
+          curr_frame, old_frame,
+          correspondences0[i], correspondences1[i], guesses[i], &curr_to_old);
+        if(found) {
+          cout << "Added edge " << idx << " -- " << curr_idx << endl;
+          pgs_->addEdge(idx, curr_idx, curr_to_old, covariance);
+          ++num_successful_loopclosures;
+          if(num_successful_loopclosures >= max_loopclosures_)
+            break;
+        }
       }
     }
   }
@@ -200,7 +200,7 @@ Cloud::Ptr PrimeSenseSlam::buildMap(const Trajectory& traj) const
     nonans->reserve(curr_pcd->size());
     for(size_t j = 0; j < curr_pcd->size(); ++j)
       if(isFinite(curr_pcd->at(j)))
-	nonans->push_back(curr_pcd->at(j));
+        nonans->push_back(curr_pcd->at(j));
     zthresh(nonans, MAX_RANGE_MAP);
     Cloud::Ptr curr_pcd_transformed(new Cloud);
     pcl::transformPointCloud(*nonans, *curr_pcd_transformed, traj.get(i).cast<float>());
@@ -225,7 +225,7 @@ Cloud::Ptr PrimeSenseSlam::buildMap(const Trajectory& traj) const
 }
 
 PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::cacheFeatures(const rgbd::Frame &frame, 
-							  size_t t, vector<cv::KeyPoint> &keypoints, rgbd::Cloud::ConstPtr &keycloud)
+                                                          size_t t, vector<cv::KeyPoint> &keypoints, rgbd::Cloud::ConstPtr &keycloud)
 {
   FeaturesPtr features = getFeatures(frame, keypoints, keycloud);
   keypoint_cache_[t] = keypoints;

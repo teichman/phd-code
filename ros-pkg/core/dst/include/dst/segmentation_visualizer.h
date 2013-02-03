@@ -14,7 +14,7 @@ namespace dst
     bool quit_at_end_;
 
     SegmentationVisualizer(const std::vector<KinectCloud::Ptr>& original,
-			   const std::vector<KinectCloud::Ptr>& segmented);
+                           const std::vector<KinectCloud::Ptr>& segmented);
     void spin();
 
   private:

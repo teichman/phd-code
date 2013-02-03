@@ -22,8 +22,8 @@ namespace dst
     pipeline2::Outlet<Output> kdtree_otl_;
 
     KdTreeNode(pipeline2::Outlet<KinectCloud::ConstPtr>* pcd_otl,
-	       pipeline2::Outlet<IndicesConstPtr>* pcd_indices_otl,
-	       double radius);
+               pipeline2::Outlet<IndicesConstPtr>* pcd_indices_otl,
+               double radius);
     ~KdTreeNode();
 
   protected:

@@ -41,9 +41,9 @@ namespace graphcuts
   }
   
   void PotentialsCache::applyWeights(const Model& model,
-				     SparseMat* edge,
-				     Eigen::VectorXd* node) const
-				     
+                                     SparseMat* edge,
+                                     Eigen::VectorXd* node) const
+                                     
   {
     ROS_ASSERT(node->rows() == edge->rows());
     ROS_ASSERT(node->rows() == edge->cols());
@@ -68,12 +68,12 @@ namespace graphcuts
     for(size_t i = 0; i < edge_.size(); ++i) {
       const SparseMat& ep = edge_[i];
       for(int j = 0; j < ep.outerSize(); ++j) {
-    	for(SparseMat::InnerIterator it(ep, j); it; ++it) {
-    	  if(it.col() <= it.row())
-    	    continue;
-	  if(seg(it.row()) == seg(it.col()))
-	    psi(i) += it.value();
-	}
+            for(SparseMat::InnerIterator it(ep, j); it; ++it) {
+              if(it.col() <= it.row())
+                continue;
+          if(seg(it.row()) == seg(it.col()))
+            psi(i) += it.value();
+        }
       }
     }
 
@@ -82,8 +82,8 @@ namespace graphcuts
       int idx = i + edge_.size();
       ROS_ASSERT(node_[i].size() == seg.rows());
       for(int j = 0; j < seg.rows(); ++j)
-	if(seg(j) == 1)
-	  psi(idx) += node_[i][j];
+        if(seg(j) == 1)
+          psi(idx) += node_[i][j];
     }
      
     return psi;

@@ -7,10 +7,10 @@ namespace dst
 {
 
   DistanceNPG::DistanceNPG(pipeline2::Outlet<KinectCloud::ConstPtr>* transformed_otl,
-			   pipeline2::Outlet<KdTree::Ptr>* fg_kdtree_otl,
-			   pipeline2::Outlet<cv::Mat3b>* img_otl,
-			   pipeline2::Outlet<IndicesConstPtr>* pcd_indices_otl,
-			   float sigma) :
+                           pipeline2::Outlet<KdTree::Ptr>* fg_kdtree_otl,
+                           pipeline2::Outlet<cv::Mat3b>* img_otl,
+                           pipeline2::Outlet<IndicesConstPtr>* pcd_indices_otl,
+                           float sigma) :
     NodePotentialGenerator(),
     transformed_otl_(transformed_otl),
     fg_kdtree_otl_(fg_kdtree_otl),
@@ -47,7 +47,7 @@ namespace dst
     for(size_t i = 0; i < pcd_indices.size(); ++i) {
       int idx = pcd_indices[i];
       if(isnan(cloud[idx].z))
-	continue;
+        continue;
       fg_kdtree.nearestKSearch(cloud[idx], 1, indices, distances);
       float dist = distances[0];
       int y = (int)idx / cloud.width;

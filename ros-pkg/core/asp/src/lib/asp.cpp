@@ -96,13 +96,13 @@ namespace asp
     
     for(int y = 0; y < raw.rows; ++y) { 
       for(int x = 0; x < raw.cols; ++x) {
-	// -1 for bg, +1 for fg.
-	double val = 2.0 * sigmoid(1.1 * (node_(y, x))) - 1.0;
-	val = min(0.9, max(-0.9, val));
-	if(val < 0)
-	  raw(y, x)[1] = 255 * -val;
-	else
-	  raw(y, x)[2] = 255 * val;	  
+        // -1 for bg, +1 for fg.
+        double val = 2.0 * sigmoid(1.1 * (node_(y, x))) - 1.0;
+        val = min(0.9, max(-0.9, val));
+        if(val < 0)
+          raw(y, x)[1] = 255 * -val;
+        else
+          raw(y, x)[2] = 255 * val;          
       }
     }
 
@@ -126,11 +126,11 @@ namespace asp
     ROS_ASSERT(vis.rows > 0 && vis.cols > 0);
     for(int y = 0; y < vis.rows; ++y) { 
       for(int x = 0; x < vis.cols; ++x) {
-	double val = sigmoid(5.0 * (node_(y, x))); // 1.0 for foreground.
-	val = min(0.9, max(0.1, val));
-	vis(y, x)[0] = vis(y, x)[0] * val;
-	vis(y, x)[1] = vis(y, x)[1] * val;
-	vis(y, x)[2] = vis(y, x)[2] * val;
+        double val = sigmoid(5.0 * (node_(y, x))); // 1.0 for foreground.
+        val = min(0.9, max(0.1, val));
+        vis(y, x)[0] = vis(y, x)[0] * val;
+        vis(y, x)[1] = vis(y, x)[1] * val;
+        vis(y, x)[2] = vis(y, x)[2] * val;
       }
     }
 
@@ -183,8 +183,8 @@ namespace asp
       pc->node_[i].resize(node[i]->rows() * node[i]->cols());
       int idx = 0;
       for(int y = 0; y < node[i]->rows(); ++y)
-	for(int x = 0; x < node[i]->cols(); ++x, ++idx)
-	  pc->node_[i].coeffRef(idx) = node[i]->coeffRef(y, x);
+        for(int x = 0; x < node[i]->cols(); ++x, ++idx)
+          pc->node_[i].coeffRef(idx) = node[i]->coeffRef(y, x);
     }
   }
 
@@ -213,8 +213,8 @@ namespace asp
     
     // const SparseMat& structure = *pull<const SparseMat*>("EdgeStructure");
     // initializeSparseMat(structure.rows(), structure.cols(),
-    // 			(double)structure.nonZeros() / (structure.rows() * structure.cols()),
-    // 			&edge_);
+    //                         (double)structure.nonZeros() / (structure.rows() * structure.cols()),
+    //                         &edge_);
   }
 
   void EdgePotentialGenerator::writeEdgePotentialVisualization() const
@@ -226,8 +226,8 @@ namespace asp
     for(int i = 0; i < edge_.rows(); ++i) {
       SparseMatrix<double, RowMajor>::InnerIterator it(edge_, i);
       for(; it; ++it) {
-	minval = min(minval, it.value());
-	maxval = max(maxval, it.value());
+        minval = min(minval, it.value());
+        maxval = max(maxval, it.value());
       }
     }
     // Unweighted edge potentials should be in [0, 1].
@@ -317,8 +317,8 @@ namespace asp
     // -- Fill the graph with node potentials.
     for(int i = 0; i < node->rows(); ++i) {
       for(int j = 0; j < node->cols(); ++j) {
-	int idx = i * node->cols() + j;
-	graph.add_tweights(idx, node->coeffRef(i, j), 0);
+        int idx = i * node->cols() + j;
+        graph.add_tweights(idx, node->coeffRef(i, j), 0);
       }
     }
 
@@ -328,12 +328,12 @@ namespace asp
     SparseMatrix<double, Eigen::RowMajor> sym = (*edge + trans) / 2.0;
     for(int i = 0; i < sym.outerSize(); ++i) {
       for(SparseMatrix<double, RowMajor>::InnerIterator it(sym, i); it; ++it) {
-	if(it.col() <= it.row())
-	  continue;
+        if(it.col() <= it.row())
+          continue;
 
-	ROS_WARN_STREAM_COND(it.value() < 0, "Edgepot weighted sum is negative: " << it.value());
-	ROS_FATAL_STREAM_COND(isnan(it.value()), "NaN in edgepot.");
-	graph.add_edge(it.col(), it.row(), it.value(), it.value());
+        ROS_WARN_STREAM_COND(it.value() < 0, "Edgepot weighted sum is negative: " << it.value());
+        ROS_FATAL_STREAM_COND(isnan(it.value()), "NaN in edgepot.");
+        graph.add_edge(it.col(), it.row(), it.value(), it.value());
       }
     }
 
@@ -346,14 +346,14 @@ namespace asp
 
     for(int y = 0; y < seg_.rows; ++y) {
       for(int x = 0; x < seg_.cols; ++x) {
-	int idx = index(y, x, seg_.cols);
+        int idx = index(y, x, seg_.cols);
 
-	if(graph.what_segment(idx, Graph3d::SINK) == Graph3d::SOURCE)
-	  seg_(y, x) = 255;
-	else if(graph.what_segment(idx, Graph3d::SOURCE) == Graph3d::SINK)
-	  seg_(y, x) = 0;
-	else
-	  seg_(y, x) = 127;
+        if(graph.what_segment(idx, Graph3d::SINK) == Graph3d::SOURCE)
+          seg_(y, x) = 255;
+        else if(graph.what_segment(idx, Graph3d::SOURCE) == Graph3d::SINK)
+          seg_(y, x) = 0;
+        else
+          seg_(y, x) = 127;
       }
     }
 
@@ -386,11 +386,11 @@ namespace asp
     cv::Mat3b dull_bg = img.clone();
     for(int y = 0; y < seg.rows; ++y) { 
       for(int x = 0; x < seg.cols; ++x) { 
-	if(seg(y, x) != 255) { 
-	  dull_bg(y, x)[0] *= 0.5; 
-	  dull_bg(y, x)[1] *= 0.5;
-	  dull_bg(y, x)[2] *= 0.5;
-	}
+        if(seg(y, x) != 255) { 
+          dull_bg(y, x)[0] *= 0.5; 
+          dull_bg(y, x)[1] *= 0.5;
+          dull_bg(y, x)[2] *= 0.5;
+        }
       }
     }
 
@@ -400,8 +400,8 @@ namespace asp
     cv::dilate(seg, dilation, cv::Mat(), cv::Point(-1, -1), 4);
     for(int y = 0; y < seg.rows; ++y) 
       for(int x = 0; x < seg.cols; ++x)
-	if(dilation(y, x) == 255 && seg(y, x) != 255)
-	  mask(y, x) = cv::Vec3b(0, 0, 255);
+        if(dilation(y, x) == 255 && seg(y, x) != 255)
+          mask(y, x) = cv::Vec3b(0, 0, 255);
     cv::addWeighted(dull_bg, 0.5, mask, 0.5, 0.0, vis);
   }
 
@@ -412,10 +412,10 @@ namespace asp
     cv::Mat1b seed = pull<cv::Mat1b>("SeedImage");
     for(int y = 0; y < seed.rows; ++y) {
       for(int x = 0; x < seed.cols; ++x) {
-	if(seed(y, x) == 255)
-	  node_(y, x) = 1;
-	else if(seed(y, x) == 0)
-	  node_(y, x) = -1;
+        if(seed(y, x) == 255)
+          node_(y, x) = 1;
+        else if(seed(y, x) == 0)
+          node_(y, x) = -1;
       }
     }
 
@@ -454,28 +454,28 @@ namespace asp
     if(param<bool>("Grid")) {
       int idx = 0;
       for(int y = 0; y < img.rows; ++y) {
-      	for(int x = 0; x < img.cols; ++x, ++idx) {
-	  if(mask(y, x) == 0)
-	    continue;
-	  if(x < img.cols - 1)
-      	    structure_.insert(idx, index(y, x + 1, img.cols)) = 1;
-      	  if(y < img.rows - 1)
-      	    structure_.insert(idx, index(y + 1, x, img.cols)) = 1;
-      	}
+              for(int x = 0; x < img.cols; ++x, ++idx) {
+          if(mask(y, x) == 0)
+            continue;
+          if(x < img.cols - 1)
+                  structure_.insert(idx, index(y, x + 1, img.cols)) = 1;
+                if(y < img.rows - 1)
+                  structure_.insert(idx, index(y + 1, x, img.cols)) = 1;
+              }
       }
     }
     if(param<bool>("Diagonal")) {
       initializeSparseMat(img.rows, img.cols, 4, &diag_);
       int idx = 0;
       for(int y = 0; y < img.rows - 1; ++y) {
-      	for(int x = 0; x < img.cols; ++x, ++idx) {
-	  if(mask(y, x) == 0)
-	    continue;
-	  if(x > 0)
-	    diag_.insert(idx, index(y + 1, x - 1, img.cols)) = 1;
-	  if(x < img.cols - 1)
-	    diag_.insert(idx, index(y + 1, x + 1, img.cols)) = 1;
-      	}
+              for(int x = 0; x < img.cols; ++x, ++idx) {
+          if(mask(y, x) == 0)
+            continue;
+          if(x > 0)
+            diag_.insert(idx, index(y + 1, x - 1, img.cols)) = 1;
+          if(x < img.cols - 1)
+            diag_.insert(idx, index(y + 1, x + 1, img.cols)) = 1;
+              }
       }
       structure_ += diag_;
     }
@@ -494,47 +494,47 @@ namespace asp
       // x = 50;
       // y = 55;
       // for(int dx = -10; dx <= 10; ++dx)
-      // 	dyn.coeffRef(idx, index(y, x + dx, img.cols)) = 1;
+      //         dyn.coeffRef(idx, index(y, x + dx, img.cols)) = 1;
       // x = 50;
       // y = 45;
       // for(int dx = -10; dx <= 10; ++dx)
-      // 	dyn.coeffRef(index(y, x + dx, img.cols), idx) = 1;
+      //         dyn.coeffRef(index(y, x + dx, img.cols), idx) = 1;
 
       int idx = 0;
       int num_outgoing = param<int>("WebNumOutgoing");
       float max_radius = param<float>("WebMaxRadius");
       eigen_extensions::UniformSampler uniform;
       for(int y = 0; y < img.rows; ++y) {
-      	for(int x = 0; x < img.cols; ++x, ++idx) {
-	  if(mask(y, x) == 0)
-	    continue;
-	  
-	  int num = 0;
-      	  while(num < num_outgoing) {
-      	    double radius = uniform.sample() * max_radius;
-      	    double theta = uniform.sample() * 2 * M_PI;
-      	    int dx = radius * cos(theta);
-      	    int dy = radius * sin(theta);
-      	    int x0 = x + dx;
-      	    int y0 = y + dy;
-      	    if(y0 < 0 || y0 >= img.rows || x0 < 0 ||
-	       x0 >= img.cols || (dx == 0 && dy == 0) ||
-	       mask(y0, x0) == 0)
-	    {
-      	      continue;
-	    }
+              for(int x = 0; x < img.cols; ++x, ++idx) {
+          if(mask(y, x) == 0)
+            continue;
+          
+          int num = 0;
+                while(num < num_outgoing) {
+                  double radius = uniform.sample() * max_radius;
+                  double theta = uniform.sample() * 2 * M_PI;
+                  int dx = radius * cos(theta);
+                  int dy = radius * sin(theta);
+                  int x0 = x + dx;
+                  int y0 = y + dy;
+                  if(y0 < 0 || y0 >= img.rows || x0 < 0 ||
+               x0 >= img.cols || (dx == 0 && dy == 0) ||
+               mask(y0, x0) == 0)
+            {
+                    continue;
+            }
 
-      	    //cout << "radius: " << radius << ", theta: " << theta << ", dx: " << dx << ", dy: " << dy << endl;
-	    
-      	    int idx0 = index(y0, x0, img.cols);
-      	    if(idx < idx0)
-      	      web_.coeffRef(idx, idx0) = 1;
-      	    else
-      	      web_.coeffRef(idx0, idx) = 1;
+                  //cout << "radius: " << radius << ", theta: " << theta << ", dx: " << dx << ", dy: " << dy << endl;
+            
+                  int idx0 = index(y0, x0, img.cols);
+                  if(idx < idx0)
+                    web_.coeffRef(idx, idx0) = 1;
+                  else
+                    web_.coeffRef(idx0, idx) = 1;
 
-	    ++num;
-      	  }
-      	}
+            ++num;
+                }
+              }
       }
 
       structure_ += web_;
@@ -548,7 +548,7 @@ namespace asp
     for(int i = 0; i < structure_.rows(); ++i) {
       SparseMat::InnerIterator it(structure_, i);
       for(; it; ++it)
-	ROS_ASSERT(it.col() >= it.row());
+        ROS_ASSERT(it.col() >= it.row());
     }
     
     cout << "EdgeStructureGenerator: " << structure_.nonZeros() << " edges with average weight of nonzeros of " << structure_.sum() / (structure_.nonZeros()) << endl;
@@ -575,17 +575,17 @@ namespace asp
     int idx = 0;
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x, ++idx) {
-	SparseMat::InnerIterator it(structure, idx);
-	for(; it; ++it) {
-	  int y1, x1;
-	  pixel(it.col(), img.cols, &y1, &x1);
-	  cv::Vec3b p = img(y, x);
-	  cv::Vec3b q = img(y1, x1);
-	  double norm = sqrt((p[0] - q[0])*(p[0] - q[0]) +
-			     (p[1] - q[1])*(p[1] - q[1]) +
-			     (p[2] - q[2])*(p[2] - q[2]));
-	  edge_.insert(it.row(), it.col()) = exp(-norm / sigma);  // TODO: Is there a faster way to fill this?
-	}
+        SparseMat::InnerIterator it(structure, idx);
+        for(; it; ++it) {
+          int y1, x1;
+          pixel(it.col(), img.cols, &y1, &x1);
+          cv::Vec3b p = img(y, x);
+          cv::Vec3b q = img(y1, x1);
+          double norm = sqrt((p[0] - q[0])*(p[0] - q[0]) +
+                             (p[1] - q[1])*(p[1] - q[1]) +
+                             (p[2] - q[2])*(p[2] - q[2]));
+          edge_.insert(it.row(), it.col()) = exp(-norm / sigma);  // TODO: Is there a faster way to fill this?
+        }
       }
     }
 
@@ -644,9 +644,9 @@ namespace asp
       y += dy;
       
       if(sdx * x > sdx * pt1.x || sdy * y > sdy * pt1.y)
-	break;
+        break;
       if(x < 0 || y < 0 || x >= vis.cols || y >= vis.rows)
-	break;
+        break;
     }
   }
 
@@ -659,7 +659,7 @@ namespace asp
     cv::resize(img, vis, sz, cv::INTER_NEAREST);
     for(int y = 0; y < vis.rows; ++y)
       for(int x = 0; x < vis.cols; ++x)
-	vis(y, x) = img(floor(y / scale), floor(x / scale));
+        vis(y, x) = img(floor(y / scale), floor(x / scale));
 
     // -- Get min and max.
     double minval = std::numeric_limits<double>::max();
@@ -667,30 +667,30 @@ namespace asp
     for(int i = 0; i < edge.rows(); ++i) {
       SparseMatrix<double, RowMajor>::InnerIterator it(edge, i);
       for(; it; ++it) {
-	minval = min(minval, it.value());
-	maxval = max(maxval, it.value());
+        minval = min(minval, it.value());
+        maxval = max(maxval, it.value());
       }
     }
           
     // -- Draw non-zero edges.
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x) {
-	int idx0 = index(y, x, img.cols);
+        int idx0 = index(y, x, img.cols);
 
-	SparseMat::InnerIterator it(edge, idx0);
-	for(; it; ++it) {
-	  int idx1 = it.col();
-	  if(idx1 == idx0) {
-	    ROS_WARN_ONCE("At least one edge from a node to itself encountered in drawEdgeVisualization.");
-	    continue;
-	  }
-	  int y1 = idx1 / img.cols;
-	  int x1 = idx1 - y1 * img.cols;
+        SparseMat::InnerIterator it(edge, idx0);
+        for(; it; ++it) {
+          int idx1 = it.col();
+          if(idx1 == idx0) {
+            ROS_WARN_ONCE("At least one edge from a node to itself encountered in drawEdgeVisualization.");
+            continue;
+          }
+          int y1 = idx1 / img.cols;
+          int x1 = idx1 - y1 * img.cols;
 
-	  cv::Point pt(x * scale + scale * 0.5, y * scale + scale * 0.5);
-	  cv::Point pt1(x1 * scale + scale * 0.5, y1 * scale + scale * 0.5);
-	  drawLine(pt, pt1, it.value() / maxval, vis);
-	}
+          cv::Point pt(x * scale + scale * 0.5, y * scale + scale * 0.5);
+          cv::Point pt1(x1 * scale + scale * 0.5, y1 * scale + scale * 0.5);
+          drawLine(pt, pt1, it.value() / maxval, vis);
+        }
       }
     }
 
@@ -703,12 +703,12 @@ namespace asp
     int idx = 0;
     for(int y = 0; y < seg_img.rows; ++y) {
       for(int x = 0; x < seg_img.cols; ++x, ++idx) {
-	if(seg_img(y, x) == 255)
-	  seg_vec->coeffRef(idx) = 1;
-	else if(seg_img(y, x) == 0)
-	  seg_vec->coeffRef(idx) = -1;
-	else
-	  seg_vec->coeffRef(idx) = 0;
+        if(seg_img(y, x) == 255)
+          seg_vec->coeffRef(idx) = 1;
+        else if(seg_img(y, x) == 0)
+          seg_vec->coeffRef(idx) = -1;
+        else
+          seg_vec->coeffRef(idx) = 0;
       }
     }
   }

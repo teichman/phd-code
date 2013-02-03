@@ -52,8 +52,8 @@ namespace pipeline
     it = inputs_.find(input_name);
     if(it == inputs_.end()) {
       PL_ABORT(getClassName() << " \"" << name_
-	       << "\" tried to check if \"" << input_name
-	       << "\" has data, but this input has not been registered.");
+               << "\" tried to check if \"" << input_name
+               << "\" has data, but this input has not been registered.");
     }
 
     const vector<const Outlet*>& inputs = it->second;
@@ -84,15 +84,15 @@ namespace pipeline
     it = inputs_.find(input_name);
     if(it == inputs_.end()) {
       PL_ABORT(getClassName() << " \"" << name_
-	       << "\" tried to check if \"" << input_name
-	       << "\" has data, but this input has not been registered.");
+               << "\" tried to check if \"" << input_name
+               << "\" has data, but this input has not been registered.");
     }
 
     const std::vector<const Outlet*>& outlets = it->second;
     int num = 0;
     for(size_t i = 0; i < outlets.size(); ++i)
       if(outlets[i]->hasData())
-	++num;
+        ++num;
 
     return num;
   }
@@ -208,13 +208,13 @@ namespace pipeline
 
     if(!pod->hasOutput(output_name)) {
       PL_ABORT("Tried to connect " << getName() << ":" << input_name << " <- " << pod->getName() << ":" << output_name
-	       << ", but Pod \"" << pod->getName() << "\" does not have an output named \"" << output_name << "\".");
+               << ", but Pod \"" << pod->getName() << "\" does not have an output named \"" << output_name << "\".");
     }
     
     const Outlet* outlet = pod->getOutlet(output_name);
     if(!outlet->checkType(declared_inputs_[input_name])) { 
       PL_ABORT(getClassName() << " \"" << getName() << "\" tried to register \"" << input_name << " <- "
-	       << pod->getName() << ":" << output_name << "\", but types do not match.");
+               << pod->getName() << ":" << output_name << "\", but types do not match.");
     }
 
     inputs_[input_name].push_back(outlet);
@@ -226,7 +226,7 @@ namespace pipeline
   {
     if(outlets_.count(name) != 1) {
       PL_ABORT("Attempted to get output (\"" << name << "\") on Pod \""
-	       << getName() << "\", but no output with that name exists.");
+               << getName() << "\", but no output with that name exists.");
     }
 
     return outlets_.find(name)->second; 
@@ -302,7 +302,7 @@ namespace pipeline
       upstream.insert(parents_[i]);
       vector<Pod*> tmp = parents_[i]->getUpstreamPods();
       for(size_t j = 0; j < tmp.size(); ++j)
-	upstream.insert(tmp[j]);
+        upstream.insert(tmp[j]);
     }
     
     // -- Put upstream nodes in order of unique hash.
@@ -338,7 +338,7 @@ namespace pipeline
       const vector<const Outlet*>& outlets = it->second;
       out << name << " <-";
       for(size_t i = 0; i < outlets.size(); ++i) { 
-	out << " " << outlets[i]->pod()->getName() << ":" << outlets[i]->getName();
+        out << " " << outlets[i]->pod()->getName() << ":" << outlets[i]->getName();
       }
       out << endl;
     }

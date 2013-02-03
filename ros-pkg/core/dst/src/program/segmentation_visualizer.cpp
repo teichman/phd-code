@@ -15,7 +15,7 @@ string usageString()
 }
 
 void loadClouds(const string& dir, const string& basename,
-		vector<KinectCloud::Ptr>* clouds)
+                vector<KinectCloud::Ptr>* clouds)
 {
   vector< pair<string, KinectCloud::Ptr> > index;
   bfs::directory_iterator end_itr; // default construction yields past-the-end

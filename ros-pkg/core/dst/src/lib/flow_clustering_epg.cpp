@@ -8,8 +8,8 @@ namespace dst
 {
 
   FlowClusteringEPG::FlowClusteringEPG(pipeline2::Outlet<OpticalFlowNode::Output>* optflow_otl,
-				       pipeline2::Outlet<DepthProjector::Output>* index_otl,
-				       float inlier_thresh) :
+                                       pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                                       float inlier_thresh) :
     EdgePotentialGenerator(),
     optflow_otl_(optflow_otl),
     index_otl_(index_otl),
@@ -22,10 +22,10 @@ namespace dst
   }
 
   void FlowClusteringEPG::sampleFlows(const std::vector<bool>& active,
-				      const std::vector<int>& prev_pcd_indices,
-				      const std::vector<int>& pcd_indices,
-				      std::vector<int>* prev_sample_indices,
-				      std::vector<int>* sample_indices)
+                                      const std::vector<int>& prev_pcd_indices,
+                                      const std::vector<int>& pcd_indices,
+                                      std::vector<int>* prev_sample_indices,
+                                      std::vector<int>* sample_indices)
   {
     ROS_ASSERT(prev_pcd_indices.size() == pcd_indices.size());
     ROS_ASSERT(sample_indices->size() == 3);
@@ -35,7 +35,7 @@ namespace dst
     while(sample.size() < 3) {
       int s = rand() % active.size();
       if(active[s])
-	sample.insert(s);
+        sample.insert(s);
     }
 
     set<int>::iterator it;
@@ -81,13 +81,13 @@ namespace dst
       // -- See if this transform made any sense at all.
       size_t num_inliers = 0;
       for(size_t i = 0; i < sample.size(); ++i) {
-	Vector3f projected = (transform * prev_cloud[prev_sample[i]].getVector4fMap()).head(3);
-	float dist = (projected - cloud[sample[i]].getVector3fMap()).norm();
-	if(dist < inlier_thresh_)
-	  ++num_inliers;
+        Vector3f projected = (transform * prev_cloud[prev_sample[i]].getVector4fMap()).head(3);
+        float dist = (projected - cloud[sample[i]].getVector3fMap()).norm();
+        if(dist < inlier_thresh_)
+          ++num_inliers;
       }
       if(num_inliers != 3)
-	continue;
+        continue;
 
       // -- Refine the estimate.
       
@@ -95,15 +95,15 @@ namespace dst
       vector<bool> inliers(pcd_indices.size(), false);
       num_inliers = 0;
       for(size_t i = 0; i < pcd_indices.size(); ++i) {
-	if(!active[i])
-	  continue;
-	Vector3f projected = (transform * prev_cloud[prev_pcd_indices[i]].getVector4fMap()).head(3);
-	float dist = (projected - cloud[pcd_indices[i]].getVector3fMap()).norm();
-	if(dist < inlier_thresh_) {
-	  inliers[i] = true;
-	  active[i] = false;
-	  ++num_inliers;
-	}
+        if(!active[i])
+          continue;
+        Vector3f projected = (transform * prev_cloud[prev_pcd_indices[i]].getVector4fMap()).head(3);
+        float dist = (projected - cloud[pcd_indices[i]].getVector3fMap()).norm();
+        if(dist < inlier_thresh_) {
+          inliers[i] = true;
+          active[i] = false;
+          ++num_inliers;
+        }
       }
       //cout << "FC: Found cluster with " << num_inliers << " inliers out of " << pcd_indices.size() << endl;
       
@@ -113,31 +113,31 @@ namespace dst
       cluster.reserve(num_inliers);
       size_t id = clusters_.size() - 1;
       for(size_t i = 0; i < inliers.size(); ++i) {
-	if(!inliers[i])
-	  continue;
-	cluster.push_back(pcd_indices[i]); // Assumes ordered ptcld.
+        if(!inliers[i])
+          continue;
+        cluster.push_back(pcd_indices[i]); // Assumes ordered ptcld.
 
-	// Assumes ordered point cloud.
-	ROS_ASSERT((size_t)img.cols == prev_cloud.width);
-	int y = prev_pcd_indices[i] / img.cols;
-	int x = prev_pcd_indices[i] - y * img.cols;
-	cluster_index_(y, x) = id;
+        // Assumes ordered point cloud.
+        ROS_ASSERT((size_t)img.cols == prev_cloud.width);
+        int y = prev_pcd_indices[i] / img.cols;
+        int x = prev_pcd_indices[i] - y * img.cols;
+        cluster_index_(y, x) = id;
       }
       sort(cluster.begin(), cluster.end());
       
       // Make a note if this is the one to ignore.
       if(num_inliers > max_cluster_size_) { 
-	max_cluster_size_ = num_inliers;
-	max_cluster_ = id;
+        max_cluster_size_ = num_inliers;
+        max_cluster_ = id;
       }
       
       // -- Break if few active flows remaining.
       int num_active = 0;
       for(size_t i = 0; i < active.size(); ++i)
-	if(active[i])
-	  ++num_active;
+        if(active[i])
+          ++num_active;
       if(num_active < 3)
-	break;
+        break;
     }
 
     //cout << "FC: total clusters = " << clusters_.size() << endl;
@@ -147,36 +147,36 @@ namespace dst
     // clusters_[i] is a sorted (ascending) vector of indices into the image.
     for(int y = 0; y < cluster_index_.rows; ++y) {
       for(int x = 0; x < cluster_index_.cols; ++x) {
-	int idx0 = y * cluster_index_.cols + x;
-	potentials_.startVec(idx0);
-	if(cluster_index_(y, x) == -1)
-	  continue;
-	// Ignore the biggest cluster.
-	if(cluster_index_(y, x) == (int)max_cluster_)
-	  continue;
+        int idx0 = y * cluster_index_.cols + x;
+        potentials_.startVec(idx0);
+        if(cluster_index_(y, x) == -1)
+          continue;
+        // Ignore the biggest cluster.
+        if(cluster_index_(y, x) == (int)max_cluster_)
+          continue;
 
-	// TODO: Gross.
-	const vector<int>& cluster = clusters_[cluster_index_(y, x)];
-	if(cluster.size() < 5) {
-	  for(size_t i = 0; i < cluster.size(); ++i) { 
-	    int idx1 = cluster[i];
-	    if(i > 0) { 
-	      ROS_ASSERT(cluster[i] > cluster[i-1]);
-	    //cout << "FC: Adding edge between " << idx0 << " and " << idx1 << endl;
-	    }
-	    if(idx0 != idx1)
-	      potentials_.insertBack(idx0, idx1) = 1.0;
-	  }
-	}
-	else { 
-	  for(int i = 0; i < 1; ++i) { 
-	    int r = rand() % cluster.size();
-	    int idx1 = cluster[r];
-	    //cout << "FC: Adding edge between " << idx0 << " and " << idx1 << endl;
-	    if(idx0 != idx1)
-	      potentials_.insertBack(idx0, idx1) = 1.0;
-	  }
-	}
+        // TODO: Gross.
+        const vector<int>& cluster = clusters_[cluster_index_(y, x)];
+        if(cluster.size() < 5) {
+          for(size_t i = 0; i < cluster.size(); ++i) { 
+            int idx1 = cluster[i];
+            if(i > 0) { 
+              ROS_ASSERT(cluster[i] > cluster[i-1]);
+            //cout << "FC: Adding edge between " << idx0 << " and " << idx1 << endl;
+            }
+            if(idx0 != idx1)
+              potentials_.insertBack(idx0, idx1) = 1.0;
+          }
+        }
+        else { 
+          for(int i = 0; i < 1; ++i) { 
+            int r = rand() % cluster.size();
+            int idx1 = cluster[r];
+            //cout << "FC: Adding edge between " << idx0 << " and " << idx1 << endl;
+            if(idx0 != idx1)
+              potentials_.insertBack(idx0, idx1) = 1.0;
+          }
+        }
       }
     }
 

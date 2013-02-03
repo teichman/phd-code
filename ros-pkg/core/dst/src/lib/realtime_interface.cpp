@@ -12,8 +12,8 @@ namespace dst
 {
   
   RealTimeInterface::RealTimeInterface(const std::string& device_id,
-				       pcl::OpenNIGrabber::Mode mode,
-				       double scale) :
+                                       pcl::OpenNIGrabber::Mode mode,
+                                       double scale) :
     sp_(NUM_THREADS),
     img_view_("Image"),
     device_id_(device_id),
@@ -50,7 +50,7 @@ namespace dst
     grabber_.start();
     while(!cloud_viewer_.wasStopped(1)) {
       if(needs_redraw_) {
-	drawVis();
+        drawVis();
       }
       usleep(3e4);
     }
@@ -63,8 +63,8 @@ namespace dst
     cv::Mat3b background;
     if(segmenting_) {
       if(imgs_.empty()) {
-	unlock();
-	return;
+        unlock();
+        return;
       }
       background = imgs_.back();
     }
@@ -74,19 +74,19 @@ namespace dst
     background.copyTo(vis_);
     for(int y = 0; y < seed_.rows; ++y) {
       for(int x = 0; x < seed_.cols; ++x) {
-	switch(seed_(y, x)) {
-	case 127:
-	  vis_(y, x) = background(y, x);
-	  break;
-	case 0:
-	  vis_(y, x) = cv::Vec3b(0, 0, 0);
-	  break;
-	case 255:
-	  vis_(y, x) = cv::Vec3b(255, 255, 255);
-	  break;
-	default:
-	  break;
-	}
+        switch(seed_(y, x)) {
+        case 127:
+          vis_(y, x) = background(y, x);
+          break;
+        case 0:
+          vis_(y, x) = cv::Vec3b(0, 0, 0);
+          break;
+        case 255:
+          vis_(y, x) = cv::Vec3b(255, 255, 255);
+          break;
+        default:
+          break;
+        }
       }
     }
 
@@ -102,23 +102,23 @@ namespace dst
     case ' ':
       segmenting_ = !segmenting_;
       if(!segmenting_) {
-	cout << "Segmented " << num_segmented_ << " frames." << endl;
-	cout << hrt_.reportSeconds() << endl;
-	cout << hrt_.getMilliseconds() / (double)num_segmented_ << " ms per frame on average." << endl;
+        cout << "Segmented " << num_segmented_ << " frames." << endl;
+        cout << hrt_.reportSeconds() << endl;
+        cout << hrt_.getMilliseconds() / (double)num_segmented_ << " ms per frame on average." << endl;
       }
       else {
-	sp_.reset();
-	img_queue_.clear();
-	img_stamp_queue_.clear();
-	pcd_queue_.clear();
-	pcds_.clear();
-	imgs_.clear();
-	seed_imgs_.clear();
-	segmentations_.clear();
-	pcd_results_.clear();
+        sp_.reset();
+        img_queue_.clear();
+        img_stamp_queue_.clear();
+        pcd_queue_.clear();
+        pcds_.clear();
+        imgs_.clear();
+        seed_imgs_.clear();
+        segmentations_.clear();
+        pcd_results_.clear();
 
-	num_segmented_ = 0;
-	hrt_.reset("Total segmentation time");
+        num_segmented_ = 0;
+        hrt_.reset("Total segmentation time");
       }
       break;
     case 'c':
@@ -168,7 +168,7 @@ namespace dst
     bad.z = numeric_limits<float>::quiet_NaN();
     for(size_t i = 0; i < thresholded->size(); ++i)
       if(thresholded->at(i).z > 2.5)
-	thresholded->at(i) = bad;
+        thresholded->at(i) = bad;
     
     lock();
     //cout << "Cloud timestamp: " << cloud->header.stamp.toSec() << endl;
@@ -189,7 +189,7 @@ namespace dst
     int i = 0;
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x, ++i) {
-      	img(y, x) = data[i];
+              img(y, x) = data[i];
       }
     }
     
@@ -204,9 +204,9 @@ namespace dst
     int i = 0;
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x, i+=3) {
-      	img(y, x)[0] = data[i+2];
-    	img(y, x)[1] = data[i+1];
-    	img(y, x)[2] = data[i];
+              img(y, x)[0] = data[i+2];
+            img(y, x)[1] = data[i+1];
+            img(y, x)[2] = data[i];
       }
     }
 
@@ -249,22 +249,22 @@ namespace dst
     else if(its < pts) {
       double delta = fabs(pcd_queue_.front()->header.stamp * 1e-9 - its);
       while(!pcd_queue_.empty()) {
-	if(delta < thresh_) {
-	  cout << "PCD more recent. Adding pair at " << pcd_queue_.front()->header.stamp * 1e-9 << " with delta " << delta << endl;
-	  imgs_.push_back(img_queue_.back());
-	  pcds_.push_back(pcd_queue_.front());
-	  
-	  pcd_queue_.pop_front();
-	  img_queue_.clear();
-	  img_stamp_queue_.clear();
-	  
-	  segmentLatest();
-	  break;
-	}
-	else if(pcd_queue_.front()->header.stamp * 1e-9 < its)
-	  pcd_queue_.pop_front();
-	else
-	  break;
+        if(delta < thresh_) {
+          cout << "PCD more recent. Adding pair at " << pcd_queue_.front()->header.stamp * 1e-9 << " with delta " << delta << endl;
+          imgs_.push_back(img_queue_.back());
+          pcds_.push_back(pcd_queue_.front());
+          
+          pcd_queue_.pop_front();
+          img_queue_.clear();
+          img_stamp_queue_.clear();
+          
+          segmentLatest();
+          break;
+        }
+        else if(pcd_queue_.front()->header.stamp * 1e-9 < its)
+          pcd_queue_.pop_front();
+        else
+          break;
       }
     }
     else {
@@ -272,25 +272,25 @@ namespace dst
       // search for img that matches pcd timestamp.
       while(!img_queue_.empty()) {
 
-	double delta = fabs(pts - img_stamp_queue_.front());
-	if(delta < thresh_) {
-	  cout << "Img more recent. Adding pair at " << pts << " with delta: " << delta << endl;
-	  imgs_.push_back(img_queue_.front());
-	  pcds_.push_back(pcd_queue_.back());
-	  
-	  pcd_queue_.clear();
-	  img_queue_.pop_front();
-	  img_stamp_queue_.pop_front();
-	  
-	  segmentLatest();
-	  break;
-	}
-	else if(img_stamp_queue_.front() < pts) {
-	  img_queue_.pop_front();
-	  img_stamp_queue_.pop_front();
-	}
-	else
-	  break;
+        double delta = fabs(pts - img_stamp_queue_.front());
+        if(delta < thresh_) {
+          cout << "Img more recent. Adding pair at " << pts << " with delta: " << delta << endl;
+          imgs_.push_back(img_queue_.front());
+          pcds_.push_back(pcd_queue_.back());
+          
+          pcd_queue_.clear();
+          img_queue_.pop_front();
+          img_stamp_queue_.pop_front();
+          
+          segmentLatest();
+          break;
+        }
+        else if(img_stamp_queue_.front() < pts) {
+          img_queue_.pop_front();
+          img_stamp_queue_.pop_front();
+        }
+        else
+          break;
       }
     }
   }
@@ -307,30 +307,30 @@ namespace dst
     seed_imgs_.push_back(seed_.clone());
 
     hrt_.start();
-	
+        
     if(pcds_.size() == 1) {
       ROS_ASSERT(segmentations_.size() == 1 && pcd_results_.size() == 1);
       
       sp_.run(seed_,
-	      imgs_.back(),
-	      pcds_.back(),
-	      cv::Mat3b(),
-	      cv::Mat1b(),
-	      KinectCloud::Ptr(),
-	      segmentations_.back(),
-	      pcd_results_.back());
+              imgs_.back(),
+              pcds_.back(),
+              cv::Mat3b(),
+              cv::Mat1b(),
+              KinectCloud::Ptr(),
+              segmentations_.back(),
+              pcd_results_.back());
 
       seed_ = 127;
     }
     else { 
       sp_.run(seed_,
-	      imgs_.back(),
-	      pcds_.back(),
-	      imgs_[imgs_.size()-2],
-    	      segmentations_[segmentations_.size()-2],
-	      pcds_[pcds_.size()-2],
-    	      segmentations_.back(),
-	      pcd_results_.back());
+              imgs_.back(),
+              pcds_.back(),
+              imgs_[imgs_.size()-2],
+                  segmentations_[segmentations_.size()-2],
+              pcds_[pcds_.size()-2],
+                  segmentations_.back(),
+              pcd_results_.back());
 
       seed_ = 127;
     }
@@ -416,15 +416,15 @@ namespace dst
     //   return;
 
     cout << "event: " << event << ", x0: " << x0 << ", y0: " << y0 << ", flags: " << flags
-	 << ", CV_EVENT_FLAG_LBUTTON: " << CV_EVENT_FLAG_LBUTTON << endl;
+         << ", CV_EVENT_FLAG_LBUTTON: " << CV_EVENT_FLAG_LBUTTON << endl;
 
     // -- Left click to add to source.
     if(flags & CV_EVENT_FLAG_LBUTTON) {
       cout << "Setting fg." << endl;
       for(int y = max(0, y0 - seed_radius_); y < seed_.rows && y <= y0 + seed_radius_; ++y)
-	for(int x = max(0, x0 - seed_radius_); x < seed_.cols && x <= x0 + seed_radius_; ++x) {
-	  seed_(y, x) = 255;
-	}
+        for(int x = max(0, x0 - seed_radius_); x < seed_.cols && x <= x0 + seed_radius_; ++x) {
+          seed_(y, x) = 255;
+        }
       
       needs_redraw_ = true;
     }
@@ -432,8 +432,8 @@ namespace dst
     // -- Right click to add to sink.
     else if(flags & CV_EVENT_FLAG_RBUTTON) {
       for(int y = max(0, y0 - seed_radius_); y < seed_.rows && y <= y0 + seed_radius_; ++y)
-	for(int x = max(0, x0 - seed_radius_); x < seed_.cols && x <= x0 + seed_radius_; ++x)
-	  seed_(y, x) = 0;
+        for(int x = max(0, x0 - seed_radius_); x < seed_.cols && x <= x0 + seed_radius_; ++x)
+          seed_(y, x) = 0;
 
       needs_redraw_ = true;
     }

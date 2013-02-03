@@ -54,7 +54,7 @@ Vector3f planeFitRANSAC(Cloud::ConstPtr cloud)
 }
 
 bool process(const StreamSequence& sseq, size_t idx, DiscreteDepthDistortionModel* dddm,
-	     double* mean_range, double* error, double* rms)
+             double* mean_range, double* error, double* rms)
 {
   Frame frame;
   sseq.readFrame(idx, &frame);

@@ -9,7 +9,7 @@ namespace bpo = boost::program_options;
 namespace bfs = boost::filesystem;
 
 void computeDistortion(const Frame& frame, const Frame& mapframe,
-		       double* total_error, double* num_pts)
+                       double* total_error, double* num_pts)
 {
   ROS_ASSERT(frame.depth_->cols() == mapframe.depth_->cols());
   ROS_ASSERT(frame.depth_->rows() == mapframe.depth_->rows());
@@ -20,15 +20,15 @@ void computeDistortion(const Frame& frame, const Frame& mapframe,
     for(int y = 0; y < frame.depth_->rows(); ++y) {
 
       if(frame.depth_->coeffRef(y, x) == 0)
-	continue;
+        continue;
       if(mapframe.depth_->coeffRef(y, x) == 0)
-	continue;
+        continue;
 
       double meas = frame.depth_->coeffRef(y, x) * 0.001;
       double gt = mapframe.depth_->coeffRef(y, x) * 0.001;
       double mult = gt / meas;
       if(mult > MAX_MULT || mult < MIN_MULT)
-	continue;
+        continue;
 
       total_error_local += fabs(meas - gt);
       ++num_pts_local;
@@ -42,12 +42,12 @@ void computeDistortion(const Frame& frame, const Frame& mapframe,
 }
 
 void evaluate(const bpo::variables_map& opts,
-	      const DiscreteDepthDistortionModel& intrinsics,
-	      const Cloud& map,
-	      const StreamSequence& sseq,
-	      const Trajectory& traj,
-	      double* raw_total_error, double* raw_num_pts,
-	      double* undistorted_total_error, double* undistorted_num_pts)
+              const DiscreteDepthDistortionModel& intrinsics,
+              const Cloud& map,
+              const StreamSequence& sseq,
+              const Trajectory& traj,
+              double* raw_total_error, double* raw_num_pts,
+              double* undistorted_total_error, double* undistorted_num_pts)
 {
   // -- For all poses, compute the distortion with and without the intrinsics.
   #pragma omp parallel for
@@ -70,11 +70,11 @@ void evaluate(const bpo::variables_map& opts,
 }
 
 void evaluate(const bpo::variables_map& opts,
-	      const DiscreteDepthDistortionModel& intrinsics,
-	      const vector<Cloud>& maps,
-	      const vector<StreamSequence::ConstPtr>& sseqs,
-	      const vector<Trajectory>& trajectories,
-	      const string& eval_path)
+              const DiscreteDepthDistortionModel& intrinsics,
+              const vector<Cloud>& maps,
+              const vector<StreamSequence::ConstPtr>& sseqs,
+              const vector<Trajectory>& trajectories,
+              const string& eval_path)
 {
   ROS_ASSERT(bfs::exists(eval_path));
   intrinsics.save(eval_path + "/intrinsics");
@@ -102,8 +102,8 @@ void evaluate(const bpo::variables_map& opts,
   double undistorted_num_pts = 0;
   for(size_t i = 0; i < sseqs.size(); ++i) {
     evaluate(opts, intrinsics, maps[i], *sseqs[i], trajectories[i],
-	     &raw_total_error, &raw_num_pts,
-	     &undistorted_total_error, &undistorted_num_pts);
+             &raw_total_error, &raw_num_pts,
+             &undistorted_total_error, &undistorted_num_pts);
   }
   double raw_mean_error = raw_total_error / raw_num_pts;
   double undistorted_mean_error = undistorted_total_error / undistorted_num_pts;
@@ -124,9 +124,9 @@ void evaluate(const bpo::variables_map& opts,
 }
 
 DiscreteDepthDistortionModel calibrate(const bpo::variables_map& opts,
-				       const DiscreteDepthDistortionModel& prev_intrinsics,
-				       const vector<StreamSequence::ConstPtr>& sseqs,
-				       const vector<Trajectory>& trajectories)
+                                       const DiscreteDepthDistortionModel& prev_intrinsics,
+                                       const vector<StreamSequence::ConstPtr>& sseqs,
+                                       const vector<Trajectory>& trajectories)
 {
   ROS_ASSERT(sseqs.size() == trajectories.size());
 
@@ -161,33 +161,33 @@ DiscreteDepthDistortionModel calibrate(const bpo::variables_map& opts,
     #pragma omp parallel for
     for(int y = 0; y < gtframe.depth_->rows(); ++y) {
       for(int x = 0; x < gtframe.depth_->cols(); ++x) {
-	if(gtframe.depth_->coeffRef(y, x) == 0)
-	  continue;
+        if(gtframe.depth_->coeffRef(y, x) == 0)
+          continue;
 
-	ProjectivePoint ppt;
-	ppt.u_ = x;
-	ppt.v_ = y;
-	ppt.z_ = gtframe.depth_->coeffRef(y, x);
-	
-	Point pt;
-	sseq.model_.project(ppt, &pt);
-	pt.getVector4fMap() = transform * pt.getVector4fMap();
-	sseq.model_.project(pt, &ppt);
-	if((ppt.u_ < 0) || (ppt.u_ >= sseq.model_.width_) ||
-	   (ppt.v_ < 0) || (ppt.v_ >= sseq.model_.height_) ||
-	   (measframe.depth_->coeffRef(ppt.v_, ppt.u_) == 0))
-	{
-	  continue;
-	}
-	
-	// Ignore ground truth points observed from further away than the measurement point.
-	double gt_orig = gtframe.depth_->coeffRef(y, x) * 0.001;
-	double meas = measframe.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
-	if(gt_orig > meas)
-	  continue;
+        ProjectivePoint ppt;
+        ppt.u_ = x;
+        ppt.v_ = y;
+        ppt.z_ = gtframe.depth_->coeffRef(y, x);
+        
+        Point pt;
+        sseq.model_.project(ppt, &pt);
+        pt.getVector4fMap() = transform * pt.getVector4fMap();
+        sseq.model_.project(pt, &ppt);
+        if((ppt.u_ < 0) || (ppt.u_ >= sseq.model_.width_) ||
+           (ppt.v_ < 0) || (ppt.v_ >= sseq.model_.height_) ||
+           (measframe.depth_->coeffRef(ppt.v_, ppt.u_) == 0))
+        {
+          continue;
+        }
+        
+        // Ignore ground truth points observed from further away than the measurement point.
+        double gt_orig = gtframe.depth_->coeffRef(y, x) * 0.001;
+        double meas = measframe.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
+        if(gt_orig > meas)
+          continue;
 
-	double gt_proj = ppt.z_ * 0.001;
-	intrinsics.addExample(ppt, gt_proj, meas);
+        double gt_proj = ppt.z_ * 0.001;
+        intrinsics.addExample(ppt, gt_proj, meas);
       }
     }
   }
@@ -196,9 +196,9 @@ DiscreteDepthDistortionModel calibrate(const bpo::variables_map& opts,
 }
 
 void load(const vector<string>& sseq_paths, const vector<string>& traj_paths,
-	  vector<StreamSequence::ConstPtr>* sseqs,
-	  vector<Trajectory>* trajectories,
-	  vector<string>* names)
+          vector<StreamSequence::ConstPtr>* sseqs,
+          vector<Trajectory>* trajectories,
+          vector<string>* names)
 {
   ROS_ASSERT(sseq_paths.size() == traj_paths.size());
   for(size_t i = 0; i < sseq_paths.size(); ++i) {
@@ -353,12 +353,12 @@ int main(int argc, char** argv)
       // slam.trajs_.push_back(trajectories_train[i]);
 
       for(size_t j = 0; j < slam.trajs_.size(); ++j) { 
-	trajectories_train_current.push_back(slam.trajs_[j]);
-	sseqs_train_current.push_back(sseqs_train[i]);
-	ostringstream oss;
-	oss << iter_path << "/" << names_train[i] << "-trajectory" << setw(3) << setfill('0') << j;
-	string traj_path = oss.str();
-	slam.trajs_[j].save(traj_path);
+        trajectories_train_current.push_back(slam.trajs_[j]);
+        sseqs_train_current.push_back(sseqs_train[i]);
+        ostringstream oss;
+        oss << iter_path << "/" << names_train[i] << "-trajectory" << setw(3) << setfill('0') << j;
+        string traj_path = oss.str();
+        slam.trajs_[j].save(traj_path);
       }
     }
 

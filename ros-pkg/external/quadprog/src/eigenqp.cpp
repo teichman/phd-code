@@ -4,9 +4,9 @@ using namespace QuadProgPP;
 
 
 EigenQP::EigenQP(const Eigen::MatrixXd& G,
-		 const Eigen::VectorXd& g0,
-		 const Eigen::MatrixXd& CI,
-		 const Eigen::VectorXd& ci0) :
+                 const Eigen::VectorXd& g0,
+                 const Eigen::MatrixXd& CI,
+                 const Eigen::VectorXd& ci0) :
   G_(G),
   g0_(g0),
   CI_(CI),
@@ -18,11 +18,11 @@ EigenQP::EigenQP(const Eigen::MatrixXd& G,
 }
 
 EigenQP::EigenQP(const Eigen::MatrixXd& G,
-		 const Eigen::VectorXd& g0,
-		 const Eigen::MatrixXd& CE,
-		 const Eigen::VectorXd& ce0,
-		 const Eigen::MatrixXd& CI,
-		 const Eigen::VectorXd& ci0) :
+                 const Eigen::VectorXd& g0,
+                 const Eigen::MatrixXd& CE,
+                 const Eigen::VectorXd& ce0,
+                 const Eigen::MatrixXd& CI,
+                 const Eigen::VectorXd& ci0) :
   G_(G),
   g0_(g0),
   CE_(CE),
@@ -71,8 +71,8 @@ double EigenQP::solve(Eigen::VectorXd* x) const
       ROS_ASSERT(G_(i, j) == G[i][j]);
 
   double val = solve_quadprog(G, g,
-			      eigToQP(CE_), eigToQP(ce0_),
-			      eigToQP(CI_), eigToQP(ci0_), qpx);
+                              eigToQP(CE_), eigToQP(ce0_),
+                              eigToQP(CI_), eigToQP(ci0_), qpx);
   *x = qpToEig(qpx);
   return val;
 }

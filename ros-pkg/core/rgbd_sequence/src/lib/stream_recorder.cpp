@@ -10,9 +10,9 @@ namespace rgbd
 {
 
   StreamRecorder::StreamRecorder(const std::string& device_id,
-				 pcl::OpenNIGrabber::Mode mode,
-				 const std::string& calib_file,
-				 bool view_cloud) :
+                                 pcl::OpenNIGrabber::Mode mode,
+                                 const std::string& calib_file,
+                                 bool view_cloud) :
     device_id_(device_id),
     mode_(mode),
     grabber_(device_id_, mode, mode),
@@ -46,7 +46,7 @@ namespace rgbd
   }
 
   void StreamRecorder::rgbdCallback(const boost::shared_ptr<openni_wrapper::Image>& oni_rgb,
-				    const boost::shared_ptr<openni_wrapper::DepthImage>& oni_depth, float f_inv)
+                                    const boost::shared_ptr<openni_wrapper::DepthImage>& oni_depth, float f_inv)
   {
     if(recording_) {
       timespec clk;
@@ -58,19 +58,19 @@ namespace rgbd
       double thresh = 1.1 * (1.0 / 60.0);
       if(fabs(depth_timestamp - image_timestamp) < thresh)
       {
-	cout << " ********** Adding pair." << endl;
-	cout << "rgbdCallback system timestamp: " << setprecision(16) << callback_timestamp << endl;
-	cout << "depth system timestamp: " << setprecision(16) << oni_depth->getSystemTimeStamp() << endl;
-	cout << "difference: " << setprecision(16) << oni_depth->getSystemTimeStamp() - callback_timestamp << endl;
-	cout << "depth timestamp: " << setprecision(16) << depth_timestamp << endl;
-	cout << "image timestamp: " << setprecision(16) << image_timestamp << endl;
-	
+        cout << " ********** Adding pair." << endl;
+        cout << "rgbdCallback system timestamp: " << setprecision(16) << callback_timestamp << endl;
+        cout << "depth system timestamp: " << setprecision(16) << oni_depth->getSystemTimeStamp() << endl;
+        cout << "difference: " << setprecision(16) << oni_depth->getSystemTimeStamp() - callback_timestamp << endl;
+        cout << "depth timestamp: " << setprecision(16) << depth_timestamp << endl;
+        cout << "image timestamp: " << setprecision(16) << image_timestamp << endl;
+        
         DepthMat depth = oniDepthToEigen( oni_depth );
-	cv::Mat3b img = oniToCV(oni_rgb);
+        cv::Mat3b img = oniToCV(oni_rgb);
         seq_->addFrame( img, depth, fx_, fy_, cx_, cy_, oni_depth->getSystemTimeStamp() ); //TODO verify timing
       }
       else {
-	ROS_WARN_STREAM("rgbdCallback got an rgbd pair with timestamp delta of " << depth_timestamp - image_timestamp);
+        ROS_WARN_STREAM("rgbdCallback got an rgbd pair with timestamp delta of " << depth_timestamp - image_timestamp);
       }
     }
 
@@ -87,9 +87,9 @@ namespace rgbd
     int i = 0;
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x, i+=3) {
-	img(y, x)[0] = data[i+2];
-	img(y, x)[1] = data[i+1];
-	img(y, x)[2] = data[i];
+        img(y, x)[0] = data[i+2];
+        img(y, x)[1] = data[i+1];
+        img(y, x)[2] = data[i];
       }
     }
     
@@ -106,8 +106,8 @@ namespace rgbd
   }
 
   std::string generateFilenameStream(const bfs::path& dir,
-			       const std::string& basename,
-			       int width)
+                               const std::string& basename,
+                               int width)
   {
     // -- Create the directory if necessary.
     ROS_ASSERT(!bfs::exists(dir) || bfs::is_directory(dir));
@@ -119,7 +119,7 @@ namespace rgbd
     bfs::directory_iterator end_itr; // default construction yields past-the-end
     for(bfs::directory_iterator itr(dir); itr != end_itr; ++itr) { 
       if(itr->leaf().substr(width+1).compare(basename) == 0)
-	++num;
+        ++num;
     }
     
     ostringstream filename;
@@ -161,7 +161,7 @@ namespace rgbd
     ROS_ASSERT(grabber_.getDevice()->isSynchronized());
 
     if(DESYNC)
-	    grabber_.getDevice()->setSynchronization(false);
+            grabber_.getDevice()->setSynchronization(false);
     if(!manual_calibration_){
       cout << "$XPL_CALIBRATION_FILE not set. Reverting to default calibration" << endl;
       fx_ = fy_ = grabber_.getDevice()->getImageFocalLength(image_width_);

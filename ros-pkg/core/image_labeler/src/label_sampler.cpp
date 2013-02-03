@@ -24,14 +24,14 @@ IplImage* getImageWithLabel(const ImageLabelManager& dataset, int image_idx, con
 {
   IplImage* img = dataset.getRawImage(image_idx);
   cvRectangle(img,
-	      cvPoint(label.x_, label.y_),
-	      cvPoint(label.x_ + label.width_, label.y_ + label.height_),
-	      ImageLabelManager::getColor(label.class_name_), 3);
+              cvPoint(label.x_, label.y_),
+              cvPoint(label.x_ + label.width_, label.y_ + label.height_),
+              ImageLabelManager::getColor(label.class_name_), 3);
   return img;
 }
 
 IplImage* getRandomLabel(const vector<ImageLabelManager>& datasets,
-			 const string& class_name)
+                         const string& class_name)
 {
   while(true) {
     int dataset_idx = rand() % datasets.size();

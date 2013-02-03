@@ -10,7 +10,7 @@ namespace bpo = boost::program_options;
 namespace bfs = boost::filesystem;
 
 void computeDistortion(const Frame& frame, const Frame& mapframe,
-		       double* total_error, double* num_pts)
+                       double* total_error, double* num_pts)
 {
   ROS_ASSERT(frame.depth_->cols() == mapframe.depth_->cols());
   ROS_ASSERT(frame.depth_->rows() == mapframe.depth_->rows());
@@ -21,15 +21,15 @@ void computeDistortion(const Frame& frame, const Frame& mapframe,
     for(int y = 0; y < frame.depth_->rows(); ++y) {
 
       if(frame.depth_->coeffRef(y, x) == 0)
-	continue;
+        continue;
       if(mapframe.depth_->coeffRef(y, x) == 0)
-	continue;
+        continue;
 
       double meas = frame.depth_->coeffRef(y, x) * 0.001;
       double gt = mapframe.depth_->coeffRef(y, x) * 0.001;
       // double mult = gt / meas;
       // if(mult > MAX_MULT || mult < MIN_MULT)
-      // 	continue;
+      //         continue;
 
       total_error_local += fabs(meas - gt);
       ++num_pts_local;
@@ -43,12 +43,12 @@ void computeDistortion(const Frame& frame, const Frame& mapframe,
 }
 
 void evaluate(const bpo::variables_map& opts,
-	      double f,
-	      const Cloud& map,
-	      const StreamSequence& sseq,
-	      const Trajectory& traj,
-	      double* raw_total_error, double* raw_num_pts,
-	      double* undistorted_total_error, double* undistorted_num_pts)
+              double f,
+              const Cloud& map,
+              const StreamSequence& sseq,
+              const Trajectory& traj,
+              double* raw_total_error, double* raw_num_pts,
+              double* undistorted_total_error, double* undistorted_num_pts)
 {
   // -- For all poses, compute the distortion with and without the intrinsics.
   #pragma omp parallel for
@@ -76,11 +76,11 @@ void evaluate(const bpo::variables_map& opts,
 }
 
 void evaluate(const bpo::variables_map& opts,
-	      double f,
-	      const vector<Cloud>& maps,
-	      const vector<StreamSequence::Ptr>& sseqs,
-	      const vector<Trajectory>& trajectories,
-	      const string& eval_path)
+              double f,
+              const vector<Cloud>& maps,
+              const vector<StreamSequence::Ptr>& sseqs,
+              const vector<Trajectory>& trajectories,
+              const string& eval_path)
 {
   ROS_ASSERT(bfs::exists(eval_path));
   ofstream file;
@@ -95,8 +95,8 @@ void evaluate(const bpo::variables_map& opts,
   double undistorted_num_pts = 0;
   for(size_t i = 0; i < sseqs.size(); ++i) {
     evaluate(opts, f, maps[i], *sseqs[i], trajectories[i],
-	     &raw_total_error, &raw_num_pts,
-	     &undistorted_total_error, &undistorted_num_pts);
+             &raw_total_error, &raw_num_pts,
+             &undistorted_total_error, &undistorted_num_pts);
   }
   double raw_mean_error = raw_total_error / raw_num_pts;
   double undistorted_mean_error = undistorted_total_error / undistorted_num_pts;
@@ -120,8 +120,8 @@ void evaluate(const bpo::variables_map& opts,
 }
 
 double calibrate(const bpo::variables_map& opts,
-		 const vector<StreamSequence::Ptr>& sseqs,
-		 const vector<Trajectory>& trajectories)
+                 const vector<StreamSequence::Ptr>& sseqs,
+                 const vector<Trajectory>& trajectories)
 {
   ROS_ASSERT(sseqs.size() == trajectories.size());
   
@@ -132,9 +132,9 @@ double calibrate(const bpo::variables_map& opts,
 }
 
 void load(const vector<string>& sseq_paths, const vector<string>& traj_paths,
-	  vector<StreamSequence::Ptr>* sseqs,
-	  vector<Trajectory>* trajectories,
-	  vector<string>* names)
+          vector<StreamSequence::Ptr>* sseqs,
+          vector<Trajectory>* trajectories,
+          vector<string>* names)
 {
   ROS_ASSERT(sseq_paths.size() == traj_paths.size());
   for(size_t i = 0; i < sseq_paths.size(); ++i) {

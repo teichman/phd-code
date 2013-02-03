@@ -30,8 +30,8 @@ public:
   
   SlamLightweight();
   void run(rgbd::StreamSequence::ConstPtr sseq,
-	   const std::string& opcd_path = "",
-	   const std::string& otraj_path = "",
+           const std::string& opcd_path = "",
+           const std::string& otraj_path = "",
      const std::string& ograph_path = "");
 
   void rebuild_map();

@@ -11,16 +11,16 @@ class EigenQP
 {
 public:
   EigenQP(const Eigen::MatrixXd& G,
-	  const Eigen::VectorXd& g0,
-	  const Eigen::MatrixXd& CI,
-	  const Eigen::VectorXd& ci0);
+          const Eigen::VectorXd& g0,
+          const Eigen::MatrixXd& CI,
+          const Eigen::VectorXd& ci0);
   
   EigenQP(const Eigen::MatrixXd& G,
-	  const Eigen::VectorXd& g0,
-	  const Eigen::MatrixXd& CE,
-	  const Eigen::VectorXd& ce0,
-	  const Eigen::MatrixXd& CI,
-	  const Eigen::VectorXd& ci0);
+          const Eigen::VectorXd& g0,
+          const Eigen::MatrixXd& CE,
+          const Eigen::VectorXd& ce0,
+          const Eigen::MatrixXd& CI,
+          const Eigen::VectorXd& ci0);
 
   //! Pass in x as the starting point; it will be filled
   //! with the solution.

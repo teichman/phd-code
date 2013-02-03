@@ -37,9 +37,9 @@ void TransformValidator::compute()
 }
 
 void TransformValidator::fineTuneAlignment(const Cloud& cloud0,
-					   KdTree& tree0,
-					   const Cloud& cloud1,
-					   Eigen::Affine3f* transform) const
+                                           KdTree& tree0,
+                                           const Cloud& cloud1,
+                                           Eigen::Affine3f* transform) const
 {
   vector<int> indices(1);
   vector<float> distances(1);
@@ -59,13 +59,13 @@ void TransformValidator::fineTuneAlignment(const Cloud& cloud0,
     TransformationFromCorrespondences tfc;
     for(size_t i = 0; i < working.size(); ++i) {
       if(i % param<int>("Skip") != 0)
-	continue;
+        continue;
       
       indices.clear();
       distances.clear();
       tree0.nearestKSearch(working[i], 1, indices, distances);
       if(indices.empty() || distances[0] > 0.03)
-	continue;
+        continue;
       
       tfc.add(working[i].getVector3fMap(), cloud0[indices[0]].getVector3fMap());
     }
@@ -89,8 +89,8 @@ void TransformValidator::fineTuneAlignment(const Cloud& cloud0,
 }
   
 double TransformValidator::computeLoss(const Cloud& cloud0,
-				       KdTree& tree0,
-				       const Cloud& cloud1) const
+                                       KdTree& tree0,
+                                       const Cloud& cloud1) const
 {
   double score = 0;
   double max_term = 0.1;

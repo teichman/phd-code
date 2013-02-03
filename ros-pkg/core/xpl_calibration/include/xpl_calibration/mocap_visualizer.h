@@ -12,8 +12,8 @@ class MocapVisualizer
 {
 public:
   MocapVisualizer(const TRCParser& trc,
-		  rgbd::StreamSequence::ConstPtr sseq,
-		  double tol = 0.0075);
+                  rgbd::StreamSequence::ConstPtr sseq,
+                  double tol = 0.0075);
   void run();
     
 protected:
@@ -30,8 +30,8 @@ protected:
   void incrementXPL(int num);
   void incrementSync(double val);
   void getTRCPoints(const rgbd::Cloud& frame,
-		    rgbd::Cloud* camera,
-		    rgbd::Cloud* checker) const;
+                    rgbd::Cloud* camera,
+                    rgbd::Cloud* checker) const;
   void getXPLPoints(rgbd::Cloud* xpl) const;
 
 };

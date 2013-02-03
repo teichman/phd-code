@@ -15,10 +15,10 @@ public:
   //! fraction is how much of the depth data to use.
   //! Default params can come from FrameAligner::defaultParams().
   FrameAlignmentMDE(const pipeline::Params& params,
-		    const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
-		    rgbd::Frame frame0, rgbd::Frame frame1,
-		    const std::vector<cv::Point2d>& correspondences0 = std::vector<cv::Point2d>(),
-		    const std::vector<cv::Point2d>& correspondences1 = std::vector<cv::Point2d>());
+                    const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
+                    rgbd::Frame frame0, rgbd::Frame frame1,
+                    const std::vector<cv::Point2d>& correspondences0 = std::vector<cv::Point2d>(),
+                    const std::vector<cv::Point2d>& correspondences1 = std::vector<cv::Point2d>());
 
   //! x = [rx, ry, rz, tx, ty, tz].
   double eval(const Eigen::VectorXd& x) const;
@@ -51,9 +51,9 @@ protected:
 };
 
 void transformAndDecimate(const rgbd::Cloud& in,
-			  const Eigen::Affine3f& transform,
-			  const std::vector<size_t>& indices,
-			  rgbd::Cloud* out);
+                          const Eigen::Affine3f& transform,
+                          const std::vector<size_t>& indices,
+                          rgbd::Cloud* out);
 
 
 //! Computes the asymmetric MDE for a given set of frames assumed to be from the same sensor
@@ -65,8 +65,8 @@ class SequenceAlignmentMDE : public ScalarFunction
 public:
   //! Frames are from the PrimeSense, pcds are from the Velodyne.
   SequenceAlignmentMDE(const rgbd::PrimeSenseModel& model,
-		 const std::vector<rgbd::Frame>& frames,
-		 const std::vector<rgbd::Cloud::ConstPtr>& pcds);
+                 const std::vector<rgbd::Frame>& frames,
+                 const std::vector<rgbd::Cloud::ConstPtr>& pcds);
   //! x = [sync, rx, ry, rz, tx, ty, tz].
   double eval(const Eigen::VectorXd& x) const;
   
@@ -83,10 +83,10 @@ class FocalLengthMDE : public ScalarFunction
 public:
   //! pcds are assumed to be in the coordinate system of their corresponding frames.
   FocalLengthMDE(const rgbd::PrimeSenseModel& model,
-		 const std::vector<rgbd::Frame>& frames,
-		 const std::vector<rgbd::Cloud::ConstPtr>& pcds,
-		 const std::vector<Eigen::Affine3d>& transforms,
-		 double fraction);
+                 const std::vector<rgbd::Frame>& frames,
+                 const std::vector<rgbd::Cloud::ConstPtr>& pcds,
+                 const std::vector<Eigen::Affine3d>& transforms,
+                 double fraction);
   double eval(const Eigen::VectorXd& x) const;
 
 protected:
@@ -98,44 +98,44 @@ protected:
 };
 
 void meanDepthError(const rgbd::PrimeSenseModel& model,
-		    const rgbd::Frame &frame, const rgbd::Cloud& pcd, const rgbd::Frame &gt,
-		    double* val, double* count,
-		    double max_range = std::numeric_limits<double>::max());
+                    const rgbd::Frame &frame, const rgbd::Cloud& pcd, const rgbd::Frame &gt,
+                    double* val, double* count,
+                    double max_range = std::numeric_limits<double>::max());
 
 void meanDepthAndColorError(const rgbd::PrimeSenseModel& model,
-			    const rgbd::Frame &frame, const rgbd::Cloud& pcd, const rgbd::Frame &gt,
-			    double* depth_error, double* color_error, double* count,
-			    double max_range = std::numeric_limits<double>::max());
+                            const rgbd::Frame &frame, const rgbd::Cloud& pcd, const rgbd::Frame &gt,
+                            double* depth_error, double* color_error, double* count,
+                            double max_range = std::numeric_limits<double>::max());
 
 void meanDepthMultiplierAndColorError(const rgbd::PrimeSenseModel& model,
-				      const rgbd::Frame &frame, const rgbd::Cloud& pcd, const rgbd::Frame &gt,
-				      double* depth_error, double* hue_error, double* count,
-				      double max_range = std::numeric_limits<double>::max());
+                                      const rgbd::Frame &frame, const rgbd::Cloud& pcd, const rgbd::Frame &gt,
+                                      double* depth_error, double* hue_error, double* count,
+                                      double max_range = std::numeric_limits<double>::max());
 void meanDepthMultiplierAndHueError(const rgbd::PrimeSenseModel& model,
-				      const rgbd::Frame &frame, const rgbd::Cloud& pcd,
+                                      const rgbd::Frame &frame, const rgbd::Cloud& pcd,
               const rgbd::Frame &gt, const rgbd::IndexMap &indexmap,
               const cv::Mat3f &hsv_frame, const cv::Mat3f &hsv_pcd, 
               const std::vector<size_t> &cloud_indices, 
-				      double* depth_error, double* color_error, double* count,
-				      double max_range = std::numeric_limits<double>::max());
+                                      double* depth_error, double* color_error, double* count,
+                                      double max_range = std::numeric_limits<double>::max());
 void meanDepthMultiplierAndEdgeError(const rgbd::PrimeSenseModel& model,
-				      const rgbd::Frame &frame, const rgbd::Cloud& pcd, 
+                                      const rgbd::Frame &frame, const rgbd::Cloud& pcd, 
               const rgbd::Frame &gt, const rgbd::IndexMap &indexmap,
               const cv::Mat1b &edge_frame, const cv::Mat1b &edge_pcd, 
               const std::vector<size_t> &cloud_indices, 
-				      double* depth_error, double* color_error, double* count,
-				      double max_range = std::numeric_limits<double>::max());
+                                      double* depth_error, double* color_error, double* count,
+                                      double max_range = std::numeric_limits<double>::max());
 void meanDepthMultiplierAndCNError(const rgbd::PrimeSenseModel& model,
-				      const rgbd::Frame &frame, const rgbd::Cloud& pcd,
+                                      const rgbd::Frame &frame, const rgbd::Cloud& pcd,
               const rgbd::Frame &gt,
               const Eigen::MatrixXf &color_names_lookup,
-				      double* depth_error, double* cn_error, double* count,
-				      double max_range = std::numeric_limits<double>::max());
+                                      double* depth_error, double* cn_error, double* count,
+                                      double max_range = std::numeric_limits<double>::max());
 
 void keypointError(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, const std::vector<cv::Point2d> correspondences0,
-		   const Eigen::Affine3f& f0_to_f1,
-		   const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1, const std::vector<cv::Point2d>& correspondences1,
-		   double keypoint_hinge,
-		   double* keypoint_error, double* keypoint_error_count);
+                   const Eigen::Affine3f& f0_to_f1,
+                   const rgbd::PrimeSenseModel& model1, rgbd::Frame frame1, const std::vector<cv::Point2d>& correspondences1,
+                   double keypoint_hinge,
+                   double* keypoint_error, double* keypoint_error_count);
 
 #endif // MEAN_DEPTH_ERROR_H

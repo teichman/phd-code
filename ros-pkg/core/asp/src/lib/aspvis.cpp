@@ -33,9 +33,9 @@ namespace asp
 
       lockWrite();
       if(needs_redraw_)
-	draw();
+        draw();
       unlockWrite();
-	  	
+                  
       char key = img_view_.cvWaitKey(10);
       handleKeypress(key);
     }
@@ -46,12 +46,12 @@ namespace asp
     cv::Mat3b vis = img_.clone();
     if(show_seed_) { 
       for(int y = 0; y < vis.rows; ++y) {
-	for(int x = 0; x < vis.cols; ++x) {
-	  if(seed_(y, x) == 255)
-	    vis(y, x) = cv::Vec3b(255, 255, 255);
-	  else if(seed_(y, x) == 0)
-	    vis(y, x) = cv::Vec3b(0, 0, 0);
-	}
+        for(int x = 0; x < vis.cols; ++x) {
+          if(seed_(y, x) == 255)
+            vis(y, x) = cv::Vec3b(255, 255, 255);
+          else if(seed_(y, x) == 0)
+            vis(y, x) = cv::Vec3b(0, 0, 0);
+        }
       }
     }
     img_view_.updateImage(vis);
@@ -158,9 +158,9 @@ namespace asp
     // -- Left click to add to source.
     if(flags & CV_EVENT_FLAG_LBUTTON) {
       for(int i = x - seed_radius_; i <= x + seed_radius_; ++i)
-	for(int j = y - seed_radius_; j <= y + seed_radius_; ++j)
-	  if(i >= 0 && i < seed_.cols && j >= 0 && j < seed_.rows)
-	    seed_(j, i) = 255;
+        for(int j = y - seed_radius_; j <= y + seed_radius_; ++j)
+          if(i >= 0 && i < seed_.cols && j >= 0 && j < seed_.rows)
+            seed_(j, i) = 255;
 
       scopeLockWrite;
       needs_redraw_ = true;
@@ -170,9 +170,9 @@ namespace asp
     else if(flags & CV_EVENT_FLAG_RBUTTON) {
 
       for(int i = x - seed_radius_; i <= x + seed_radius_; ++i) 
-	for(int j = y - seed_radius_; j <= y + seed_radius_; ++j)
-	  if(i >= 0 && i < seed_.cols && j >= 0 && j < seed_.rows)
-	    seed_(j, i) = 0;
+        for(int j = y - seed_radius_; j <= y + seed_radius_; ++j)
+          if(i >= 0 && i < seed_.cols && j >= 0 && j < seed_.rows)
+            seed_(j, i) = 0;
 
       scopeLockWrite;
       needs_redraw_ = true;

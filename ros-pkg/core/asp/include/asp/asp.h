@@ -42,7 +42,7 @@ namespace asp
     //! seg_img is 255 for fg, 0 for bg, 127 for unknown.
     //! cache and seg_vec and for training.  See graphcuts/structural_svm.h.
     void segment(cv::Mat1b* seg_img, PotentialsCache* cache = NULL);
-		     
+                     
   protected:
     //! Initializes pipeline_ with NodePotentialAggregator, EdgePotentialAggregator, 
     //! and GraphCuts pods.  You then hook up your own things to this.

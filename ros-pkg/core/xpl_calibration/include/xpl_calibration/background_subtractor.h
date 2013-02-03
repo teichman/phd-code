@@ -28,9 +28,9 @@ protected:
   std::vector<cv::Mat1b> fg_imgs_;
 
   void findForeground(const rgbd::Cloud& pcd,
-		      const BackgroundModel& model,
-		      std::vector<int>* indices,
-		      cv::Mat1b img) const;
+                      const BackgroundModel& model,
+                      std::vector<int>* indices,
+                      cv::Mat1b img) const;
     
 };
 

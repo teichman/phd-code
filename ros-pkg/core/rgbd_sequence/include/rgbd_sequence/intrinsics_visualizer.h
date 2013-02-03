@@ -10,7 +10,7 @@ namespace rgbd
 {
 
   class AcceptedPoints : public std::vector< std::pair<ProjectivePoint, ProjectivePoint> >,
-			 public Serializable
+                         public Serializable
   {
     void serialize(std::ostream& out) const;
     void deserialize(std::istream& in);

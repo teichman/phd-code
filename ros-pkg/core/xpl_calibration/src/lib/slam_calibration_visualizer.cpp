@@ -76,33 +76,33 @@ void SlamCalibrationVisualizer::visualizationThreadFunction()
 
       // -- Add the raw sensor data from the current frame.
       if(show_frame_) { 
-	const Trajectory& traj = calibrator_->trajectories_[seq_idx_];
-	const StreamSequence& sseq = *calibrator_->sseqs_[seq_idx_];
-	if(traj.exists(frame_idx_)) {
-	  Frame pose_frame;
-	  sseq.readFrame(frame_idx_, &pose_frame);
-	  if(dddm_ && use_distortion_model_) {
-	    ScopedTimer st("Undistorting");
-	    dddm_->undistort(&pose_frame);
-	  }
-	  Cloud pose_pcd;
-	  sseq.model_.frameToCloud(pose_frame, &pose_pcd);
-	  if(!color_frame_) {
-	    for(size_t i = 0; i < pose_pcd.size(); ++i) {
-	      pose_pcd[i].r = 255;
-	      pose_pcd[i].g = 0;
-	      pose_pcd[i].b = 0;
-	    }
-	  }
-	  
-	  Affine3f transform = traj.get(frame_idx_).cast<float>();
-	  pcl::transformPointCloud(pose_pcd, pose_pcd, transform);
-	  *pcd += pose_pcd;
-	}
+        const Trajectory& traj = calibrator_->trajectories_[seq_idx_];
+        const StreamSequence& sseq = *calibrator_->sseqs_[seq_idx_];
+        if(traj.exists(frame_idx_)) {
+          Frame pose_frame;
+          sseq.readFrame(frame_idx_, &pose_frame);
+          if(dddm_ && use_distortion_model_) {
+            ScopedTimer st("Undistorting");
+            dddm_->undistort(&pose_frame);
+          }
+          Cloud pose_pcd;
+          sseq.model_.frameToCloud(pose_frame, &pose_pcd);
+          if(!color_frame_) {
+            for(size_t i = 0; i < pose_pcd.size(); ++i) {
+              pose_pcd[i].r = 255;
+              pose_pcd[i].g = 0;
+              pose_pcd[i].b = 0;
+            }
+          }
+          
+          Affine3f transform = traj.get(frame_idx_).cast<float>();
+          pcl::transformPointCloud(pose_pcd, pose_pcd, transform);
+          *pcd += pose_pcd;
+        }
       }
       
       if(!vis_.updatePointCloud(pcd, "default"))
-	vis_.addPointCloud(pcd, "default");
+        vis_.addPointCloud(pcd, "default");
       needs_update_ = false;
     }
 
@@ -162,7 +162,7 @@ void SlamCalibrationVisualizer::keyboardCallback(const pcl::visualization::Keybo
       use_distortion_model_ = !use_distortion_model_;
       cout << "use_distortion_model_: " << use_distortion_model_ << endl;
       if(use_distortion_model_ && !dddm_)
-	cout << "No distortion model provided." << endl;
+        cout << "No distortion model provided." << endl;
       needs_update_ = true;
     }
     else if(key == 'c') {
@@ -209,12 +209,12 @@ void SlamCalibrationVisualizer::incrementFrameIdx(int num)
     while(true) {
       idx += incr;
       if(idx < 0)
-	idx = traj.size() - 1;
+        idx = traj.size() - 1;
       if(idx >= (int)traj.size())
-	idx = 0;
+        idx = 0;
 
       if(traj.exists(idx)) {
-	break;
+        break;
       }
     }
     num -= incr;

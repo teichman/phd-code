@@ -22,10 +22,10 @@ DepthMatPtr oniDepthToEigenPtr(const boost::shared_ptr<openni_wrapper::DepthImag
   for(int y = 0; y < depth->rows(); ++y){
     for(int x = 0; x < depth->cols(); ++x, ++i){
       if(data[i] == oni->getNoSampleValue() || data[i] == oni->getShadowValue()){
-	depth->coeffRef(y,x) = 0;
+        depth->coeffRef(y,x) = 0;
       }
       else{
-	depth->coeffRef(y,x) = data[i];
+        depth->coeffRef(y,x) = data[i];
       }
     }
   }
@@ -52,8 +52,8 @@ cv::Mat3b oniToCV(const boost::shared_ptr<openni_wrapper::Image>& oni)
 
 
 void rgbdCallback(const boost::shared_ptr<openni_wrapper::Image>& oni_rgb,
-		  const boost::shared_ptr<openni_wrapper::DepthImage>& oni_depth,
-		  float)
+                  const boost::shared_ptr<openni_wrapper::DepthImage>& oni_depth,
+                  float)
 {
   DepthMatPtr depth = oniDepthToEigenPtr(oni_depth);
   g_img = oniToCV(oni_rgb);
@@ -61,12 +61,12 @@ void rgbdCallback(const boost::shared_ptr<openni_wrapper::Image>& oni_rgb,
   for(int y = 0; y < g_img.rows; ++y) {
     for(int x = 0; x < g_img.cols; ++x) {
       if(depth->coeffRef(y, x) == 0 ||
-	 depth->coeffRef(y, x) > g_threshold * 1000)
+         depth->coeffRef(y, x) > g_threshold * 1000)
       {
-	if(g_debug)
-	  g_img(y, x) = cv::Vec3b(0, 255, 0);
-	else
-	  g_img(y, x) = g_background(y, x);
+        if(g_debug)
+          g_img(y, x) = cv::Vec3b(0, 255, 0);
+        else
+          g_img(y, x) = g_background(y, x);
       }
     }
   }
@@ -105,8 +105,8 @@ int main(int argc, char** argv)
   pcl::OpenNIGrabber grabber("", mode, mode);
 
   boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&,
-  		const boost::shared_ptr<openni_wrapper::DepthImage>&,
-  		float)> rgbd_cb;
+                  const boost::shared_ptr<openni_wrapper::DepthImage>&,
+                  float)> rgbd_cb;
 //rgbd_cb = boost::bind(&StreamRecorder::rgbdCallback, this, _1, _2, _3);
 rgbd_cb = boost::bind(rgbdCallback, _1, _2, _3);
 grabber.registerCallback(rgbd_cb);

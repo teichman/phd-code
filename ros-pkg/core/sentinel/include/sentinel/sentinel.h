@@ -17,15 +17,15 @@ class Sentinel
 {
 public:
   Sentinel(std::string name,
-	   double update_interval,
-	   double save_interval,
-	   int max_training_imgs,
-	   double threshold,
-	   const std::string& device_id = "",
-	   pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QVGA_30Hz);
+           double update_interval,
+           double save_interval,
+           int max_training_imgs,
+           double threshold,
+           const std::string& device_id = "",
+           pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QVGA_30Hz);
   void rgbdCallback(const boost::shared_ptr<openni_wrapper::Image>& rgb,
-		    const boost::shared_ptr<openni_wrapper::DepthImage>& depth,
-		    float f_inv);
+                    const boost::shared_ptr<openni_wrapper::DepthImage>& depth,
+                    float f_inv);
   void run();
 
 protected:

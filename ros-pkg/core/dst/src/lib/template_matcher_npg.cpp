@@ -7,8 +7,8 @@ namespace dst
 {
 
   TemplateMatcherNPG::TemplateMatcherNPG(pipeline2::Outlet<DepthProjector::Output>* index_otl,
-					 pipeline2::Outlet<cv::Mat3b>* img_otl,
-					 pipeline2::Outlet<cv::Mat1b>* mask_otl) :
+                                         pipeline2::Outlet<cv::Mat3b>* img_otl,
+                                         pipeline2::Outlet<cv::Mat1b>* mask_otl) :
     NodePotentialGenerator(),
     index_otl_(index_otl),
     img_otl_(img_otl),
@@ -37,16 +37,16 @@ namespace dst
     // -- Compute node potentials.
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x) {
-	// Ignore points not on the boundary.
-	if(mask(y, x) != 255)
-	  continue;
+        // Ignore points not on the boundary.
+        if(mask(y, x) != 255)
+          continue;
 
-	// Random placeholder.
-	int idx = y * img.cols + x;
-	if(idx % 2 == 0)
-	  source_potentials_(y, x) = 1;
-	else
-	  sink_potentials_(y, x) = 1;
+        // Random placeholder.
+        int idx = y * img.cols + x;
+        if(idx % 2 == 0)
+          source_potentials_(y, x) = 1;
+        else
+          sink_potentials_(y, x) = 1;
       }
     }
 

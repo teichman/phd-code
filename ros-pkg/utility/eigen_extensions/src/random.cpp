@@ -55,7 +55,7 @@ namespace eigen_extensions
     for(int i = 0; i < weights.rows(); ++i) {
       cumulative += weights(i) * inv_sum;
       if(cumulative >= r)
-	return i;
+        return i;
     }
     return weights.rows() - 1;
   }
@@ -77,9 +77,9 @@ namespace eigen_extensions
     for(int m = 0; m < indices->rows(); ++m) {
       double u = r + m / (double)indices->rows();
       while(u > c) {
-	++i;
-	i = min(i, (int)(weights.rows() - 1));  // edge case
-	c += weights(i);
+        ++i;
+        i = min(i, (int)(weights.rows() - 1));  // edge case
+        c += weights(i);
       }
       indices->coeffRef(m) = i;
     }

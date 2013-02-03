@@ -24,7 +24,7 @@ Cloud::Ptr downsampleCloud(const Cloud& orig, double ds)
 }
 
 void ObjectMatchingCalibrator::accumulateObjects(const ObjectClouds& objects,
-						 std::vector<Cloud::Ptr>* pcds) const
+                                                 std::vector<Cloud::Ptr>* pcds) const
 {
   pcds->clear();
   for(size_t i = 0; i < objects.size(); ++i) {
@@ -38,9 +38,9 @@ void ObjectMatchingCalibrator::accumulateObjects(const ObjectClouds& objects,
     for(size_t j = 0; j < objects[i].size(); ++j) {
       pcd->reserve(pcd->size() + objects[i][j]->size());
       for(size_t k = 0; k < objects[i][j]->size(); ++k) {
-	if(((double)rand() / (double)RAND_MAX) < downsample)
-	  continue;
-	pcd->push_back(objects[i][j]->at(k));
+        if(((double)rand() / (double)RAND_MAX) < downsample)
+          continue;
+        pcd->push_back(objects[i][j]->at(k));
       }
     }
 
@@ -50,8 +50,8 @@ void ObjectMatchingCalibrator::accumulateObjects(const ObjectClouds& objects,
 }
 
 void ObjectMatchingCalibrator::getData(std::vector<KdTree::Ptr>* trees0,
-					 std::vector<Cloud::ConstPtr>* pcds0,
-					 std::vector<Cloud::Ptr>* pcds1) const
+                                         std::vector<Cloud::ConstPtr>* pcds0,
+                                         std::vector<Cloud::Ptr>* pcds1) const
 {
   trees0->clear();
   pcds0->clear();
@@ -147,8 +147,8 @@ void ObjectMatchingCalibrator::compute()
 }
 
 double ObjectMatchingCalibrator::updateSync(const std::vector<KdTree::Ptr>& trees0,
-					    const std::vector<Cloud::ConstPtr>& pcds0,
-					    const std::vector<Cloud::Ptr>& pcds1) const
+                                            const std::vector<Cloud::ConstPtr>& pcds0,
+                                            const std::vector<Cloud::Ptr>& pcds1) const
 {
   LossFunction::Ptr lf(new LossFunction(trees0, pcds0, pcds1, getParams()));
   double dt = gridSearchSync(lf);
@@ -186,7 +186,7 @@ Eigen::Affine3f ObjectMatchingCalibrator::centroidRansac() const
 
     // Count up inliers.
     int num_inliers = countInliers(transform, centroids0, centroids1,
-				   param<double>("CentroidThreshold"));
+                                   param<double>("CentroidThreshold"));
     
     
     // Save this transform if it's the best.
@@ -200,7 +200,7 @@ Eigen::Affine3f ObjectMatchingCalibrator::centroidRansac() const
   Affine3f refined;
   cout << "Num inliers before refinement: " << best_num_inliers << endl;
   int new_num_inliers = countInliers(best_transform, centroids0, centroids1,
-				     param<double>("CentroidThreshold"), &refined);
+                                     param<double>("CentroidThreshold"), &refined);
   cout << "Num inliers after refinement: " << new_num_inliers << endl;
 
   if(debug_) {
@@ -269,13 +269,13 @@ void ObjectMatchingCalibrator::visualizeInliers(const std::string& name, const E
   vector<Vector3f> inlier_centroids0;
   vector<Vector3f> inlier_centroids1;
   countInliers(transform, centroids0, centroids1,
-	       param<double>("CentroidThreshold"),
-	       NULL, NULL, NULL,
-	       &inlier_centroids0, &inlier_centroids1);
+               param<double>("CentroidThreshold"),
+               NULL, NULL, NULL,
+               &inlier_centroids0, &inlier_centroids1);
 
   Cloud seq1;
   pcl::transformPointCloud(*pull<Sequence::ConstPtr>("Sequence1")->pcds_[0],
-			   seq1, transform);
+                           seq1, transform);
    
   ROS_ASSERT(inlier_centroids1.size() == inlier_centroids0.size());
   Cloud::Ptr pcd(new Cloud);
@@ -305,7 +305,7 @@ void ObjectMatchingCalibrator::visualizeInliers(const std::string& name, const E
 }
 
 void ObjectMatchingCalibrator::computeCentroids(const ObjectClouds& objects,
-						std::vector< std::vector<Eigen::Vector3f> >* centroids) const
+                                                std::vector< std::vector<Eigen::Vector3f> >* centroids) const
 {
   centroids->clear();
   centroids->resize(objects.size());
@@ -316,10 +316,10 @@ void ObjectMatchingCalibrator::computeCentroids(const ObjectClouds& objects,
       const Cloud& obj = *objects[i][j];
       double num = 0;
       for(size_t k = 0; k < obj.size(); ++k) { 
-	if(pcl_isfinite(obj[k].x)) { 
-	  centroids->at(i)[j] += obj[k].getVector3fMap();
-	  ++num;
-	}
+        if(pcl_isfinite(obj[k].x)) { 
+          centroids->at(i)[j] += obj[k].getVector3fMap();
+          ++num;
+        }
       }
       centroids->at(i)[j] /= num;
       total_num_pts += num;
@@ -330,10 +330,10 @@ void ObjectMatchingCalibrator::computeCentroids(const ObjectClouds& objects,
 }
 
 void ObjectMatchingCalibrator::sampleCorrespondence(const rgbd::Sequence& seq0,
-						    const rgbd::Sequence& seq1,
-						    const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
-						    const std::vector< std::vector<Eigen::Vector3f> >& centroids1,
-						    pcl::TransformationFromCorrespondences* tfc) const
+                                                    const rgbd::Sequence& seq1,
+                                                    const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
+                                                    const std::vector< std::vector<Eigen::Vector3f> >& centroids1,
+                                                    pcl::TransformationFromCorrespondences* tfc) const
 {
   int iter = 0;
   while(true) {
@@ -360,14 +360,14 @@ void ObjectMatchingCalibrator::sampleCorrespondence(const rgbd::Sequence& seq0,
 
   
 int ObjectMatchingCalibrator::countInliers(const Eigen::Affine3f& transform,
-					   const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
-					   const std::vector< std::vector<Eigen::Vector3f> >& centroids1,
-					   double ransac_thresh,
-					   Eigen::Affine3f* refined_transform,
-					   std::vector<Cloud::ConstPtr>* inlier_clouds0,
-					   std::vector<Cloud::ConstPtr>* inlier_clouds1,
-					   std::vector<Vector3f>* inlier_centroids0,
-					   std::vector<Vector3f>* inlier_centroids1) const
+                                           const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
+                                           const std::vector< std::vector<Eigen::Vector3f> >& centroids1,
+                                           double ransac_thresh,
+                                           Eigen::Affine3f* refined_transform,
+                                           std::vector<Cloud::ConstPtr>* inlier_clouds0,
+                                           std::vector<Cloud::ConstPtr>* inlier_clouds1,
+                                           std::vector<Vector3f>* inlier_centroids0,
+                                           std::vector<Vector3f>* inlier_centroids1) const
 {
   const ObjectClouds& objects0 = *pull<const ObjectClouds*>("Objects0");
   const ObjectClouds& objects1 = *pull<const ObjectClouds*>("Objects1");
@@ -395,24 +395,24 @@ int ObjectMatchingCalibrator::countInliers(const Eigen::Affine3f& transform,
       double best_dist = numeric_limits<double>::max();
       int best_idx = -1;
       for(size_t k = 0; k < centroids0[i].size(); ++k) {
-	double dist = (centroids0[i][k] - transformed).norm();
-	if(dist < best_dist) {
-	  best_dist = dist;
-	  best_idx = k;
-	}
+        double dist = (centroids0[i][k] - transformed).norm();
+        if(dist < best_dist) {
+          best_dist = dist;
+          best_idx = k;
+        }
       }
 
       if(best_dist < ransac_thresh) { 
-	++num_inliers;
-	tfc.add(centroids1[i][j], centroids0[i][best_idx]);
-	if(inlier_clouds0 && inlier_clouds1) { 
-	  inlier_clouds0->push_back(objects0[i][best_idx]);
-	  inlier_clouds1->push_back(objects1[i][j]);
-	}
-	if(inlier_centroids0 && inlier_centroids1) { 
-	  inlier_centroids0->push_back(centroids0[i][best_idx]);
-	  inlier_centroids1->push_back(centroids1[i][j]);
-	}
+        ++num_inliers;
+        tfc.add(centroids1[i][j], centroids0[i][best_idx]);
+        if(inlier_clouds0 && inlier_clouds1) { 
+          inlier_clouds0->push_back(objects0[i][best_idx]);
+          inlier_clouds1->push_back(objects1[i][j]);
+        }
+        if(inlier_centroids0 && inlier_centroids1) { 
+          inlier_centroids0->push_back(centroids0[i][best_idx]);
+          inlier_centroids1->push_back(centroids1[i][j]);
+        }
       }
     }
   }
@@ -443,8 +443,8 @@ Eigen::Affine3f ObjectMatchingCalibrator::gridSearchTransform(ScalarFunction::Pt
 }
 
 Affine3f ObjectMatchingCalibrator::updateTransformGS(const std::vector<KdTree::Ptr>& trees0,
-						     const std::vector<Cloud::ConstPtr>& pcds0,
-						     const std::vector<Cloud::Ptr>& pcds1) const
+                                                     const std::vector<Cloud::ConstPtr>& pcds0,
+                                                     const std::vector<Cloud::Ptr>& pcds1) const
 {
   Affine3f transform = Affine3f::Identity();
   int iter = 0;
@@ -471,8 +471,8 @@ Affine3f ObjectMatchingCalibrator::updateTransformGS(const std::vector<KdTree::P
 }
 
 Affine3f ObjectMatchingCalibrator::updateTransformICP(const std::vector<KdTree::Ptr>& trees0,
-						      const std::vector<Cloud::ConstPtr>& pcds0,
-						      const std::vector<Cloud::Ptr>& pcds1) const
+                                                      const std::vector<Cloud::ConstPtr>& pcds0,
+                                                      const std::vector<Cloud::Ptr>& pcds1) const
 {
   Affine3f transform = Affine3f::Identity();
   
@@ -484,29 +484,29 @@ Affine3f ObjectMatchingCalibrator::updateTransformICP(const std::vector<KdTree::
     if(debug_) {
       ostringstream oss;
       oss << "icp-outer-iter"  << setw(4) << setfill('0') << outer_iter_
-	  << "-inner-iter" << setw(4) << setfill('0') << iter;
+          << "-inner-iter" << setw(4) << setfill('0') << iter;
     }
     ++iter;
     
     pcl::TransformationFromCorrespondences tfc;
     for(size_t i = 0; i < pcds1.size(); ++i) {
       int idx = seek(pcds0, pcds1[i]->header.stamp * 1e-9 ,
-		     param<double>("TimeCorrespondenceThreshold"));
+                     param<double>("TimeCorrespondenceThreshold"));
       if(idx == -1)
-	continue;
+        continue;
       
       KdTree::Ptr tree0 = trees0[idx];
       const Cloud& pcd0 = *pcds0[idx];
       const Cloud& pcd1 = *pcds1[i];
             
       for(size_t j = 0; j < pcd1.size(); ++j) {
-	indices.clear();
-	distances.clear();
-	tree0->nearestKSearch(pcd1[j], 1, indices, distances);
-	if(indices.empty() || distances[0] > max_dist)
-	  continue;
-	
-	tfc.add(pcd1[j].getVector3fMap(), pcd0[indices[0]].getVector3fMap());
+        indices.clear();
+        distances.clear();
+        tree0->nearestKSearch(pcd1[j], 1, indices, distances);
+        if(indices.empty() || distances[0] > max_dist)
+          continue;
+        
+        tfc.add(pcd1[j].getVector3fMap(), pcd0[indices[0]].getVector3fMap());
       }
     }
     
@@ -531,9 +531,9 @@ Affine3f ObjectMatchingCalibrator::updateTransformICP(const std::vector<KdTree::
  ************************************************************/
 
 LossFunction::LossFunction(const std::vector<KdTree::Ptr>& trees0,
-			   const std::vector<Cloud::ConstPtr>& pcds0,
-			   const std::vector<Cloud::Ptr>& pcds1,
-			   const pipeline::Params& params) :
+                           const std::vector<Cloud::ConstPtr>& pcds0,
+                           const std::vector<Cloud::Ptr>& pcds1,
+                           const pipeline::Params& params) :
   trees0_(trees0),
   pcds0_(pcds0),
   pcds1_(pcds1),
@@ -610,7 +610,7 @@ double LossFunction::computeLoss(KdTree::Ptr tree0, const Cloud& pcd0, const Clo
       int idx = projectPoint(pcd0, pt, &u, &v);
       double fsv = max_dist_;
       if(idx != -1 && pcl_isfinite(pcd0[idx].z))
-	fsv = fmin(max_dist_, fmax(0.0, pcd0[idx].z - pt.z));
+        fsv = fmin(max_dist_, fmax(0.0, pcd0[idx].z - pt.z));
       val += fsv;
     }
         
@@ -626,7 +626,7 @@ double LossFunction::computeLoss(KdTree::Ptr tree0, const Cloud& pcd0, const Clo
 }
 
 int LossFunction::projectPoint(const rgbd::Cloud& pcd, const rgbd::Point& pt,
-			       int* u, int* v) const
+                               int* u, int* v) const
 {
   ROS_ASSERT(pcd.isOrganized());
   ROS_ASSERT(pcl_isfinite(pt.x) && pcl_isfinite(pt.y) && pcl_isfinite(pt.z));
@@ -678,7 +678,7 @@ int seek(const std::vector<Cloud::ConstPtr>& pcds0, double ts1, double dt_thresh
 }
 
 Eigen::Affine3f generateTransform(double rx, double ry, double rz,
-				  double tx, double ty, double tz)
+                                  double tx, double ty, double tz)
 {
   Affine3f Rx, Ry, Rz, T;
   Rx = Eigen::AngleAxisf(rx, Vector3f(1, 0, 0));

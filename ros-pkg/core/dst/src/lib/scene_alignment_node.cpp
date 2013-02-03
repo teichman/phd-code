@@ -7,10 +7,10 @@ namespace dst
 {
 
   SceneAlignmentNode::SceneAlignmentNode(pipeline2::Outlet<OpticalFlowNode::Output>* optflow_otl,
-					 pipeline2::Outlet<DepthProjector::Output>* index_otl,
-					 double distance_threshold,
-					 double edge_threshold,
-					 int num_samples) :
+                                         pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                                         double distance_threshold,
+                                         double edge_threshold,
+                                         int num_samples) :
     ComputeNode(),
     transformed_otl_(this),
     prev_to_curr_otl_(this),
@@ -26,31 +26,31 @@ namespace dst
   }
 
   void SceneAlignmentNode::get3DPoints(const std::vector<cv::Point2i>& img_pts,
-				       const std::vector<bool>& valid,
-				       cv::Mat1i index,
-				       KinectCloud::ConstPtr pcd,
-				       std::vector<pcl::PointXYZRGB>* pts) const
+                                       const std::vector<bool>& valid,
+                                       cv::Mat1i index,
+                                       KinectCloud::ConstPtr pcd,
+                                       std::vector<pcl::PointXYZRGB>* pts) const
   {
     ROS_ASSERT(pts->empty());
     pts->reserve(img_pts.size());
     for(size_t i = 0; i < valid_.size(); ++i) {
       if(!valid_[i])
-	continue;
+        continue;
 
       cv::Point2i impt;
       OpticalFlowNode::safePointRound(index.size(), img_pts[i], &impt);
       int idx = index(impt);
       ROS_FATAL_STREAM_COND(idx < 0 || (size_t)idx >= pcd->points.size(),
-			    "idx is " << idx << ", but pcd->points is only "
-			    << pcd->points.size() << " long." << endl
-			    << "Point: " << impt);
+                            "idx is " << idx << ", but pcd->points is only "
+                            << pcd->points.size() << " long." << endl
+                            << "Point: " << impt);
       pts->push_back(pcd->points[idx]);
     }
   }
 
   double SceneAlignmentNode::scoreTransform(const Eigen::Affine3f& trans,
-					    std::vector<pcl::PointXYZRGB>* curr_inliers,
-					    std::vector<pcl::PointXYZRGB>* prev_inliers) const
+                                            std::vector<pcl::PointXYZRGB>* curr_inliers,
+                                            std::vector<pcl::PointXYZRGB>* prev_inliers) const
   {
     curr_inliers->clear();
     prev_inliers->clear();
@@ -59,9 +59,9 @@ namespace dst
     for(size_t i = 0; i < current_points_.size(); ++i) {
       double d = (trans * current_points_[i].getVector3fMap() - previous_points_[i].getVector3fMap()).norm();
       if(d < distance_threshold_) { 
-	++num_inliers;
-	prev_inliers->push_back(previous_points_[i]);
-	curr_inliers->push_back(current_points_[i]);
+        ++num_inliers;
+        prev_inliers->push_back(previous_points_[i]);
+        curr_inliers->push_back(current_points_[i]);
       }
     }
 
@@ -69,7 +69,7 @@ namespace dst
   }
 
   void SceneAlignmentNode::sampleCorrespondences(std::vector<pcl::PointXYZRGB>* prev,
-						 std::vector<pcl::PointXYZRGB>* curr) const
+                                                 std::vector<pcl::PointXYZRGB>* curr) const
   {
     set<size_t> sample;
     while(sample.size() < 3) {
@@ -105,13 +105,13 @@ namespace dst
     int num_valid = 0;
     for(size_t i = 0; i < edge_scores.size(); ++i) {
       if(optflow.status_->at(i) == 0)
-	continue;
+        continue;
       if(edge_scores[i] < edge_threshold_)
-	continue;
+        continue;
       if(current_index(optflow.points_->at(i)) == -1)
-	continue;
+        continue;
       if(previous_index(optflow.prev_points_->at(i)) == -1)
-	continue;
+        continue;
       
       valid_[i] = true;
       ++num_valid;
@@ -146,10 +146,10 @@ namespace dst
       double score = scoreTransform(trans, &curr_inliers_, &prev_inliers_);
       
       if(score > best_score_) {
-	best_score_ = score;
-	best_prev_inliers = prev_inliers_;
-	best_curr_inliers = curr_inliers_;
-	transform_ = computeTransform(best_prev_inliers, best_curr_inliers);
+        best_score_ = score;
+        best_prev_inliers = prev_inliers_;
+        best_curr_inliers = curr_inliers_;
+        transform_ = computeTransform(best_prev_inliers, best_curr_inliers);
       }
     }
     
@@ -166,7 +166,7 @@ namespace dst
 
   Eigen::Affine3f
   SceneAlignmentNode::computeTransform(const std::vector<pcl::PointXYZRGB>& world_points,
-				       const std::vector<pcl::PointXYZRGB>& model_points)
+                                       const std::vector<pcl::PointXYZRGB>& model_points)
   {
     pcl::TransformationFromCorrespondences tfc;
 

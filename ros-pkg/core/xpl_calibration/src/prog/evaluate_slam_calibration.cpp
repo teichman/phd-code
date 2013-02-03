@@ -17,15 +17,15 @@ void computeDistortion(const Frame& frame, const Frame& mapframe, double* total_
     for(int y = 0; y < frame.depth_->rows(); ++y) {
 
       if(frame.depth_->coeffRef(y, x) == 0)
-	continue;
+        continue;
       if(mapframe.depth_->coeffRef(y, x) == 0)
-	continue;
+        continue;
 
       double meas = frame.depth_->coeffRef(y, x) * 0.001;
       double gt = mapframe.depth_->coeffRef(y, x) * 0.001;
       double mult = gt / meas;
       if(mult > MAX_MULT || mult < MIN_MULT)
-	continue;
+        continue;
       
       *total_error += fabs(meas - gt);
       (*count)++;
@@ -34,9 +34,9 @@ void computeDistortion(const Frame& frame, const Frame& mapframe, double* total_
 }
 
 void evaluate(const bpo::variables_map& opts,
-	      const DiscreteDepthDistortionModel& intrinsics,
-	      const StreamSequence& sseq, const Trajectory& traj,
-	      const string& eval_path)
+              const DiscreteDepthDistortionModel& intrinsics,
+              const StreamSequence& sseq, const Trajectory& traj,
+              const string& eval_path)
 {
   ROS_ASSERT(!bfs::exists(eval_path));
   bfs::create_directory(eval_path);
@@ -89,9 +89,9 @@ void evaluate(const bpo::variables_map& opts,
 }
 
 DiscreteDepthDistortionModel calibrateLOO(const bpo::variables_map& opts,
-					  const vector<StreamSequence::ConstPtr>& sseqs,
-					  const vector<Trajectory>& trajectories,
-					  size_t idx)
+                                          const vector<StreamSequence::ConstPtr>& sseqs,
+                                          const vector<Trajectory>& trajectories,
+                                          size_t idx)
 {
   ROS_ASSERT(sseqs.size() == trajectories.size());
   

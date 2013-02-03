@@ -53,7 +53,7 @@ void DepthHistogram::finalize()
   for(int idx = 0; idx < (int)num_nearby_.size(); ++idx)
     for(int i = idx - 1; i <= idx + 1; ++i)
       if(i >= 0 && i < (int)bins_.size())
-	num_nearby_[idx] = max(bins_[i], num_nearby_[idx]);
+        num_nearby_[idx] = max(bins_[i], num_nearby_[idx]);
 }
 
 int DepthHistogram::getNumNearby(double z) const
@@ -94,7 +94,7 @@ void HistogramBackgroundModeler::compute()
     const Cloud& pcd = *seq.pcds_[i];
     for(size_t j = 0; j < pcd.size(); ++j) {
       if(pcl_isfinite(pcd[j].z))
-	histograms_[j]->insert(pcd[j].z);
+        histograms_[j]->insert(pcd[j].z);
     }
   }
   hrt.stop();
@@ -118,7 +118,7 @@ cv::Mat1f HistogramBackgroundModeler::getZBuffer(const rgbd::Cloud& pcd) const
     for(int x = 0; x < zbuf.cols; ++x) {
       int idx = y * zbuf.cols + x;
       if(!isnan(pcd[idx].z))
-	zbuf(y, x) = pcd[idx].z;
+        zbuf(y, x) = pcd[idx].z;
     }
   }
 

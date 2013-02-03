@@ -3,7 +3,7 @@
 using namespace std;
 
 ImageLabelerController::ImageLabelerController(ImageLabelManager* dataset,
-					       OpenCVView* view) :
+                                               OpenCVView* view) :
   dataset_(dataset),
   view_(view),
   click_width_(10),
@@ -303,11 +303,11 @@ void ImageLabelerController::interpolateLabels()
     double pct = (double)(i - start) / (double)(end - start);
     vector<Label> labels = dataset_->getLabelsForImage(i);
     Label lint(-1, // TODO: start using track ids.
-	       most_recent_class_name_,
-	       (1-pct) * l0->x_ + pct * l1->x_,
-	       (1-pct) * l0->y_ + pct * l1->y_,
-	       (1-pct) * l0->width_ + pct * l1->width_,
-	       (1-pct) * l0->height_ + pct * l1->height_);
+               most_recent_class_name_,
+               (1-pct) * l0->x_ + pct * l1->x_,
+               (1-pct) * l0->y_ + pct * l1->y_,
+               (1-pct) * l0->width_ + pct * l1->width_,
+               (1-pct) * l0->height_ + pct * l1->height_);
     labels.push_back(lint);
     dataset_->setLabelsForImage(i, labels);
   }
@@ -407,7 +407,7 @@ hover_type_t ImageLabelerController::getHoverTypeForLabel(const Label& label)
     return CORNER;
   }
   else if(x_ >= label.x_ && x_ < label.x_ + label.width_ &&
-	  y_ >= label.y_ && y_ < label.y_ + label.height_)
+          y_ >= label.y_ && y_ < label.y_ + label.height_)
     return INSIDE;
   else
     return NONE;

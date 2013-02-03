@@ -25,11 +25,11 @@ namespace dst
     //!   boundary mask using depth.
     //! @param radius_3d Points within this radius count as neighbors.
     BoundaryMaskNode(pipeline2::Outlet<cv::Mat1b>* seg_otl,
-		     pipeline2::Outlet<KinectCloud::ConstPtr>* pcd_otl,
-		     pipeline2::Outlet<KinectCloud::ConstPtr>* prev_pcd_otl,
-		     pipeline2::Outlet<cv::Mat3b>* img_otl,
-		     pipeline2::Outlet<cv::Mat1b>* seed_otl,
-		     int radius_2d, double radius_3d);
+                     pipeline2::Outlet<KinectCloud::ConstPtr>* pcd_otl,
+                     pipeline2::Outlet<KinectCloud::ConstPtr>* prev_pcd_otl,
+                     pipeline2::Outlet<cv::Mat3b>* img_otl,
+                     pipeline2::Outlet<cv::Mat1b>* seed_otl,
+                     int radius_2d, double radius_3d);
 
   protected:
     pipeline2::Outlet<cv::Mat1b>* seg_otl_;

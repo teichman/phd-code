@@ -58,21 +58,21 @@ namespace dgc {
       gsl_minimizer = gsl_multimin_fdfminimizer_alloc(T_min, N);
       
       if(gsl_minimizer == NULL) {
-	//TODO: handle
+        //TODO: handle
       }
       x = gsl_vector_alloc(N);
       if(x == NULL) {
-	//TODO: handle
+        //TODO: handle
       }
       debug = false;
     }
 
     GICPOptimizer::~GICPOptimizer() {
       if(gsl_minimizer != NULL) {
-	gsl_multimin_fdfminimizer_free(gsl_minimizer);
+        gsl_multimin_fdfminimizer_free(gsl_minimizer);
       }
       if(x != NULL) {
-	gsl_vector_free(x);
+        gsl_vector_free(x);
       }
     }
 
@@ -100,41 +100,41 @@ namespace dgc {
       int N = (max-min)/resolution;
 
       for(int n1 = 0; n1 < 6; n1++) {
-	for(int n2 = 0; n2 < n1; n2++) {
-	  // set up the filename for this pair of coordinates
-	  ostringstream full_filename;
-	  full_filename << filename << "_" << n1 << "vs" << n2 << ".dat";
-	  // open the file
-	  ofstream fout(full_filename.str().c_str());
-	  if(!fout) {
-	    cout << "Could not open file for writing." << endl;
-	    return;
-	  }
-	  
-	  // loop through pairs of values for these two coordinates while keeping others fixed
-	  double val1_0 = gsl_vector_get(x, n1);
-	  for(int k1 = 0; k1 < N; k1++) {    
-	    gsl_vector_set(x, n1, val1_0 + min + resolution*k1);
-	    
-	    double val2_0 = gsl_vector_get(x, n2);
-	    for(int k2 = 0; k2 < N; k2++) {
-	      gsl_vector_set(x, n2, val2_0 + min + resolution*k2);
-	      
-	      dgc_transform_copy(temp, opt_data.base_t);
-	      apply_state(temp, x);
-	  
-	      double error = f(x, &opt_data);
-	      fout << error << "\t";	      		
-	    }
-	    gsl_vector_set(x, n2, val2_0); // restore to old value
-	    
-	    fout << endl;
-	  }
-	  gsl_vector_set(x, n1, val1_0); // restore to old value
+        for(int n2 = 0; n2 < n1; n2++) {
+          // set up the filename for this pair of coordinates
+          ostringstream full_filename;
+          full_filename << filename << "_" << n1 << "vs" << n2 << ".dat";
+          // open the file
+          ofstream fout(full_filename.str().c_str());
+          if(!fout) {
+            cout << "Could not open file for writing." << endl;
+            return;
+          }
+          
+          // loop through pairs of values for these two coordinates while keeping others fixed
+          double val1_0 = gsl_vector_get(x, n1);
+          for(int k1 = 0; k1 < N; k1++) {    
+            gsl_vector_set(x, n1, val1_0 + min + resolution*k1);
+            
+            double val2_0 = gsl_vector_get(x, n2);
+            for(int k2 = 0; k2 < N; k2++) {
+              gsl_vector_set(x, n2, val2_0 + min + resolution*k2);
+              
+              dgc_transform_copy(temp, opt_data.base_t);
+              apply_state(temp, x);
+          
+              double error = f(x, &opt_data);
+              fout << error << "\t";                              
+            }
+            gsl_vector_set(x, n2, val2_0); // restore to old value
+            
+            fout << endl;
+          }
+          gsl_vector_set(x, n1, val1_0); // restore to old value
 
-	  // close the file for this pair of coordinates
-	  fout.close();
-	}
+          // close the file for this pair of coordinates
+          fout.close();
+        }
       }
     }
 
@@ -169,33 +169,33 @@ namespace dgc {
       status = GSL_CONTINUE;
       iter = 0;
       if(debug) {
-	cout << "iter\t\tf-value\t\tstatus" << endl;
-	cout << iter << "\t\t" << gsl_minimizer->f << "\t\t" << Status() << endl;
+        cout << "iter\t\tf-value\t\tstatus" << endl;
+        cout << iter << "\t\t" << gsl_minimizer->f << "\t\t" << Status() << endl;
       }
       while(status == GSL_CONTINUE && iter < max_iter) {
-	iter++;
-	status = gsl_multimin_fdfminimizer_iterate(gsl_minimizer);
-	if(debug) {
-	  cout << iter << "\t\t" << gsl_minimizer->f << "\t\t" << Status() <<endl;
-	}
-	if(status) {
-	  break;
-	}
-	status = gsl_multimin_test_gradient (gsl_minimizer->gradient, gradient_tol);
+        iter++;
+        status = gsl_multimin_fdfminimizer_iterate(gsl_minimizer);
+        if(debug) {
+          cout << iter << "\t\t" << gsl_minimizer->f << "\t\t" << Status() <<endl;
+        }
+        if(status) {
+          break;
+        }
+        status = gsl_multimin_test_gradient (gsl_minimizer->gradient, gradient_tol);
       }
       
       if(status == GSL_SUCCESS || iter == max_iter) {
-	//set t to the converged solution
-	
-	dgc_transform_identity(t);
-	// apply the current state to the base
-	apply_state(t, gsl_minimizer->x);
-	//dgc_transform_print(t, "converged to:");	
-	return true;
+        //set t to the converged solution
+        
+        dgc_transform_identity(t);
+        // apply the current state to the base
+        apply_state(t, gsl_minimizer->x);
+        //dgc_transform_print(t, "converged to:");        
+        return true;
       }
       else {
-	// the algorithm failed to converge
-	return false;
+        // the algorithm failed to converge
+        return false;
       }
     }
     
@@ -205,9 +205,9 @@ namespace dgc {
       int n = mat1->size1;
       
       for(int i = 0; i < n; i++) {
-	for(int j = 0; j < n; j++) { // tr(mat1^t.mat2)
-	  r += gsl_matrix_get(mat1, j, i)*gsl_matrix_get(mat2, i, j);
-	}
+        for(int j = 0; j < n; j++) { // tr(mat1^t.mat2)
+          r += gsl_matrix_get(mat1, j, i)*gsl_matrix_get(mat2, i, j);
+        }
       }
       
       return r;
@@ -263,7 +263,7 @@ namespace dgc {
       dR_dTheta[0][1] = cpsi*ctheta*sphi;
       dR_dTheta[1][1] = ctheta*sphi*spsi;
       dR_dTheta[2][1] = -sphi*stheta;
-	
+        
       dR_dTheta[0][2] = cphi*cpsi*ctheta;
       dR_dTheta[1][2] = cphi*ctheta*spsi;
       dR_dTheta[2][2] = -cphi*stheta;

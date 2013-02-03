@@ -25,27 +25,27 @@ namespace dst
     pipeline2::Outlet<KdTree::Ptr> aligned_fg_kdtree_otl_;
     
     IcpNPG(pipeline2::Outlet<DepthProjector::Output>* index_otl,
-	   pipeline2::Outlet<KdTreeNode::Output>* kdtree_otl,
-	   pipeline2::Outlet<const Eigen::Affine3f*>* prev_to_curr_otl,
-	   pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
-	   pipeline2::Outlet<IndicesConstPtr>* pcd_indices_otl,
-	   float score_thresh,
-	   float distance_thresh,
-	   float fringe_radius,
-	   float sigma_dist,
-	   float sigma_color,
-	   float delta_transform_thresh,
-	   bool use_prev_bg,
-	   int skip,
-	   const std::vector<int>& lookback = std::vector<int>(1, 0));
+           pipeline2::Outlet<KdTreeNode::Output>* kdtree_otl,
+           pipeline2::Outlet<const Eigen::Affine3f*>* prev_to_curr_otl,
+           pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
+           pipeline2::Outlet<IndicesConstPtr>* pcd_indices_otl,
+           float score_thresh,
+           float distance_thresh,
+           float fringe_radius,
+           float sigma_dist,
+           float sigma_color,
+           float delta_transform_thresh,
+           bool use_prev_bg,
+           int skip,
+           const std::vector<int>& lookback = std::vector<int>(1, 0));
       
 
     //! Iteratively transforms curr_fg to fit into curr_kdtree.
     //! Returns num_inliers / curr_fg->size as score.
     double runICP(KdTree& curr_kdtree,
-		  const KinectCloud& curr_cloud,
-		  KinectCloud::Ptr curr_fg,
-		  Eigen::Affine3f* final_transform) const;
+                  const KinectCloud& curr_cloud,
+                  KinectCloud::Ptr curr_fg,
+                  Eigen::Affine3f* final_transform) const;
     
   protected:
     pipeline2::Outlet<DepthProjector::Output>* index_otl_;
@@ -82,12 +82,12 @@ namespace dst
     void updateBuffers();
     void computeForLookback(int lb);
     void addPotentials2(KinectCloud::ConstPtr object,
-			Eigen::MatrixXd* potentials) const;
-	
+                        Eigen::MatrixXd* potentials) const;
+        
     void addPotentials(const KinectCloud& object,
-		       const KinectCloud& curr_cloud,
-		       KdTree& curr_kdtree,
-		       Eigen::MatrixXd* potentials) const;
+                       const KinectCloud& curr_cloud,
+                       KdTree& curr_kdtree,
+                       Eigen::MatrixXd* potentials) const;
 
     void _compute();
     void _reset();

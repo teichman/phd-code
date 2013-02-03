@@ -29,7 +29,7 @@ TEST(NodePotentialGenerator, NodePotentialGenerator)
     img = cv::Mat3b(cv::Size(100, 100), cv::Vec3b(127, 127, 127));
     for(int y = 0; y < img.rows; ++y)
       for(int x = 0; x < img.cols; ++x)
-	img(y, x) = cv::Vec3b(rand() % 255, rand() % 255, rand() % 255);
+        img(y, x) = cv::Vec3b(rand() % 255, rand() % 255, rand() % 255);
   }
   asp.setInput("ImageEntryPoint", img);
   
@@ -68,7 +68,7 @@ TEST(SparseMat, SparseMat)
     mat.reserve(64 * 48 * 2);
     for(int y = 0; y < mat.rows(); y += 10)
       for(int x = 0; x < mat.cols(); x += 10)
-	mat.insert(y, x) = 1;
+        mat.insert(y, x) = 1;
   }
 }
 

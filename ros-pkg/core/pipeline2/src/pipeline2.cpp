@@ -151,7 +151,7 @@ namespace pipeline2 {
     for(size_t i = 0; i < inputs_.size(); ++i) { 
       oss << inputs_[i]->getFullName();
       if(i < inputs_.size() - 1)
-	oss << "&&";
+        oss << "&&";
     }
     oss << ")=>";
     return oss.str();
@@ -277,7 +277,7 @@ namespace pipeline2 {
     queue<ComputeNode*> to_check;
     for(size_t i = 0; i < nodes_.size(); ++i) {
       if(nodes_[i]->inputs_.empty())
-	to_check.push(nodes_[i]);
+        to_check.push(nodes_[i]);
     }
 
     set<ComputeNode*> found;
@@ -286,7 +286,7 @@ namespace pipeline2 {
       to_check.pop();
       found.insert(active); //Won't insert duplicates.
       for(size_t i = 0; i < active->outputs_.size(); ++i) {
-	to_check.push(active->outputs_[i]);
+        to_check.push(active->outputs_[i]);
       }
     }
 
@@ -327,11 +327,11 @@ namespace pipeline2 {
     set<ComputeNode*> marked;
     for(size_t i = 0; i < nodes_.size(); ++i) { 
       if(nodes_[i]->inputs_.empty()) { 
-	to_check.push(nodes_[i]);
-	marked.insert(nodes_[i]);
-	backptrs[nodes_[i]] = NULL;
-	times[nodes_[i]] = nodes_[i]->getComputationTime();
-	ROS_ASSERT(times.count(nodes_[i]) == 1);
+        to_check.push(nodes_[i]);
+        marked.insert(nodes_[i]);
+        backptrs[nodes_[i]] = NULL;
+        times[nodes_[i]] = nodes_[i]->getComputationTime();
+        ROS_ASSERT(times.count(nodes_[i]) == 1);
       }
     }
 
@@ -343,35 +343,35 @@ namespace pipeline2 {
       
       double max = -std::numeric_limits<double>::max();
       for(size_t i = 0; i < active->inputs_.size(); ++i) {
-	ROS_ASSERT(marked.count(active->inputs_[i]));
-	ROS_ASSERT(times.count(active->inputs_[i]));
-	double val = times[active->inputs_[i]] + active->getComputationTime();
-	if(val > max) { 
-	  max = val;
-	  times[active] = val;
-	  backptrs[active] = active->inputs_[i];
-	}
+        ROS_ASSERT(marked.count(active->inputs_[i]));
+        ROS_ASSERT(times.count(active->inputs_[i]));
+        double val = times[active->inputs_[i]] + active->getComputationTime();
+        if(val > max) { 
+          max = val;
+          times[active] = val;
+          backptrs[active] = active->inputs_[i];
+        }
       }
       
       // Add children.
       for(size_t i = 0; i < active->outputs_.size(); ++i) {
-	ComputeNode* downstream = active->outputs_[i];
-	if(marked.count(downstream)) {
-	  continue;
-	}
-	bool all_parents_done = true;
-	for(size_t j = 0; j < downstream->inputs_.size(); ++j) {
-	  if(!times.count(downstream->inputs_[j])) { 
-	    all_parents_done = false;
-	    break;
-	  }
-	}
+        ComputeNode* downstream = active->outputs_[i];
+        if(marked.count(downstream)) {
+          continue;
+        }
+        bool all_parents_done = true;
+        for(size_t j = 0; j < downstream->inputs_.size(); ++j) {
+          if(!times.count(downstream->inputs_[j])) { 
+            all_parents_done = false;
+            break;
+          }
+        }
 
-	if(all_parents_done) { 
-	  to_check.push(downstream);
-	  ROS_ASSERT(marked.count(downstream) == 0);
-	  marked.insert(downstream);
-	}
+        if(all_parents_done) { 
+          to_check.push(downstream);
+          ROS_ASSERT(marked.count(downstream) == 0);
+          marked.insert(downstream);
+        }
 
 
       }
@@ -379,11 +379,11 @@ namespace pipeline2 {
 
     if(marked.size() != nodes_.size()) { 
       for(size_t i = 0; i < nodes_.size(); ++i)
-	if(marked.count(nodes_[i]) == 0)
-	  cout << "Node not in marked: " << nodes_[i]->_getName() << endl;
+        if(marked.count(nodes_[i]) == 0)
+          cout << "Node not in marked: " << nodes_[i]->_getName() << endl;
 
       cout << "Error in pipeline2::reportSlowestPath.  marked.size() == "
-	   << marked.size() << ", nodes_.size() == " << nodes_.size() << endl;
+           << marked.size() << ", nodes_.size() == " << nodes_.size() << endl;
       abort();
     }
     
@@ -394,8 +394,8 @@ namespace pipeline2 {
     for(it = times.begin(); it != times.end(); ++it) {
       //cout << it->first->_getName() << ": " << it->second << endl;
       if(it->second > max) {
-	max = it->second;
-	active = it->first;
+        max = it->second;
+        active = it->first;
       }
     }
 
@@ -410,8 +410,8 @@ namespace pipeline2 {
     oss << "Slowest path (" << max << " ms): " << endl;
     for(int i = (int)path.size() - 1; i >= 0; --i) {
       oss << "  " << fixed << setprecision(2) << setw(8) << times[path[i]]
-	  << "\t" << fixed << setprecision(2) << setw(8) << path[i]->getComputationTime()
-	  << "\t" << path[i]->_getName() << endl;
+          << "\t" << fixed << setprecision(2) << setw(8) << path[i]->getComputationTime()
+          << "\t" << path[i]->_getName() << endl;
     }
     return oss.str();
   }
@@ -467,7 +467,7 @@ namespace pipeline2 {
     for(size_t i = 0; i < nodes_.size(); ++i) {
       vector<ComputeNode*>& outputs = nodes_[i]->outputs_;
       for(size_t j = 0; j < outputs.size(); ++j) {
-	oss << (uint64_t)nodes_[i] << "->" << (uint64_t)outputs[j] << endl;
+        oss << (uint64_t)nodes_[i] << "->" << (uint64_t)outputs[j] << endl;
       }
     }
     oss << endl;
@@ -491,7 +491,7 @@ namespace pipeline2 {
     bool valid = false;
     for(size_t i = 0; i < nodes_.size(); ++i) {
       if(node == nodes_[i])
-	valid = true;
+        valid = true;
     }
     assert(valid);
 
@@ -563,9 +563,9 @@ namespace pipeline2 {
     for(size_t i = 0; i < nodes_.size(); ++i) {
       nodes_[i]->lock();
       if(nodes_[i]->ready()) {
-	nodes_[i]->on_queue_ = true;
-	queue_.push_back(nodes_[i]);
-	pthread_cond_signal(&queue_cv_);
+        nodes_[i]->on_queue_ = true;
+        queue_.push_back(nodes_[i]);
+        pthread_cond_signal(&queue_cv_);
       }
       nodes_[i]->unlock();
     }
@@ -584,13 +584,13 @@ namespace pipeline2 {
     for(size_t i = 0; i < node->outputs_.size(); ++i) {
       node->outputs_[i]->lock();
       if(node->outputs_[i]->ready()) {
-	// Debugging.  TODO: remove.
-	for(size_t j = 0; j < queue_.size(); ++j)
-	  assert(queue_[j] != node->outputs_[i]);
-	
-	node->outputs_[i]->on_queue_ = true;
-	queue_.push_back(node->outputs_[i]);
-	pthread_cond_signal(&queue_cv_);
+        // Debugging.  TODO: remove.
+        for(size_t j = 0; j < queue_.size(); ++j)
+          assert(queue_[j] != node->outputs_[i]);
+        
+        node->outputs_[i]->on_queue_ = true;
+        queue_.push_back(node->outputs_[i]);
+        pthread_cond_signal(&queue_cv_);
       }
       node->outputs_[i]->unlock();
     }
@@ -601,37 +601,37 @@ namespace pipeline2 {
     lock();
     while(true) {
       if(destructing_) { 
-	unlock();
-	break;
+        unlock();
+        break;
       }
             
       if(queue_.empty()) {
-	if(num_nodes_computing_ == 0)
-	  pthread_cond_signal(&done_cv_);
-	
-	pthread_cond_wait(&queue_cv_, &mutex_);
+        if(num_nodes_computing_ == 0)
+          pthread_cond_signal(&done_cv_);
+        
+        pthread_cond_wait(&queue_cv_, &mutex_);
       }
 
       // pthread signal might awaken more than one thread.
       if(!queue_.empty()) {
-	ComputeNode* node = queue_.back();
-	queue_.pop_back();
+        ComputeNode* node = queue_.back();
+        queue_.pop_back();
 
-	// Debugging. TODO: remove.
-	assert(node->on_queue_);
-	for(size_t i = 0; i < queue_.size(); ++i)
-	  assert(queue_[i] != node);
+        // Debugging. TODO: remove.
+        assert(node->on_queue_);
+        for(size_t i = 0; i < queue_.size(); ++i)
+          assert(queue_[i] != node);
 
-	++num_nodes_computing_;
-	unlock();
+        ++num_nodes_computing_;
+        unlock();
 
-	node->lock();
-	node->compute();
-	node->unlock();
+        node->lock();
+        node->compute();
+        node->unlock();
 
-	lock();
-	registerCompleted(node);
-	--num_nodes_computing_;
+        lock();
+        registerCompleted(node);
+        --num_nodes_computing_;
       }
     }
   }
@@ -654,12 +654,12 @@ namespace pipeline2 {
       to_check.pop();
       component.insert(active); //Won't insert duplicates.
       for(size_t i = 0; i < active->outputs_.size(); ++i) {
-	if(component.count(active->outputs_[i]) == 0)
-	  to_check.push(active->outputs_[i]);
+        if(component.count(active->outputs_[i]) == 0)
+          to_check.push(active->outputs_[i]);
       }
       for(size_t i = 0; i < active->inputs_.size(); ++i) { 
-	if(component.count(active->inputs_[i]) == 0)
-	  to_check.push(active->inputs_[i]);
+        if(component.count(active->inputs_[i]) == 0)
+          to_check.push(active->inputs_[i]);
       }
     }
 

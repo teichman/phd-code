@@ -19,7 +19,7 @@ GridSearch::GridSearch(int num_variables) :
 }
 
 void GridSearch::appendVariations(int id, const Eigen::ArrayXd& orig,
-				  std::vector<Eigen::ArrayXd>* xs) const
+                                  std::vector<Eigen::ArrayXd>* xs) const
 {
   for(int i = -grid_radii_[id]; i <= grid_radii_[id]; ++i)  {
     if(i == 0)
@@ -31,7 +31,7 @@ void GridSearch::appendVariations(int id, const Eigen::ArrayXd& orig,
 }
 
 void GridSearch::makeGrid(const std::vector<int>& variables,
-			  std::vector<Eigen::ArrayXd>* xs) const
+                          std::vector<Eigen::ArrayXd>* xs) const
 {
   xs->clear();
   xs->push_back(x_);
@@ -64,9 +64,9 @@ public:
     assert(a.rows() == b.rows());
     for(int i = 0; i < a.rows(); ++i) {
       if(a.coeffRef(i) < b.coeffRef(i))
-	return true;
+        return true;
       if(a.coeffRef(i) > b.coeffRef(i))
-	return false;
+        return false;
     }
     return false;
   }
@@ -94,7 +94,7 @@ Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
     vector<int> coup;
     for(int j = 0; j < couplings_.rows(); ++j)
       if(couplings_(j) == i)
-	coup.push_back(j);
+        coup.push_back(j);
     if(!coup.empty())
       couplings.push_back(coup);
   }
@@ -112,13 +112,13 @@ Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
     {
       //ScopedTimer st("Making complete grid");
       for(size_t i = 0; i < couplings.size(); ++i) {
-	// -- Get all values of x to try in parallel.
-	vector<ArrayXd> xs_this_coupling;
-	makeGrid(couplings[i], &xs_this_coupling);
-	//	xs.insert(xs.end(), xs_this_coupling.begin(), xs_this_coupling.end());
-	for(size_t j = 0; j < xs_this_coupling.size(); ++j)
-	  if(checked.count(xs_this_coupling[j]) == 0)
-	    xs.push_back(xs_this_coupling[j]);
+        // -- Get all values of x to try in parallel.
+        vector<ArrayXd> xs_this_coupling;
+        makeGrid(couplings[i], &xs_this_coupling);
+        //        xs.insert(xs.end(), xs_this_coupling.begin(), xs_this_coupling.end());
+        for(size_t j = 0; j < xs_this_coupling.size(); ++j)
+          if(checked.count(xs_this_coupling[j]) == 0)
+            xs.push_back(xs_this_coupling[j]);
       }
     }
 
@@ -138,17 +138,17 @@ Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
     for(int j = 0; j < vals.rows(); ++j) {
       checked.insert(xs[j]);
       if(vals(j) < best_obj_) {
-	improved = true;
-	best_obj_ = vals(j);
-	x_ = xs[j];
-	if(verbose_)
-	  cout << "*** ";
-	if(view_handler_)
-	  view_handler_->handleGridSearchUpdate(xs[j], vals(j));	
+        improved = true;
+        best_obj_ = vals(j);
+        x_ = xs[j];
+        if(verbose_)
+          cout << "*** ";
+        if(view_handler_)
+          view_handler_->handleGridSearchUpdate(xs[j], vals(j));        
       }
       
       if(verbose_)
-	cout << "obj = " << vals(j) << ", x = " << xs[j].transpose() << endl;
+        cout << "obj = " << vals(j) << ", x = " << xs[j].transpose() << endl;
     }
       
     if(improved)

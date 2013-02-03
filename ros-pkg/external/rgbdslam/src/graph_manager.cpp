@@ -1189,16 +1189,16 @@ void GraphManager::pointCloud2MeshFile(QString filename, pointcloud_type full_cl
   QFile file(filename);//file is closed on destruction
   if(!file.open(QIODevice::WriteOnly|QIODevice::Text)) return; //TODO: Errormessage
   QTextStream out(&file);
-	out << "ply\n";
-	out << "format ascii 1.0\n";
-	out << "element vertex " << (int)full_cloud.points.size() << "\n"; 
-	out << "property float x\n";
-	out << "property float y\n";
-	out << "property float z\n";
-	out << "property uchar red\n";
-	out << "property uchar green\n";
-	out << "property uchar blue\n";
-	out << "end_header\n";
+        out << "ply\n";
+        out << "format ascii 1.0\n";
+        out << "element vertex " << (int)full_cloud.points.size() << "\n"; 
+        out << "property float x\n";
+        out << "property float y\n";
+        out << "property float z\n";
+        out << "property uchar red\n";
+        out << "property uchar green\n";
+        out << "property uchar blue\n";
+        out << "end_header\n";
   unsigned char r,g,b;
   float x, y, z ;
   for(unsigned int i = 0; i < full_cloud.points.size() ; i++){
@@ -1320,8 +1320,8 @@ void GraphManager::sendAllClouds(){
 }
 
 void GraphManager::setMaxDepth(float max_depth){
-	Max_Depth = max_depth;
-	ROS_INFO("Max Depth set to: %f", max_depth);
+        Max_Depth = max_depth;
+        ROS_INFO("Max Depth set to: %f", max_depth);
 }
 
 void GraphManager::cloudRendered(pointcloud_type const * pc) {

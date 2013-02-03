@@ -42,8 +42,8 @@ public:
   //! The covariance matrix orders the variables as translation, then rotation.
   //! covariance must be positive definite.
   void addEdge(int idx0, int idx1,
-	       const Eigen::Affine3d& transform,
-	       const Matrix6d& covariance);
+               const Eigen::Affine3d& transform,
+               const Matrix6d& covariance);
   //! Remove the given edge from the map.
   void removeEdge(size_t idx);
   //! Solve all subgraphs above size min_size, return # subgraphs

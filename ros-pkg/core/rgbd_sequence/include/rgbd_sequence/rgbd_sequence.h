@@ -43,7 +43,7 @@ namespace rgbd
   //! path can point to a directory of sequences or a single sequence.
   //! sequences does not have to be empty.
   void loadSequences(const std::string& path,
-		     std::vector<Sequence::Ptr>* sequences);
+                     std::vector<Sequence::Ptr>* sequences);
   void zthresh(rgbd::Cloud::Ptr pcd, double max_z);
 }
 

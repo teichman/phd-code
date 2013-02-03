@@ -8,9 +8,9 @@ namespace rgbd
 {
 
   OniRecorder::OniRecorder(const std::string& type,
-			   int id,
-			   const std::string& mode,
-			   bool registered) :
+                           int id,
+                           const std::string& mode,
+                           bool registered) :
     mode_(mode),
     recording_(true),
     registered_(registered),
@@ -30,15 +30,15 @@ namespace rgbd
       char key = cv::waitKey(2);
       bool done = false;
       if(key == 'q')
-	break;
+        break;
       if(key == ' ')
-	done = toggleRecording();
+        done = toggleRecording();
 
       if(done)
-	break;
+        break;
       
       if(recording_)
-	getRGBD();
+        getRGBD();
     }
   }
 
@@ -163,10 +163,10 @@ namespace rgbd
     if(registered_) {
       cout << "Registering depth and rgb data." << endl;
       if(model_.type_ == "kinect") {
-	retval = dgen_.SetIntProperty("RegistrationType", 2); handleXnStatus(retval);
+        retval = dgen_.SetIntProperty("RegistrationType", 2); handleXnStatus(retval);
       }
       else {
-	retval = dgen_.SetIntProperty("RegistrationType", 1); handleXnStatus(retval);
+        retval = dgen_.SetIntProperty("RegistrationType", 1); handleXnStatus(retval);
       }
       
       retval = dgen_.GetAlternativeViewPointCap().SetViewPoint(igen_); handleXnStatus(retval);

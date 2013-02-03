@@ -14,7 +14,7 @@ namespace graphcuts
   }
   
   void MaxflowInference::segment(PotentialsCache::ConstPtr pc,
-				 Eigen::VectorXi* seg) const
+                                 Eigen::VectorXi* seg) const
   {
     // -- Check for monkey business and allocate.
     ROS_ASSERT(pc->numEdgePotentials() == model_.eweights_.rows());
@@ -35,7 +35,7 @@ namespace graphcuts
     
     Graph3d graph(seg->rows(), num_edges);
     graph.add_node(seg->rows());
-		        
+                        
     Eigen::VectorXd weighted_node(seg->rows());
     SparseMat weighted_edge(seg->rows(), seg->rows());
     pc->applyWeights(model_, &weighted_edge, &weighted_node);
@@ -47,12 +47,12 @@ namespace graphcuts
     // -- Fill the graph with edge potentials.  Assumes symmetry & upper triangular.
     for(int i = 0; i < weighted_edge.outerSize(); ++i) {
       for(SparseMatrix<double, RowMajor>::InnerIterator it(weighted_edge, i); it; ++it) {
-	if(it.col() <= it.row())
-	  continue;
+        if(it.col() <= it.row())
+          continue;
 
-	ROS_WARN_STREAM_COND(it.value() < 0, "Edgepot weighted sum is negative: " << it.value());
-	ROS_FATAL_STREAM_COND(isnan(it.value()), "NaN in edgepot.");
-	graph.add_edge(it.row(), it.col(), it.value(), it.value());
+        ROS_WARN_STREAM_COND(it.value() < 0, "Edgepot weighted sum is negative: " << it.value());
+        ROS_FATAL_STREAM_COND(isnan(it.value()), "NaN in edgepot.");
+        graph.add_edge(it.row(), it.col(), it.value(), it.value());
       }
     }
 
@@ -66,9 +66,9 @@ namespace graphcuts
     // -- Fill the segmentation.
     for(int i = 0; i < seg->rows(); ++i) {
       if(graph.what_segment(i, Graph3d::SINK) == Graph3d::SINK)
-	seg->coeffRef(i) = -1;
+        seg->coeffRef(i) = -1;
       else
-	seg->coeffRef(i) = 1;
+        seg->coeffRef(i) = 1;
     }
   }
   

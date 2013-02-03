@@ -8,12 +8,12 @@ namespace dst
 {
   
   NodePotentialAggregator::NodePotentialAggregator(Outlet<Graph3dPtr>* graph_otl,
-						   Outlet<cv::Mat1b>* seed_otl,
-						   Outlet<cv::Mat3b>* image_otl,
-						   Outlet<DepthProjector::Output>* index_otl,
-						   EdgePotentialAggregator* edge_aggregator,
-						   const std::vector<NodePotentialGenerator*>& generators,
-						   const Eigen::VectorXd& weights) :
+                                                   Outlet<cv::Mat1b>* seed_otl,
+                                                   Outlet<cv::Mat3b>* image_otl,
+                                                   Outlet<DepthProjector::Output>* index_otl,
+                                                   EdgePotentialAggregator* edge_aggregator,
+                                                   const std::vector<NodePotentialGenerator*>& generators,
+                                                   const Eigen::VectorXd& weights) :
     NodePotentialGenerator(),
     graph_otl_(graph_otl),
     seed_otl_(seed_otl),
@@ -40,7 +40,7 @@ namespace dst
     ostringstream oss;
     for(size_t i = 0; i < generators_.size(); ++i) { 
       oss << setiosflags(ios::left) << setw(10) << weights_[i] << "\t"
-	  << setiosflags(ios::left) << setw(100) << generators_[i]->getShortName() << endl;
+          << setiosflags(ios::left) << setw(100) << generators_[i]->getShortName() << endl;
     }
     return oss.str();
   }
@@ -62,7 +62,7 @@ namespace dst
     // -- Force the SeedNPG weight to be very high.
     for(size_t i = 0; i < generators_.size(); ++i) {
       if(generators_[i]->getShortName().substr(0, 7).compare("SeedNPG") == 0)
-	weights_(i) = 1000000;
+        weights_(i) = 1000000;
     }
 
     if(verbose) {
@@ -71,14 +71,14 @@ namespace dst
   }
 
   void NodePotentialAggregator::ignoreDepthless(const Eigen::MatrixXd& pot,
-						Eigen::MatrixXd* sanitized) const
+                                                Eigen::MatrixXd* sanitized) const
   {
     cv::Mat1i index = index_otl_->pull().current_index_;
     *sanitized = pot;
     for(int y = 0; y < sanitized->rows(); ++y)
       for(int x = 0; x < sanitized->cols(); ++x)
-	if(index(y, x) == -1)
-	  sanitized->coeffRef(y, x) = 0;
+        if(index(y, x) == -1)
+          sanitized->coeffRef(y, x) = 0;
   }
   
   void NodePotentialAggregator::cacheUnweightedPotentials(FramePotentialsCache::Ptr framecache) const
@@ -91,7 +91,7 @@ namespace dst
     int cols = -1;
     for(size_t i = 0; i < generators_.size(); ++i) {
       if(!generators_[i]->source_otl_.pull())
-	continue;
+        continue;
 
       rows = generators_[i]->source_otl_.pull()->rows();
       cols = generators_[i]->source_otl_.pull()->cols();
@@ -102,20 +102,20 @@ namespace dst
     // -- Cache all potentials, setting to zero if none.
     for(size_t i = 0; i < generators_.size(); ++i) {
       if(!generators_[i]->source_otl_.pull()) {
-	ROS_ASSERT(!generators_[i]->sink_otl_.pull());
-	framecache->source_potentials_.push_back(MatrixXd::Zero(rows, cols));
-	framecache->sink_potentials_.push_back(MatrixXd::Zero(rows, cols));
+        ROS_ASSERT(!generators_[i]->sink_otl_.pull());
+        framecache->source_potentials_.push_back(MatrixXd::Zero(rows, cols));
+        framecache->sink_potentials_.push_back(MatrixXd::Zero(rows, cols));
       }
       else {
-	ROS_ASSERT(generators_[i]->sink_otl_.pull());
-	
-	MatrixXd sanitized_source;
-	ignoreDepthless(*generators_[i]->source_otl_.pull(), &sanitized_source);
-	framecache->source_potentials_.push_back(sanitized_source);
+        ROS_ASSERT(generators_[i]->sink_otl_.pull());
+        
+        MatrixXd sanitized_source;
+        ignoreDepthless(*generators_[i]->source_otl_.pull(), &sanitized_source);
+        framecache->source_potentials_.push_back(sanitized_source);
 
-	MatrixXd sanitized_sink;
-	ignoreDepthless(*generators_[i]->sink_otl_.pull(), &sanitized_sink);
-	framecache->sink_potentials_.push_back(sanitized_sink);
+        MatrixXd sanitized_sink;
+        ignoreDepthless(*generators_[i]->sink_otl_.pull(), &sanitized_sink);
+        framecache->sink_potentials_.push_back(sanitized_sink);
       }
     }
 
@@ -131,7 +131,7 @@ namespace dst
     int cols = -1;
     for(size_t i = 0; i < generators_.size(); ++i) {
       if(!generators_[i]->source_otl_.pull())
-	continue;
+        continue;
 
       rows = generators_[i]->source_otl_.pull()->rows();
       cols = generators_[i]->source_otl_.pull()->cols();
@@ -147,7 +147,7 @@ namespace dst
     // -- Get weighted sum of source and sink potentials.
     for(size_t i = 0; i < generators_.size(); ++i) {
       if(!generators_[i]->source_otl_.pull())
-	continue;
+        continue;
 
       MatrixXd sanitized_source;
       ignoreDepthless(*generators_[i]->source_otl_.pull(), &sanitized_source);

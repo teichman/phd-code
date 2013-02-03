@@ -7,8 +7,8 @@ namespace dst
 {
 
   DepthNPG::DepthNPG(pipeline2::Outlet<DepthProjector::Output>* index_otl,
-		     pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
-		     float sigma, size_t buffer_size) :
+                     pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
+                     float sigma, size_t buffer_size) :
     NodePotentialGenerator(),
     index_otl_(index_otl),
     prev_seg_otl_(prev_seg_otl),
@@ -40,13 +40,13 @@ namespace dst
     float min = std::numeric_limits<float>::max();
     for(int y = 0; y < prev_index.rows; ++y) {
       for(int x = 0; x < prev_index.cols; ++x) {
-	if(prev_seg(y, x) != 255 || prev_index(y, x) == -1)
-	  continue;
-	float z = prev_pcd[prev_index(y, x)].z;
-	if(z > max)
-	  max = z;
-	if(z < min)
-	  min = z;
+        if(prev_seg(y, x) != 255 || prev_index(y, x) == -1)
+          continue;
+        float z = prev_pcd[prev_index(y, x)].z;
+        if(z > max)
+          max = z;
+        if(z < min)
+          min = z;
       }
     }
 
@@ -62,23 +62,23 @@ namespace dst
     deque<float>::iterator it;
     for(it = max_buffer_.begin(); it != max_buffer_.end(); ++it)
       if(*it > max)
-	max = *it;
+        max = *it;
     for(it = min_buffer_.begin(); it != min_buffer_.end(); ++it)
       if(*it < min)
-	min = *it;
+        min = *it;
 
     // -- Assign node potentials in current frame.
     cv::Mat1i index = index_otl_->pull().current_index_;
     const KinectCloud& pcd = *index_otl_->pull().current_pcd_;
     for(int y = 0; y < index.rows; ++y) {
       for(int x = 0; x < index.cols; ++x) {
-	if(index(y, x) == -1)
-	  continue;
-	float z = pcd[index(y, x)].z;
-	if(z < min || z > max) { 
-	  float delta = fmin(fabs(z - min), fabs(z - max));
-	  sink_potentials_(y, x) = 1.0 - exp(-delta / sigma_);
-	}
+        if(index(y, x) == -1)
+          continue;
+        float z = pcd[index(y, x)].z;
+        if(z < min || z > max) { 
+          float delta = fmin(fabs(z - min), fabs(z - max));
+          sink_potentials_(y, x) = 1.0 - exp(-delta / sigma_);
+        }
       }
     }
 

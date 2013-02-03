@@ -22,7 +22,7 @@ namespace asp
 
       //! All Pods should have a constructor that only takes their name.
       RandomNPG(std::string name) :
-	NodePotentialGenerator(name)
+        NodePotentialGenerator(name)
       {
       }
 
@@ -40,8 +40,8 @@ namespace asp
       initializeStorage();
 
       for(int y = 0; y < node_.rows(); ++y)
-	for(int x = 0; x < node_.cols(); ++x)
-	  node_(y, x) = ((double)rand() / RAND_MAX) * 2.0 - 1.0;
+        for(int x = 0; x < node_.cols(); ++x)
+          node_(y, x) = ((double)rand() / RAND_MAX) * 2.0 - 1.0;
 
       push<const MatrixXd*>("Node", &node_);
     }
@@ -51,7 +51,7 @@ namespace asp
     public:
       DECLARE_POD(RandomEPG);
       RandomEPG(std::string name) :
-	EdgePotentialGenerator(name)
+        EdgePotentialGenerator(name)
       {
       }
 
@@ -65,9 +65,9 @@ namespace asp
       const SparseMat& structure = *pull<const SparseMat*>("EdgeStructure");
 
       for(int i = 0; i < structure.rows(); ++i) {
-	SparseMat::InnerIterator it(structure, i);
-	for(; it; ++it)
-	  edge_.insert(it.row(), it.col()) = (double)rand() / RAND_MAX;
+        SparseMat::InnerIterator it(structure, i);
+        for(; it; ++it)
+          edge_.insert(it.row(), it.col()) = (double)rand() / RAND_MAX;
       }
 
       push<const SparseMat*>("Edge", &edge_);

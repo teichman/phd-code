@@ -13,11 +13,11 @@ namespace dst
   public:
     //! @param radius The maximum radius to search for neighbors of a point.
     SceneAlignmentNPG(pipeline2::Outlet<KinectCloud::ConstPtr>* transformed_otl,
-		      pipeline2::Outlet<KdTreeNode::Output>* kdtree_otl,
-		      pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
-		      pipeline2::Outlet<DepthProjector::Output>* index_otl,
-		      int num_neighbors = 1,
-		      double sigma = 0.0217);
+                      pipeline2::Outlet<KdTreeNode::Output>* kdtree_otl,
+                      pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
+                      pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                      int num_neighbors = 1,
+                      double sigma = 0.0217);
 
   protected:
     pipeline2::Outlet<KinectCloud::ConstPtr>* transformed_otl_;

@@ -497,9 +497,9 @@ void GLViewer::deleteLastNode(){
     this->reset();
     return;
   }
-	GLuint nodeId = cloud_list_indices.back();
-	cloud_list_indices.pop_back();
-	glDeleteLists(nodeId,1);
+        GLuint nodeId = cloud_list_indices.back();
+        cloud_list_indices.pop_back();
+        glDeleteLists(nodeId,1);
 }
 
 void GLViewer::pointCloud2GLList(pointcloud_type const * pc){

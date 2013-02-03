@@ -17,8 +17,8 @@ namespace dst
     pipeline2::Outlet<Normals::Ptr> normals_otl_;
     
     SurfaceNormalNode(pipeline2::Outlet<KdTreeNode::Output>* kdtree_otl,
-		      pipeline2::Outlet<DepthProjector::Output>* index_otl,
-		      double radius = 0.025);
+                      pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                      double radius = 0.025);
 
   protected:
     pipeline2::Outlet<KdTreeNode::Output>* kdtree_otl_;
@@ -27,7 +27,7 @@ namespace dst
     Normals::Ptr normals_;
 
     void normalToColor(const pcl::Normal& normal,
-		       cv::Vec3b* color) const;
+                       cv::Vec3b* color) const;
     void _compute();
     void _display() const;
     void _flush();

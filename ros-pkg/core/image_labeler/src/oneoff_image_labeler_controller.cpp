@@ -3,8 +3,8 @@
 using namespace std;
 
 OneoffImageLabelerController::OneoffImageLabelerController(const std::string& save_path,
-							   IplImage* img,
-							   OpenCVView* view) :
+                                                           IplImage* img,
+                                                           OpenCVView* view) :
   view_(view),
   click_width_(10),
   mutex_(pthread_mutex_t()),
@@ -132,9 +132,9 @@ void OneoffImageLabelerController::drawLabels(IplImage* img, const std::vector<L
   for(size_t i = 0; i < labels.size(); ++i) {
     Label const& l = labels[i];
     cvRectangle(img,
-		cvPoint(l.x_, l.y_),
-		cvPoint(l.x_ + l.width_, l.y_ + l.height_),
-		getColor(l.class_name_), 3);
+                cvPoint(l.x_, l.y_),
+                cvPoint(l.x_ + l.width_, l.y_ + l.height_),
+                getColor(l.class_name_), 3);
   }
 }
 
@@ -343,7 +343,7 @@ hover_type_t OneoffImageLabelerController::getHoverTypeForLabel(const Label& lab
     return CORNER;
   }
   else if(x_ >= label.x_ && x_ < label.x_ + label.width_ &&
-	  y_ >= label.y_ && y_ < label.y_ + label.height_)
+          y_ >= label.y_ && y_ < label.y_ + label.height_)
     return INSIDE;
   else
     return NONE;

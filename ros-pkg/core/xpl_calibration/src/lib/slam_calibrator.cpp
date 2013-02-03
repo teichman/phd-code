@@ -32,7 +32,7 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(const StreamSequence& sseq, const Traj
     nonans->reserve(tmp->size());
     for(size_t j = 0; j < tmp->size(); ++j)
       if(isFinite(tmp->at(j)))
-	nonans->push_back(tmp->at(j));
+        nonans->push_back(tmp->at(j));
         
     pcl::transformPointCloud(*nonans, *nonans, traj.get(i).cast<float>());
 
@@ -103,7 +103,7 @@ DepthDistortionLearner SlamCalibrator::setupDepthDistortionLearner() const
 
     for(size_t j = 0; j < traj.size(); ++j) {
       if(!traj.exists(j))
-	continue;
+        continue;
 
       // -- Add the frame.
       Frame frame;
@@ -113,15 +113,15 @@ DepthDistortionLearner SlamCalibrator::setupDepthDistortionLearner() const
       // -- Visualize.
       // static int num = 0;
       // if(num % 10 == 0) {
-      // 	cout << "Visualizing " << j << " / " << traj.size() << endl;
-      // 	cv::imshow("measurement", frame.depthImage());
-      // 	Frame mapframe;
-      // 	Affine3f transform = traj.get(j).inverse().cast<float>();
-      // 	Cloud transformed;
-      // 	pcl::transformPointCloud(*map, transformed, transform);
-      // 	initial_model.cloudToFrame(transformed, &mapframe);
-      // 	cv::imshow("map", mapframe.depthImage());
-      // 	cv::waitKey(10);
+      //         cout << "Visualizing " << j << " / " << traj.size() << endl;
+      //         cv::imshow("measurement", frame.depthImage());
+      //         Frame mapframe;
+      //         Affine3f transform = traj.get(j).inverse().cast<float>();
+      //         Cloud transformed;
+      //         pcl::transformPointCloud(*map, transformed, transform);
+      //         initial_model.cloudToFrame(transformed, &mapframe);
+      //         cv::imshow("map", mapframe.depthImage());
+      //         cv::waitKey(10);
       // }
       // ++num;
     }

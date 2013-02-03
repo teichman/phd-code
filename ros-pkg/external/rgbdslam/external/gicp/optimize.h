@@ -51,10 +51,10 @@ namespace dgc {
     inline void print_gsl_matrix(gsl_matrix *mat, const char * name) {
       std::cout << name << "= [";
       for(unsigned int i = 0; i < mat->size1; i++) {
-	for(unsigned int j = 0; j < mat->size2; j++) {
-	  std::cout << gsl_matrix_get(mat, i, j) << " ";
-	}
-	std::cout << ";" << std::endl;
+        for(unsigned int j = 0; j < mat->size2; j++) {
+          std::cout << gsl_matrix_get(mat, i, j) << " ";
+        }
+        std::cout << ";" << std::endl;
       }
       std::cout << "]" << std::endl;
     }    

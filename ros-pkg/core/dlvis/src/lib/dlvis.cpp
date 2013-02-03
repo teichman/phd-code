@@ -207,8 +207,8 @@ void DLVis::reshape(int w, int h)
   // glMatrixMode(GL_MODELVIEW);
   // glLoadIdentity();
   // gluLookAt(0, 1.75, 5,
-  // 	    0, 1.75, 4,
-  // 	    0.0f, 1.0f, 0.0f);
+  //             0, 1.75, 4,
+  //             0.0f, 1.0f, 0.0f);
 }
 
 void DLVis::setPointCloud(rgbd::Cloud::ConstPtr cloud)

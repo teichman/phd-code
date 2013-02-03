@@ -44,9 +44,9 @@ public:
     double rand = uniform(0, 1);
     if(rand < 0.1) {
       if(params.get<string>("type") == "constant")
-	params.set<string>("type", "quadratic");
+        params.set<string>("type", "quadratic");
       else
-	params.set<string>("type", "constant");
+        params.set<string>("type", "constant");
       
       // Have to twiddle type & w2 simultaneously or you can get stuck.
       params.set("w2", uniform(0.5, 1));

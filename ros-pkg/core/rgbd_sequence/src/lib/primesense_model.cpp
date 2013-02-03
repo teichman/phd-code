@@ -46,21 +46,21 @@ namespace rgbd
       ind.resize(height_);
     for(size_t y = 0; y < ind.size(); ++y)
       if((int)ind[y].size() != width_)
-	ind[y].resize(width_);
+        ind[y].resize(width_);
     for(size_t y = 0; y < ind.size(); ++y) {
       for(size_t x = 0; x < ind[y].size(); ++x) { 
-	ind[y][x].clear();
-	ind[y][x].reserve(10);
+        ind[y][x].clear();
+        ind[y][x].reserve(10);
       }
     }
 
     ProjectivePoint ppt;
     for(size_t i = 0; i < pcd.size(); ++i) {
       if(!isFinite(pcd[i]))
-	continue;
+        continue;
       project(pcd[i], &ppt);
       if(ppt.z_ == 0 || !(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
-	continue;
+        continue;
       //ind[ppt.v_][ppt.u_].push_back(pcd[i].getVector3fMap().norm());
       ind[ppt.v_][ppt.u_].push_back(pcd[i].z);
     }
@@ -86,12 +86,12 @@ namespace rgbd
     ProjectivePoint ppt;
     for(size_t i = 0; i < pcd.size(); ++i) {
       if(!isFinite(pcd[i]))
-	continue;
+        continue;
       
       // Ignore points outside the depth image or behind the sensor.
       project(pcd[i], &ppt);
       if(ppt.z_ == 0 || !(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
-	continue;
+        continue;
 
       // Eigen is column-major by default: http://eigen.tuxfamily.org/dox/TopicStorageOrders.html
       // opencv is row-major
@@ -101,13 +101,13 @@ namespace rgbd
       // Take the closest point in pcd.
       unsigned short curr_depth = frame->depth_->coeffRef(ppt.v_, ppt.u_);
       if(curr_depth == 0 || ppt.z_ < curr_depth) { 
-	frame->depth_->coeffRef(ppt.v_, ppt.u_) = ppt.z_;
-	frame->img_(ppt.v_, ppt.u_)[0] = ppt.b_;
-	frame->img_(ppt.v_, ppt.u_)[1] = ppt.g_;
-	frame->img_(ppt.v_, ppt.u_)[2] = ppt.r_;
-	if(indexmap) {
-	  (*indexmap)(ppt.v_, ppt.u_) = i;
-	}
+        frame->depth_->coeffRef(ppt.v_, ppt.u_) = ppt.z_;
+        frame->img_(ppt.v_, ppt.u_)[0] = ppt.b_;
+        frame->img_(ppt.v_, ppt.u_)[1] = ppt.g_;
+        frame->img_(ppt.v_, ppt.u_)[2] = ppt.r_;
+        if(indexmap) {
+          (*indexmap)(ppt.v_, ppt.u_) = i;
+        }
       }
     }
   }
@@ -134,14 +134,14 @@ namespace rgbd
     ProjectivePoint ppt;
     for(ppt.v_ = 0; ppt.v_ < dm.rows(); ++ppt.v_) {
       for(ppt.u_ = 0; ppt.u_ < dm.cols(); ++ppt.u_, ++idx) {
-	ppt.z_ = dm(ppt.v_, ppt.u_);
-	if(ppt.z_ > max_range * 1000)
-	  ppt.z_ = 0;  // bad point.
+        ppt.z_ = dm(ppt.v_, ppt.u_);
+        if(ppt.z_ > max_range * 1000)
+          ppt.z_ = 0;  // bad point.
 
-	ppt.r_ = img(ppt.v_, ppt.u_)[2];
-	ppt.g_ = img(ppt.v_, ppt.u_)[1];
-	ppt.b_ = img(ppt.v_, ppt.u_)[0];
-	project(ppt, &pcd->at(idx));
+        ppt.r_ = img(ppt.v_, ppt.u_)[2];
+        ppt.g_ = img(ppt.v_, ppt.u_)[1];
+        ppt.b_ = img(ppt.v_, ppt.u_)[0];
+        project(ppt, &pcd->at(idx));
       }
     }
   }
@@ -152,7 +152,7 @@ namespace rgbd
     int idx = 0;
     for(int x = 0; x < mat.cols(); ++x)
       for(int y = 0; y < mat.rows(); ++y, ++idx)
-	vec(idx) = mat(y, x);
+        vec(idx) = mat(y, x);
     return vec;
   }
   
@@ -175,9 +175,9 @@ namespace rgbd
       pt->y = pt->z * (ppt.v_ - cy_) / fy_;
 
       // if(use_distortion_model_) { 
-      // 	VectorXd features = computeFeatures(ppt);
-      // 	double mult = weights_.dot(features);
-      // 	pt->getVector3fMap() *= mult;
+      //         VectorXd features = computeFeatures(ppt);
+      //         double mult = weights_.dot(features);
+      //         pt->getVector3fMap() *= mult;
       // }
     }
   }
@@ -204,13 +204,13 @@ namespace rgbd
     double uv;
     for(int vexp = 0; vexp < 4; ++vexp) {
       for(int uexp = 0; uexp < 4; ++uexp) {
-	uv = us.coeffRef(uexp) * vs.coeffRef(vexp);
-	for(int mexp = 0; mexp < 4; ++mexp, ++idx) {
-	  features->coeffRef(idx) = ms.coeffRef(mexp) * uv;
-	}
+        uv = us.coeffRef(uexp) * vs.coeffRef(vexp);
+        for(int mexp = 0; mexp < 4; ++mexp, ++idx) {
+          features->coeffRef(idx) = ms.coeffRef(mexp) * uv;
+        }
       }
     }
-	      
+              
     // VectorXd ms(4);
     // double m = (ppt.z_ * 0.001) / 10.0;  // z_ is in millimeters, and we want to scale it so that 10 meters is equal to 1.
     // ms << 1, m, m*m, m*m*m;
@@ -316,9 +316,9 @@ namespace rgbd
     bool has = false;
     for(int i = 0; i < weights_.rows(); ++i) {
       if(i == 0 && weights_(i) != 1)
-	has = true;
+        has = true;
       if(i != 0 && weights_(i) != 0)
-	has = true;
+        has = true;
     }
     return has;
   }
@@ -328,9 +328,9 @@ namespace rgbd
     bool has = true;
     for(int i = 0; i < weights_.rows(); ++i) {
       if(i == 1 && weights_(i) != 10)
-	has = false;
+        has = false;
       if(i != 1 && weights_(i) != 0)
-	has = false;
+        has = false;
     }
     return has;
   }
@@ -379,18 +379,18 @@ namespace rgbd
     VectorXd f(numFeatures());
     for(ppt.v_ = 0; ppt.v_ < depth.rows(); ++ppt.v_) {
       for(ppt.u_ = 0; ppt.u_ < depth.cols(); ++ppt.u_) {
-	ppt.z_ = depth.coeffRef(ppt.v_, ppt.u_);
-	if(ppt.z_ != 0) {
-	  computeFeatures(ppt, &f);
-	  depth.coeffRef(ppt.v_, ppt.u_) *= weights_.dot(f);
-	}
+        ppt.z_ = depth.coeffRef(ppt.v_, ppt.u_);
+        if(ppt.z_ != 0) {
+          computeFeatures(ppt, &f);
+          depth.coeffRef(ppt.v_, ppt.u_) *= weights_.dot(f);
+        }
       }
     }
   }
 
   void PrimeSenseModel::estimateMapDepth(const Cloud& map, const Eigen::Affine3f& transform,
-					 const Frame& measurement,
-					 DepthMat* estimate) const
+                                         const Frame& measurement,
+                                         DepthMat* estimate) const
   {
     // -- Reallocate estimate if necessary.
     if(estimate->rows() != measurement.depth_->rows() ||
@@ -415,8 +415,8 @@ namespace rgbd
     mask = 0;
     for(int y = 0; y < mask.rows; ++y)
       for(int x = 0; x < mask.cols; ++x)
-	if(naive_mapdepth(y, x) != 0)
-	  mask(y, x) = 255;
+        if(naive_mapdepth(y, x) != 0)
+          mask(y, x) = 255;
     cv::dilate(mask, mask, cv::Mat(), cv::Point(-1, -1), 4);
     cv::erode(mask, mask, cv::Mat(), cv::Point(-1, -1), 15);
 
@@ -425,36 +425,36 @@ namespace rgbd
     Point pt;
     for(ppt.v_ = 0; ppt.v_ < measurement_depth.rows(); ++ppt.v_) {
       for(ppt.u_ = 0; ppt.u_ < measurement_depth.cols(); ++ppt.u_) {
-	// -- Reject points with no data.
-	if(measurement_depth(ppt.v_, ppt.u_) == 0)
-	  continue;
-	if(naive_mapdepth(ppt.v_, ppt.u_) == 0)
-	  continue;
-	
-	// -- Reject points on the edge of the map.
-	if(mask(ppt.v_, ppt.u_) == 0)
-	  continue;
+        // -- Reject points with no data.
+        if(measurement_depth(ppt.v_, ppt.u_) == 0)
+          continue;
+        if(naive_mapdepth(ppt.v_, ppt.u_) == 0)
+          continue;
+        
+        // -- Reject points on the edge of the map.
+        if(mask(ppt.v_, ppt.u_) == 0)
+          continue;
 
-	// -- Find nearby points in the cone to get a good estimate of the map depth.
-	double radius = 0.02;
-	double mean = 0;
-	double stdev = 0;
-	//double stdev_thresh = numeric_limits<double>::max();
-	double stdev_thresh = 0.03;
-	bool valid = coneFit(naive_mapdepth, rindex, ppt.u_, ppt.v_, radius, measurement_depth(ppt.v_, ppt.u_) * 0.001, &mean, &stdev);
-	if(!valid)
-	  continue;
-	if(stdev > stdev_thresh)
-	  continue;
+        // -- Find nearby points in the cone to get a good estimate of the map depth.
+        double radius = 0.02;
+        double mean = 0;
+        double stdev = 0;
+        //double stdev_thresh = numeric_limits<double>::max();
+        double stdev_thresh = 0.03;
+        bool valid = coneFit(naive_mapdepth, rindex, ppt.u_, ppt.v_, radius, measurement_depth(ppt.v_, ppt.u_) * 0.001, &mean, &stdev);
+        if(!valid)
+          continue;
+        if(stdev > stdev_thresh)
+          continue;
 
-	(*estimate)(ppt.v_, ppt.u_) = mean * 1000;
+        (*estimate)(ppt.v_, ppt.u_) = mean * 1000;
       }
     }
   }
 
   bool PrimeSenseModel::coneFit(const DepthMat& naive_mapdepth, const RangeIndex& rindex,
-				int uc, int vc, double radius, double measurement_depth,
-				double* mean, double* stdev) const
+                                int uc, int vc, double radius, double measurement_depth,
+                                double* mean, double* stdev) const
   {
     Point pt_center, pt_ul, pt_lr;
     ProjectivePoint ppt, ppt_ul, ppt_lr;
@@ -486,14 +486,14 @@ namespace rgbd
     double num = 0;
     for(ppt.u_ = min_u; ppt.u_ <= max_u; ++ppt.u_) {
       for(ppt.v_ = min_v; ppt.v_ <= max_v; ++ppt.v_) {
-	const vector<double>& vals = rindex[ppt.v_][ppt.u_];
-	for(size_t i = 0; i < vals.size(); ++i) {
-	  double mult = vals[i] / measurement_depth;
-	  if(mult > MIN_MULT && mult < MAX_MULT) {
-	    *mean += vals[i];
-	    ++num;
-	  }
-	}
+        const vector<double>& vals = rindex[ppt.v_][ppt.u_];
+        for(size_t i = 0; i < vals.size(); ++i) {
+          double mult = vals[i] / measurement_depth;
+          if(mult > MIN_MULT && mult < MAX_MULT) {
+            *mean += vals[i];
+            ++num;
+          }
+        }
       }
     }
     if(num == 0)
@@ -503,12 +503,12 @@ namespace rgbd
     double var = 0;
     for(ppt.u_ = min_u; ppt.u_ <= max_u; ++ppt.u_) {
       for(ppt.v_ = min_v; ppt.v_ <= max_v; ++ppt.v_) {
-	const vector<double>& vals = rindex[ppt.v_][ppt.u_];
-	for(size_t i = 0; i < vals.size(); ++i) {
-	  double mult = vals[i] / measurement_depth;
-	  if(mult > MIN_MULT && mult < MAX_MULT)
-	    var += (vals[i] - *mean) * (vals[i] - *mean);
-	}
+        const vector<double>& vals = rindex[ppt.v_][ppt.u_];
+        for(size_t i = 0; i < vals.size(); ++i) {
+          double mult = vals[i] / measurement_depth;
+          if(mult > MIN_MULT && mult < MAX_MULT)
+            var += (vals[i] - *mean) * (vals[i] - *mean);
+        }
       }
     }
     var /= num;
@@ -553,7 +553,7 @@ namespace rgbd
     depth = cv::Vec3b(0, 0, 0);
     for(int y = 0; y < depth.rows; ++y)
       for(int x = 0; x < depth.cols; ++x)
-	depth(y, x) = colorize(depth_->coeffRef(y, x) * 0.001, 0, 10);
+        depth(y, x) = colorize(depth_->coeffRef(y, x) * 0.001, 0, 10);
     return depth;
   }
 

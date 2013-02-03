@@ -60,9 +60,9 @@ void BackgroundSubtractor::debug() const
 }
 
 void BackgroundSubtractor::findForeground(const Cloud& pcd,
-					  const BackgroundModel& model,
-					  vector<int>* indices,
-					  cv::Mat1b img) const
+                                          const BackgroundModel& model,
+                                          vector<int>* indices,
+                                          cv::Mat1b img) const
 {
   indices->clear();
 
@@ -83,7 +83,7 @@ void BackgroundSubtractor::findForeground(const Cloud& pcd,
   for(int y = 0; y < img.rows; ++y)
     for(int x = 0; x < img.cols; ++x)
       if(img(y, x) != 0)
-	indices->push_back(y * img.cols + x);
+        indices->push_back(y * img.cols + x);
   
   cout << "Foreground: " << indices->size() << ", Total: " << pcd.size() << endl;
 }

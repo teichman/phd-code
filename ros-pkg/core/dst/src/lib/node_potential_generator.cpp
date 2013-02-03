@@ -22,18 +22,18 @@ namespace dst
     // -- Just the potentials.
     cv::Mat3b raw;
     raw = cv::Mat3b(source_potentials_.rows(),
-		    source_potentials_.cols(),
-		    cv::Vec3b(0, 0, 0));
+                    source_potentials_.cols(),
+                    cv::Vec3b(0, 0, 0));
     
     for(int y = 0; y < raw.rows; ++y) { 
       for(int x = 0; x < raw.cols; ++x) {
-	// -1 for bg, +1 for fg.
-	double val = 2.0 * sigmoid(1.1 * (source_potentials_(y, x) - sink_potentials_(y, x))) - 1.0;
-	val = min(0.9, max(-0.9, val));
-	if(val < 0)
-	  raw(y, x)[1] = 255 * -val;
-	else
-	  raw(y, x)[2] = 255 * val;	  
+        // -1 for bg, +1 for fg.
+        double val = 2.0 * sigmoid(1.1 * (source_potentials_(y, x) - sink_potentials_(y, x))) - 1.0;
+        val = min(0.9, max(-0.9, val));
+        if(val < 0)
+          raw(y, x)[1] = 255 * -val;
+        else
+          raw(y, x)[2] = 255 * val;          
       }
     }
 
@@ -54,11 +54,11 @@ namespace dst
     ROS_ASSERT(vis.rows > 0 && vis.cols > 0);
     for(int y = 0; y < vis.rows; ++y) { 
       for(int x = 0; x < vis.cols; ++x) {
-	double val = sigmoid(5.0 * (source_potentials_(y, x) - sink_potentials_(y, x))); // 1.0 for foreground.
-	val = min(0.9, max(0.1, val));
-	vis(y, x)[0] = vis(y, x)[0] * val;
-	vis(y, x)[1] = vis(y, x)[1] * val;
-	vis(y, x)[2] = vis(y, x)[2] * val;
+        double val = sigmoid(5.0 * (source_potentials_(y, x) - sink_potentials_(y, x))); // 1.0 for foreground.
+        val = min(0.9, max(0.1, val));
+        vis(y, x)[0] = vis(y, x)[0] * val;
+        vis(y, x)[1] = vis(y, x)[1] * val;
+        vis(y, x)[2] = vis(y, x)[2] * val;
       }
     }
 

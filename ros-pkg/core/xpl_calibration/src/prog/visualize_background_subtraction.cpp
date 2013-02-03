@@ -109,9 +109,9 @@ int main(int argc, char** argv)
       const vector<int>& indices = fg_indices->at(i);
       *fg = pcd;
       for(size_t j = 0; j < indices.size(); ++j) { 
-	fg->at(indices[j]).r = 255;
-	fg->at(indices[j]).g = 0;
-	fg->at(indices[j]).b = 0;
+        fg->at(indices[j]).r = 255;
+        fg->at(indices[j]).g = 0;
+        fg->at(indices[j]).b = 0;
       }
       
       vis.showCloud(fg);

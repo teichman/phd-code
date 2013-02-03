@@ -12,22 +12,22 @@ void OrbExtractor::compute()
 }
 
 OrbExtractor::PackedDescriptorsPtr OrbExtractor::extractOrb(cv::Mat3b img,
-							    vector<cv::KeyPoint>* keypoints)
+                                                            vector<cv::KeyPoint>* keypoints)
 {
   keypoints_.clear();
   if(!extractor_) {
     // cv::ORB::CommonParams ocp(param<double>("ScaleFactor"),
-    // 			      param<int>("NumLevels"),
-    // 			      31,
-    // 			      param<int>("FirstLevel"));
+    //                               param<int>("NumLevels"),
+    //                               31,
+    //                               param<int>("FirstLevel"));
     // int num = param<int>("DesiredNumKeypoints");
     // extractor_ = boost::shared_ptr<cv::ORB>(new cv::ORB(num, ocp));
 
     extractor_ = boost::shared_ptr<cv::ORB>(new cv::ORB(param<int>("DesiredNumKeypoints"),
-							param<double>("ScaleFactor"),
-							param<int>("NumLevels"),
-							31,
-							param<int>("FirstLevel")));
+                                                        param<double>("ScaleFactor"),
+                                                        param<int>("NumLevels"),
+                                                        31,
+                                                        param<int>("FirstLevel")));
   }
   
   // -- Compute keypoints on the image.
