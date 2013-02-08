@@ -65,23 +65,23 @@ int main(int argc, char** argv)
       break;
     case 'P':
       if(argc != 3) // No pause mode if we're dumping out to disk.
-	pause = !pause;
+        pause = !pause;
       break;
     case '0':
       if(pause)
-	increment = 10;
+        increment = 10;
       break;
     case ')':
       if(pause)
-	increment = -10;
+        increment = -10;
       break;
     case '1':
       if(pause)
-	increment = 1;
+        increment = 1;
       break;
     case '!':
       if(pause)
-	increment = -1;
+        increment = -1;
       break;
     default:
       break;

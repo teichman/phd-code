@@ -13,12 +13,12 @@ namespace dst
   {
   public:
     EdgePotentialAggregator(pipeline2::Outlet<Graph3dPtr>* graph_otl,
-			    pipeline2::Outlet<cv::Mat3b>* img_otl,
-			    pipeline2::Outlet<DepthProjector::Output>* index_otl,
-			    const std::vector<EdgePotentialGenerator*>& generators,
-			    const Eigen::VectorXd& weights,
-			    bool ignore_depthless = true,
-			    pipeline2::Outlet< Eigen::SparseMatrix<double, Eigen::RowMajor>* >* weights_otl = NULL);
+                            pipeline2::Outlet<cv::Mat3b>* img_otl,
+                            pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                            const std::vector<EdgePotentialGenerator*>& generators,
+                            const Eigen::VectorXd& weights,
+                            bool ignore_depthless = true,
+                            pipeline2::Outlet< Eigen::SparseMatrix<double, Eigen::RowMajor>* >* weights_otl = NULL);
 
     std::string weightsStatus() const;
     Eigen::VectorXd getWeights() const { return weights_; }
@@ -38,8 +38,8 @@ namespace dst
     //! sanitized is a version of pot.  Edge potentials that touch at least one depthless
     //! pixel are removed.
     void ignoreDepthless(const Eigen::SparseMatrix<double, Eigen::RowMajor>& pot,
-			 Eigen::SparseMatrix<double, Eigen::RowMajor>* sanitized,
-			 const std::string& name = "") const;
+                         Eigen::SparseMatrix<double, Eigen::RowMajor>* sanitized,
+                         const std::string& name = "") const;
     
     void _compute();
     void _display() const;

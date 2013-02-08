@@ -138,8 +138,8 @@ DiscreteDepthDistortionModel& DiscreteDepthDistortionModel::operator=(const Disc
 }
 
 DiscreteDepthDistortionModel::DiscreteDepthDistortionModel(const PrimeSenseModel& psm,
-							   int bin_width, int bin_height, double bin_depth,
-							   int smoothing) :
+                                                           int bin_width, int bin_height, double bin_depth,
+                                                           int smoothing) :
   psm_(psm),
   bin_width_(bin_width),
   bin_height_(bin_height),
@@ -167,7 +167,7 @@ void DiscreteDepthDistortionModel::deleteFrustums()
   for(size_t y = 0; y < frustums_.size(); ++y)
     for(size_t x = 0; x < frustums_[y].size(); ++x)
       if(frustums_[y][x])
-	delete frustums_[y][x];
+        delete frustums_[y][x];
 }
 
 DiscreteDepthDistortionModel::~DiscreteDepthDistortionModel()
@@ -186,7 +186,7 @@ void DiscreteDepthDistortionModel::undistort(Frame* frame) const
   for(int v = 0; v < psm_.height_; ++v) {
     for(int u = 0; u < psm_.width_; ++u) {
       if(frame->depth_->coeffRef(v, u) == 0)
-	continue;
+        continue;
 
       // Non-caching version.
       double z = frame->depth_->coeffRef(v, u) * 0.001;
@@ -198,12 +198,12 @@ void DiscreteDepthDistortionModel::undistort(Frame* frame) const
       // float z = frame->depth_->coeffRef(v, u) * 0.001;
       // int idx = frustum(v, u).index(z);
       // if(idx_cache_.coeffRef(v, u) == idx)
-      // 	z *= multiplier_cache_.coeffRef(v, u);
+      //         z *= multiplier_cache_.coeffRef(v, u);
       // else {
-      // 	float mult;
-      // 	frustum(v, u).undistort(idx, &z, &mult);
-      // 	idx_cache_.coeffRef(v, u) = idx;
-      // 	multiplier_cache_.coeffRef(v, u) = mult;
+      //         float mult;
+      //         frustum(v, u).undistort(idx, &z, &mult);
+      //         idx_cache_.coeffRef(v, u) = idx;
+      //         multiplier_cache_.coeffRef(v, u) = mult;
       // }
       // frame->depth_->coeffRef(v, u) = z * 1000;
     }
@@ -214,36 +214,6 @@ void DiscreteDepthDistortionModel::addExample(const ProjectivePoint& ppt, double
 {
   frustum(ppt.v_, ppt.u_).addExample(ground_truth, measurement);
 }
-
-// void DiscreteDepthDistortionModel::accumulate(const rgbd::Frame& measurement, const Eigen::MatrixXd& multipliers)
-// {
-//   ROS_ASSERT(psm_.width_ == measurement.depth_->cols());
-//   ROS_ASSERT(psm_.height_ == measurement.depth_->rows());
-//   ROS_ASSERT(psm_.width_ == multipliers.cols());
-//   ROS_ASSERT(psm_.height_ == multipliers.rows());
-
-//   ProjectivePoint ppt;
-//   Point pt;
-//   for(ppt.v_ = 0; ppt.v_ < psm_.height_; ++ppt.v_) {
-//     for(ppt.u_ = 0; ppt.u_ < psm_.width_; ++ppt.u_) {
-//       double mult = multipliers(ppt.v_, ppt.u_);
-//       if(measurement.depth_->coeffRef(ppt.v_, ppt.u_) == 0) {
-// 	ROS_ASSERT(mult == 0);
-// 	continue;
-//       }
-//       if(mult == 0)
-// 	continue;
-      
-//       // ppt.z_ = measurement.depth_->coeffRef(ppt.v_, ppt.u_);
-//       // psm_.project(ppt, &pt);
-//       // double meas = pt.getVector3fMap().norm();
-//       // frustum(ppt.v_, ppt.u_).addMultiplier(meas, mult);
-
-//       double z = measurement.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
-//       frustum(ppt.v_, ppt.u_).addMultiplier(z, mult);
-//     }
-//   }
-// }
 
 void DiscreteDepthDistortionModel::accumulate(const Frame& ground_truth, const Frame& measurement)
 {
@@ -257,9 +227,9 @@ void DiscreteDepthDistortionModel::accumulate(const Frame& ground_truth, const F
   for(ppt.v_ = 0; ppt.v_ < psm_.height_; ++ppt.v_) {
     for(ppt.u_ = 0; ppt.u_ < psm_.width_; ++ppt.u_) {
       if(ground_truth.depth_->coeffRef(ppt.v_, ppt.u_) == 0)
-	continue;
+        continue;
       if(measurement.depth_->coeffRef(ppt.v_, ppt.u_) == 0)
-	continue;
+        continue;
       
       // ppt.z_ = ground_truth.depth_->coeffRef(ppt.v_, ppt.u_);
       // psm_.project(ppt, &pt);
@@ -348,12 +318,12 @@ void DiscreteDepthDistortionModel::visualize(const std::string& dir) const
     cv::Mat3b mult(cv::Size(psm_.width_, psm_.height_), cv::Vec3b(0, 0, 0));
     for(int y = 0; y < mult.rows; ++y) {
       for(int x = 0; x < mult.cols; ++x) {
-	const Frustum& frustum = *frustums_[y / bin_height_][x / bin_width_];
-	float val = frustum.multipliers_(i);
-	if(val > 1)
-	  mult(y, x)[2] = min(255., 255 * (val - 1.0) / 0.25);
-	if(val < 1)
-	  mult(y, x)[0] = min(255., 255 * (1.0 - val) / 0.25);
+        const Frustum& frustum = *frustums_[y / bin_height_][x / bin_width_];
+        float val = frustum.multipliers_(i);
+        if(val > 1)
+          mult(y, x)[2] = min(255., 255 * (val - 1.0) / 0.25);
+        if(val < 1)
+          mult(y, x)[0] = min(255., 255 * (1.0 - val) / 0.25);
       }
     }
     cv::imwrite(oss.str(), mult);
@@ -363,11 +333,11 @@ void DiscreteDepthDistortionModel::visualize(const std::string& dir) const
     cv::Mat3b count(cv::Size(psm_.width_, psm_.height_), cv::Vec3b(0, 0, 0));
     for(int y = 0; y < count.rows; ++y) {
       for(int x = 0; x < count.cols; ++x) {
-	const Frustum& frustum = *frustums_[y / bin_height_][x / bin_width_];
-	uchar val = min(255., (double)(255 * frustum.counts_(i) / 100));
-	count(y, x)[0] = val;
-	count(y, x)[1] = val;
-	count(y, x)[2] = val;
+        const Frustum& frustum = *frustums_[y / bin_height_][x / bin_width_];
+        uchar val = min(255., (double)(255 * frustum.counts_(i) / 100));
+        count(y, x)[0] = val;
+        count(y, x)[1] = val;
+        count(y, x)[2] = val;
       }
     }
     oss.str("");
@@ -378,10 +348,10 @@ void DiscreteDepthDistortionModel::visualize(const std::string& dir) const
     cv::Mat3b combined(cv::Size(psm_.width_ * 2 + horiz_divider, psm_.height_), cv::Vec3b(0, 0, 0));
     for(int y = 0; y < combined.rows; ++y) {
       for(int x = 0; x < combined.cols; ++x) {
-	if(x < count.cols)
-	  combined(y, x) = count(y, x);
-	else if(x > count.cols + horiz_divider)
-	  combined(y, x) = mult(y, x - count.cols - horiz_divider);
+        if(x < count.cols)
+          combined(y, x) = count(y, x);
+        else if(x > count.cols + horiz_divider)
+          combined(y, x) = mult(y, x - count.cols - horiz_divider);
       }
     }
     oss.str("");
@@ -391,39 +361,39 @@ void DiscreteDepthDistortionModel::visualize(const std::string& dir) const
     // -- Append to the mega image.
     for(int y = 0; y < combined.rows; ++y)
       for(int x = 0; x < combined.cols; ++x)
-	mega(y + i * (combined.rows + vert_divider) + vert_divider, x) = combined(y, x);
+        mega(y + i * (combined.rows + vert_divider) + vert_divider, x) = combined(y, x);
 
     // -- Compute the publication multipliers visualization for this layer.
     //    Multiplier of 1 is white, >1 is red, <1 is blue.  Think redshift.
     cv::Mat3b pubmult(cv::Size(psm_.width_, psm_.height_), cv::Vec3b(255, 255, 255));
     for(int y = 0; y < pubmult.rows; ++y) {
       for(int x = 0; x < pubmult.cols; ++x) {
-	const Frustum& frustum = *frustums_[y / bin_height_][x / bin_width_];
-	float val = frustum.multipliers_(i);
-	if(val > 1) {
-	  pubmult(y, x)[0] = 255 - min(255., 255 * (val - 1.0) / 0.1);
-	  pubmult(y, x)[1] = 255 - min(255., 255 * (val - 1.0) / 0.1);
-	}
-	if(val < 1) {
-	  pubmult(y, x)[1] = 255 - min(255., 255 * (1.0 - val) / 0.1);
-	  pubmult(y, x)[2] = 255 - min(255., 255 * (1.0 - val) / 0.1);
-	}
+        const Frustum& frustum = *frustums_[y / bin_height_][x / bin_width_];
+        float val = frustum.multipliers_(i);
+        if(val > 1) {
+          pubmult(y, x)[0] = 255 - min(255., 255 * (val - 1.0) / 0.1);
+          pubmult(y, x)[1] = 255 - min(255., 255 * (val - 1.0) / 0.1);
+        }
+        if(val < 1) {
+          pubmult(y, x)[1] = 255 - min(255., 255 * (1.0 - val) / 0.1);
+          pubmult(y, x)[2] = 255 - min(255., 255 * (1.0 - val) / 0.1);
+        }
       }
     }
   
     // -- Append to publication image.
     for(size_t j = 0; j < pub_layers.size(); ++j)
       if(pub_layers[j] == i)
-	for(int y = 0; y < pubmult.rows; ++y)
-	  for(int x = 0; x < pubmult.cols; ++x)
-	    pub(y + j * (pubmult.rows + vert_divider) + vert_divider, x) = pubmult(y, x);
+        for(int y = 0; y < pubmult.rows; ++y)
+          for(int x = 0; x < pubmult.cols; ++x)
+            pub(y + j * (pubmult.rows + vert_divider) + vert_divider, x) = pubmult(y, x);
   }
   
   // -- Add a white bar at the top and bottom for reference.
   for(int y = 0; y < mega.rows; ++y)
     if(y < vert_divider || y > mega.rows - vert_divider)
       for(int x = 0; x < mega.cols; ++x)
-	mega(y, x) = cv::Vec3b(255, 255, 255);
+        mega(y, x) = cv::Vec3b(255, 255, 255);
   
   // -- Save mega image.
   ostringstream oss;

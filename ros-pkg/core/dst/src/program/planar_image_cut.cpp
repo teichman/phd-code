@@ -55,11 +55,11 @@ void ViewController::mouseEvent(int event, int x, int y, int flags, void* param)
   if(flags == 1) {
     for(int i = x - radius_; i <= x + radius_; ++i) { 
       for(int j = y - radius_; j <= y + radius_; ++j) {
-	if(i >= 0 && i < vis_.cols &&
-	   j >= 0 && j < vis_.rows) { 
-	  source_points_.insert(pair<int, int>(j, i));
-	  cv::circle(vis_, cv::Point(i, j), 1, cv::Scalar(255, 255, 255)); // OpenCV consistency fail.
-	}
+        if(i >= 0 && i < vis_.cols &&
+           j >= 0 && j < vis_.rows) { 
+          source_points_.insert(pair<int, int>(j, i));
+          cv::circle(vis_, cv::Point(i, j), 1, cv::Scalar(255, 255, 255)); // OpenCV consistency fail.
+        }
       }
     }
     view_.updateImage(vis_);
@@ -69,11 +69,11 @@ void ViewController::mouseEvent(int event, int x, int y, int flags, void* param)
   else if(flags == 2) {
     for(int i = x - radius_; i <= x + radius_; ++i) { 
       for(int j = y - radius_; j <= y + radius_; ++j) {
-	if(i >= 0 && i < vis_.cols &&
-	   j >= 0 && j < vis_.rows) { 
-	  sink_points_.insert(pair<int, int>(j, i));
-	  cv::circle(vis_, cv::Point(i, j), 1, cv::Scalar(0, 0, 0));
-	}
+        if(i >= 0 && i < vis_.cols &&
+           j >= 0 && j < vis_.rows) { 
+          sink_points_.insert(pair<int, int>(j, i));
+          cv::circle(vis_, cv::Point(i, j), 1, cv::Scalar(0, 0, 0));
+        }
       }
     }
     view_.updateImage(vis_);
@@ -139,11 +139,11 @@ void ViewController::cut()
   for(int y = 0; y < img_.rows; ++y) { 
     for(int x = 0; x < img_.cols; ++x) {
       if(source_points_.count(pair<int, int>(y, x)))
-	mask[idx] = source_id;
+        mask[idx] = source_id;
       else if(sink_points_.count(pair<int, int>(y, x)))
-	mask[idx] = sink_id;
+        mask[idx] = sink_id;
       else
-	mask[idx] = unl;
+        mask[idx] = unl;
 
       ++idx;
     }
@@ -163,11 +163,11 @@ void ViewController::cut()
   for(int y = 0; y < output.rows; ++y) {
     for(int x = 0; x < output.cols; ++x) {
       if(graph.getLabel(y, x) == CutPlanar::LABEL_SOURCE)
-	output.at<cv::Vec3b>(y, x) = img_.at<cv::Vec3b>(y, x);
+        output.at<cv::Vec3b>(y, x) = img_.at<cv::Vec3b>(y, x);
       else if(graph.getLabel(y, x) == CutPlanar::LABEL_SINK)
-	output.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
+        output.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
       else
-	output.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 255);
+        output.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 255);
     }
   }
 

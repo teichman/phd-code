@@ -15,9 +15,9 @@ class LossFunction : public ScalarFunction
 {
 public:
   LossFunction(const std::vector<KdTree::Ptr>& trees0,
-	       const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
-	       const std::vector<rgbd::Cloud::Ptr>& pcds1,
-	       const pipeline::Params& params);
+               const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
+               const std::vector<rgbd::Cloud::Ptr>& pcds1,
+               const pipeline::Params& params);
   double eval(const Eigen::VectorXd& x) const;
   double computeLoss(KdTree::Ptr tree0, const rgbd::Cloud& pcd0, const rgbd::Cloud& pcd1) const;
 
@@ -34,7 +34,7 @@ protected:
   double cy_;
 
   int projectPoint(const rgbd::Cloud& pcd, const rgbd::Point& pt,
-		   int* u, int* v) const;
+                   int* u, int* v) const;
 };
 
 class ObjectMatchingCalibrator : public pipeline::Pod
@@ -83,72 +83,72 @@ protected:
   int outer_iter_;
 
   void accumulateObjects(const ObjectClouds& objects,
-			 std::vector<rgbd::Cloud::Ptr>* pcds) const;
+                         std::vector<rgbd::Cloud::Ptr>* pcds) const;
   void getData(std::vector<KdTree::Ptr>* trees0,
-	       std::vector<rgbd::Cloud::ConstPtr>* pcds0,
-	       std::vector<rgbd::Cloud::Ptr>* pcds1) const;
+               std::vector<rgbd::Cloud::ConstPtr>* pcds0,
+               std::vector<rgbd::Cloud::Ptr>* pcds1) const;
 
   void checkInput() const;
   Eigen::Affine3f centroidRansac() const;
   rgbd::Cloud::ConstPtr getNearestReferenceObject(const rgbd::Cloud& pcd1) const;
   void getSyncedInlierModels(const Eigen::Affine3f& transform,
-			     double sync,
-			     std::vector<rgbd::Cloud::ConstPtr>* inliers0,
-			     std::vector<rgbd::Cloud::Ptr>* inliers1) const;
+                             double sync,
+                             std::vector<rgbd::Cloud::ConstPtr>* inliers0,
+                             std::vector<rgbd::Cloud::Ptr>* inliers1) const;
     
   void computeCentroids(const ObjectClouds& objects,
-			std::vector< std::vector<Eigen::Vector3f> >* centroids) const;
+                        std::vector< std::vector<Eigen::Vector3f> >* centroids) const;
 
   void sampleCorrespondence(const rgbd::Sequence& seq0,
-			    const rgbd::Sequence& seq1,
-			    const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
-			    const std::vector< std::vector<Eigen::Vector3f> >& centroids1,
-			    pcl::TransformationFromCorrespondences* tfc) const;
+                            const rgbd::Sequence& seq1,
+                            const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
+                            const std::vector< std::vector<Eigen::Vector3f> >& centroids1,
+                            pcl::TransformationFromCorrespondences* tfc) const;
 
   int countInliers(const Eigen::Affine3f& transform,
-		   const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
-		   const std::vector< std::vector<Eigen::Vector3f> >& centroids1,
-		   double ransac_thresh,
-		   Eigen::Affine3f* refined_transform = NULL,
-		   std::vector<rgbd::Cloud::ConstPtr>* inlier_clouds0 = NULL,
-		   std::vector<rgbd::Cloud::ConstPtr>* inlier_clouds1 = NULL,
-		   std::vector<Eigen::Vector3f>* inlier_centroids0 = NULL,
-		   std::vector<Eigen::Vector3f>* inlier_centroids1 = NULL) const;
+                   const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
+                   const std::vector< std::vector<Eigen::Vector3f> >& centroids1,
+                   double ransac_thresh,
+                   Eigen::Affine3f* refined_transform = NULL,
+                   std::vector<rgbd::Cloud::ConstPtr>* inlier_clouds0 = NULL,
+                   std::vector<rgbd::Cloud::ConstPtr>* inlier_clouds1 = NULL,
+                   std::vector<Eigen::Vector3f>* inlier_centroids0 = NULL,
+                   std::vector<Eigen::Vector3f>* inlier_centroids1 = NULL) const;
 
   //! Moves pcds1 by the returned incremental transform.
   Eigen::Affine3f updateTransformICP(const std::vector<KdTree::Ptr>& trees0,
-				     const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
-				     const std::vector<rgbd::Cloud::Ptr>& pcds1) const;
+                                     const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
+                                     const std::vector<rgbd::Cloud::Ptr>& pcds1) const;
   //! Moves pcds1 by the returned incremental transform.
   Eigen::Affine3f updateTransformGS(const std::vector<KdTree::Ptr>& trees0,
-				    const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
-				    const std::vector<rgbd::Cloud::Ptr>& pcds1) const;
+                                    const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
+                                    const std::vector<rgbd::Cloud::Ptr>& pcds1) const;
   double updateSync(const std::vector<KdTree::Ptr>& trees0,
-		    const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
-		    const std::vector<rgbd::Cloud::Ptr>& pcds1) const;
+                    const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
+                    const std::vector<rgbd::Cloud::Ptr>& pcds1) const;
       
   void visualizeInliers(const std::string& name, const Eigen::Affine3f& transform) const;
   void visualizeResult(const std::string& name, const Eigen::Affine3f& transform, double sync) const;
   void visualizeScenes(const std::string& name,
-		       const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
-		       const std::vector<rgbd::Cloud::Ptr>& pcds1) const;
+                       const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
+                       const std::vector<rgbd::Cloud::Ptr>& pcds1) const;
   
   void downsampleAndTransform(const std::vector<rgbd::Cloud::Ptr>& source,
-			      const Eigen::Affine3f& transform,
-			      std::vector<rgbd::Cloud::Ptr>* destination) const;
+                              const Eigen::Affine3f& transform,
+                              std::vector<rgbd::Cloud::Ptr>* destination) const;
 
   double gridSearchSync(ScalarFunction::Ptr lf) const;
   Eigen::Affine3f gridSearchTransform(ScalarFunction::Ptr lf) const;
 };
 
-	 
+         
 int seek(const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
-	 double ts1, double dt_thresh);
+         double ts1, double dt_thresh);
 int seek(const std::vector<rgbd::Cloud::Ptr>& pcds0,
-	 double ts1, double dt_thresh);
+         double ts1, double dt_thresh);
 //! Rotations are in radians.
 Eigen::Affine3f generateTransform(double rx, double ry, double rz,
-				  double tx, double ty, double tz);
+                                  double tx, double ty, double tz);
 //! Inverse of generateTransform
 void generateXYZYPR(const Eigen::Affine3f &trans, 
     double &rx, double &ry, double &rz, double &tx, double &ty, double &tz);

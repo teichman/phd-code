@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     mapframe.depth_ = DepthMatPtr(new DepthMat(measurement.depth_->rows(), measurement.depth_->cols()));
     mapframe.depth_->setZero();
     sseq.model_.estimateMapDepth(*map, transform, measurement, mapframe.depth_.get());
-				 
+                                 
     cv::imshow("Map estimate", mapframe.depthImage());
 
     Frame naive_mapframe;

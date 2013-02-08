@@ -24,20 +24,20 @@ public:
   //std::vector<int> num_inliers_;
   
   OrganizedConnectedComponents(size_t min_inliers,
-			       double distance_thresh);
+                               double distance_thresh);
   void compute(const rgbd::Cloud& cloud);
-	   
+           
 protected:
   size_t min_inliers_;
   double distance_thresh_;
 
   bool findComponent(const rgbd::Cloud& pcd,
-		     size_t center_idx,
-		     int new_id);
+                     size_t center_idx,
+                     int new_id);
   
   void getNeighbors(const rgbd::Cloud& pcd,
-		    size_t center_idx,
-		    std::vector<int>* indices);
+                    size_t center_idx,
+                    std::vector<int>* indices);
 };
 
 #endif // ORGANIZED_CONNECTED_COMPONENTS_H

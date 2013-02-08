@@ -28,8 +28,8 @@ public:
   
   SlamVisualizer();
   void run(rgbd::StreamSequence::ConstPtr sseq,
-	   const std::string& opcd_path = "",
-	   const std::string& otraj_path = "");
+           const std::string& opcd_path = "",
+           const std::string& otraj_path = "");
   void setCamera(const std::string& camera_path);
 
   void rebuild_map();

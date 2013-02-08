@@ -24,16 +24,16 @@ namespace rgbd
     while(true) {
       lockWrite();
       if(needs_update_) {
-	if(pcd_->empty()) {
-	  Point pt;
-	  pt.x = 0;
-	  pt.y = 0;
-	  pt.z = 0;
-	  pcd_->push_back(pt);
-	}
-	if(!vis_.updatePointCloud(pcd_, "default"))
-	  vis_.addPointCloud(pcd_, "default");
-	needs_update_ = false;
+        if(pcd_->empty()) {
+          Point pt;
+          pt.x = 0;
+          pt.y = 0;
+          pt.z = 0;
+          pcd_->push_back(pt);
+        }
+        if(!vis_.updatePointCloud(pcd_, "default"))
+          vis_.addPointCloud(pcd_, "default");
+        needs_update_ = false;
       }
       unlockWrite();
       
@@ -41,7 +41,7 @@ namespace rgbd
 
       scopeLockWrite;
       if(quitting_)
-	break;
+        break;
     }
   }
 

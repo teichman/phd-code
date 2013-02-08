@@ -16,8 +16,8 @@ namespace dst
     pipeline2::Outlet<Normals::Ptr> normals_otl_;
     
     OrganizedSurfaceNormalNode(pipeline2::Outlet<KinectCloud::ConstPtr>* pcd_otl,
-			       pipeline2::Outlet<cv::Mat1b>* mask_otl,
-			       int radius);
+                               pipeline2::Outlet<cv::Mat1b>* mask_otl,
+                               int radius);
     cv::Mat3b getSurfNorm(const KinectCloud& cloud);
 
     void _compute();
@@ -27,15 +27,15 @@ namespace dst
     
   protected:
     void computeNormal(const KinectCloud& pcd,
-		       const pcl::PointXYZRGB& center,
-		       const std::vector<int>& indices,
-		       pcl::Normal* normal);
+                       const pcl::PointXYZRGB& center,
+                       const std::vector<int>& indices,
+                       pcl::Normal* normal);
     void computeNormal(const KinectCloud& pcd,
-		       const pcl::PointXYZRGB& pt,
-		       const cv::Point2i& img_pt,
-		       pcl::Normal* normal);
+                       const pcl::PointXYZRGB& pt,
+                       const cv::Point2i& img_pt,
+                       pcl::Normal* normal);
     void normalToColor(const pcl::Normal& normal,
-		       cv::Vec3b* color) const;
+                       cv::Vec3b* color) const;
     pipeline2::Outlet<KinectCloud::ConstPtr>* pcd_otl_;
     pipeline2::Outlet<cv::Mat1b>* mask_otl_;
     double radius_;

@@ -88,8 +88,8 @@ TEST(OpenCV, jpg_and_video)
   }
 
   CvVideoWriter* writer = cvCreateVideoWriter("opencv_test.avi",
-					      CV_FOURCC('I', '4', '2', '0'),
-					      10, cvSize(640, 480), true);
+                                              CV_FOURCC('I', '4', '2', '0'),
+                                              10, cvSize(640, 480), true);
   if(!writer)
     cout << "OpenCV video write failed." << endl;
   else

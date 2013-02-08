@@ -8,10 +8,10 @@ namespace rgbd
 {
 
   OpenNIStreamRecorder::OpenNIStreamRecorder(const std::string& type,
-					     int id,
-					     const std::string& mode,
-					     bool fake_rgb,
-					     bool registered) :
+                                             int id,
+                                             const std::string& mode,
+                                             bool fake_rgb,
+                                             bool registered) :
     sequences_dir_("recorded_sequences"),
     mode_(mode),
     recording_(false),
@@ -35,14 +35,14 @@ namespace rgbd
     while(true) {
       char key = cv::waitKey(2);
       if(key == 'q')
-	break;
+        break;
       if(key == ' ')
-	toggleRecording();
+        toggleRecording();
 
       if(fake_rgb_) 
-	getDepth();
+        getDepth();
       else
-	getRGBD();
+        getRGBD();
     }
 
     //ProfilerStop();
@@ -177,8 +177,8 @@ namespace rgbd
     double max_depth = 10.0;
     if(fake_rgb_) {
       for(int y = 0; y < cimg.rows; ++y)
-	for(int x = 0; x < cimg.cols; ++x)
-	  cimg(y, x) = colorize(frame.depth_->coeffRef(y, x) / 1000.0, min_depth, max_depth);
+        for(int x = 0; x < cimg.cols; ++x)
+          cimg(y, x) = colorize(frame.depth_->coeffRef(y, x) / 1000.0, min_depth, max_depth);
     }
     else {
       ROS_ASSERT(width == (int)sync_.current1_->GetUnderlying()->pMap->Res.X);
@@ -187,12 +187,12 @@ namespace rgbd
       HighResTimer hrt2("Dealing with openni_wrapper");
       hrt2.start();
       if(model_.type_ == "kinect") {
-	openni_wrapper::ImageBayerGRBG owimg(sync_.current1_, openni_wrapper::ImageBayerGRBG::EdgeAwareWeighted);
-	cimg = oniToCV(owimg);
+        openni_wrapper::ImageBayerGRBG owimg(sync_.current1_, openni_wrapper::ImageBayerGRBG::EdgeAwareWeighted);
+        cimg = oniToCV(owimg);
       }
       else {
-	openni_wrapper::ImageYUV422 owimg(sync_.current1_);
-	cimg = oniToCV(owimg);
+        openni_wrapper::ImageYUV422 owimg(sync_.current1_);
+        cimg = oniToCV(owimg);
       }
     }
     frame.img_ = cimg;
@@ -207,8 +207,8 @@ namespace rgbd
       double min_depth = 0.1;
       double max_depth = 10.0;
       for(int y = 0; y < dimg.rows; ++y)
-	for(int x = 0; x < dimg.cols; ++x)
-	  dimg(y, x) = colorize(frame.depth_->coeffRef(y, x) * 0.001, min_depth, max_depth);
+        for(int x = 0; x < dimg.cols; ++x)
+          dimg(y, x) = colorize(frame.depth_->coeffRef(y, x) * 0.001, min_depth, max_depth);
       
       cv::imshow("Depth Image", dimg);
       cv::imshow("Color Image", frame.img_);
@@ -223,9 +223,9 @@ namespace rgbd
     int i = 0;
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x, i+=3) {
-	img(y, x)[0] = data[i+2];
-	img(y, x)[1] = data[i+1];
-	img(y, x)[2] = data[i];
+        img(y, x)[0] = data[i+2];
+        img(y, x)[1] = data[i+1];
+        img(y, x)[2] = data[i];
       }
     }
     
@@ -233,8 +233,8 @@ namespace rgbd
   }
 
   std::string generateFilenameStream(const bfs::path& dir,
-				     const std::string& basename,
-				     int width)
+                                     const std::string& basename,
+                                     int width)
   {
     // -- Create the directory if necessary.
     ROS_ASSERT(!bfs::exists(dir) || bfs::is_directory(dir));
@@ -246,7 +246,7 @@ namespace rgbd
     vector<string> dirs;
     for(bfs::directory_iterator itr(dir); itr != end_itr; ++itr) {
       if(itr->leaf().substr(0, basename.size()).compare(basename) == 0)
-	dirs.push_back(itr->leaf());
+        dirs.push_back(itr->leaf());
     }
 
     sort(dirs.begin(), dirs.end());
@@ -258,7 +258,7 @@ namespace rgbd
       int num = atoi(numstr.c_str());
       ROS_ASSERT(num >= 0);
       if(idx < (size_t)num)
-	break;
+        break;
     }
     
     ostringstream filename;
@@ -275,7 +275,7 @@ namespace rgbd
     cout << "Recording: " << recording_ << endl;
     if(recording_) {
       prev_depth_ts_ = numeric_limits<double>::quiet_NaN();
-			  
+                          
       string name = generateFilenameStream(sequences_dir_, model_.name(), 3);
       cout << "Saving to " << name << endl;
       seq_ = StreamSequence::Ptr(new StreamSequence);
@@ -347,40 +347,40 @@ namespace rgbd
       retval = igen_.Create(context_); handleXnStatus(retval);
       retval = igen_.SetMapOutputMode(output_mode); handleXnStatus(retval);
       if(model_.type_ == "xpl") {
-	retval = igen_.SetIntProperty("InputFormat", 5);  handleXnStatus(retval);  // Uncompressed YUV?  PCL openni_device_primesense.cpp:62.
-	retval = igen_.SetPixelFormat(XN_PIXEL_FORMAT_YUV422); handleXnStatus(retval);
+        retval = igen_.SetIntProperty("InputFormat", 5);  handleXnStatus(retval);  // Uncompressed YUV?  PCL openni_device_primesense.cpp:62.
+        retval = igen_.SetPixelFormat(XN_PIXEL_FORMAT_YUV422); handleXnStatus(retval);
       }
       else if(model_.type_ == "kinect") {
-	retval = igen_.SetIntProperty("InputFormat", 6);  handleXnStatus(retval);  // Some special Kinect image mode?
-	retval = igen_.SetPixelFormat(XN_PIXEL_FORMAT_GRAYSCALE_8_BIT); handleXnStatus(retval);
+        retval = igen_.SetIntProperty("InputFormat", 6);  handleXnStatus(retval);  // Some special Kinect image mode?
+        retval = igen_.SetPixelFormat(XN_PIXEL_FORMAT_GRAYSCALE_8_BIT); handleXnStatus(retval);
       }
 
       // Synchronize output.
       if(model_.type_ != "kinect") {
-	retval = dgen_.GetFrameSyncCap().FrameSyncWith(igen_); handleXnStatus(retval);
-	ROS_ASSERT(dgen_.GetFrameSyncCap().IsFrameSyncedWith(igen_));
-	ROS_ASSERT(igen_.GetFrameSyncCap().IsFrameSyncedWith(dgen_));
-	ROS_DEBUG_STREAM("Using FrameSync.");
+        retval = dgen_.GetFrameSyncCap().FrameSyncWith(igen_); handleXnStatus(retval);
+        ROS_ASSERT(dgen_.GetFrameSyncCap().IsFrameSyncedWith(igen_));
+        ROS_ASSERT(igen_.GetFrameSyncCap().IsFrameSyncedWith(dgen_));
+        ROS_DEBUG_STREAM("Using FrameSync.");
       }
       else
-	ROS_DEBUG_STREAM("Not using FrameSync.");
+        ROS_DEBUG_STREAM("Not using FrameSync.");
 
       // Hardware depth registration.
       // https://groups.google.com/forum/?fromgroups=#!topic/openni-dev/5rP0mdPBeq0
       if(registered_) {
-	cout << "Registering depth and rgb data." << endl;
-	if(model_.type_ == "kinect") {
-	  retval = dgen_.SetIntProperty("RegistrationType", 2); handleXnStatus(retval);
-	}
-	else {
-	  retval = dgen_.SetIntProperty("RegistrationType", 1); handleXnStatus(retval);
-	}
+        cout << "Registering depth and rgb data." << endl;
+        if(model_.type_ == "kinect") {
+          retval = dgen_.SetIntProperty("RegistrationType", 2); handleXnStatus(retval);
+        }
+        else {
+          retval = dgen_.SetIntProperty("RegistrationType", 1); handleXnStatus(retval);
+        }
 
-	retval = dgen_.GetAlternativeViewPointCap().SetViewPoint(igen_); handleXnStatus(retval);
-	//retval = igen_.GetAlternativeViewPointCap().SetViewPoint(dgen_); handleXnStatus(retval);  // This fails.
+        retval = dgen_.GetAlternativeViewPointCap().SetViewPoint(igen_); handleXnStatus(retval);
+        //retval = igen_.GetAlternativeViewPointCap().SetViewPoint(dgen_); handleXnStatus(retval);  // This fails.
       }
       else
-	ROS_DEBUG_STREAM("Leaving depth and rgb unregistered.");
+        ROS_DEBUG_STREAM("Leaving depth and rgb unregistered.");
     }
   
     retval = context_.StartGeneratingAll(); handleXnStatus(retval);

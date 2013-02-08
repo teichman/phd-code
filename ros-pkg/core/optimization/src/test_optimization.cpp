@@ -19,8 +19,8 @@ public:
   typedef boost::shared_ptr<QuadraticFunction> Ptr;
   
   QuadraticFunction(const Eigen::MatrixXd& A,
-		    const Eigen::VectorXd& b,
-		    double c) :
+                    const Eigen::VectorXd& b,
+                    double c) :
     ScalarFunction(),
     A_(A),
     b_(b),
@@ -45,7 +45,7 @@ public:
   typedef boost::shared_ptr<QuadraticGradient> Ptr;
   
   QuadraticGradient(const Eigen::MatrixXd& A,
-		    const Eigen::VectorXd& b) :
+                    const Eigen::VectorXd& b) :
     VectorFunction(),
     A_(A),
     b_(b)
@@ -104,7 +104,7 @@ TEST(Functions, SparseLinearFunction)
   cout << *b << endl;
   
   SparseLinearFunction slf(A, b);
-			   
+                           
 
   VectorXd x = VectorXd::Zero(3);
   cout << slf.eval(x).transpose() << endl;
@@ -164,7 +164,7 @@ TEST(NesterovInteriorPointSolver, SimpleProblem)
   double stepsize = 1e-8; // Oscillates badly without restarting.
   //double stepsize = 1e-3;
   NesterovInteriorPointSolver nips(obj, grad, mu, tol, alpha, beta,
-				   max_num_iters, stepsize, RESTART, DEBUG);
+                                   max_num_iters, stepsize, RESTART, DEBUG);
   VectorXd xstar = VectorXd::Zero(2);
   nips.optimal_solution_ = &xstar;
   VectorXd init = VectorXd::Ones(2) * 100;
@@ -193,7 +193,7 @@ TEST(NesterovInteriorPointSolver, ConstrainedWellConditionedProblem)
   int max_num_iters = 0;
   double stepsize = 100;
   NesterovInteriorPointSolver nips(obj, grad, mu, tol, alpha, beta,
-				   max_num_iters, stepsize, RESTART, DEBUG);
+                                   max_num_iters, stepsize, RESTART, DEBUG);
 
   // -- x0 \geq 9.75
   VectorXd b0 = VectorXd::Zero(2);
@@ -255,7 +255,7 @@ TEST(NesterovInteriorPointSolver, ConstrainedBadlyConditionedProblem)
   int max_num_iters = 0;
   double stepsize = 1;
   NesterovInteriorPointSolver nips(obj, grad, mu, tol, alpha, beta,
-				   max_num_iters, stepsize, RESTART, DEBUG);
+                                   max_num_iters, stepsize, RESTART, DEBUG);
   VectorXd xstar(2);
   xstar(0) = 9.75;
   xstar(1) = 9.031754163;
@@ -315,7 +315,7 @@ TEST(NesterovInteriorPointSolver, NoCurvature)
   int max_num_iters = 0;
   double stepsize = 1e-3;
   NesterovInteriorPointSolver nips(obj, grad, mu, tol, alpha, beta,
-				   max_num_iters, stepsize, RESTART, DEBUG);
+                                   max_num_iters, stepsize, RESTART, DEBUG);
   
   // -- x0 \geq 9.75
   VectorXd b0 = VectorXd::Zero(2);

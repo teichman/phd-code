@@ -12,9 +12,9 @@ namespace dst
   {
   public:
     DepthNPG(pipeline2::Outlet<DepthProjector::Output>* index_otl,
-	     pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
-	     float sigma,
-	     size_t buffer_size);
+             pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
+             float sigma,
+             size_t buffer_size);
 
   protected:
     pipeline2::Outlet<DepthProjector::Output>* index_otl_;

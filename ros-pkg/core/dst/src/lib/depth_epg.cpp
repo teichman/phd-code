@@ -7,11 +7,11 @@ namespace dst
 {
 
   DepthEPG::DepthEPG(pipeline2::Outlet<DepthProjector::Output>* index_otl,
-		     pipeline2::Outlet<Normals::Ptr>* normals_otl,
-		     pipeline2::Outlet<cv::Mat1b>* mask_otl,
-		     int radius2d,
-		     double sigma_norm,
-		     double sigma_euc) :
+                     pipeline2::Outlet<Normals::Ptr>* normals_otl,
+                     pipeline2::Outlet<cv::Mat1b>* mask_otl,
+                     int radius2d,
+                     double sigma_norm,
+                     double sigma_euc) :
     EdgePotentialGenerator(),
     weights_otl_(this),
     index_otl_(index_otl),
@@ -78,17 +78,17 @@ namespace dst
     
     for(int y = ymin; y <= ymax; ++y) {
       for(int x = xmin; x <= xmax; ++x) {
-	if(y == y0 && x == x0)
-	  continue;
+        if(y == y0 && x == x0)
+          continue;
 
 
-	// Don't use diagonal edges.  TODO: Remove this.
-	if(x != x0 && y != y0) 
-	  continue;
-	
-	int idx2 = getIdx(y, x, index.cols);
-	weights_.insertBack(idx, idx2) = 0;//getWeight(y0, x0, y, x);
-	potentials_.insertBack(idx, idx2) = getPotential(y0, x0, y, x);
+        // Don't use diagonal edges.  TODO: Remove this.
+        if(x != x0 && y != y0) 
+          continue;
+        
+        int idx2 = getIdx(y, x, index.cols);
+        weights_.insertBack(idx, idx2) = 0;//getWeight(y0, x0, y, x);
+        potentials_.insertBack(idx, idx2) = getPotential(y0, x0, y, x);
       }
     }
   }
@@ -111,12 +111,12 @@ namespace dst
     cv::Mat1b mask = mask_otl_->pull();
     for(int y = 0; y < index.rows; ++y) {
       for(int x = 0; x < index.cols; ++x) {
-	int idx = getIdx(y, x, index.cols);
-	potentials_.startVec(idx);
-	weights_.startVec(idx);
+        int idx = getIdx(y, x, index.cols);
+        potentials_.startVec(idx);
+        weights_.startVec(idx);
 
-	if(mask(y, x) == 255)
-	  processDepthPoint(y, x);
+        if(mask(y, x) == 255)
+          processDepthPoint(y, x);
       }
     }
     potentials_.finalize();

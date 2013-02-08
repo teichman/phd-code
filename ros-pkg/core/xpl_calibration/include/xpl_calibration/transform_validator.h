@@ -36,13 +36,13 @@ protected:
   Eigen::Affine3f best_transform_;
   
   double computeLoss(const rgbd::Cloud& cloud0,
-		     KdTree& tree0,
-		     const rgbd::Cloud& cloud1) const;
+                     KdTree& tree0,
+                     const rgbd::Cloud& cloud1) const;
   
   void fineTuneAlignment(const rgbd::Cloud& cloud0,
-			 KdTree& tree0,
-			 const rgbd::Cloud& cloud1,
-			 Eigen::Affine3f* transform) const;
+                         KdTree& tree0,
+                         const rgbd::Cloud& cloud1,
+                         Eigen::Affine3f* transform) const;
 
 };
 

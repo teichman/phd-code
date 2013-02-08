@@ -124,9 +124,9 @@ void SiftGPUWrapper::detect(const cv::Mat& image, cv::vector<cv::KeyPoint>& keyp
         keypoints.push_back(key);
     }
 
-    //	FILE *fp = fopen("bla.pgm", "w");
-    //	WritePGM(fp, data, image.cols, image.rows);
-    //	fclose(fp);
+    //        FILE *fp = fopen("bla.pgm", "w");
+    //        WritePGM(fp, data, image.cols, image.rows);
+    //        fclose(fp);
     gpu_mutex.unlock();
 
 }

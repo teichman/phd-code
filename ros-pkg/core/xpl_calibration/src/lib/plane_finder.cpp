@@ -9,8 +9,8 @@ using namespace rgbd;
 #define VISUALIZE (getenv("VISUALIZE") ? atoi(getenv("VISUALIZE")) : 0)
 
 PlaneFinder::PlaneFinder(size_t min_inliers,
-			 double angle_thresh,
-			 double distance_thresh) :
+                         double angle_thresh,
+                         double distance_thresh) :
   min_inliers_(min_inliers),
   angle_thresh_(angle_thresh),
   distance_thresh_(distance_thresh)
@@ -18,7 +18,7 @@ PlaneFinder::PlaneFinder(size_t min_inliers,
 }
 
 void PlaneFinder::compute(const Cloud& pcd,
-			  const pcl::PointCloud<pcl::Normal>& normals)
+                          const pcl::PointCloud<pcl::Normal>& normals)
 {
   ScopedTimer st("PlaneFinder::compute");
   ROS_ASSERT(UNTOUCHED == -2); // enum isn't guaranteed to work with negative numbers.
@@ -39,7 +39,7 @@ void PlaneFinder::compute(const Cloud& pcd,
     else if(assignments_[i] == UNTOUCHED) { 
       bool found = findPlanarSurface(pcd, normals, i, num_planes);
       if(found)
-	++num_planes;
+        ++num_planes;
     }
   }
 
@@ -48,9 +48,9 @@ void PlaneFinder::compute(const Cloud& pcd,
     cv::Mat1b zbuf(cv::Size(pcd.width, pcd.height), 0);
     for(int y = 0; y < zbuf.rows; ++y) {
       for(int x = 0; x < zbuf.cols; ++x) {
-	int idx = y * zbuf.cols + x;
-	if(!isnan(pcd[idx].z))
-	  zbuf(y, x) = 255.0 * pcd[idx].z / 7.0;
+        int idx = y * zbuf.cols + x;
+        if(!isnan(pcd[idx].z))
+          zbuf(y, x) = 255.0 * pcd[idx].z / 7.0;
       }
     }
     cv::imshow("depth", zbuf);
@@ -61,13 +61,13 @@ void PlaneFinder::compute(const Cloud& pcd,
     cv::Mat3b vis(cv::Size(pcd.width, pcd.height), cv::Vec3b(0, 0, 0));
     for(int y = 0; y < vis.rows; ++y) {
       for(int x = 0; x < vis.cols; ++x) {
-	int idx = y * vis.cols + x;
-	if(assignments_[idx] >= 0)
-	  vis(y, x) = cw.getColor(assignments_[idx]);
-	else if(assignments_[idx] == NONE)
-	  vis(y, x) = cv::Vec3b(0, 0, 0);
-	else if(assignments_[idx] == NODATA)
-	  vis(y, x) = cv::Vec3b(0, 0, 0);
+        int idx = y * vis.cols + x;
+        if(assignments_[idx] >= 0)
+          vis(y, x) = cw.getColor(assignments_[idx]);
+        else if(assignments_[idx] == NONE)
+          vis(y, x) = cv::Vec3b(0, 0, 0);
+        else if(assignments_[idx] == NODATA)
+          vis(y, x) = cv::Vec3b(0, 0, 0);
       }
     }
     cv::imshow("planes", vis);
@@ -81,11 +81,11 @@ void PlaneFinder::compute(const Cloud& pcd,
     double num = 0;
     for(size_t j = 0; j < pcd.size(); ++j) {
       if(assignments_[j] == i) {
-	int y = j / pcd.width;
-	int x = j - y * pcd.width;
-	cy += y;
-	cx += x;
-	++num;
+        int y = j / pcd.width;
+        int x = j - y * pcd.width;
+        cy += y;
+        cx += x;
+        ++num;
       }
     }
     cy /= num;
@@ -95,9 +95,9 @@ void PlaneFinder::compute(const Cloud& pcd,
 }
 
 bool PlaneFinder::findPlanarSurface(const Cloud& pcd,
-				    const PointCloud<Normal>& normals,
-				    size_t center_idx,
-				    int new_plane_id)
+                                    const PointCloud<Normal>& normals,
+                                    size_t center_idx,
+                                    int new_plane_id)
 {
   queue<size_t> que;
   que.push(center_idx);
@@ -118,14 +118,14 @@ bool PlaneFinder::findPlanarSurface(const Cloud& pcd,
 
     for(size_t i = 0; i < indices.size(); ++i) {
       if(assignments_[indices[i]] == UNTOUCHED) { 
-	inliers.push_back(indices[i]);
-	que.push(indices[i]);
-	assignments_[indices[i]] = PROCESSING;
-	acc_normal += normals[indices[i]].getNormalVector3fMap();
-	acc_constant += running_normal.dot(pcd[indices[i]].getVector3fMap());
-	running_normal = acc_normal / (double)inliers.size();
-	running_normal.normalize();
-	running_constant = acc_constant / (double)inliers.size();
+        inliers.push_back(indices[i]);
+        que.push(indices[i]);
+        assignments_[indices[i]] = PROCESSING;
+        acc_normal += normals[indices[i]].getNormalVector3fMap();
+        acc_constant += running_normal.dot(pcd[indices[i]].getVector3fMap());
+        running_normal = acc_normal / (double)inliers.size();
+        running_normal.normalize();
+        running_constant = acc_constant / (double)inliers.size();
       }
     }
   }
@@ -144,11 +144,11 @@ bool PlaneFinder::findPlanarSurface(const Cloud& pcd,
 }
 
 void PlaneFinder::getInPlaneNeighbors(const Cloud& pcd,
-				      const PointCloud<Normal>& normals,
-				      size_t center_idx,
-				      const Vector3f& plane_normal,
-				      double plane_constant,
-				      vector<int>* indices)
+                                      const PointCloud<Normal>& normals,
+                                      size_t center_idx,
+                                      const Vector3f& plane_normal,
+                                      double plane_constant,
+                                      vector<int>* indices)
 {
 
   int center_y = center_idx / pcd.width;

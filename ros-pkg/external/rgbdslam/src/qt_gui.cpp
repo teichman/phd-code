@@ -234,7 +234,7 @@ void Graphical_UI::setMax() {
     double value = QInputDialog::getDouble(this, tr("Set Max Depth"),
                                             tr("Enter Max Depth [in cm]\n (negativ if no Filtering is required):"), -100.00, -10000000, 10000000, 2, &ok);
     if(ok){
-    	Q_EMIT setMaxDepth(value/100.0);
+            Q_EMIT setMaxDepth(value/100.0);
     }
 }
 void Graphical_UI::toggleFullscreen(bool mode){
@@ -252,7 +252,7 @@ void Graphical_UI::pruneEdgesWithHighError(){
     float value = QInputDialog::getDouble(this, tr("Set Max Edge Error"),
                                           tr("No Text"), 1.00, -10000000, 10000000, 2, &ok);
     if(ok){
-    	Q_EMIT pruneEdgesWithErrorAbove(value);
+            Q_EMIT pruneEdgesWithErrorAbove(value);
     }
 }
 void Graphical_UI::sendFinished() {

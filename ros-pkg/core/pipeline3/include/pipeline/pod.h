@@ -191,7 +191,7 @@ namespace pipeline
     }
     catch(boost::bad_any_cast& e) {
       PL_ABORT("Type mismatch during push to " << pod_->getName() << ":" << name_ << "."
-	       << " You may need to explicitly specify the type, i.e. push<T>(...).");
+               << " You may need to explicitly specify the type, i.e. push<T>(...).");
     }
     data_ = data;
     has_data_ = true;
@@ -213,11 +213,11 @@ namespace pipeline
     // Force the writer of a pod to declare all his params.
     if(declared_params_.count(name) != 1)
       PL_ABORT(getClassName() << " \"" << getName() << "\" tried to get undeclared param \"" << name << "\". "
-	       << "Params should be declared in the Pod constructor using declareParam<type>(name).");
+               << "Params should be declared in the Pod constructor using declareParam<type>(name).");
     
     if(!params_.exists(name))
       PL_ABORT(getClassName() << " \"" << getName() << "\" tried to get param \"" << name
-	       << "\", but this param has not been set.");
+               << "\", but this param has not been set.");
     
     return params_.get<T>(name);
   }
@@ -275,14 +275,14 @@ namespace pipeline
     it = inputs_.find(name);
     if(it == inputs_.end()) {
       PL_ABORT(getClassName() << " \"" << name_
-	       << "\" tried to pull \"" << name
-	       << "\" but this input has not been registered.");
+               << "\" tried to pull \"" << name
+               << "\" but this input has not been registered.");
     }
 
     const std::vector<const Outlet*>& outlets = it->second;
     if(outlets.size() != 1) { 
       PL_ABORT(getClassName() << " \"" << name_ << "\" tried to pull \"" << name << "\" expecting exactly one input, but got "
-	       << outlets.size() << " inputs. You probably want the alternate form of Pod::pull.");
+               << outlets.size() << " inputs. You probably want the alternate form of Pod::pull.");
     }
 
     return outlets[0]->pull<T>();

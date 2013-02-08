@@ -25,8 +25,8 @@ SlamLightweight::SlamLightweight() :
 }
 
 void SlamLightweight::run(StreamSequence::ConstPtr sseq,
-			 const std::string& opcd_path,
-			 const std::string& otraj_path,
+                         const std::string& opcd_path,
+                         const std::string& otraj_path,
        const std::string& ograph_path)
 {
   sseq_ = sseq;
@@ -93,8 +93,8 @@ void SlamLightweight::slamThreadFunction()
     while(dt < min_dt_) {
       ++curr_idx;
       if(curr_idx >= sseq_->size()) {
-	done = true;
-	break;
+        done = true;
+        break;
       }
       dt = sseq_->timestamps_[curr_idx] - prev_frame_.timestamp_;
       //cout << "Searching: " << curr_idx << " " << prev_idx << " " << dt << endl;
@@ -104,7 +104,7 @@ void SlamLightweight::slamThreadFunction()
     oss << "ODOMETRY: Aligning frame " << curr_idx << " -> " << prev_idx;
     frame_text_ = oss.str();
     cout << "---------- Searching for link between " << prev_idx << " and " << curr_idx
-	 << " / " << sseq_->size() << endl;
+         << " / " << sseq_->size() << endl;
     cout << "           dt: " << dt << endl;
     sseq_->readFrame(prev_idx, &prev_frame_);
     sseq_->readFrame(curr_idx, &curr_frame_);
@@ -173,7 +173,7 @@ void SlamLightweight::slamThreadFunction()
     traj.resize(slam_->numNodes());
     for(size_t i = 0; i < slam_->numNodes(); ++i) {
       if(slam_->numEdges(i) == 0)
-	continue;
+        continue;
       traj.set(i, slam_->transform(i));
     }
     traj.save(otraj_path_);

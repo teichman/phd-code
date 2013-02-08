@@ -141,7 +141,7 @@ void transformAndAppendPointCloud (const pointcloud_type &cloud_in,
       cloud_to_append_to.points.resize(j+cloud_to_append_to_original_size);
       cloud_to_append_to.width    = 1;
       cloud_to_append_to.height   = j+cloud_to_append_to_original_size;
-	}
+        }
 }
 
 //do spurious type conversions
@@ -189,7 +189,7 @@ bool isBigTrafo(const Eigen::Matrix4f& t){
 
     // at least 10cm or 5deg
     return (dist > ParameterServer::instance()->get<double>("min_translation_meter")
-    		|| max_angle > ParameterServer::instance()->get<int>("min_rotation_degree"));
+                    || max_angle > ParameterServer::instance()->get<int>("min_rotation_degree"));
 }
 
 bool isBigTrafo(const g2o::SE3Quat& t){
@@ -201,11 +201,11 @@ bool isBigTrafo(const g2o::SE3Quat& t){
     //Q_EMIT setGUIInfo2(infostring);
     ParameterServer* ps =  ParameterServer::instance();
     if(dist > ps->get<double>("min_translation_meter") ||
-    	 angle_around_axis > ps->get<int>("min_rotation_degree"))
+             angle_around_axis > ps->get<int>("min_rotation_degree"))
     {
       //Too big fails too
       if(dist < ps->get<double>("max_translation_meter") ||
-    		 angle_around_axis < ps->get<int>("max_rotation_degree"))
+                     angle_around_axis < ps->get<int>("max_rotation_degree"))
       {
         return true;
       }
@@ -265,14 +265,14 @@ using namespace cv;
 ///Analog to opencv example file and modified to use adjusters
 FeatureDetector* createDetector( const string& detectorType ) 
 {
-	ParameterServer* params = ParameterServer::instance();
-	FeatureDetector* fd = 0;
+        ParameterServer* params = ParameterServer::instance();
+        FeatureDetector* fd = 0;
     if( !detectorType.compare( "FAST" ) ) {
         //fd = new FastFeatureDetector( 20/*threshold*/, true/*nonmax_suppression*/ );
         fd = new DynamicAdaptedFeatureDetector (new FastAdjuster(20,true), 
-												params->get<int>("min_keypoints"),
-												params->get<int>("max_keypoints"),
-												params->get<int>("adjuster_max_iterations"));
+                                                                                                params->get<int>("min_keypoints"),
+                                                                                                params->get<int>("max_keypoints"),
+                                                                                                params->get<int>("adjuster_max_iterations"));
     }
     else if( !detectorType.compare( "STAR" ) ) {
         fd = new StarFeatureDetector( 16/*max_size*/, 5/*response_threshold*/, 10/*line_threshold_projected*/,
@@ -287,7 +287,7 @@ FeatureDetector* createDetector( const string& detectorType )
     }
     else if( !detectorType.compare( "SURF" ) ) {
         fd = new DynamicAdaptedFeatureDetector(new SurfAdjuster(),
-        										params->get<int>("min_keypoints"),
+                                                                                        params->get<int>("min_keypoints"),
                             params->get<int>("max_keypoints"),
                             params->get<int>("adjuster_max_iterations"));
     }

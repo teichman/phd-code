@@ -28,10 +28,10 @@ namespace dst
     int getNumWeights() const;
     int getNumEdgeWeights() const { return edge_potentials_.size(); }
     double computeScore(cv::Mat1b labels,
-			const Eigen::VectorXd edge_weights,
-			const Eigen::VectorXd node_weights,
-			Eigen::VectorXd* psi = NULL) const;
-	
+                        const Eigen::VectorXd edge_weights,
+                        const Eigen::VectorXd node_weights,
+                        Eigen::VectorXd* psi = NULL) const;
+        
   };
 
   class PotentialsCache

@@ -52,20 +52,20 @@ void saveCloud(const char* filename, const pointcloud_type& pc, const int max_cn
 
         bool invalid = (isnan(p.x) || isnan(p.y) || isnan(p.z));
         if (invalid)
-        	continue;
+                continue;
 
         
         of << p.x << "\t" << p.y << "\t" << p.z;
         if (color) {
-        	
-        	int color = *reinterpret_cast<const int*>(&p.rgb); 
-        	int r = (0xff0000 & color) >> 16;
-        	int g = (0x00ff00 & color) >> 8;
-        	int b = 0x0000ff & color; 
-        	of << "\t \t" << r << "\t" << g << "\t" << b << "\t" << endl;
-        }	
+                
+                int color = *reinterpret_cast<const int*>(&p.rgb); 
+                int r = (0xff0000 & color) >> 16;
+                int g = (0x00ff00 & color) >> 8;
+                int b = 0x0000ff & color; 
+                of << "\t \t" << r << "\t" << g << "\t" << b << "\t" << endl;
+        }        
         else
-        	of << endl;
+                of << endl;
        // cout << p.x << "\t" << p.y << "\t" << p.z << endl;
                        
         cnt++;
@@ -93,8 +93,8 @@ void downSample(const pointcloud_type& src, pointcloud_type& to){
 
 bool gicpfallback(const pointcloud_type& from, const pointcloud_type& to, Eigen::Matrix4f& transform){
 
-	// std::clock_t starttime_gicp = std::clock();
-	
+        // std::clock_t starttime_gicp = std::clock();
+        
     FILE *fp;
     char f1[200];
     char f2[200];
@@ -145,7 +145,7 @@ bool gicpfallback(const pointcloud_type& from, const pointcloud_type& to, Eigen:
     int pos = 0;
     // last lines contain the transformation:
     for (unsigned int i=lines.size()-5; i<lines.size()-1; i++){
-    	
+            
         stringstream ss(lines.at(i));
         for (int j=0; j<4; j++)
         {

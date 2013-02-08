@@ -50,12 +50,12 @@ int main(int argc, char** argv)
     cv::Mat3b vis(mask.size(), cv::Vec3b(0, 0, 0));
     for(int y = 0; y < mask.rows; ++y) { 
       for(int x = 0; x < mask.cols; ++x) { 
-	if(mask(y, x)[0] != 0) { 
-	  mask1b(y, x) = 255;
-	  vis(y, x)[2] = 255;
-	}
-	if(seq.segmentations_[i+1](y, x) == 255)
-	  vis(y, x)[1] = 255;
+        if(mask(y, x)[0] != 0) { 
+          mask1b(y, x) = 255;
+          vis(y, x)[2] = 255;
+        }
+        if(seq.segmentations_[i+1](y, x) == 255)
+          vis(y, x)[1] = 255;
       }
     }
 

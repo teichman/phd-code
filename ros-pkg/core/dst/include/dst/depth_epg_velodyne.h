@@ -20,11 +20,11 @@ namespace dst
     pipeline2::Outlet< Eigen::SparseMatrix<double, Eigen::RowMajor>* > weights_otl_;
     
     DepthEPGVelodyne(pipeline2::Outlet<DepthProjector::Output>* index_otl,
-	     pipeline2::Outlet<Normals::Ptr>* normals_otl,
-	     pipeline2::Outlet<cv::Mat1b>* mask_otl,
-	     int radius2d,
-	     double sigma_norm,
-	     double sigma_euc);
+             pipeline2::Outlet<Normals::Ptr>* normals_otl,
+             pipeline2::Outlet<cv::Mat1b>* mask_otl,
+             int radius2d,
+             double sigma_norm,
+             double sigma_euc);
     ~DepthEPGVelodyne();
     
   protected:

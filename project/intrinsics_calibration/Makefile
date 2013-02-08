@@ -65,10 +65,13 @@ SLAM_RUNS_TESTING_xpl00		:=	2012-12-19_short_03 \
 
 SLAM_RUNS_xpl00 := $(SLAM_RUNS_TRAINING_xpl00) $(SLAM_RUNS_TESTING_xpl00)
 
-SLAM_RUNS_TRAINING_xpl01	:= 	2a_backandforth \
-					2012-10-22_2a_backandforth_2 \
-					2012-12-19_xpl01_boardroom_0-upsidedown \
-					2012-12-19_xpl01_boardroom_1-upsidedown
+
+# 2012-12-19_xpl01_boardroom_0-upsidedown is not so good.
+# 2012-12-19_xpl01_boardroom_2 floor is also not good.
+SLAM_RUNS_TRAINING_xpl01	:= 	2012-12-19_xpl01_boardroom_0-upsidedown \
+					2012-12-19_xpl01_boardroom_1-upsidedown \
+					2a_backandforth \
+					2012-10-22_2a_backandforth_2
 
 # Running out of memory....   These are fine to use, but I just can't afford it.
 #					2012-11-16_2a_backandforth_8 \
@@ -214,6 +217,12 @@ $(1)/evaluation/planarity_experiment/comparison.pdf:	$(1)/evaluation/planarity_e
 							$(MAKE_ROOT)/plot_planarity_comparison_experiment.py \
 							$(1)/evaluation/planarity_experiment/training_time.txt
 	python $(MAKE_ROOT)/plot_planarity_comparison_experiment.py $$(@D)
+
+$(1)/evaluation/undistortion_time.txt: 	$(1)/evaluation/discrete_learned_model
+	rosrun xpl_calibration undistortion_time_experiment \
+	$$< \
+	--sseqs $$(addprefix $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_TESTING_$(1))) \
+	> $$@
 
 $(1)/evaluation/planarity_experiment/training_time.txt:
 	for seq in $$(PLANARITY_TRAINING_$(1)); do \

@@ -25,10 +25,10 @@ namespace rgbd
     //! type \in {"xpl", "kinect"}
     //! id is the device number.
     OpenNIStreamRecorder(const std::string& type,
-			 int id,
-			 const std::string& mode = "VGA",
-			 bool fake_rgb = false,
-			 bool registered = false);
+                         int id,
+                         const std::string& mode = "VGA",
+                         bool fake_rgb = false,
+                         bool registered = false);
     void run();
 
     static DepthMat oniDepthToEigen(const openni_wrapper::DepthImage& oni);

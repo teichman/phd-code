@@ -15,8 +15,8 @@ namespace dst
   double ColorDeltaEPG::computeCost(const cv::Vec3b& p, const cv::Vec3b& q) const
   {
     double norm = sqrt((p[0] - q[0])*(p[0] - q[0]) +
-		       (p[1] - q[1])*(p[1] - q[1]) +
-		       (p[2] - q[2])*(p[2] - q[2]));
+                       (p[1] - q[1])*(p[1] - q[1]) +
+                       (p[2] - q[2])*(p[2] - q[2]));
     //cout << p << ", " << q << ", " << norm << " " << exp(-norm / 30.0) << endl;
     return exp(-norm / 30.0); // TODO: Parameterize this.
   }
@@ -53,7 +53,7 @@ namespace dst
     // -- Fill the edge potentials.
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x) {
-	processPixel(y, x);
+        processPixel(y, x);
       }
     }
 

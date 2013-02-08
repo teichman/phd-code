@@ -18,11 +18,11 @@ namespace pipeline
     public:
       DECLARE_POD(Sorter);
       Sorter(std::string name) :
-	Pod(name),
-	sorted_(new Vec)
+        Pod(name),
+        sorted_(new Vec)
       {
-	declareInput<VecConstPtr>("Points");
-	declareOutput<VecConstPtr>("Sorted");
+        declareInput<VecConstPtr>("Points");
+        declareOutput<VecConstPtr>("Sorted");
       }
 
       VecPtr sorted_;
@@ -36,12 +36,12 @@ namespace pipeline
     public:
       DECLARE_POD(Summarizer);
       Summarizer(std::string name) :
-	Pod(name)
+        Pod(name)
       {
-	declareInput<VecConstPtr>("Points"); // Must be sorted.
-	declareOutput<double>("Mean");
-	declareOutput<double>("Stdev");
-	declareOutput<double>("MeanNeighborSeparation");
+        declareInput<VecConstPtr>("Points"); // Must be sorted.
+        declareOutput<double>("Mean");
+        declareOutput<double>("Stdev");
+        declareOutput<double>("MeanNeighborSeparation");
       }
 
       void compute();
@@ -56,17 +56,17 @@ namespace pipeline
     public:
       DECLARE_POD(HistogramGenerator);
       HistogramGenerator(std::string name) :
-	Pod(name),
-	hist_(new Vec),
-	lower_bounds_(new Vec)
+        Pod(name),
+        hist_(new Vec),
+        lower_bounds_(new Vec)
       {
-	declareParam<double>("BinWidth");
-	declareParam<double>("Min");
-	declareParam<double>("Max");
-	declareParam<bool>("Normalize", false); // Whether or not the final histogram should sum to one. Default false.
-	declareInput<VecConstPtr>("Points"); // Must be sorted.
-	declareOutput<VecConstPtr>("Histogram");
-	declareOutput<VecConstPtr>("LowerBounds"); // Vector of the lower bounds of each bin.
+        declareParam<double>("BinWidth");
+        declareParam<double>("Min");
+        declareParam<double>("Max");
+        declareParam<bool>("Normalize", false); // Whether or not the final histogram should sum to one. Default false.
+        declareInput<VecConstPtr>("Points"); // Must be sorted.
+        declareOutput<VecConstPtr>("Histogram");
+        declareOutput<VecConstPtr>("LowerBounds"); // Vector of the lower bounds of each bin.
       }
 
       VecPtr hist_;
@@ -86,11 +86,11 @@ namespace pipeline
     public:
       DECLARE_POD(Aggregator);
       Aggregator(std::string name) :
-	Pod(name),
-	aggregated_(new Vec)
+        Pod(name),
+        aggregated_(new Vec)
       {
-	declareInput<VecConstPtr>("PointSets");
-	declareOutput<VecConstPtr>("Aggregated");
+        declareInput<VecConstPtr>("PointSets");
+        declareOutput<VecConstPtr>("Aggregated");
       }
 
       VecPtr aggregated_;
@@ -105,12 +105,12 @@ namespace pipeline
     public:
       DECLARE_POD(DescriptorAssembler);
       DescriptorAssembler(std::string name) :
-	Pod(name),
-	descriptor_(new Vec)
+        Pod(name),
+        descriptor_(new Vec)
       {
-	declareInput<double>("Elements");
-	declareInput<VecConstPtr>("SubVectors");
-	declareOutput<VecConstPtr>("Descriptor");
+        declareInput<double>("Elements");
+        declareInput<VecConstPtr>("SubVectors");
+        declareOutput<VecConstPtr>("Descriptor");
       }
 
       VecPtr descriptor_;
@@ -124,11 +124,11 @@ namespace pipeline
       // You should only DECLARE_POD for concrete classes.
       // DECLARE_POD(AbstractPod);
       AbstractPod(std::string name) :
-	Pod(name),
-	vals_(new Vec)
+        Pod(name),
+        vals_(new Vec)
       {
-	declareInput<VecConstPtr>("Vals");
-	declareOutput<VecConstPtr>("ChangedVals");
+        declareInput<VecConstPtr>("Vals");
+        declareOutput<VecConstPtr>("ChangedVals");
       }
 
       VecPtr vals_;
@@ -142,7 +142,7 @@ namespace pipeline
     public:
       DECLARE_POD(ConcretePodA);
       ConcretePodA(std::string name) :
-	AbstractPod(name)
+        AbstractPod(name)
       {
       }
 
@@ -154,9 +154,9 @@ namespace pipeline
     public:
       DECLARE_POD(ConcretePodB);
       ConcretePodB(std::string name) :
-	AbstractPod(name)
+        AbstractPod(name)
       {
-	declareParam<bool>("Something", false);
+        declareParam<bool>("Something", false);
       }
 
       void compute();

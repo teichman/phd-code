@@ -177,9 +177,9 @@ namespace pipeline {
     for(size_t i = 0; i < nodes.size(); ++i) {
       boost::shared_ptr<T> casted = boost::dynamic_pointer_cast<T, ComputeNode>(nodes[i]);
       if(!casted)
-	continue;
+        continue;
       if(test && !test(casted.get()))
-	continue;
+        continue;
     
       passed.push_back(casted);
     }

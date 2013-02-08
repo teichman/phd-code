@@ -161,7 +161,7 @@ bool NameMapping::operator==(const NameMapping& other) const
       return false;
     }
   }
-		  
+                  
   return true;
 }
 
@@ -182,7 +182,7 @@ bool NameMapping::isPermutation(const NameMapping& other) const
   for(size_t i = 0; i < other.size(); ++i)
     if(!hasName(other.toName(i)))
       return false;
-		  
+                  
   return true;
 }
 
@@ -204,8 +204,8 @@ std::string NameMapping::diff(const NameMapping& other) const
 }
 
 void NameMapping::diff(const NameMapping& other,
-		       vector<string>* here_but_not_there,
-		       vector<string>* there_but_not_here) const
+                       vector<string>* here_but_not_there,
+                       vector<string>* there_but_not_here) const
 {
   ROS_ASSERT(there_but_not_here->empty());
   ROS_ASSERT(here_but_not_there->empty());

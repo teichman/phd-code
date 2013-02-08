@@ -12,10 +12,10 @@ namespace dst
   public:
     typedef pcl::PointCloud<pcl::Normal> Normals;
     SurfaceNormalEPG(pipeline2::Outlet<Normals::Ptr>* normals_otl,
-		     pipeline2::Outlet<DepthProjector::Output>* index_otl,
-		     pipeline2::Outlet<cv::Mat1b>* mask_otl,
-		     pipeline2::Outlet<cv::Mat3b>* image_otl,
-		     double sigma);
+                     pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                     pipeline2::Outlet<cv::Mat1b>* mask_otl,
+                     pipeline2::Outlet<cv::Mat3b>* image_otl,
+                     double sigma);
 
   protected:
     pipeline2::Outlet<Normals::Ptr>* normals_otl_;

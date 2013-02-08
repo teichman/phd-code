@@ -12,8 +12,8 @@ namespace dst
   {
   public:
     FlowClusteringEPG(pipeline2::Outlet<OpticalFlowNode::Output>* optflow_otl,
-		      pipeline2::Outlet<DepthProjector::Output>* index_otl,
-		      float inlier_thresh);
+                      pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                      float inlier_thresh);
     
   protected:
     pipeline2::Outlet<OpticalFlowNode::Output>* optflow_otl_;
@@ -25,10 +25,10 @@ namespace dst
     size_t max_cluster_;
 
     void sampleFlows(const std::vector<bool>& active,
-		     const std::vector<int>& prev_pcd_indices,
-		     const std::vector<int>& pcd_indices,
-		     std::vector<int>* prev_sample_indices,
-		     std::vector<int>* sample_indices);
+                     const std::vector<int>& prev_pcd_indices,
+                     const std::vector<int>& pcd_indices,
+                     std::vector<int>* prev_sample_indices,
+                     std::vector<int>* sample_indices);
 
     void _compute();
     void _display() const;

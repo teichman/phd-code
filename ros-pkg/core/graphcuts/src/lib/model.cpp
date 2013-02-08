@@ -11,9 +11,9 @@ namespace graphcuts
   }
 
   Model::Model(const Eigen::VectorXd& nweights,
-	       const Eigen::VectorXd& eweights,
-	       const NameMapping& nmap,
-	       const NameMapping& emap)
+               const Eigen::VectorXd& eweights,
+               const NameMapping& nmap,
+               const NameMapping& emap)
   {
     applyNameMapping("nmap", nmap);
     applyNameMapping("emap", emap);

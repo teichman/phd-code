@@ -13,10 +13,10 @@ namespace dst
     typedef boost::shared_ptr<const std::vector<int> > IndicesConstPtr;
     
     DistanceNPG(pipeline2::Outlet<KinectCloud::ConstPtr>* transformed_otl,
-		pipeline2::Outlet<KdTree::Ptr>* fg_kdtree_otl,
-		pipeline2::Outlet<cv::Mat3b>* img_otl,
-		pipeline2::Outlet<IndicesConstPtr>* pcd_indices_otl,
-		float sigma);
+                pipeline2::Outlet<KdTree::Ptr>* fg_kdtree_otl,
+                pipeline2::Outlet<cv::Mat3b>* img_otl,
+                pipeline2::Outlet<IndicesConstPtr>* pcd_indices_otl,
+                float sigma);
     
   protected:
     pipeline2::Outlet<KinectCloud::ConstPtr>* transformed_otl_;

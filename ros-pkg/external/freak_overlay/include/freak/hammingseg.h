@@ -1,10 +1,10 @@
 //  hammingseg.h
 //      
-//	Copyright (C) 2011-2012  Signal processing laboratory 2, EPFL,
-//	Kirell Benzi (kirell.benzi@epfl.ch),
-//	Raphael Ortiz (raphael.ortiz@a3.epfl.ch),
-//	Alexandre Alahi (alexandre.alahi@epfl.ch),
-//	and Pierre Vandergheynst (pierre.vandergheynst@epfl.ch)
+//        Copyright (C) 2011-2012  Signal processing laboratory 2, EPFL,
+//        Kirell Benzi (kirell.benzi@epfl.ch),
+//        Raphael Ortiz (raphael.ortiz@a3.epfl.ch),
+//        Alexandre Alahi (alexandre.alahi@epfl.ch),
+//        and Pierre Vandergheynst (pierre.vandergheynst@epfl.ch)
 //
 //  Redistribution and use in source and binary forms, with or without modification,
 //  are permitted provided that the following conditions are met:

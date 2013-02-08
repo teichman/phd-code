@@ -155,5 +155,5 @@ namespace cloud_calibration {
     points_ref = vector<rgbd::Point>(controller_.ref_pts_);
     points_target = vector<rgbd::Point>(controller_.target_pts_);
   }
-}		/* -----  end of namespace cloud_calibration  ----- */
+}                /* -----  end of namespace cloud_calibration  ----- */
 

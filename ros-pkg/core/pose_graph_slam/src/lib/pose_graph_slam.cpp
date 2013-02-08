@@ -23,8 +23,8 @@ PoseGraphSlam::initialize(size_t num_nodes)
 }
 
 void PoseGraphSlam::addEdge(int idx0, int idx1,
-			    const Eigen::Affine3d& transform,
-			    const Matrix6d& covariance)
+                            const Eigen::Affine3d& transform,
+                            const Matrix6d& covariance)
 {
   EdgeStruct edge_struct;
   edge_struct.idx0 = idx0;

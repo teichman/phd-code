@@ -42,7 +42,7 @@ namespace rgbd {
     key_ = 0;
     if(msec == 0)
       while(key_ == 0)
-	vis_.spinOnce(1);
+        vis_.spinOnce(1);
     else
       vis_.spinOnce(msec);
 

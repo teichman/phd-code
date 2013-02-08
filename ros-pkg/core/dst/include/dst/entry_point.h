@@ -76,7 +76,7 @@ namespace dst
   template <typename T>
   EntryPoint<T>*
   getTaggedEntryPoint(const std::vector<pipeline2::ComputeNode*>& nodes,
-		      const std::string& tag)
+                      const std::string& tag)
   {
     std::vector<EntryPoint<T>*> x = pipeline2::filterNodes< EntryPoint<T> >(nodes);
     std::vector<EntryPoint<T>*> matches;
@@ -84,7 +84,7 @@ namespace dst
     
     for(size_t i = 0; i < x.size(); ++i) {
       if(x[i]->tag_.compare(tag) == 0)
-	matches.push_back(x[i]);
+        matches.push_back(x[i]);
     }
          
     if(matches.empty())

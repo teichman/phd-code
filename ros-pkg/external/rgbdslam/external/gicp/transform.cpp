@@ -80,8 +80,8 @@ void dgc_transform_left_multiply(dgc_transform_t t1, dgc_transform_t t2)
 }
 
 void dgc_transform_left_multiply_nc(dgc_transform_t dest, 
-				    dgc_transform_t src, 
-				    dgc_transform_t left)
+                                    dgc_transform_t src, 
+                                    dgc_transform_t left)
 {
   int i, j, k;
 
@@ -149,7 +149,7 @@ void dgc_transform_copy(dgc_transform_t dest, dgc_transform_t src)
 }
 /*
 inline void dgc_transform_point(double *x, double *y, double *z, 
-				dgc_transform_t t)
+                                dgc_transform_t t)
 {
   double x2, y2, z2;
 
@@ -228,7 +228,7 @@ int dgc_transform_read_string(dgc_transform_t t, char *str)
         }
         else {
           dgc_warning("Error: could not parse line \"%s\" from transform\n", 
-		      line);
+                      line);
           return -1;
         }
       }
@@ -259,26 +259,26 @@ int dgc_transform_read(dgc_transform_t t, const char *filename)
         arg = strtod(mark, &mark);
         if(strncasecmp(unit, "deg", 3) == 0)
           arg = dgc_d2r(arg);
-	dgc_transform_rotate_x(t, arg);	
+        dgc_transform_rotate_x(t, arg);        
       }
       else if(strncasecmp(line, "ry ", 3) == 0) {
         arg = strtod(mark, &mark);
         if(strncasecmp(unit, "deg", 3) == 0)
           arg = dgc_d2r(arg);
-	dgc_transform_rotate_y(t, arg);
+        dgc_transform_rotate_y(t, arg);
       }
       else if(strncasecmp(line, "rz ", 3) == 0) {
         arg = strtod(mark, &mark);
         if(strncasecmp(unit, "deg", 3) == 0)
           arg = dgc_d2r(arg);
-	dgc_transform_rotate_z(t, arg);
+        dgc_transform_rotate_z(t, arg);
       }
       else if(strncasecmp(line, "t ", 2) == 0) {
-	char *a = strdup("test");
-	x = strtod(mark, &mark);
-	y = strtod(mark, &mark);
+        char *a = strdup("test");
+        x = strtod(mark, &mark);
+        y = strtod(mark, &mark);
         z = strtod(mark, &mark);
-	
+        
         if(strncasecmp(unit, "in", 2) == 0) {
           x *= 0.0254;
           y *= 0.0254;
@@ -293,7 +293,7 @@ int dgc_transform_read(dgc_transform_t t, const char *filename)
       }
       else {
         dgc_warning("Error: could not parse line \"%s\" from %s\n", 
-		    line, filename);
+                    line, filename);
         return -1;
       }
       
@@ -328,7 +328,7 @@ int dgc_transform_write(dgc_transform_t t, const char *filename)
 }
 
 void dgc_transform_get_translation(dgc_transform_t t, double *x, double *y, 
-				   double *z) 
+                                   double *z) 
 {
   *x = t[0][3];
   *y = t[1][3];
@@ -336,7 +336,7 @@ void dgc_transform_get_translation(dgc_transform_t t, double *x, double *y,
 }
 
 void dgc_transform_get_rotation(dgc_transform_t t, double *x, double *y, 
-				double *z) 
+                                double *z) 
 {
   *x = atan2(t[2][1], t[2][2]);
   *y = asin(-t[2][0]);
@@ -344,7 +344,7 @@ void dgc_transform_get_rotation(dgc_transform_t t, double *x, double *y,
 }
 
 void dgc_transform_rpy(dgc_transform_t dest, dgc_transform_t src, double roll,
-		       double pitch, double yaw)
+                       double pitch, double yaw)
 {
   double sinroll = sin(roll), cosroll  = cos(roll);
   double sinpitch = sin(pitch), cospitch = cos(pitch);

@@ -19,8 +19,8 @@ namespace dst
     int seed_radius_;
     
     RealTimeInterface(const std::string& device_id = "",
-		      pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz,
-		      double scale = 3);
+                      pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz,
+                      double scale = 3);
     void cloudCallback(const KinectCloud::ConstPtr& cloud);
     void imageCallback(const boost::shared_ptr<openni_wrapper::Image>& image);
     void irCallback(const boost::shared_ptr<openni_wrapper::IRImage>& oni_img);

@@ -59,11 +59,11 @@ void mousePress(int button, int state, int x, int y)
   //     gui3D.last_mouse_x = x;
   //     gui3D.last_mouse_y = y;
   //     if(button == GLUT_LEFT_BUTTON)
-  // 	motion_state = ROTATING;
+  //         motion_state = ROTATING;
   //     else if(button == GLUT_MIDDLE_BUTTON)
-  // 	motion_state = MOVING;
+  //         motion_state = MOVING;
   //     else if(button == GLUT_RIGHT_BUTTON)
-  // 	motion_state = ZOOMING;
+  //         motion_state = ZOOMING;
   //   }
   //   else if(state == GLUT_UP)
   //     motion_state = IDLE;
@@ -210,8 +210,8 @@ void changeSize(int w, int h){
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   gluLookAt(x, y, z,
-	    x + lx,y + ly,z + lz,
-	    0.0f,1.0f,0.0f);
+            x + lx,y + ly,z + lz,
+            0.0f,1.0f,0.0f);
 }
 
 void initScene() {
@@ -311,8 +311,8 @@ void orientMe(float ang) {
   lz = -cos(ang);
   glLoadIdentity();
   gluLookAt(x, y, z,
-	    x + lx,y + ly,z + lz,
-	    0.0f,1.0f,0.0f);
+            x + lx,y + ly,z + lz,
+            0.0f,1.0f,0.0f);
 }
 
 
@@ -322,8 +322,8 @@ void moveMeFlat(int i) {
 
   glLoadIdentity();
   gluLookAt(x, y, z,
-	    x + lx,y + ly,z + lz,
-	    0.0f,1.0f,0.0f);
+            x + lx,y + ly,z + lz,
+            0.0f,1.0f,0.0f);
 }
 
 

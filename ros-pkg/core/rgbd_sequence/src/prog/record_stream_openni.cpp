@@ -38,15 +38,15 @@ int main(int argc, char** argv)
   ROS_ASSERT(!(opts.count("register") && opts.count("fake-rgb")));
   
   OpenNIStreamRecorder rec(opts["device"].as<string>(),
-			   opts["id"].as<int>(),
-			   opts["resolution"].as<string>(),
-			   opts.count("fake-rgb"),
-			   opts.count("register"));
+                           opts["id"].as<int>(),
+                           opts["resolution"].as<string>(),
+                           opts.count("fake-rgb"),
+                           opts.count("register"));
 
   if(opts.count("output"))
     rec.sequences_dir_ = opts["output"].as<string>();
   cout << "Saving new sequences in " << rec.sequences_dir_ << endl;
-			   
+                           
   rec.run();
 
   return 0;

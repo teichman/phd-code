@@ -33,9 +33,9 @@ protected:
   ObjectIndices object_indices_;
 
   void extractObjectsFromFrame(const rgbd::Cloud& pcd,
-			       const std::vector<int>& indices,
-			       std::vector<rgbd::Cloud::ConstPtr>* objects,
-			       std::vector< std::vector<int> >* object_indices) const;
+                               const std::vector<int>& indices,
+                               std::vector<rgbd::Cloud::ConstPtr>* objects,
+                               std::vector< std::vector<int> >* object_indices) const;
 };
 
 #endif // OBJECT_EXTRACTOR_H

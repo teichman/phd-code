@@ -24,11 +24,11 @@ namespace graphcuts
     StructuralSVM(double c, double precision, int num_threads, int debug_level);
     //! labels must all be in {-1, +1}^n.
     Model train(const std::vector<PotentialsCache::Ptr>& caches,
-		const std::vector<VecXiPtr>& labels) const;
+                const std::vector<VecXiPtr>& labels) const;
 
   protected:
     double updateModel(const std::vector<Constraint>& constraints,
-		       Model* model, double* slacks) const;
+                       Model* model, double* slacks) const;
     
     friend class ConstraintGenerator;
   };
@@ -52,8 +52,8 @@ namespace graphcuts
     double hamming_loss_;
     
     ConstraintGenerator(const Model& model,
-			PotentialsCache::ConstPtr cache,
-			VecXiConstPtr labels);
+                        PotentialsCache::ConstPtr cache,
+                        VecXiConstPtr labels);
     void _run();
 
   protected:
@@ -63,9 +63,9 @@ namespace graphcuts
   };
 
   double hammingLoss(const Eigen::VectorXi& label,
-		     const Eigen::VectorXi& pred);
+                     const Eigen::VectorXi& pred);
   double zeroOneLoss(const Eigen::VectorXi& label,
-		     const Eigen::VectorXi& pred);
+                     const Eigen::VectorXi& pred);
   
 }
 
