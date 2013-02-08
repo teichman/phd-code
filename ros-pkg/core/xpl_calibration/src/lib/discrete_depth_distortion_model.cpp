@@ -11,7 +11,8 @@ Frustum::Frustum(int smoothing, double bin_depth) :
 {
   num_bins_ = ceil(max_dist_ / bin_depth_);
   counts_ = VectorXf::Ones(num_bins_) * smoothing;
-  total_multipliers_ = VectorXf::Ones(num_bins_) * smoothing;
+  total_numerators_ = VectorXf::Ones(num_bins_) * smoothing;
+  total_denominators_ = VectorXf::Ones(num_bins_) * smoothing;
   multipliers_ = VectorXf::Ones(num_bins_);
 }
 
@@ -25,26 +26,11 @@ void Frustum::addExample(double ground_truth, double measurement)
   
   int idx = min(num_bins_ - 1, (int)floor(measurement / bin_depth_));
   ROS_ASSERT(idx >= 0);
-  total_multipliers_(idx) += mult;
+  total_numerators_(idx) += ground_truth * ground_truth;
+  total_denominators_(idx) += ground_truth * measurement;
   ++counts_(idx);
-  multipliers_(idx) = total_multipliers_(idx) / counts_(idx);
+  multipliers_(idx) = total_numerators_(idx) / total_denominators_(idx);
 }
-
-void Frustum::addMultiplier(double measurement, double multiplier)
-{
-  scopeLockWrite;
-  
-  ROS_ASSERT(multiplier > 0);
-  if(multiplier > MAX_MULT || multiplier < MIN_MULT)
-    return;
-  
-  int idx = min(num_bins_ - 1, (int)floor(measurement / bin_depth_));
-  ROS_ASSERT(idx >= 0);
-  total_multipliers_(idx) += multiplier;
-  ++counts_(idx);
-  multipliers_(idx) = total_multipliers_(idx) / counts_(idx);
-}
-
 
 inline int Frustum::index(double z) const
 {
@@ -109,7 +95,8 @@ void Frustum::serialize(std::ostream& out) const
   eigen_extensions::serializeScalar(num_bins_, out);
   eigen_extensions::serializeScalar(bin_depth_, out);
   eigen_extensions::serialize(counts_, out);
-  eigen_extensions::serialize(total_multipliers_, out);
+  eigen_extensions::serialize(total_numerators_, out);
+  eigen_extensions::serialize(total_denominators_, out);
   eigen_extensions::serialize(multipliers_, out);
 }
 
@@ -119,7 +106,8 @@ void Frustum::deserialize(std::istream& in)
   eigen_extensions::deserializeScalar(in, &num_bins_);
   eigen_extensions::deserializeScalar(in, &bin_depth_);
   eigen_extensions::deserialize(in, &counts_);
-  eigen_extensions::deserialize(in, &total_multipliers_);
+  eigen_extensions::deserialize(in, &total_numerators_);
+  eigen_extensions::deserialize(in, &total_denominators_);
   eigen_extensions::deserialize(in, &multipliers_);
 }
 
@@ -227,35 +215,35 @@ void DiscreteDepthDistortionModel::addExample(const ProjectivePoint& ppt, double
   frustum(ppt.v_, ppt.u_).addExample(ground_truth, measurement);
 }
 
-void DiscreteDepthDistortionModel::accumulate(const rgbd::Frame& measurement, const Eigen::MatrixXd& multipliers)
-{
-  ROS_ASSERT(psm_.width_ == measurement.depth_->cols());
-  ROS_ASSERT(psm_.height_ == measurement.depth_->rows());
-  ROS_ASSERT(psm_.width_ == multipliers.cols());
-  ROS_ASSERT(psm_.height_ == multipliers.rows());
+// void DiscreteDepthDistortionModel::accumulate(const rgbd::Frame& measurement, const Eigen::MatrixXd& multipliers)
+// {
+//   ROS_ASSERT(psm_.width_ == measurement.depth_->cols());
+//   ROS_ASSERT(psm_.height_ == measurement.depth_->rows());
+//   ROS_ASSERT(psm_.width_ == multipliers.cols());
+//   ROS_ASSERT(psm_.height_ == multipliers.rows());
 
-  ProjectivePoint ppt;
-  Point pt;
-  for(ppt.v_ = 0; ppt.v_ < psm_.height_; ++ppt.v_) {
-    for(ppt.u_ = 0; ppt.u_ < psm_.width_; ++ppt.u_) {
-      double mult = multipliers(ppt.v_, ppt.u_);
-      if(measurement.depth_->coeffRef(ppt.v_, ppt.u_) == 0) {
-	ROS_ASSERT(mult == 0);
-	continue;
-      }
-      if(mult == 0)
-	continue;
+//   ProjectivePoint ppt;
+//   Point pt;
+//   for(ppt.v_ = 0; ppt.v_ < psm_.height_; ++ppt.v_) {
+//     for(ppt.u_ = 0; ppt.u_ < psm_.width_; ++ppt.u_) {
+//       double mult = multipliers(ppt.v_, ppt.u_);
+//       if(measurement.depth_->coeffRef(ppt.v_, ppt.u_) == 0) {
+// 	ROS_ASSERT(mult == 0);
+// 	continue;
+//       }
+//       if(mult == 0)
+// 	continue;
       
-      // ppt.z_ = measurement.depth_->coeffRef(ppt.v_, ppt.u_);
-      // psm_.project(ppt, &pt);
-      // double meas = pt.getVector3fMap().norm();
-      // frustum(ppt.v_, ppt.u_).addMultiplier(meas, mult);
+//       // ppt.z_ = measurement.depth_->coeffRef(ppt.v_, ppt.u_);
+//       // psm_.project(ppt, &pt);
+//       // double meas = pt.getVector3fMap().norm();
+//       // frustum(ppt.v_, ppt.u_).addMultiplier(meas, mult);
 
-      double z = measurement.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
-      frustum(ppt.v_, ppt.u_).addMultiplier(z, mult);
-    }
-  }
-}
+//       double z = measurement.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
+//       frustum(ppt.v_, ppt.u_).addMultiplier(z, mult);
+//     }
+//   }
+// }
 
 void DiscreteDepthDistortionModel::accumulate(const Frame& ground_truth, const Frame& measurement)
 {

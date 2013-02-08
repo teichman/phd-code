@@ -11,7 +11,6 @@ public:
   Frustum(int smoothing = 1, double bin_depth = 1.0);
   //! z value, not distance to origin.
   void addExample(double ground_truth, double measurement);
-  void addMultiplier(double measurement, double multiplier);
   int index(double z) const;
   void undistort(double* z) const;
 //  void undistort(int idx, float* z, float* mult) const;
@@ -24,7 +23,9 @@ protected:
   int num_bins_;
   double bin_depth_;
   Eigen::VectorXf counts_;
-  Eigen::VectorXf total_multipliers_;
+  // Eigen::VectorXf total_multipliers_;
+  Eigen::VectorXf total_numerators_;
+  Eigen::VectorXf total_denominators_;
   Eigen::VectorXf multipliers_;
 
   friend class DiscreteDepthDistortionModel;
@@ -40,7 +41,7 @@ public:
   DiscreteDepthDistortionModel& operator=(const DiscreteDepthDistortionModel& other);
   void undistort(rgbd::Frame* frame) const;
   void accumulate(const rgbd::Frame& ground_truth, const rgbd::Frame& measurement);
-  void accumulate(const rgbd::Frame& measurement, const Eigen::MatrixXd& multipliers);
+//  void accumulate(const rgbd::Frame& measurement, const Eigen::MatrixXd& multipliers);
   void addExample(const rgbd::ProjectivePoint& ppt, double ground_truth, double measurement);
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);
