@@ -1,0 +1,15 @@
+<package>
+  <description brief="replicator">
+
+     replicator
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/replicator</url>
+  <depend package="xpl_calibration"/>
+
+</package>
+
+
