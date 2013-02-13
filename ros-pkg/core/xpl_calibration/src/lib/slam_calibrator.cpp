@@ -11,7 +11,42 @@ SlamCalibrator::SlamCalibrator(const PrimeSenseModel& model, double max_range, d
 {
 }
 
-rgbd::Cloud::Ptr SlamCalibrator::buildMap(const StreamSequence& sseq, const Trajectory& traj, double max_range, double vgsize)
+void filterFringe(Frame* frame)
+{
+  DepthMat& depth = *frame->depth_;
+
+  cv::Mat1b mask(depth.rows(), depth.cols());  // points to be removed.
+  mask = 0;
+  ushort threshold = 5000;  // millimeters
+  for(int y = 1; y < depth.rows(); ++y) {
+    for(int x = 1; x < depth.cols(); ++x) {
+      if(depth(y, x) == 0 || depth(y-1, x) == 0 || depth(y, x-1) == 0 ||
+         fabs(depth(y, x) - depth(y-1, x)) > threshold ||
+         fabs(depth(y, x) - depth(y, x-1)) > threshold)
+      {
+        mask(y, x) = 255;
+      }
+    }
+  }
+
+  // cv::imshow("mask", mask);
+  // cv::imshow("depth", frame->depthImage());
+  // cv::waitKey();
+  
+  cv::dilate(mask, mask, cv::Mat(), cv::Point(-1, -1), 8);
+  // cv::imshow("mask", mask);
+  // cv::waitKey();
+    
+  for(int y = 1; y < depth.rows(); ++y)
+    for(int x = 1; x < depth.cols(); ++x)
+      if(mask(y, x))
+        depth(y, x) = 0;  
+
+  // cv::imshow("depth", frame->depthImage());
+  // cv::waitKey();
+}
+
+rgbd::Cloud::Ptr SlamCalibrator::buildMap(const StreamSequence& sseq, const Trajectory& traj, double max_range, double vgsize, bool filter_fringe)
 {
   ROS_DEBUG_STREAM("Building slam calibration map using max range of " << max_range);
   ROS_WARN("SlamCalibrator::buildMap does not use distortion model.");
@@ -25,6 +60,9 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(const StreamSequence& sseq, const Traj
     cout << "Using frame " << i << " / " << traj.size() << endl;
     Frame frame;
     sseq.readFrame(i, &frame);
+
+    if(filter_fringe)
+      filterFringe(&frame);
     
     Cloud::Ptr tmp(new Cloud);
     sseq.model_.frameToCloud(frame, tmp.get(), max_range);
@@ -39,7 +77,7 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(const StreamSequence& sseq, const Traj
     *map += *nonans;
     ++num_used_frames;
     // Added intermediate filtering to handle memory overload on huge maps
-    if(num_used_frames % 250 == 0)
+    if(num_used_frames % 500 == 0)
     {
       cout << "Filtering..." << endl;
       HighResTimer hrt("filtering");

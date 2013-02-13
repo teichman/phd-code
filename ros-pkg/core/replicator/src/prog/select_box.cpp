@@ -47,7 +47,8 @@ int main(int argc, char** argv)
   traj.load(trajectory_path);
   Cloud::Ptr map = SlamCalibrator::buildMap(*sseq, traj,
                                             opts["max-range"].as<double>(),
-                                            opts["vgsize"].as<double>());
+                                            opts["vgsize"].as<double>(),
+                                            true);
 
   cout << "  To select a center point, use shift-click.  To change the extent of the box, use x/X/y/Y/z/Z." << endl;
   BoxSelectionVisualizer bsv(map, output_path);
