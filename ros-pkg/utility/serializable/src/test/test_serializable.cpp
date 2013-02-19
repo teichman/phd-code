@@ -34,6 +34,7 @@ public:
   
   void deserialize(std::istream& in)
   {
+    cout << "NDC::deserialize" << endl;
     in.read((char*)&val_, sizeof(int));
   }
 };
@@ -44,9 +45,7 @@ TEST(Serializable, Serializable)
   NDC ndc(val);
   ndc.save("ndc");
 
-  ifstream f("ndc");
-  NDC ndc2(f);
-  f.close();
+  NDC ndc2((IfstreamWrapper("ndc")));
   cout << ndc2.val_ << endl;
   EXPECT_TRUE(ndc2.val_ == val);
 

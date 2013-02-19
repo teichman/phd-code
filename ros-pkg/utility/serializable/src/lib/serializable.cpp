@@ -37,3 +37,22 @@ std::istream& operator>>(std::istream& in, Serializable& ser)
   ser.deserialize(in);
   return in;
 }
+
+IfstreamWrapper::IfstreamWrapper(const std::string& path)
+{
+  cout << "Constructing IfstreamWrapper" << endl;
+  
+  ifstream_.open(path.c_str());
+  if(!ifstream_.is_open()) {
+    cerr << "Failed to open " << path << endl;
+  }
+  assert(ifstream_.is_open());
+}
+
+IfstreamWrapper::~IfstreamWrapper()
+{
+  cout << "Destroying IfstreamWrapper." << endl;
+  
+  if(ifstream_.is_open())
+    ifstream_.close();
+}
