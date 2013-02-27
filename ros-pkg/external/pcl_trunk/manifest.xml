@@ -15,8 +15,8 @@
   <depend package="roscpp_serialization"/>
   
       <export>
-        <cpp cflags="`cmake-config PCL --cflags-only-I --cflags-only-other --module-path=${prefix}/release_against_ros/share/pcl-1.7`"      
-          lflags="-L${prefix}/release_against_ros/lib -Wl,-rpath,${prefix}/release_against_ros/lib `cmake-config PCL --libs-only-L --libs-only-l --module-path=${prefix}/release_against_ros/share/pcl-1.7`"/> 
+        <cpp cflags="`${prefix}/cmake-config PCL --cflags-only-I --cflags-only-other --module-path=${prefix}/release_against_ros/share/pcl-1.7` -DUSE_ROS"      
+          lflags="-L${prefix}/release_against_ros/lib -Wl,-rpath,${prefix}/release_against_ros/lib `${prefix}/cmake-config PCL --libs-only-L --libs-only-l --module-path=${prefix}/release_against_ros/share/pcl-1.7`"/> 
       </export>
 
     
