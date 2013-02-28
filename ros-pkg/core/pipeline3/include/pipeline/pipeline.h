@@ -233,7 +233,7 @@ namespace pipeline
   }
 
   template<typename T> T* pod(const std::string& name,
-                                  const std::vector<Pod*>& pods)
+                              const std::vector<Pod*>& pods)
   {
     std::vector<T*> passed;
     for(size_t i = 0; i < pods.size(); ++i) {
@@ -273,8 +273,8 @@ namespace pipeline
   }
 
   template<typename T> void Pipeline::pull(const std::string& pod_name,
-                                                const std::string& outlet_name,
-                                                T* dest) const
+                                           const std::string& outlet_name,
+                                           T* dest) const
   {
     *dest = pod(pod_name)->getOutlet(outlet_name)->pull<T>();
   }

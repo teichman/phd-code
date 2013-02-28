@@ -43,7 +43,6 @@ namespace graphcuts
   void PotentialsCache::applyWeights(const Model& model,
                                      SparseMat* edge,
                                      Eigen::VectorXd* node) const
-                                     
   {
     ROS_ASSERT(node->rows() == edge->rows());
     ROS_ASSERT(node->rows() == edge->cols());

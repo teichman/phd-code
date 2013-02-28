@@ -1,0 +1,65 @@
+Index: gpu/kinfu/include/pcl/gpu/kinfu/kinfu.h
+===================================================================
+--- gpu/kinfu/include/pcl/gpu/kinfu/kinfu.h	(revision 8672)
++++ gpu/kinfu/include/pcl/gpu/kinfu/kinfu.h	(working copy)
+@@ -179,8 +179,11 @@
+         getLastFrameNormals (DeviceArray2D<NormalType>& normals) const;
+ 
+         /** \brief Disables ICP forever */
+-        void disableIcp();
++        void disableIcp ();
+ 
++        /** \brief Enables ICP */
++        void enableIcp ();
++
+       private:
+         
+         /** \brief Number of pyramid levels */
+Index: gpu/kinfu/src/kinfu.cpp
+===================================================================
+--- gpu/kinfu/src/kinfu.cpp	(revision 8672)
++++ gpu/kinfu/src/kinfu.cpp	(working copy)
+@@ -335,7 +335,7 @@
+             {
+               if (pcl_isnan (det)) cout << "qnan" << endl;
+ 
+-              reset ();
++              //reset (); // SDM Taking out so we never lose our beautiful results
+               return (false);
+             }
+             //float maxc = A.maxCoeff();
+@@ -365,9 +365,20 @@
+       if (global_time_ == 0)
+         ++global_time_;
+ 
+-      Matrix3frm Rcurr = rmats_[global_time_ - 1];
+-      Vector3f   tcurr = tvecs_[global_time_ - 1];
++      Matrix3frm Rcurr;// = rmats_[global_time_ - 1];
++      Vector3f   tcurr;// = tvecs_[global_time_ - 1];
+ 
++      if(hint)
++      {
++        Rcurr = hint->rotation().matrix();
++        tcurr = hint->translation().matrix();
++      }
++      else
++      {
++        Rcurr = rmats_[global_time_ - 1]; // tranform to global coo for ith camera pose
++        tcurr = tvecs_[global_time_ - 1];
++      }
++
+       rmats_.push_back (Rcurr);
+       tvecs_.push_back (tcurr);
+ 
+@@ -510,7 +521,11 @@
+ void 
+ pcl::gpu::KinfuTracker::disableIcp() { disable_icp_ = true; }
+ 
++///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
++void 
++pcl::gpu::KinfuTracker::enableIcp() { disable_icp_ = false; }
+ 
++
+ ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+ void

@@ -36,6 +36,7 @@ namespace graphcuts
     Graph3d graph(seg->rows(), num_edges);
     graph.add_node(seg->rows());
                         
+
     Eigen::VectorXd weighted_node(seg->rows());
     SparseMat weighted_edge(seg->rows(), seg->rows());
     pc->applyWeights(model_, &weighted_edge, &weighted_node);

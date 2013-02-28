@@ -40,7 +40,6 @@ namespace graphcuts
     void applyWeights(const Model& model,
                       SparseMat* edge,
                       Eigen::VectorXd* node) const;
-                            
   protected:
     //! "nmap" or "emap"
     void _applyNameTranslator(const std::string& id, const NameTranslator& translator);

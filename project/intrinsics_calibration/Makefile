@@ -104,6 +104,14 @@ SLAM_RUNS_TRAINING_xpl05	:=	2013-01-16_boardroom_0 \
 SLAM_RUNS_TESTING_xpl05		:=	2013-01-16_boardroom_2
 SLAM_RUNS_xpl05 := $(SLAM_RUNS_TRAINING_xpl05) $(SLAM_RUNS_TESTING_xpl05)
 
+SLAM_RUNS_TRAINING_xpl06	:= 	xpl006-seq000 \
+					xpl006-seq001
+SLAM_RUNS_TESTING_xpl06		:= 	xpl006-seq003 \
+					xpl006-seq004 \
+					xpl006-seq005
+SLAM_RUNS_xpl06 := $(SLAM_RUNS_TRAINING_xpl06) $(SLAM_RUNS_TESTING_xpl06)
+
+
 # Data specifically for the 2012-11-06 run in which multiple sensor views were collected.
 AVV_MULTIVIEW_NAMES_xpl01	:= 	xpl01_straight-11-06-2012_00-08-08
 #					xpl01_down-11-06-2012_00-17-19
