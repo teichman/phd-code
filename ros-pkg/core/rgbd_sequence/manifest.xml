@@ -8,8 +8,8 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/rgbd_sequence</url>
-  <!-- pcl_bleeding has to come before anything that causes inclusion of /opt/ros/fuerte/include -->
-  <depend package="pcl_bleeding"/>
+
+  <depend package="pcl_trunk"/>
   <depend package="serializable"/>
   <depend package="opencv_bleeding"/>
   <depend package="bag_of_tricks"/>

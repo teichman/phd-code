@@ -9,7 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/slam_interface</url>
   <depend package="rgbd_sequence"/>
-  <depend package="pcl_bleeding"/>
+  <depend package="pcl_trunk"/>
   <depend package="sensor_msgs"/>
   <depend package="cv_bridge_bleeding"/>
   <depend package="eigen_flags"/>
