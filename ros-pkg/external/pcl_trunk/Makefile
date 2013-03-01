@@ -6,6 +6,8 @@ CUDA_BINDIR := /tmp/gcc-4.4
 C_COMPILER:=/usr/bin/gcc
 CXX_COMPILER:=/usr/bin/g++
 
+default: built
+
 built_against_ros: svn svn/PATCHED_KINFU
 	cd svn && mkdir -p build_against_ros
 	mkdir -p ${CUDA_BINDIR}
@@ -28,7 +30,7 @@ built_against_ros: svn svn/PATCHED_KINFU
 	rm -rf ${CUDA_BINDIR}
 	touch $@
 
-default: built_against_ros
+
 # was 5600
 built: svn svn/PATCHED_KINFU
 	cd svn && mkdir -p build
@@ -97,7 +99,6 @@ built_against_ros_debug: svn svn/PATCHED_KINFU
 	cd svn/build_against_ros_debug && make -j4 && make install
 	rm -rf ${CUDA_BINDIR}
 	touch $@
-	
 
 svn:
 	#svn co -r${PCL_VERSION} http://svn.pointclouds.org/pcl/trunk $@
@@ -152,6 +153,3 @@ wipe:
 	cd 3rdparty/flann-1.7.1-src/build && cmake ../ -DBUILD_CUDA_LIB:BOOL=OFF -DCMAKE_INSTALL_PREFIX:STRING=/usr
 	cd 3rdparty/flann-1.7.1-src/build && make
 	cd 3rdparty/flann-1.7.1-src/build && sudo make install
-	
-	
-
