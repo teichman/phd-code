@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ $# -eq 0 ]
+if [ ! $# -eq 2 ]
 then
     echo "Usage: record_sequence SENSORID DESCRIPTIVENAME"
     echo "  SENSORID is, for example, xpl01."
