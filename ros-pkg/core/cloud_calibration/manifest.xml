@@ -11,7 +11,7 @@
   <depend package="roscpp"/>
   <depend package="opencv2"/>
   <depend package="eigen"/>
-  <depend package="pcl_bleeding"/>
+  <depend package="pcl_trunk"/>
   <depend package="rgbd_sequence"/>
   <depend package="multi_sequence"/>
   <depend package="eigen_extensions"/>
