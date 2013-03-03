@@ -4,15 +4,15 @@ using namespace std;
 using namespace Eigen;
 
 NesterovInteriorPointSolver::NesterovInteriorPointSolver(ScalarFunction::ConstPtr objective,
-							 VectorFunction::ConstPtr gradient,
-							 double initial_mu,
-							 double tol,
-							 double alpha,
-							 double beta,
-							 int max_num_iters,
-							 double initial_stepsize,
-							 int restart,
-							 int debug) :
+                                                         VectorFunction::ConstPtr gradient,
+                                                         double initial_mu,
+                                                         double tol,
+                                                         double alpha,
+                                                         double beta,
+                                                         int max_num_iters,
+                                                         double initial_stepsize,
+                                                         int restart,
+                                                         int debug) :
   
   optimal_solution_(NULL),
   objective_(objective),
@@ -32,7 +32,7 @@ NesterovInteriorPointSolver::NesterovInteriorPointSolver(ScalarFunction::ConstPt
 }
 
 void NesterovInteriorPointSolver::addConstraint(ScalarFunction::ConstPtr constraint,
-						VectorFunction::ConstPtr gradient)
+                                                VectorFunction::ConstPtr gradient)
 {
   constraints_.push_back(constraint);
   grad_constraints_.push_back(gradient);
@@ -58,12 +58,12 @@ Eigen::VectorXd NesterovInteriorPointSolver::barrierGradient(const Eigen::Vector
 }
 
 double NesterovInteriorPointSolver::backtracking(double t,
-						 const VectorXd& x,
-						 const VectorXd& grad,
-						 const VectorXd& direction,
-						 double objective,
-						 int* num_backtracks,
-						 bool* precision_flag)
+                                                 const VectorXd& x,
+                                                 const VectorXd& grad,
+                                                 const VectorXd& direction,
+                                                 double objective,
+                                                 int* num_backtracks,
+                                                 bool* precision_flag)
 {
   assert(beta_ < 1 && beta_ > 0);
   assert(alpha_ > 0 && alpha_ <= 0.5);
@@ -73,21 +73,21 @@ double NesterovInteriorPointSolver::backtracking(double t,
     *num_backtracks = 0;
 
   while(!feasible(x + t * direction) ||
-	(barrierObjective(x + t * direction) > objective + alpha_ * t * grad.dot(direction)))
+        (barrierObjective(x + t * direction) > objective + alpha_ * t * grad.dot(direction)))
   {
     if(debug_ > 2) {
       VectorXd canditate = x + t * direction;
       if(!feasible(canditate))
-	cout << "  Backtracking (Infeasible): " << setprecision(16) << canditate.transpose() << endl;
+        cout << "  Backtracking (Infeasible): " << setprecision(16) << canditate.transpose() << endl;
       else { 
-	cout << "  Backtracking (condition not met): " << setprecision(16)
-	     << barrierObjective(canditate) << " > "
-	     << objective + alpha_ * t * grad.dot(direction) << endl;
-	cout << "    t = " << t << endl;
-	cout << "    x = " << x.transpose() << endl;
-	cout << "    direction = " << direction.transpose() << endl;
-	cout << "    t * direction = " << (t * direction).transpose() << endl;
-	cout << "    x + t * direction = " << canditate.transpose() << endl;	
+        cout << "  Backtracking (condition not met): " << setprecision(16)
+             << barrierObjective(canditate) << " > "
+             << objective + alpha_ * t * grad.dot(direction) << endl;
+        cout << "    t = " << t << endl;
+        cout << "    x = " << x.transpose() << endl;
+        cout << "    direction = " << direction.transpose() << endl;
+        cout << "    t * direction = " << (t * direction).transpose() << endl;
+        cout << "    x + t * direction = " << canditate.transpose() << endl;        
       }
     }
 
@@ -105,8 +105,8 @@ double NesterovInteriorPointSolver::backtracking(double t,
     if(direction(i) != 0 && canditate(i) == x(i)) { 
       *precision_flag = true;
       if(debug_ > 2)
-	cout << "    ==========  t * direction(i) = " << t * direction(i)
-	     << " is 0 when added to " << x(i) << "!" << endl;
+        cout << "    ==========  t * direction(i) = " << t * direction(i)
+             << " is 0 when added to " << x(i) << "!" << endl;
     }
   }
 
@@ -123,7 +123,7 @@ bool NesterovInteriorPointSolver::feasible(const VectorXd& x)
 }
 
 VectorXd NesterovInteriorPointSolver::solve(const VectorXd& init,
-					    long int* num_steps)
+                                            long int* num_steps)
 {
   assert(feasible(init));
 
@@ -207,12 +207,12 @@ VectorXd NesterovInteriorPointSolver::solveInner(const VectorXd& init, long int*
       mult *= 2.0 / 3.0;
     bool precision_flag;
     double stepsize = backtracking(mult * initial_stepsize_, y, gradient_y,
-				   -gradient_y, objective_y, &num_backtracks,
-				   &precision_flag);
+                                   -gradient_y, objective_y, &num_backtracks,
+                                   &precision_flag);
 
     // Regular backtracking.
     // double stepsize = backtracking(initial_stepsize_, y, gradient_y, -gradient_y,
-    // 				   objective_y, &num_backtracks);
+    //                                    objective_y, &num_backtracks);
 
     // Fixed stepsize choice.
     // double beta = 0.5;
@@ -230,7 +230,7 @@ VectorXd NesterovInteriorPointSolver::solveInner(const VectorXd& init, long int*
     // -- If y is infeasible, restart the algorithm.
     if(!feasible(y)) {
       if(debug_ > 1)
-	cout << "  Infeasible y!  Restarting." << endl;
+        cout << "  Infeasible y!  Restarting." << endl;
       k = 1;
       y = x;
     }
@@ -252,10 +252,10 @@ VectorXd NesterovInteriorPointSolver::solveInner(const VectorXd& init, long int*
     
     if(!precision_flag &&
        ((restart_ < 0 && -restart_ < num_bad_steps) ||  
-	(restart_ > 0 && (int)k % restart_ == 0)))
+        (restart_ > 0 && (int)k % restart_ == 0)))
     { 
       if(debug_ > 1)
-	cout << "Restarting Nesterov." << endl;
+        cout << "Restarting Nesterov." << endl;
       return solveInner(x, num_steps);
     }
 
@@ -264,13 +264,13 @@ VectorXd NesterovInteriorPointSolver::solveInner(const VectorXd& init, long int*
     
     if(debug_ > 1) {
       cout << setprecision(16)
-	   << "Nesterov Step " << *num_steps << ", mu = " << mu_ << ", gradient norm " << norm
-	   << ", objective " << setprecision(12) << objective_x
-	   << ", (x - x_prev).norm() " << setprecision(6) << (x - x_prev).norm()
-	   << ", " << num_backtracks << " backtracks, stepsize = " << stepsize;
+           << "Nesterov Step " << *num_steps << ", mu = " << mu_ << ", gradient norm " << norm
+           << ", objective " << setprecision(12) << objective_x
+           << ", (x - x_prev).norm() " << setprecision(6) << (x - x_prev).norm()
+           << ", " << num_backtracks << " backtracks, stepsize = " << stepsize;
 
       if(optimal_solution_)
-	cout << ", error norm: " << (x - *optimal_solution_).norm();
+        cout << ", error norm: " << (x - *optimal_solution_).norm();
       cout << endl;
     }
 
@@ -288,13 +288,13 @@ VectorXd NesterovInteriorPointSolver::solveInner(const VectorXd& init, long int*
     
     if(norm < mu_) {
       if(debug_)
-	cout << "Breaking due to tolerance." << endl;
+        cout << "Breaking due to tolerance." << endl;
       break;
     }
      else if(max_num_iters_ > 0 && *num_steps == max_num_iters_) {
        if(debug_)
-	 cout << "Breaking because num_iters " << *num_steps
-	      << " = max_num_iters_ = " << max_num_iters_ << endl;
+         cout << "Breaking because num_iters " << *num_steps
+              << " = max_num_iters_ = " << max_num_iters_ << endl;
       break;
     }
     ++k;
@@ -302,14 +302,14 @@ VectorXd NesterovInteriorPointSolver::solveInner(const VectorXd& init, long int*
 
   if(debug_) {
     cout << "Solver complete, gradient norm " << gradient_x.norm()
-	 << " < tolerance " << mu_ << ", objective " << barrierObjective(x);
+         << " < tolerance " << mu_ << ", objective " << barrierObjective(x);
     if(optimal_solution_)
       cout << ", error norm: " << (x - *optimal_solution_).norm();
     cout << endl;
 
     cout << "Best x found has gradient norm " << setprecision(12)
-	 << barrierGradient(best_x).norm() << ", objective "
-	 << barrierObjective(best_x) << endl;
+         << barrierGradient(best_x).norm() << ", objective "
+         << barrierObjective(best_x) << endl;
   }
 
   return best_x;  

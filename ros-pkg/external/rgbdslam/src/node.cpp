@@ -261,9 +261,9 @@ bool Node::getRelativeTransformationTo_ICP_code(const Node* target_node,
   dgc_transform_identity(final_trafo);
 
   gicp_mutex.lock();
-	dgc::gicp::GICPPointSet* gicp_point_set = this->getGICPStructure();
+        dgc::gicp::GICPPointSet* gicp_point_set = this->getGICPStructure();
   ROS_INFO("this'  (%d) Point Set: %d", this->id_, gicp_point_set->Size());
-	dgc::gicp::GICPPointSet* target_gicp_point_set = target_node->getGICPStructure();
+        dgc::gicp::GICPPointSet* target_gicp_point_set = target_node->getGICPStructure();
   ROS_INFO("others (%d) Point Set: %d", target_node->id_, target_gicp_point_set->Size());
   int iterations = gicp_max_iterations;
   if(gicp_point_set->Size() > Node::gicp_min_point_cnt && 
@@ -1273,9 +1273,9 @@ MatchingResult Node::matchNodePair(const Node* older_node)
 
 void Node::clearFeatureInformation(){
   //clear only points, by swapping data with empty vector (so mem really gets freed)
-	std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f> > f_l_3d;  
+        std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f> > f_l_3d;  
   f_l_3d.swap(feature_locations_3d_);
-	std::vector<cv::KeyPoint> f_l_2d; 
+        std::vector<cv::KeyPoint> f_l_2d; 
   f_l_2d.swap(feature_locations_2d_);
   feature_descriptors_.release();
 }

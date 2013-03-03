@@ -265,9 +265,9 @@ namespace pipeline2 {
     for(size_t i = 0; i < nodes.size(); ++i) {
       T* casted = dynamic_cast<T*>(nodes[i]);
       if(!casted)
-	continue;
+        continue;
       if(test && !test(casted))
-	continue;
+        continue;
     
       passed.push_back(casted);
     }
@@ -290,7 +290,7 @@ namespace pipeline2 {
     for(size_t i = 0; i < nodes.size(); ++i) {
       T* casted = dynamic_cast<T*>(nodes[i]);
       if(!casted)
-	continue;
+        continue;
       passed.push_back(casted);
     }
 

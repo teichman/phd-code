@@ -25,7 +25,7 @@ void dumpObjects(const string& path, const string& output_dir)
     vector<Label> labels = ilm.getLabelsForImage(i);
     for(size_t j = 0; j < labels.size(); ++j) {
       if(labels[j].class_name_.compare("background") == 0)
-	continue;
+        continue;
       class_names.insert(labels[j].class_name_);
     }
   }
@@ -49,20 +49,20 @@ void dumpObjects(const string& path, const string& output_dir)
     bool nonbg = false;
     for(size_t j = 0; j < labels.size(); ++j) {
       if(labels[j].class_name_.compare("background") == 0) {
-	nonbg = true;
-	break;
+        nonbg = true;
+        break;
       }
     }
     if(!nonbg)
       continue;
-		
+                
     
     IplImage* img = ilm.getRawImage(i);
 
     for(size_t j = 0; j < labels.size(); ++j) {
       Label& label = labels[j];
       if(label.class_name_.compare("background") == 0)
-	continue;
+        continue;
       
       CvRect rect = cvRect(label.x_, label.y_, label.width_, label.height_);
       cvSetImageROI(img, rect);

@@ -6,8 +6,8 @@ namespace dst
 {
 
   DepthProjector::DepthProjector(pipeline2::Outlet<cv::Mat3b>* img_otl,
-				 pipeline2::Outlet<KinectCloud::ConstPtr>* pcd_otl) :
-				 
+                                 pipeline2::Outlet<KinectCloud::ConstPtr>* pcd_otl) :
+                                 
     ComputeNode(),
     index_otl_(this),
     img_otl_(img_otl),
@@ -34,14 +34,14 @@ namespace dst
 
       // top & bottom
       for(int x = min_x; x <= max_x; ++x) { 
-	if(index(min_y, x) != -1) return cv::Point2i(x, min_y);
-	if(index(max_y, x) != -1) return cv::Point2i(x, max_y);
+        if(index(min_y, x) != -1) return cv::Point2i(x, min_y);
+        if(index(max_y, x) != -1) return cv::Point2i(x, max_y);
       }
       
       // left & right
       for(int y = min_y + 1; y < max_y; ++y) {
-	if(index(y, min_x) != -1) return cv::Point2i(min_x, y);
-	if(index(y, max_x) != -1) return cv::Point2i(max_x, y);
+        if(index(y, min_x) != -1) return cv::Point2i(min_x, y);
+        if(index(y, max_x) != -1) return cv::Point2i(max_x, y);
       }
     }
 
@@ -49,8 +49,8 @@ namespace dst
   }
   
   void DepthProjector::projectCloud(const KinectCloud& cloud,
-				    int spread,
-				    cv::Mat1i index) const
+                                    int spread,
+                                    cv::Mat1i index) const
   {
     ROS_ASSERT((size_t)index.rows == cloud.height);
     ROS_ASSERT((size_t)index.cols == cloud.width);
@@ -60,9 +60,9 @@ namespace dst
     int idx = 0;
     for(int y = 0; y < index.rows; ++y) {
       for(int x = 0; x < index.cols; ++x, ++idx) {
-	if(isnan(cloud[idx].y) || isnan(cloud[idx].x) || isnan(cloud[idx].z))
-	  continue;
-	index(y, x) = idx;
+        if(isnan(cloud[idx].y) || isnan(cloud[idx].x) || isnan(cloud[idx].z))
+          continue;
+        index(y, x) = idx;
       }
     }
   }
@@ -95,18 +95,18 @@ namespace dst
   }
   
   cv::Mat3b DepthProjector::getZBuffer(const KinectCloud& cloud,
-				       int spread,
-				       float min_range,
-				       float max_range) const
+                                       int spread,
+                                       float min_range,
+                                       float max_range) const
   {
     cv::Mat1i index(cv::Size(cloud.width, cloud.height), -1);
     projectCloud(cloud, spread, index);
     cv::Mat3b zbuf(index.size(), cv::Vec3b(50, 50, 50));
     for(int y = 0; y < index.rows; ++y) {
       for(int x = 0; x < index.cols; ++x) {
-	if(index(y, x) == -1)
-	  continue;
-	zbuf(y, x) = colorize(cloud[index(y, x)].z, min_range, max_range);
+        if(index(y, x) == -1)
+          continue;
+        zbuf(y, x) = colorize(cloud[index(y, x)].z, min_range, max_range);
       }
     }
     return zbuf;
@@ -148,11 +148,11 @@ namespace dst
     current_rindex_->resize(current_pcd_->size(), cv::Point2i(-1, -1));
     for(int y = 0; y < current_index_.rows; ++y) {
       for(int x = 0; x < current_index_.cols; ++x) {
-	int idx = current_index_(y, x);
-	if(idx == -1)
-	  continue;
-	ROS_ASSERT(idx >= 0 && (size_t)idx < current_pcd_->size());
-	current_rindex_->at(idx) = cv::Point2i(x, y);
+        int idx = current_index_(y, x);
+        if(idx == -1)
+          continue;
+        ROS_ASSERT(idx >= 0 && (size_t)idx < current_pcd_->size());
+        current_rindex_->at(idx) = cv::Point2i(x, y);
       }
     }
     
@@ -168,13 +168,13 @@ namespace dst
     index_otl_.push(output);
   }
 
-  cv::Mat1b DepthProjector::visualizeDepthIndex(cv::Mat1i index) const
+  cv::Mat1b DepthProjector::visualizeRangeIndex(cv::Mat1i index) const
   { 
     cv::Mat1b indvis(index.size(), 0);
     for(int x = 0; x < indvis.cols; ++x) {
       for(int y = 0; y < indvis.rows; ++y) {
-	if(index(y, x) != -1)
-	  indvis(y, x) = 255;
+        if(index(y, x) != -1)
+          indvis(y, x) = 255;
       }
     }
     return indvis;
@@ -182,7 +182,7 @@ namespace dst
   
   void DepthProjector::_display() const
   {
-    cv::Mat1b indvis = visualizeDepthIndex(current_index_);
+    cv::Mat1b indvis = visualizeRangeIndex(current_index_);
     cv::imwrite("debug/" + getRunName() + "-depth_index.png", indvis);
   }
 

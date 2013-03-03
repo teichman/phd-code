@@ -11,7 +11,7 @@ namespace dst
 {
 
   SegmentationVisualizer::SegmentationVisualizer(const std::vector<KinectCloud::Ptr>& original,
-						 const std::vector<KinectCloud::Ptr>& segmented) :
+                                                 const std::vector<KinectCloud::Ptr>& segmented) :
     quit_at_end_(false),
     vis_("Segmentation"),
     original_(original),
@@ -100,13 +100,13 @@ namespace dst
       vis_.spinOnce(15);
       usleep(15000);
       if(stepping_) { 
-	increment(1);
-	draw();
-//	if(recording_)
-	  //saveScreenshot(generateFilename("screenshots", "screenshot.png", 5));
+        increment(1);
+        draw();
+//        if(recording_)
+          //saveScreenshot(generateFilename("screenshots", "screenshot.png", 5));
       }
       if(quit_at_end_ && idx_ == (int)segmented_.size() - 1)
-	break;
+        break;
     }
   }
   

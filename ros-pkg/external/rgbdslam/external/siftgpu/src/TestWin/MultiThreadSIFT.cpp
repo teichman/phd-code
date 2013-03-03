@@ -55,26 +55,26 @@ class ScopedMutex
 {
 #ifdef _WIN32
 private:
-	HANDLE hmutex;
+        HANDLE hmutex;
 public:
-	ScopedMutex(const char* name) {
-		hmutex = CreateMutex(NULL, FALSE, name);
-		WaitForSingleObject(hmutex, INFINITE);
-	}
-	~ScopedMutex()
-	{
-		ReleaseMutex(hmutex);
-		CloseHandle(hmutex);
-	}
+        ScopedMutex(const char* name) {
+                hmutex = CreateMutex(NULL, FALSE, name);
+                WaitForSingleObject(hmutex, INFINITE);
+        }
+        ~ScopedMutex()
+        {
+                ReleaseMutex(hmutex);
+                CloseHandle(hmutex);
+        }
 #else
 public:
-	ScopedMutex(const char* name) {
+        ScopedMutex(const char* name) {
         pthread_mutex_lock(&global_mutex);
-	}
-	~ScopedMutex()
-	{
-		pthread_mutex_unlock(&global_mutex);
-	}
+        }
+        ~ScopedMutex()
+        {
+                pthread_mutex_unlock(&global_mutex);
+        }
 #endif
 };
 
@@ -141,7 +141,7 @@ public:
     virtual void InitializeSIFT()
     {
         ////////////////////////////
-   	    char device[2] = {'0' + _device_id, '\0'}; //works for 0-9...use sprintf if you have more than 10
+               char device[2] = {'0' + _device_id, '\0'}; //works for 0-9...use sprintf if you have more than 10
         char * argv[] = {"-fo", "-1",  "-v", "0", "-cuda", device};
         //-nogl was previously required, but now default 
         int argc = sizeof(argv)/sizeof(char*);
@@ -151,7 +151,7 @@ public:
         _sift->ParseParam(argc, argv);
 
         //create an OpenGL context for computation, and SiftGPU will be initialized automatically 
-        if(_sift->CreateContextGL() != SiftGPU::SIFTGPU_FULL_SUPPORTED)		exit(0);
+        if(_sift->CreateContextGL() != SiftGPU::SIFTGPU_FULL_SUPPORTED)                exit(0);
     }
 };
 
@@ -197,7 +197,7 @@ class MultiProcessDemo: public MultiThreadSIFT
 public:
     MultiProcessDemo(int deviceid, const char* filename):  MultiThreadSIFT(deviceid, filename)
     {
-    }	
+    }        
     virtual void RunTask()
     {
         char* filename = (char*) _thread_param;
@@ -209,21 +209,21 @@ public:
     }
     virtual void InitializeSIFT()
     {
-		//Although the multi-process demo here uses CUDA, 
-		//if multiple GPUs are mapped to multiple monitors/displayes
-		//it is possible to use OpenGL (not CUDA)for this. 
+                //Although the multi-process demo here uses CUDA, 
+                //if multiple GPUs are mapped to multiple monitors/displayes
+                //it is possible to use OpenGL (not CUDA)for this. 
         //Also, the mutex protection is not necessary
-   	    char device[2] = {'0' + _device_id, '\0'}; //works for 0-9...use sprintf if you have more than 10
+               char device[2] = {'0' + _device_id, '\0'}; //works for 0-9...use sprintf if you have more than 10
         char * argv[] = {"-fo", "-1",  "-v", "0", "-cuda", device};
         int argc = sizeof(argv)/sizeof(char*);
 
         /////////////////////////////////////
-		//create two server with differ socket ports
+                //create two server with differ socket ports
         _sift = CreateRemoteSiftGPU(7777 + _device_id, NULL);
         _sift->ParseParam(argc, argv);
 
         //create an OpenGL context for computation, and SiftGPU will be initialized automatically 
-        if(_sift->CreateContextGL() != SiftGPU::SIFTGPU_FULL_SUPPORTED)		exit(0);
+        if(_sift->CreateContextGL() != SiftGPU::SIFTGPU_FULL_SUPPORTED)                exit(0);
     }
 };
 
@@ -235,7 +235,7 @@ int main()
     MultiThreadDemo thread2(1, "../data/800-1.jpg");
 
 
-	//Use MultiProcessDemo for multi-process mode
+        //Use MultiProcessDemo for multi-process mode
     //MultiProcessDemo thread1(0, "../data/640-1.jpg");
     //MultiProcessDemo thread2(1, "../data/800-1.jpg");
 

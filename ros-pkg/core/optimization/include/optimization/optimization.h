@@ -45,8 +45,8 @@ public:
   bool debug_;
   
   BisectionSolver(ScalarFunction* objective, VectorFunction* gradient,
-		  double tol, double min, double max,
-		  int max_num_iters = 0, bool debug = false);
+                  double tol, double min, double max,
+                  int max_num_iters = 0, bool debug = false);
 
   double solve();
 };
@@ -66,20 +66,20 @@ class NesterovGradientSolver {
   bool debug_;
 
   NesterovGradientSolver(ScalarFunction* objective,
-			 VectorFunction* gradient,
-			 double tol,
-			 double alpha,
-			 double beta,
-			 int max_num_iters = 0,
-			 double initial_stepsize = 1,
-			 bool debug = false);
+                         VectorFunction* gradient,
+                         double tol,
+                         double alpha,
+                         double beta,
+                         int max_num_iters = 0,
+                         double initial_stepsize = 1,
+                         bool debug = false);
   Eigen::VectorXd solve(const Eigen::VectorXd& init);
 
  private:
   double backtracking(double t, const Eigen::VectorXd& x,
-		      const Eigen::VectorXd& grad,
-		      const Eigen::VectorXd& direction,
-		      double objective, int* num_backtracks);
+                      const Eigen::VectorXd& grad,
+                      const Eigen::VectorXd& direction,
+                      double objective, int* num_backtracks);
 };
   
 class NewtonSolver {
@@ -95,25 +95,25 @@ class NewtonSolver {
   int max_iters_;
 
   NewtonSolver(ScalarFunction* objective,
-	       VectorFunction* gradient,
-	       MatrixFunction* hessian,
-	       double tol,
-	       double alpha,
-	       double beta,
-	       double stepsize,
-	       int debug = 0,
-	       int max_iters = 0);
+               VectorFunction* gradient,
+               MatrixFunction* hessian,
+               double tol,
+               double alpha,
+               double beta,
+               double stepsize,
+               int debug = 0,
+               int max_iters = 0);
   
   Eigen::VectorXd solve(Eigen::VectorXd x);
   std::string progressString(int k, const Eigen::VectorXd& grad,
-			     const Eigen::VectorXd& x, double lambda2,
-			     double objective, int num_backtracks);
+                             const Eigen::VectorXd& x, double lambda2,
+                             double objective, int num_backtracks);
   
  private:
   double backtracking(double t, const Eigen::VectorXd& x,
-		      const Eigen::VectorXd& grad,
-		      const Eigen::VectorXd& direction,
-		      double objective, int* num_backtracks = NULL);
+                      const Eigen::VectorXd& grad,
+                      const Eigen::VectorXd& direction,
+                      double objective, int* num_backtracks = NULL);
 };
 
 class GradientSolver
@@ -129,20 +129,20 @@ public:
   bool debug_;
 
   GradientSolver(ScalarFunction* objective,
-		 VectorFunction* gradient,
-		 double tol,
-		 double alpha,
-		 double beta,
-		 int max_num_iters = 0,
-		 double initial_stepsize = 1,
-		 bool debug = false);
+                 VectorFunction* gradient,
+                 double tol,
+                 double alpha,
+                 double beta,
+                 int max_num_iters = 0,
+                 double initial_stepsize = 1,
+                 bool debug = false);
   Eigen::VectorXd solve(const Eigen::VectorXd& init);
 
 private:
   double backtracking(double t, const Eigen::VectorXd& x,
-		      const Eigen::VectorXd& grad,
-		      const Eigen::VectorXd& direction,
-		      double objective, int* num_backtracks);
+                      const Eigen::VectorXd& grad,
+                      const Eigen::VectorXd& direction,
+                      double objective, int* num_backtracks);
 };
 
 #endif // OPTIMIZATION_H

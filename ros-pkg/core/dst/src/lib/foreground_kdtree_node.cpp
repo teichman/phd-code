@@ -6,7 +6,7 @@ namespace dst
 {
 
   ForegroundKdTreeNode::ForegroundKdTreeNode(pipeline2::Outlet<cv::Mat1b>* seg_otl,
-					     pipeline2::Outlet<DepthProjector::Output>* index_otl) :
+                                             pipeline2::Outlet<DepthProjector::Output>* index_otl) :
     kdtree_otl_(this),
     pcd_otl_(this),
     seg_otl_(seg_otl),
@@ -30,13 +30,13 @@ namespace dst
     fg_pcd_->reserve(pcd.size());
     for(int y = 0; y < seg.rows; ++y) {
       for(int x = 0; x < seg.cols; ++x) {
-	if(seg(y, x) != 255)
-	  continue;
-	if(index(y, x) == -1)
-	  continue;
+        if(seg(y, x) != 255)
+          continue;
+        if(index(y, x) == -1)
+          continue;
 
-	//if(rand() % 3 == 0)
-	fg_pcd_->push_back(pcd[index(y, x)]);
+        //if(rand() % 3 == 0)
+        fg_pcd_->push_back(pcd[index(y, x)]);
       }
     }
 

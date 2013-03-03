@@ -45,7 +45,7 @@ namespace eigen_extensions
   {
     for(int i = 0; i < mat->cols(); ++i)
       for(int j = 0; j < mat->rows(); ++j)
-	mat->coeffRef(j, i) = sample();
+        mat->coeffRef(j, i) = sample();
   }
   
   template<class S, int T, int U>

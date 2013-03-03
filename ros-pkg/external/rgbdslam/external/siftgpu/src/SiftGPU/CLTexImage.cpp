@@ -1,21 +1,21 @@
 ////////////////////////////////////////////////////////////////////////////
-//	File:		CLTexImage.cpp
-//	Author:		Changchang Wu
-//	Description : implementation of the CLTexImage class.
+//        File:                CLTexImage.cpp
+//        Author:                Changchang Wu
+//        Description : implementation of the CLTexImage class.
 //
-//	Copyright (c) 2007 University of North Carolina at Chapel Hill
-//	All Rights Reserved
+//        Copyright (c) 2007 University of North Carolina at Chapel Hill
+//        All Rights Reserved
 //
-//	Permission to use, copy, modify and distribute this software and its
-//	documentation for educational, research and non-profit purposes, without
-//	fee, and without a written agreement is hereby granted, provided that the
-//	above copyright notice and the following paragraph appear in all copies.
-//	
-//	The University of North Carolina at Chapel Hill make no representations
-//	about the suitability of this software for any purpose. It is provided
-//	'as is' without express or implied warranty. 
+//        Permission to use, copy, modify and distribute this software and its
+//        documentation for educational, research and non-profit purposes, without
+//        fee, and without a written agreement is hereby granted, provided that the
+//        above copyright notice and the following paragraph appear in all copies.
+//        
+//        The University of North Carolina at Chapel Hill make no representations
+//        about the suitability of this software for any purpose. It is provided
+//        'as is' without express or implied warranty. 
 //
-//	Please send BUG REPORTS to ccwu@cs.unc.edu
+//        Please send BUG REPORTS to ccwu@cs.unc.edu
 //
 ////////////////////////////////////////////////////////////////////////////
 
@@ -40,17 +40,17 @@ CLTexImage::CLTexImage()
 {
     _context = NULL;
     _queue = NULL;
-	_clData = NULL;
-	_numChannel = _bufferLen = _fromGL = 0;
+        _clData = NULL;
+        _numChannel = _bufferLen = _fromGL = 0;
     _imgWidth = _imgHeight = _texWidth = _texHeight = 0;
 }
 
 CLTexImage::CLTexImage(cl_context context, cl_command_queue queue)
 {
-	_context = context;
-	_queue  = queue;
-	_clData = NULL;
-	_numChannel = _bufferLen = _fromGL = 0;
+        _context = context;
+        _queue  = queue;
+        _clData = NULL;
+        _numChannel = _bufferLen = _fromGL = 0;
     _imgWidth = _imgHeight = _texWidth = _texHeight = 0;
 }
 
@@ -69,31 +69,31 @@ CLTexImage::~CLTexImage()
 void CLTexImage::ReleaseTexture()
 {
     if(_fromGL)     clEnqueueReleaseGLObjects(_queue, 1, &_clData, 0, NULL, NULL); 
-	if(_clData) 	clReleaseMemObject(_clData);
+        if(_clData)         clReleaseMemObject(_clData);
 }
 
 void CLTexImage::SetImageSize(int width, int height)
 {
-	_imgWidth = width;
-	_imgHeight = height;
+        _imgWidth = width;
+        _imgHeight = height;
 }
 
 void CLTexImage::InitBufferTex(int width, int height, int nchannel)
 {
     if(width == 0 || height == 0 || nchannel <= 0 || _fromGL) return; 
 
-	_imgWidth = width;	_imgHeight = height;
+        _imgWidth = width;        _imgHeight = height;
     _texWidth = _texHeight = _fromGL = 0; 
-	_numChannel = min(nchannel, 4);
+        _numChannel = min(nchannel, 4);
 
-	int size = width * height * _numChannel * sizeof(float);
-	if (size <= _bufferLen) return;
-	
-	//allocate the buffer data
+        int size = width * height * _numChannel * sizeof(float);
+        if (size <= _bufferLen) return;
+        
+        //allocate the buffer data
     cl_int status; 
-	if(_clData) status = clReleaseMemObject(_clData);
+        if(_clData) status = clReleaseMemObject(_clData);
 
-	_clData = clCreateBuffer(_context, CL_MEM_READ_WRITE, 
+        _clData = clCreateBuffer(_context, CL_MEM_READ_WRITE, 
                             _bufferLen = size, NULL, &status);
 
     ProgramBagCL::CheckErrorCL(status, "CLTexImage::InitBufferTex");
@@ -103,12 +103,12 @@ void CLTexImage::InitBufferTex(int width, int height, int nchannel)
 void CLTexImage::InitTexture(int width, int height, int nchannel)
 {
     if(width == 0 || height == 0 || nchannel <= 0 || _fromGL) return; 
-	if(_clData && width == _texWidth && height == _texHeight && _numChannel == nchannel) return;
-	if(_clData) clReleaseMemObject(_clData);
+        if(_clData && width == _texWidth && height == _texHeight && _numChannel == nchannel) return;
+        if(_clData) clReleaseMemObject(_clData);
 
-	_texWidth = _imgWidth =  width;
-	_texHeight = _imgHeight =  height;
-	_numChannel = nchannel; 
+        _texWidth = _imgWidth =  width;
+        _texHeight = _imgHeight =  height;
+        _numChannel = nchannel; 
     _bufferLen = _fromGL = 0; 
 
     cl_int status;    cl_image_format format;
@@ -161,11 +161,11 @@ void CLTexImage::InitTextureGL(GLuint tex, int width, int height, int nchannel)
 
 void CLTexImage::CopyFromHost(const void * buf)
 {
-	if(_clData == NULL) return;
+        if(_clData == NULL) return;
     cl_int status; 
     if(_bufferLen)
     {
-	    status = clEnqueueWriteBuffer(_queue, _clData, false,  0, 
+            status = clEnqueueWriteBuffer(_queue, _clData, false,  0, 
             _imgWidth * _imgHeight * _numChannel * sizeof(float),  buf,  0, NULL, NULL);
     }else
     {
@@ -187,10 +187,10 @@ int CLTexImage::CopyToPBO(GLuint pbo)
     glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, pbo);  
 
     int esize = GetImageDataSize(), bsize;
-	glGetBufferParameteriv(GL_PIXEL_UNPACK_BUFFER_ARB, GL_BUFFER_SIZE, &bsize);
-	if(bsize < esize)
+        glGetBufferParameteriv(GL_PIXEL_UNPACK_BUFFER_ARB, GL_BUFFER_SIZE, &bsize);
+        if(bsize < esize)
     {
-        glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, esize,	NULL, GL_STATIC_DRAW_ARB);
+        glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, esize,        NULL, GL_STATIC_DRAW_ARB);
         glGetBufferParameteriv(GL_PIXEL_UNPACK_BUFFER_ARB, GL_BUFFER_SIZE, &bsize);
     }
     if(bsize >= esize)
@@ -208,11 +208,11 @@ int CLTexImage::CopyToPBO(GLuint pbo)
 
 void CLTexImage::CopyToHost(void * buf)
 {
-	if(_clData == NULL) return;
+        if(_clData == NULL) return;
     cl_int status;
     if(_bufferLen)
     { 
-	    status = clEnqueueReadBuffer(_queue, _clData, true,  0, 
+            status = clEnqueueReadBuffer(_queue, _clData, true,  0, 
             _imgWidth * _imgHeight * _numChannel * sizeof(float), buf,  0, NULL, NULL);
     }else
     {

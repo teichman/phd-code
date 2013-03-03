@@ -12,7 +12,7 @@ namespace dst
   }
   
   PatchClassifierData::PatchClassifierData(cv::Mat3b bgr, cv::Mat1b intensity,
-					   cv::Mat1i integral, cv::Mat3f hsv) :
+                                           cv::Mat1i integral, cv::Mat3f hsv) :
     bgr_(bgr),
     intensity_(intensity),
     integral_(integral),
@@ -132,15 +132,15 @@ namespace dst
       height_ = (rand() % radius_) + 1;
       ul0_ = getRandomPoint();
       if(orientation_ == 0) {
-	ul1_.x = ul0_.x + width_;
-	ul1_.y = ul0_.y;
+        ul1_.x = ul0_.x + width_;
+        ul1_.y = ul0_.y;
       }
       else {
-	ul1_.x = ul0_.x;
-	ul1_.y = ul0_.y + height_;
+        ul1_.x = ul0_.x;
+        ul1_.y = ul0_.y + height_;
       }
       if(ul1_.x + width_ < radius_ && ul1_.y + height_ < radius_)
-	break;
+        break;
     }
   }
 
@@ -198,13 +198,13 @@ namespace dst
     for(int i = 0; i < NUM_FEATURES; ++i) { 
       int type = rand() % 7;
       if(type == 0 || type == 1)
-      	features_.push_back(ColorDifference::Ptr(new ColorDifference(radius_)));
+              features_.push_back(ColorDifference::Ptr(new ColorDifference(radius_)));
       else if(type == 2 || type == 3)
-      	features_.push_back(IntensityDifference::Ptr(new IntensityDifference(radius_)));
+              features_.push_back(IntensityDifference::Ptr(new IntensityDifference(radius_)));
       else if(type == 4)
-       	features_.push_back(PointColorThreshold::Ptr(new PointColorThreshold(radius_)));
+               features_.push_back(PointColorThreshold::Ptr(new PointColorThreshold(radius_)));
       else if(type == 5 || type == 6)
-	features_.push_back(HaarWavelet::Ptr(new HaarWavelet(radius_)));
+        features_.push_back(HaarWavelet::Ptr(new HaarWavelet(radius_)));
     }
   }
   
@@ -251,7 +251,7 @@ namespace dst
     int bit = 1;
     for(int i = 0; i < NUM_FEATURES; ++i) {
       if(features_[i]->compute(data, pt))
-	features |= bit;
+        features |= bit;
       bit *= 2;
     }
     return features;
@@ -337,24 +337,24 @@ namespace dst
     int idx = 0;
     for(int y = radius_; y < labels.rows - radius_; ++y) {
       for(int x = radius_; x < labels.cols - radius_; ++x, ++idx) {
-	float prediction = cached_classifications(y, x);
-	if(prediction > max_prediction)
-	  max_prediction = prediction;
-	if(prediction < min_prediction)
-	  min_prediction = prediction;
-	
-	if(labels(y, x) == 0) {
-	  A->coeffRef(idx) = 1;
-	  b->coeffRef(idx) = cached_classifications(y, x);
-	}
-	else if(labels(y, x) == 255) {
-	  A->coeffRef(idx) = -1;
-	  b->coeffRef(idx) = -cached_classifications(y, x);
-	}
-	else {
-	  A->coeffRef(idx) = 0;
-	  b->coeffRef(idx) = 0;
-	}
+        float prediction = cached_classifications(y, x);
+        if(prediction > max_prediction)
+          max_prediction = prediction;
+        if(prediction < min_prediction)
+          min_prediction = prediction;
+        
+        if(labels(y, x) == 0) {
+          A->coeffRef(idx) = 1;
+          b->coeffRef(idx) = cached_classifications(y, x);
+        }
+        else if(labels(y, x) == 255) {
+          A->coeffRef(idx) = -1;
+          b->coeffRef(idx) = -cached_classifications(y, x);
+        }
+        else {
+          A->coeffRef(idx) = 0;
+          b->coeffRef(idx) = 0;
+        }
       }
     }
     ROS_ASSERT(idx == num_vars);
@@ -378,7 +378,7 @@ namespace dst
   }
 
   float PatchClassifier::classify(FeatureCache& cache,
-				  const cv::Point2i& pt) const
+                                  const cv::Point2i& pt) const
   {
     float val = 0.0;
     for(int i = 0; i < NUM_FERNS; ++i) { 
@@ -391,24 +391,24 @@ namespace dst
   }
 
   void PatchClassifier::cacheFeatures(PatchClassifierData& data,
-				      FeatureCache& cache,
-				      cv::Mat1b mask) const
+                                      FeatureCache& cache,
+                                      cv::Mat1b mask) const
   {
     cv::Point2i pt;
     cv::Mat3b bgr = data.bgr_;
 
     if(mask.rows == 0) {
       for(pt.y = radius_; pt.y < bgr.rows - radius_; ++pt.y)
-	for(pt.x = radius_; pt.x < bgr.cols - radius_; ++pt.x)
-	  for(int i = 0; i < NUM_FERNS; ++i)
-	    cache(pt)[i] = ferns_[i]->computeFeatures(data, pt);
+        for(pt.x = radius_; pt.x < bgr.cols - radius_; ++pt.x)
+          for(int i = 0; i < NUM_FERNS; ++i)
+            cache(pt)[i] = ferns_[i]->computeFeatures(data, pt);
     }
     else {
       for(pt.y = radius_; pt.y < bgr.rows - radius_; ++pt.y)
-	for(pt.x = radius_; pt.x < bgr.cols - radius_; ++pt.x)
-	  if(mask(pt) == 255)
-	    for(int i = 0; i < NUM_FERNS; ++i)
-	      cache(pt)[i] = ferns_[i]->computeFeatures(data, pt);
+        for(pt.x = radius_; pt.x < bgr.cols - radius_; ++pt.x)
+          if(mask(pt) == 255)
+            for(int i = 0; i < NUM_FERNS; ++i)
+              cache(pt)[i] = ferns_[i]->computeFeatures(data, pt);
     }
   }
 
@@ -429,12 +429,12 @@ namespace dst
    ************************************************************/
 
   PatchClassifierNPG::PatchClassifierNPG(pipeline2::Outlet<cv::Mat3b>* img_otl,
-					 pipeline2::Outlet<cv::Mat1b>* intensity_otl,
-					 pipeline2::Outlet<cv::Mat1i>* integral_otl,
-					 pipeline2::Outlet<cv::Mat3f>* hsv_otl,
-					 pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
-					 pipeline2::Outlet<cv::Mat1b>* mask_otl,
-					 int radius, int skip) :
+                                         pipeline2::Outlet<cv::Mat1b>* intensity_otl,
+                                         pipeline2::Outlet<cv::Mat1i>* integral_otl,
+                                         pipeline2::Outlet<cv::Mat3f>* hsv_otl,
+                                         pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
+                                         pipeline2::Outlet<cv::Mat1b>* mask_otl,
+                                         int radius, int skip) :
 
     NodePotentialGenerator(),
     img_otl_(img_otl),
@@ -474,9 +474,9 @@ namespace dst
     cv::Point2i pt;
     for(pt.y = radius_; pt.y < mask.rows - radius_; ++pt.y)
       for(pt.x = radius_; pt.x < mask.cols - radius_; ++pt.x)
-	if((rand() % skip_) == 0 && mask(pt) == 255)
-	  if(prev_seg(pt) == 255 || prev_seg(pt) == 0)
-	    classifier_->train(prev_data_, pt, prev_seg(pt));
+        if((rand() % skip_) == 0 && mask(pt) == 255)
+          if(prev_seg(pt) == 255 || prev_seg(pt) == 0)
+            classifier_->train(prev_data_, pt, prev_seg(pt));
   }
 
   void PatchClassifierNPG::updateClassifier()
@@ -492,13 +492,13 @@ namespace dst
     cv::Point2i pt;
     for(pt.y = radius_; pt.y < mask.rows - radius_; ++pt.y) { 
       for(pt.x = radius_; pt.x < mask.cols - radius_; ++pt.x) { 
-	if(mask(pt) == 255 && (rand() % skip_) == 0) {
-//	if(mask(pt) == 255) {
-	  if(prev_seg(pt) == 0)
-	    bg_pts_.push_back(pt);
-	  else if(prev_seg(pt) == 255)
-	    fg_pts_.push_back(pt);
-	}
+        if(mask(pt) == 255 && (rand() % skip_) == 0) {
+//        if(mask(pt) == 255) {
+          if(prev_seg(pt) == 0)
+            bg_pts_.push_back(pt);
+          else if(prev_seg(pt) == 255)
+            fg_pts_.push_back(pt);
+        }
       }
     }
 
@@ -539,15 +539,15 @@ namespace dst
     cv::Point2i pt;
     for(pt.y = radius_; pt.y < mask.rows - radius_; ++pt.y) { 
       for(pt.x = radius_; pt.x < mask.cols - radius_; ++pt.x) {
-	if((rand() % skip_) != 0 || mask(pt) != 255)
-	  continue;
-	
-	float logodds = classifier_->classify(data_, pt);
-	//cached_classifications_(pt) = logodds;
-	float prfg = 1.0 / (1.0 + exp(-logodds));
-	float prbg = 1.0 - prfg;
-	source_potentials_(pt.y, pt.x) = prfg;
-	sink_potentials_(pt.y, pt.x) = prbg;
+        if((rand() % skip_) != 0 || mask(pt) != 255)
+          continue;
+        
+        float logodds = classifier_->classify(data_, pt);
+        //cached_classifications_(pt) = logodds;
+        float prfg = 1.0 / (1.0 + exp(-logodds));
+        float prbg = 1.0 - prfg;
+        source_potentials_(pt.y, pt.x) = prfg;
+        sink_potentials_(pt.y, pt.x) = prbg;
       }
     }
   }

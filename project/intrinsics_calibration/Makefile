@@ -3,8 +3,13 @@
 # -- Global settings.
 ############################################################
 
-.SECONDEXPANSION:	# Allows use of automatic vars in prerequisites.
-.SECONDARY:		# Prevents deletion of intermediate targets in a chain of implicit rules.
+# Allows use of automatic vars in prerequisites.
+.SECONDEXPANSION:	
+# Prevents deletion of intermediate targets in a chain of implicit rules.
+.PRECIOUS:
+# ... but if there's an error, the target should be deleted.
+# Otherwise, the next time you run make, it will try to proceed using that file!
+.DELETE_ON_ERROR:	
 
 export NUM_THREADS	:= 40
 #SHELL = $(warning ---------- Making $@$(if $?,. Newer prereqs: $?)) /bin/bash -x
@@ -26,6 +31,18 @@ AVV_PATH_xpl04		:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_xpl_04-0
 AVV_PATH_kinect00	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_00-09-12-2012_23-42-23
 AVV_PATH_kinect01	:= $(AVV_PATH)/2012-09-13_primesense_vs_velo/intrinsics_kinect_01-09-13-2012_00-01-35
 
+SLAM_RUNS_TRAINING_kinect00	:=	2013-01-15_2a_medium_range_0
+SLAM_RUNS_TESTING_kinect00	:=	2013-01-15_2a_medium_range_1
+SLAM_RUNS_kinect00 := $(SLAM_RUNS_TRAINING_kinect00) $(SLAM_RUNS_TESTING_kinect00)
+
+SLAM_RUNS_TRAINING_kinect01	:=	2013-01-16_boardroom_0
+SLAM_RUNS_TESTING_kinect01	:=	2013-01-16_boardroom_1
+SLAM_RUNS_kinect01 := $(SLAM_RUNS_TRAINING_kinect01) $(SLAM_RUNS_TESTING_kinect01)
+
+SLAM_RUNS_TRAINING_kinect02	:=	2013-01-16_boardroom_0
+SLAM_RUNS_TESTING_kinect02	:=	2013-01-16_boardroom_1
+SLAM_RUNS_kinect02 := $(SLAM_RUNS_TRAINING_kinect02) $(SLAM_RUNS_TESTING_kinect02)
+
 # These all sucked.
 # 2012-12-19_short_00 \
 # 2012-12-19_short_02 \
@@ -41,26 +58,56 @@ SLAM_RUNS_TRAINING_xpl00	:=	2012-12-19_boardroom_2 \
 					2013-01-07_2a_backandforth_01 \
 					2013-01-07_boardroom_01
 
-SLAM_RUNS_TESTING_xpl00		:=	2012-12-19_short_01 \
-					2012-12-19_short_03 \
+SLAM_RUNS_TESTING_xpl00		:=	2012-12-19_short_03 \
 					2012-12-19_short_04 \
 					2013-01-07_2a_backandforth_02 \
 					2013-01-07_boardroom_02
 
 SLAM_RUNS_xpl00 := $(SLAM_RUNS_TRAINING_xpl00) $(SLAM_RUNS_TESTING_xpl00)
 
-SLAM_RUNS_TRAINING_xpl01	:= 	2a_backandforth \
-					2012-10-22_2a_backandforth_0 \
-					2012-10-22_2a_backandforth_2 \
-					2012-10-22_2a_backandforth_4 \
-					2012-11-16_2a_backandforth_6
+
+# 2012-12-19_xpl01_boardroom_0-upsidedown is not so good.
+# 2012-12-19_xpl01_boardroom_2 floor is also not good.
+SLAM_RUNS_TRAINING_xpl01	:= 	2012-12-19_xpl01_boardroom_0-upsidedown \
+					2012-12-19_xpl01_boardroom_1-upsidedown \
+					2a_backandforth \
+					2012-10-22_2a_backandforth_2
+
+# Running out of memory....   These are fine to use, but I just can't afford it.
+#					2012-11-16_2a_backandforth_8 \
+#					2012-10-22_2a_backandforth_0 \
+# 					2012-10-22_2a_backandforth_4
 SLAM_RUNS_TESTING_xpl01		:=	2012-11-16_2a_backandforth_7 \
-					2012-11-16_2a_backandforth_8
+					2012-11-16_2a_backandforth_6 \
+					2012-12-19_xpl01_boardroom_2
 
 #SLAM_RUNS_TRAINING_xpl01	:= 	2012-10-22_2a_backandforth_2
 #SLAM_RUNS_TESTING_xpl01		:=	2012-11-16_2a_backandforth_7
 
 SLAM_RUNS_xpl01			:= 	$(SLAM_RUNS_TRAINING_xpl01) $(SLAM_RUNS_TESTING_xpl01)
+
+#2012-12-19_xpl03_boardroom_0
+#2012-12-19_xpl03_boardroom_1
+SLAM_RUNS_TRAINING_xpl03	:=	2013-01-17_xpl03_boardroom_0 \
+					2012-12-19_xpl03_boardroom_3 \
+					2013-01-17_xpl03_boardroom_1
+SLAM_RUNS_TESTING_xpl03		:=	2012-12-19_xpl03_boardroom_2 \
+					2013-01-17_xpl03_boardroom_2
+
+SLAM_RUNS_xpl03 := $(SLAM_RUNS_TRAINING_xpl03) $(SLAM_RUNS_TESTING_xpl03)
+
+# 					2013-01-16_boardroom_3  # Has bad image.
+SLAM_RUNS_TRAINING_xpl05	:=	2013-01-16_boardroom_0 \
+					2013-01-16_boardroom_1
+SLAM_RUNS_TESTING_xpl05		:=	2013-01-16_boardroom_2
+SLAM_RUNS_xpl05 := $(SLAM_RUNS_TRAINING_xpl05) $(SLAM_RUNS_TESTING_xpl05)
+
+SLAM_RUNS_TRAINING_xpl06	:= 	xpl006-seq000 \
+					xpl006-seq001
+SLAM_RUNS_TESTING_xpl06		:= 	xpl006-seq003 \
+					xpl006-seq004 \
+					xpl006-seq005
+SLAM_RUNS_xpl06 := $(SLAM_RUNS_TRAINING_xpl06) $(SLAM_RUNS_TESTING_xpl06)
 
 
 # Data specifically for the 2012-11-06 run in which multiple sensor views were collected.
@@ -72,6 +119,12 @@ AVV_MULTIVIEW_PATHS_xpl01	:=	$(addprefix $(AVV_PATH)/2012-11-06_primesense_vs_ve
 AVV_MULTIVIEW_PATHS_xpl04	:=	$(AVV_PATH)/2012-11-06_primesense_vs_velo/xpl04_down-11-05-2012_23-47-23 \
 					$(AVV_PATH)/2012-11-06_primesense_vs_velo/xpl04_straight-11-06-2012_00-01-38 \
 					$(AVV_PATH)/2012-11-06_primesense_vs_velo/xpl04_up-11-05-2012_23-53-26
+
+PLANARITY_LOG_xpl00		:= $(DATA_PATH)/planar_sequences/xpl00/2013-01-24_hewlett_outside
+PLANARITY_TRAINING_xpl00	:= $(SLAM_RUNS_TESTING_xpl00)
+
+PLANARITY_LOG_xpl03		:= $(DATA_PATH)/planar_sequences/xpl03/2013-01-22_hewlett_outside
+
 
 all:
 	@echo You should probably be more specific.
@@ -87,6 +140,35 @@ rss2013.pdf: 	$$(MAKE_ROOT)/rss2013/rss2013.tex
 	cd $(MAKE_ROOT)/rss2013 && pdflatex rss2013
 	-cd $(MAKE_ROOT)/rss2013 && rm rss2013.{aux,bbl,blg,log,idx} latex_macros.aux
 	mv $(MAKE_ROOT)/rss2013/rss2013.pdf .
+
+
+.PHONY: several_distortion_maps
+several_distortion_maps:	kinect00/evaluation/slam_eval \
+				kinect01/evaluation/slam_eval \
+				kinect02/evaluation/slam_eval \
+				xpl00/evaluation/slam_eval \
+				xpl01/evaluation/slam_eval \
+				xpl03/evaluation/slam_eval \
+				kinect00/evaluation/discrete_learned_model-vis \
+				kinect01/evaluation/discrete_learned_model-vis \
+				kinect02/evaluation/discrete_learned_model-vis \
+				xpl00/evaluation/discrete_learned_model-vis \
+				xpl01/evaluation/discrete_learned_model-vis \
+				xpl03/evaluation/discrete_learned_model-vis \
+				xpl05/evaluation/discrete_learned_model-vis \
+				xpl05/evaluation/slam_eval
+
+
+	mkdir -p $@
+	for file in `find -name discrete_learned_model-vis | sort | grep -E 'kinect|xpl'`; do \
+	rsync -av $$file several_distortion_maps/$$(echo $$file | awk -F/ '{print $$2}'); \
+	done
+	cd $@ && \
+	mkdir -p cropped; \
+	for dir in `ls | grep -E 'kinect|xpl'`; do \
+	echo $$dir; \
+	convert $$dir/discrete_learned_model-vis/pub-01-02-03.png -crop 640x480+0+530 cropped/$$dir.png; \
+	done
 
 
 ############################################################
@@ -105,7 +187,6 @@ rss2013.pdf: 	$$(MAKE_ROOT)/rss2013/rss2013.tex
 	git log -n1 >> $@
 	git diff >> $@
 
-
 # -- Enumeration of targets for each sensor.
 define SENSOR_RULE_GENERATOR
 
@@ -120,6 +201,67 @@ TRAJECTORIES_ONLYFIRST_TESTING_$(1) := `for DIR in $$(TRAJDIRS_TESTING_$(1)); do
 TRAJECTORIES_SUB_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do find $$$${DIR} -name *.traj; done`
 SLAM_RUNS_DUPL_$(1) := `for DIR in $$(TRAJDIRS_$(1)); do \
 	for TRAJ in $$$$(ls $$$${DIR} | grep traj); do basename $$$${DIR} | xargs -I {} echo $(SLAM_DATA_PATH)/$(1)/{}; done; done`
+
+PLANARITY_TRAJDIRS_TRAINING_$(1) := $$(addprefix $(1)/slam_results/, $$(PLANARITY_TRAINING_$(1)))
+PLANARITY_TRAJECTORIES_SUB_$(1) := `for DIR in $$(PLANARITY_TRAJDIRS_TRAINING_$(1)); do find $$$${DIR} -name *.traj; done`
+PLANARITY_SLAM_RUNS_DUPL_$(1) := `for DIR in $$(PLANARITY_TRAJDIRS_TRAINING_$(1)); do \
+	for TRAJ in $$$$(ls $$$${DIR} | grep traj); do basename $$$${DIR} | xargs -I {} echo $(SLAM_DATA_PATH)/$(1)/{}; done; done`
+
+
+$(1)-visualize-planarity-experiment:	$(1)/evaluation/planarity_experiment/intrinsics
+	rosrun xpl_calibration view_stream $$(PLANARITY_LOG_$(1)) --intrinsics $$<
+
+$(1)/evaluation/planarity_experiment/comparison.pdf:	$(1)/evaluation/planarity_experiment/raw.txt \
+							$(1)/evaluation/planarity_experiment/undistorted.txt \
+							$(MAKE_ROOT)/common_plotting.py \
+							$(MAKE_ROOT)/plot_planarity_comparison_experiment.py \
+							$(1)/evaluation/planarity_experiment/training_time.txt
+	python $(MAKE_ROOT)/plot_planarity_comparison_experiment.py $$(@D)
+
+$(1)/evaluation/undistortion_time.txt: 	$(1)/evaluation/discrete_learned_model
+	rosrun xpl_calibration undistortion_time_experiment \
+	$$< \
+	--sseqs $$(addprefix $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_TESTING_$(1))) \
+	> $$@
+
+$(1)/evaluation/planarity_experiment/training_time.txt:
+	for seq in $$(PLANARITY_TRAINING_$(1)); do \
+	rosrun rgbd_sequence view_stream --only-stats $(SLAM_DATA_PATH)/$(1)/$$$$seq; \
+	done \
+	| grep 'Total time' | awk '{sum += $$$$NF} END {print sum}' \
+	> $$@
+
+$(1)/evaluation/planarity_experiment/raw.pdf: 	$(1)/evaluation/planarity_experiment/raw.txt \
+						$(MAKE_ROOT)/plot_planarity_experiment.py \
+						$(MAKE_ROOT)/common_plotting.py \
+						$$$$@-experiment_metadata.txt
+	python $(MAKE_ROOT)/plot_planarity_experiment.py $$<
+
+$(1)/evaluation/planarity_experiment/undistorted.pdf: 	$(1)/evaluation/planarity_experiment/undistorted.txt \
+							$(MAKE_ROOT)/plot_planarity_experiment.py \
+							$(MAKE_ROOT)/common_plotting.py \
+							$$$$@-experiment_metadata.txt
+	python $(MAKE_ROOT)/plot_planarity_experiment.py $$<
+
+$(1)/evaluation/planarity_experiment/raw.txt:  $$(PLANARITY_LOG_$(1)) $$$$@-experiment_metadata.txt \
+						$(shell echo $$(rospack find xpl_calibration)/bin/planarity_experiment)
+	mkdir -p $$(@D)
+	rosrun xpl_calibration planarity_experiment $$< > $$@
+
+$(1)/evaluation/planarity_experiment/undistorted.txt:	$(1)/evaluation/planarity_experiment/intrinsics \
+							$(shell echo $$(rospack find xpl_calibration)/bin/planarity_experiment) \
+							$$$$@-experiment_metadata.txt
+	mkdir -p $$(@D)
+	rosrun xpl_calibration planarity_experiment $$(PLANARITY_LOG_$(1)) --intrinsics $(1)/evaluation/planarity_experiment/intrinsics > $$@
+
+$(1)/evaluation/planarity_experiment/intrinsics: $$(PLANARITY_TRAJDIRS_TRAINING_$(1)) $$$$@-experiment_metadata.txt
+	mkdir -p $$(@D)
+	rosrun xpl_calibration calibrate_slam \
+	--discrete \
+	$$$$(for f in $$(PLANARITY_SLAM_RUNS_DUPL_$(1)); do echo --sseq $$$$f; done) \
+	$$$$(for f in $$(PLANARITY_TRAJECTORIES_SUB_$(1)); do echo --traj $$$$f; done) \
+	--omodel $$@ \
+	| tee $$@-log.txt
 
 $(1)/evaluation/iterative_calibration_experiment: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
@@ -136,9 +278,19 @@ $(1)/evaluation/slam_eval: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	--output $(1)/evaluation/slam_eval \
 	--sseqs $$(addprefix $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_$(1))) \
 	--trajs $$(TRAJECTORIES_ONLYFIRST_$(1))
+	cd $$(@D) && for file in `find -name intrinsics | sort`; do echo $$$$file; rosrun xpl_calibration visualize_intrinsics $$$$file $$$${file}-vis; done
 
-$(1)/evaluation/slam_eval_quantity/quantity_experiment.pdf: $(MAKE_ROOT)/plot_quantity_experiment.py $(1)/evaluation/slam_eval_quantity
-	python $$^
+
+$(1)/evaluation/slam_eval_quantity/complexity.png:	$(MAKE_ROOT)/common_plotting.py
+#							$(1)/evaluation/slam_eval_quantity
+	cd $$(@D) && for file in `find -name info.txt | sort`; do \
+	echo `grep 'number of frames used for training' $$$$file | awk '{print $$$$NF}'` `grep 'Calibration time' $$$$file | awk '{print $$$$NF}'`; \
+	done | gnuplot -p -e "set term png; set output \"complexity.png\"; set xlabel \"Number of training frames\"; set ylabel \"Time (s)\"; plot \"-\" with points notitle"
+
+$(1)/evaluation/slam_eval_quantity/quantity_experiment.pdf: 	$(MAKE_ROOT)/common_plotting.py \
+								$(MAKE_ROOT)/plot_quantity_experiment.py \
+								$(1)/evaluation/slam_eval_quantity
+	python $(MAKE_ROOT)/plot_quantity_experiment.py $(1)/evaluation/slam_eval_quantity
 
 $(1)/evaluation/slam_eval_quantity: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
@@ -152,16 +304,23 @@ $(1)/evaluation/slam_eval_quantity: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.
 $(1)/evaluation/focal_length: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
 	rosrun xpl_calibration focal_length_experiment \
-	--initial-f 550 \
+	--initial-f 525 \
 	--output $$@ \
 	--sseqs-train $$(addprefix $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_TRAINING_$(1))) \
 	--trajs-train $$(TRAJECTORIES_ONLYFIRST_TRAINING_$(1)) \
 	--sseqs-test $$(addprefix $(SLAM_DATA_PATH)/$(1)/, $$(SLAM_RUNS_TESTING_$(1))) \
-	--trajs-test $$(TRAJECTORIES_ONLYFIRST_TESTING_$(1))
+	--trajs-test $$(TRAJECTORIES_ONLYFIRST_TESTING_$(1)) | tee $$@-log.txt
 
 $(1)-quantitative-evaluation: 	$(1)/evaluation/results-baseline.txt \
-				$(1)/evaluation/results-distortion_model_and_recalib.txt
+				$(1)/evaluation/results-discrete_distortion_model_and_recalib.txt
 	@grep '^' $$^
+
+$(1)/evaluation/results-discrete_distortion_model_and_recalib.txt: $(1)/evaluation/discrete_learned_model $(1)/evaluation/discrete_extrinsics 
+	rosrun xpl_calibration asus_vs_velo \
+	$$(AVV_PATH_$(1))-StreamSequence $$(AVV_PATH_$(1))-VeloSequence \
+	--discrete-intrinsics $$< \
+	--extrinsics $(1)/evaluation/discrete_extrinsics \
+	--evaluate $$@
 
 $(1)/evaluation/results-distortion_model_and_recalib.txt: $(1)/evaluation/learned_model.psm $(1)/evaluation/extrinsics 
 	rosrun xpl_calibration asus_vs_velo \
@@ -221,8 +380,27 @@ $(1)/evaluation/learned_model.psm: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.t
 	$$$$(for f in $$(TRAJECTORIES_SUB_$(1)); do echo --traj $$$$f; done) \
 	--omodel $$@ \
 	| tee $$@-log.txt
-	rm -rf $$(@D)/clams_coverage
-	mv .ddl $$(@D)/clams_coverage
+
+$(1)/evaluation/discrete_learned_model-vis: $(1)/evaluation/discrete_learned_model
+	rosrun xpl_calibration visualize_intrinsics $$< $$@
+
+$(1)-stats-all-sequences:
+	for seq in $$(SLAM_RUNS_$(1)); do \
+	rosrun rgbd_sequence view_stream --only-stats $(SLAM_DATA_PATH)/$(1)/$$$$seq; \
+	done \
+	| grep 'Total time' | awk '{sum += $$$$NF} END {print sum}'
+
+$(1)-stats-training-sequences:
+	for seq in $$(SLAM_RUNS_TRAINING_$(1)); do \
+	rosrun rgbd_sequence view_stream --only-stats $(SLAM_DATA_PATH)/$(1)/$$$$seq; \
+	done \
+	| grep 'Total time' | awk '{sum += $$$$NF} END {print sum}'
+
+$(1)-stats-testing-sequences:
+	for seq in $$(SLAM_RUNS_TESTING_$(1)); do \
+	rosrun rgbd_sequence view_stream --only-stats $(SLAM_DATA_PATH)/$(1)/$$$$seq; \
+	done \
+	| grep 'Total time' | awk '{sum += $$$$NF} END {print sum}'
 
 $(1)/evaluation/discrete_learned_model: $$(TRAJDIRS_$(1)) $$$$@-experiment_metadata.txt
 	mkdir -p $$(@D)
@@ -232,8 +410,6 @@ $(1)/evaluation/discrete_learned_model: $$(TRAJDIRS_$(1)) $$$$@-experiment_metad
 	$$$$(for f in $$(TRAJECTORIES_SUB_$(1)); do echo --traj $$$$f; done) \
 	--omodel $$@ \
 	| tee $$@-log.txt
-	rm -rf $$(@D)/clams_coverage
-	mv .ddl $$(@D)/clams_coverage
 
 $(1)-visualize-avv-intrinsics: $(1)/asus_vs_velodyne/extrinsics $(1)/asus_vs_velodyne/intrinsics
 	rosrun xpl_calibration asus_vs_velo \
@@ -258,7 +434,6 @@ $(1)-visualize-avv-extrinsics: $(1)/asus_vs_velodyne/extrinsics
 
 $(1)/asus_vs_velodyne/extrinsics:
 	mkdir -p $$(@D)
-	cd $$(@D) && \
 	rosrun xpl_calibration asus_vs_velo \
 	$$(AVV_PATH_$(1))-StreamSequence \
 	$$(AVV_PATH_$(1))-VeloSequence \
@@ -342,7 +517,7 @@ $(1)-remake-unrefined-$(2): $(SLAM_DATA_PATH)/$(1)/$(2) $(1)/slam_results/$(2)_u
 # 	cd $$(@D)/$(2) && mencoder "mf://slam-png/slam*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(2)-alignment.avi
 # 	cd $$(@D)/$(2) && mencoder "mf://montage-png/montage*.png" -mf fps=20 -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=10000000 -o $(2)-montage.avi
 
-$(1)/slam_results/$(2)_unrefined: $(SLAM_DATA_PATH)/$(1)/$(2) $(CAMERAS_PATH)/$(1)/$(2).cam
+$(1)/slam_results/$(2)_unrefined: $(SLAM_DATA_PATH)/$(1)/$(2)
 	mkdir -p $$(@D)
 	rosrun xpl_calibration primesense_slam $$< --otraj $$@ --opcd $$@ --ograph $$@/graph.log --cam $(CAMERAS_PATH)/$(1)/$(2).cam
 

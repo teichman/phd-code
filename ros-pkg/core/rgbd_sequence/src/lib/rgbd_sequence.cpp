@@ -61,11 +61,11 @@ namespace rgbd
     BOOST_FOREACH(const bfs::path& p, make_pair(it, eod)) {
       ROS_ASSERT(is_regular_file(p));
       if(p.leaf().substr(0, 3).compare("img") == 0 && bfs::extension(p).compare(".png") == 0)
-	img_names.push_back(p.string());
+        img_names.push_back(p.string());
       else if(bfs::extension(p).compare(".pcd") == 0)
-	pcd_names.push_back(p.string());
+        pcd_names.push_back(p.string());
       else if(bfs::extension(p).compare(".clk") == 0)
-	clk_names.push_back(p.string());
+        clk_names.push_back(p.string());
     }
     ROS_ASSERT(img_names.size() == pcd_names.size());
     ROS_ASSERT(img_names.size() == clk_names.size());
@@ -120,7 +120,7 @@ namespace rgbd
   }  
 
   void loadSequences(const std::string& path,
-		     std::vector<Sequence::Ptr>* sequences)
+                     std::vector<Sequence::Ptr>* sequences)
   {
     size_t prev_num_seq = sequences->size();
     
@@ -128,7 +128,7 @@ namespace rgbd
     for(bfs::directory_iterator itr(path); itr != end_itr; ++itr) {
       string p = itr->path().string();
       if(!bfs::is_directory(p))
-	continue;
+        continue;
 
       Sequence::Ptr seq(new Sequence());
       seq->load(p);
@@ -149,9 +149,9 @@ namespace rgbd
   {
     for(size_t i = 0; i < pcd->size(); ++i) {
       if(pcd->at(i).z > max_z) {
-	pcd->at(i).x = std::numeric_limits<float>::quiet_NaN();
-	pcd->at(i).y = std::numeric_limits<float>::quiet_NaN();
-	pcd->at(i).z = std::numeric_limits<float>::quiet_NaN();
+        pcd->at(i).x = std::numeric_limits<float>::quiet_NaN();
+        pcd->at(i).y = std::numeric_limits<float>::quiet_NaN();
+        pcd->at(i).z = std::numeric_limits<float>::quiet_NaN();
       }
     }
   }

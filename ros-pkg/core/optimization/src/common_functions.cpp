@@ -55,7 +55,7 @@ double logsig(double z)
  ************************************************************/
 
 ObjectiveMELSparse::ObjectiveMELSparse(Eigen::SparseMatrix<double, Eigen::ColMajor> const* A,
-				       Eigen::VectorXd const* b) :
+                                       Eigen::VectorXd const* b) :
   A_(A),
   b_(b)
 {
@@ -78,7 +78,7 @@ double ObjectiveMELSparse::eval(const VectorXd& x) const
 }
 
 GradientMELSparse::GradientMELSparse(Eigen::SparseMatrix<double, Eigen::ColMajor>* A,
-				     Eigen::VectorXd* b) :
+                                     Eigen::VectorXd* b) :
   A_(A),
   b_(b)
 {
@@ -113,7 +113,7 @@ VectorXd GradientMELSparse::eval(const VectorXd& x) const
  ************************************************************/
 
 ObjectiveMLSSparse::ObjectiveMLSSparse(Eigen::SparseMatrix<double, Eigen::ColMajor> const* A,
-				       Eigen::VectorXd const* b) :
+                                       Eigen::VectorXd const* b) :
   A_(A),
   b_(b)
 {
@@ -132,7 +132,7 @@ double ObjectiveMLSSparse::eval(const VectorXd& x) const
 }
 
 GradientMLSSparse::GradientMLSSparse(Eigen::SparseMatrix<double, Eigen::ColMajor>* A,
-				     Eigen::VectorXd* b) :
+                                     Eigen::VectorXd* b) :
   A_(A),
   b_(b)
 {
@@ -156,7 +156,7 @@ VectorXd GradientMLSSparse::eval(const VectorXd& x) const
 }
 
 HessianMLSSparse::HessianMLSSparse(Eigen::SparseMatrix<double, Eigen::ColMajor>* A,
-				   Eigen::VectorXd* b) :
+                                   Eigen::VectorXd* b) :
   A_(A),
   b_(b)
 {
@@ -172,7 +172,7 @@ MatrixXd HessianMLSSparse::eval(const VectorXd& x) const
     double mult = sigmoid(vals(i) + b_->coeffRef(i)) * sigmoid(-vals(i) - b_->coeffRef(i));
     for(Eigen::SparseMatrix<double, Eigen::ColMajor>::InnerIterator it1(*A_, i); it1; ++it1) {
       for(Eigen::SparseMatrix<double, Eigen::ColMajor>::InnerIterator it2(*A_, i); it2; ++it2) {  
-	hess(it1.row(), it2.row()) += it1.value() * it2.value() * mult;
+        hess(it1.row(), it2.row()) += it1.value() * it2.value() * mult;
       }
     }
   }

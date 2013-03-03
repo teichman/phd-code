@@ -84,8 +84,8 @@ int NaiveDescriptorDatabase::query(const PackedDescriptor& d, std::vector<int>* 
     if(d2 < threshold) { 
       indices->push_back(i);
       if(d2 < min) { 
-	min = d2;
-	best = i;
+        min = d2;
+        best = i;
       }
     }
   }
@@ -98,7 +98,7 @@ int NaiveDescriptorDatabase::query(const PackedDescriptor& d, std::vector<int>* 
  ************************************************************/
 
 ProjectionIndex::ProjectionIndex(DescriptorDatabase::PackedDescriptorsConstPtr packed_descriptors,
-				 int byte_number) :
+                                 int byte_number) :
   packed_descriptors_(packed_descriptors),
   byte_number_(byte_number),
   buckets_(256)
@@ -145,17 +145,17 @@ int LSHDescriptorDatabase::query(const DescriptorDatabase::PackedDescriptor& d, 
     for(size_t j = 0; j < bucket.size(); ++j) {
       int idx = bucket[j];
       if(flags_[idx])
-	continue;
+        continue;
 
       flags_[idx] = true;
       double distance = distSquared(packed_descriptors_->col(idx), d);
       if(distance < threshold) { 
-	indices->push_back(idx);
+        indices->push_back(idx);
 
-	if(distance < min_distance) {
-	  min_distance = distance;
-	  best = idx;
-	}
+        if(distance < min_distance) {
+          min_distance = distance;
+          best = idx;
+        }
       }
     }
   }

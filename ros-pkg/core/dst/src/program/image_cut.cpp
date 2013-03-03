@@ -55,11 +55,11 @@ void ViewController::mouseEvent(int event, int x, int y, int flags, void* param)
   if(flags == 1) {
     for(int i = x - radius_; i <= x + radius_; ++i) { 
       for(int j = y - radius_; j <= y + radius_; ++j) {
-	if(i >= 0 && i < vis_.cols &&
-	   j >= 0 && j < vis_.rows) { 
-	  source_points_.insert(pair<int, int>(j, i));
-	  cv::circle(vis_, cv::Point(i, j), 1, cv::Scalar(255, 255, 255)); // OpenCV consistency fail.
-	}
+        if(i >= 0 && i < vis_.cols &&
+           j >= 0 && j < vis_.rows) { 
+          source_points_.insert(pair<int, int>(j, i));
+          cv::circle(vis_, cv::Point(i, j), 1, cv::Scalar(255, 255, 255)); // OpenCV consistency fail.
+        }
       }
     }
     view_.updateImage(vis_);
@@ -69,11 +69,11 @@ void ViewController::mouseEvent(int event, int x, int y, int flags, void* param)
   else if(flags == 2) {
     for(int i = x - radius_; i <= x + radius_; ++i) { 
       for(int j = y - radius_; j <= y + radius_; ++j) {
-	if(i >= 0 && i < vis_.cols &&
-	   j >= 0 && j < vis_.rows) { 
-	  sink_points_.insert(pair<int, int>(j, i));
-	  cv::circle(vis_, cv::Point(i, j), 1, cv::Scalar(0, 0, 0));
-	}
+        if(i >= 0 && i < vis_.cols &&
+           j >= 0 && j < vis_.rows) { 
+          sink_points_.insert(pair<int, int>(j, i));
+          cv::circle(vis_, cv::Point(i, j), 1, cv::Scalar(0, 0, 0));
+        }
       }
     }
     view_.updateImage(vis_);
@@ -105,8 +105,8 @@ int ViewController::getIndex(int y, int x) const
 double ViewController::computeCost(const cv::Vec3b& p, const cv::Vec3b& q) const
 {
   double norm = sqrt((p[0] - q[0])*(p[0] - q[0]) +
-		     (p[1] - q[1])*(p[1] - q[1]) +
-		     (p[2] - q[2])*(p[2] - q[2]));
+                     (p[1] - q[1])*(p[1] - q[1]) +
+                     (p[2] - q[2])*(p[2] - q[2]));
   return 40.0 * exp(-norm / 20.0);
 }
 
@@ -131,7 +131,7 @@ void ViewController::cut()
     for(size_t j = 0; j < source_hist[i].size(); ++j) { 
       source_hist[i][j].resize(256);
       for(size_t k = 0; k < source_hist[i][j].size(); ++k)
-	source_hist[i][j][k] = smoothing;
+        source_hist[i][j][k] = smoothing;
     }
   }
    
@@ -150,7 +150,7 @@ void ViewController::cut()
   for(size_t i = 0; i < source_hist.size(); ++i)
     for(size_t j = 0; j < source_hist[i].size(); ++j)
       for(size_t k = 0; k < source_hist[i][j].size(); ++k)
-	source_hist[i][j][k] /= total;
+        source_hist[i][j][k] /= total;
 
 
 
@@ -160,7 +160,7 @@ void ViewController::cut()
     for(size_t j = 0; j < sink_hist[i].size(); ++j) { 
       sink_hist[i][j].resize(256);
       for(size_t k = 0; k < sink_hist[i][j].size(); ++k)
-	sink_hist[i][j][k] = smoothing;
+        sink_hist[i][j][k] = smoothing;
     }
   }
 
@@ -178,7 +178,7 @@ void ViewController::cut()
   for(size_t i = 0; i < sink_hist.size(); ++i)
     for(size_t j = 0; j < sink_hist[i].size(); ++j)
       for(size_t k = 0; k < sink_hist[i][j].size(); ++k)
-	sink_hist[i][j][k] /= total;
+        sink_hist[i][j][k] /= total;
 
   
   // -- Add sink and source edges for all nodes.
@@ -186,16 +186,16 @@ void ViewController::cut()
   for(int y = 0; y < img_.rows; ++y) { 
     for(int x = 0; x < img_.cols; ++x) {
       if(source_points_.count(pair<int, int>(y, x)))
-	graph.add_tweights(getIndex(y, x), seed_weight, 0.0);
+        graph.add_tweights(getIndex(y, x), seed_weight, 0.0);
       else if(sink_points_.count(pair<int, int>(y, x)))
-	graph.add_tweights(getIndex(y, x), 0.0, seed_weight);
+        graph.add_tweights(getIndex(y, x), 0.0, seed_weight);
       else {
-	int b = img_.at<cv::Vec3b>(y, x)[0];
-	int g = img_.at<cv::Vec3b>(y, x)[1];
-	int r = img_.at<cv::Vec3b>(y, x)[2];
-	double node_pot_sink = -log(source_hist[b][g][r]);
-	double node_pot_source = -log(sink_hist[b][g][r]);
-	graph.add_tweights(getIndex(y, x), node_pot_source, node_pot_sink);
+        int b = img_.at<cv::Vec3b>(y, x)[0];
+        int g = img_.at<cv::Vec3b>(y, x)[1];
+        int r = img_.at<cv::Vec3b>(y, x)[2];
+        double node_pot_sink = -log(source_hist[b][g][r]);
+        double node_pot_source = -log(sink_hist[b][g][r]);
+        graph.add_tweights(getIndex(y, x), node_pot_source, node_pot_sink);
       }
     }
   }
@@ -204,16 +204,16 @@ void ViewController::cut()
   for(int y = 0; y < img_.rows; ++y) { 
     for(int x = 0; x < img_.cols; ++x) {
       if(x > 0) {
-	double cost = computeCost(img_.at<cv::Vec3b>(y, x), img_.at<cv::Vec3b>(y, x-1));
-	graph.add_edge(getIndex(y, x), getIndex(y, x-1), cost, cost);
+        double cost = computeCost(img_.at<cv::Vec3b>(y, x), img_.at<cv::Vec3b>(y, x-1));
+        graph.add_edge(getIndex(y, x), getIndex(y, x-1), cost, cost);
       }
       if(y > 0) {
-	double cost = computeCost(img_.at<cv::Vec3b>(y, x), img_.at<cv::Vec3b>(y-1, x));
-	graph.add_edge(getIndex(y, x), getIndex(y-1, x), cost, cost);
+        double cost = computeCost(img_.at<cv::Vec3b>(y, x), img_.at<cv::Vec3b>(y-1, x));
+        graph.add_edge(getIndex(y, x), getIndex(y-1, x), cost, cost);
       }
 //       if(x > 0 && y > 0) {
-// 	double cost = computeCost(img_.at<cv::Vec3b>(y, x), img_.at<cv::Vec3b>(y-1, x-1));
-// 	graph.add_edge(getIndex(y, x), getIndex(y-1, x-1), cost, cost);
+//         double cost = computeCost(img_.at<cv::Vec3b>(y, x), img_.at<cv::Vec3b>(y-1, x-1));
+//         graph.add_edge(getIndex(y, x), getIndex(y-1, x-1), cost, cost);
 //       }
     }
   }
@@ -230,10 +230,10 @@ void ViewController::cut()
   for(int y = 0; y < output.rows; ++y) {
     for(int x = 0; x < output.cols; ++x) {
       if(graph.what_segment(getIndex(y, x)) == Graph<double, double, double>::SOURCE) { 
-	output.at<cv::Vec3b>(y, x) = img_.at<cv::Vec3b>(y, x);
+        output.at<cv::Vec3b>(y, x) = img_.at<cv::Vec3b>(y, x);
       }
       else { 
-	output.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
+        output.at<cv::Vec3b>(y, x) = cv::Vec3b(0, 0, 0);
       }
     }
   }

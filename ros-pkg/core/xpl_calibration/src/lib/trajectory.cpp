@@ -112,7 +112,7 @@ std::string Trajectory::status(const std::string& prefix) const
   //   if(transforms_[i]) {
   //     oss << prefix << "Transform " << i << endl;
   //     for(int j = 0; j < 4; ++j)
-  // 	oss << prefix << "  " << transforms_[i]->matrix().row(j) << endl;
+  //         oss << prefix << "  " << transforms_[i]->matrix().row(j) << endl;
   //   }
   // }
 

@@ -25,15 +25,15 @@ namespace pipeline
     template<typename T> bool isType(const std::string& name) const
     {
       if(storage_.count(name) == 0) { 
-	PL_ABORT("Tried to check type of non-existent param \"" << name << "\".");
+        PL_ABORT("Tried to check type of non-existent param \"" << name << "\".");
       }
             
       bool is_T = true;
       try {
-	boost::any_cast<T>(storage_.find(name)->second);
+        boost::any_cast<T>(storage_.find(name)->second);
       }
       catch(boost::bad_any_cast& e) {
-	is_T = false;
+        is_T = false;
       }
 
       return is_T;
@@ -43,7 +43,7 @@ namespace pipeline
     {
       assertValidName(name);
       if(storage_.count(name) != 0 && !isType<T>(name))
-	PL_ABORT("Tried to change type of param \"" << name << "\".");
+        PL_ABORT("Tried to change type of param \"" << name << "\".");
       
       storage_[name] = val;
     }
@@ -52,14 +52,14 @@ namespace pipeline
     {
       assertValidName(name);
       if(storage_.count(name) == 0) { 
-	PL_ABORT("Params does not have a member named \"" << name << "\"");
+        PL_ABORT("Params does not have a member named \"" << name << "\"");
       }
 
       try {
-	boost::any_cast<T>(storage_.find(name)->second);
+        boost::any_cast<T>(storage_.find(name)->second);
       }
       catch(boost::bad_any_cast& e) {
-	PL_ABORT("Bad type when getting param \"" << name << "\"");
+        PL_ABORT("Bad type when getting param \"" << name << "\"");
       }
       return boost::any_cast<T>(storage_.find(name)->second);
     }

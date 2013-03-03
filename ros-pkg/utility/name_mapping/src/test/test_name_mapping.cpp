@@ -109,11 +109,11 @@ void Foo::_applyNameTranslator(const std::string& id, const NameTranslator& tran
 
     for(size_t i = 0; i < labels_.size(); ++i) {
       if(labels_[i] == -1)
-	continue;
+        continue;
       if(translator.toNew(labels_[i]) == NameTranslator::NO_ID)
-	labels_[i] = -1;
+        labels_[i] = -1;
       else
-	labels_[i] = translator.toNew(labels_[i]);
+        labels_[i] = translator.toNew(labels_[i]);
     }
   }
   else if(id == "dmap") {
@@ -159,9 +159,9 @@ Foo Foo::getTestMBObject()
   for(size_t i = 0; i < foo.labels_.size(); ++i) {
     for(int j = 0; j < foo.eigen_labels_.rows(); ++j) {
       if(j == foo.labels_[i])
-	foo.eigen_labels_(j, i) = 1;
+        foo.eigen_labels_(j, i) = 1;
       else
-	foo.eigen_labels_(j, i) = -1;
+        foo.eigen_labels_(j, i) = -1;
     }
   }
   foo.eigen_labels_transposed_ = foo.eigen_labels_.transpose();

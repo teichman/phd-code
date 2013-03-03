@@ -7,7 +7,7 @@ using namespace rgbd;
 #define VISUALIZE
 
 FrameAligner::FrameAligner(const rgbd::PrimeSenseModel& model0,
-			   const rgbd::PrimeSenseModel& model1) :
+                           const rgbd::PrimeSenseModel& model1) :
   view_handler_(NULL),
   params_(defaultParams()),
   model0_(model0),
@@ -22,10 +22,10 @@ bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1, Eigen::Affine3d
 }
 
 bool FrameAligner::align(rgbd::Frame frame0, rgbd::Frame frame1,
-			 const std::vector<cv::KeyPoint>& keypoints0, const std::vector<cv::KeyPoint>& keypoints1,
+                         const std::vector<cv::KeyPoint>& keypoints0, const std::vector<cv::KeyPoint>& keypoints1,
        rgbd::Cloud::ConstPtr keycloud0, rgbd::Cloud::ConstPtr keycloud1,
-			 FeaturesConstPtr features0, FeaturesConstPtr features1,
-			 bool consider_wide_search, Eigen::Affine3d* f0_to_f1) const
+                         FeaturesConstPtr features0, FeaturesConstPtr features1,
+                         bool consider_wide_search, Eigen::Affine3d* f0_to_f1) const
 {
   // -- Try to get rough transform between the two based on the corresponding keypoints.
   Affine3d guess;
@@ -92,8 +92,8 @@ GridSearch FrameAligner::setupGridSearch() const
 }
 
 bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
-				      const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1,
-				      Eigen::Affine3d* f0_to_f1) const
+                                      const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1,
+                                      Eigen::Affine3d* f0_to_f1) const
 {
   ROS_DEBUG("FrameAligner::wideGridSearch");
   // -- Run grid search.
@@ -126,9 +126,9 @@ bool FrameAligner::wideGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
 }
 
 bool FrameAligner::narrowGridSearch(rgbd::Frame frame0, rgbd::Frame frame1,
-				    const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1, 
-				    const Eigen::Affine3d& guess,
-				    Eigen::Affine3d* f0_to_f1) const
+                                    const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1, 
+                                    const Eigen::Affine3d& guess,
+                                    Eigen::Affine3d* f0_to_f1) const
 {
   ROS_DEBUG("FrameAligner::narrowGridSearch");
   // -- Run grid search.
@@ -181,11 +181,11 @@ bool FrameAligner::validate(double count, double depth_error) const
 }
 
 bool FrameAligner::computeRoughTransform(//rgbd::Frame frame0, rgbd::Frame frame1,
-					 const std::vector<cv::KeyPoint>& keypoints0, const std::vector<cv::KeyPoint>& keypoints1,
+                                         const std::vector<cv::KeyPoint>& keypoints0, const std::vector<cv::KeyPoint>& keypoints1,
            rgbd::Cloud::ConstPtr keycloud0, rgbd::Cloud::ConstPtr keycloud1,
-					 FeaturesConstPtr features0, FeaturesConstPtr features1,
-					 std::vector<cv::Point2d>* correspondences0, std::vector<cv::Point2d>* correspondences1,
-					 Eigen::Affine3d* f0_to_f1) const
+                                         FeaturesConstPtr features0, FeaturesConstPtr features1,
+                                         std::vector<cv::Point2d>* correspondences0, std::vector<cv::Point2d>* correspondences1,
+                                         Eigen::Affine3d* f0_to_f1) const
 {
   correspondences0->clear();
   correspondences1->clear();
@@ -215,28 +215,28 @@ bool FrameAligner::computeRoughTransform(//rgbd::Frame frame0, rgbd::Frame frame
     for(size_t k = 0; k < mat.size(); k++) {
       //cout << mat[k].distance << " ";
       if(mat[k].queryIdx < 0 || mat[k].trainIdx < 0)
-	continue;
+        continue;
       if(mat[k].distance > max_feature_dist)
-	continue;
+        continue;
 
       // Make sure opencv is doing what we think it is.
       if(k > 0)
-	ROS_ASSERT(mat[k].distance >= mat[k-1].distance);
+        ROS_ASSERT(mat[k].distance >= mat[k-1].distance);
       
       // Correspondences get filled with the best matches that are at least somewhat good.
       // They don't need depth.
       if(!added_corr) {
-	correspondences0->push_back(keypoints0[mat[k].queryIdx].pt);
-	correspondences1->push_back(keypoints1[mat[k].trainIdx].pt);
-	added_corr = true;
+        correspondences0->push_back(keypoints0[mat[k].queryIdx].pt);
+        correspondences1->push_back(keypoints1[mat[k].trainIdx].pt);
+        added_corr = true;
       }
 
       // Saved matches must have depth for 3d ransac.
       /*  
       if(frame0.depth_->coeffRef(keypoints0[mat[k].queryIdx].pt.y, keypoints0[mat[k].queryIdx].pt.x) > 0 &&
-	 frame1.depth_->coeffRef(keypoints1[mat[k].trainIdx].pt.y, keypoints1[mat[k].trainIdx].pt.x) > 0)
+         frame1.depth_->coeffRef(keypoints1[mat[k].trainIdx].pt.y, keypoints1[mat[k].trainIdx].pt.x) > 0)
       {
-	matches.push_back(mat[k]);
+        matches.push_back(mat[k]);
       }
       */
       if( isFinite(keycloud0->at(mat[k].queryIdx)) && 
@@ -256,7 +256,7 @@ bool FrameAligner::computeRoughTransform(//rgbd::Frame frame0, rgbd::Frame frame
 //#ifdef VISUALIZE
 //  cv::Mat3b img_match;
 //  cv::drawMatches(frame0.img_, keypoints0, frame1.img_, keypoints1,
-//		  matches, img_match);
+//                  matches, img_match);
 //  cv::imshow("match", img_match);
 //  // cv::imshow("frame0", frame0.img_);
 //  // cv::imshow("frame1", frame1.img_);
@@ -379,17 +379,17 @@ bool FrameAligner::computeRoughTransform(//rgbd::Frame frame0, rgbd::Frame frame
       kdtree0.nearestKSearch(transformed_keypoint_cloud1.points[k], 1, indices, distances);
       if(distances.size() != 0 && distances[0] < ransac_max_inlier_dist)
       {
-	++num_inliers;
-	inlier_distance += distances[0];
-	inliers.push_back(std::pair<size_t, size_t>(k, indices[0]));
-	const pcl::PointXYZRGB& kpt = transformed_keypoint_cloud1.points[k];
-	//Update bounding volume
-	if(kpt.x < minx) minx = kpt.x;
-	if(kpt.x > maxx) maxx = kpt.x;
-	if(kpt.y < miny) miny = kpt.y;
-	if(kpt.y > maxy) maxy = kpt.y;
-	if(kpt.z < minz) minz = kpt.z;
-	if(kpt.z > maxz) maxz = kpt.z;
+        ++num_inliers;
+        inlier_distance += distances[0];
+        inliers.push_back(std::pair<size_t, size_t>(k, indices[0]));
+        const pcl::PointXYZRGB& kpt = transformed_keypoint_cloud1.points[k];
+        //Update bounding volume
+        if(kpt.x < minx) minx = kpt.x;
+        if(kpt.x > maxx) maxx = kpt.x;
+        if(kpt.y < miny) miny = kpt.y;
+        if(kpt.y > maxy) maxy = kpt.y;
+        if(kpt.z < minz) minz = kpt.z;
+        if(kpt.z > maxz) maxz = kpt.z;
       }
     }
     //Check number of inliers
@@ -424,17 +424,17 @@ bool FrameAligner::computeRoughTransform(//rgbd::Frame frame0, rgbd::Frame frame
       double maxval = -numeric_limits<double>::max();
       double minval = numeric_limits<double>::max();
       for(size_t k = 0; k < transformed_keypoint_cloud1.size(); ++k) {
-	Vector3d pt = transformed_keypoint_cloud1[k].getVector3fMap().cast<double>() - mean;
-	double val = vec.dot(pt);
-	maxval = max(val, maxval);
-	minval = min(val, minval);
+        Vector3d pt = transformed_keypoint_cloud1[k].getVector3fMap().cast<double>() - mean;
+        double val = vec.dot(pt);
+        maxval = max(val, maxval);
+        minval = min(val, minval);
       }
       if(maxval - minval < params_.get<double>("min_bounding_length")) {
-	// ROS_WARN_STREAM("Rejecting this hypothesized transform due to PCA check.");
-	// ROS_WARN_STREAM("Extremal values of " << minval << " to " << maxval);
-	// ROS_WARN_STREAM("Distance of " << maxval - minval << " along principal component " << i << ", " << vec.transpose());
-	// ROS_WARN_STREAM("Num pts: " << transformed_keypoint_cloud1.size());
-	passed_pca = false;
+        // ROS_WARN_STREAM("Rejecting this hypothesized transform due to PCA check.");
+        // ROS_WARN_STREAM("Extremal values of " << minval << " to " << maxval);
+        // ROS_WARN_STREAM("Distance of " << maxval - minval << " along principal component " << i << ", " << vec.transpose());
+        // ROS_WARN_STREAM("Num pts: " << transformed_keypoint_cloud1.size());
+        passed_pca = false;
       }
       //ROS_DEBUG_STREAM("Distance of " << maxval - minval << " along principal component " << i << ", " << vec.transpose());
     }
@@ -475,7 +475,7 @@ bool FrameAligner::computeRoughTransform(//rgbd::Frame frame0, rgbd::Frame frame
     pcl::TransformationFromCorrespondences tfc;
     for(size_t j = 0; j < best_inliers.size(); j++)
       tfc.add(keypoint_cloud1->points[best_inliers[j].first].getVector3fMap(), 
-	      keypoint_cloud0->points[best_inliers[j].second].getVector3fMap());
+              keypoint_cloud0->points[best_inliers[j].second].getVector3fMap());
     Affine3d f1_to_f0 = tfc.getTransformation().cast<double>();
     *f0_to_f1 = f1_to_f0.inverse();
     cout << "Final f1_to_f0: " << endl;
@@ -541,7 +541,7 @@ void FrameAlignmentVisualizer::_run()
       pcl::transformPointCloud(*cloud0_, *pcd, f0_to_f1_);
       *pcd += *cloud1_;
       if(!vis_.updatePointCloud(pcd, "default"))
-	vis_.addPointCloud(pcd, "default");
+        vis_.addPointCloud(pcd, "default");
       needs_update_ = false;
     }
     vis_.spinOnce(2);

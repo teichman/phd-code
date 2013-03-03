@@ -56,58 +56,58 @@ namespace rgbd
       model_.frameToCloud(frame, pcd_.get());
       ROS_DEBUG_STREAM("IntrinsicsVisualizer using model: " << endl << model_.status("  "));
       if(!show_color_)
-	decolorize(pcd_.get());
+        decolorize(pcd_.get());
 
       vw_.showCloud(pcd_);
       char key = vw_.waitKey();
 
       switch(key) {
-	// Apparent 'q' doesn't get passed through, so ESC quits.
+        // Apparent 'q' doesn't get passed through, so ESC quits.
       case 27:
-	return;
-	break;
+        return;
+        break;
       case 'g':
-	gridSearch();
-	break;
+        gridSearch();
+        break;
       case 's':
-	saveAccepted();
-	break;
+        saveAccepted();
+        break;
       case 'C':
-	show_color_ = !show_color_;
-	break;
+        show_color_ = !show_color_;
+        break;
       case 'c':
-	clearSelection();
-	break;
+        clearSelection();
+        break;
       case 'l':
-	loadAccepted();
-	break;
+        loadAccepted();
+        break;
       case 'd':
-	cout << "Accepted points: " << endl;
-	cout << accepted_;
-	break;
+        cout << "Accepted points: " << endl;
+        cout << accepted_;
+        break;
       case 'a':
-	acceptVisible();
-	break;
+        acceptVisible();
+        break;
       case ',':
-	increment(-1);
-	break;
+        increment(-1);
+        break;
       case '.':
-	increment(1);
-	break;
+        increment(1);
+        break;
       case '{':
-	incrementIntrinsics(-10, -10, 0, 0);
-	break;
+        incrementIntrinsics(-10, -10, 0, 0);
+        break;
       case '}':
-	incrementIntrinsics(10, 10, 0, 0);
-	break;
+        incrementIntrinsics(10, 10, 0, 0);
+        break;
       case '[':
-	incrementIntrinsics(0, 0, -10, 0);
-	break;
+        incrementIntrinsics(0, 0, -10, 0);
+        break;
       case ']':
-	incrementIntrinsics(0, 0, 10, 0);
-	break;
+        incrementIntrinsics(0, 0, 10, 0);
+        break;
       default:
-	break;
+        break;
       }
     }
   }
@@ -252,7 +252,7 @@ namespace rgbd
   }
   
   LossFunction::LossFunction(const AcceptedPoints& accepted,
-			     double actual_distance, int width, int height) :
+                             double actual_distance, int width, int height) :
     accepted_(accepted),
     actual_distance_(actual_distance),
     width_(width),

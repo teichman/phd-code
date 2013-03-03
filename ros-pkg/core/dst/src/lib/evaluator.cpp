@@ -32,13 +32,13 @@ namespace dst
     double num_fg = 0;
     for(int y = 0; y < pred.rows; ++y) { 
       for(int x = 0; x < pred.cols; ++x) {
-	if(label(y, x) != 255 && label(y, x) != 0)
-	  continue;
-	
-	if(pred(y, x) != label(y, x))
-	  ++hamming_loss;
-	if(label(y, x) == 255)
-	  ++num_fg;
+        if(label(y, x) != 255 && label(y, x) != 0)
+          continue;
+        
+        if(pred(y, x) != label(y, x))
+          ++hamming_loss;
+        if(label(y, x) == 255)
+          ++num_fg;
       }
     }
     double hamming_accuracy = (double)(pred.rows * pred.cols - hamming_loss) / (double)(pred.rows * pred.cols);
@@ -54,12 +54,12 @@ namespace dst
     if(!failed_) {
       ++frames_till_failure_;
       if(normalized_loss >= failure_criterion_)
-	failed_ = true;
+        failed_ = true;
     }
 
     if(verbose)
       cout << "SequenceResults::update(): Hamming loss = " << hamming_loss
-	   << ", total fg: " << num_fg << endl;
+           << ", total fg: " << num_fg << endl;
   }
 
   
@@ -80,7 +80,7 @@ namespace dst
   }
   
   Evaluator::Evaluator(const Eigen::VectorXd& weights,
-		       bool frame_to_frame) :
+                       bool frame_to_frame) :
     weights_(weights),
     frame_to_frame_(frame_to_frame)
   {
@@ -101,38 +101,38 @@ namespace dst
       //cout << "Evaluating frame " << i+1 << " / " << seq->segmentations_.size() << endl;      
       // -- Segment the frame.
       if(i == 0) {
-	sp.run(seq->seed_images_[i],
-	       seq->images_[i],
-	       seq->pointclouds_[i],
-	       cv::Mat3b(),
-	       cv::Mat1b(),
-	       KinectCloud::Ptr(),
-	       pred,
-	       KinectCloud::Ptr());
-	continue; // Do not count the segmentation of the first frame.
+        sp.run(seq->seed_images_[i],
+               seq->images_[i],
+               seq->pointclouds_[i],
+               cv::Mat3b(),
+               cv::Mat1b(),
+               KinectCloud::Ptr(),
+               pred,
+               KinectCloud::Ptr());
+        continue; // Do not count the segmentation of the first frame.
       }
       else {
-	cv::Mat1b prev_seg = pred;
-	if(frame_to_frame_)
-	  prev_seg = seq->segmentations_[i-1];
-	
-	sp.run(empty_seed,
-	       seq->images_[i],
-	       seq->pointclouds_[i],
-	       seq->images_[i-1],
-	       prev_seg,
-	       seq->pointclouds_[i-1],
-	       pred,
-	       KinectCloud::Ptr());
+        cv::Mat1b prev_seg = pred;
+        if(frame_to_frame_)
+          prev_seg = seq->segmentations_[i-1];
+        
+        sp.run(empty_seed,
+               seq->images_[i],
+               seq->pointclouds_[i],
+               seq->images_[i-1],
+               prev_seg,
+               seq->pointclouds_[i-1],
+               pred,
+               KinectCloud::Ptr());
       }
       sr.update(seq->segmentations_[i], pred);
       
       if(VISUALIZE) { 
-	cv::imshow("Original image", seq->images_[i]);
-	cv::imshow("Prediction", pred);
-	cvMoveWindow("Original image", 200, 100);
-	cvMoveWindow("Prediction", 600, 100);
-	cv::waitKey(10);
+        cv::imshow("Original image", seq->images_[i]);
+        cv::imshow("Prediction", pred);
+        cvMoveWindow("Original image", 200, 100);
+        cvMoveWindow("Prediction", 600, 100);
+        cv::waitKey(10);
       }
     }
 

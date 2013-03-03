@@ -7,8 +7,8 @@ namespace dst
 {
 
   SurfaceNormalNode::SurfaceNormalNode(pipeline2::Outlet<KdTreeNode::Output>* kdtree_otl,
-				       pipeline2::Outlet<DepthProjector::Output>* index_otl,
-				       double radius) :
+                                       pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                                       double radius) :
     ComputeNode(),
     normals_otl_(this),
     kdtree_otl_(kdtree_otl),
@@ -37,8 +37,8 @@ namespace dst
     // normals_->resize(pcd->size());
     // for(size_t x = 0; x < pcd->width; ++x) {
     //   for(size_t y = 0; y < pcd->height; ++y) {
-    // 	int idx = y * pcd->width + x;
-    // 	ne.computePointNormal(x, y, normals_->at(idx));
+    //         int idx = y * pcd->width + x;
+    //         ne.computePointNormal(x, y, normals_->at(idx));
     //   }
     // }
 
@@ -56,16 +56,16 @@ namespace dst
     
     for(size_t i = 0; i < normals_->size(); ++i) {
       pcl::flipNormalTowardsViewpoint(pcd->at(i), 0, 0, 0,
-				      normals_->at(i).normal[0],
-				      normals_->at(i).normal[1],
-				      normals_->at(i).normal[2]);
+                                      normals_->at(i).normal[0],
+                                      normals_->at(i).normal[1],
+                                      normals_->at(i).normal[2]);
     }
 
     normals_otl_.push(normals_);
   }
 
   void SurfaceNormalNode::normalToColor(const pcl::Normal& p,
-					cv::Vec3b* color) const
+                                        cv::Vec3b* color) const
   {
     cv::Vec3b& c = *color;
     if(isnan(p.normal[0])) { 
@@ -86,10 +86,10 @@ namespace dst
 
     for(int y = 0; y < vis.rows; ++y) {
       for(int x = 0; x < vis.cols; ++x) {
-	if(index(y, x) == -1)
-	  continue;
+        if(index(y, x) == -1)
+          continue;
 
-	normalToColor(normals_->at(index(y, x)), &vis(y, x));
+        normalToColor(normals_->at(index(y, x)), &vis(y, x));
       }
     }
 

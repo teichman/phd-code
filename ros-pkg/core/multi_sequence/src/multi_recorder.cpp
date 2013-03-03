@@ -11,7 +11,7 @@ namespace multi_sequence
 {
 
   MultiRecorder::MultiRecorder(const vector<string> &device_ids,
-		     pcl::OpenNIGrabber::Mode mode) :
+                     pcl::OpenNIGrabber::Mode mode) :
     device_ids_(device_ids),
     mode_(mode),
     recording_(false)
@@ -64,7 +64,7 @@ namespace multi_sequence
     int i = 0;
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x, ++i) {
-	img(y, x) = data[i];
+        img(y, x) = data[i];
       }
     }
     
@@ -79,9 +79,9 @@ namespace multi_sequence
     int i = 0;
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x, i+=3) {
-	      img(y, x)[0] = data[i+2];
-	      img(y, x)[1] = data[i+1];
-	      img(y, x)[2] = data[i];
+              img(y, x)[0] = data[i+2];
+              img(y, x)[1] = data[i+1];
+              img(y, x)[2] = data[i];
       }
     }
     
@@ -133,8 +133,8 @@ namespace multi_sequence
   }
 
   std::string generateFilename(const bfs::path& dir,
-			       const std::string& basename,
-			       int width)
+                               const std::string& basename,
+                               int width)
   {
     // -- Create the directory if necessary.
     ROS_ASSERT(!bfs::exists(dir) || bfs::is_directory(dir));
@@ -146,7 +146,7 @@ namespace multi_sequence
     bfs::directory_iterator end_itr; // default construction yields past-the-end
     for(bfs::directory_iterator itr(dir); itr != end_itr; ++itr) { 
       if(itr->leaf().substr(width+1).compare(basename) == 0)
-	++num;
+        ++num;
     }
     
     ostringstream filename;
@@ -180,38 +180,38 @@ namespace multi_sequence
         cout << img_ts << " " << pcd_ts << ", |dt| = " << dt << endl;
         
         if(dt < thresh) {
-	        Cloud::Ptr tmp(new Cloud(*clouds_[i][pcd_idx]));
-	        seqs[i]->pcds_.push_back(tmp);
-	        if(mode_ == pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz) { 
-	          ROS_ASSERT(imgs_[i][img_idx].cols == 320);
-	          ROS_ASSERT(imgs_[i][img_idx].rows == 240);
-	          ROS_ASSERT(tmp->width == 160);
-	          ROS_ASSERT(tmp->height == 120);
-	          cv::Mat3b small_img;
-	          cv::resize(imgs_[i][img_idx], small_img, cv::Size(160, 120));
-	          seqs[i]->imgs_.push_back(small_img);
-	        }
-	        else if(mode_ == pcl::OpenNIGrabber::OpenNI_VGA_30Hz) {
-	          ROS_ASSERT(imgs_[i][img_idx].cols == 640);
-	          ROS_ASSERT(imgs_[i][img_idx].rows == 480);
-	          ROS_ASSERT(clouds_[i][pcd_idx]->width == 640);
-	          ROS_ASSERT(clouds_[i][pcd_idx]->height == 480);
-	          
-	          seqs[i]->imgs_.push_back(imgs_[i][img_idx]);
-	        }
+                Cloud::Ptr tmp(new Cloud(*clouds_[i][pcd_idx]));
+                seqs[i]->pcds_.push_back(tmp);
+                if(mode_ == pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz) { 
+                  ROS_ASSERT(imgs_[i][img_idx].cols == 320);
+                  ROS_ASSERT(imgs_[i][img_idx].rows == 240);
+                  ROS_ASSERT(tmp->width == 160);
+                  ROS_ASSERT(tmp->height == 120);
+                  cv::Mat3b small_img;
+                  cv::resize(imgs_[i][img_idx], small_img, cv::Size(160, 120));
+                  seqs[i]->imgs_.push_back(small_img);
+                }
+                else if(mode_ == pcl::OpenNIGrabber::OpenNI_VGA_30Hz) {
+                  ROS_ASSERT(imgs_[i][img_idx].cols == 640);
+                  ROS_ASSERT(imgs_[i][img_idx].rows == 480);
+                  ROS_ASSERT(clouds_[i][pcd_idx]->width == 640);
+                  ROS_ASSERT(clouds_[i][pcd_idx]->height == 480);
+                  
+                  seqs[i]->imgs_.push_back(imgs_[i][img_idx]);
+                }
 
-	        ++img_idx;
-	        ++pcd_idx;
-	        total_dt += dt;
-	        cout << "Added." << endl;
+                ++img_idx;
+                ++pcd_idx;
+                total_dt += dt;
+                cout << "Added." << endl;
         }
         else if(img_ts < pcd_ts)
-	        ++img_idx;
+                ++img_idx;
         else
-	        ++pcd_idx;
+                ++pcd_idx;
 
         if(img_idx == imgs_[i].size() || pcd_idx == clouds_[i].size()){
-	        break;
+                break;
         }
       }
       imgs_[i].clear();
@@ -244,7 +244,7 @@ namespace multi_sequence
       ROS_ASSERT(grabbers_[idx]->getDevice()->isSynchronized());
 
       if(DESYNC)
-	      grabbers_[idx]->getDevice()->setSynchronization(false);
+              grabbers_[idx]->getDevice()->setSynchronization(false);
 
     }
   }

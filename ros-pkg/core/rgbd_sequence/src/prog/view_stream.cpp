@@ -1,10 +1,9 @@
 #include <boost/program_options.hpp>
-#include <rgbd_sequence/stream_sequence.h>
-#include <pcl/visualization/cloud_viewer.h>
-#include <opencv2/highgui/highgui.hpp>
+#include <rgbd_sequence/stream_visualizer.h>
 
 using namespace std;
 using namespace rgbd;
+using namespace pcl::visualization;
 namespace bpo = boost::program_options;
 
 int main(int argc, char** argv)
@@ -13,7 +12,6 @@ int main(int argc, char** argv)
   bpo::options_description opts_desc("Allowed options");
   opts_desc.add_options()
     ("help,h", "produce help message")
-    ("distortion-model", bpo::value<string>(), "Use pre-computed distortion model")
     ("seq", bpo::value<string>(&dir), "Sequence directory")
     ("only-stats", "Only print stats and exit")
     ;
@@ -30,50 +28,33 @@ int main(int argc, char** argv)
   bpo::notify(opts);
   
   cout << "Looking at dir: " << dir << endl;
-  StreamSequence seq;
-  seq.load(dir);
+  StreamSequence::Ptr sseq(new StreamSequence);
+  sseq->load(dir);
   cout << "Loaded successfully" << endl;
 
   double mean_dt = 0;
   double max_dt = -std::numeric_limits<double>::max();
-  for(size_t i = 1; i < seq.size(); i++) {
-    double dt = seq.timestamps_[i] - seq.timestamps_[i-1];
+  for(size_t i = 1; i < sseq->size(); i++) {
+    double dt = sseq->timestamps_[i] - sseq->timestamps_[i-1];
     mean_dt += dt;
     if(dt > max_dt)
       max_dt = dt;
   }
-  mean_dt /= (double)seq.size();
+  mean_dt /= (double)sseq->size();
   cout << "--------------------" << endl;
-  cout << "Mean fps: " << (double)seq.size() / (seq.timestamps_.back() - seq.timestamps_.front()) << endl;
+  cout << "Mean fps: " << (double)sseq->size() / (sseq->timestamps_.back() - sseq->timestamps_.front()) << endl;
   cout << "Mean dt: " << mean_dt << endl;
   cout << "Max dt: " << max_dt << endl;
+  cout << "Total time (s): " << sseq->timestamps_.back() - sseq->timestamps_.front() << endl;
   cout << "--------------------" << endl;
   cout << "Sensor model: " << endl;
-  cout << seq.model_.status("  ");
+  cout << sseq->model_.status("  ");
   
   if(opts.count("only-stats"))
     return 0;
-  
-  pcl::visualization::CloudViewer cloud_viewer("cloud");
-  cv::namedWindow("image");
-  Frame frame;
-  for(size_t i = 0; i < seq.size(); i++){
-    cout << "Viewing cloud: " << i << endl;
-    seq.readFrame(i, &frame);
 
-    Cloud::Ptr cloud(new Cloud);
-    seq.model_.frameToCloud(frame, cloud.get());
-    cloud_viewer.showCloud(cloud);
-
-    cv::imshow("image", frame.img_);
-
-    if(i < seq.size()) {
-      double dt = seq.timestamps_[i+1]-seq.timestamps_[i];
-      cout << "dt: " << dt << endl;
-      cv::waitKey(dt * 1e3);
-    }
-  }
-  
+  StreamVisualizer vis(sseq);
+  vis.run();
   return 0;
 }
 

@@ -103,7 +103,7 @@ vector< shared_ptr<ComputeNode> > getNodes2() {
   nodes.back()->disabled_ = true;
   return nodes;
 }
-	
+        
 TEST(Pipeline, filterNodes) {
   Pipeline pl(sysconf(_SC_NPROCESSORS_ONLN), getNodes2());
 

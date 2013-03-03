@@ -23,8 +23,8 @@ namespace dst
   {
   public:
     SeedDistanceNPG(pipeline2::Outlet<cv::Mat1b>* seed_otl,
-		    pipeline2::Outlet<DepthProjector::Output>* index_otl,
-		    float variance);
+                    pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                    float variance);
 
   protected:
     pipeline2::Outlet<cv::Mat1b>* seed_otl_;
@@ -36,10 +36,10 @@ namespace dst
     std::priority_queue<PP, std::vector<PP>, CustomPairCompare> pq_;
 
     void processNeighbor(const cv::Point2i& pt0,
-			 const cv::Point2i& pt1,
-			 cv::Mat1f distances,
-			 KinectCloud::ConstPtr pcd,
-			 cv::Mat1i index);
+                         const cv::Point2i& pt1,
+                         cv::Mat1f distances,
+                         KinectCloud::ConstPtr pcd,
+                         cv::Mat1i index);
     cv::Mat1f visualizeDistanceMap(cv::Mat1f dist) const;
     void computeDistanceMap(int label, cv::Mat1f& distances);
     void _compute();

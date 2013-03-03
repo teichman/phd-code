@@ -49,10 +49,10 @@ namespace dst
     for(int i = 0; i < normalized.rows(); ++i) {
       SparseMatrix<double, RowMajor>::InnerIterator it(normalized, i);
       for(; it; ++it) {
-	if(it.value() > max)
-	  max = it.value();
-	if(it.value() < min)
-	  min = it.value();
+        if(it.value() > max)
+          max = it.value();
+        if(it.value() < min)
+          min = it.value();
       }
     }
     normalized /= max;
@@ -61,20 +61,20 @@ namespace dst
     // -- Draw non-zero edges.
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x) {
-	int idx0 = getIdx(y, x, img.cols);
+        int idx0 = getIdx(y, x, img.cols);
 
-	SparseMatrix<double, RowMajor>::InnerIterator it(normalized, idx0);
-	for(; it; ++it) {
-	  int idx1 = it.col();
-	  int y1 = idx1 / img.cols;
-	  int x1 = idx1 - y1 * img.cols;
+        SparseMatrix<double, RowMajor>::InnerIterator it(normalized, idx0);
+        for(; it; ++it) {
+          int idx1 = it.col();
+          int y1 = idx1 / img.cols;
+          int x1 = idx1 - y1 * img.cols;
 
-	  cv::Point pt(x*scale, y*scale);
-	  cv::Point pt1(x1*scale, y1*scale);
-	  //cv::Scalar color(it.value(), it.value(), it.value());
-	  //cv::line(vis, pt, pt1, color);
-	  drawLine(pt, pt1, it.value(), vis);
-	}
+          cv::Point pt(x*scale, y*scale);
+          cv::Point pt1(x1*scale, y1*scale);
+          //cv::Scalar color(it.value(), it.value(), it.value());
+          //cv::line(vis, pt, pt1, color);
+          drawLine(pt, pt1, it.value(), vis);
+        }
       }
     }
 

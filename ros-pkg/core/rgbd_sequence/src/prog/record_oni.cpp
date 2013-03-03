@@ -29,10 +29,10 @@ int main(int argc, char** argv)
   bpo::notify(opts);
 
   OniRecorder rec(opts["device"].as<string>(),
-		  opts["id"].as<int>(),
-		  "VGA",
-		  opts.count("register"));
-			   
+                  opts["id"].as<int>(),
+                  "VGA",
+                  opts.count("register"));
+                           
   rec.run();
 
   return 0;

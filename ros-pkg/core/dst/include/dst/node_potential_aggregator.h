@@ -15,12 +15,12 @@ namespace dst
   {
   public:
     NodePotentialAggregator(pipeline2::Outlet<Graph3dPtr>* graph_otl,
-			    pipeline2::Outlet<cv::Mat1b>* seed_otl,
-			    pipeline2::Outlet<cv::Mat3b>* image_otl,
-			    pipeline2::Outlet<DepthProjector::Output>* index_otl,
-			    EdgePotentialAggregator* edge_aggregator,
-			    const std::vector<NodePotentialGenerator*>& generators,
-			    const Eigen::VectorXd& weights);
+                            pipeline2::Outlet<cv::Mat1b>* seed_otl,
+                            pipeline2::Outlet<cv::Mat3b>* image_otl,
+                            pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                            EdgePotentialAggregator* edge_aggregator,
+                            const std::vector<NodePotentialGenerator*>& generators,
+                            const Eigen::VectorXd& weights);
     ~NodePotentialAggregator();
 
     std::string weightsStatus() const;
@@ -40,7 +40,7 @@ namespace dst
     Eigen::VectorXd weights_;
 
     void ignoreDepthless(const Eigen::MatrixXd& pot,
-			 Eigen::MatrixXd* sanitized) const;
+                         Eigen::MatrixXd* sanitized) const;
     void _compute();
     //! Optional.
     void _display() const;

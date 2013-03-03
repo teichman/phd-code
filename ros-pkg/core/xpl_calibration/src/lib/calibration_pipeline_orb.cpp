@@ -16,7 +16,7 @@ CalibrationPipelineOrb::CalibrationPipelineOrb(int num_threads, std::string pipe
 }
 
 Eigen::Affine3f CalibrationPipelineOrb::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
-						  rgbd::StreamSequence::ConstPtr sseq1)
+                                                  rgbd::StreamSequence::ConstPtr sseq1)
 {
   // -- Downsample the sequences.
   size_t interval = 20;

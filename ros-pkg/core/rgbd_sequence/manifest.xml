@@ -8,7 +8,8 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/rgbd_sequence</url>
-  <depend package="pcl_bleeding"/>
+
+  <depend package="pcl_trunk"/>
   <depend package="serializable"/>
   <depend package="opencv_bleeding"/>
   <depend package="bag_of_tricks"/>

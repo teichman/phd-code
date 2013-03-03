@@ -26,8 +26,8 @@ namespace dst
 {
 
   StructSVM::StructSVM(double c,
-		       double precision,
-		       bool margin_rescaling) :
+                       double precision,
+                       bool margin_rescaling) :
     c_(c),
     precision_(precision),
     margin_rescaling_(margin_rescaling)
@@ -54,14 +54,14 @@ namespace dst
     if(HYBRID) {
       ROS_DEBUG_STREAM("Initializing with oracle training examples.");
       for(size_t i = 0; i < sequences_.size(); ++i) {
-    	KinectSequence::Ptr seq = sequences_[i];
-    	SegmentationPipeline sp(NUM_THREADS);
-    	PotentialsCache::Ptr cache = sp.cacheUnweightedPotentialsWithOracle(seq);
-	
-    	for(size_t j = 0; j < cache->size(); ++j) { 
-    	  caches.push_back(cache->framecaches_[j]);
-    	  labels.push_back(seq->segmentations_[j]);
-    	}
+            KinectSequence::Ptr seq = sequences_[i];
+            SegmentationPipeline sp(NUM_THREADS);
+            PotentialsCache::Ptr cache = sp.cacheUnweightedPotentialsWithOracle(seq);
+        
+            for(size_t j = 0; j < cache->size(); ++j) { 
+              caches.push_back(cache->framecaches_[j]);
+              labels.push_back(seq->segmentations_[j]);
+            }
       }
     }
 
@@ -91,151 +91,151 @@ namespace dst
       // -- Build the training set in a way that will produce some non-optimal,
       //    realistic sets of potentials.
       for(size_t i = 0; i < sequences_.size(); ++i) {
-	KinectSequence::Ptr seq = sequences_[i];
-	total_frames += seq->segmentations_.size();
+        KinectSequence::Ptr seq = sequences_[i];
+        total_frames += seq->segmentations_.size();
 
-	SegmentationPipeline sp(NUM_THREADS);
-	sp.verbose_ = false;
-	sp.setWeightsWithClipping(weights);
-	if(i == 0)
-	  ROS_DEBUG_STREAM("Weights: " << endl << sp.weightsStatus() << flush);
-	cv::Mat1b working_img_seg(seq->seed_images_[0].size(), 127);
-	cv::Mat1b empty_seed(seq->seed_images_[0].size(), 127);
-	double seq_normalized_loss = 0;
-	for(size_t j = 0; j < seq->segmentations_.size(); ++j) { 
-	  // Segment using current weights.
-	  KinectCloud::Ptr seg_pcd(new KinectCloud());  // Not used.
-	  if(j == 0) {
-	    sp.run(seq->seed_images_[j],
-		   seq->images_[j],
-		   seq->pointclouds_[j],
-		   cv::Mat3b(),
-		   cv::Mat1b(),
-		   KinectCloud::Ptr(),
-		   working_img_seg,
-		   seg_pcd);
-	    continue; // Don't add training examples for seed frames.
-	  }
-	  else {
-	    sp.run(empty_seed,
-		   seq->images_[j],
-		   seq->pointclouds_[j],
-		   seq->images_[j-1],
-		   working_img_seg,
-		   seq->pointclouds_[j-1],
-		   working_img_seg,
-		   seg_pcd);
-	    ++total_segmented_frames;
-	  }
+        SegmentationPipeline sp(NUM_THREADS);
+        sp.verbose_ = false;
+        sp.setWeightsWithClipping(weights);
+        if(i == 0)
+          ROS_DEBUG_STREAM("Weights: " << endl << sp.weightsStatus() << flush);
+        cv::Mat1b working_img_seg(seq->seed_images_[0].size(), 127);
+        cv::Mat1b empty_seed(seq->seed_images_[0].size(), 127);
+        double seq_normalized_loss = 0;
+        for(size_t j = 0; j < seq->segmentations_.size(); ++j) { 
+          // Segment using current weights.
+          KinectCloud::Ptr seg_pcd(new KinectCloud());  // Not used.
+          if(j == 0) {
+            sp.run(seq->seed_images_[j],
+                   seq->images_[j],
+                   seq->pointclouds_[j],
+                   cv::Mat3b(),
+                   cv::Mat1b(),
+                   KinectCloud::Ptr(),
+                   working_img_seg,
+                   seg_pcd);
+            continue; // Don't add training examples for seed frames.
+          }
+          else {
+            sp.run(empty_seed,
+                   seq->images_[j],
+                   seq->pointclouds_[j],
+                   seq->images_[j-1],
+                   working_img_seg,
+                   seq->pointclouds_[j-1],
+                   working_img_seg,
+                   seg_pcd);
+            ++total_segmented_frames;
+          }
 
-	  double normalized_loss = fgNormalizedHammingLoss(seq->segmentations_[j], working_img_seg);
-	  total_normalized_loss += normalized_loss;
-	  seq_normalized_loss += normalized_loss;
-	  
-	  // -- Check to see if the boundary mask includes the entire ground truth boundary.
-	  if(DEBUG) { 
-	    cv::Mat1b boundary = sp.boundary_mask_node_->mask_otl_.pull();
-	    cv::namedWindow("Boundary", 0);
-	    cv::namedWindow("Image", 0);
-	    cv::namedWindow("Segmentation", 0);
-	    cv::namedWindow("Ground truth", 0);
-	    cvMoveWindow("Boundary", 100, 600);
-	    cvMoveWindow("Image", 500, 600);
-	    cvMoveWindow("Segmentation", 100, 1000);
-	    cvMoveWindow("Ground truth", 500, 1000);
-	    cv::imshow("Boundary", boundary);
-	    cv::imshow("Image", seq->images_[j]);
-	    cv::imshow("Segmentation", working_img_seg);
-	    cv::imshow("Ground truth", seq->segmentations_[j]);
-	    cv::waitKey(10);
-	    cout << "normalized loss: " << normalized_loss << endl;
-	    cv::waitKey(0);
-	  }
-	  
-	  // If we've done really well on this frame, don't bother adding it to the training set.
-	  if(normalized_loss < MIN_NORMALIZED_LOSS) {
-	    if(j == seq->images_.size() - 1)
-	      ROS_DEBUG_STREAM("Sequence " << i << ": Completed " << j << " frames without making serious errors.  Mean normalized loss: "
-			       << seq_normalized_loss / (double)j << flush);
-	    continue;
-	  }
+          double normalized_loss = fgNormalizedHammingLoss(seq->segmentations_[j], working_img_seg);
+          total_normalized_loss += normalized_loss;
+          seq_normalized_loss += normalized_loss;
+          
+          // -- Check to see if the boundary mask includes the entire ground truth boundary.
+          if(DEBUG) { 
+            cv::Mat1b boundary = sp.boundary_mask_node_->mask_otl_.pull();
+            cv::namedWindow("Boundary", 0);
+            cv::namedWindow("Image", 0);
+            cv::namedWindow("Segmentation", 0);
+            cv::namedWindow("Ground truth", 0);
+            cvMoveWindow("Boundary", 100, 600);
+            cvMoveWindow("Image", 500, 600);
+            cvMoveWindow("Segmentation", 100, 1000);
+            cvMoveWindow("Ground truth", 500, 1000);
+            cv::imshow("Boundary", boundary);
+            cv::imshow("Image", seq->images_[j]);
+            cv::imshow("Segmentation", working_img_seg);
+            cv::imshow("Ground truth", seq->segmentations_[j]);
+            cv::waitKey(10);
+            cout << "normalized loss: " << normalized_loss << endl;
+            cv::waitKey(0);
+          }
+          
+          // If we've done really well on this frame, don't bother adding it to the training set.
+          if(normalized_loss < MIN_NORMALIZED_LOSS) {
+            if(j == seq->images_.size() - 1)
+              ROS_DEBUG_STREAM("Sequence " << i << ": Completed " << j << " frames without making serious errors.  Mean normalized loss: "
+                               << seq_normalized_loss / (double)j << flush);
+            continue;
+          }
 
-	  ++num_training_examples_added;
-	  labels.push_back(seq->segmentations_[j]);
-	  caches.push_back(sp.getFrameCache());
+          ++num_training_examples_added;
+          labels.push_back(seq->segmentations_[j]);
+          caches.push_back(sp.getFrameCache());
 
 
-	  // -- Make sure sp is consistent.
-	  if(DEBUG) { 
-	    SegmentationPipeline sp(1);
-	    sp.verbose_ = false;
-	    sp.setWeightsWithClipping(weights);
-	    ROS_ASSERT(!margin_rescaling_);
-	    cv::Mat1b ymv = sp.findMostViolating(*caches.back(), labels.back(), margin_rescaling_);
+          // -- Make sure sp is consistent.
+          if(DEBUG) { 
+            SegmentationPipeline sp(1);
+            sp.verbose_ = false;
+            sp.setWeightsWithClipping(weights);
+            ROS_ASSERT(!margin_rescaling_);
+            cv::Mat1b ymv = sp.findMostViolating(*caches.back(), labels.back(), margin_rescaling_);
 
-	    cv::Mat1b diff(ymv.size());
-	    diff = 0;
-	    bool show = false;
-	    for(int y = 0; y < ymv.rows; ++y)
-	      for(int x = 0; x < ymv.cols; ++x)
-		if(ymv(y, x) != working_img_seg(y, x)) {
-		  ROS_ERROR_STREAM("SegPipe is inconsistent.");
-		  show = true;
-		  diff(y, x) = 255;
-		}
+            cv::Mat1b diff(ymv.size());
+            diff = 0;
+            bool show = false;
+            for(int y = 0; y < ymv.rows; ++y)
+              for(int x = 0; x < ymv.cols; ++x)
+                if(ymv(y, x) != working_img_seg(y, x)) {
+                  ROS_ERROR_STREAM("SegPipe is inconsistent.");
+                  show = true;
+                  diff(y, x) = 255;
+                }
 
-	    cv::imshow("Seg differences", diff);
-	    cv::waitKey(10);
-	    if(show) { 
-	      cv::waitKey();
-	    }
-	  }
-	  
-	  
-	  // Memory limit.
-	  if(caches.size() > 1500) {
-	    caches.erase(caches.begin(), caches.begin()+1);
-	    labels.erase(labels.begin(), labels.begin()+1);
-	  }
-	  
-	  // If we're starting to do really poorly or if we're done,
-	  // print out results and move on to the next sequence.
-	  if(normalized_loss >= MAX_NORMALIZED_LOSS) {
-	    ROS_DEBUG_STREAM("Sequence " << i << ": Normalized loss for frame " << j + 1 << " / " << seq->images_.size()
-			     << " is " << normalized_loss << ".  Mean normalized loss: " << seq_normalized_loss / (double)j
-			     << flush);
-			     
-	    break;
-	  }
-	  else if(j == seq->images_.size() - 1)
-	    ROS_DEBUG_STREAM("Sequence " << i << ": Completed " << j + 1 << " frames without making serious errors.  Mean normalized loss: "
-			     << seq_normalized_loss / (double)j << flush);
-	}
+            cv::imshow("Seg differences", diff);
+            cv::waitKey(10);
+            if(show) { 
+              cv::waitKey();
+            }
+          }
+          
+          
+          // Memory limit.
+          if(caches.size() > 1500) {
+            caches.erase(caches.begin(), caches.begin()+1);
+            labels.erase(labels.begin(), labels.begin()+1);
+          }
+          
+          // If we're starting to do really poorly or if we're done,
+          // print out results and move on to the next sequence.
+          if(normalized_loss >= MAX_NORMALIZED_LOSS) {
+            ROS_DEBUG_STREAM("Sequence " << i << ": Normalized loss for frame " << j + 1 << " / " << seq->images_.size()
+                             << " is " << normalized_loss << ".  Mean normalized loss: " << seq_normalized_loss / (double)j
+                             << flush);
+                             
+            break;
+          }
+          else if(j == seq->images_.size() - 1)
+            ROS_DEBUG_STREAM("Sequence " << i << ": Completed " << j + 1 << " frames without making serious errors.  Mean normalized loss: "
+                             << seq_normalized_loss / (double)j << flush);
+        }
       }
 
       ROS_DEBUG_STREAM("Added " << num_training_examples_added << " training examples.");
       ROS_DEBUG_STREAM(total_segmented_frames << " frames segmented, mean normalized loss of "
-		       << total_normalized_loss / (double)total_segmented_frames);
+                       << total_normalized_loss / (double)total_segmented_frames);
       
       // -- Determine if this is an improvement.
       if(total_segmented_frames > best_total_segmented_frames ||
-	 (total_segmented_frames == best_total_segmented_frames &&
-	  total_normalized_loss < best_total_normalized_loss))
+         (total_segmented_frames == best_total_segmented_frames &&
+          total_normalized_loss < best_total_normalized_loss))
       { 
-	best_total_segmented_frames = total_segmented_frames;
-	best_total_normalized_loss = total_normalized_loss;
-	ROS_DEBUG_STREAM("Best performance so far this iter.");
-	best_weights = weights;
-	num_iters_since_improvement = 0;
-	
-	string filename = "autosave_best_weights.eig.txt";
-	ROS_DEBUG_STREAM("Saving best weights to " << filename);
-	eigen_extensions::saveASCII(weights, filename);
+        best_total_segmented_frames = total_segmented_frames;
+        best_total_normalized_loss = total_normalized_loss;
+        ROS_DEBUG_STREAM("Best performance so far this iter.");
+        best_weights = weights;
+        num_iters_since_improvement = 0;
+        
+        string filename = "autosave_best_weights.eig.txt";
+        ROS_DEBUG_STREAM("Saving best weights to " << filename);
+        eigen_extensions::saveASCII(weights, filename);
       }
       else
-	++num_iters_since_improvement;
+        ++num_iters_since_improvement;
       ROS_DEBUG_STREAM(num_iters_since_improvement << " iterations since last improvement.");
-	
+        
       
       // -- Run structural SVM.
       ROS_DEBUG_STREAM("Total number of segmented frames this outer iteration: " << total_segmented_frames);
@@ -244,26 +244,26 @@ namespace dst
       prev_weights = weights;
       weights = runSolver(caches, labels, &constraints);
       if(CLEAR_CONSTRAINTS) {
-	ROS_DEBUG_STREAM("Clearing constraints.");
-	constraints.clear();
+        ROS_DEBUG_STREAM("Clearing constraints.");
+        constraints.clear();
       }
 
       if(iter > 0) {
-      	// cout << "weights norm: " << weights.norm() << endl;
-      	// cout << "prev weights norm: " << prev_weights.norm() << endl;
-      	ROS_ASSERT(fabs(weights.norm() - 1.0) < 1e-3);
-      	ROS_ASSERT(fabs(prev_weights.norm() - 1.0) < 1e-3);
+              // cout << "weights norm: " << weights.norm() << endl;
+              // cout << "prev weights norm: " << prev_weights.norm() << endl;
+              ROS_ASSERT(fabs(weights.norm() - 1.0) < 1e-3);
+              ROS_ASSERT(fabs(prev_weights.norm() - 1.0) < 1e-3);
       }
       
       // -- Stop if we're done.
       ROS_DEBUG_STREAM("Angle change between weights: " << fabs(acos(weights.dot(prev_weights))) << flush);
       if(fabs(acos(weights.dot(prev_weights))) < 1e-3) {
-	ROS_DEBUG_STREAM("Breaking outer iteration because weights have not changed much." << flush);
-	break;
+        ROS_DEBUG_STREAM("Breaking outer iteration because weights have not changed much." << flush);
+        break;
       }
       if(num_iters_since_improvement > 10) {
-	ROS_DEBUG_STREAM("Breaking outer iteration because performance has not improved recently.");
-	break;
+        ROS_DEBUG_STREAM("Breaking outer iteration because performance has not improved recently.");
+        break;
       }
     
       ++iter;
@@ -276,7 +276,7 @@ namespace dst
   }
 
   void StructSVM::precache(std::vector<FramePotentialsCache::Ptr>* caches,
-			   std::vector<cv::Mat1b>* labels) const
+                           std::vector<cv::Mat1b>* labels) const
   {
     for(size_t i = 0; i < sequences_.size(); ++i) {
       KinectSequence::Ptr seq = sequences_[i];
@@ -284,8 +284,8 @@ namespace dst
       PotentialsCache::Ptr cache = sp.cacheUnweightedPotentialsWithOracle(seq);
       
       for(size_t j = 0; j < cache->size(); ++j) { 
-	caches->push_back(cache->framecaches_[j]);
-	labels->push_back(seq->segmentations_[j]);
+        caches->push_back(cache->framecaches_[j]);
+        labels->push_back(seq->segmentations_[j]);
       }
     }
   }
@@ -303,8 +303,8 @@ namespace dst
   }
 
   Eigen::VectorXd StructSVM::runOneSlackSolver(const std::vector<FramePotentialsCache::Ptr>& caches,
-					       const std::vector<cv::Mat1b>& labels,
-					       std::vector<Constraint>* constraints) const
+                                               const std::vector<cv::Mat1b>& labels,
+                                               std::vector<Constraint>* constraints) const
   {
     ROS_ASSERT(caches.size() == labels.size());
     ROS_ASSERT(constraints);
@@ -323,10 +323,10 @@ namespace dst
       ROS_DEBUG_STREAM("==================== Starting iteration " << iter << flush);
 
       if(SAVE_INNER_WEIGHTS) {
-	ROS_ASSERT(!ROBUST && !HYBRID);
-	ostringstream oss;
-	oss << "weights" << setw(4) << setfill('0') << iter << ".eig.txt";
-	eigen_extensions::saveASCII(weights, oss.str());
+        ROS_ASSERT(!ROBUST && !HYBRID);
+        ostringstream oss;
+        oss << "weights" << setw(4) << setfill('0') << iter << ".eig.txt";
+        eigen_extensions::saveASCII(weights, oss.str());
       }
       
       VectorXd prev_weights = weights;
@@ -337,7 +337,7 @@ namespace dst
       // -- Compute the most violating labeling for each framecache.
       vector<ComputeNode*> nodes(caches.size(), NULL);
       for(size_t i = 0; i < caches.size(); ++i)
-	nodes[i] = new ConstraintGenerator(this, weights, i, caches[i], labels[i]);
+        nodes[i] = new ConstraintGenerator(this, weights, i, caches[i], labels[i]);
       Pipeline2 pl(NUM_GC_THREADS, nodes);
       HighResTimer hrt("Computing ymvs");
       hrt.start();
@@ -351,18 +351,18 @@ namespace dst
       c.tr_ex_id_ = 0; // For all; this indexes into which slack variable, and there's only one.
       c.dpsi_ = VectorXd::Zero(weights.rows());
       for(size_t i = 0; i < nodes.size(); ++i) {
-	ConstraintGenerator& cg = *(ConstraintGenerator*)nodes[i];
-	ROS_ASSERT(cg.hamming_loss_ >= 0);  // Make sure all nodes computed.
-	normalized_loss += cg.normalized_loss_ / (double)caches.size();
-	c.loss_ += cg.con_.loss_ / (double)nodes.size(); // mean 0-1 loss
-	c.dpsi_ += cg.con_.dpsi_ / (double)nodes.size(); // mean dpsi
+        ConstraintGenerator& cg = *(ConstraintGenerator*)nodes[i];
+        ROS_ASSERT(cg.hamming_loss_ >= 0);  // Make sure all nodes computed.
+        normalized_loss += cg.normalized_loss_ / (double)caches.size();
+        c.loss_ += cg.con_.loss_ / (double)nodes.size(); // mean 0-1 loss
+        c.dpsi_ += cg.con_.dpsi_ / (double)nodes.size(); // mean dpsi
       }
       constraints->push_back(c);
       ROS_DEBUG_STREAM("Mean normalized loss: " << normalized_loss);
       if(normalized_loss < best_normalized_loss) {
-	ROS_DEBUG_STREAM("Best normalized loss so far (previous best: " << best_normalized_loss << ").");
-	best_normalized_loss = normalized_loss;
-	best_weights = weights;
+        ROS_DEBUG_STREAM("Best normalized loss so far (previous best: " << best_normalized_loss << ").");
+        best_normalized_loss = normalized_loss;
+        best_weights = weights;
       }
       
       // -- Check if we're done.
@@ -370,8 +370,8 @@ namespace dst
       ROS_DEBUG_STREAM("loss - margin: " << c.loss_ - margin);
       ROS_DEBUG_STREAM("Slack: " << slacks(0));
       if(c.loss_ - margin <= slacks(0) + 1e-6) {
-	ROS_DEBUG_STREAM("Breaking because the newly added constraint is already satisfied.");
-	break;
+        ROS_DEBUG_STREAM("Breaking because the newly added constraint is already satisfied.");
+        break;
       }
       
       // -- Run the solver.
@@ -379,8 +379,8 @@ namespace dst
       hrt.reset("Learning new weights (NIPS)");
       hrt.start();
       updateWeights2(*constraints, 1,
-		     num_edge_weights,
-		     &weights, &slacks);
+                     num_edge_weights,
+                     &weights, &slacks);
       hrt.stop();
       ROS_DEBUG_STREAM(hrt.report() << flush);
 
@@ -392,8 +392,8 @@ namespace dst
   }
 
   Eigen::VectorXd StructSVM::runSolver(const std::vector<FramePotentialsCache::Ptr>& caches,
-				       const std::vector<cv::Mat1b>& labels,
-				       std::vector<Constraint>* constraints) const
+                                       const std::vector<cv::Mat1b>& labels,
+                                       std::vector<Constraint>* constraints) const
   {
     // -- Report on memory usage.
     long int bytes = 0;
@@ -410,7 +410,7 @@ namespace dst
     
   
   Eigen::VectorXd StructSVM::runNSlackSolver(const std::vector<FramePotentialsCache::Ptr>& caches,
-					     const std::vector<cv::Mat1b>& labels) const
+                                             const std::vector<cv::Mat1b>& labels) const
   {
     ROS_ASSERT(caches.size() == labels.size());
     ROS_DEBUG_STREAM("Using n-slack formulation.");
@@ -432,7 +432,7 @@ namespace dst
       // -- Add constraints for all training examples.
       vector<ComputeNode*> nodes(caches.size(), NULL);
       for(size_t i = 0; i < caches.size(); ++i)
-	nodes[i] = new ConstraintGenerator(this, weights, i, caches[i], labels[i]);
+        nodes[i] = new ConstraintGenerator(this, weights, i, caches[i], labels[i]);
       Pipeline2 pl(NUM_GC_THREADS, nodes);
       ROS_DEBUG_STREAM("Using parallel constraint finder.");
       HighResTimer hrt("Computing constraints");
@@ -441,33 +441,33 @@ namespace dst
       hrt.stop();
       ROS_DEBUG_STREAM(hrt.report());
       for(size_t i = 0; i < nodes.size(); ++i) {
-	ConstraintGenerator& cg = *(ConstraintGenerator*)nodes[i];
-	ROS_ASSERT(cg.hamming_loss_ >= 0);  // Make sure all nodes computed.
-	hamming_loss += cg.hamming_loss_ / (double)caches.size();
-	if(cg.hamming_loss_ > 0)
-	  working.push_back(cg.con_);
+        ConstraintGenerator& cg = *(ConstraintGenerator*)nodes[i];
+        ROS_ASSERT(cg.hamming_loss_ >= 0);  // Make sure all nodes computed.
+        hamming_loss += cg.hamming_loss_ / (double)caches.size();
+        if(cg.hamming_loss_ > 0)
+          working.push_back(cg.con_);
       }
       
       // -- Keep track of the best weights vector.
       ROS_DEBUG_STREAM("Mean hamming loss: " << hamming_loss);
       ROS_DEBUG_STREAM("Best so far: " << best_hamming_loss);
       if(hamming_loss < best_hamming_loss) {
-	ROS_DEBUG_STREAM("This iteration has best mean hamming loss so far: " << hamming_loss << " vs " << best_hamming_loss);
-	best_hamming_loss = hamming_loss;
-	best_weights = weights;
-	num_iters_since_improvement = 0;
-	
-	string filename = "autosave_best_weights.eig.txt";
-	ROS_DEBUG_STREAM("Saving best weights to " << filename);
-	eigen_extensions::saveASCII(weights, filename);
+        ROS_DEBUG_STREAM("This iteration has best mean hamming loss so far: " << hamming_loss << " vs " << best_hamming_loss);
+        best_hamming_loss = hamming_loss;
+        best_weights = weights;
+        num_iters_since_improvement = 0;
+        
+        string filename = "autosave_best_weights.eig.txt";
+        ROS_DEBUG_STREAM("Saving best weights to " << filename);
+        eigen_extensions::saveASCII(weights, filename);
       }
       else
-	++num_iters_since_improvement;
+        ++num_iters_since_improvement;
       
       // -- Check if we're done.
       if(working.size() == prev_working_size) {
-	ROS_DEBUG_STREAM("Breaking due to lack of additions to working set.");
-	break;
+        ROS_DEBUG_STREAM("Breaking due to lack of additions to working set.");
+        break;
       }
       
       // -- Update the weights.
@@ -484,31 +484,31 @@ namespace dst
       hrt.reset("Learning new weights (NIPS)");
       hrt.start();
       updateWeights2(working, caches.size(),
-      		     num_edge_weights,
-      		     &weights, &slacks);
+                           num_edge_weights,
+                           &weights, &slacks);
       hrt.stop();
       ROS_DEBUG_STREAM(hrt.report() << flush);
 
       ROS_ASSERT(fabs(weights.norm() - 1.0) < 1e-6);
       if(iter > 0) { 
-	ROS_ASSERT(fabs(prev_weights.norm() - 1.0) < 1e-6);
-	ROS_DEBUG_STREAM("angle change between current weights and old weights = " << acos(weights.dot(prev_weights)));
+        ROS_ASSERT(fabs(prev_weights.norm() - 1.0) < 1e-6);
+        ROS_DEBUG_STREAM("angle change between current weights and old weights = " << acos(weights.dot(prev_weights)));
       }
       ROS_DEBUG_STREAM("new weights: ");
       ROS_DEBUG_STREAM(weights.transpose());
 
       // -- Check if we're done.
       if(!feas) {
-	ROS_WARN_STREAM("Breaking due to infeasibility.");
-	break;
+        ROS_WARN_STREAM("Breaking due to infeasibility.");
+        break;
       }
       if(fabs(acos(weights.dot(prev_weights))) < 1e-3) {
-	ROS_DEBUG_STREAM("Breaking because weights have not changed much.");
-	break;
+        ROS_DEBUG_STREAM("Breaking because weights have not changed much.");
+        break;
       }
       if(num_iters_since_improvement > 20) {
-	ROS_DEBUG_STREAM("Breaking because best hamming loss has not improved recently.");
-	break;
+        ROS_DEBUG_STREAM("Breaking because best hamming loss has not improved recently.");
+        break;
       }
 
       ++iter;
@@ -523,7 +523,7 @@ namespace dst
     double* qpo = new double[eig.rows() * eig.cols()];
     for(int i = 0; i < eig.rows(); ++i)
       for(int j = 0; j < eig.cols(); ++j) 
-	qpo[j + i*eig.cols()] = eig(i, j);
+        qpo[j + i*eig.cols()] = eig(i, j);
 
     return qpo;
   }
@@ -538,10 +538,10 @@ namespace dst
   }
 
   double StructSVM::updateWeights2(const std::vector<Constraint>& constraints,
-				   int num_tr_ex,
-				   int num_edge_weights,
-				   Eigen::VectorXd* weights,
-				   Eigen::VectorXd* slacks) const
+                                   int num_tr_ex,
+                                   int num_edge_weights,
+                                   Eigen::VectorXd* weights,
+                                   Eigen::VectorXd* slacks) const
   {
     // -- Warm start from previous solution.
     VectorXd x = VectorXd::Zero(weights->rows() + num_tr_ex);
@@ -553,9 +553,9 @@ namespace dst
       const Constraint& c = constraints[i];
       double& slack = x.coeffRef(weights->rows() + c.tr_ex_id_);
       if(weights->dot(c.dpsi_) < c.loss_ - slack) { 
-	// Strict equality won't work with this solver,
-	// so add a bit to the minimum amount of slack.
-	slack = c.loss_ - weights->dot(c.dpsi_) + 1.0;
+        // Strict equality won't work with this solver,
+        // so add a bit to the minimum amount of slack.
+        slack = c.loss_ - weights->dot(c.dpsi_) + 1.0;
       }
     }
     
@@ -571,7 +571,7 @@ namespace dst
     b->startVec(0);
     for(int i = 0; i < x.rows(); ++i)
       if(i >= weights->rows())
-	b->insertBack(i) = c_ / (double)num_tr_ex;
+        b->insertBack(i) = c_ / (double)num_tr_ex;
     b->finalize();
 
     SparseQuadraticFunction::Ptr objective(new SparseQuadraticFunction(A, b, 0));
@@ -587,8 +587,8 @@ namespace dst
     int restart = 0;
     ROS_DEBUG_STREAM("Solving with tolerance " << TOL);
     NesterovInteriorPointSolver nips(objective, gradient,
-				     initial_mu, tol, alpha, beta,
-				     max_num_iters, stepsize, restart, DEBUG_LEVEL);
+                                     initial_mu, tol, alpha, beta,
+                                     max_num_iters, stepsize, restart, DEBUG_LEVEL);
 
     // -- Generate the margin constraints.
     for(size_t i = 0; i < constraints.size(); ++i) {
@@ -598,7 +598,7 @@ namespace dst
       SVPtr b(new Eigen::SparseVector<double>(x.rows()));
       b->startVec(0);
       for(int j = 0; j < weights->rows(); ++j)
-	b->insertBack(j) = -constraints[i].dpsi_(j);
+        b->insertBack(j) = -constraints[i].dpsi_(j);
       b->insertBack(weights->rows() + constraints[i].tr_ex_id_) = -1;
 
       SparseQuadraticFunction::Ptr c(new SparseQuadraticFunction(A, b, constraints[i].loss_));
@@ -610,17 +610,17 @@ namespace dst
     //    and the slack variables.
     for(int i = 0; i < x.rows(); ++i) {
       if(ALL_NONNEG || (i < num_edge_weights || i >= weights->rows())) { 
-	SMPtr A(new Eigen::SparseMatrix<double>(x.rows(), x.rows()));
-	A->finalize();
-	
-	SVPtr b(new Eigen::SparseVector<double>(x.rows()));
-	b->startVec(0);
-	b->insertBack(i) = -1.0;
-	b->finalize();
+        SMPtr A(new Eigen::SparseMatrix<double>(x.rows(), x.rows()));
+        A->finalize();
+        
+        SVPtr b(new Eigen::SparseVector<double>(x.rows()));
+        b->startVec(0);
+        b->insertBack(i) = -1.0;
+        b->finalize();
 
-	SparseQuadraticFunction::Ptr c(new SparseQuadraticFunction(A, b, 0));
-	SparseLinearFunction::Ptr gc(new SparseLinearFunction(A, b));
-	nips.addConstraint(c, gc);
+        SparseQuadraticFunction::Ptr c(new SparseQuadraticFunction(A, b, 0));
+        SparseLinearFunction::Ptr gc(new SparseLinearFunction(A, b));
+        nips.addConstraint(c, gc);
       }
     }
 
@@ -634,7 +634,7 @@ namespace dst
     
     for(int i = 0; i < num_edge_weights; ++i)
       if(weights->coeffRef(i) < 0)
-	weights->coeffRef(i) = 0;
+        weights->coeffRef(i) = 0;
     weights->normalize();
 
     return objective->eval(xstar);
@@ -649,14 +649,14 @@ namespace dst
     double num_fg = 0;
     for(int y = 0; y < label.rows; ++y) {
       for(int x = 0; x < label.cols; ++x) {
-	
-	if(label(y, x) == 255)
-	  ++num_fg;
-	// Ignore pixels without depth.
-	if(label(y, x) == 255 && pred(y, x) == 0)
-	  ++loss;
-	else if(label(y, x) == 0 && pred(y, x) == 255)
-	  ++loss;
+        
+        if(label(y, x) == 255)
+          ++num_fg;
+        // Ignore pixels without depth.
+        if(label(y, x) == 255 && pred(y, x) == 0)
+          ++loss;
+        else if(label(y, x) == 0 && pred(y, x) == 255)
+          ++loss;
       }
     }
 
@@ -682,13 +682,13 @@ namespace dst
     if(hamming) {
       double loss = 0;
       for(int y = 0; y < label.rows; ++y) {
-	for(int x = 0; x < label.cols; ++x) {
-	  // Ignore pixels without depth.
-	  if(label(y, x) == 255 && pred(y, x) == 0)
-	    ++loss;
-	  else if(label(y, x) == 0 && pred(y, x) == 255)
-	    ++loss;
-	}
+        for(int x = 0; x < label.cols; ++x) {
+          // Ignore pixels without depth.
+          if(label(y, x) == 255 && pred(y, x) == 0)
+            ++loss;
+          else if(label(y, x) == 0 && pred(y, x) == 255)
+            ++loss;
+        }
       }
       return loss;
       //return 1000.0 * loss / (double)(label.rows * label.cols);
@@ -697,17 +697,17 @@ namespace dst
     else { 
       bool equal = true;
       for(int y = 0; y < label.rows && equal; ++y) {
-	for(int x = 0; x < label.cols && equal; ++x) {
-	  // Ignore pixels without depth.
-	  if((label(y, x) == 255 && pred(y, x) == 0) ||
-	     (label(y, x) == 0 && pred(y, x) == 255))
-	    equal = false;
-	}
+        for(int x = 0; x < label.cols && equal; ++x) {
+          // Ignore pixels without depth.
+          if((label(y, x) == 255 && pred(y, x) == 0) ||
+             (label(y, x) == 0 && pred(y, x) == 255))
+            equal = false;
+        }
       }
       if(!equal)
-	return 1.0;
+        return 1.0;
       else
-	return 0.0;
+        return 0.0;
     }
 
     ROS_ASSERT(0);
@@ -715,10 +715,10 @@ namespace dst
   }
 
   ConstraintGenerator::ConstraintGenerator(const StructSVM* svm,
-					   const Eigen::VectorXd& weights,
-					   int tr_ex_id,
-					   FramePotentialsCache::Ptr cache,
-					   cv::Mat1b labels) :
+                                           const Eigen::VectorXd& weights,
+                                           int tr_ex_id,
+                                           FramePotentialsCache::Ptr cache,
+                                           cv::Mat1b labels) :
     ComputeNode(),
     hamming_loss_(-1),
     normalized_loss_(-1),
@@ -743,15 +743,15 @@ namespace dst
 
     VectorXd psi_gt;
     double gt_score = cache_->computeScore(labels_,
-					   sp.getEdgeWeights(),
-					   sp.getNodeWeights(),
-					   &psi_gt);
-	
+                                           sp.getEdgeWeights(),
+                                           sp.getNodeWeights(),
+                                           &psi_gt);
+        
     VectorXd psi_pred;
     double pred_score = cache_->computeScore(ymv,
-					     sp.getEdgeWeights(),
-					     sp.getNodeWeights(),
-					     &psi_pred);
+                                             sp.getEdgeWeights(),
+                                             sp.getNodeWeights(),
+                                             &psi_pred);
     VectorXd dpsi = psi_gt - psi_pred;
 
     // ymv should the best possible labeling for these weights.
@@ -762,7 +762,7 @@ namespace dst
       cv::waitKey();
       ROS_ASSERT(pred_score >= gt_score);  // This failed once.  Why?
     }
-	
+        
     con_.tr_ex_id_ = tr_ex_id_;
     con_.dpsi_ = dpsi;
     con_.loss_ = l;

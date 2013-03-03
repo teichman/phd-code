@@ -22,10 +22,10 @@ public:
   //! Computes transform that will move target to reference.
   //! T * target = reference.
   Eigen::Affine3f calibrate(rgbd::Sequence::ConstPtr reference,
-			    rgbd::Sequence::ConstPtr target) const;
+                            rgbd::Sequence::ConstPtr target) const;
 
   pcl::PointXYZRGB samplePoint(const std::vector<cv::KeyPoint>& keypoints,
-			       const rgbd::Cloud& pcd, int* idx) const;
+                               const rgbd::Cloud& pcd, int* idx) const;
   pcl::PointXYZRGB getPoint(const cv::KeyPoint& keypoint, const rgbd::Cloud& pcd) const;
 };
 

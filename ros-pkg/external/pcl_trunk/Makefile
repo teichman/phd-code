@@ -6,7 +6,13 @@ CUDA_BINDIR := /tmp/gcc-4.4
 C_COMPILER:=/usr/bin/gcc
 CXX_COMPILER:=/usr/bin/g++
 
+default: built_against_ros
+
 built_against_ros: svn svn/PATCHED_KINFU
+	mkdir -p msgs_tmp
+	for d in `echo svn/common/include/* | grep msg`; do \
+	  mv $$d msgs_tmp; \
+  done
 	cd svn && mkdir -p build_against_ros
 	mkdir -p ${CUDA_BINDIR}
 	cd ${CUDA_BINDIR} && ln -sf /usr/bin/gcc-4.4 gcc && ln -sf /usr/bin/g++-4.4 g++
@@ -20,15 +26,18 @@ built_against_ros: svn svn/PATCHED_KINFU
 	-DBUILD_apps:BOOL=ON \
 	-DBUILD_gpu_surface:BOOL=ON \
 	-DCUDA_NVCC_FLAGS:="--compiler-bindir=${CUDA_BINDIR};-w" \
-	-DCMAKE_CXX_FLAGS:=" -Wno-invalid-offsetof -Wno-deprecated-declarations -I`rospack find sensor_msgs`/include -I`rospack find sensor_msgs`/msg_gen/cpp/include -I`rospack find std_msgs`/include -I`rospack find std_msgs`/msg_gen/cpp/include -I`rospack find roscpp_serialization`/include -I`rospack find cpp_common`/include -I`rospack find rostime`/include -I`rospack find roscpp_traits`/include -I`rospack find rosconsole`/include" \
+	-DCMAKE_CXX_FLAGS:=" -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}`" \
+	-DCMAKE_C_FLAGS:=" -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}`" \
 	-DCMAKE_BUILD_TYPE:="Release" \
 	-DBUILD_examples:BOOL=OFF \
 	-DCMAKE_INSTALL_PREFIX:=`rospack find pcl_trunk`/release_against_ros
 	cd svn/build_against_ros && make -j4 && make install
 	rm -rf ${CUDA_BINDIR}
+	for d in `echo msgs_tmp/*`; do \
+		mv $$d svn/common/include; \
+	done
 	touch $@
 
-default: built_against_ros
 # was 5600
 built: svn svn/PATCHED_KINFU
 	cd svn && mkdir -p build

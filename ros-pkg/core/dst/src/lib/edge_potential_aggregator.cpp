@@ -7,12 +7,12 @@ namespace dst
 {
   
   EdgePotentialAggregator::EdgePotentialAggregator(pipeline2::Outlet<Graph3dPtr>* graph_otl,
-						   pipeline2::Outlet<cv::Mat3b>* img_otl,
-						   pipeline2::Outlet<DepthProjector::Output>* index_otl,
-						   const std::vector<EdgePotentialGenerator*>& generators,
-						   const Eigen::VectorXd& weights,
-						   bool ignore_depthless,
-						   pipeline2::Outlet< Eigen::SparseMatrix<double, Eigen::RowMajor>* >* weights_otl) :
+                                                   pipeline2::Outlet<cv::Mat3b>* img_otl,
+                                                   pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                                                   const std::vector<EdgePotentialGenerator*>& generators,
+                                                   const Eigen::VectorXd& weights,
+                                                   bool ignore_depthless,
+                                                   pipeline2::Outlet< Eigen::SparseMatrix<double, Eigen::RowMajor>* >* weights_otl) :
     graph_otl_(graph_otl),
     img_otl_(img_otl),
     index_otl_(index_otl),
@@ -46,13 +46,13 @@ namespace dst
     ostringstream oss;
     for(size_t i = 0; i < generators_.size(); ++i) { 
       oss << setiosflags(ios::left) << setw(10) << weights_[i] << "\t"
-	  << setiosflags(ios::left) << setw(100) << generators_[i]->getShortName() << endl;
+          << setiosflags(ios::left) << setw(100) << generators_[i]->getShortName() << endl;
     }
     return oss.str();
   }
   
   void EdgePotentialAggregator::setWeights(const Eigen::VectorXd& weights, bool verbose)
-					   
+                                           
   {
     ROS_ASSERT((size_t)weights.rows() == generators_.size());
     weights_ = weights;
@@ -63,8 +63,8 @@ namespace dst
   }
 
   void EdgePotentialAggregator::ignoreDepthless(const SparseMatrix<double, RowMajor>& pot,
-						SparseMatrix<double, RowMajor>* sanitized,
-						const std::string& name) const
+                                                SparseMatrix<double, RowMajor>* sanitized,
+                                                const std::string& name) const
   {
     cv::Mat1i index = index_otl_->pull().current_index_;
     
@@ -73,20 +73,20 @@ namespace dst
       SparseMatrix<double, RowMajor>::InnerIterator it(pot, i);
       sanitized->startVec(i);
       for(; it; ++it) {
-	ROS_ASSERT(it.row() == i);
-	
-	int idx1 = it.row();
-	int y1 = idx1 / index.cols;
-	int x1 = idx1 - y1 * index.cols;
-	int idx2 = it.col();
-	int y2 = idx2 / index.cols;
-	int x2 = idx2 - y2 * index.cols;
-	if(index(y1, x1) == -1 || index(y2, x2) == -1)
-	  continue;
-	sanitized->insertBack(it.row(), it.col()) = it.value();
-	ROS_WARN_STREAM_COND(it.value() < 0, "Negative edge weight of " << it.value() << " in " << name);
-	ROS_WARN_STREAM_COND(isnan(it.value()), "NaN in " << name);
-	ROS_WARN_STREAM_COND(isinf(it.value()), "inf in " << name);
+        ROS_ASSERT(it.row() == i);
+        
+        int idx1 = it.row();
+        int y1 = idx1 / index.cols;
+        int x1 = idx1 - y1 * index.cols;
+        int idx2 = it.col();
+        int y2 = idx2 / index.cols;
+        int x2 = idx2 - y2 * index.cols;
+        if(index(y1, x1) == -1 || index(y2, x2) == -1)
+          continue;
+        sanitized->insertBack(it.row(), it.col()) = it.value();
+        ROS_WARN_STREAM_COND(it.value() < 0, "Negative edge weight of " << it.value() << " in " << name);
+        ROS_WARN_STREAM_COND(isnan(it.value()), "NaN in " << name);
+        ROS_WARN_STREAM_COND(isinf(it.value()), "inf in " << name);
       }
     }
   }
@@ -100,7 +100,7 @@ namespace dst
     for(size_t i = 0; i < generators_.size(); ++i) {
       ROS_ASSERT(generators_[i]);
       if(!generators_[i]->edge_otl_.pull())
-	continue;
+        continue;
 
       SparseMatrix<double, RowMajor> gen;
       ignoreDepthless(*generators_[i]->edge_otl_.pull(), &gen, generators_[i]->getFullName());
@@ -121,29 +121,29 @@ namespace dst
     if(weights_otl_) {
       SparseMatrix<double, RowMajor>& w = *weights_otl_->pull();
       for(size_t i = 0; i < generators_.size(); ++i) {
-	if(!generators_[i]->edge_otl_.pull())
-	  continue;
+        if(!generators_[i]->edge_otl_.pull())
+          continue;
 
-	SparseMatrix<double, RowMajor>& inc = *generators_[i]->edge_otl_.pull();
-	if(inc.nonZeros() == 0)
-	  continue;
+        SparseMatrix<double, RowMajor>& inc = *generators_[i]->edge_otl_.pull();
+        if(inc.nonZeros() == 0)
+          continue;
 
-	SparseMatrix<double, RowMajor> gen;
-	ignoreDepthless(inc, &gen, generators_[i]->getFullName());
-	if(generators_[i] == weights_otl_->getNode())
-	  potentials_ += weights_[i] * gen;
-	else
-	  potentials_ += weights_[i] * gen.cwiseProduct(w);
+        SparseMatrix<double, RowMajor> gen;
+        ignoreDepthless(inc, &gen, generators_[i]->getFullName());
+        if(generators_[i] == weights_otl_->getNode())
+          potentials_ += weights_[i] * gen;
+        else
+          potentials_ += weights_[i] * gen.cwiseProduct(w);
       }
     }
     else { 
       for(size_t i = 0; i < generators_.size(); ++i) {
-	if(!generators_[i]->edge_otl_.pull())
-	  continue;
-	
-	SparseMatrix<double, RowMajor> gen;
-	ignoreDepthless(*generators_[i]->edge_otl_.pull(), &gen, generators_[i]->getFullName());
-	potentials_ += weights_[i] * gen;
+        if(!generators_[i]->edge_otl_.pull())
+          continue;
+        
+        SparseMatrix<double, RowMajor> gen;
+        ignoreDepthless(*generators_[i]->edge_otl_.pull(), &gen, generators_[i]->getFullName());
+        potentials_ += weights_[i] * gen;
       }
     }
     

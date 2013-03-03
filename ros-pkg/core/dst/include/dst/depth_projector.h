@@ -35,24 +35,24 @@ namespace dst
     pipeline2::Outlet<Output> index_otl_;
     
     DepthProjector(pipeline2::Outlet<cv::Mat3b>* img_otl,
-		   pipeline2::Outlet<KinectCloud::ConstPtr>* pcd_otl);
+                   pipeline2::Outlet<KinectCloud::ConstPtr>* pcd_otl);
 
     //! Finds the closest pixel to pt that has a corresponding depth point.
     //! If none was found, returns (-1, -1).
     static cv::Point2i findNearest(cv::Mat1i index,
-				   int radius,
-				   const cv::Point2i& pt);
+                                   int radius,
+                                   const cv::Point2i& pt);
 
     void projectCloud(const KinectCloud& cloud,
-		      int spread,
-		      cv::Mat1i index) const;
+                      int spread,
+                      cv::Mat1i index) const;
 
     cv::Mat3b getZBuffer(const KinectCloud& cloud,
-			 int spread,
-			 float min_range,
-			 float max_range) const;
-    cv::Mat1b visualizeDepthIndex(cv::Mat1i index) const;
-	
+                         int spread,
+                         float min_range,
+                         float max_range) const;
+    cv::Mat1b visualizeRangeIndex(cv::Mat1i index) const;
+        
   protected:
     pipeline2::Outlet<cv::Mat3b>* img_otl_;
     pipeline2::Outlet<KinectCloud::ConstPtr>* pcd_otl_;

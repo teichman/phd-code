@@ -52,11 +52,14 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/link_visualizer.cpp
   src/lib/discrete_depth_distortion_model.cpp
   )
+
+# memory fragmentation is a problem for data quantity experiment?
+target_link_libraries(${PROJECT_NAME} tcmalloc)
+
 rosbuild_add_compile_flags(${PROJECT_NAME} -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
 rosbuild_link_boost(${PROJECT_NAME} system program_options)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
+
+
 rosbuild_add_executable(calibrate_sequences src/prog/calibrate_sequences.cpp)
 target_link_libraries(calibrate_sequences ${PROJECT_NAME})
 
@@ -176,3 +179,15 @@ target_link_libraries(visualize_intrinsics ${PROJECT_NAME})
 rosbuild_add_executable(iterative_calibration_experiment src/prog/iterative_calibration_experiment.cpp)
 rosbuild_link_boost(iterative_calibration_experiment program_options filesystem)
 target_link_libraries(iterative_calibration_experiment ${PROJECT_NAME})
+
+rosbuild_add_executable(planarity_experiment src/prog/planarity_experiment.cpp)
+rosbuild_link_boost(planarity_experiment program_options filesystem)
+target_link_libraries(planarity_experiment ${PROJECT_NAME})
+
+rosbuild_add_executable(view_stream src/prog/view_stream.cpp)
+rosbuild_link_boost(view_stream program_options filesystem)
+target_link_libraries(view_stream ${PROJECT_NAME})
+
+rosbuild_add_executable(visualize_map_depth_estimation src/prog/visualize_map_depth_estimation.cpp)
+rosbuild_link_boost(visualize_map_depth_estimation program_options filesystem)
+target_link_libraries(visualize_map_depth_estimation ${PROJECT_NAME})

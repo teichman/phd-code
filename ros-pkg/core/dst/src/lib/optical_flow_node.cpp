@@ -19,8 +19,8 @@ namespace dst
   }
 
   void OpticalFlowNode::safePointRound(const cv::Size& sz,
-				       const cv::Point2f& fpt,
-				       cv::Point2i* ipt)
+                                       const cv::Point2f& fpt,
+                                       cv::Point2i* ipt)
   {
     ipt->x = min(sz.width - 1, max(0, (int)fpt.x));
     ipt->y = min(sz.height - 1, max(0, (int)fpt.y));
@@ -80,8 +80,8 @@ namespace dst
       int y0 = min(curr_index.rows - 1, max(0, (int)points_[i].y));
       int idx0 = curr_index(y0, x0);
       if(idx0 == -1) {
-	edge_scores_[i] = 0.0; // Trust places where we don't have depth.
-	continue;
+        edge_scores_[i] = 0.0; // Trust places where we don't have depth.
+        continue;
       }
       ROS_FATAL_STREAM_COND(idx0 < 0 || idx0 >= (int)pcd->size(), "idx0 is " << idx0 << " but pcd->size() is " << pcd->size() << "; point is (x, y) " << x0 << " " << y0);
       double ref = pcd->at(idx0).z;
@@ -93,27 +93,27 @@ namespace dst
       int min_y = max(0, y0 - edge_radius_);
       int max_y = min(curr_index.rows - 1, y0 + edge_radius_);
       for(int x = min_x; x <= max_x; ++x) {
-	for(int y = min_y; y <= max_y; ++y) {
-	  int idx = curr_index(y, x);
-	  if(idx != -1) {
-	    double z = pcd->at(idx).z;
-	    double pct = fabs(z - ref) / ref;
-	    distances.push_back(pct);
-	  }
-	}
+        for(int y = min_y; y <= max_y; ++y) {
+          int idx = curr_index(y, x);
+          if(idx != -1) {
+            double z = pcd->at(idx).z;
+            double pct = fabs(z - ref) / ref;
+            distances.push_back(pct);
+          }
+        }
       }
 
       // TODO: This could be sorted on insertion.
       std::sort(distances.begin(), distances.end());
-	
+        
       // -- Find biggest change in z-distances.
       double max_change = 0;
       if(distances.size() > 1) { 
-	for(size_t j = 1; j < distances.size(); ++j) {
-	  double d = fabs(distances[j] - distances[j-1]);
-	  if(d > max_change)
-	    max_change = d;
-	}
+        for(size_t j = 1; j < distances.size(); ++j) {
+          double d = fabs(distances[j] - distances[j-1]);
+          if(d > max_change)
+            max_change = d;
+        }
       }
       edge_scores_[i] = 1.0 - exp(-max_change / sigma_);
     }
@@ -155,25 +155,25 @@ namespace dst
     float max = -std::numeric_limits<float>::max();
     for(int y = 0; y < zbuf.rows; ++y) {
       for(int x = 0; x < zbuf.cols; ++x) {
-	int idx = depth_index(y, x);
-	if(idx != -1) {
-	  zbuf(y, x) = pcd->at(idx).z;
-	  if(zbuf(y, x) > max)
-	    max = zbuf(y, x);
-	}
+        int idx = depth_index(y, x);
+        if(idx != -1) {
+          zbuf(y, x) = pcd->at(idx).z;
+          if(zbuf(y, x) > max)
+            max = zbuf(y, x);
+        }
       }
     }
     zbuf /= max; // normalize so max element == 1.
     zbuf *= 255;
     cv::imwrite("debug/" + getRunName() + "-zbuffer.png", zbuf);
-	    
+            
     // -- Show flow vectors with edge scores.
     cv::Mat3b vis = curr_img.clone();
     for(size_t i = 0; i < prev_points_.size(); ++i) { 
       if(status_[i]) {
-	//cv::circle(vis, prev_points_[i], 2, cv::Scalar(255, 0, 0));
-	cv::line(vis, prev_points_[i], points_[i], cv::Scalar(0, 0, 0));
-	cv::circle(vis, points_[i], 2, cv::Scalar(0, (1.0 - edge_scores_[i]) * 255, edge_scores_[i] * 255));
+        //cv::circle(vis, prev_points_[i], 2, cv::Scalar(255, 0, 0));
+        cv::line(vis, prev_points_[i], points_[i], cv::Scalar(0, 0, 0));
+        cv::circle(vis, points_[i], 2, cv::Scalar(0, (1.0 - edge_scores_[i]) * 255, edge_scores_[i] * 255));
       }
     }
     cv::imwrite("debug/" + getRunName() + "-optical_flow.png", vis);

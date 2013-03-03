@@ -29,38 +29,38 @@ extern "C" {
 //during conversion. It takes a little more time, but it is the correct
 //way of doing this. If you are sure your floats are always valid,
 //you can undefine this value...
-#define CLAMP_HALF		1
-#define CLAMP_FLOATS	1
-#define CLAMP_DOUBLES	1
+#define CLAMP_HALF                1
+#define CLAMP_FLOATS        1
+#define CLAMP_DOUBLES        1
 
 /*#ifdef _WIN32_WCE
-	#define IL_NO_EXR
-	#define IL_NO_GIF
-	#define IL_NO_JP2
-	#define IL_NO_JPG
-	#define IL_NO_MNG
-	#define IL_NO_PNG
-	#define IL_NO_TIF
-	#define IL_NO_LCMS
+        #define IL_NO_EXR
+        #define IL_NO_GIF
+        #define IL_NO_JP2
+        #define IL_NO_JPG
+        #define IL_NO_MNG
+        #define IL_NO_PNG
+        #define IL_NO_TIF
+        #define IL_NO_LCMS
 #endif //_WIN32_WCE
 
 #ifdef DJGPP
-	#define IL_NO_EXR
-	#define IL_NO_GIF
-	#define IL_NO_JP2
-	#define IL_NO_JPG
-	#define IL_NO_MNG
-	#define IL_NO_PNG
-	#define IL_NO_TIF
-	#define IL_NO_LCMS
+        #define IL_NO_EXR
+        #define IL_NO_GIF
+        #define IL_NO_JP2
+        #define IL_NO_JPG
+        #define IL_NO_MNG
+        #define IL_NO_PNG
+        #define IL_NO_TIF
+        #define IL_NO_LCMS
 #endif //DJGPP*/
 
 #ifdef _WIN32
-	#if (defined(IL_USE_PRAGMA_LIBS)) && (!defined(_IL_BUILD_LIBRARY))
-		#if defined(_MSC_VER) || defined(__BORLANDC__)
-			#pragma comment(lib, "DevIL.lib")
-		#endif
-	#endif
+        #if (defined(IL_USE_PRAGMA_LIBS)) && (!defined(_IL_BUILD_LIBRARY))
+                #if defined(_MSC_VER) || defined(__BORLANDC__)
+                        #pragma comment(lib, "DevIL.lib")
+                #endif
+        #endif
 #endif
 
 #ifdef RESTRICT_KEYWORD
@@ -78,7 +78,7 @@ typedef unsigned char  ILboolean;
 typedef unsigned int   ILbitfield;
 typedef signed char    ILbyte;
 typedef signed short   ILshort;
-typedef int     	   ILint;
+typedef int                ILint;
 typedef size_t         ILsizei;
 typedef unsigned char  ILubyte;
 typedef unsigned short ILushort;
@@ -99,30 +99,30 @@ typedef long long unsigned int ILuint64;
 
 #include <limits.h>
 #ifdef _UNICODE
-	#ifndef _WIN32_WCE
-		#include <wchar.h>
-	#endif
-	//if we use a define instead of a typedef,
-	//ILconst_string works as intended
-	#define ILchar wchar_t
-	#define ILstring wchar_t*
-	#define ILconst_string  wchar_t const *
+        #ifndef _WIN32_WCE
+                #include <wchar.h>
+        #endif
+        //if we use a define instead of a typedef,
+        //ILconst_string works as intended
+        #define ILchar wchar_t
+        #define ILstring wchar_t*
+        #define ILconst_string  wchar_t const *
 #else
-	//if we use a define instead of a typedef,
-	//ILconst_string works as intended
-	#define ILchar char
-	#define ILstring char*
-	#define ILconst_string char const *
+        //if we use a define instead of a typedef,
+        //ILconst_string works as intended
+        #define ILchar char
+        #define ILstring char*
+        #define ILconst_string char const *
 #endif //_UNICODE
 
-#define IL_FALSE			0
-#define IL_TRUE				1
+#define IL_FALSE                        0
+#define IL_TRUE                                1
 
 //  Matches OpenGL's right now.
 //! Data formats \link Formats Formats\endlink
 #define IL_COLOUR_INDEX     0x1900
 #define IL_COLOR_INDEX      0x1900
-#define IL_ALPHA			0x1906
+#define IL_ALPHA                        0x1906
 #define IL_RGB              0x1907
 #define IL_RGBA             0x1908
 #define IL_BGR              0x80E0
@@ -142,15 +142,15 @@ typedef long long unsigned int ILuint64;
 #define IL_HALF           0x140B
 
 
-#define IL_MAX_BYTE		  		SCHAR_MAX
-#define IL_MAX_UNSIGNED_BYTE  	UCHAR_MAX
-#define IL_MAX_SHORT	  		SHRT_MAX
-#define IL_MAX_UNSIGNED_SHORT 	USHRT_MAX
-#define IL_MAX_INT		  		INT_MAX
-#define IL_MAX_UNSIGNED_INT   	UINT_MAX
+#define IL_MAX_BYTE                                  SCHAR_MAX
+#define IL_MAX_UNSIGNED_BYTE          UCHAR_MAX
+#define IL_MAX_SHORT                          SHRT_MAX
+#define IL_MAX_UNSIGNED_SHORT         USHRT_MAX
+#define IL_MAX_INT                                  INT_MAX
+#define IL_MAX_UNSIGNED_INT           UINT_MAX
 
-#define IL_LIMIT(x,m,M)		(x<m?m:(x>M?M:x))
-#define IL_CLAMP(x) 		IL_LIMIT(x,0,1)
+#define IL_LIMIT(x,m,M)                (x<m?m:(x>M?M:x))
+#define IL_CLAMP(x)                 IL_LIMIT(x,0,1)
 
 #define IL_VENDOR   0x1F00
 #define IL_LOAD_EXT 0x1F01
@@ -222,15 +222,15 @@ typedef long long unsigned int ILuint64;
 #define IL_PXR          0x043D  //!< Pixar - .pxr extension
 #define IL_XPM          0x043E  //!< X Pixel Map - .xpm extension
 #define IL_HDR          0x043F  //!< Radiance High Dynamic Range - .hdr extension
-#define IL_ICNS			0x0440  //!< Macintosh Icon - .icns extension
-#define IL_JP2			0x0441  //!< Jpeg 2000 - .jp2 extension
-#define IL_EXR			0x0442  //!< OpenEXR - .exr extension
-#define IL_WDP			0x0443  //!< 
-#define IL_VTF			0x0444  //!< Valve Texture Format - .vtf extension
-#define IL_WBMP			0x0445  //!< Wireless Bitmap - .wbmp extension
-#define IL_SUN			0x0446  //!< Sun Raster - .sun, .ras, .rs, .im1, .im8, .im24 and .im32 extensions
-#define IL_IFF			0x0447  //!< Interchange File Format - .iff extension
-#define IL_TPL			0x0448  //!< Gamecube Texture - .tpl extension
+#define IL_ICNS                        0x0440  //!< Macintosh Icon - .icns extension
+#define IL_JP2                        0x0441  //!< Jpeg 2000 - .jp2 extension
+#define IL_EXR                        0x0442  //!< OpenEXR - .exr extension
+#define IL_WDP                        0x0443  //!< 
+#define IL_VTF                        0x0444  //!< Valve Texture Format - .vtf extension
+#define IL_WBMP                        0x0445  //!< Wireless Bitmap - .wbmp extension
+#define IL_SUN                        0x0446  //!< Sun Raster - .sun, .ras, .rs, .im1, .im8, .im24 and .im32 extensions
+#define IL_IFF                        0x0447  //!< Interchange File Format - .iff extension
+#define IL_TPL                        0x0448  //!< Gamecube Texture - .tpl extension
 
 
 #define IL_JASC_PAL     0x0475  //!< PaintShop Pro Palette
@@ -283,27 +283,27 @@ typedef long long unsigned int ILuint64;
 
 
 // File definitions
-#define IL_FILE_OVERWRITE	0x0620
-#define IL_FILE_MODE		0x0621
+#define IL_FILE_OVERWRITE        0x0620
+#define IL_FILE_MODE                0x0621
 
 
 // Palette definitions
-#define IL_CONV_PAL			0x0630
+#define IL_CONV_PAL                        0x0630
 
 
 // Load fail definitions
-#define IL_DEFAULT_ON_FAIL	0x0632
+#define IL_DEFAULT_ON_FAIL        0x0632
 
 
 // Key colour and alpha definitions
-#define IL_USE_KEY_COLOUR	0x0635
-#define IL_USE_KEY_COLOR	0x0635
-#define IL_BLIT_BLEND		0x0636
+#define IL_USE_KEY_COLOUR        0x0635
+#define IL_USE_KEY_COLOR        0x0635
+#define IL_BLIT_BLEND                0x0636
 
 
 // Interlace definitions
-#define IL_SAVE_INTERLACED	0x0639
-#define IL_INTERLACE_MODE	0x063A
+#define IL_SAVE_INTERLACED        0x0639
+#define IL_INTERLACE_MODE        0x063A
 
 
 // Quantization definitions
@@ -326,8 +326,8 @@ typedef long long unsigned int ILuint64;
 
 
 // Compression
-#define IL_NVIDIA_COMPRESS	0x0670
-#define IL_SQUISH_COMPRESS	0x0671
+#define IL_NVIDIA_COMPRESS        0x0670
+#define IL_SQUISH_COMPRESS        0x0671
 
 
 // Subimage types
@@ -444,47 +444,47 @@ typedef long long unsigned int ILuint64;
 
 // This is from Win32's <windef.h>
 #if (_MSC_VER >= 800) || defined(_STDCALL_SUPPORTED) || defined(__BORLANDC__) || defined(__LCC__)
-	#define ILAPIENTRY __stdcall 
-	#define IL_PACKSTRUCT
+        #define ILAPIENTRY __stdcall 
+        #define IL_PACKSTRUCT
 //#elif defined(linux) || defined(MACOSX) || defined(__CYGWIN__) //fix bug 840364
 #elif defined( __GNUC__ )
   // this should work for any of the above commented platforms 
   // plus any platform using GCC
-	#ifdef __MINGW32__
-		#define ILAPIENTRY __stdcall
-	#else
-		#define ILAPIENTRY
-	#endif
-	#define IL_PACKSTRUCT __attribute__ ((packed))
+        #ifdef __MINGW32__
+                #define ILAPIENTRY __stdcall
+        #else
+                #define ILAPIENTRY
+        #endif
+        #define IL_PACKSTRUCT __attribute__ ((packed))
 #else
-	#define ILAPIENTRY
-	#define IL_PACKSTRUCT
+        #define ILAPIENTRY
+        #define IL_PACKSTRUCT
 #endif
 
 // This is from Win32's <wingdi.h> and <winnt.h>
 #if defined(__LCC__)
-	#define ILAPI __stdcall
+        #define ILAPI __stdcall
 #elif defined(_WIN32) //changed 20031221 to fix bug 840421
-	#ifdef IL_STATIC_LIB
-		#define ILAPI
-	#else
-		#ifdef _IL_BUILD_LIBRARY
-			#define ILAPI __declspec(dllexport)
-		#else
-			#define ILAPI __declspec(dllimport)
-		#endif
-	#endif
+        #ifdef IL_STATIC_LIB
+                #define ILAPI
+        #else
+                #ifdef _IL_BUILD_LIBRARY
+                        #define ILAPI __declspec(dllexport)
+                #else
+                        #define ILAPI __declspec(dllimport)
+                #endif
+        #endif
 #elif __APPLE__
-	#define ILAPI extern
+        #define ILAPI extern
 #else
-	#define ILAPI
+        #define ILAPI
 #endif
 
 
-#define IL_SEEK_SET	0
-#define IL_SEEK_CUR	1
-#define IL_SEEK_END	2
-#define IL_EOF		-1
+#define IL_SEEK_SET        0
+#define IL_SEEK_CUR        1
+#define IL_SEEK_END        2
+#define IL_EOF                -1
 
 
 // Callback functions for file reading
@@ -521,13 +521,13 @@ ILAPI ILboolean ILAPIENTRY ilActiveLayer(ILuint Number);
 ILAPI ILboolean ILAPIENTRY ilActiveMipmap(ILuint Number);
 ILAPI ILboolean ILAPIENTRY ilApplyPal(ILconst_string FileName);
 ILAPI ILboolean ILAPIENTRY ilApplyProfile(ILstring InProfile, ILstring OutProfile);
-ILAPI void		ILAPIENTRY ilBindImage(ILuint Image);
+ILAPI void                ILAPIENTRY ilBindImage(ILuint Image);
 ILAPI ILboolean ILAPIENTRY ilBlit(ILuint Source, ILint DestX, ILint DestY, ILint DestZ, ILuint SrcX, ILuint SrcY, ILuint SrcZ, ILuint Width, ILuint Height, ILuint Depth);
 ILAPI ILboolean ILAPIENTRY ilClampNTSC(void);
-ILAPI void		ILAPIENTRY ilClearColour(ILclampf Red, ILclampf Green, ILclampf Blue, ILclampf Alpha);
+ILAPI void                ILAPIENTRY ilClearColour(ILclampf Red, ILclampf Green, ILclampf Blue, ILclampf Alpha);
 ILAPI ILboolean ILAPIENTRY ilClearImage(void);
 ILAPI ILuint    ILAPIENTRY ilCloneCurImage(void);
-ILAPI ILubyte*	ILAPIENTRY ilCompressDXT(ILubyte *Data, ILuint Width, ILuint Height, ILuint Depth, ILenum DXTCFormat, ILuint *DXTCSize);
+ILAPI ILubyte*        ILAPIENTRY ilCompressDXT(ILubyte *Data, ILuint Width, ILuint Height, ILuint Depth, ILenum DXTCFormat, ILuint *DXTCSize);
 ILAPI ILboolean ILAPIENTRY ilCompressFunc(ILenum Mode);
 ILAPI ILboolean ILAPIENTRY ilConvertImage(ILenum DestFormat, ILenum DestType);
 ILAPI ILboolean ILAPIENTRY ilConvertPal(ILenum DestFormat);
@@ -535,19 +535,19 @@ ILAPI ILboolean ILAPIENTRY ilCopyImage(ILuint Src);
 ILAPI ILuint    ILAPIENTRY ilCopyPixels(ILuint XOff, ILuint YOff, ILuint ZOff, ILuint Width, ILuint Height, ILuint Depth, ILenum Format, ILenum Type, void *Data);
 ILAPI ILuint    ILAPIENTRY ilCreateSubImage(ILenum Type, ILuint Num);
 ILAPI ILboolean ILAPIENTRY ilDefaultImage(void);
-ILAPI void		ILAPIENTRY ilDeleteImage(const ILuint Num);
+ILAPI void                ILAPIENTRY ilDeleteImage(const ILuint Num);
 ILAPI void      ILAPIENTRY ilDeleteImages(ILsizei Num, const ILuint *Images);
-ILAPI ILenum	ILAPIENTRY ilDetermineType(ILconst_string FileName);
-ILAPI ILenum	ILAPIENTRY ilDetermineTypeF(ILHANDLE File);
-ILAPI ILenum	ILAPIENTRY ilDetermineTypeL(const void *Lump, ILuint Size);
+ILAPI ILenum        ILAPIENTRY ilDetermineType(ILconst_string FileName);
+ILAPI ILenum        ILAPIENTRY ilDetermineTypeF(ILHANDLE File);
+ILAPI ILenum        ILAPIENTRY ilDetermineTypeL(const void *Lump, ILuint Size);
 ILAPI ILboolean ILAPIENTRY ilDisable(ILenum Mode);
 ILAPI ILboolean ILAPIENTRY ilDxtcDataToImage(void);
 ILAPI ILboolean ILAPIENTRY ilDxtcDataToSurface(void);
 ILAPI ILboolean ILAPIENTRY ilEnable(ILenum Mode);
-ILAPI void		ILAPIENTRY ilFlipSurfaceDxtcData(void);
+ILAPI void                ILAPIENTRY ilFlipSurfaceDxtcData(void);
 ILAPI ILboolean ILAPIENTRY ilFormatFunc(ILenum Mode);
-ILAPI void	    ILAPIENTRY ilGenImages(ILsizei Num, ILuint *Images);
-ILAPI ILuint	ILAPIENTRY ilGenImage(void);
+ILAPI void            ILAPIENTRY ilGenImages(ILsizei Num, ILuint *Images);
+ILAPI ILuint        ILAPIENTRY ilGenImage(void);
 ILAPI ILubyte*  ILAPIENTRY ilGetAlpha(ILenum Type);
 ILAPI ILboolean ILAPIENTRY ilGetBoolean(ILenum Mode);
 ILAPI void      ILAPIENTRY ilGetBooleanv(ILenum Mode, ILboolean *Param);
@@ -560,7 +560,7 @@ ILAPI ILuint    ILAPIENTRY ilGetLumpPos(void);
 ILAPI ILubyte*  ILAPIENTRY ilGetPalette(void);
 ILAPI ILconst_string  ILAPIENTRY ilGetString(ILenum StringName);
 ILAPI void      ILAPIENTRY ilHint(ILenum Target, ILenum Mode);
-ILAPI ILboolean	ILAPIENTRY ilInvertSurfaceDxtcDataAlpha(void);
+ILAPI ILboolean        ILAPIENTRY ilInvertSurfaceDxtcDataAlpha(void);
 ILAPI void      ILAPIENTRY ilInit(void);
 ILAPI ILboolean ILAPIENTRY ilImageToDxtcData(ILenum Format);
 ILAPI ILboolean ILAPIENTRY ilIsDisabled(ILenum Mode);
@@ -620,7 +620,7 @@ ILAPI ILboolean ILAPIENTRY ilLoadDataL(void *Lump, ILuint Size, ILuint Width, IL
 ILAPI ILboolean ILAPIENTRY ilSaveData(ILconst_string FileName);
 
 // For all those weirdos that spell "colour" without the 'u'.
-#define ilClearColor	ilClearColour
+#define ilClearColor        ilClearColour
 #define ilKeyColor      ilKeyColour
 
 #define imemclear(x,y) memset(x,0,y);

@@ -27,8 +27,8 @@ public:
   //! Fills indices (column numbers) with all descriptors within threshold of d.
   //! Returns the index of the closest, or -1 if none within threshold.
   virtual int query(const PackedDescriptor& d,
-		    std::vector<int>* indices,
-		    double threshold = 45) = 0;
+                    std::vector<int>* indices,
+                    double threshold = 45) = 0;
   int size() const;
 
   double distSquared(const PackedDescriptor& a, const PackedDescriptor& b) const;
@@ -50,8 +50,8 @@ public:
   NaiveDescriptorDatabase(PackedDescriptorsConstPtr packed_descriptors);
   //! Returns all descriptors within threshold of d.
   int query(const PackedDescriptor& d,
-	    std::vector<int>* indices,
-	    double thresh = 45);
+            std::vector<int>* indices,
+            double thresh = 45);
 };
 
 

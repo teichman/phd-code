@@ -6,8 +6,8 @@ using namespace Eigen;
 using namespace rgbd;
 
 MocapVisualizer::MocapVisualizer(const TRCParser& trc,
-				 rgbd::StreamSequence::ConstPtr sseq,
-				 double tol) :
+                                 rgbd::StreamSequence::ConstPtr sseq,
+                                 double tol) :
   trc_(trc),
   sseq_(sseq),
   tol_(tol),
@@ -19,8 +19,8 @@ MocapVisualizer::MocapVisualizer(const TRCParser& trc,
 }
 
 void MocapVisualizer::getTRCPoints(const rgbd::Cloud& frame,
-				   rgbd::Cloud* camera,
-				   rgbd::Cloud* checker) const
+                                   rgbd::Cloud* camera,
+                                   rgbd::Cloud* checker) const
 {
   // -- Find the camera.
   for(size_t i = 0; i < frame.size(); ++i) {
@@ -28,9 +28,9 @@ void MocapVisualizer::getTRCPoints(const rgbd::Cloud& frame,
     int cam3 = -1;
     for(size_t j = 0; j < frame.size(); ++j) {
       if(fabs(pcl::euclideanDistance(frame[i], frame[j]) - 0.115) < tol_)
-	cam2 = j;
+        cam2 = j;
       if(fabs(pcl::euclideanDistance(frame[i], frame[j]) - 0.1325) < tol_)
-	cam3 = j;
+        cam3 = j;
     }
     if(cam2 == -1 && cam3 == -1)
       checker->push_back(frame[i]);

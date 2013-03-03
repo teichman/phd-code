@@ -26,18 +26,18 @@ namespace dst
     // -- Assign potentials.
     for(int y = 0; y < seed.rows; ++y) {
       for(int x = 0; x < seed.cols; ++x) {
-	if(seed(y, x) == 255) { 
-	  source_potentials_(y, x) = 1.0;
-	  sink_potentials_(y, x) = 0.0;
-	}
-	else if(seed(y, x) == 0) {
-	  source_potentials_(y, x) = 0.0;
-	  sink_potentials_(y, x) = 1.0;
-	}
-	else {
-	  source_potentials_(y, x) = 0.0;
-	  sink_potentials_(y, x) = 0.0;
-	}
+        if(seed(y, x) == 255) { 
+          source_potentials_(y, x) = 1.0;
+          sink_potentials_(y, x) = 0.0;
+        }
+        else if(seed(y, x) == 0) {
+          source_potentials_(y, x) = 0.0;
+          sink_potentials_(y, x) = 1.0;
+        }
+        else {
+          source_potentials_(y, x) = 0.0;
+          sink_potentials_(y, x) = 0.0;
+        }
       }
     }
 

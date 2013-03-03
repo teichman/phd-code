@@ -32,7 +32,7 @@ cv::Mat3b drawSegVis(cv::Mat3b img, cv::Mat1b seg)
   for(int y = 0; y < seg_vis.rows; ++y) {
     for(int x = 0; x < seg_vis.cols; ++x) {
       if(seg(y, x) == 127 || seg(y, x) == 0)
-	seg_vis(y, x) = cv::Vec3b(0, 0, 0);
+        seg_vis(y, x) = cv::Vec3b(0, 0, 0);
     }
   }
   return seg_vis;
@@ -63,23 +63,23 @@ int main(int argc, char** argv)
   for(int i = 0; i < (int)seq->images_.size(); ++i) {
     if(i == 0) {
       sp.run(seq->seed_images_[i],
-	      seq->images_[i],
-	      seq->pointclouds_[i],
-	      cv::Mat3b(),
-	      cv::Mat1b(),
-	      KinectCloud::Ptr(),
-	      seq->segmentations_[i],
-	      seg_pcd);
+              seq->images_[i],
+              seq->pointclouds_[i],
+              cv::Mat3b(),
+              cv::Mat1b(),
+              KinectCloud::Ptr(),
+              seq->segmentations_[i],
+              seg_pcd);
     }
     else {
       sp.run(seq->seed_images_[i],
-	      seq->images_[i],
-	      seq->pointclouds_[i],
-	      seq->images_[i-1],
-	      seq->segmentations_[i-1],
-	      seq->pointclouds_[i-1],
-	      seq->segmentations_[i],
-	      seg_pcd);
+              seq->images_[i],
+              seq->pointclouds_[i],
+              seq->images_[i-1],
+              seq->segmentations_[i-1],
+              seq->pointclouds_[i-1],
+              seq->segmentations_[i],
+              seg_pcd);
     }
 
     cv::Mat3b seg_vis = drawSegVis(seq->images_[i], seq->segmentations_[i]);
@@ -95,14 +95,14 @@ int main(int argc, char** argv)
     if(sp.getDebug()) {
       string filename;
       filename = generateFilename("debug", "segmented_pointcloud.pcd", 4);
-      	// Writer fails if there are no points.
+              // Writer fails if there are no points.
       if(seg_pcd->size() == 0) {
-	  pcl::PointXYZRGB pt;
-	  pt.x = 0; pt.y = 0; pt.z = -20;
-	  seg_pcd->push_back(pt);
-	  seg_pcd->push_back(pt);
-	  seg_pcd->push_back(pt);
-	}
+          pcl::PointXYZRGB pt;
+          pt.x = 0; pt.y = 0; pt.z = -20;
+          seg_pcd->push_back(pt);
+          seg_pcd->push_back(pt);
+          seg_pcd->push_back(pt);
+        }
       pcl::io::savePCDFileBinary(filename, *seg_pcd);
       
       filename = generateFilename("debug", "original_pointcloud.pcd", 4);

@@ -21,7 +21,7 @@ namespace pipeline
     void compute()
     {
       if(!has_data_)
-	PL_ABORT(getClassName() << " \"" << getName() << "\" was not given data before start of Pipeline computation.  See Pipeline::setInput.");
+        PL_ABORT(getClassName() << " \"" << getName() << "\" was not given data before start of Pipeline computation.  See Pipeline::setInput.");
       push("Output", data_);
     }
 

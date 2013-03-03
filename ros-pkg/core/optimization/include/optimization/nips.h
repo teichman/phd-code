@@ -10,19 +10,19 @@ public:
   Eigen::VectorXd* optimal_solution_;
   
   NesterovInteriorPointSolver(ScalarFunction::ConstPtr objective,
-			      VectorFunction::ConstPtr gradient,
-			      double initial_mu,
-			      double tol,
-			      double alpha,
-			      double beta,
-			      int max_num_iters,
-			      double initial_stepsize,
-			      int restart,
-			      int debug);
+                              VectorFunction::ConstPtr gradient,
+                              double initial_mu,
+                              double tol,
+                              double alpha,
+                              double beta,
+                              int max_num_iters,
+                              double initial_stepsize,
+                              int restart,
+                              int debug);
   void addConstraint(ScalarFunction::ConstPtr constraint,
-		     VectorFunction::ConstPtr gradient);
+                     VectorFunction::ConstPtr gradient);
   Eigen::VectorXd solve(const Eigen::VectorXd& init,
-			long int* num_steps = NULL);
+                        long int* num_steps = NULL);
   bool feasible(const Eigen::VectorXd& x);
 
 protected:
@@ -47,14 +47,14 @@ protected:
   double barrierObjective(const Eigen::VectorXd& x);
   Eigen::VectorXd barrierGradient(const Eigen::VectorXd& x);
   Eigen::VectorXd solveInner(const Eigen::VectorXd& init,
-			     long int* num_steps);
+                             long int* num_steps);
   double backtracking(double t,
-		      const Eigen::VectorXd& x,
-		      const Eigen::VectorXd& grad,
-		      const Eigen::VectorXd& direction,
-		      double objective,
-		      int* num_backtracks,
-		      bool* precision_flag);
+                      const Eigen::VectorXd& x,
+                      const Eigen::VectorXd& grad,
+                      const Eigen::VectorXd& direction,
+                      double objective,
+                      int* num_backtracks,
+                      bool* precision_flag);
 };
 
 #endif // NIPS_H

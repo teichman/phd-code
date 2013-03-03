@@ -11,7 +11,7 @@ namespace rgbd
 {
 
   Publisher::Publisher(const std::string& device_id,
-		     pcl::OpenNIGrabber::Mode mode) :
+                     pcl::OpenNIGrabber::Mode mode) :
     device_id_(device_id),
     mode_(mode),
     grabber_(device_id_, mode, mode),
@@ -38,9 +38,9 @@ namespace rgbd
     int i = 0;
     for(int y = 0; y < img.rows; ++y) {
       for(int x = 0; x < img.cols; ++x, i+=3) {
-	img(y, x)[0] = data[i+2];
-	img(y, x)[1] = data[i+1];
-	img(y, x)[2] = data[i];
+        img(y, x)[0] = data[i+2];
+        img(y, x)[1] = data[i+1];
+        img(y, x)[2] = data[i];
       }
     }
     

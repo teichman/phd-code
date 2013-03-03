@@ -3,10 +3,20 @@
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/common/transforms.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <serializable/serializable.h>
 #include <eigen_extensions/eigen_extensions.h>
+
+// Depth multipliers, used in PrimeSenseModel::estimateMapDepth and
+// all over the xpl_calibration package.
+#define MAX_MULT 1.2
+#define MIN_MULT 0.8
+
+// Voxel grid size.
+#define DEFAULT_VGSIZE 0.01
 
 namespace rgbd
 {
@@ -19,7 +29,8 @@ namespace rgbd
   typedef Eigen::Matrix<unsigned short, Eigen::Dynamic, Eigen::Dynamic> DepthMat;  
   typedef boost::shared_ptr<DepthMat> DepthMatPtr;
   typedef boost::shared_ptr<const DepthMat> DepthMatConstPtr;
-  typedef std::vector< std::vector< std::vector<double> > > DepthIndex;
+  // For storing z values in meters.  This is not Euclidean distance.
+  typedef std::vector< std::vector< std::vector<double> > > RangeIndex;
   typedef Eigen::Matrix<size_t, Eigen::Dynamic, Eigen::Dynamic> IndexMap;
   
   //! "Projective" point comes from the OpenNI terminology, and refers to (u, v, z), i.e.
@@ -81,9 +92,16 @@ namespace rgbd
     //! Does *not* apply the depth distortion model.
     //! The only way to apply the depth distortion model is to call undistort.
     void frameToCloud(const Frame& frame, Cloud* pcd,
-		      double max_range = std::numeric_limits<double>::max()) const;
+                      double max_range = std::numeric_limits<double>::max()) const;
     void cloudToFrame(const Cloud& pcd, Frame* frame, IndexMap* indexmap = NULL) const;
-    void cloudToDepthIndex(const Cloud& pcd, DepthIndex* dindex) const;
+    void cloudToRangeIndex(const Cloud& pcd, RangeIndex* rindex) const;
+    //! transform is applied to the map, then projected into a depth index.
+    //! The best depth estimate from the map corresponding to the measurement depth frame
+    //! will be returned.
+    void estimateMapDepth(const Cloud& map, const Eigen::Affine3f& transform,
+                          const Frame& measurement,
+                          DepthMat* estimate) const;
+                          
     //! Applies depth distortion model to the depth data in frame.
     void undistort(Frame* frame) const;
     
@@ -110,6 +128,9 @@ namespace rgbd
 
     //Eigen::VectorXd computeFeaturesMU(const ProjectivePoint& ppt) const;
     void computeFeaturesMUV(const ProjectivePoint& ppt, Eigen::VectorXd* features) const;
+    bool coneFit(const DepthMat& naive_mapdepth, const RangeIndex& rindex,
+                 int uc, int vc, double radius, double measurement_depth,
+                 double* mean, double* stdev) const;
   };
     
 }

@@ -15,14 +15,14 @@ namespace dst
   {
   public:
     BilateralNPG(pipeline2::Outlet<KdTreeNode::Output>* kdtree_otl,
-		 pipeline2::Outlet<KinectCloud::ConstPtr>* transformed_otl,
-		 pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
-		 pipeline2::Outlet<DepthProjector::Output>* index_otl,
-		 pipeline2::Outlet<cv::Mat1b>* mask_otl,
-		 double sigma_dist,
-		 double sigma_color,
-		 double sigma_img_dist,
-		 int skip, int neighbor_skip);
+                 pipeline2::Outlet<KinectCloud::ConstPtr>* transformed_otl,
+                 pipeline2::Outlet<cv::Mat1b>* prev_seg_otl,
+                 pipeline2::Outlet<DepthProjector::Output>* index_otl,
+                 pipeline2::Outlet<cv::Mat1b>* mask_otl,
+                 double sigma_dist,
+                 double sigma_color,
+                 double sigma_img_dist,
+                 int skip, int neighbor_skip);
 
   protected:
     pipeline2::Outlet<KdTreeNode::Output>* kdtree_otl_;
@@ -42,25 +42,25 @@ namespace dst
     std::vector<cv::Point2i> neighborhood_;
 
     void getNeighborhood(cv::Mat3b img,
-			 const cv::Point2i& pt,
-			 double radius,
-			 std::vector<cv::Point2i>* neighborhood) const;
+                         const cv::Point2i& pt,
+                         double radius,
+                         std::vector<cv::Point2i>* neighborhood) const;
 
     double computeTerm(const pcl::PointXYZRGB& curr_pt,
-		       const pcl::PointXYZRGB& prev_pt) const;
+                       const pcl::PointXYZRGB& prev_pt) const;
     double computeTerm(const cv::Point2i& curr_pt,
-		       const cv::Vec3b& curr_color,
-		       const cv::Point2i& prev_pt,
-		       const cv::Vec3b& prev_color) const;
+                       const cv::Vec3b& curr_color,
+                       const cv::Point2i& prev_pt,
+                       const cv::Vec3b& prev_color) const;
     double computeBilateral(const pcl::PointXYZRGB& curr_pt,
-			    KdTree& prev_kdtree,
-			    const std::vector<cv::Point2i>& prev_rindex,
-			    cv::Mat1b prev_seg,
-			    const KinectCloud& prev_pcd);
+                            KdTree& prev_kdtree,
+                            const std::vector<cv::Point2i>& prev_rindex,
+                            cv::Mat1b prev_seg,
+                            const KinectCloud& prev_pcd);
     double computeBilateralNoDepth(const cv::Point2i& curr_pt,
-				   cv::Mat3b curr_img,
-				   cv::Mat3b prev_img,
-				   cv::Mat1b prev_seg);
+                                   cv::Mat3b curr_img,
+                                   cv::Mat3b prev_img,
+                                   cv::Mat1b prev_seg);
       
     void _compute();
     void _display() const;

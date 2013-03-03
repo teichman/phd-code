@@ -135,7 +135,7 @@ namespace pipeline {
     for(size_t i = 0; i < inputs_.size(); ++i) { 
       oss << inputs_[i]->getFullName();
       if(i < inputs_.size() - 1)
-	oss << "&&";
+        oss << "&&";
     }
     oss << ")=>";
     return oss.str();
@@ -258,12 +258,12 @@ namespace pipeline {
       to_check.pop();
       component.insert(active); //Won't insert duplicates.
       for(size_t i = 0; i < active->outputs_.size(); ++i) {
-	if(component.count(active->outputs_[i]) == 0)
-	  to_check.push(active->outputs_[i]);
+        if(component.count(active->outputs_[i]) == 0)
+          to_check.push(active->outputs_[i]);
       }
       for(size_t i = 0; i < active->inputs_.size(); ++i) { 
-	if(component.count(active->inputs_[i]) == 0)
-	  to_check.push(active->inputs_[i]);
+        if(component.count(active->inputs_[i]) == 0)
+          to_check.push(active->inputs_[i]);
       }
     }
 
@@ -280,7 +280,7 @@ namespace pipeline {
     queue<ComputeNode*> to_check;
     for(size_t i = 0; i < nodes_.size(); ++i) {
       if(nodes_[i]->inputs_.empty())
-	to_check.push(nodes_[i].get());
+        to_check.push(nodes_[i].get());
     }
 
     set<ComputeNode*> found;
@@ -289,7 +289,7 @@ namespace pipeline {
       to_check.pop();
       found.insert(active); //Won't insert duplicates.
       for(size_t i = 0; i < active->outputs_.size(); ++i) {
-	to_check.push(active->outputs_[i]);
+        to_check.push(active->outputs_[i]);
       }
     }
 
@@ -343,7 +343,7 @@ namespace pipeline {
     for(size_t i = 0; i < nodes_.size(); ++i) {
       vector<ComputeNode*>& outputs = nodes_[i]->outputs_;
       for(size_t j = 0; j < outputs.size(); ++j) {
-	oss << (uint64_t)nodes_[i].get() << "->" << (uint64_t)outputs[j] << endl;
+        oss << (uint64_t)nodes_[i].get() << "->" << (uint64_t)outputs[j] << endl;
       }
     }
     oss << endl;
@@ -367,7 +367,7 @@ namespace pipeline {
     bool valid = false;
     for(size_t i = 0; i < nodes_.size(); ++i) {
       if(node == nodes_[i].get())
-	valid = true;
+        valid = true;
     }
     assert(valid);
 
@@ -418,9 +418,9 @@ namespace pipeline {
     for(size_t i = 0; i < nodes_.size(); ++i) {
       nodes_[i]->lock();
       if(nodes_[i]->ready()) {
-	nodes_[i]->on_queue_ = true;
-	queue_.push_back(nodes_[i].get());
-	pthread_cond_signal(&queue_cv_);
+        nodes_[i]->on_queue_ = true;
+        queue_.push_back(nodes_[i].get());
+        pthread_cond_signal(&queue_cv_);
       }
       nodes_[i]->unlock();
     }
@@ -437,13 +437,13 @@ namespace pipeline {
     for(size_t i = 0; i < node->outputs_.size(); ++i) {
       node->outputs_[i]->lock();
       if(node->outputs_[i]->ready()) {
-	// Debugging.  TODO: remove.
-	for(size_t j = 0; j < queue_.size(); ++j)
-	  assert(queue_[j] != node->outputs_[i]);
-	
-	node->outputs_[i]->on_queue_ = true;
-	queue_.push_back(node->outputs_[i]);
-	pthread_cond_signal(&queue_cv_);
+        // Debugging.  TODO: remove.
+        for(size_t j = 0; j < queue_.size(); ++j)
+          assert(queue_[j] != node->outputs_[i]);
+        
+        node->outputs_[i]->on_queue_ = true;
+        queue_.push_back(node->outputs_[i]);
+        pthread_cond_signal(&queue_cv_);
       }
       node->outputs_[i]->unlock();
     }
@@ -454,37 +454,37 @@ namespace pipeline {
     lock();
     while(true) {
       if(destructing_) { 
-	unlock();
-	break;
+        unlock();
+        break;
       }
             
       if(queue_.empty()) {
-	if(num_nodes_computing_ == 0)
-	  pthread_cond_signal(&done_cv_);
-	
-	pthread_cond_wait(&queue_cv_, &mutex_);
+        if(num_nodes_computing_ == 0)
+          pthread_cond_signal(&done_cv_);
+        
+        pthread_cond_wait(&queue_cv_, &mutex_);
       }
 
       // pthread signal might awaken more than one thread.
       if(!queue_.empty()) {
-	ComputeNode* node = queue_.back();
-	queue_.pop_back();
+        ComputeNode* node = queue_.back();
+        queue_.pop_back();
 
-	// Debugging. TODO: remove.
-	assert(node->on_queue_);
-	for(size_t i = 0; i < queue_.size(); ++i)
-	  assert(queue_[i] != node);
+        // Debugging. TODO: remove.
+        assert(node->on_queue_);
+        for(size_t i = 0; i < queue_.size(); ++i)
+          assert(queue_[i] != node);
 
-	++num_nodes_computing_;
-	unlock();
+        ++num_nodes_computing_;
+        unlock();
 
-	node->lock();
-	node->compute();
-	node->unlock();
+        node->lock();
+        node->compute();
+        node->unlock();
 
-	lock();
-	registerCompleted(node);
-	--num_nodes_computing_;
+        lock();
+        registerCompleted(node);
+        --num_nodes_computing_;
       }
     }
   }

@@ -26,7 +26,7 @@ public:
   //! Computes transform that will move target to reference.
   //! T * seq1 = seq0.
   Eigen::Affine3f calibrate(rgbd::StreamSequence::ConstPtr seq0,
-			    rgbd::StreamSequence::ConstPtr seq1);
+                            rgbd::StreamSequence::ConstPtr seq1);
   
 protected:
   pipeline::Pipeline pl_;

@@ -18,8 +18,8 @@ namespace dst
   }
   
   std::string generateFilename(const bfs::path& dir,
-			       const std::string& basename,
-			       int width)
+                               const std::string& basename,
+                               int width)
   {
     // -- Create the directory if necessary.
     ROS_ASSERT(!bfs::exists(dir) || bfs::is_directory(dir));
@@ -31,7 +31,7 @@ namespace dst
     bfs::directory_iterator end_itr; // default construction yields past-the-end
     for(bfs::directory_iterator itr(dir); itr != end_itr; ++itr) { 
       if(itr->leaf().substr(width+1).compare(basename) == 0)
-	++num;
+        ++num;
     }
     
     ostringstream filename;

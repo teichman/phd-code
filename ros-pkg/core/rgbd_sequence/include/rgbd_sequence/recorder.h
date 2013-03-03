@@ -17,7 +17,7 @@ namespace rgbd
     //! 640x480: OpenNI_VGA_30Hz
     //! 160x120: OpenNI_QQVGA_30Hz
     Recorder(const std::string& device_id = "",
-	     pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz);
+             pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz);
     void cloudCallback(const Cloud::ConstPtr& cloud);
     void imageCallback(const boost::shared_ptr<openni_wrapper::Image>& image);
     void irCallback(const boost::shared_ptr<openni_wrapper::IRImage>& oni_img);

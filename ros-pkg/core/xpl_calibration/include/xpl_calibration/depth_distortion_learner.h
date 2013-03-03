@@ -98,11 +98,11 @@ protected:
   Eigen::VectorXd regress(const Eigen::MatrixXd& X, const Eigen::VectorXd& Y) const;
   Eigen::VectorXd regressRegularized(const Eigen::MatrixXd& X, const Eigen::VectorXd& Y) const;
   void computeMultiplierMap(const rgbd::PrimeSenseModel& model,
-			    const rgbd::DepthMat& depth,
-			    const rgbd::DepthMat& mapdepth,
-			    const rgbd::DepthIndex& dindex,
-			    Eigen::MatrixXd* multipliers,
-			    cv::Mat3b* visualization) const;
+                            const rgbd::DepthMat& depth,
+                            const rgbd::DepthMat& mapdepth,
+                            const rgbd::RangeIndex& rindex,
+                            Eigen::MatrixXd* multipliers,
+                            cv::Mat3b* visualization) const;
 };
 
 

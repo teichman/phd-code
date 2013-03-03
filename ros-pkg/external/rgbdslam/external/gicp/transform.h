@@ -42,7 +42,7 @@ void dgc_transform_translate(dgc_transform_t t, double x, double y, double z);
   /** Apply transform to 3D point */
 
 extern inline void dgc_transform_point(double *x, double *y, double *z, 
-				       dgc_transform_t t)
+                                       dgc_transform_t t)
 {
   double x2, y2, z2;
 
@@ -73,15 +73,15 @@ int dgc_transform_read_string(dgc_transform_t t, char *str);
   /** Get translation */
 
 void dgc_transform_get_translation(dgc_transform_t t, double *x, double *y,
-				   double *z);
+                                   double *z);
 
   /** Get rotation */
 
 void dgc_transform_get_rotation(dgc_transform_t t, double *x, double *y,
-				double *z);
+                                double *z);
 
 void dgc_transform_rpy(dgc_transform_t dest, dgc_transform_t src, double roll,
-		       double pitch, double yaw);
+                       double pitch, double yaw);
 
 void dgc_transform_inverse(dgc_transform_t in, dgc_transform_t out);
 

@@ -13,8 +13,8 @@ namespace dst
   {
   public:
     CannyEPG(pipeline2::Outlet<cv::Mat3b>* image_otl,
-	     double threshold1,
-	     double threshold2);
+             double threshold1,
+             double threshold2);
 
   protected:
     //! TODO: Make this cv::Mat1b, add a node to do BGR->gray if necessary.

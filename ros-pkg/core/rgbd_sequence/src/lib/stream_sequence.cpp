@@ -48,15 +48,15 @@ namespace rgbd
     BOOST_FOREACH(const bfs::path& p, make_pair(it, eod)) {
       ROS_ASSERT(is_regular_file(p));
       if(p.leaf().substr(0, 3).compare("img") == 0 &&
-	 (bfs::extension(p).compare(".ppm") == 0 ||
-	  bfs::extension(p).compare(".png") == 0))
+         (bfs::extension(p).compare(".ppm") == 0 ||
+          bfs::extension(p).compare(".png") == 0))
       {
-	img_names_.push_back(p.leaf());
+        img_names_.push_back(p.leaf());
       }
       else if(bfs::extension(p).compare(".eig") == 0)
-	dpt_names_.push_back(p.leaf());
+        dpt_names_.push_back(p.leaf());
       else if(bfs::extension(p).compare(".clk") == 0)
-	clk_names_.push_back(p.leaf());
+        clk_names_.push_back(p.leaf());
     }
     ROS_ASSERT(img_names_.size() == dpt_names_.size());
     ROS_ASSERT(img_names_.size() == clk_names_.size());
@@ -119,9 +119,9 @@ namespace rgbd
     
     if(max_depth_ != numeric_limits<double>::max())
       for(int y = 0; y < frame->depth_->rows(); ++y)
-	for(int x = 0; x < frame->depth_->cols(); ++x)
-	  if(frame->depth_->coeffRef(y, x) > max_depth_ * 1000)
-	    frame->depth_->coeffRef(y, x) = 0;
+        for(int x = 0; x < frame->depth_->cols(); ++x)
+          if(frame->depth_->coeffRef(y, x) > max_depth_ * 1000)
+            frame->depth_->coeffRef(y, x) = 0;
 
   }
 
@@ -141,8 +141,8 @@ namespace rgbd
     for(size_t i = 0; i < timestamps_.size(); ++i) {
       double d = timestamp - timestamps_[i];
       if(fabs(d) < *dt) {
-	*dt = d;
-	nearest = i;
+        *dt = d;
+        nearest = i;
       }
     }
 

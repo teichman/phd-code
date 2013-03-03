@@ -34,13 +34,13 @@ namespace dst
     //! img_seg and pcd_seg come out.  img_seg must be the right size.
     //! pcd_seg will be filled.
     void run(cv::Mat1b seed,
-	     cv::Mat3b image,
-	     KinectCloud::ConstPtr cloud,
-	     cv::Mat3b prev_image,
-	     cv::Mat1b prev_seg,
-	     KinectCloud::ConstPtr prev_cloud,
-	     cv::Mat1b img_seg,
-	     KinectCloud::Ptr pcd_seg);
+             cv::Mat3b image,
+             KinectCloud::ConstPtr cloud,
+             cv::Mat3b prev_image,
+             cv::Mat1b prev_seg,
+             KinectCloud::ConstPtr prev_cloud,
+             cv::Mat1b img_seg,
+             KinectCloud::Ptr pcd_seg);
 
     //! Clears any accumulated data, e.g. color histogram models.
     void reset();
@@ -62,20 +62,20 @@ namespace dst
     //! node potential that graph cuts will solve for the label of the
     //! most violated constraint in a structural SVM.
     cv::Mat1b findMostViolating(const FramePotentialsCache& fc,
-				cv::Mat1b labels,
-				bool hamming = true);
+                                cv::Mat1b labels,
+                                bool hamming = true);
     cv::Mat3b getZBuffer(const KinectCloud& cloud,
-			 int spread,
-			 float min_range,
-			 float max_range) const;
+                         int spread,
+                         float min_range,
+                         float max_range) const;
     cv::Mat3b getSurfNorm(const KinectCloud& cloud) const;
     void generateSegmentationFromGraph(Graph3d& graph,
-				       cv::Mat1i index,
-				       cv::Mat1b img_seg,
-				       KinectCloud::ConstPtr cloud =
-				       KinectCloud::ConstPtr((KinectCloud*)NULL),
-				       KinectCloud::Ptr pcd_seg =
-				       KinectCloud::Ptr((KinectCloud*)NULL)) const;
+                                       cv::Mat1i index,
+                                       cv::Mat1b img_seg,
+                                       KinectCloud::ConstPtr cloud =
+                                       KinectCloud::ConstPtr((KinectCloud*)NULL),
+                                       KinectCloud::Ptr pcd_seg =
+                                       KinectCloud::Ptr((KinectCloud*)NULL)) const;
 
     //! Make a new SegmentationPipeline of this type.
     virtual SegmentationPipeline::Ptr mitosis(int num_threads) const;

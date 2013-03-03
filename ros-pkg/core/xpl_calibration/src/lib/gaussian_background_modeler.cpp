@@ -28,7 +28,7 @@ void GaussianBackgroundModeler::compute()
     const Cloud& pcd = *seq.pcds_[i];
     for(size_t j = 0; j < pcd.size(); ++j) {
       if(!pcl_isfinite(pcd[j].z))
-	continue;
+        continue;
       means_[j] += pcd[j].z;
       ++counts_[j];
     }
@@ -41,7 +41,7 @@ void GaussianBackgroundModeler::compute()
     const Cloud& pcd = *seq.pcds_[i];
     for(size_t j = 0; j < pcd.size(); ++j) {
       if(!pcl_isfinite(pcd[j].z))
-	continue;
+        continue;
       stdevs_[j] += pow(pcd[j].z - means_[j], 2);
     }
   }
@@ -84,7 +84,7 @@ cv::Mat1f GaussianBackgroundModeler::getZBuffer(const rgbd::Cloud& pcd) const
     for(int x = 0; x < zbuf.cols; ++x) {
       int idx = y * zbuf.cols + x;
       if(!isnan(pcd[idx].z))
-	zbuf(y, x) = pcd[idx].z;
+        zbuf(y, x) = pcd[idx].z;
     }
   }
 
@@ -103,7 +103,7 @@ cv::Mat1b GaussianBackgroundModeler::visualizeVector(const std::vector<double>& 
       int idx = y * vis.cols + x;
       vis(y, x) = vec[idx];
       if(vec[idx] > max)
-	max = vec[idx];
+        max = vec[idx];
     }
   }
   for(int y = 0; y < vis.rows; ++y)
