@@ -6,7 +6,7 @@ using namespace pcl::visualization;
 namespace rgbd
 {
 
-  StreamVisualizer::StreamVisualizer(StreamSequence::ConstPtr sseq) :
+  StreamVisualizer::StreamVisualizer(StreamSequenceBase::ConstPtr sseq) :
     sseq_(sseq),
     idx_(0),
     pcd_(new Cloud)

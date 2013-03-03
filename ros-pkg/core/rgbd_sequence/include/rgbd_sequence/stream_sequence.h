@@ -14,22 +14,25 @@
 #include <eigen_extensions/eigen_extensions.h>
 #include <timer/timer.h>
 #include <rgbd_sequence/primesense_model.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 
 namespace rgbd
 {
 
-  class StreamSequence
+  class StreamSequence : public StreamSequenceBase
   {
   public:
     typedef boost::shared_ptr<StreamSequence> Ptr;
     typedef boost::shared_ptr<const StreamSequence> ConstPtr;
+
+    using StreamSequenceBase::timestamps_;
+    using StreamSequenceBase::model_;
+    using StreamSequenceBase::seek;
   
     std::vector<std::string> img_names_;
     std::vector<std::string> dpt_names_;
     std::vector<std::string> clk_names_;
-    std::vector<double> timestamps_; //Keep these in memory
     std::string root_path_;
-    PrimeSenseModel model_;
     //! The maximum depth in meters, used when reading data.
     //! Anything beyond this is set to 0.
     double max_depth_;
@@ -58,8 +61,6 @@ namespace rgbd
     rgbd::Cloud::Ptr getCloud(double timestamp, double* dt) const __attribute__ ((__deprecated__));
     cv::Mat3b getImage(size_t idx) const __attribute__ ((__deprecated__));
     cv::Mat3b getImage(double timestamp, double* dt) const __attribute__ ((__deprecated__));
-    //! dt is signed.
-    size_t seek(double timestamp, double* dt) const;
     
   protected:
     // Assignment op & copy constructor would deep copy if they were implemented.
@@ -67,11 +68,6 @@ namespace rgbd
     StreamSequence& operator=(const StreamSequence& seq);
   };
 
-
-  inline bool isFinite(const Point& pt)
-  {
-    return (pcl_isfinite(pt.x) && pcl_isfinite(pt.y) && pcl_isfinite(pt.z));
-  }
 
 }
 

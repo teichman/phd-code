@@ -15,23 +15,24 @@
 #include <eigen_extensions/eigen_extensions.h>
 #include <timer/timer.h>
 #include <rgbd_sequence/primesense_model.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 
 namespace rgbd
 {
 
-  class StreamSequencePCLWrapper
+  class StreamSequencePCLWrapper : public StreamSequenceBase
   {
   public:
     typedef boost::shared_ptr<StreamSequencePCLWrapper> Ptr;
     typedef boost::shared_ptr<const StreamSequencePCLWrapper> ConstPtr;
+    
+    using StreamSequenceBase::timestamps_;
+    using StreamSequenceBase::model_;
+    using StreamSequenceBase::seek;
   
     //! The maximum depth in meters, used when reading data.
     //! Anything beyond this is set to 0.
     double max_depth_;
-    //! Primesense model. Will be initialized once the grabber starts
-    PrimeSenseModel model_;
-    //! Timestamps. Will be loaded from grabber
-    std::vector<double> timestamps_;
 
     //! Does not initialize anything.
     StreamSequencePCLWrapper();
@@ -43,9 +44,6 @@ namespace rgbd
     void readFrame(size_t idx, Frame* frame) const;
     //! Returns the nearest frame, no matter how far away it is in time.  Check dt to find out.
     void readFrame(double timestamp, double* dt, Frame* frame) const;
-
-    //! dt is signed.
-    size_t seek(double timestamp, double* dt) const;
 
   protected:
     boost::shared_ptr <pcl::ImageGrabber<pcl::PointXYZRGBA> > grabber_;

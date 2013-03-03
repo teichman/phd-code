@@ -1,5 +1,7 @@
 #include <boost/program_options.hpp>
 #include <rgbd_sequence/stream_visualizer.h>
+#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_pcl_wrapper.h>
 
 using namespace std;
 using namespace rgbd;
@@ -14,6 +16,7 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("seq", bpo::value<string>(&dir), "Sequence directory")
     ("only-stats", "Only print stats and exit")
+    ("pclzf", "PCLZF formatted stream")
     ;
 
   bpo::positional_options_description p;
@@ -28,7 +31,11 @@ int main(int argc, char** argv)
   bpo::notify(opts);
   
   cout << "Looking at dir: " << dir << endl;
-  StreamSequence::Ptr sseq(new StreamSequence);
+  StreamSequenceBase::Ptr sseq;
+  if (opts.count ("pclzf"))
+    sseq.reset (new StreamSequencePCLWrapper);
+  else
+    sseq.reset (new StreamSequence);
   sseq->load(dir);
   cout << "Loaded successfully" << endl;
 
