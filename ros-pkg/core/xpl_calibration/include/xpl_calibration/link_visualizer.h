@@ -9,6 +9,7 @@
 #include <xpl_calibration/utility_functions.h>
 #include <pcl/common/transforms.h>
 #include <xpl_calibration/primesense_slam.h>
+#include <string>
 
 class LinkVisualizer : public SharedLockable
 {
@@ -32,7 +33,7 @@ protected:
   bool transform_;
   bool needs_update_;
   bool sorted_;
-  string frame_text_;
+  std::string frame_text_;
   std::vector<double> errors_;
   std::vector<double> errors_desc_;
   std::vector<size_t> edges_desc_;

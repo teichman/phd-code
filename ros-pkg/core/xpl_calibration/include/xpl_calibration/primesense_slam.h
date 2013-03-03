@@ -8,6 +8,7 @@
 #include <xpl_calibration/trajectory.h>
 #include <xpl_calibration/frame_aligner.h>
 #include <xpl_calibration/discrete_depth_distortion_model.h>
+#include <vector>
 
 #define MAX_RANGE_MAP 2.0
 
@@ -35,9 +36,9 @@ public:
   int keypoints_per_frame_;
   
   // -- Outputs
-  vector<Trajectory> trajs_;
+  std::vector<Trajectory> trajs_;
   //! Just for visualization.
-  vector<rgbd::Cloud::Ptr> maps_;
+  std::vector<rgbd::Cloud::Ptr> maps_;
   //! For saving the graph.
   PoseGraphSlam::Ptr pgs_;
   

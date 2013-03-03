@@ -1,4 +1,5 @@
 #include <rgbd_sequence/intrinsics_visualizer.h>
+#include <pcl/common/distances.h>
 
 using namespace std;
 using namespace Eigen;

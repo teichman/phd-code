@@ -1,7 +1,7 @@
 .SECONDARY:
 
 CUDA_BINDIR := /tmp/gcc-4.4
- PCL_VERSION := 8736
+ PCL_VERSION := 8754
 
 C_COMPILER:=/usr/bin/gcc
 CXX_COMPILER:=/usr/bin/g++
@@ -10,8 +10,9 @@ default: built_against_ros
 
 built_against_ros: svn svn/PATCHED_KINFU
 	mkdir -p msgs_tmp
-	for d in `echo svn/common/include/* | grep msg`; do \
-	  mv $$d msgs_tmp; \
+	for d in `ls svn/common/include | grep msgs`; do \
+		echo Moving $$d; \
+	  mv svn/common/include/$${d} msgs_tmp; \
   done
 	cd svn && mkdir -p build_against_ros
 	mkdir -p ${CUDA_BINDIR}
@@ -36,6 +37,11 @@ built_against_ros: svn svn/PATCHED_KINFU
 	for d in `echo msgs_tmp/*`; do \
 		mv $$d svn/common/include; \
 	done
+	# We're building against our own message versions, so ignore the USE_ROS directive
+	cp svn/common/include/pcl/PointIndices.h release_against_ros/include/pcl-1.7/pcl
+	cp svn/common/include/pcl/ModelCoefficients.h release_against_ros/include/pcl-1.7/pcl
+	cp svn/common/include/pcl/PolygonMesh.h release_against_ros/include/pcl-1.7/pcl
+	cp svn/common/include/pcl/Vertices.h release_against_ros/include/pcl-1.7/pcl
 	touch $@
 
 # was 5600
