@@ -43,6 +43,12 @@ built_against_ros: svn svn/PATCHED_KINFU
 	cp svn/common/include/pcl/PointIndices.h release_against_ros/include/pcl-1.7/pcl
 	cp svn/common/include/pcl/ModelCoefficients.h release_against_ros/include/pcl-1.7/pcl
 	cp svn/common/include/pcl/Vertices.h release_against_ros/include/pcl-1.7/pcl
+	# Make rospack only look in the installed location
+	for f in release*; do \
+		touch $${f}/rospack_nosubdirs; \
+	done
+	touch svn/rospack_nosubdirs
+	rm -f release_against_ros/rospack_nosubdirs
 	touch $@
 
 # was 5600
