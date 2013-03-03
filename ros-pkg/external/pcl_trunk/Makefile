@@ -29,7 +29,7 @@ built_against_ros: svn svn/PATCHED_KINFU
 	-DCUDA_NVCC_FLAGS:="--compiler-bindir=${CUDA_BINDIR};-w" \
 	 -DCMAKE_CXX_FLAGS:STRING=" -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}`" \
 	 -DCMAKE_C_FLAGS:=" -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}`" \
-	-DCMAKE_EXE_LINKER_FLAGS="`rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_linker_flags {}`" \
+	-DCMAKE_EXE_LINKER_FLAGS="`rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_linker_flags {}` -Wl,-rpath,`rospack find pcl_trunk`/release_against_ros/lib" \
 	-DCMAKE_BUILD_TYPE:="Release" \
 	-DBUILD_examples:BOOL=OFF \
 	-DCMAKE_INSTALL_PREFIX:=`rospack find pcl_trunk`/release_against_ros
