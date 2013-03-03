@@ -1,0 +1,10 @@
+#!/bin/bash
+PKG=$1
+LFLAGS=`rospack libs-only-L $PKG`
+for Lflag in $LFLAGS; do
+  echo -n "-Wl,-rpath,${Lflag} "
+done
+
+
+
+

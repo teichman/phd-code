@@ -27,8 +27,9 @@ built_against_ros: svn svn/PATCHED_KINFU
 	-DBUILD_apps:BOOL=ON \
 	-DBUILD_gpu_surface:BOOL=ON \
 	-DCUDA_NVCC_FLAGS:="--compiler-bindir=${CUDA_BINDIR};-w" \
-	-DCMAKE_CXX_FLAGS:=" -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}`" \
-	-DCMAKE_C_FLAGS:=" -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}`" \
+	 -DCMAKE_CXX_FLAGS:STRING=" -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}`" \
+	 -DCMAKE_C_FLAGS:=" -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}`" \
+	-DCMAKE_EXE_LINKER_FLAGS="`rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_linker_flags {}`" \
 	-DCMAKE_BUILD_TYPE:="Release" \
 	-DBUILD_examples:BOOL=OFF \
 	-DCMAKE_INSTALL_PREFIX:=`rospack find pcl_trunk`/release_against_ros
@@ -37,10 +38,10 @@ built_against_ros: svn svn/PATCHED_KINFU
 	for d in `echo msgs_tmp/*`; do \
 		mv $$d svn/common/include; \
 	done
-	# We're building against our own message versions, so ignore the USE_ROS directive
+	#Gross, but forcing it to export these
+	cp svn/common/include/pcl/PolygonMesh.h release_against_ros/include/pcl-1.7/pcl
 	cp svn/common/include/pcl/PointIndices.h release_against_ros/include/pcl-1.7/pcl
 	cp svn/common/include/pcl/ModelCoefficients.h release_against_ros/include/pcl-1.7/pcl
-	cp svn/common/include/pcl/PolygonMesh.h release_against_ros/include/pcl-1.7/pcl
 	cp svn/common/include/pcl/Vertices.h release_against_ros/include/pcl-1.7/pcl
 	touch $@
 
