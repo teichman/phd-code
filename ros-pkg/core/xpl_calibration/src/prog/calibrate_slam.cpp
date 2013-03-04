@@ -43,7 +43,7 @@ int main(int argc, char** argv)
 
   cout << "Using sequence / trajectory pairs: " << endl;
   vector<Trajectory> trajectories(trajectory_paths.size());
-  vector<StreamSequence::ConstPtr> sseqs;
+  vector<StreamSequenceBase::ConstPtr> sseqs;
   ROS_ASSERT(sequence_paths.size() == trajectory_paths.size());
   for(size_t i = 0; i < sequence_paths.size(); ++i) {
     cout << "  " << sequence_paths[i] << " ----- " << trajectory_paths[i] << endl;
@@ -52,8 +52,7 @@ int main(int argc, char** argv)
     cout << "Trajectory: " << endl;
     cout << trajectories[i].status("  ");
 
-    StreamSequence::Ptr sseq(new StreamSequence);
-    sseq->load(sequence_paths[i]);
+    StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory (sequence_paths[i]);
     sseqs.push_back(sseq);
   }
 

@@ -17,8 +17,7 @@ int main(int argc, char** argv)
     return 0;
   }
   string seq_dir = argv[1];
-  StreamSequence::Ptr seq( new StreamSequence );
-  seq->load(seq_dir);
+  StreamSequenceBase::Ptr seq = StreamSequenceBase::initializeFromDirectory (seq_dir);
   pcl::visualization::CloudViewer vis("Cloud");
   MocapDetector md;
   for(size_t i = 0; i < seq->size(); i++){

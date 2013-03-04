@@ -1,5 +1,7 @@
 #include <rgbd_sequence/oni_recorder.h>
 #include <bag_of_tricks/high_res_timer.h>
+#include <ros/console.h>
+#include <ros/assert.h>
 
 using namespace std;
 namespace bfs = boost::filesystem;

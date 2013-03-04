@@ -27,7 +27,7 @@
 using namespace rgbd;
 using namespace std;
 
-LoopCloser::LoopCloser(rgbd::StreamSequence::ConstPtr sseq):
+LoopCloser::LoopCloser(rgbd::StreamSequenceBase::ConstPtr sseq):
   sseq_(sseq),
   fine_tune_(true),
   num_ransac_samples_(1000),

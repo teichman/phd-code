@@ -20,8 +20,8 @@ CalibrationPipelineDynamic::CalibrationPipelineDynamic(int num_threads, std::str
     pl_.load(pipeline_file);
 }
 
-void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequence::ConstPtr sseq0,
-                                           rgbd::StreamSequence::ConstPtr sseq1,
+void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequenceBase::ConstPtr sseq0,
+                                           rgbd::StreamSequenceBase::ConstPtr sseq1,
                                            Eigen::Affine3f* transform,
                                            double* sync)
 {

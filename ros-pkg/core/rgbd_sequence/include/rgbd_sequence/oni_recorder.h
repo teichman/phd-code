@@ -5,12 +5,12 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <rgbd_sequence/stream_sequence.h>
 #include <Eigen/Eigen>
 #include <pcl/io/openni_camera/openni_image_yuv_422.h>
 #include <pcl/io/openni_camera/openni_image_bayer_grbg.h>
 #include <pcl/io/openni_camera/openni_depth_image.h>
 #include <rgbd_sequence/synchronizer.h>
+#include <rgbd_sequence/primesense_model.h>
 #include <gperftools/profiler.h>
 
 namespace rgbd

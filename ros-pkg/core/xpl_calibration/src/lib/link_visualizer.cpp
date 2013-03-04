@@ -4,7 +4,7 @@ using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 
-LinkVisualizer::LinkVisualizer(StreamSequence::ConstPtr sseq, PoseGraphSlam::Ptr slam) :
+LinkVisualizer::LinkVisualizer(StreamSequenceBase::ConstPtr sseq, PoseGraphSlam::Ptr slam) :
   sseq_(sseq),
   slam_(slam),
   quitting_(false),

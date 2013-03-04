@@ -11,7 +11,7 @@ SlamCalibrator::SlamCalibrator(const PrimeSenseModel& model, double max_range, d
 {
 }
 
-rgbd::Cloud::Ptr SlamCalibrator::buildMap(const StreamSequence& sseq, const Trajectory& traj, double max_range, double vgsize)
+rgbd::Cloud::Ptr SlamCalibrator::buildMap(StreamSequenceBase::ConstPtr sseq, const Trajectory& traj, double max_range, double vgsize)
 {
   ROS_DEBUG_STREAM("Building slam calibration map using max range of " << max_range);
   ROS_WARN("SlamCalibrator::buildMap does not use distortion model.");
@@ -24,10 +24,10 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(const StreamSequence& sseq, const Traj
 
     cout << "Using frame " << i << " / " << traj.size() << endl;
     Frame frame;
-    sseq.readFrame(i, &frame);
+    sseq->readFrame(i, &frame);
     
     Cloud::Ptr tmp(new Cloud);
-    sseq.model_.frameToCloud(frame, tmp.get(), max_range);
+    sseq->model_.frameToCloud(frame, tmp.get(), max_range);
     Cloud::Ptr nonans(new Cloud);
     nonans->reserve(tmp->size());
     for(size_t j = 0; j < tmp->size(); ++j)
@@ -74,7 +74,7 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(size_t idx) const
 {
   ROS_ASSERT(idx < trajectories_.size());
   ROS_ASSERT(trajectories_.size() == sseqs_.size());
-  return buildMap(*sseqs_[idx], trajectories_[idx], max_range_, vgsize_);
+  return buildMap(sseqs_[idx], trajectories_[idx], max_range_, vgsize_);
 }
 
 size_t SlamCalibrator::size() const
@@ -98,7 +98,7 @@ DepthDistortionLearner SlamCalibrator::setupDepthDistortionLearner() const
   for(size_t i = 0; i < size(); ++i) {
 
     const Trajectory& traj = trajectories_[i];
-    const StreamSequence& sseq = *sseqs_[i];
+    StreamSequenceBase::ConstPtr sseq = sseqs_[i];
     rgbd::Cloud::Ptr map = buildMap(i);
 
     for(size_t j = 0; j < traj.size(); ++j) {
@@ -107,7 +107,7 @@ DepthDistortionLearner SlamCalibrator::setupDepthDistortionLearner() const
 
       // -- Add the frame.
       Frame frame;
-      sseq.readFrame(j, &frame);
+      sseq->readFrame(j, &frame);
       ddl.addFrame(frame, map, traj.get(j).inverse());
 
       // -- Visualize.

@@ -29,6 +29,8 @@ namespace rgbd
 
     virtual ~StreamSequenceBase () {}
 
+    static StreamSequenceBase::Ptr initializeFromDirectory (const std::string &dir);
+
     //! Loads existing model and timestamps at root_path_, prepares for streaming from here.
     virtual void load(const std::string& root_path) = 0;
     //! Saves PrimeSenseModel and timestamps to root_path_.
@@ -41,6 +43,15 @@ namespace rgbd
 
     //! dt is signed.
     size_t seek(double timestamp, double* dt) const;
+    
+    //! Adds dt to all timestamps.  Does not save.
+    void applyTimeOffset(double dt);
+    //! Inefficient accessors that conceal how the projection is done.
+    //! These shouldn't be used.
+    rgbd::Cloud::Ptr getCloud(size_t idx) const __attribute__ ((__deprecated__));
+    rgbd::Cloud::Ptr getCloud(double timestamp, double* dt) const __attribute__ ((__deprecated__));
+    cv::Mat3b getImage(size_t idx) const __attribute__ ((__deprecated__));
+    cv::Mat3b getImage(double timestamp, double* dt) const __attribute__ ((__deprecated__));
     
   protected:
   };

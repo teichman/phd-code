@@ -1,5 +1,6 @@
 #include <boost/program_options.hpp>
 #include <rgbd_sequence/stream_visualizer.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <xpl_calibration/discrete_depth_distortion_model.h>
 
 using namespace std;
@@ -12,7 +13,7 @@ class UndistortingStreamVisualizer : public StreamVisualizer
 public:
   //! UndistortingStreamVisualizer does not delete DiscreteDepthDistortionModel.
   DiscreteDepthDistortionModel* dddm_;
-  UndistortingStreamVisualizer(StreamSequence::ConstPtr sseq);
+  UndistortingStreamVisualizer(StreamSequenceBase::ConstPtr sseq);
 
 protected:
   bool use_model_;
@@ -22,7 +23,7 @@ protected:
 };
 
 
-UndistortingStreamVisualizer::UndistortingStreamVisualizer(StreamSequence::ConstPtr sseq) :
+UndistortingStreamVisualizer::UndistortingStreamVisualizer(StreamSequenceBase::ConstPtr sseq) :
   StreamVisualizer(sseq),
   dddm_(NULL),
   use_model_(false)
@@ -90,8 +91,7 @@ int main(int argc, char** argv)
   bpo::notify(opts);
   
   cout << "Looking at dir: " << dir << endl;
-  StreamSequence::Ptr sseq(new StreamSequence);
-  sseq->load(dir);
+  StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory(dir);
   cout << "Loaded successfully" << endl;
 
   double mean_dt = 0;

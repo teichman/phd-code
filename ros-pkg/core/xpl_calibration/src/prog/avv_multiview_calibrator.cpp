@@ -56,8 +56,7 @@ int main(int argc, char** argv)
   AVVMultiviewModel mvm;
   for(size_t i = 0; i < sseq_paths.size(); ++i) {
     AVVSequence avvseq;
-    avvseq.sseq_ = StreamSequence::Ptr(new StreamSequence);
-    avvseq.sseq_->load(sseq_paths[i]);
+    avvseq.sseq_ = StreamSequenceBase::initializeFromDirectory(sseq_paths[i]);
     avvseq.vseq_ = VeloSequence::Ptr(new VeloSequence(vseq_paths[i]));
     avvseq.extrinsics_.load(extrinsics_paths[i]);
     mvm.sequences_.push_back(avvseq);

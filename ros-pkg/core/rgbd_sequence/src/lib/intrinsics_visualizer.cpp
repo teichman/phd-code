@@ -49,11 +49,11 @@ namespace rgbd
     path_ = path;
     actual_distance_ = actual_distance;
     
-    sseq_.load(path);
-    model_ = sseq_.model_;
+    sseq_ = StreamSequenceBase::initializeFromDirectory(path);
+    model_ = sseq_->model_;
     Frame frame;
     while(true) {
-      sseq_.readFrame(idx_, &frame);
+      sseq_->readFrame(idx_, &frame);
       model_.frameToCloud(frame, pcd_.get());
       ROS_DEBUG_STREAM("IntrinsicsVisualizer using model: " << endl << model_.status("  "));
       if(!show_color_)
@@ -172,8 +172,8 @@ namespace rgbd
     idx_ += num;
     if(idx_ < 0)
       idx_ = 0;
-    if(idx_ >= (int)sseq_.size())
-      idx_ = sseq_.size() - 1;
+    if(idx_ >= (int)sseq_->size())
+      idx_ = sseq_->size() - 1;
   }
 
   void IntrinsicsVisualizer::saveAccepted() const

@@ -42,8 +42,7 @@ int main(int argc, char** argv)
   cout << "Using " << opts["sseq"].as<string>() << endl;
   cout << "Saving final map at " << opts["opcd"].as<string>() << endl;
   ROS_ASSERT(!bfs::exists(opts["opcd"].as<string>()));
-  StreamSequence::Ptr sseq(new StreamSequence);
-  sseq->load(opts["sseq"].as<string>());
+  StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory (opts["sseq"].as<string>());
 
   PrimeSenseSlam pss;
   if(opts.count("max-loopclosures"))

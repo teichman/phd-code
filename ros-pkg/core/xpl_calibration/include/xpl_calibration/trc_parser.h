@@ -1,7 +1,7 @@
 #ifndef TRC_PARSER_H
 #define TRC_PARSER_H
 
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 
 class TRCParser : public Serializable
 {

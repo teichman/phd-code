@@ -52,19 +52,19 @@ DiscreteDepthDistortionModel AVVMultiviewModel::learnDiscreteDistortionModel() c
   DiscreteDepthDistortionModel dddm(initial_model);
   
   for(size_t i = 0; i < sequences_.size(); ++i) {
-    const StreamSequence& sseq = *sequences_[i].sseq_;
+    StreamSequenceBase::ConstPtr sseq = sequences_[i].sseq_;
     const VeloSequence& vseq = *sequences_[i].vseq_;
     const VeloToAsusCalibration& extrinsics = sequences_[i].extrinsics_;
 
     for(size_t i = step_; i < vseq.size(); i += step_) { 
       double dt;
-      size_t idx = sseq.seek(sseq.timestamps_[0] + extrinsics.offset_ + vseq.timestamps_[i], &dt);
+      size_t idx = sseq->seek(sseq->timestamps_[0] + extrinsics.offset_ + vseq.timestamps_[i], &dt);
       if(dt > 0.01)
         continue;
       
       cout << "Adding frame " << i << endl;
       Frame frame;
-      sseq.readFrame(idx, &frame);
+      sseq->readFrame(idx, &frame);
       Cloud::Ptr filtered = filterVelo(extrinsics, vseq.getCloud(i));
       pcl::transformPointCloud(*filtered, *filtered, extrinsics.veloToAsus());
       Frame vframe;
@@ -84,19 +84,19 @@ rgbd::PrimeSenseModel AVVMultiviewModel::learnDistortionModel() const
   ddl.use_filters_ = false;
 
   for(size_t i = 0; i < sequences_.size(); ++i) {
-    const StreamSequence& sseq = *sequences_[i].sseq_;
+    StreamSequenceBase::ConstPtr sseq = sequences_[i].sseq_;
     const VeloSequence& vseq = *sequences_[i].vseq_;
     const VeloToAsusCalibration& extrinsics = sequences_[i].extrinsics_;
 
     for(size_t i = step_; i < vseq.size(); i += step_) { 
       double dt;
-      size_t idx = sseq.seek(sseq.timestamps_[0] + extrinsics.offset_ + vseq.timestamps_[i], &dt);
+      size_t idx = sseq->seek(sseq->timestamps_[0] + extrinsics.offset_ + vseq.timestamps_[i], &dt);
       if(dt > 0.01)
         continue;
       
       cout << "Adding frame " << i << endl;
       Frame frame;
-      sseq.readFrame(idx, &frame);
+      sseq->readFrame(idx, &frame);
       Cloud::Ptr filtered = filterVelo(extrinsics, vseq.getCloud(i));
       ddl.addFrame(frame, filtered, extrinsics.veloToAsus().cast<double>());
     }
@@ -112,7 +112,7 @@ rgbd::PrimeSenseModel AVVMultiviewModel::learnDistortionModel() const
 //   VeloToAsusCalibrator calibrator(initial_model, NULL);
 
 //   for(size_t i = 0; i < sseqs_.size(); ++i)
-//     updateCalibrator(*sseqs_[i], *vseqs_[i], extrinsics_[i], &calibrator);
+//     updateCalibrator(sseqs_[i], *vseqs_[i], extrinsics_[i], &calibrator);
 
 // }
 

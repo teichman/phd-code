@@ -6,7 +6,7 @@ using namespace Eigen;
 using namespace rgbd;
 
 MocapVisualizer::MocapVisualizer(const TRCParser& trc,
-                                 rgbd::StreamSequence::ConstPtr sseq,
+                                 rgbd::StreamSequenceBase::ConstPtr sseq,
                                  double tol) :
   trc_(trc),
   sseq_(sseq),

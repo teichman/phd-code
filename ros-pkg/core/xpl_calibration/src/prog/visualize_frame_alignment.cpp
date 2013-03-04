@@ -92,8 +92,7 @@ int main(int argc, char** argv)
   }
   
   cout << "Using " << opts["sseq"].as<string>() << endl;
-  StreamSequence::Ptr sseq(new StreamSequence);
-  sseq->load(opts["sseq"].as<string>());
+  StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory(opts["sseq"].as<string>());
 
   // -- Parse params.
   FrameAligner aligner(sseq->model_, sseq->model_);

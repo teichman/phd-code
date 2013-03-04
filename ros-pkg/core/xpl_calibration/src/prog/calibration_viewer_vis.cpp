@@ -4,7 +4,7 @@
 #include <pcl/common/transforms.h>
 #include <eigen_extensions/eigen_extensions.h>
 #include <rgbd_sequence/rgbd_sequence.h>
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <opencv2/calib3d/calib3d.hpp>
 
 #define MAX_Z (getenv("MAX_Z") ? atof(getenv("MAX_Z")) : 3.5)
@@ -74,10 +74,8 @@ int main(int argc, char** argv)
   Eigen::VectorXd sync;
   eigen_extensions::loadASCII(argv[4], &sync);
   
-  StreamSequence::Ptr sseq0(new StreamSequence);
-  StreamSequence::Ptr sseq1(new StreamSequence);
-  sseq0->load(argv[1]);
-  sseq1->load(argv[2]);
+  StreamSequenceBase::Ptr sseq0 = StreamSequenceBase::initializeFromDirectory (argv[1]);
+  StreamSequenceBase::Ptr sseq1 = StreamSequenceBase::initializeFromDirectory (argv[2]);
   sseq1->applyTimeOffset(sync(0));
 
   pcl::visualization::CloudViewer vis("Overlay");

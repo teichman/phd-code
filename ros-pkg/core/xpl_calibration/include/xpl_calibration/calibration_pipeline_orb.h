@@ -2,7 +2,7 @@
 #define CALIBRATION_PIPELINE_H
 
 #include <pipeline/pipeline.h>
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <rgbd_sequence/rgbd_sequence.h>
 #include <xpl_calibration/frame_selector.h>
 #include <xpl_calibration/orb_extractor.h>
@@ -25,8 +25,8 @@ public:
   
   //! Computes transform that will move target to reference.
   //! T * seq1 = seq0.
-  Eigen::Affine3f calibrate(rgbd::StreamSequence::ConstPtr seq0,
-                            rgbd::StreamSequence::ConstPtr seq1);
+  Eigen::Affine3f calibrate(rgbd::StreamSequenceBase::ConstPtr seq0,
+                            rgbd::StreamSequenceBase::ConstPtr seq1);
   
 protected:
   pipeline::Pipeline pl_;

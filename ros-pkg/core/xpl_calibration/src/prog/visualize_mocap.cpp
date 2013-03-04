@@ -20,8 +20,7 @@ int main(int argc, char** argv)
     
   TRCParser trc;
   trc.load(argv[1]);
-  StreamSequence::Ptr sseq(new StreamSequence);
-  sseq->load(argv[2]);
+  StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory(argv[2]);
   MocapVisualizer mv(trc, sseq);
   mv.run();
   

@@ -77,16 +77,16 @@ void SlamCalibrationVisualizer::visualizationThreadFunction()
       // -- Add the raw sensor data from the current frame.
       if(show_frame_) { 
         const Trajectory& traj = calibrator_->trajectories_[seq_idx_];
-        const StreamSequence& sseq = *calibrator_->sseqs_[seq_idx_];
+        StreamSequenceBase::ConstPtr sseq = calibrator_->sseqs_[seq_idx_];
         if(traj.exists(frame_idx_)) {
           Frame pose_frame;
-          sseq.readFrame(frame_idx_, &pose_frame);
+          sseq->readFrame(frame_idx_, &pose_frame);
           if(dddm_ && use_distortion_model_) {
             ScopedTimer st("Undistorting");
             dddm_->undistort(&pose_frame);
           }
           Cloud pose_pcd;
-          sseq.model_.frameToCloud(pose_frame, &pose_pcd);
+          sseq->model_.frameToCloud(pose_frame, &pose_pcd);
           if(!color_frame_) {
             for(size_t i = 0; i < pose_pcd.size(); ++i) {
               pose_pcd[i].r = 255;

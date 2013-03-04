@@ -2,7 +2,7 @@
 #define INTRINSICS_VISUALIZER_H
 
 #include <rgbd_sequence/vis_wrapper.h>
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <rgbd_sequence/primesense_model.h>
 #include <optimization/grid_search.h>
 
@@ -24,7 +24,7 @@ namespace rgbd
 
   protected:
     VisWrapper vw_;
-    StreamSequence sseq_;
+    StreamSequenceBase::Ptr sseq_;
     int idx_;
     //! The currently selected points.  Zero or one.
     std::vector<Point> selected_;

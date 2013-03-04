@@ -45,8 +45,7 @@ int main(int argc, char** argv)
   cout << "Loading StreamSequence at " << opts["sseq"].as<string>() << endl;
   cout << "Loading VeloSequence at " << opts["vseq"].as<string>() << endl;
 
-  StreamSequence::Ptr sseq(new StreamSequence);
-  sseq->load(opts["sseq"].as<string>());
+  StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory (opts["sseq"].as<string> ());
 
   VeloSequence::Ptr vseq(new VeloSequence(opts["vseq"].as<string>()));
   AsusVsVeloVisualizer avv(sseq, vseq);

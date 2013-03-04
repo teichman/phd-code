@@ -45,12 +45,11 @@ int main(int argc, char** argv)
 
   vector<double> times_std;
   for(size_t i = 0; i < sseq_paths.size(); ++i) {
-    StreamSequence sseq;
-    sseq.load(sseq_paths[i]);
+    StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory(sseq_paths[i]);
     cout << sseq_paths[i] << endl;
-    for(size_t j = 0; j < min(step * opts["max-num"].as<size_t>(), sseq.size()); j += step) {
+    for(size_t j = 0; j < min(step * opts["max-num"].as<size_t>(), sseq->size()); j += step) {
       Frame frame;
-      sseq.readFrame(i, &frame);    
+      sseq->readFrame(i, &frame);    
       HighResTimer hrt;
       hrt.start();
       dddm.undistort(&frame);

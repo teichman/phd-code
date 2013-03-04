@@ -4,7 +4,7 @@
 class AVVSequence
 {
 public:
-  rgbd::StreamSequence::Ptr sseq_;
+  rgbd::StreamSequenceBase::Ptr sseq_;
   VeloSequence::Ptr vseq_;
   VeloToAsusCalibration extrinsics_;
 };

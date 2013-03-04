@@ -4,7 +4,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <bag_of_tricks/agent.h>
 #include <pose_graph_slam/pose_graph_slam.h>
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <xpl_calibration/trajectory.h>
 #include <xpl_calibration/frame_aligner.h>
 #include <xpl_calibration/discrete_depth_distortion_model.h>
@@ -19,7 +19,7 @@ public:
   typedef boost::shared_ptr<const cv::Mat1f> FeaturesConstPtr;
 
   // -- Inputs
-  rgbd::StreamSequence::ConstPtr sseq_;
+  rgbd::StreamSequenceBase::ConstPtr sseq_;
   //! Should be running in the main thread if you want to see anything.
   FrameAlignmentVisualizer* fav_;
   //! If not NULL, it will use these intrinsics when computing frame alignments.

@@ -20,7 +20,7 @@
 #include <xpl_calibration/orb_extractor.h>
 #include <xpl_calibration/orb_matcher.h>
 #include <pose_graph_slam/pose_graph_slam.h>
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <map>
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/nonfree/features2d.hpp>
@@ -48,7 +48,7 @@ public:
   typedef boost::shared_ptr<cv::Mat1f> FeaturesPtr;
   typedef boost::shared_ptr<const cv::Mat1f> FeaturesConstPtr;
 
-  LoopCloser(rgbd::StreamSequence::ConstPtr sseq);
+  LoopCloser(rgbd::StreamSequenceBase::ConstPtr sseq);
   bool getLinkHypotheses(const rgbd::Frame &frame, size_t t, vector<size_t> &targets, 
       vector<Eigen::Affine3f> &transforms);
   void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
@@ -105,7 +105,7 @@ protected:
   //! Get features from orb and cache them
   virtual FeaturesPtr getFeatures(const rgbd::Frame &frame, size_t t, vector<cv::KeyPoint> &keypoints);
 
-  rgbd::StreamSequence::ConstPtr sseq_;
+  rgbd::StreamSequenceBase::ConstPtr sseq_;
   //OrbExtractor oe_;
   //OrbMatcher om_;
   boost::shared_ptr<cv::ORB> orb_;

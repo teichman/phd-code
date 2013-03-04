@@ -4,7 +4,7 @@
 #include <boost/thread.hpp>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <bag_of_tricks/lockable.h>
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <xpl_calibration/trajectory.h>
 #include <xpl_calibration/utility_functions.h>
 #include <pcl/common/transforms.h>
@@ -14,7 +14,7 @@
 class LinkVisualizer : public SharedLockable
 {
 public:
-  LinkVisualizer(rgbd::StreamSequence::ConstPtr sseq, PoseGraphSlam::Ptr slam);
+  LinkVisualizer(rgbd::StreamSequenceBase::ConstPtr sseq, PoseGraphSlam::Ptr slam);
   void run();
   void setCamera(const std::string& camera_path);
 protected:
@@ -25,7 +25,7 @@ protected:
     ALL
   };
   pcl::visualization::PCLVisualizer vis_;
-  rgbd::StreamSequence::ConstPtr sseq_;
+  rgbd::StreamSequenceBase::ConstPtr sseq_;
   PoseGraphSlam::Ptr slam_;
   size_t edge_idx_;
   const EdgeStruct* cur_edge_;

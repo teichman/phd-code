@@ -2,7 +2,7 @@
 #include <boost/filesystem.hpp>
 #include <pcl/sample_consensus/ransac.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <xpl_calibration/discrete_depth_distortion_model.h>
 
 using namespace std;
@@ -53,15 +53,15 @@ Vector3f planeFitRANSAC(Cloud::ConstPtr cloud)
   return planeFitSVD(inliers);
 }
 
-bool process(const StreamSequence& sseq, size_t idx, DiscreteDepthDistortionModel* dddm,
+bool process(StreamSequenceBase::ConstPtr sseq, size_t idx, DiscreteDepthDistortionModel* dddm,
              double* mean_range, double* error, double* rms)
 {
   Frame frame;
-  sseq.readFrame(idx, &frame);
+  sseq->readFrame(idx, &frame);
   if(dddm)
     dddm->undistort(&frame);
   Cloud::Ptr cloud(new Cloud);
-  sseq.model_.frameToCloud(frame, cloud.get());
+  sseq->model_.frameToCloud(frame, cloud.get());
 
   double total = 0;
   for(size_t i = 0; i < cloud->size(); ++i)
@@ -131,8 +131,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  StreamSequence sseq;
-  sseq.load(opts["sseq"].as<string>());
+  StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory(opts["sseq"].as<string>());
 
   DiscreteDepthDistortionModel* dddm = NULL;
   if(opts.count("intrinsics")) {
@@ -140,7 +139,7 @@ int main(int argc, char** argv)
     dddm->load(opts["intrinsics"].as<string>());
   }
   
-  for(size_t i = 10; i < sseq.size(); i += 5) {
+  for(size_t i = 10; i < sseq->size(); i += 5) {
     double mean_range;
     double error;
     double rms;
