@@ -14,7 +14,7 @@ namespace rgbd
   
   void StreamSequencePCLWrapper::load(const std::string& dir)
   {
-    grabber_.reset (new pcl::ImageGrabber<pcl::PointXYZRGBA> (dir, 0, false, true) ); // PCLZF mode
+    grabber_.reset (new pcl::ImageGrabber<pcl::PointXYZRGB> (dir, 0, false, true) ); // PCLZF mode
     grabber_->start ();
     // Update primesense model
     model_.id_ = 0; // TODO ?
@@ -35,23 +35,10 @@ namespace rgbd
   void StreamSequencePCLWrapper::readFrame(size_t idx, Frame* frame) const
   {
     ROS_ASSERT (idx < grabber_->size ());
-    pcl::PointCloud <pcl::PointXYZRGBA>::ConstPtr cloud = grabber_->at (idx);
+    rgbd::Cloud::ConstPtr cloud = grabber_->at (idx);
     // Make img_ and depth_;
-
-    frame->img_ = cv::Mat3b::zeros (model_.height_, model_.width_);
-    frame->depth_ = DepthMatPtr(new DepthMat (model_.height_, model_.width_));
-
-    for (int y = 0; y < cloud->height; y++)
-    {
-      for (int x = 0; x < cloud->width; x++)
-      {
-        const pcl::PointXYZRGBA &pt = cloud->at (x, y);
-        frame->img_ (y, x)[0] = pt.b;
-        frame->img_ (y, x)[1] = pt.g;
-        frame->img_ (y, x)[2] = pt.r;
-        frame->depth_->coeffRef (y, x) = (pt.z > max_depth_ ? 0 : pt.z * 1000);
-      }
-    }
+    model_.cloudToFrame (*cloud, frame);
+    frame->timestamp_ = timestamps_[idx];
   }
 
   void StreamSequencePCLWrapper::readFrame(double timestamp, double* dt, Frame* frame) const

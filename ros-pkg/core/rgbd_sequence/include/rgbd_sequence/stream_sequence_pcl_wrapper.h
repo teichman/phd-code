@@ -46,7 +46,7 @@ namespace rgbd
     void readFrame(double timestamp, double* dt, Frame* frame) const;
 
   protected:
-    boost::shared_ptr <pcl::ImageGrabber<pcl::PointXYZRGBA> > grabber_;
+    boost::shared_ptr <pcl::ImageGrabber<pcl::PointXYZRGB> > grabber_;
     
   };
 

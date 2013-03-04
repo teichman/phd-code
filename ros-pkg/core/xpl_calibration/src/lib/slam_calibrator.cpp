@@ -39,7 +39,7 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(StreamSequenceBase::ConstPtr sseq, con
     *map += *nonans;
     ++num_used_frames;
     // Added intermediate filtering to handle memory overload on huge maps
-    if(num_used_frames % 250 == 0)
+    if(num_used_frames % 50 == 0)
     {
       cout << "Filtering..." << endl;
       HighResTimer hrt("filtering");
