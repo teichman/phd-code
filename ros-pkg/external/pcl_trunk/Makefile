@@ -1,7 +1,7 @@
 .SECONDARY:
 
 CUDA_BINDIR := /tmp/gcc-4.4
- PCL_VERSION := 8754
+ PCL_VERSION := 8755
 
 C_COMPILER:=/usr/bin/gcc
 CXX_COMPILER:=/usr/bin/g++
