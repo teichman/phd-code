@@ -1,7 +1,7 @@
 .SECONDARY:
 
 CUDA_BINDIR := /tmp/gcc-4.4
- PCL_VERSION := 8754
+ PCL_VERSION := 8755
 
 C_COMPILER:=/usr/bin/gcc
 CXX_COMPILER:=/usr/bin/g++
@@ -16,17 +16,17 @@ built_against_ros: svn svn/PATCHED_KINFU svn/PATCHED_USE_ROS
   done
 	cd svn && mkdir -p build_against_ros
 	mkdir -p ${CUDA_BINDIR}
-	cd ${CUDA_BINDIR} && ln -sf /usr/bin/gcc-4.4 gcc && ln -sf /usr/bin/g++-4.4 g++
+	cd ${CUDA_BINDIR} && ln -sf /usr/bin/gcc-4.6 gcc && ln -sf /usr/bin/g++-4.6 g++ && ln -sf /usr/bin/gcc-4.6 cc && ln -sf /usr/bin/g++-4.6 c++
 	cd svn/build_against_ros && cmake ../ \
 	-DCMAKE_C_COMPILER:FILEPATH=${C_COMPILER} \
 	-DCMAKE_CXX_COMPILER:FILEPATH=${CXX_COMPILER} \
 	-DUSE_ROS:BOOL=ON \
-	-DBUILD_CUDA:BOOL=ON \
-	-DBUILD_GPU:BOOL=ON \
+	-DBUILD_CUDA:BOOL=OFF \
+	-DBUILD_GPU:BOOL=OFF \
 	-DBUILD_global_tests:BOOL=OFF \
 	-DBUILD_apps:BOOL=ON \
 	-DBUILD_gpu_surface:BOOL=ON \
-	-DCUDA_NVCC_FLAGS:="--compiler-bindir=${CUDA_BINDIR};-w" \
+	-DCUDA_NVCC_FLAGS:="--compiler-bindir=${CUDA_BINDIR}" \
 	-DCMAKE_CXX_FLAGS:STRING="-Wl,--no-as-needed -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}`" \
 	-DCMAKE_C_FLAGS:=" -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}`" \
 	-DCMAKE_EXE_LINKER_FLAGS="-Wl,--no-as-needed `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_linker_flags {}` -Wl,-rpath,`rospack find pcl_trunk`/release_against_ros/lib" \
