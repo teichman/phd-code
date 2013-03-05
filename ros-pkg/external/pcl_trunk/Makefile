@@ -8,7 +8,7 @@ CXX_COMPILER:=/usr/bin/g++
 
 default: built_against_ros
 
-built_against_ros: svn svn/PATCHED_KINFU
+built_against_ros: svn svn/PATCHED_KINFU svn/PATCHED_USE_ROS
 	mkdir -p msgs_tmp
 	for d in `ls svn/common/include | grep msgs`; do \
 		echo Moving $$d; \
@@ -128,6 +128,10 @@ svn:
 
 svn/PATCHED_KINFU:
 	cd svn && patch -p0 < ../kinfu_reset.patch
+	touch $@
+
+svn/PATCHED_USE_ROS:
+	cd svn && patch -p0 < ../use_ros.patch
 	touch $@
 
 remove_msgs:

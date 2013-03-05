@@ -1,0 +1,24 @@
+Index: common/CMakeLists.txt
+===================================================================
+--- common/CMakeLists.txt	(revision 8753)
++++ common/CMakeLists.txt	(working copy)
+@@ -61,13 +61,13 @@
+         include/pcl/TextureMesh.h
+         )
+ 
++    set(incs ${incs}
++      include/pcl/ModelCoefficients.h
++      include/pcl/PolygonMesh.h
++      include/pcl/Vertices.h
++      include/pcl/PointIndices.h
++      )
+     if(NOT USE_ROS)
+-        set(incs ${incs}
+-          include/pcl/ModelCoefficients.h
+-          include/pcl/PolygonMesh.h
+-          include/pcl/Vertices.h
+-          include/pcl/PointIndices.h
+-          )
+ 
+         set(sensor_msg_incs 
+           include/sensor_msgs/PointField.h
