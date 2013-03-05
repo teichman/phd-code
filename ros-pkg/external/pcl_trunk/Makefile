@@ -119,7 +119,6 @@ built_against_ros_debug: svn svn/PATCHED_KINFU
 	cd svn/build_against_ros_debug && make -j4 && make install
 	rm -rf ${CUDA_BINDIR}
 	touch $@
-	
 
 svn:
 	#svn co -r${PCL_VERSION} http://svn.pointclouds.org/pcl/trunk $@
@@ -163,7 +162,7 @@ clean: restore_msgs restore_ros_conflicts
 	-rm -f built
 
 wipe:
-	-rm -rf svn
+	-rm -rf svn msgs_tmp
 	-rm -f built
 
 3rdparty: svn
@@ -174,6 +173,5 @@ wipe:
 	cd 3rdparty/flann-1.7.1-src/build && cmake ../ -DBUILD_CUDA_LIB:BOOL=OFF -DCMAKE_INSTALL_PREFIX:STRING=/usr
 	cd 3rdparty/flann-1.7.1-src/build && make
 	cd 3rdparty/flann-1.7.1-src/build && sudo make install
-	
-	
+
 
