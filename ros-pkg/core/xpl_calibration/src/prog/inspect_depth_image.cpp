@@ -107,9 +107,11 @@ void Inspector::updateDepth(const openni_wrapper::DepthImage& oni)
   if(dddm_ && use_intrinsics_)
     dddm_->undistort(&frame_);
   
-  vis_ = frame_.depthImage();
-  frame_.img_ = vis_.clone();
-
+  // vis_ = frame_.depthImage();
+  // frame_.img_ = vis_.clone();
+  static cv::Mat3b blank(cv::Size(oni.getWidth(), oni.getHeight()), cv::Vec3b(0, 0, 0));
+  frame_.img_ = blank;
+  
   static pcl::visualization::CloudViewer viewer("pcd");
 
   if(show_pcd_) {
@@ -123,20 +125,7 @@ void Inspector::updateDepth(const openni_wrapper::DepthImage& oni)
     model.fy_ = 525;
     model.frameToCloud(frame_, cloud.get());
     viewer.showCloud(cloud);
-  }
-  
-  // vis_ = cv::Vec3b(0, 0, 0);
-  // for(int y = 0; y < frame_.depth_->rows(); ++y) {
-  //   for(int x = 0; x < frame_.depth_->cols(); ++x) {
-  //     if(frame_.depth_->coeffRef(y, x) == 0)
-  //         continue;
-      
-  //     double maxdist = 10;
-  //     double mindist = 1;
-  //     double val = 255 * (1.0 - ((fmin(maxdist, fmax(mindist, frame_.depth_->coeffRef(y, x))) - mindist) / (maxdist - mindist)));
-  //     vis_(y, x) = cv::Vec3b(val, val, val);
-  //   }
-  // }
+  }  
 }
 
 void Inspector::callback(const boost::shared_ptr<openni_wrapper::DepthImage>& oni)
