@@ -21,22 +21,22 @@ SlamCalibrationVisualizer::SlamCalibrationVisualizer(SlamCalibrator::Ptr calibra
   vis_.setBackgroundColor(1, 1, 1);
   
   // -- Set the viewpoint to be sensible for PrimeSense devices.
-  vis_.camera_.clip[0] = 0.00387244;
-  vis_.camera_.clip[1] = 3.87244;
-  vis_.camera_.focal[0] = -0.160878;
-  vis_.camera_.focal[1] = -0.0444743;
-  vis_.camera_.focal[2] = 1.281;
-  vis_.camera_.pos[0] = 0.0402195;
-  vis_.camera_.pos[1] = 0.0111186;
-  vis_.camera_.pos[2] = -1.7;
-  vis_.camera_.view[0] = 0;
-  vis_.camera_.view[1] = -1;
-  vis_.camera_.view[2] = 0;
-  vis_.camera_.window_size[0] = 1678;
-  vis_.camera_.window_size[1] = 525;
-  vis_.camera_.window_pos[0] = 2;
-  vis_.camera_.window_pos[1] = 82;
-  vis_.updateCamera();    
+  // SDM TODO vis_.camera_.clip[0] = 0.00387244;
+  // SDM TODO vis_.camera_.clip[1] = 3.87244;
+  // SDM TODO vis_.camera_.focal[0] = -0.160878;
+  // SDM TODO vis_.camera_.focal[1] = -0.0444743;
+  // SDM TODO vis_.camera_.focal[2] = 1.281;
+  // SDM TODO vis_.camera_.pos[0] = 0.0402195;
+  // SDM TODO vis_.camera_.pos[1] = 0.0111186;
+  // SDM TODO vis_.camera_.pos[2] = -1.7;
+  // SDM TODO vis_.camera_.view[0] = 0;
+  // SDM TODO vis_.camera_.view[1] = -1;
+  // SDM TODO vis_.camera_.view[2] = 0;
+  // SDM TODO vis_.camera_.window_size[0] = 1678;
+  // SDM TODO vis_.camera_.window_size[1] = 525;
+  // SDM TODO vis_.camera_.window_pos[0] = 2;
+  // SDM TODO vis_.camera_.window_pos[1] = 82;
+  // SDM TODO vis_.updateCamera();    
 }
 
 void SlamCalibrationVisualizer::run()
@@ -77,16 +77,16 @@ void SlamCalibrationVisualizer::visualizationThreadFunction()
       // -- Add the raw sensor data from the current frame.
       if(show_frame_) { 
         const Trajectory& traj = calibrator_->trajectories_[seq_idx_];
-        const StreamSequence& sseq = *calibrator_->sseqs_[seq_idx_];
+        StreamSequenceBase::ConstPtr sseq = calibrator_->sseqs_[seq_idx_];
         if(traj.exists(frame_idx_)) {
           Frame pose_frame;
-          sseq.readFrame(frame_idx_, &pose_frame);
+          sseq->readFrame(frame_idx_, &pose_frame);
           if(dddm_ && use_distortion_model_) {
             ScopedTimer st("Undistorting");
             dddm_->undistort(&pose_frame);
           }
           Cloud pose_pcd;
-          sseq.model_.frameToCloud(pose_frame, &pose_pcd);
+          sseq->model_.frameToCloud(pose_frame, &pose_pcd);
           if(!color_frame_) {
             for(size_t i = 0; i < pose_pcd.size(); ++i) {
               pose_pcd[i].r = 255;

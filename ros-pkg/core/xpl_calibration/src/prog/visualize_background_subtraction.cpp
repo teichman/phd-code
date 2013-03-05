@@ -78,9 +78,8 @@ int main(int argc, char** argv)
     pl.save("bgs-default.pl");
   }
   
-  StreamSequence::Ptr sseq(new StreamSequence);
   cout << "Loading " << argv[1] << "." << endl;
-  sseq->load(argv[1]);
+  StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory(argv[1]);
 
   // -- Downsample the sequence heavily.
   size_t interval = 20;

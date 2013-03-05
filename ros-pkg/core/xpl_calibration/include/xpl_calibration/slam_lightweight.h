@@ -8,7 +8,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <bag_of_tricks/lockable.h>
 #include <pose_graph_slam/pose_graph_slam.h>
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <xpl_calibration/frame_aligner.h>
 #include <xpl_calibration/loop_closer.h>
 #include <xpl_calibration/trajectory.h>
@@ -29,7 +29,7 @@ public:
   // TODO
   
   SlamLightweight();
-  void run(rgbd::StreamSequence::ConstPtr sseq,
+  void run(rgbd::StreamSequenceBase::ConstPtr sseq,
            const std::string& opcd_path = "",
            const std::string& otraj_path = "",
      const std::string& ograph_path = "");
@@ -37,7 +37,7 @@ public:
   void rebuild_map();
   
 protected:
-  rgbd::StreamSequence::ConstPtr sseq_;
+  rgbd::StreamSequenceBase::ConstPtr sseq_;
   PoseGraphSlam::Ptr slam_;
   rgbd::Cloud::Ptr map_;
   rgbd::Cloud::Ptr curr_pcd_;

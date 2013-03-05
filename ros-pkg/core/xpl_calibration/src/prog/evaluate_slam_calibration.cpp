@@ -35,7 +35,7 @@ void computeDistortion(const Frame& frame, const Frame& mapframe, double* total_
 
 void evaluate(const bpo::variables_map& opts,
               const DiscreteDepthDistortionModel& intrinsics,
-              const StreamSequence& sseq, const Trajectory& traj,
+              StreamSequenceBase::ConstPtr sseq, const Trajectory& traj,
               const string& eval_path)
 {
   ROS_ASSERT(!bfs::exists(eval_path));
@@ -57,11 +57,11 @@ void evaluate(const bpo::variables_map& opts,
       continue;
 
     Frame frame;
-    sseq.readFrame(i, &frame);
+    sseq->readFrame(i, &frame);
     Affine3f transform = traj.get(i).inverse().cast<float>();
     pcl::transformPointCloud(map, transformed, transform);
     Frame mapframe;
-    sseq.model_.cloudToFrame(transformed, &mapframe);
+    sseq->model_.cloudToFrame(transformed, &mapframe);
 
     cv::imshow("mapframe", mapframe.depthImage());
     cv::imshow("frame", frame.depthImage());
@@ -89,13 +89,13 @@ void evaluate(const bpo::variables_map& opts,
 }
 
 DiscreteDepthDistortionModel calibrateLOO(const bpo::variables_map& opts,
-                                          const vector<StreamSequence::ConstPtr>& sseqs,
+                                          const vector<StreamSequenceBase::ConstPtr>& sseqs,
                                           const vector<Trajectory>& trajectories,
                                           size_t idx)
 {
   ROS_ASSERT(sseqs.size() == trajectories.size());
   
-  vector<StreamSequence::ConstPtr> sseq_train;
+  vector<StreamSequenceBase::ConstPtr> sseq_train;
   vector<Trajectory> traj_train;
   for(size_t i = 0; i < sseqs.size(); ++i) {
     if(i == idx)
@@ -149,7 +149,7 @@ int main(int argc, char** argv)
   cout << "Saving output to " << output_path << endl;
   cout << "--------------------" << endl;
 
-  vector<StreamSequence::ConstPtr> sseqs;
+  vector<StreamSequenceBase::ConstPtr> sseqs;
   vector<Trajectory> trajectories;
   vector<string> names;
   ROS_ASSERT(sseq_paths.size() == traj_paths.size());
@@ -157,8 +157,7 @@ int main(int argc, char** argv)
     cout << endl;
     string path = sseq_paths[i];
     cout << "Loading StreamSequence at " << path << endl;
-    StreamSequence::Ptr sseq(new StreamSequence);
-    sseq->load(path);
+    StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory (path);
     sseqs.push_back(sseq);
       
     // Get the StreamSequence name.
@@ -186,7 +185,7 @@ int main(int argc, char** argv)
     ROS_ASSERT(!bfs::exists(eval_path));
     
     DiscreteDepthDistortionModel intrinsics = calibrateLOO(opts, sseqs, trajectories, i);
-    evaluate(opts, intrinsics, *sseqs[i], trajectories[i], eval_path);
+    evaluate(opts, intrinsics, sseqs[i], trajectories[i], eval_path);
   }
 
   return 0;

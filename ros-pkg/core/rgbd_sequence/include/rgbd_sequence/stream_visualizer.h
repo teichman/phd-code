@@ -1,6 +1,6 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <opencv2/highgui/highgui.hpp>
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <bag_of_tricks/agent.h>
 
 namespace rgbd
@@ -9,13 +9,13 @@ namespace rgbd
   class StreamVisualizer : public Agent
   {
   public:
-    StreamVisualizer(StreamSequence::ConstPtr sseq);
+    StreamVisualizer(StreamSequenceBase::ConstPtr sseq);
     virtual ~StreamVisualizer() {}
     virtual void _run();
 
   protected:
     pcl::visualization::PCLVisualizer vis_;
-    StreamSequence::ConstPtr sseq_;
+    StreamSequenceBase::ConstPtr sseq_;
     int idx_;
     Cloud::Ptr pcd_;
     bool needs_update_;

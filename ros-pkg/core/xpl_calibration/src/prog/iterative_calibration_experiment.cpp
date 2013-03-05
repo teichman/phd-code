@@ -44,7 +44,7 @@ void computeDistortion(const Frame& frame, const Frame& mapframe,
 void evaluate(const bpo::variables_map& opts,
               const DiscreteDepthDistortionModel& intrinsics,
               const Cloud& map,
-              const StreamSequence& sseq,
+              StreamSequenceBase::ConstPtr sseq,
               const Trajectory& traj,
               double* raw_total_error, double* raw_num_pts,
               double* undistorted_total_error, double* undistorted_num_pts)
@@ -56,12 +56,12 @@ void evaluate(const bpo::variables_map& opts,
       continue;
 
     Frame frame;
-    sseq.readFrame(i, &frame);
+    sseq->readFrame(i, &frame);
     Affine3f transform = traj.get(i).inverse().cast<float>();
     Cloud transformed;
     pcl::transformPointCloud(map, transformed, transform);
     Frame mapframe;
-    sseq.model_.cloudToFrame(transformed, &mapframe);
+    sseq->model_.cloudToFrame(transformed, &mapframe);
 
     computeDistortion(frame, mapframe, raw_total_error, raw_num_pts);
     intrinsics.undistort(&frame);
@@ -72,7 +72,7 @@ void evaluate(const bpo::variables_map& opts,
 void evaluate(const bpo::variables_map& opts,
               const DiscreteDepthDistortionModel& intrinsics,
               const vector<Cloud>& maps,
-              const vector<StreamSequence::ConstPtr>& sseqs,
+              const vector<StreamSequenceBase::ConstPtr>& sseqs,
               const vector<Trajectory>& trajectories,
               const string& eval_path)
 {
@@ -101,7 +101,7 @@ void evaluate(const bpo::variables_map& opts,
   double undistorted_total_error = 0;
   double undistorted_num_pts = 0;
   for(size_t i = 0; i < sseqs.size(); ++i) {
-    evaluate(opts, intrinsics, maps[i], *sseqs[i], trajectories[i],
+    evaluate(opts, intrinsics, maps[i], sseqs[i], trajectories[i],
              &raw_total_error, &raw_num_pts,
              &undistorted_total_error, &undistorted_num_pts);
   }
@@ -125,7 +125,7 @@ void evaluate(const bpo::variables_map& opts,
 
 DiscreteDepthDistortionModel calibrate(const bpo::variables_map& opts,
                                        const DiscreteDepthDistortionModel& prev_intrinsics,
-                                       const vector<StreamSequence::ConstPtr>& sseqs,
+                                       const vector<StreamSequenceBase::ConstPtr>& sseqs,
                                        const vector<Trajectory>& trajectories)
 {
   ROS_ASSERT(sseqs.size() == trajectories.size());
@@ -135,7 +135,7 @@ DiscreteDepthDistortionModel calibrate(const bpo::variables_map& opts,
   int num_pairs = 0;
   while(num_pairs < desired_num_pairs) {
     int idx = rand() % sseqs.size();
-    const StreamSequence& sseq = *sseqs[idx];
+    StreamSequenceBase::ConstPtr sseq = sseqs[idx];
     const Trajectory& traj = trajectories[idx];
     
     int idx2 = rand() % traj.size();
@@ -150,8 +150,8 @@ DiscreteDepthDistortionModel calibrate(const bpo::variables_map& opts,
 
     Frame gtframe;
     Frame measframe;
-    sseq.readFrame(idx2, &measframe);
-    sseq.readFrame(idx3, &gtframe);
+    sseq->readFrame(idx2, &measframe);
+    sseq->readFrame(idx3, &gtframe);
     prev_intrinsics.undistort(&gtframe);
     
     Affine3f transform = (traj.get(idx2).inverse() * traj.get(idx3)).cast<float>();
@@ -170,11 +170,11 @@ DiscreteDepthDistortionModel calibrate(const bpo::variables_map& opts,
         ppt.z_ = gtframe.depth_->coeffRef(y, x);
         
         Point pt;
-        sseq.model_.project(ppt, &pt);
+        sseq->model_.project(ppt, &pt);
         pt.getVector4fMap() = transform * pt.getVector4fMap();
-        sseq.model_.project(pt, &ppt);
-        if((ppt.u_ < 0) || (ppt.u_ >= sseq.model_.width_) ||
-           (ppt.v_ < 0) || (ppt.v_ >= sseq.model_.height_) ||
+        sseq->model_.project(pt, &ppt);
+        if((ppt.u_ < 0) || (ppt.u_ >= sseq->model_.width_) ||
+           (ppt.v_ < 0) || (ppt.v_ >= sseq->model_.height_) ||
            (measframe.depth_->coeffRef(ppt.v_, ppt.u_) == 0))
         {
           continue;
@@ -196,7 +196,7 @@ DiscreteDepthDistortionModel calibrate(const bpo::variables_map& opts,
 }
 
 void load(const vector<string>& sseq_paths, const vector<string>& traj_paths,
-          vector<StreamSequence::ConstPtr>* sseqs,
+          vector<StreamSequenceBase::ConstPtr>* sseqs,
           vector<Trajectory>* trajectories,
           vector<string>* names)
 {
@@ -205,8 +205,7 @@ void load(const vector<string>& sseq_paths, const vector<string>& traj_paths,
     cout << endl;
     string path = sseq_paths[i];
     cout << "Loading StreamSequence at " << path << endl;
-    StreamSequence::Ptr sseq(new StreamSequence);
-    sseq->load(path);
+    StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory (path);
     sseqs->push_back(sseq);
       
     // Get the StreamSequence name.
@@ -263,11 +262,11 @@ int main(int argc, char** argv)
   cout << "Saving output to " << output_path << endl;
   cout << "--------------------" << endl;
 
-  vector<StreamSequence::ConstPtr> sseqs_train;
+  vector<StreamSequenceBase::ConstPtr> sseqs_train;
   vector<Trajectory> trajectories_train;
   vector<string> names_train;
   load(sseq_paths_train, traj_paths_train, &sseqs_train, &trajectories_train, &names_train);
-  vector<StreamSequence::ConstPtr> sseqs_test;
+  vector<StreamSequenceBase::ConstPtr> sseqs_test;
   vector<Trajectory> trajectories_test;
   vector<string> names_test;
   load(sseq_paths_test, traj_paths_test, &sseqs_test, &trajectories_test, &names_test);
@@ -308,7 +307,7 @@ int main(int argc, char** argv)
   cout << "Building test maps." << endl;
   vector<Cloud> maps(sseqs_test.size());
   for(size_t i = 0; i < maps.size(); ++i)
-    maps[i] = *SlamCalibrator::buildMap(*sseqs_test[i], trajectories_test[i], MAX_RANGE_MAP, opts["vgsize"].as<double>());
+    maps[i] = *SlamCalibrator::buildMap(sseqs_test[i], trajectories_test[i], MAX_RANGE_MAP, opts["vgsize"].as<double>());
   cout << "Done." << endl;
   
   cout << endl;
@@ -327,7 +326,7 @@ int main(int argc, char** argv)
 
     // -- Run SLAM on all training sequences.
     vector<Trajectory> trajectories_train_current;
-    vector<StreamSequence::ConstPtr> sseqs_train_current;
+    vector<StreamSequenceBase::ConstPtr> sseqs_train_current;
     for(size_t i = 0; i < sseqs_train.size(); ++i) {
       // Run the SLAM solver.
       PrimeSenseSlam slam;

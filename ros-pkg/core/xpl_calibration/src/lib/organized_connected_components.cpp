@@ -1,4 +1,5 @@
 #include <xpl_calibration/plane_finder.h>
+#include <pcl/common/distances.h>
 
 using namespace std;
 using namespace Eigen;

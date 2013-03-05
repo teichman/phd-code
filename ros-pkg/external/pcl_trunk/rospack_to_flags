@@ -1,0 +1,19 @@
+#!/bin/bash
+PKG=$1
+INCLUDES=`rospack cflags-only-I $PKG`
+for inc in $INCLUDES; do
+  echo -n "-I${inc} "
+done
+LFLAGS=`rospack libs-only-L $PKG`
+for Lflag in $LFLAGS; do
+  echo -n "-L${Lflag} "
+done
+
+LIBS=`rospack libs-only-l $PKG`
+for lib in $LIBS; do
+  echo -n "-l${lib} ";
+done
+
+
+
+

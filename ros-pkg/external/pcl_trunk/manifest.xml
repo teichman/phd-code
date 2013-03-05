@@ -8,11 +8,14 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/pcl_trunk</url>
+
+  <depend package="sensor_msgs"/>
+  <depend package="roscpp_serialization"/>
   
-      <export>
-        <cpp cflags="`${prefix}/cmake-config PCL --version 1.7 --cflags-only-I --cflags-only-other --module-path=${prefix}/release/share/pcl-1.7`"      
-          lflags="-L${prefix}/release/lib -Wl,-rpath,${prefix}/release/lib `${prefix}/cmake-config PCL --version 1.7 --libs-only-L --libs-only-l --module-path=${prefix}/release/share/pcl-1.7`"/> 
-      </export>
+  <export>
+    <cpp cflags="`${prefix}/cmake-config PCL --version 1.7 --cflags-only-I --cflags-only-other --module-path=${prefix}/release_against_ros/share/pcl-1.7`"
+         lflags="-lvtkFiltering -L${prefix}/release_against_ros/lib -Wl,-rpath,${prefix}/release_against_ros/lib `${prefix}/cmake-config PCL --version 1.7 --libs-only-L --libs-only-l --module-path=${prefix}/release_against_ros/share/pcl-1.7`"/> 
+  </export>
 
     
     

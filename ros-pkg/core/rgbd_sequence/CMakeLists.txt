@@ -24,11 +24,13 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #common commands for building c++ executables and libraries
 rosbuild_add_library(rgbd_sequence
   src/lib/rgbd_sequence.cpp
+  src/lib/stream_sequence_base.cpp
   src/lib/stream_sequence.cpp
   src/lib/primesense_model.cpp
   src/lib/vis_wrapper.cpp
   src/lib/intrinsics_visualizer.cpp
   src/lib/stream_visualizer.cpp
+  src/lib/stream_sequence_pcl_wrapper.cpp
   )
 # memory fragmentation is a problem for data quantity experiment?
 target_link_libraries(${PROJECT_NAME} tcmalloc)

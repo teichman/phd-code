@@ -38,12 +38,10 @@ int main(int argc, char** argv)
     return 0;
   }
   
-  StreamSequence::Ptr sseq0(new StreamSequence);
-  StreamSequence::Ptr sseq1(new StreamSequence);
   cout << "Loading " << path0 << "." << endl;
-  sseq0->load(path0);
+  StreamSequenceBase::Ptr sseq0 = StreamSequenceBase::initializeFromDirectory(path0);
   cout << "Loading " << path1 << "." << endl;
-  sseq1->load(path1);
+  StreamSequenceBase::Ptr sseq1 = StreamSequenceBase::initializeFromDirectory(path1);
 
   string pipeline_path = "";
   if(argc == 5) { 

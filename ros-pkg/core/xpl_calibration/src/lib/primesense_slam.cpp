@@ -207,7 +207,7 @@ Cloud::Ptr PrimeSenseSlam::buildMap(const Trajectory& traj) const
     *map += *curr_pcd_transformed;
     
     num_frames_used++;
-    if(num_frames_used % 250 == 0)
+    if(num_frames_used % 50 == 0)
     {
       cout << "Filtering" << endl;
       Cloud::Ptr tmp(new Cloud);

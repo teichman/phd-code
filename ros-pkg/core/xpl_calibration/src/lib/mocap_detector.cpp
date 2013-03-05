@@ -17,7 +17,7 @@ MocapDetector::MocapDetector(int checker_cols, int checker_rows, float square_si
   br_ = Eigen::Vector3f(4*square_size_+0.05, 8*square_size_+0.0525, -0.025);
 }
 
-bool MocapDetector::locatePoints(const StreamSequence::ConstPtr &seq, size_t frame, 
+bool MocapDetector::locatePoints(const StreamSequenceBase::ConstPtr &seq, size_t frame, 
     Point &tl, Point &tr, Point& bl, Point &br) const
 {
     Cloud::Ptr pcd = seq->getCloud(frame);

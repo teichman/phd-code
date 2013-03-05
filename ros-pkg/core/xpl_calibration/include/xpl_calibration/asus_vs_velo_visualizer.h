@@ -8,7 +8,7 @@
 #include <ros/package.h>
 #include <matplotlib_interface/matplotlib_interface.h>
 #include <rgbd_sequence/vis_wrapper.h>
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <xpl_calibration/depth_distortion_learner.h>
 #include <xpl_calibration/velo_to_asus_calibrator.h>
 #include <xpl_calibration/discrete_depth_distortion_model.h>
@@ -44,7 +44,7 @@ public:
   //! Will be deleted by AsusVsVeloVisualizer.
   DiscreteDepthDistortionModel* dddm_;
   
-  AsusVsVeloVisualizer(rgbd::StreamSequence::Ptr sseq, VeloSequence::ConstPtr vseq);
+  AsusVsVeloVisualizer(rgbd::StreamSequenceBase::Ptr sseq, VeloSequence::ConstPtr vseq);
   ~AsusVsVeloVisualizer();
   void run();
   void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective);
@@ -60,7 +60,7 @@ public:
   void fitFocalLength();
   
 protected:
-  rgbd::StreamSequence::Ptr sseq_;
+  rgbd::StreamSequenceBase::Ptr sseq_;
   VeloSequence::ConstPtr vseq_;
   rgbd::VisWrapper vw_;
   int velo_idx_;

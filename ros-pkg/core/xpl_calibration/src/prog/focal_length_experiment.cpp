@@ -45,7 +45,7 @@ void computeDistortion(const Frame& frame, const Frame& mapframe,
 void evaluate(const bpo::variables_map& opts,
               double f,
               const Cloud& map,
-              const StreamSequence& sseq,
+              StreamSequenceBase::ConstPtr sseq,
               const Trajectory& traj,
               double* raw_total_error, double* raw_num_pts,
               double* undistorted_total_error, double* undistorted_num_pts)
@@ -57,13 +57,13 @@ void evaluate(const bpo::variables_map& opts,
       continue;
 
     Frame frame;
-    sseq.readFrame(i, &frame);
+    sseq->readFrame(i, &frame);
     Affine3f transform = traj.get(i).inverse().cast<float>();
     Cloud transformed;
     pcl::transformPointCloud(map, transformed, transform);
 
     Frame mapframe;
-    PrimeSenseModel model = sseq.model_;
+    PrimeSenseModel model = sseq->model_;
     model.fx_ = opts["initial-f"].as<double>();
     model.fy_ = opts["initial-f"].as<double>();
     model.cloudToFrame(transformed, &mapframe);
@@ -78,7 +78,7 @@ void evaluate(const bpo::variables_map& opts,
 void evaluate(const bpo::variables_map& opts,
               double f,
               const vector<Cloud>& maps,
-              const vector<StreamSequence::Ptr>& sseqs,
+              const vector<StreamSequenceBase::Ptr>& sseqs,
               const vector<Trajectory>& trajectories,
               const string& eval_path)
 {
@@ -94,7 +94,7 @@ void evaluate(const bpo::variables_map& opts,
   double undistorted_total_error = 0;
   double undistorted_num_pts = 0;
   for(size_t i = 0; i < sseqs.size(); ++i) {
-    evaluate(opts, f, maps[i], *sseqs[i], trajectories[i],
+    evaluate(opts, f, maps[i], sseqs[i], trajectories[i],
              &raw_total_error, &raw_num_pts,
              &undistorted_total_error, &undistorted_num_pts);
   }
@@ -120,19 +120,19 @@ void evaluate(const bpo::variables_map& opts,
 }
 
 double calibrate(const bpo::variables_map& opts,
-                 const vector<StreamSequence::Ptr>& sseqs,
+                 const vector<StreamSequenceBase::Ptr>& sseqs,
                  const vector<Trajectory>& trajectories)
 {
   ROS_ASSERT(sseqs.size() == trajectories.size());
   
   SlamCalibrator calibrator(sseqs[0]->model_, MAX_RANGE_MAP, opts["vgsize"].as<double>());
-  calibrator.sseqs_ = cast<const StreamSequence>(sseqs);
+  calibrator.sseqs_ = cast<const StreamSequenceBase>(sseqs);
   calibrator.trajectories_ = trajectories;
   return calibrator.calibrateFocalLength();
 }
 
 void load(const vector<string>& sseq_paths, const vector<string>& traj_paths,
-          vector<StreamSequence::Ptr>* sseqs,
+          vector<StreamSequenceBase::Ptr>* sseqs,
           vector<Trajectory>* trajectories,
           vector<string>* names)
 {
@@ -141,8 +141,7 @@ void load(const vector<string>& sseq_paths, const vector<string>& traj_paths,
     cout << endl;
     string path = sseq_paths[i];
     cout << "Loading StreamSequence at " << path << endl;
-    StreamSequence::Ptr sseq(new StreamSequence);
-    sseq->load(path);
+    StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory(path);
     sseqs->push_back(sseq);
       
     // Get the StreamSequence name.
@@ -204,11 +203,11 @@ int main(int argc, char** argv)
   cout << "Saving output to " << output_path << endl;
   cout << "--------------------" << endl;
 
-  vector<StreamSequence::Ptr> sseqs_train;
+  vector<StreamSequenceBase::Ptr> sseqs_train;
   vector<Trajectory> trajectories_train;
   vector<string> names_train;
   load(sseq_paths_train, traj_paths_train, &sseqs_train, &trajectories_train, &names_train);
-  vector<StreamSequence::Ptr> sseqs_test;
+  vector<StreamSequenceBase::Ptr> sseqs_test;
   vector<Trajectory> trajectories_test;
   vector<string> names_test;
   load(sseq_paths_test, traj_paths_test, &sseqs_test, &trajectories_test, &names_test);
@@ -256,7 +255,7 @@ int main(int argc, char** argv)
   for(size_t i = 0; i < maps_test.size(); ++i) {
     ROS_ASSERT(sseqs_test[i]->model_.fx_ == 525);
     ROS_ASSERT(sseqs_test[i]->model_.fy_ == 525);
-    maps_test[i] = *SlamCalibrator::buildMap(*sseqs_test[i], trajectories_test[i], MAX_RANGE_MAP, opts["vgsize"].as<double>());
+    maps_test[i] = *SlamCalibrator::buildMap(sseqs_test[i], trajectories_test[i], MAX_RANGE_MAP, opts["vgsize"].as<double>());
   }
   cout << "Done." << endl;
   
@@ -290,7 +289,7 @@ int main(int argc, char** argv)
     sseqs_train[0]->model_.save(iter_path + "/model");
     
     // -- Optimize focal length based on map.
-    vector<StreamSequence::Ptr> sseqs_train_first;
+    vector<StreamSequenceBase::Ptr> sseqs_train_first;
     sseqs_train_first.push_back(sseqs_train[0]);
     prev_f = f;
     f = calibrate(opts, sseqs_train_first, trajectories_train);

@@ -24,7 +24,7 @@ SlamLightweight::SlamLightweight() :
   vg_.setLeafSize(0.02, 0.02, 0.02);
 }
 
-void SlamLightweight::run(StreamSequence::ConstPtr sseq,
+void SlamLightweight::run(StreamSequenceBase::ConstPtr sseq,
                          const std::string& opcd_path,
                          const std::string& otraj_path,
        const std::string& ograph_path)

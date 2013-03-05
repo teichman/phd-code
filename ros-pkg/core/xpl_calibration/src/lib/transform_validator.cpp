@@ -1,5 +1,6 @@
 #include <xpl_calibration/transform_validator.h>
 #include <pcl/common/transformation_from_correspondences.h>
+#include <pcl/common/distances.h>
 
 using namespace std;
 using namespace Eigen;

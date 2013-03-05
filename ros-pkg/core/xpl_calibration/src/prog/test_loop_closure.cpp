@@ -17,7 +17,7 @@
  */
 
 #include <xpl_calibration/loop_closer.h>
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <Eigen/Eigen>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
@@ -53,9 +53,7 @@ int main(int argc, char** argv)
   }
 
   cout << "Using " << opts["sseq"].as<string>() << endl;
-  StreamSequence::Ptr sseq(new StreamSequence);
-  sseq->load(opts["sseq"].as<string>());
-  
+  StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory (opts["sseq"].as<string> ());  
   LoopCloser lc(sseq);
   lc.fine_tune_ = false;
   lc.visualize_ = true;

@@ -5,7 +5,7 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/common/transforms.h>
 #include <bag_of_tricks/lockable.h>
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <xpl_calibration/trajectory.h>
 #include <xpl_calibration/slam_calibrator.h>
 

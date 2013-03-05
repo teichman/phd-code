@@ -59,7 +59,7 @@ void SlamVisualizer::setCamera(const std::string& camera_path)
   vis_.updateCamera();    
 }
 
-void SlamVisualizer::run(StreamSequence::ConstPtr sseq,
+void SlamVisualizer::run(StreamSequenceBase::ConstPtr sseq,
                          const std::string& opcd_path,
                          const std::string& otraj_path)
 {

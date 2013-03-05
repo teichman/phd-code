@@ -131,23 +131,6 @@ namespace rgbd
     readFrame(idx, frame);    
   }
 
-  size_t StreamSequence::seek(double timestamp, double* dt) const
-  {
-    ROS_ASSERT(!timestamps_.empty());
-    
-    // TODO: This could be much faster than linear search.
-    size_t nearest = 0;
-    *dt = numeric_limits<double>::max();
-    for(size_t i = 0; i < timestamps_.size(); ++i) {
-      double d = timestamp - timestamps_[i];
-      if(fabs(d) < *dt) {
-        *dt = d;
-        nearest = i;
-      }
-    }
-
-    return nearest;
-  }
 
   size_t StreamSequence::size() const
   {
@@ -157,43 +140,7 @@ namespace rgbd
     return img_names_.size();
   }
 
-  void StreamSequence::applyTimeOffset(double dt)
-  {
-    for(size_t i = 0; i < timestamps_.size(); ++i)
-      timestamps_[i] += dt;
-  }
 
-  rgbd::Cloud::Ptr StreamSequence::getCloud(size_t idx) const
-  {
-    Cloud::Ptr pcd(new Cloud);
-    Frame frame;
-    readFrame(idx, &frame);
-    model_.frameToCloud(frame, pcd.get());
-    return pcd;
-  }
-
-  rgbd::Cloud::Ptr StreamSequence::getCloud(double timestamp, double* dt) const
-  {
-    Cloud::Ptr pcd(new Cloud);
-    Frame frame;
-    readFrame(timestamp, dt, &frame);
-    model_.frameToCloud(frame, pcd.get());
-    return pcd;
-  }
-
-  cv::Mat3b StreamSequence::getImage(size_t idx) const
-  {
-    Frame frame;
-    readFrame(idx, &frame);
-    return frame.img_;
-  }
-
-  cv::Mat3b StreamSequence::getImage(double timestamp, double* dt) const
-  {
-    Frame frame;
-    readFrame(timestamp, dt, &frame);
-    return frame.img_;
-  }
   
   
 } // namespace rgbd

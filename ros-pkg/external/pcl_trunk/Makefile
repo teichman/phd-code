@@ -1,35 +1,55 @@
 .SECONDARY:
 
 CUDA_BINDIR := /tmp/gcc-4.4
- PCL_VERSION := 8736
+ PCL_VERSION := 8755
 
 C_COMPILER:=/usr/bin/gcc
 CXX_COMPILER:=/usr/bin/g++
 
 default: built
 
-built_against_ros: svn svn/PATCHED_KINFU
+built_against_ros: svn svn/PATCHED_KINFU svn/PATCHED_USE_ROS
+	mkdir -p msgs_tmp
+	for d in `ls svn/common/include | grep msgs`; do \
+		echo Moving $$d; \
+	  mv svn/common/include/$${d} msgs_tmp; \
+  done
 	cd svn && mkdir -p build_against_ros
 	mkdir -p ${CUDA_BINDIR}
-	cd ${CUDA_BINDIR} && ln -sf /usr/bin/gcc-4.4 gcc && ln -sf /usr/bin/g++-4.4 g++
+	cd ${CUDA_BINDIR} && ln -sf /usr/bin/gcc-4.6 gcc && ln -sf /usr/bin/g++-4.6 g++ && ln -sf /usr/bin/gcc-4.6 cc && ln -sf /usr/bin/g++-4.6 c++
 	cd svn/build_against_ros && cmake ../ \
 	-DCMAKE_C_COMPILER:FILEPATH=${C_COMPILER} \
 	-DCMAKE_CXX_COMPILER:FILEPATH=${CXX_COMPILER} \
 	-DUSE_ROS:BOOL=ON \
-	-DBUILD_CUDA:BOOL=ON \
-	-DBUILD_GPU:BOOL=ON \
+	-DBUILD_CUDA:BOOL=OFF \
+	-DBUILD_GPU:BOOL=OFF \
 	-DBUILD_global_tests:BOOL=OFF \
 	-DBUILD_apps:BOOL=ON \
 	-DBUILD_gpu_surface:BOOL=ON \
-	-DCUDA_NVCC_FLAGS:="--compiler-bindir=${CUDA_BINDIR};-w" \
-	-DCMAKE_CXX_FLAGS:=" -Wno-invalid-offsetof -Wno-deprecated-declarations -I`rospack find sensor_msgs`/include -I`rospack find sensor_msgs`/msg_gen/cpp/include -I`rospack find std_msgs`/include -I`rospack find std_msgs`/msg_gen/cpp/include -I`rospack find roscpp_serialization`/include -I`rospack find cpp_common`/include -I`rospack find rostime`/include -I`rospack find roscpp_traits`/include -I`rospack find rosconsole`/include" \
+	-DCUDA_NVCC_FLAGS:="--compiler-bindir=${CUDA_BINDIR}" \
+	-DCMAKE_CXX_FLAGS:STRING="-Wl,--no-as-needed -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}`" \
+	-DCMAKE_C_FLAGS:=" -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}`" \
+	-DCMAKE_EXE_LINKER_FLAGS="-Wl,--no-as-needed `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_linker_flags {}` -Wl,-rpath,`rospack find pcl_trunk`/release_against_ros/lib" \
 	-DCMAKE_BUILD_TYPE:="Release" \
 	-DBUILD_examples:BOOL=OFF \
 	-DCMAKE_INSTALL_PREFIX:=`rospack find pcl_trunk`/release_against_ros
 	cd svn/build_against_ros && make -j4 && make install
 	rm -rf ${CUDA_BINDIR}
+	for d in `echo msgs_tmp/*`; do \
+		mv $$d svn/common/include; \
+	done
+	#Gross, but forcing it to export these
+	cp svn/common/include/pcl/PolygonMesh.h release_against_ros/include/pcl-1.7/pcl
+	cp svn/common/include/pcl/PointIndices.h release_against_ros/include/pcl-1.7/pcl
+	cp svn/common/include/pcl/ModelCoefficients.h release_against_ros/include/pcl-1.7/pcl
+	cp svn/common/include/pcl/Vertices.h release_against_ros/include/pcl-1.7/pcl
+	# Make rospack only look in the installed location
+	for f in release*; do \
+		touch $${f}/rospack_nosubdirs; \
+	done
+	touch svn/rospack_nosubdirs
+	rm -f release_against_ros/rospack_nosubdirs
 	touch $@
-
 
 # was 5600
 built: svn svn/PATCHED_KINFU
@@ -109,6 +129,10 @@ svn/PATCHED_KINFU:
 	cd svn && patch -p0 < ../kinfu_reset.patch
 	touch $@
 
+svn/PATCHED_USE_ROS:
+	cd svn && patch -p0 < ../use_ros.patch
+	touch $@
+
 remove_msgs:
 	cd svn/common/include; \
 	if [ -d std_msgs ]; then \
@@ -142,7 +166,7 @@ clean: restore_msgs restore_ros_conflicts
 	-rm -f built
 
 wipe:
-	-rm -rf svn
+	-rm -rf svn msgs_tmp
 	-rm -f built
 
 3rdparty: svn

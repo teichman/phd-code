@@ -1,19 +1,19 @@
 #ifndef __XPL_CALIBRATION__MOCAP_DETECTOR_H__
 #define __XPL_CALIBRATION__MOCAP_DETECTOR_H__
 
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <pcl/visualization/cloud_viewer.h>
 
 using rgbd::Point;
 using rgbd::Cloud;
-using rgbd::StreamSequence;
+using rgbd::StreamSequenceBase;
 
 class MocapDetector
 {
   public:
     MocapDetector(int checker_cols=6, int checker_rows=8, float square_size=0.1016);
     
-    bool locatePoints(const StreamSequence::ConstPtr &seq, size_t frame, Point &tl, Point &tr, Point& bl, Point &br)
+    bool locatePoints(const StreamSequenceBase::ConstPtr &seq, size_t frame, Point &tl, Point &tr, Point& bl, Point &br)
       const;
 
   private:

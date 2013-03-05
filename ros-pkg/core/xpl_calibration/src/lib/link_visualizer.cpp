@@ -4,7 +4,7 @@ using namespace std;
 using namespace Eigen;
 using namespace rgbd;
 
-LinkVisualizer::LinkVisualizer(StreamSequence::ConstPtr sseq, PoseGraphSlam::Ptr slam) :
+LinkVisualizer::LinkVisualizer(StreamSequenceBase::ConstPtr sseq, PoseGraphSlam::Ptr slam) :
   sseq_(sseq),
   slam_(slam),
   quitting_(false),
@@ -18,22 +18,22 @@ LinkVisualizer::LinkVisualizer(StreamSequence::ConstPtr sseq, PoseGraphSlam::Ptr
   vis_.registerKeyboardCallback(&LinkVisualizer::keyboardCallback, *this);
   vis_.setBackgroundColor(1,1,1);
   // -- Set the viewpoint to be sensible for PrimeSense devices.
-  vis_.camera_.clip[0] = 0.00387244;
-  vis_.camera_.clip[1] = 3.87244;
-  vis_.camera_.focal[0] = -0.160878;
-  vis_.camera_.focal[1] = -0.0444743;
-  vis_.camera_.focal[2] = 1.281;
-  vis_.camera_.pos[0] = 0.0402195;
-  vis_.camera_.pos[1] = 0.0111186;
-  vis_.camera_.pos[2] = -1.7;
-  vis_.camera_.view[0] = 0;
-  vis_.camera_.view[1] = -1;
-  vis_.camera_.view[2] = 0;
-  vis_.camera_.window_size[0] = 1678;
-  vis_.camera_.window_size[1] = 525;
-  vis_.camera_.window_pos[0] = 2;
-  vis_.camera_.window_pos[1] = 82;
-  vis_.updateCamera();    
+  // SDM TODO vis_.camera_.clip[0] = 0.00387244;
+  // SDM TODO vis_.camera_.clip[1] = 3.87244;
+  // SDM TODO vis_.camera_.focal[0] = -0.160878;
+  // SDM TODO vis_.camera_.focal[1] = -0.0444743;
+  // SDM TODO vis_.camera_.focal[2] = 1.281;
+  // SDM TODO vis_.camera_.pos[0] = 0.0402195;
+  // SDM TODO vis_.camera_.pos[1] = 0.0111186;
+  // SDM TODO vis_.camera_.pos[2] = -1.7;
+  // SDM TODO vis_.camera_.view[0] = 0;
+  // SDM TODO vis_.camera_.view[1] = -1;
+  // SDM TODO vis_.camera_.view[2] = 0;
+  // SDM TODO vis_.camera_.window_size[0] = 1678;
+  // SDM TODO vis_.camera_.window_size[1] = 525;
+  // SDM TODO vis_.camera_.window_pos[0] = 2;
+  // SDM TODO vis_.camera_.window_pos[1] = 82;
+  // SDM TODO vis_.updateCamera();    
 }
 
 void LinkVisualizer::run()

@@ -1,5 +1,6 @@
 #include <boost/program_options.hpp>
 #include <rgbd_sequence/stream_visualizer.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 
 using namespace std;
 using namespace rgbd;
@@ -28,8 +29,7 @@ int main(int argc, char** argv)
   bpo::notify(opts);
   
   cout << "Looking at dir: " << dir << endl;
-  StreamSequence::Ptr sseq(new StreamSequence);
-  sseq->load(dir);
+  StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory (dir);
   cout << "Loaded successfully" << endl;
 
   double mean_dt = 0;

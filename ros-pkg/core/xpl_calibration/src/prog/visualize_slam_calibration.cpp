@@ -44,12 +44,11 @@ int main(int argc, char** argv)
 
   cout << "Using sequence / trajectory pairs: " << endl;
   Trajectory traj;
-  StreamSequence::Ptr sseq(new StreamSequence);
-  sseq->load(sequence_path);
+  StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory (sequence_path);
   traj.load(trajectory_path);
   vector<Trajectory> trajectories;
   trajectories.push_back(traj);
-  vector<StreamSequence::ConstPtr> sseqs;
+  vector<StreamSequenceBase::ConstPtr> sseqs;
   sseqs.push_back(sseq);
   
   SlamCalibrator::Ptr calibrator(new SlamCalibrator(sseqs[0]->model_,

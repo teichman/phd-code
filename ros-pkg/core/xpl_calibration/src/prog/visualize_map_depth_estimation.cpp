@@ -33,8 +33,7 @@ int main(int argc, char** argv)
   }
 
   // -- Load data.
-  StreamSequence sseq;
-  sseq.load(opts["sseq"].as<string>());
+  StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory(opts["sseq"].as<string>());
   Trajectory traj;
   traj.load(opts["traj"].as<string>());
 
@@ -47,20 +46,20 @@ int main(int argc, char** argv)
       continue;
     Affine3f transform = traj.get(i).inverse().cast<float>();
     Frame measurement;
-    sseq.readFrame(i, &measurement);
+    sseq->readFrame(i, &measurement);
     cv::imshow("Measurement", measurement.depthImage());
 
     Frame mapframe;
     mapframe.depth_ = DepthMatPtr(new DepthMat(measurement.depth_->rows(), measurement.depth_->cols()));
     mapframe.depth_->setZero();
-    sseq.model_.estimateMapDepth(*map, transform, measurement, mapframe.depth_.get());
+    sseq->model_.estimateMapDepth(*map, transform, measurement, mapframe.depth_.get());
                                  
     cv::imshow("Map estimate", mapframe.depthImage());
 
     Frame naive_mapframe;
     Cloud transformed;
     transformPointCloud(*map, transformed, transform);
-    sseq.model_.cloudToFrame(transformed, &naive_mapframe);
+    sseq->model_.cloudToFrame(transformed, &naive_mapframe);
     cv::imshow("Naive map", naive_mapframe.depthImage());
 
     char key = cv::waitKey();

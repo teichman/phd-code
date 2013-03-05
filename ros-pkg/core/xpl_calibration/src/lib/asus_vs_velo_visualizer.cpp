@@ -39,7 +39,7 @@ Cloud::Ptr VeloSequence::getCloud(size_t idx) const
   return pcd;
 }
 
-AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequence::Ptr sseq, VeloSequence::ConstPtr vseq) :
+AsusVsVeloVisualizer::AsusVsVeloVisualizer(rgbd::StreamSequenceBase::Ptr sseq, VeloSequence::ConstPtr vseq) :
   skip_(5),
   num_pixel_plots_(20),
   dddm_(NULL),

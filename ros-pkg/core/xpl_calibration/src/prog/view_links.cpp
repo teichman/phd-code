@@ -3,7 +3,7 @@
 #include <boost/filesystem.hpp>
 #include <gperftools/profiler.h>
 #include <pose_graph_slam/pose_graph_slam.h>
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <rgbd_sequence/rgbd_sequence.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <xpl_calibration/utility_functions.h>
@@ -49,8 +49,7 @@ int main(int argc, char** argv)
   }
   cout << "Using " << opts["sseq"].as<string>() << endl;
   cout << "Using pose graph " << opts["posegraph"].as<string>() << endl;
-  StreamSequence::Ptr sseq(new StreamSequence);
-  sseq->load(opts["sseq"].as<string>());
+  StreamSequenceBase::Ptr sseq = StreamSequenceBase::initializeFromDirectory (opts["sseq"].as<string> ());
   PoseGraphSlam::Ptr slam(new PoseGraphSlam);
   slam->load(opts["posegraph"].as<string>());
   LinkVisualizer lv(sseq, slam);

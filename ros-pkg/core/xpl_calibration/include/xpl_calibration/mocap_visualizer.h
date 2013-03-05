@@ -12,13 +12,13 @@ class MocapVisualizer
 {
 public:
   MocapVisualizer(const TRCParser& trc,
-                  rgbd::StreamSequence::ConstPtr sseq,
+                  rgbd::StreamSequenceBase::ConstPtr sseq,
                   double tol = 0.0075);
   void run();
     
 protected:
   TRCParser trc_;
-  rgbd::StreamSequence::ConstPtr sseq_;
+  rgbd::StreamSequenceBase::ConstPtr sseq_;
   rgbd::VisWrapper vw_;
   double tol_;
   int trc_idx_;
