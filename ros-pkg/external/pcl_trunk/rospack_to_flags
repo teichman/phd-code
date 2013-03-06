@@ -11,7 +11,11 @@ done
 
 LIBS=`rospack libs-only-l $PKG`
 for lib in $LIBS; do
-  echo -n "-l${lib} ";
+  if [ `echo $lib | grep '/'` ]; then
+    echo -n "${lib} ";
+  else
+    echo -n "-l${lib} ";
+  fi
 done
 
 

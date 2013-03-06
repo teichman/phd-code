@@ -14,6 +14,7 @@
 #include <eigen_extensions/eigen_extensions.h>
 #include <timer/timer.h>
 #include <rgbd_sequence/primesense_model.h>
+#include <ros/assert.h>
 
 namespace rgbd
 {
