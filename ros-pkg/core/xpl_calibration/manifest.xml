@@ -12,7 +12,7 @@
   <depend package="bag_of_tricks"/>
   <depend package="eigen_extensions"/>
   <depend package="pipeline3"/>
-  <depend package="multi_sequence"/>
+  <!-- depend package="multi_sequence" /-->
   <depend package="optimization"/>
   <depend package="google-perftools"/>
   <depend package="image_labeler"/>

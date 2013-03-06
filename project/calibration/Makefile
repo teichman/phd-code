@@ -54,42 +54,46 @@ all_ground_truth: $(addprefix ground_truth/, $(addsuffix /transform.eig.txt, $(C
 all_ground_truth_user: $(addprefix ground_truth_user/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
 
 visualize_dynamic-%: dynamic/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
-	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/camera* $< dynamic/configuration$*/sync.eig.txt
+	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< dynamic/configuration$*/sync.eig.txt
 
 visualize_ground_truth-%: ground_truth/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
-	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/camera* $< ground_truth/configuration$*/sync.eig.txt
+	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< ground_truth/configuration$*/sync.eig.txt
 
 visualize_ground_truth_user-%: ground_truth_user/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
-	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/camera* $< ground_truth_user/configuration$*/sync.eig.txt
+	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< ground_truth_user/configuration$*/sync.eig.txt
 
 visualize_keypoint-%: keypoint/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
-	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/camera* $< keypoint/configuration$*/sync.eig.txt
+	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< keypoint/configuration$*/sync.eig.txt
 
 ground_truth_sync-%: $(DATA_DIR)/configuration%
-	rosrun xpl_calibration offset_maker $(DATA_DIR)/configuration$*/unstructured/camera* ground_truth/configuration$*/sync.eig.txt ground_truth/configuration$*/sync.eig.txt
+	rosrun xpl_calibration offset_maker $(DATA_DIR)/configuration$*/unstructured/* ground_truth/configuration$*/sync.eig.txt ground_truth/configuration$*/sync.eig.txt
 
 dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) && ON=10 OFF=90 $(CALIBRATE_DYNAMIC) $</unstructured/camera* &> transform.eig.txt-log.txt
+	cd $(@D) && ON=10 OFF=90 $(CALIBRATE_DYNAMIC) $</unstructured/* | tee transform.eig.txt-log.txt
+
+dynamic-tiny/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
+	mkdir -p $(@D)
+	cd $(@D) && ON=20 OFF=900 $(CALIBRATE_DYNAMIC) $</unstructured/* | tee transform.eig.txt-log.txt
 
 MAX_DT := 0.015
 ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	rosrun cloud_calibration checker_calibrate $(DATA_DIR)/$*/checkerboard/camera* $@ $(MAX_DT) > $@-log.txt
+	rosrun cloud_calibration checker_calibrate $(DATA_DIR)/$*/checkerboard/* $@ $(MAX_DT) > $@-log.txt
 
 ground_truth_user/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	rosrun cloud_calibration user_calibrate $(DATA_DIR)/$*/checkerboard/camera* $@ $(MAX_DT) > $@-log.txt
-	rosrun xpl_calibration offset_maker $(DATA_DIR)/$*/unstructured/camera* $(@D)/sync.eig.txt > $(@D)/sync.eig.txt-log.txt
+	rosrun cloud_calibration user_calibrate $(DATA_DIR)/$*/checkerboard/* $@ $(MAX_DT) > $@-log.txt
+	rosrun xpl_calibration offset_maker $(DATA_DIR)/$*/unstructured/* $(@D)/sync.eig.txt > $(@D)/sync.eig.txt-log.txt
 
 ground_truth_user-%: $(DATA_DIR)/configuration%
 	mkdir -p $(MAKE_ROOT)/ground_truth_user/configuration$*
-	rosrun cloud_calibration user_calibrate $(DATA_DIR)/configuration$*/checkerboard/camera* ground_truth_user/configuration$*/transform.eig.txt $(MAX_DT)
+	rosrun cloud_calibration user_calibrate $(DATA_DIR)/configuration$*/checkerboard/* ground_truth_user/configuration$*/transform.eig.txt $(MAX_DT)
 
 
 keypoint/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) &&	$(CALIBRATE_ORB) $(DATA_DIR)/$*/unstructured/camera* > transform.eig.txt-log.txt
+	cd $(@D) &&	$(CALIBRATE_ORB) $(DATA_DIR)/$*/unstructured/* > transform.eig.txt-log.txt
 
 evaluations/%.txt: ground_truth/%/transform.eig.txt dynamic/%/transform.eig.txt
 	mkdir -p $(@D)
