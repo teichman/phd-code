@@ -79,9 +79,9 @@ namespace rgbd
     if(indexmap)
     {
       *indexmap = IndexMap(height_, width_);
-      //ROS_ASSERT(pcd.height == height_);
-      //ROS_ASSERT(pcd.width == width_);
     }
+    ROS_ASSERT(pcd.height == height_);
+    ROS_ASSERT(pcd.width == width_);
 
     ProjectivePoint ppt;
     for(size_t i = 0; i < pcd.size(); ++i) {
@@ -90,7 +90,7 @@ namespace rgbd
       
       // Ignore points outside the depth image or behind the sensor.
       project(pcd[i], &ppt);
-      if(ppt.z_ == 0 || !(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
+      if(ppt.z_ <= 0 || !(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
         continue;
 
       // Eigen is column-major by default: http://eigen.tuxfamily.org/dox/TopicStorageOrders.html
