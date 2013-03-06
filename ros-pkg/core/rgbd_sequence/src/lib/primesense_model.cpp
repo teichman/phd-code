@@ -79,9 +79,9 @@ namespace rgbd
     if(indexmap)
     {
       *indexmap = IndexMap(height_, width_);
+      // ROS_ASSERT(pcd.height == height_);
+      // ROS_ASSERT(pcd.width == width_);
     }
-    ROS_ASSERT(pcd.height == height_);
-    ROS_ASSERT(pcd.width == width_);
 
     ProjectivePoint ppt;
     for(size_t i = 0; i < pcd.size(); ++i) {
