@@ -268,7 +268,7 @@ namespace rgbd
 
   void PrimeSenseModel::serialize(std::ostream& out) const
   {
-    ROS_ASSERT(type_ == "xpl" || type_ == "kinect");
+    // ROS_ASSERT(type_ == "xpl" || type_ == "kinect");
     ROS_ASSERT(id_ != -1);
     ROS_ASSERT(width_ != -1);
     ROS_ASSERT(height_ != -1);
@@ -291,7 +291,7 @@ namespace rgbd
   void PrimeSenseModel::deserialize(std::istream& in)
   {
     getline(in, type_);
-    ROS_ASSERT(type_ == "xpl" || type_ == "kinect");
+    // ROS_ASSERT(type_ == "xpl" || type_ == "kinect");
     eigen_extensions::deserializeScalar(in, &id_);
     eigen_extensions::deserializeScalar(in, &width_);
     eigen_extensions::deserializeScalar(in, &height_);
