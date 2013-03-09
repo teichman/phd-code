@@ -37,8 +37,23 @@ namespace rgbd
     ROS_ASSERT (idx < grabber_->size ());
     rgbd::Cloud::ConstPtr cloud = grabber_->at (idx);
     // Make img_ and depth_;
-    model_.cloudToFrame (*cloud, frame);
     frame->timestamp_ = timestamps_[idx];
+    frame->depth_ = DepthMatPtr (new DepthMat (cloud->height, cloud->width));
+    frame->depth_->setZero ();
+    frame->img_ = cv::Mat3b (cloud->height, cloud->width);
+    for (int u = 0; u < cloud->width; u++)
+    {
+      for (int v = 0; v < cloud->height; v++)
+      {
+        const pcl::PointXYZRGB &pt = cloud->at (u, v);
+        frame->img_(v, u)[0] = pt.b;
+        frame->img_(v, u)[1] = pt.g;
+        frame->img_(v, u)[2] = pt.r;
+        if (!pcl_isnan (pt.z))
+          frame->depth_->coeffRef (v, u) = pt.z*1000;
+
+      }
+    }
   }
 
   void StreamSequencePCLWrapper::readFrame(double timestamp, double* dt, Frame* frame) const

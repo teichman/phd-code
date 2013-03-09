@@ -99,7 +99,10 @@ namespace rgbd
     Frame frame;
     sseq_->readFrame(idx_, &frame);
     sseq_->model_.frameToCloud(frame, pcd_.get());
-
+    cout <<  frame.img_.rows << " x " << frame.img_.cols << endl;
+    cv::imshow ("FRAME", frame.img_);
+    cout << "On frame " << idx_ << endl;
+    cv::waitKey (100);
     needs_update_ = true;
   }
 

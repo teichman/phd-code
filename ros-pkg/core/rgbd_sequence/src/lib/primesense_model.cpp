@@ -79,8 +79,8 @@ namespace rgbd
     if(indexmap)
     {
       *indexmap = IndexMap(height_, width_);
-      //ROS_ASSERT(pcd.height == height_);
-      //ROS_ASSERT(pcd.width == width_);
+      // ROS_ASSERT(pcd.height == height_);
+      // ROS_ASSERT(pcd.width == width_);
     }
 
     ProjectivePoint ppt;
@@ -90,7 +90,7 @@ namespace rgbd
       
       // Ignore points outside the depth image or behind the sensor.
       project(pcd[i], &ppt);
-      if(ppt.z_ == 0 || !(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
+      if(ppt.z_ <= 0 || !(ppt.u_ >= 0 && ppt.v_ >= 0 && ppt.u_ < width_ && ppt.v_ < height_))
         continue;
 
       // Eigen is column-major by default: http://eigen.tuxfamily.org/dox/TopicStorageOrders.html
@@ -268,7 +268,7 @@ namespace rgbd
 
   void PrimeSenseModel::serialize(std::ostream& out) const
   {
-    ROS_ASSERT(type_ == "xpl" || type_ == "kinect");
+    // ROS_ASSERT(type_ == "xpl" || type_ == "kinect");
     ROS_ASSERT(id_ != -1);
     ROS_ASSERT(width_ != -1);
     ROS_ASSERT(height_ != -1);
@@ -291,7 +291,7 @@ namespace rgbd
   void PrimeSenseModel::deserialize(std::istream& in)
   {
     getline(in, type_);
-    ROS_ASSERT(type_ == "xpl" || type_ == "kinect");
+    // ROS_ASSERT(type_ == "xpl" || type_ == "kinect");
     eigen_extensions::deserializeScalar(in, &id_);
     eigen_extensions::deserializeScalar(in, &width_);
     eigen_extensions::deserializeScalar(in, &height_);
