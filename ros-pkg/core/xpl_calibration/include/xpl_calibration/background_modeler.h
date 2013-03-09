@@ -47,7 +47,7 @@ public:
     declareParam<double>("MaxDepth", 10);
     declareParam<int>("Stride", 1); // Use every kth pointcloud for building the model.
     declareParam<double>("MinPercent", 0.2); // [0, 1]
-    declareInput<rgbd::Sequence::ConstPtr>("Sequence");
+    declareInput<StreamConstPtr>("Sequence");
     declareOutput<const BackgroundModel*>("BackgroundModel");
   }
 

@@ -29,7 +29,7 @@ code:
 
 CONFIGURATIONS := $(shell ls $(DATA_DIR) | grep configuration)
 
-CALIBRATE_DYNAMIC := DEBUG=1 rosrun xpl_calibration calibrate_sequences --dynamic
+CALIBRATE_DYNAMIC := rosrun xpl_calibration calibrate_sequences --dynamic
 CALIBRATE_ORB := rosrun xpl_calibration calibrate_sequences --orb
 VISUALIZE := rosrun xpl_calibration calibration_viewer_vis
 EVALUATE := rosrun xpl_calibration evaluate
@@ -56,6 +56,9 @@ all_ground_truth_user: $(addprefix ground_truth_user/, $(addsuffix /transform.ei
 visualize_dynamic-%: dynamic/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
 	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< dynamic/configuration$*/sync.eig.txt
 
+visualize_dynamic-tiny-%: dynamic-tiny/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
+	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< dynamic-tiny/configuration$*/sync.eig.txt
+
 visualize_ground_truth-%: ground_truth/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
 	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< ground_truth/configuration$*/sync.eig.txt
 
@@ -70,7 +73,7 @@ ground_truth_sync-%: $(DATA_DIR)/configuration%
 
 dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) && ON=10 OFF=90 $(CALIBRATE_DYNAMIC) $</unstructured/* | tee transform.eig.txt-log.txt
+	cd $(@D) && ON=10 OFF=40 MAX_FRAMES=100 $(CALIBRATE_DYNAMIC) $</unstructured/* | tee transform.eig.txt-log.txt
 
 dynamic-tiny/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)

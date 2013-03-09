@@ -21,7 +21,14 @@
 #include <bag_of_tricks/image_region_iterator.h>
 #include <pipeline/pod.h>
 #include <rgbd_sequence/rgbd_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <xpl_calibration/descriptor_database.h>
 #include <xpl_calibration/organized_connected_components.h>
+#include <xpl_calibration/pcd_stream.h>
+//typedef op::PCDStream<pcl::PointXYZRGB> Stream;
+typedef rgbd::StreamSequenceAccessor Stream;
+typedef Stream::Ptr StreamPtr;
+typedef Stream::ConstPtr StreamConstPtr;
+
 
 #endif // XPL_CALIBRATION_PODS_H

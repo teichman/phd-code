@@ -8,19 +8,19 @@ using namespace rgbd;
 
 void ObjectExtractor::compute()
 {
-  const Sequence& seq = *pull<Sequence::ConstPtr>("Sequence");
+  const Stream& strm = *pull<Stream::ConstPtr>("Sequence");
   const vector<cv::Mat1b>& fg_imgs = *pull<const vector<cv::Mat1b>*>("ForegroundImages");
   const vector< vector<int> >& fg_indices = *pull<const vector< vector<int> >*>("ForegroundIndices");
-  ROS_ASSERT(seq.size() == fg_imgs.size());
-  ROS_ASSERT(seq.size() == fg_indices.size());
+  ROS_ASSERT(strm.size() == fg_imgs.size());
+  ROS_ASSERT(strm.size() == fg_indices.size());
 
   objects_.clear();
-  objects_.resize(seq.size());
+  objects_.resize(strm.size());
   object_indices_.clear();
-  object_indices_.resize(seq.size());
+  object_indices_.resize(strm.size());
   
   for(size_t i = 0; i < fg_indices.size(); ++i)
-    extractObjectsFromFrame(*seq.pcds_[i], fg_indices[i], &objects_[i], &object_indices_[i]);
+    extractObjectsFromFrame(*strm[i], fg_indices[i], &objects_[i], &object_indices_[i]);
 
   push<const Objects*>("Objects", &objects_);
   push<const ObjectIndices*>("ObjectIndices", &object_indices_);
@@ -97,14 +97,14 @@ void ObjectExtractor::extractObjectsFromFrame(const rgbd::Cloud& pcd,
 void ObjectExtractor::debug() const
 {
   cout << *this << endl;
-  const Sequence& seq = *pull<Sequence::ConstPtr>("Sequence");
+  const Stream& strm = *pull<Stream::ConstPtr>("Sequence");
   
-  for(size_t i = 0; i < seq.size(); ++i) {
+  for(size_t i = 0; i < strm.size(); ++i) {
     if(i % 25)
       continue;
     
     cout << "Frame " << i << ": " << object_indices_[i].size() << " objects." << endl;
-    Cloud vis = *seq.pcds_[i];
+    Cloud vis = *strm[i];
     for(size_t j = 0; j < object_indices_[i].size(); ++j) {
       cout << "  Object " << j << ": " << object_indices_[i][j].size() << " points." << endl;
       double r = (rand() % 256);

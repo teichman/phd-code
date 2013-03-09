@@ -41,8 +41,6 @@ namespace rgbd
     StreamSequence();
     //! Creates a new directory at root_path for streaming to.
     void init(const std::string& root_path);
-    //! Loads existing model and timestamps at root_path_, prepares for streaming from here.
-    void load(const std::string& root_path);
     //! Saves PrimeSenseModel and timestamps to root_path_.
     //! Must have an initialized model_.
     void save() const;
@@ -50,11 +48,11 @@ namespace rgbd
     void writeFrame(const Frame& frame);
     //! Loads from disk and fills frame.
     void readFrame(size_t idx, Frame* frame) const;
-    //! Returns the nearest frame, no matter how far away it is in time.  Check dt to find out.
-    void readFrame(double timestamp, double* dt, Frame* frame) const;
 
     
   protected:
+    //! Loads existing model and timestamps at root_path_, prepares for streaming from here.
+    void loadImpl(const std::string& root_path);
     // Assignment op & copy constructor would deep copy if they were implemented.
     StreamSequence(const StreamSequence& seq);
     StreamSequence& operator=(const StreamSequence& seq);

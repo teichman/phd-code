@@ -8,28 +8,28 @@ using namespace rgbd;
 void BackgroundSubtractor::compute()
 {
   const BackgroundModel& model = *pull<const BackgroundModel*>("BackgroundModel");
-  const Sequence& seq = *pull<Sequence::ConstPtr>("Sequence");
-  ROS_ASSERT(seq.size() > 0);
-  ROS_ASSERT(seq.pcds_[0]->size() == model.size());
+  const Stream& strm = *pull<Stream::ConstPtr>("Sequence");
+  ROS_ASSERT(strm.size() > 0);
+  ROS_ASSERT(strm[0]->size() == model.size());
 
   // -- Reset the foreground images and indices.
-  if(fg_imgs_.size() != seq.size()) { 
+  if(fg_imgs_.size() != strm.size()) { 
     fg_imgs_.clear();
-    fg_imgs_.reserve(seq.size());
-    for(size_t i = 0; i < seq.size(); ++i)
-      fg_imgs_.push_back(cv::Mat1b(cv::Size(seq.pcds_[0]->width, seq.pcds_[0]->height), 0));
+    fg_imgs_.reserve(strm.size());
+    for(size_t i = 0; i < strm.size(); ++i)
+      fg_imgs_.push_back(cv::Mat1b(cv::Size(strm[0]->width, strm[0]->height), 0));
   }
   else
-    for(size_t i = 0; i < seq.size(); ++i)
+    for(size_t i = 0; i < strm.size(); ++i)
       fg_imgs_[i] = 0;
   
-  fg_indices_.resize(seq.size());
+  fg_indices_.resize(strm.size());
   for(size_t i = 0; i < fg_indices_.size(); ++i)
     fg_indices_[i].clear();
 
   // -- Compute foreground.
-  for(size_t i = 0; i < seq.size(); ++i)
-    findForeground(*seq.pcds_[i], model, &fg_indices_[i], fg_imgs_[i]);
+  for(size_t i = 0; i < strm.size(); ++i)
+    findForeground(*strm[i], model, &fg_indices_[i], fg_imgs_[i]);
   
   push<const vector< vector<int> >*>("ForegroundIndices", &fg_indices_);
   push<const vector<cv::Mat1b>*>("ForegroundImages", &fg_imgs_);
@@ -37,12 +37,12 @@ void BackgroundSubtractor::compute()
 
 void BackgroundSubtractor::debug() const
 {
-  const Sequence& seq = *pull<Sequence::ConstPtr>("Sequence");
-  for(size_t i = 0; i < seq.size(); ++i) {
+  const Stream& strm = *pull<Stream::ConstPtr>("Sequence");
+  for(size_t i = 0; i < strm.size(); ++i) {
     if(i % 25)
       continue;
     
-    const Cloud& pcd = *seq.pcds_[i];
+    const Cloud& pcd = *strm[i];
     const vector<int>& indices = fg_indices_[i];
 
     Cloud::Ptr fg(new Cloud);

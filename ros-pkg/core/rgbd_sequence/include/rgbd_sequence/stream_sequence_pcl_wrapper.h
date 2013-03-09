@@ -28,7 +28,6 @@ namespace rgbd
     
     using StreamSequenceBase::timestamps_;
     using StreamSequenceBase::model_;
-    using StreamSequenceBase::seek;
   
     //! The maximum depth in meters, used when reading data.
     //! Anything beyond this is set to 0.
@@ -37,15 +36,17 @@ namespace rgbd
     //! Does not initialize anything.
     StreamSequencePCLWrapper();
     //! Loads existing model and timestamps at root_path_, prepares for streaming from here.
-    void load(const std::string& root_path);
+
 
     size_t size() const;
     //! Loads from disk and fills frame.
     void readFrame(size_t idx, Frame* frame) const;
-    //! Returns the nearest frame, no matter how far away it is in time.  Check dt to find out.
-    void readFrame(double timestamp, double* dt, Frame* frame) const;
+
+
 
   protected:
+    void loadImpl(const std::string& root_path);
+
     boost::shared_ptr <pcl::ImageGrabber<pcl::PointXYZRGB> > grabber_;
     
   };

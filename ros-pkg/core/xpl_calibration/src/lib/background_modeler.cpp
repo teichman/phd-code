@@ -69,9 +69,9 @@ int DepthHistogram::getNumNearby(double z) const
 void HistogramBackgroundModeler::compute()
 {
   // -- Initialize.
-  const Sequence& seq = *pull<Sequence::ConstPtr>("Sequence");
-  ROS_ASSERT(seq.pcds_[0]->isOrganized());
-  size_t num_pixels = seq.pcds_[0]->size();
+  const Stream& strm = *pull<StreamConstPtr>("Sequence");
+  ROS_ASSERT(strm[0]->isOrganized());
+  size_t num_pixels = strm[0]->size();
   min_pct_ = param<double>("MinPercent"); // The param call is slow.
   
   if(histograms_.size() != num_pixels) {
@@ -90,8 +90,9 @@ void HistogramBackgroundModeler::compute()
   // -- Compute histograms of z values.
   HighResTimer hrt("Accumulating");
   hrt.start();
-  for(size_t i = 0; i < seq.size(); i += param<int>("Stride")) {
-    const Cloud& pcd = *seq.pcds_[i];
+  for(size_t i = 0; i < strm.size(); i += param<int>("Stride")) {
+    std::cout << "Accumulating cloud " << i+1 << " / " << strm.size() << std::endl;
+    const Cloud& pcd = *strm[i];
     for(size_t j = 0; j < pcd.size(); ++j) {
       if(pcl_isfinite(pcd[j].z))
         histograms_[j]->insert(pcd[j].z);

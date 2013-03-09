@@ -34,7 +34,7 @@ namespace rgbd
     bfs::create_directory(root_path_);
   }
 
-  void StreamSequence::load(const std::string& dir)
+  void StreamSequence::loadImpl(const std::string& dir)
   {
     root_path_ = dir;
     model_.load(root_path_ + "/primesense_model");
@@ -125,11 +125,6 @@ namespace rgbd
 
   }
 
-  void StreamSequence::readFrame(double timestamp, double* dt, Frame* frame) const
-  {
-    size_t idx = seek(timestamp, dt);
-    readFrame(idx, frame);    
-  }
 
 
   size_t StreamSequence::size() const

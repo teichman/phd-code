@@ -10,7 +10,7 @@ public:
   BackgroundSubtractor(std::string name) :
     Pod(name)
   {
-    declareInput<rgbd::Sequence::ConstPtr>("Sequence");
+    declareInput<StreamConstPtr>("Sequence");
     declareInput<const BackgroundModel*>("BackgroundModel");
         
     declareParam<int>("NumErosions", 5);

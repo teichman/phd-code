@@ -1,4 +1,5 @@
 #include <xpl_calibration/object_matching_calibrator.h>
+#include <xpl_calibration/utility_functions.h>
 
 using namespace std;
 using namespace Eigen;
@@ -23,11 +24,74 @@ Cloud::Ptr downsampleCloud(const Cloud& orig, double ds)
   return pcd;
 }
 
+void ObjectMatchingCalibrator::findGoodFrames(std::vector<size_t> &frames)
+{
+  const ObjectClouds& objects0 = *pull<const ObjectClouds*>("Objects0");
+  const ObjectClouds& objects1 = *pull<const ObjectClouds*>("Objects1");
+  int max_consecutive_frames = param<int>("MaxConsecutiveFrames" );
+  int max_frames = param<int>("MaxFrames");
+  int min_object_size = param<int>("MinObjectSize");
+  // Compute a running tally of the size of all objects over MaxFrames intervals
+  std::vector<float> min_size_cumulative (objects0.size ());
+  for (size_t i = 0; i < objects0.size (); ++i)
+  {
+    size_t numobjects0 = 0;
+    for (size_t j = 0; j < objects0[i].size (); j++)
+    {
+      if (objects0[i][j]->size () > numobjects0)
+        numobjects0 = objects0[i][j]->size ();
+    }
+    size_t numobjects1 = 0;
+    for (size_t j = 0; j < objects1[i].size (); j++)
+    {
+      if (objects1[i][j]->size () > numobjects1)
+        numobjects1 = objects1[i][j]->size ();
+    }
+    min_size_cumulative[i] = std::min (numobjects0, numobjects1);
+  }
+  // Accumulate
+  for (size_t i = 0; i < min_size_cumulative.size () - max_consecutive_frames; i++)
+  {
+    for (size_t j = 1; j < max_consecutive_frames; j++)
+    {
+      min_size_cumulative[i] += min_size_cumulative[i+j];
+    }
+  }
+  min_size_cumulative.resize (min_size_cumulative.size () - max_consecutive_frames);
+  //// Sort
+  //std::vector<float> min_size_sorted;
+  //std::vector<size_t> idxs_sorted;
+  //std::vector<bool> can_take(min_size_cumulative.size (), true);
+  //sortv (min_size_cumulative, min_size_sorted, idxs_sorted);
+  // Select below threshold
+  size_t threshold = min_object_size * max_consecutive_frames;
+  std::vector<size_t> valid_indices;
+  for (size_t i = 0; i < min_size_cumulative.size (); i++)
+  {
+    if (min_size_cumulative[i] > threshold)
+    {
+      valid_indices.push_back (i);
+      i += max_consecutive_frames - 1; // Don't double count
+    }
+  }
+  std::random_shuffle (valid_indices.begin (), valid_indices.end ());
+  for (size_t i = 0; i < valid_indices.size (); i++)
+  {
+    for (size_t j = 0; j < max_consecutive_frames; j++)
+    {
+      frames.push_back (valid_indices[i]+j);
+    }
+  }
+
+}
+
 void ObjectMatchingCalibrator::accumulateObjects(const ObjectClouds& objects,
+                                                 const std::vector<size_t> &frames,
                                                  std::vector<Cloud::Ptr>* pcds) const
 {
   pcds->clear();
-  for(size_t i = 0; i < objects.size(); ++i) {
+  for(size_t idx = 0; idx < frames.size(); ++idx) {
+    size_t i = frames[idx];
     if(objects[i].empty())
       continue;
     
@@ -49,9 +113,10 @@ void ObjectMatchingCalibrator::accumulateObjects(const ObjectClouds& objects,
   }
 }
 
-void ObjectMatchingCalibrator::getData(std::vector<KdTree::Ptr>* trees0,
-                                         std::vector<Cloud::ConstPtr>* pcds0,
-                                         std::vector<Cloud::Ptr>* pcds1) const
+void ObjectMatchingCalibrator::getData(const std::vector<size_t> &frames, 
+                                       std::vector<KdTree::Ptr>* trees0,
+                                       std::vector<Cloud::ConstPtr>* pcds0,
+                                       std::vector<Cloud::Ptr>* pcds1) const
 {
   trees0->clear();
   pcds0->clear();
@@ -59,21 +124,23 @@ void ObjectMatchingCalibrator::getData(std::vector<KdTree::Ptr>* trees0,
 
   // -- Get floating objects, with downsampling.
   const ObjectClouds& objects1 = *pull<const ObjectClouds*>("Objects1");
-  accumulateObjects(objects1, pcds1);
+  accumulateObjects(objects1, frames, pcds1);
   // Also get one floating frame.
   //const Sequence& seq1 = *pull<Sequence::ConstPtr>("Sequence1");
   //pcds1->push_back(downsampleCloud(*seq1.pcds_[seq1.pcds_.size() / 2], param<double>("Downsampling")));
   //pcds1->push_back(downsampleCloud(*seq1.pcds_[seq1.pcds_.size() / 2], 0.0));
 
   // -- Get entire reference frames without downsampling.
-  const Sequence& seq0 = *pull<Sequence::ConstPtr>("Sequence0");
-  for(size_t i = 0; i < seq0.pcds_.size(); ++i)
-    pcds0->push_back(seq0.pcds_[i]);
+  const Stream& strm0 = *pull<Stream::ConstPtr>("Sequence0");
+  for(size_t i = 0; i < frames.size(); ++i)
+  {
+    pcds0->push_back(strm0[frames[i]]);
+  }
   
   // -- Make KdTrees for all reference pcds.
   for(size_t i = 0; i < pcds0->size(); ++i) {
     KdTree::Ptr tree(new KdTree);
-    tree->setInputCloud(pcds0->at(i));
+    tree->setInputCloud(pcds0->at (i));
     trees0->push_back(tree);
   }
 
@@ -86,12 +153,15 @@ void ObjectMatchingCalibrator::getData(std::vector<KdTree::Ptr>* trees0,
 void ObjectMatchingCalibrator::compute()
 {
   checkInput();
-  ransac_transform_ = centroidRansac();
+  std::vector<size_t> frames;
+  findGoodFrames (frames);
+
+  ransac_transform_ = centroidRansac(frames);
 
   vector<KdTree::Ptr> trees0;
   vector<Cloud::ConstPtr> pcds0;
   vector<Cloud::Ptr> pcds1;
-  getData(&trees0, &pcds0, &pcds1);
+  getData(frames, &trees0, &pcds0, &pcds1);
 
   for(size_t i = 0; i < pcds1.size(); ++i)
     pcl::transformPointCloud(*pcds1[i], *pcds1[i], ransac_transform_);
@@ -158,17 +228,19 @@ double ObjectMatchingCalibrator::updateSync(const std::vector<KdTree::Ptr>& tree
   }
   return dt;
 }
-Eigen::Affine3f ObjectMatchingCalibrator::centroidRansac() const
+Eigen::Affine3f ObjectMatchingCalibrator::centroidRansac(const std::vector<size_t> &frames) const
 {
   // Compute centroids for all objects.
   const ObjectClouds& objects0 = *pull<const ObjectClouds*>("Objects0");
   const ObjectClouds& objects1 = *pull<const ObjectClouds*>("Objects1");
   std::vector< std::vector<Eigen::Vector3f> > centroids0;
   std::vector< std::vector<Eigen::Vector3f> > centroids1;
-  computeCentroids(objects0, &centroids0);
-  computeCentroids(objects1, &centroids1);
-  const Sequence& seq0 = *pull<Sequence::ConstPtr>("Sequence0");
-  const Sequence& seq1 = *pull<Sequence::ConstPtr>("Sequence1");
+  computeCentroids(objects0, frames, &centroids0);
+  computeCentroids(objects1, frames, &centroids1);
+  const Stream& strm0 = *pull<Stream::ConstPtr>("Sequence0");
+  const Stream& strm1 = *pull<Stream::ConstPtr>("Sequence1");
+  strm0.setCacheSize (frames.size ());
+  strm1.setCacheSize (frames.size ());
 
   // RANSAC.
   int num_iterations = param<int>("NumRansacIters");
@@ -179,7 +251,7 @@ Eigen::Affine3f ObjectMatchingCalibrator::centroidRansac() const
     cout << "RANSAC iter " << i << endl;
     pcl::TransformationFromCorrespondences tfc;
     for(int j = 0; j < num_correspondences; ++j)
-      sampleCorrespondence(seq0, seq1, centroids0, centroids1, &tfc);
+      sampleCorrespondence(strm0, strm1, frames, centroids0, centroids1, &tfc);
     
     // Compute transform.
     Affine3f transform = tfc.getTransformation();
@@ -206,21 +278,21 @@ Eigen::Affine3f ObjectMatchingCalibrator::centroidRansac() const
   if(debug_) {
     visualizeResult("ransac-rough", best_transform, 0);
     visualizeResult("ransac-refined", refined, 0);
-    visualizeInliers("ransac-inliers-rough", best_transform);
-    visualizeInliers("ransac-inliers-refined", refined);
+    visualizeInliers("ransac-inliers-rough", best_transform, frames);
+    visualizeInliers("ransac-inliers-refined", refined, frames);
   }
   return refined;
 }
 
 void ObjectMatchingCalibrator::checkInput() const
 {
-  const Sequence& seq0 = *pull<Sequence::ConstPtr>("Sequence0");
-  const Sequence& seq1 = *pull<Sequence::ConstPtr>("Sequence1");
+  const Stream& strm0 = *pull<Stream::ConstPtr>("Sequence0");
+  const Stream& strm1 = *pull<Stream::ConstPtr>("Sequence1");
   const ObjectClouds& objects0 = *pull<const ObjectClouds*>("Objects0");
   const ObjectClouds& objects1 = *pull<const ObjectClouds*>("Objects1");
-  ROS_ASSERT(seq0.size() == seq1.size());
-  ROS_ASSERT(seq0.size() == objects0.size());
-  ROS_ASSERT(seq0.size() == objects1.size());
+  ROS_ASSERT(strm0.size() == strm1.size());
+  ROS_ASSERT(strm0.size() == objects0.size());
+  ROS_ASSERT(strm0.size() == objects1.size());
 }
 
 double ObjectMatchingCalibrator::gridSearchSync(ScalarFunction::Ptr lf) const
@@ -239,18 +311,20 @@ double ObjectMatchingCalibrator::gridSearchSync(ScalarFunction::Ptr lf) const
 
 void ObjectMatchingCalibrator::visualizeResult(const std::string& name, const Eigen::Affine3f& transform, double sync) const
 {
-  const Sequence& seq0 = *pull<Sequence::ConstPtr>("Sequence0");
-  const Sequence& seq1 = *pull<Sequence::ConstPtr>("Sequence1");
+  if (!debug_) // Safeguard
+    return;
+  const Stream& strm0 = *pull<Stream::ConstPtr>("Sequence0");
+  const Stream& strm1 = *pull<Stream::ConstPtr>("Sequence1");
 
   double max_dt = 0.3; // More lenient than that used for calibration.
-  for(size_t i = 0; i < seq1.size(); i+=100) {
-    int idx = seek(seq0.pcds_, seq1.pcds_[i]->header.stamp.toSec() + sync, max_dt);
+  for(size_t i = 0; i < strm1.size(); i+=100) {
+    int idx = seek(strm0, strm1[i]->header.stamp.toSec() + sync, max_dt);
     if(idx == -1)
       continue;
     
     Cloud overlay;
-    pcl::transformPointCloud(*seq1.pcds_[i], overlay, transform);
-    overlay += *seq0.pcds_[idx];
+    pcl::transformPointCloud(*strm1[i], overlay, transform);
+    overlay += *strm0[idx];
 
     ostringstream oss;
     oss << getDebugPath() << "-" << name << "-overlay" << setw(4) << setfill('0') << i << ".pcd";
@@ -258,14 +332,14 @@ void ObjectMatchingCalibrator::visualizeResult(const std::string& name, const Ei
   }
 }
 
-void ObjectMatchingCalibrator::visualizeInliers(const std::string& name, const Eigen::Affine3f& transform) const
+void ObjectMatchingCalibrator::visualizeInliers(const std::string& name, const Eigen::Affine3f& transform, const std::vector<size_t> &frames) const
 {
   const ObjectClouds& objects0 = *pull<const ObjectClouds*>("Objects0");
   const ObjectClouds& objects1 = *pull<const ObjectClouds*>("Objects1");
   std::vector< std::vector<Eigen::Vector3f> > centroids0;
   std::vector< std::vector<Eigen::Vector3f> > centroids1;
-  computeCentroids(objects0, &centroids0);
-  computeCentroids(objects1, &centroids1);
+  computeCentroids(objects0, frames, &centroids0);
+  computeCentroids(objects1, frames, &centroids1);
   vector<Vector3f> inlier_centroids0;
   vector<Vector3f> inlier_centroids1;
   countInliers(transform, centroids0, centroids1,
@@ -274,12 +348,12 @@ void ObjectMatchingCalibrator::visualizeInliers(const std::string& name, const E
                &inlier_centroids0, &inlier_centroids1);
 
   Cloud seq1;
-  pcl::transformPointCloud(*pull<Sequence::ConstPtr>("Sequence1")->pcds_[0],
+  pcl::transformPointCloud(*pull<Stream::ConstPtr>("Sequence1")->at(0),
                            seq1, transform);
    
   ROS_ASSERT(inlier_centroids1.size() == inlier_centroids0.size());
   Cloud::Ptr pcd(new Cloud);
-  *pcd = *pull<Sequence::ConstPtr>("Sequence0")->pcds_[0];
+  *pcd = *pull<Stream::ConstPtr>("Sequence0")->at(0);
   *pcd += seq1;
 
   pcd->reserve(pcd->size() + inlier_centroids0.size());
@@ -305,32 +379,35 @@ void ObjectMatchingCalibrator::visualizeInliers(const std::string& name, const E
 }
 
 void ObjectMatchingCalibrator::computeCentroids(const ObjectClouds& objects,
+                                                const std::vector<size_t> &frames,
                                                 std::vector< std::vector<Eigen::Vector3f> >* centroids) const
 {
   centroids->clear();
-  centroids->resize(objects.size());
+  centroids->resize(frames.size());
   double total_num_pts = 0;
-  for(size_t i = 0; i < objects.size(); ++i) {
-    centroids->at(i).resize(objects[i].size(), Vector3f::Zero());
+  for(size_t idx = 0; idx < frames.size(); ++idx) {
+    size_t i = frames[idx];
+    centroids->at(idx).resize(objects[i].size(), Vector3f::Zero());
     for(size_t j = 0; j < objects[i].size(); ++j) {
       const Cloud& obj = *objects[i][j];
       double num = 0;
       for(size_t k = 0; k < obj.size(); ++k) { 
         if(pcl_isfinite(obj[k].x)) { 
-          centroids->at(i)[j] += obj[k].getVector3fMap();
+          centroids->at(idx)[j] += obj[k].getVector3fMap();
           ++num;
         }
       }
-      centroids->at(i)[j] /= num;
+      centroids->at(idx)[j] /= num;
       total_num_pts += num;
     }
   }
 
-  cout << "Mean num points in objects: " << total_num_pts / (double)objects.size() << endl;
+  cout << "Mean num points in objects: " << total_num_pts / (double)frames.size() << endl;
 }
 
-void ObjectMatchingCalibrator::sampleCorrespondence(const rgbd::Sequence& seq0,
-                                                    const rgbd::Sequence& seq1,
+void ObjectMatchingCalibrator::sampleCorrespondence(const Stream& strm0,
+                                                    const Stream& strm1,
+                                                    const std::vector<size_t> &frames,
                                                     const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
                                                     const std::vector< std::vector<Eigen::Vector3f> >& centroids1,
                                                     pcl::TransformationFromCorrespondences* tfc) const
@@ -341,15 +418,16 @@ void ObjectMatchingCalibrator::sampleCorrespondence(const rgbd::Sequence& seq0,
     ++iter;
     
     // -- Randomly sample corresponding centroids.
-    int frame_idx = rand() % seq0.size();
-    const Cloud& pcd0 = *seq0.pcds_[frame_idx];
-    const Cloud& pcd1 = *seq1.pcds_[frame_idx];
+    int centroid_idx = rand() % frames.size();
+    int frame_idx = frames[centroid_idx];
+    const Cloud& pcd0 = *strm0[frame_idx];
+    const Cloud& pcd1 = *strm1[frame_idx];
     double ts0 = pcd0.header.stamp.toSec();
     double ts1 = pcd1.header.stamp.toSec();
     ROS_ASSERT(fabs(ts0 - ts1) < 0.05); // See thresh in CalibrationPipelineDynamic.
     
-    const vector<Vector3f>& c0 = centroids0[frame_idx];
-    const vector<Vector3f>& c1 = centroids1[frame_idx];
+    const vector<Vector3f>& c0 = centroids0[centroid_idx];
+    const vector<Vector3f>& c1 = centroids1[centroid_idx];
     if(c0.empty() || c1.empty())
       continue;
 
@@ -664,6 +742,26 @@ int seek(const std::vector<Cloud::ConstPtr>& pcds0, double ts1, double dt_thresh
   // TODO: This could be faster than linear search.
   for(size_t i = 0; i < pcds0.size(); ++i) {
     double ts0 = pcds0[i]->header.stamp.toSec();
+    double dt = fabs(ts0 - ts1);
+    if(dt < min) {
+      min = dt;
+      idx = i;
+    }
+  }
+
+  if(min < dt_thresh)
+    return idx;
+  else
+    return -1;
+}
+
+int seek(const Stream& strm0, double ts1, double dt_thresh)
+{
+  int idx = -1;
+  double min = numeric_limits<double>::max();
+  // TODO: This could be faster than linear search.
+  for(size_t i = 0; i < strm0.size(); ++i) {
+    double ts0 = strm0[i]->header.stamp.toSec();
     double dt = fabs(ts0 - ts1);
     if(dt < min) {
       min = dt;

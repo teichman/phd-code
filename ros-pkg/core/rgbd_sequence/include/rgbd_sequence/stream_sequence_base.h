@@ -27,22 +27,42 @@ namespace rgbd
     std::vector<double> timestamps_;
     PrimeSenseModel model_;
 
+    StreamSequenceBase ():
+      cache_size_(0)
+    {}
+
     virtual ~StreamSequenceBase () {}
 
     static StreamSequenceBase::Ptr initializeFromDirectory (const std::string &dir);
 
     //! Loads existing model and timestamps at root_path_, prepares for streaming from here.
-    virtual void load(const std::string& root_path) = 0;
+    inline void load(const std::string &root_path)
+    {
+      loadImpl (root_path);
+      root_path_ = root_path;
+    }
+
+    inline std::string getRootPath() const
+    { return root_path_; };
+
     //! Saves PrimeSenseModel and timestamps to root_path_.
     //! Must have an initialized model_.
     virtual size_t size() const = 0;
 
     virtual void readFrame(size_t idx, Frame* frame) const = 0;
     //! Returns the nearest frame, no matter how far away it is in time.  Check dt to find out.
-    virtual void readFrame(double timestamp, double* dt, Frame* frame) const = 0;
+    size_t readFrame(double timestamp, double* dt, Frame* frame) const;
 
     //! dt is signed.
     size_t seek(double timestamp, double* dt) const;
+
+    rgbd::Cloud::ConstPtr operator[] (size_t idx) const;
+
+    rgbd::Cloud::ConstPtr at (size_t idx) const;
+
+    inline void
+    setCacheSize (size_t cache_size) const
+    { cache_size_ = cache_size; };
     
     //! Adds dt to all timestamps.  Does not save.
     void applyTimeOffset(double dt);
@@ -54,6 +74,73 @@ namespace rgbd
     cv::Mat3b getImage(double timestamp, double* dt) const __attribute__ ((__deprecated__));
     
   protected:
+    virtual void loadImpl(const std::string& root_path) = 0;
+
+    void
+    addCloudToCache (size_t idx, rgbd::Cloud::ConstPtr cloud) const;
+
+    mutable std::deque<size_t> frames_cache_;
+    mutable std::map<size_t, rgbd::Cloud::ConstPtr> pcds_cache_;
+    mutable size_t cache_size_;
+    std::string root_path_;
+  };
+
+  //! Accessor which has "push back" functionality, remapping indices appropriately...don't ask
+  class StreamSequenceAccessor : public Serializable
+  {
+  public:
+    typedef boost::shared_ptr<StreamSequenceAccessor> Ptr;
+    typedef boost::shared_ptr<const StreamSequenceAccessor> ConstPtr;
+
+    StreamSequenceAccessor (StreamSequenceBase::ConstPtr sseq)
+      : sseq_ (sseq)
+    {}
+
+    inline void
+    turnOnFrameNumber (size_t idx)
+    {
+      frames_.push_back (idx);
+    }
+
+    inline rgbd::Cloud::ConstPtr operator[] (size_t idx) const
+    {
+      return ( (*sseq_)[frames_[idx]]);
+    }
+
+    inline rgbd::Cloud::ConstPtr at (size_t idx) const
+    {
+      ROS_ASSERT (idx < frames_.size ());
+      return (operator[] (idx));
+    }
+    
+    inline void serialize (std::ostream& out) const
+    {
+      out << sseq_->getRootPath () << std::endl;
+      size_t sz = frames_.size ();
+      out.write ((char*)&sz, sizeof (size_t));
+      out.write ((char*)&frames_[0], sz * sizeof (size_t));
+    }
+
+    inline void deserialize (std::istream& in)
+    {
+      std::string root_path;
+      in >> root_path;
+      sseq_ = StreamSequenceBase::initializeFromDirectory (root_path);
+      size_t sz;
+      in.read((char*)&sz, sizeof(size_t));
+      frames_.resize (sz);
+      in.read((char*)&frames_[0], sz * sizeof (size_t));
+    }
+
+    inline void setCacheSize (size_t cache_size) const
+    { sseq_->setCacheSize (cache_size); }
+
+    inline size_t size () const
+    { return frames_.size (); }
+
+  protected:
+    StreamSequenceBase::ConstPtr sseq_;
+    std::vector<size_t> frames_;
   };
 
 

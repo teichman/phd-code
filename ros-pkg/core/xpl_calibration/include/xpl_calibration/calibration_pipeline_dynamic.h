@@ -13,6 +13,8 @@
 #include <xpl_calibration/background_subtractor.h>
 #include <xpl_calibration/object_extractor.h>
 #include <xpl_calibration/object_matching_calibrator.h>
+#include <xpl_calibration/pcd_stream.h>
+#include <xpl_calibration/common.h>
 
 class CalibrationPipelineDynamic
 {
