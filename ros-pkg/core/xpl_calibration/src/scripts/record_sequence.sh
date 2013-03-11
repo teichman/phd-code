@@ -15,6 +15,7 @@ else
         mkdir $DIR
         cd $DIR
         `rospack find pcl_trunk`/release/bin/pcl_openni_image
+        cp `rospack find xpl_calibration`/distortion_models/${2} ./distortion_model
         cd -
     fi
 fi

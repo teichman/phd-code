@@ -8,7 +8,7 @@
 #include <optimization/optimization.h>
 #include <bag_of_tricks/lockable.h>
 #include <xpl_calibration/mean_depth_error.h>
-#include <xpl_calibration/discrete_depth_distortion_model.h>
+#include <rgbd_sequence/discrete_depth_distortion_model.h>
 
 class PixelStats
 {

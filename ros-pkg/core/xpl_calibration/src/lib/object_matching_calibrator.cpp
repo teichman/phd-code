@@ -75,12 +75,17 @@ void ObjectMatchingCalibrator::findGoodFrames(std::vector<size_t> &frames)
     }
   }
   std::random_shuffle (valid_indices.begin (), valid_indices.end ());
+  int nframe = 0;
   for (size_t i = 0; i < valid_indices.size (); i++)
   {
     for (size_t j = 0; j < max_consecutive_frames; j++)
     {
       frames.push_back (valid_indices[i]+j);
+      if (++nframe >= max_frames)
+        break;
     }
+    if (nframe >= max_frames)
+      break;
   }
 
 }

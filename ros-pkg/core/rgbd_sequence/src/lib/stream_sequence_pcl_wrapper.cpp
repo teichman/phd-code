@@ -33,7 +33,7 @@ namespace rgbd
   }
   
 
-  void StreamSequencePCLWrapper::readFrame(size_t idx, Frame* frame) const
+  void StreamSequencePCLWrapper::readFrameImpl(size_t idx, Frame* frame) const
   {
     ROS_ASSERT (idx < grabber_->size ());
     rgbd::Cloud::ConstPtr cloud = grabber_->at (idx);

@@ -11,7 +11,7 @@
 #include <rgbd_sequence/stream_sequence_base.h>
 #include <xpl_calibration/depth_distortion_learner.h>
 #include <xpl_calibration/velo_to_asus_calibrator.h>
-#include <xpl_calibration/discrete_depth_distortion_model.h>
+#include <rgbd_sequence/discrete_depth_distortion_model.h>
 
 typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;
 

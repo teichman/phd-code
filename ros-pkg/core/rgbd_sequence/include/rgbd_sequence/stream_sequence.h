@@ -46,14 +46,15 @@ namespace rgbd
     void save() const;
     size_t size() const;
     void writeFrame(const Frame& frame);
-    //! Loads from disk and fills frame.
-    void readFrame(size_t idx, Frame* frame) const;
 
     
   protected:
     //! Loads existing model and timestamps at root_path_, prepares for streaming from here.
     void loadImpl(const std::string& root_path);
     // Assignment op & copy constructor would deep copy if they were implemented.
+    //! Loads from disk and fills frame.
+    void readFrameImpl(size_t idx, Frame* frame) const;
+
     StreamSequence(const StreamSequence& seq);
     StreamSequence& operator=(const StreamSequence& seq);
   };

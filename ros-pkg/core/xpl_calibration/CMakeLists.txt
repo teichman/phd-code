@@ -50,7 +50,7 @@ rosbuild_add_library(${PROJECT_NAME}
 #  src/lib/slam_lightweight.cpp
   src/lib/primesense_slam.cpp
   src/lib/link_visualizer.cpp
-  src/lib/discrete_depth_distortion_model.cpp
+#  src/lib/discrete_depth_distortion_model.cpp
   )
 
 # memory fragmentation is a problem for data quantity experiment?

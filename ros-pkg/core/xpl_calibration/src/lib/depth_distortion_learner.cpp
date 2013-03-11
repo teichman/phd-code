@@ -337,9 +337,10 @@ DiscreteDepthDistortionModel DepthDistortionLearner::fitDiscreteModel()
   ROS_ASSERT(frames_.size() == transforms_.size());
 
   DiscreteDepthDistortionModel dddm(initial_model_);
-  
+  size_t max_i_sm = frames_.size () / DDL_INCR; 
 #pragma omp parallel for
-  for(size_t i = 0; i < frames_.size(); i += DDL_INCR) {
+  for(size_t i_sm = 0; i_sm < max_i_sm; i_sm++) {
+    size_t i = i_sm * DDL_INCR;
     ScopedTimer st("total for frame");
     PrimeSenseModel localmodel = initial_model_;
     HighResTimer hrt;
@@ -368,7 +369,8 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
 #ifndef VISUALIZE
 #pragma omp parallel for
 #endif 
-  for(size_t i = 0; i < frames_.size(); i += DDL_INCR) {
+  for(size_t i_sm = 0; i_sm < max_i_sm; i_sm++) {
+    size_t i = i_sm * DDL_INCR;
     MatrixXd& xxt = xxts[i];
     VectorXd& b = bs[i];
 

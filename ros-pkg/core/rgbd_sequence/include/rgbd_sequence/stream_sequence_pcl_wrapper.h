@@ -39,8 +39,9 @@ namespace rgbd
 
 
     size_t size() const;
+  protected:
     //! Loads from disk and fills frame.
-    void readFrame(size_t idx, Frame* frame) const;
+    void readFrameImpl(size_t idx, Frame* frame) const;
 
 
 

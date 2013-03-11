@@ -15,6 +15,19 @@ rgbd::StreamSequenceBase::Ptr rgbd::StreamSequenceBase::initializeFromDirectory 
   return out;
 }
 
+void rgbd::StreamSequenceBase::load (const std::string &root_path)
+{
+  
+   loadImpl (root_path);
+   // Populate distortion model
+   if (boost::filesystem::exists (root_path + "/distortion_model"))
+   {
+     dddm_.reset (new DiscreteDepthDistortionModel);
+     dddm_->load (root_path + "/distortion_model");
+   }
+   root_path_ = root_path;
+}
+
 size_t rgbd::StreamSequenceBase::seek(double timestamp, double* dt) const
 {
   ROS_ASSERT(!timestamps_.empty());
@@ -115,8 +128,22 @@ void rgbd::StreamSequenceBase::addCloudToCache (
 }
   
 size_t rgbd::StreamSequenceBase::readFrame(double timestamp, double* dt, Frame* frame) const
+{
+  size_t idx = seek(timestamp, dt);
+  readFrame(idx, frame);    
+  return idx;
+}
+
+void rgbd::StreamSequenceBase::readFrame(size_t idx, Frame* frame) const
+{
+  readFrameImpl (idx, frame);
+  if (undistort_)  
   {
-    size_t idx = seek(timestamp, dt);
-    readFrame(idx, frame);    
-    return idx;
+    if (!dddm_)
+      PCL_WARN ("Attempted to undistort a frame, but no distortion model was found!\n");
+    else
+    {
+      dddm_->undistort (frame); 
+    }
   }
+}

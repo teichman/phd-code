@@ -109,7 +109,7 @@ namespace rgbd
     timestamps_.push_back(frame.timestamp_);
   }
 
-  void StreamSequence::readFrame(size_t idx, Frame* frame) const
+  void StreamSequence::readFrameImpl(size_t idx, Frame* frame) const
   {
     ROS_ASSERT(idx < img_names_.size());
     frame->img_ = cv::imread(root_path_ + "/" + img_names_[idx], 1);

@@ -14,6 +14,9 @@
 #include <eigen_extensions/eigen_extensions.h>
 #include <timer/timer.h>
 #include <rgbd_sequence/primesense_model.h>
+#include <rgbd_sequence/discrete_depth_distortion_model.h>
+#include <ros/assert.h>
+#include <ros/console.h>
 
 namespace rgbd
 {
@@ -36,11 +39,7 @@ namespace rgbd
     static StreamSequenceBase::Ptr initializeFromDirectory (const std::string &dir);
 
     //! Loads existing model and timestamps at root_path_, prepares for streaming from here.
-    inline void load(const std::string &root_path)
-    {
-      loadImpl (root_path);
-      root_path_ = root_path;
-    }
+    void load(const std::string &root_path);
 
     inline std::string getRootPath() const
     { return root_path_; };
@@ -49,7 +48,7 @@ namespace rgbd
     //! Must have an initialized model_.
     virtual size_t size() const = 0;
 
-    virtual void readFrame(size_t idx, Frame* frame) const = 0;
+    void readFrame(size_t idx, Frame* frame) const;
     //! Returns the nearest frame, no matter how far away it is in time.  Check dt to find out.
     size_t readFrame(double timestamp, double* dt, Frame* frame) const;
 
@@ -63,10 +62,19 @@ namespace rgbd
     inline void
     setCacheSize (size_t cache_size) const
     { cache_size_ = cache_size; };
+
+    inline void
+    setUndistort (bool undistort)
+    { 
+      undistort_ = undistort;
+      // Clear the cache
+      pcds_cache_.clear ();
+      frames_cache_.clear ();
+    };
     
     //! Adds dt to all timestamps.  Does not save.
     void applyTimeOffset(double dt);
-    //! Inefficient accessors that conceal how the projection is done.
+    //! Inefficient accessors that conceal ) how the projection is done.
     //! These shouldn't be used.
     rgbd::Cloud::Ptr getCloud(size_t idx) const __attribute__ ((__deprecated__));
     rgbd::Cloud::Ptr getCloud(double timestamp, double* dt) const __attribute__ ((__deprecated__));
@@ -74,6 +82,9 @@ namespace rgbd
     cv::Mat3b getImage(double timestamp, double* dt) const __attribute__ ((__deprecated__));
     
   protected:
+    friend class StreamSequenceAccessor;
+
+    virtual void readFrameImpl (size_t idx, Frame* frame) const = 0;
     virtual void loadImpl(const std::string& root_path) = 0;
 
     void
@@ -83,6 +94,8 @@ namespace rgbd
     mutable std::map<size_t, rgbd::Cloud::ConstPtr> pcds_cache_;
     mutable size_t cache_size_;
     std::string root_path_;
+    bool undistort_;
+    DiscreteDepthDistortionModel::Ptr dddm_;
   };
 
   //! Accessor which has "push back" functionality, remapping indices appropriately...don't ask
@@ -119,6 +132,7 @@ namespace rgbd
       size_t sz = frames_.size ();
       out.write ((char*)&sz, sizeof (size_t));
       out.write ((char*)&frames_[0], sz * sizeof (size_t));
+      out.write ((char*)&sseq_->undistort_, sizeof(bool));
     }
 
     inline void deserialize (std::istream& in)
@@ -130,6 +144,7 @@ namespace rgbd
       in.read((char*)&sz, sizeof(size_t));
       frames_.resize (sz);
       in.read((char*)&frames_[0], sz * sizeof (size_t));
+      in.read((char*)&sseq_->undistort_, sizeof(bool));
     }
 
     inline void setCacheSize (size_t cache_size) const

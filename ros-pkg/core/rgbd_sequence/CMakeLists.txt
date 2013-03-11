@@ -27,6 +27,7 @@ rosbuild_add_library(rgbd_sequence
   src/lib/stream_sequence_base.cpp
   src/lib/stream_sequence.cpp
   src/lib/primesense_model.cpp
+  src/lib/discrete_depth_distortion_model.cpp
   src/lib/vis_wrapper.cpp
   src/lib/intrinsics_visualizer.cpp
   src/lib/stream_visualizer.cpp

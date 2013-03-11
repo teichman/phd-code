@@ -24,7 +24,6 @@
 #include <rgbd_sequence/stream_sequence_base.h>
 #include <xpl_calibration/descriptor_database.h>
 #include <xpl_calibration/organized_connected_components.h>
-#include <xpl_calibration/pcd_stream.h>
 //typedef op::PCDStream<pcl::PointXYZRGB> Stream;
 typedef rgbd::StreamSequenceAccessor Stream;
 typedef Stream::Ptr StreamPtr;

@@ -6,7 +6,8 @@ using namespace std;
 using namespace pcl;
 using namespace rgbd;
 
-#define NUM_THREADS (getenv("NUM_THREADS") ? atoi(getenv("NUM_THREADS")) : 1)
+#define NUM_THREADS (getenv("NUM_THREADS") ? atoi(getenv("NUM_THREADS")) : 0)
+#define UNDISTORT (getenv("UNDISTORT") ? atoi(getenv("UNDISTORT")) : 0)
 
 string usageString()
 {
@@ -42,6 +43,8 @@ int main(int argc, char** argv)
   StreamSequenceBase::Ptr sseq0 = StreamSequenceBase::initializeFromDirectory(path0);
   cout << "Loading " << path1 << "." << endl;
   StreamSequenceBase::Ptr sseq1 = StreamSequenceBase::initializeFromDirectory(path1);
+  sseq0->setUndistort (UNDISTORT);
+  sseq1->setUndistort (UNDISTORT);
 
   string pipeline_path = "";
   if(argc == 5) { 
