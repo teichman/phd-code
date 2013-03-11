@@ -366,6 +366,7 @@ PrimeSenseModel DepthDistortionLearner::fitModel()
   vector<MatrixXd> xxts(frames_.size(), MatrixXd::Zero(num_features, num_features));
   vector<VectorXd> bs(frames_.size(), VectorXd::Zero(num_features));
   VectorXi num_tr_ex_frame = VectorXi::Zero(frames_.size());
+  size_t max_i_sm = frames_.size () / DDL_INCR; 
 #ifndef VISUALIZE
 #pragma omp parallel for
 #endif 

@@ -160,14 +160,14 @@ void ObjectMatchingCalibrator::compute()
   checkInput();
   std::vector<size_t> frames;
   findGoodFrames (frames);
-
+  cout << "Num frames: " << frames.size () << std::endl;
   ransac_transform_ = centroidRansac(frames);
 
   vector<KdTree::Ptr> trees0;
   vector<Cloud::ConstPtr> pcds0;
   vector<Cloud::Ptr> pcds1;
   getData(frames, &trees0, &pcds0, &pcds1);
-
+  cout << "pcds0 size: " << pcds0.size () << ", pcds1 size: " << pcds1.size () << std::endl;
   for(size_t i = 0; i < pcds1.size(); ++i)
     pcl::transformPointCloud(*pcds1[i], *pcds1[i], ransac_transform_);
   

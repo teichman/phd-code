@@ -73,7 +73,7 @@ ground_truth_sync-%: $(DATA_DIR)/configuration%
 
 dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) && ON=10 OFF=40 MAX_FRAMES=100 $(CALIBRATE_DYNAMIC) $</unstructured/* | tee transform.eig.txt-log.txt
+	cd $(@D) && ON=5 OFF=45 MAX_FRAMES=50 UNDISTORT=1 $(CALIBRATE_DYNAMIC) $</unstructured/* | tee transform.eig.txt-log.txt
 
 dynamic-tiny/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
