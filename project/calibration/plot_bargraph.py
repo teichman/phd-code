@@ -17,11 +17,11 @@ cp.setup()
 
 # -- Load data
 tmpfile = ".python-aosetuhsaotehusaoeu"
-os.system("grep Angle evaluations/configuration*.txt | awk '{print $NF}' > " + tmpfile)
+os.system("grep Angle ../evaluations/configuration*.txt | awk '{print $NF}' > " + tmpfile)
 angles = np.loadtxt(tmpfile)
-os.system("grep Euclidean evaluations/configuration*.txt | awk '{print $NF}' > " + tmpfile)
+os.system("grep Euclidean ../evaluations/configuration*.txt | awk '{print $NF}' > " + tmpfile)
 translations = np.loadtxt(tmpfile);
-os.system("grep 'Sync error' evaluations/configuration*.txt | awk '{print $NF}' > " + tmpfile)
+os.system("grep 'Sync error' ../evaluations/configuration*.txt | awk '{print $NF}' > " + tmpfile)
 syncs = np.loadtxt(tmpfile);
 
 # -- Get overall performances

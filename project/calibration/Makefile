@@ -110,8 +110,9 @@ evaluations/%.txt: ground_truth/%/transform.eig.txt dynamic/%/transform.eig.txt
 # -- Plots
 ############################################################
 
-bargraph.pdf: $(addprefix evaluations/, $(addsuffix .txt, $(CONFIGURATIONS)))
-	python $(MAKE_ROOT)/plot_bargraph.py
+img/bargraph.pdf: $(addprefix evaluations/, $(addsuffix .txt, $(CONFIGURATIONS)))
+	mkdir -p img && cd img && python $(MAKE_ROOT)/plot_bargraph.py
+	
 
 
 ############################################################
