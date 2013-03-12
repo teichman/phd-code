@@ -26,8 +26,8 @@ namespace cloud_calibration
   {
   }
   
-  Eigen::Affine3f CheckerCalibrator::calibrate( const StreamSequence::Ptr &seq_ref, 
-      const StreamSequence::Ptr &seq_target, double dt_thresh) const
+  Eigen::Affine3f CheckerCalibrator::calibrate( const StreamSequenceBase::Ptr &seq_ref, 
+      const StreamSequenceBase::Ptr &seq_target, double dt_thresh) const
   {
     // Create a multi sequence from the two
     vector<Point> points_ref, points_target;
@@ -53,6 +53,7 @@ namespace cloud_calibration
       for(int fast_check = 1; fast_check >= 0; fast_check--){
         for(size_t i = 0; i < seq->size(); i++)
         {
+          cout << "On frame " << i+1 << " of " << seq->size () << endl;
           vector<Point> points_ref, points_target;
           Eigen::Affine3f frame_transform;
           bool found = estimateAffineFromFrame(seq, i, ref_idx, target_idx, frame_transform, points_ref, points_target,

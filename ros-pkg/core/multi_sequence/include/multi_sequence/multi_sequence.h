@@ -4,7 +4,7 @@
 #define BOOST_FILESYSTEM_VERSION 2
 #include <vector>
 #include <serializable/serializable.h>
-#include <rgbd_sequence/stream_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 #include <opencv2/core/core.hpp>
 
 namespace multi_sequence
@@ -16,8 +16,8 @@ namespace multi_sequence
     typedef boost::shared_ptr<const MultiSequence> ConstPtr;
 
     MultiSequence(double dt=0);
-    MultiSequence(double dt, const std::vector<rgbd::StreamSequence::Ptr> &seqs);
-    void addSequence(const rgbd::StreamSequence::Ptr &seq );
+    MultiSequence(double dt, const std::vector<rgbd::StreamSequenceBase::Ptr> &seqs);
+    void addSequence(const rgbd::StreamSequenceBase::Ptr &seq );
     size_t size() const;
     size_t num_sequences() const;
     //! Fetch the clouds at aligned frame i -- does not copy data
@@ -25,11 +25,8 @@ namespace multi_sequence
     //! Fetch the images at aligned frame i -- does not copy data
     void getImages(int frame, std::vector<cv::Mat3b> &imgs) const;
 
-    void save(const std::string &dir) const;
-    void load(const std::string &dir);
-
   protected:
-    std::vector<rgbd::StreamSequence::Ptr> seqs_;
+    std::vector<rgbd::StreamSequenceBase::Ptr> seqs_;
     //! Populated by alignSequences()
     std::vector<std::vector<int> > alignments_;
     //! Flag for whether or not sequences have been aligned yet

@@ -24,11 +24,11 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #common commands for building c++ executables and libraries
 rosbuild_add_boost_directories()
 
-rosbuild_add_library(${PROJECT_NAME} src/multi_sequence.cpp src/multi_recorder.cpp)
+rosbuild_add_library(${PROJECT_NAME} src/multi_sequence.cpp)
 rosbuild_link_boost(${PROJECT_NAME} system)
 
-rosbuild_add_executable(record src/record.cpp)
-target_link_libraries(record ${PROJECT_NAME})
+#rosbuild_add_executable(record src/record.cpp)
+#target_link_libraries(record ${PROJECT_NAME})
 
 #rosbuild_add_executable(make_multi src/make_multi.cpp)
 #target_link_libraries(make_multi ${PROJECT_NAME})

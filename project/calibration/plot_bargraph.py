@@ -25,9 +25,14 @@ os.system("grep 'Sync error' evaluations/configuration*.txt | awk '{print $NF}' 
 syncs = np.loadtxt(tmpfile);
 
 # -- Get overall performances
-average_angle = np.sum(angles) / len(angles)
-average_translation = np.sum(translations) / len(translations)
-average_sync = np.sum(syncs) / len(syncs)
+num_examples = np.prod(np.size(angles))
+if num_examples <= 1:
+    angles = np.array([np.asscalar(angles)])
+    translations = np.array([np.asscalar(translations)])
+    syncs = np.array([np.asscalar(syncs)])
+average_angle = np.sum(angles) / num_examples
+average_translation = np.sum(translations) / num_examples
+average_sync = np.sum(syncs) / num_examples
 
 # Save tex of the table while we're at it
 std_trans = np.std(translations)
@@ -37,7 +42,7 @@ texfile = open('results_table.tex','w')
 texfile.write('\\begin{tabular}{ l | r | r | r }\n')
 texfile.write('Sequence & Translation & Rotation & Sync \\\ \n')
 texfile.write('\\hline\n')
-for i in range(len(translations)):
+for i in range(num_examples):
     texfile.write('%.2d & %.2f & %.2f & %.2f \\\ \n'%(i+1, translations[i], angles[i], syncs[i]))
 texfile.write('\\hline\n')
 texfile.write('Avg & %.2f$\pm$%.2f & %.2f$\pm$%.2f & %.2f$\pm$%.2f \\\ \n'%(average_translation, std_trans, average_angle,std_angle, average_sync, std_sync))
@@ -49,8 +54,11 @@ angles = hstack([angles, 0, 0, average_angle, 0])
 translations = hstack([translations, 0, 0, average_translation, 0])
 syncs = hstack([syncs, 0, 0, average_sync, 0])
 
+print "Angles"
 print angles
+print "Translations"
 print translations
+print "Syncs"
 print syncs
 
 # -- Set up figure

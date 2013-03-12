@@ -10,6 +10,7 @@
 #include <pcl/point_types.h>
 #include <pcl/common/transforms.h>
 #include <multi_sequence/multi_sequence.h>
+#include <rgbd_sequence/stream_sequence_base.h>
 
 namespace cloud_calibration
 {
@@ -20,7 +21,7 @@ namespace cloud_calibration
   using cv::Mat3b;
   using cv::Mat1d;
   using multi_sequence::MultiSequence;
-  using rgbd::StreamSequence;
+  using rgbd::StreamSequenceBase;
 
   class CheckerCalibrator
   {
@@ -28,7 +29,7 @@ namespace cloud_calibration
     CheckerCalibrator();
     CheckerCalibrator(int rows, int cols);
     //! Calibrate a pair of sequences
-    Eigen::Affine3f calibrate( const StreamSequence::Ptr &seq_ref, const StreamSequence::Ptr &seq_target, 
+    Eigen::Affine3f calibrate( const StreamSequenceBase::Ptr &seq_ref, const StreamSequenceBase::Ptr &seq_target, 
                                double dt_thresh=0.05) const;
     //! Calibrate a multi sequence
     Eigen::Affine3f calibrate( const MultiSequence::ConstPtr &seq, 

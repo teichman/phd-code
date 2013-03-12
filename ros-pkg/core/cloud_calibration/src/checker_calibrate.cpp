@@ -1,5 +1,8 @@
 #include <cloud_calibration/checker_calibrator.h>
 #include <eigen_extensions/eigen_extensions.h>
+#include <rgbd_sequence/stream_sequence_base.h>
+
+#define UNDISTORT (getenv("UNDISTORT") ? atoi(getenv("UNDISTORT")) : 0)
 
 using namespace std;
 using namespace cloud_calibration;
@@ -21,12 +24,15 @@ int main(int argc, char** argv)
     cout << usageString() << endl;
     return 0;
   }
+  cout << "Initializing seq 0" << endl;
   string seq_ref_dir = argv[1];
-  StreamSequence::Ptr seq_ref( new StreamSequence );
-  seq_ref->load(seq_ref_dir);
+  rgbd::StreamSequenceBase::Ptr seq_ref = rgbd::StreamSequenceBase::initializeFromDirectory (seq_ref_dir);
   string seq_target_dir = argv[2];
-  StreamSequence::Ptr seq_target( new StreamSequence );
-  seq_target->load(seq_target_dir);
+  cout << "Initializing seq 1" << endl;
+  rgbd::StreamSequenceBase::Ptr seq_target = rgbd::StreamSequenceBase::initializeFromDirectory (seq_target_dir);
+  cout << "Loaded sequences!" << endl;
+  seq_ref->setUndistort (UNDISTORT);
+  seq_target->setUndistort (UNDISTORT);
   string eig_out = argv[3];
   double dt_thresh;
   if(argc == 5)
