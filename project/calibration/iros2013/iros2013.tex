@@ -32,7 +32,7 @@ Unsupervised Calibration of Multiple Depth Sensors (TODO come up with real title
 %TODO@SDM rename
 
 \author{Stephen Miller, Alex Teichman, and Sebastian Thrun
-\thanks{Stephen Miller, Alex Teichman, and Sebastian Thrun are with the Department of Computer Science at Stanford University. \newline E-mail: \{teichman, stephen, thrun\}@cs.stanford.edu } }
+\thanks{Stephen Miller, Alex Teichman, and Sebastian Thrun are with the Department of Computer Science at Stanford University. \newline E-mail: \{stephen, teichman, thrun\}@cs.stanford.edu } }
 
 
 
@@ -122,6 +122,9 @@ could certainly be used for extrinsic registration without the need for register
 Unlike the above techniques, we do not make use of any calibration target -- or, indeed, any structured routine 
 on the part of the user. Once our correspondences are determined, however, our approach is fairly similar; with 
 the caveat that we use the entire dense scene to refine our extrinsics, rather than only sparse correspondences.
+
+TODO briefly touch upon the keypoint based approaches which must exist. Say why this can be unstable in an 
+untextured environment, and why it relies on an overlap in fields of view which may not exist.
 
 In recent years, a body of work has emerged which attempts to perform extrinsic calibration in an unsupervised 
 fashion, via expected statistics of the data. CITE (Jesse) proposed a method for calibrating 2D and 3D LIDAR sensors mounted on a moving platform, 
@@ -261,11 +264,31 @@ referred to as \texttt{centroidRANSAC()} in Algorithm~\ref{alg:sketch}, provides
 
 
 \section{EXPERIMENTS}
-TODO
-%TODO@SDM Write
-%TODO@SDM Try to see if ground truth can be better. Really seems like these errors aren't fair.
 
+Talk a little bit about the experimental setup here -- particularly implementation details. How we run an undistortion technique 
+prior to doing this, with a mention that that work is currently under review. Note that that approach did not make any use of a 
+calibration pattern either. How we subsample frames, 
+how we do object-to-frame alignment rather than frame-to-frame or object to object, and why that fails. Show an example of naive ICP failing.
 
+Finally, do a very brief runtime analysis.
+
+\subsection{Quantitative Evaluation Against a Checkerboard}
+
+Talk about getting ground truth from a checkerboard. Explain why even this isn't truly ``ground truth'', and try to get error bars 
+for the checkerboard steps. Get a visual of checkerboard correspondences on two point clouds.
+
+Show the table, plus a few pictures of results. Briefly comment on why the error, though it seems a bit high, is actually pretty ambiguous -- certain things, like trading pitch for Y, are pretty hard to define, and it's unclear that the checkerboard is actually in the 
+right here. 
+
+\subsection{Difficult Scenes}
+
+Show, here, a few scenes in which there is no way a checkerboard could possibly do this task, because the FOV overlap is small or 
+nonexistant. Talk a bit about why we are able to handle this case, even though no feature-based method could hope to.
+
+\subsection{Multiple Sensors}
+
+If there's time, try to get a full 360 going with 4 sensors. Explain how relating all to 0 works okay, but GraphSLAM does better. Show 
+results for both.
 
 \begin{figure}
   \centering
@@ -283,8 +306,9 @@ TODO
 Angular error results are reported as the angle in the angle-axis representation of the rotation matrix 
 
 \section{CONCLUSIONS}
-TODO
-%TODO@SDM Write
+
+Short and sweet conclusion. We took a common task, and found a way to solve it by leveraging an abundance of unstructured 
+data. Very briefly recap why it is now feasible to mount multiple sensors in a home, press a button, and have full 360 3D.
 
 \bibliographystyle{IEEEtran}
 \bibliography{icra2013}
