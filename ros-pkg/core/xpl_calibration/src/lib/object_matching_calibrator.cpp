@@ -695,15 +695,28 @@ double LossFunction::computeLoss(KdTree::Ptr tree0, const Cloud& pcd0, const Clo
       if(idx != -1 && pcl_isfinite(pcd0[idx].z))
         fsv = fmin(max_dist_, fmax(0.0, pcd0[idx].z - pt.z));
       val += fsv;
+      // Do KD tree only for perpendicular distance to nearest neighbor
+      indices.clear();
+      distances.clear();
+      tree0->nearestKSearch(pt, 1, indices, distances);
+      // Don't penalize for the lack of a neighbor
+      if (indices.size () > 0 && distances[0] < max_dist_)
+      {
+        const Point& pt_tgt = pcd0[indices[0]];
+        val += std::sqrt ((pt.x - pt_tgt.x)*(pt.x - pt_tgt.x) + (pt.y - pt_tgt.y)*(pt.y - pt_tgt.y)); // Perpendicular distance only
+      }
+
     }
-        
-    indices.clear();
-    distances.clear();
-    tree0->nearestKSearch(pt, 1, indices, distances);
-    if(indices.empty() || distances[0] > max_dist_)
-      val += max_dist_;
-    else 
-      val += distances[0];
+    else
+    {
+      indices.clear();
+      distances.clear();
+      tree0->nearestKSearch(pt, 1, indices, distances);
+      if(indices.empty() || distances[0] > max_dist_)
+        val += max_dist_;
+      else 
+        val += distances[0];
+    }
   }
   return val / count;
 }

@@ -49,7 +49,10 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequenceBase::ConstPtr ss
   strm1->setCacheSize (CACHE_SIZE);
   ROS_ASSERT(sseq0->size() == sseq0->timestamps_.size());
   bool on = false;
-  pcl::visualization::CloudViewer vis("Matched");
+  
+  boost::shared_ptr<pcl::visualization::CloudViewer> vis;
+  if (VISUALIZE)
+    vis.reset (new pcl::visualization::CloudViewer ("matched"));
   for(size_t i = 0; i < sseq0->size(); ++i) {
     if(on && ((int)i % ON == 0))
       on = false;
@@ -76,7 +79,7 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequenceBase::ConstPtr ss
     {
       Cloud::Ptr pcd1(new Cloud);
       sseq1->model_.frameToCloud(frame, pcd1.get());
-      vis.showCloud(pcd1);
+      vis->showCloud(pcd1);
       usleep(1000 * 30);
     }
     //strm1->addCloud (pcd1);
