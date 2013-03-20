@@ -9,6 +9,15 @@
 #include <vector>
 #include <boost/algorithm/string.hpp>
 
+std::string mpliToPython(const std::string& str); 
+std::string mpliToPython(int val);
+std::string mpliToPython(size_t val);
+std::string mpliToPython(double val);
+std::string mpliToPython(const std::vector<double>& vec);
+std::string mpliToPython(const Eigen::VectorXd& vec);
+std::string mpliToPython(const Eigen::MatrixXd& mat);
+std::string mpliToPython(const Eigen::ArrayXXd& arr);
+std::string mpliToPython(const Eigen::ArrayXd& arr);
 //! Export data to python with the same name as in the c++ program.
 //! Works with anything you can call mpliToPython on.
 #define mpliExport(name) PyRun_SimpleString((std::string(#name) + std::string(" = ") + mpliToPython(name)).c_str())
@@ -30,15 +39,6 @@ void mpliExecuteFile(const std::string& filename);
 //! Executes str as a python command.
 void mpli(const std::string& str);
 
-std::string mpliToPython(const std::string& str); 
-std::string mpliToPython(int val);
-std::string mpliToPython(size_t val);
-std::string mpliToPython(double val);
-std::string mpliToPython(const std::vector<double>& vec);
-std::string mpliToPython(const Eigen::VectorXd& vec);
-std::string mpliToPython(const Eigen::MatrixXd& mat);
-std::string mpliToPython(const Eigen::ArrayXXd& arr);
-std::string mpliToPython(const Eigen::ArrayXd& arr);
 
 void mpliPrintSize();
 
