@@ -77,14 +77,19 @@ dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) && $(UNDISTORT) ON=5 OFF=45 MAX_FRAMES=50 $(CALIBRATE_DYNAMIC) $</unstructured/* | tee transform.eig.txt-log.txt
 
+
 dynamic-tiny/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) && $(UNDISTORT) ON=20 OFF=900 $(CALIBRATE_DYNAMIC) $</unstructured/* | tee transform.eig.txt-log.txt
 
 MAX_DT := 0.015
-ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
+ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt ground_truth/%/sync.eig.txt
 	mkdir -p $(@D)
 	$(UNDISTORT) rosrun cloud_calibration checker_calibrate $(DATA_DIR)/$*/checkerboard/* $@ $(MAX_DT) | tee $@-log.txt
+
+ground_truth/%/sync.eig.txt:
+	echo '% 1 1' > $@
+	echo '0' >> $@
 
 ground_truth_user/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
@@ -100,7 +105,7 @@ keypoint/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) &&	$(UNDISTORT) $(CALIBRATE_ORB) $(DATA_DIR)/$*/unstructured/* > transform.eig.txt-log.txt
 
-evaluations/%.txt: ground_truth/%/transform.eig.txt dynamic/%/transform.eig.txt
+evaluations/%.txt: ground_truth/%/transform.eig.txt ground_truth/%/sync.eig.txt dynamic/%/transform.eig.txt
 	mkdir -p $(@D)
 	$(UNDISTORT) $(EVALUATE) $^ ground_truth/$*/sync.eig.txt dynamic/$*/sync.eig.txt
 	$(UNDISTORT) $(EVALUATE) $^ ground_truth/$*/sync.eig.txt dynamic/$*/sync.eig.txt > $@
