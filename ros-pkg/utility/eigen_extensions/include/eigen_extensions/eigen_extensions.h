@@ -261,7 +261,6 @@ namespace eigen_extensions {
     int cols;
     iss >> rows;
     iss >> cols;
-    
     // -- Read in the data.
     *mat = Eigen::Matrix<S, T, U>(rows, cols);
     for(int y = 0; y < rows; ++y) {

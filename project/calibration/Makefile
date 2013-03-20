@@ -105,10 +105,9 @@ keypoint/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
 	cd $(@D) &&	$(UNDISTORT) $(CALIBRATE_ORB) $(DATA_DIR)/$*/unstructured/* > transform.eig.txt-log.txt
 
-evaluations/%.txt: ground_truth/%/transform.eig.txt ground_truth/%/sync.eig.txt dynamic/%/transform.eig.txt
+evaluations/%.txt: ground_truth/%/transform.eig.txt dynamic/%/transform.eig.txt ground_truth/%/sync.eig.txt
 	mkdir -p $(@D)
-	$(UNDISTORT) $(EVALUATE) $^ ground_truth/$*/sync.eig.txt dynamic/$*/sync.eig.txt
-	$(UNDISTORT) $(EVALUATE) $^ ground_truth/$*/sync.eig.txt dynamic/$*/sync.eig.txt > $@
+	$(UNDISTORT) $(EVALUATE) $^ dynamic/$*/sync.eig.txt $(DATA_DIR)/$*/unstructured/* | tee $@
 
 
 ############################################################
