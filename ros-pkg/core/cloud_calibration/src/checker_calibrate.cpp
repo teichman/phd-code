@@ -42,10 +42,19 @@ int main(int argc, char** argv)
   // Load sequence
   int rows = 6, cols = 8;
   CheckerCalibrator cc( rows, cols );
-  Eigen::Affine3f transf = cc.calibrate( seq_ref, seq_target, dt_thresh );
+  float std_trans, std_rot;
+  Eigen::Affine3f transf = cc.calibrate( seq_ref, seq_target, std_trans, std_rot, dt_thresh );
   cout << transf.matrix() << endl; 
   cout << "Saving to " << eig_out << endl;
   eigen_extensions::saveASCII( transf.matrix(), eig_out );
+  cout << "Std_trans: " << std_trans << ", std_rot: " << std_rot << endl;
+  Eigen::Vector2f stdev;
+  stdev(0) = std_trans;
+  stdev(1) = std_rot;
+  string stdev_out = argv[3];
+  stdev_out += "_std.eig.txt";
+  eigen_extensions::saveASCII (stdev, stdev_out);
+
 
   return 0;
 }

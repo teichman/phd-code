@@ -30,11 +30,13 @@ namespace cloud_calibration
     CheckerCalibrator(int rows, int cols);
     //! Calibrate a pair of sequences
     Eigen::Affine3f calibrate( const StreamSequenceBase::Ptr &seq_ref, const StreamSequenceBase::Ptr &seq_target, 
+                               float &std_trans, float &std_rot,
                                double dt_thresh=0.05) const;
     //! Calibrate a multi sequence
     Eigen::Affine3f calibrate( const MultiSequence::ConstPtr &seq, 
                               size_t ref_idx, size_t target_idx, 
-                              std::vector<Point> &points_ref, std::vector<Point> &points_target) const;
+                              std::vector<Point> &points_ref, std::vector<Point> &points_target,
+                              float &std_trans, float &std_rot) const;
 
     Eigen::Affine3f estimateAffine( const std::vector<Point> &points_ref,
                                     const std::vector<Point> &points_target) const;

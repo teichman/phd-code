@@ -45,7 +45,8 @@ int main(int argc, char** argv)
   mseq->addSequence(seq_target);
   vector<rgbd::Point> cc_ref, cc_target;
   CheckerCalibrator cc;
-  cc.calibrate(mseq, 0, 1, cc_ref, cc_target);
+  float std_trans, std_rot;
+  cc.calibrate(mseq, 0, 1, cc_ref, cc_target, std_trans, std_rot);
   pcl::TransformationFromCorrespondences tc;
   for(size_t i = 0; i < cc_ref.size(); i++){
     tc.add(cc_target[i].getVector3fMap(), cc_ref[i].getVector3fMap() );

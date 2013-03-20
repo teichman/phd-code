@@ -27,19 +27,22 @@ namespace cloud_calibration
   }
   
   Eigen::Affine3f CheckerCalibrator::calibrate( const StreamSequenceBase::Ptr &seq_ref, 
-      const StreamSequenceBase::Ptr &seq_target, double dt_thresh) const
+      const StreamSequenceBase::Ptr &seq_target, 
+      float &std_trans, float &std_rot, double dt_thresh) const
   {
     // Create a multi sequence from the two
     vector<Point> points_ref, points_target;
     MultiSequence::Ptr seq( new MultiSequence(dt_thresh) );
     seq->addSequence(seq_ref);
     seq->addSequence(seq_target);
-    return calibrate(seq, 0, 1, points_ref, points_target);
+    return calibrate(seq, 0, 1, points_ref, points_target, std_trans, std_rot);
   }
+
 
   Eigen::Affine3f CheckerCalibrator::calibrate( const MultiSequence::ConstPtr &seq, 
                              size_t ref_idx, size_t target_idx, 
-                             vector<Point> &points_ref_best, vector<Point> &points_target_best ) const
+                             vector<Point> &points_ref_best, vector<Point> &points_target_best,
+                             float &std_trans, float &std_rot) const
   {
     cout << "Considering " << seq->size() << " frames" << endl;
     //Iterate over the board being flipped or not
@@ -51,7 +54,7 @@ namespace cloud_calibration
       vector<vector<Point> > points_ref_all, points_target_all;
       vector<Eigen::Affine3f> transforms;
       for(int fast_check = 1; fast_check >= 0; fast_check--){
-        for(size_t i = 0; i < seq->size(); i++)
+        for(size_t i = 0; i < seq->size(); i+= 10)
         {
           cout << "On frame " << i+1 << " of " << seq->size () << endl;
           vector<Point> points_ref, points_target;
@@ -65,7 +68,7 @@ namespace cloud_calibration
           }
         }
         if(transforms.size() > 0 && fast_check){
-          reject_pct = 0.25;
+          reject_pct = 0.05;
           break;
         }
         else{
@@ -113,7 +116,38 @@ namespace cloud_calibration
           points_target_best.push_back(points_target_all[frame][j]);
         }
       }
+      // Get entire trans
       trans = estimateAffine(points_ref_best, points_target_best);
+      // Get 5 random splits of 20% of the data
+      std::vector<Eigen::Affine3f> transforms_split;
+      std::vector<int> indices;
+      for (size_t i = 0 ; i < points_ref_best.size (); i++)
+        indices.push_back (i);
+      for (int iter = 0; iter < 5; iter++)
+      {
+        //std::random_shuffle (indices.begin (), indices.end ());
+        std::vector<Point> points_ref_half, points_target_half;
+        for (size_t i = 0; i < indices.size () / 5; i++)
+        {
+          size_t idx = indices[iter * (indices.size () / 5) + i];
+          points_ref_half.push_back (points_ref_best[idx]);
+          points_target_half.push_back (points_target_best[idx]);
+        }
+        transforms_split.push_back (estimateAffine (points_ref_half, points_target_half));
+        cout << "Split " << iter+1 << " of 5: " << endl << transforms_split[iter].matrix () << endl;
+      }
+      // Compute variance
+      std_trans = 0;
+      std_rot = 0;
+      for (size_t iter = 0; iter < 5; iter++)
+      {
+        std_trans += (transforms_split[iter].translation ()  - trans.translation ()).squaredNorm ();
+        std_rot += std::pow (Eigen::AngleAxisf (transforms_split[iter].rotation ().inverse () * trans.rotation ()).angle (), 2);
+      }
+      std_trans /= 5.;
+      std_rot /= 5.;
+      std_trans = std::sqrt (std_trans);
+      std_rot = std::sqrt(std_rot);
     }
 
     return trans;
