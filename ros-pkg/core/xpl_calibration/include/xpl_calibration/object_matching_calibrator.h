@@ -55,6 +55,9 @@ public:
     declareParam<double>("DistanceThreshold", 0.3); // Maximum distance for hinge loss in objective function.
     declareParam<double>("TransformThreshold", 0.01);
     declareParam<std::string>("TransformSearchMethod", TRANSFORM_SEARCH_METHOD); // "GridSearch" or "ICP"
+    declareParam<int>("MaxConsecutiveFrames", 10);
+    declareParam<int>("MaxFrames", 100);
+    declareParam<int>("MinObjectSize", 1000);
     
     // Camera intrinsics for sequence 0.
     // These should come from the corresponding StreamSequence members.
@@ -63,8 +66,9 @@ public:
     declareParam<double>("Seq0Cx");
     declareParam<double>("Seq0Cy");
 
-    declareInput<rgbd::Sequence::ConstPtr>("Sequence0");
-    declareInput<rgbd::Sequence::ConstPtr>("Sequence1");
+
+    declareInput<Stream::ConstPtr>("Sequence0");
+    declareInput<Stream::ConstPtr>("Sequence1");
     declareInput<const ObjectClouds*>("Objects0");
     declareInput<const ObjectClouds*>("Objects1");
 
@@ -82,14 +86,18 @@ protected:
   Eigen::Affine3f final_transform_;
   int outer_iter_;
 
+  void findGoodFrames (std::vector<size_t> &frames);
+
   void accumulateObjects(const ObjectClouds& objects,
+                         const std::vector<size_t> &frames,
                          std::vector<rgbd::Cloud::Ptr>* pcds) const;
-  void getData(std::vector<KdTree::Ptr>* trees0,
+  void getData(const std::vector<size_t> &frames,
+               std::vector<KdTree::Ptr>* trees0,
                std::vector<rgbd::Cloud::ConstPtr>* pcds0,
                std::vector<rgbd::Cloud::Ptr>* pcds1) const;
 
   void checkInput() const;
-  Eigen::Affine3f centroidRansac() const;
+  Eigen::Affine3f centroidRansac(const std::vector<size_t> &frames) const;
   rgbd::Cloud::ConstPtr getNearestReferenceObject(const rgbd::Cloud& pcd1) const;
   void getSyncedInlierModels(const Eigen::Affine3f& transform,
                              double sync,
@@ -97,10 +105,12 @@ protected:
                              std::vector<rgbd::Cloud::Ptr>* inliers1) const;
     
   void computeCentroids(const ObjectClouds& objects,
+                        const std::vector<size_t> &frames,
                         std::vector< std::vector<Eigen::Vector3f> >* centroids) const;
 
-  void sampleCorrespondence(const rgbd::Sequence& seq0,
-                            const rgbd::Sequence& seq1,
+  void sampleCorrespondence(const Stream& seq0,
+                            const Stream& seq1,
+                            const std::vector<size_t> &frames,
                             const std::vector< std::vector<Eigen::Vector3f> >& centroids0,
                             const std::vector< std::vector<Eigen::Vector3f> >& centroids1,
                             pcl::TransformationFromCorrespondences* tfc) const;
@@ -127,7 +137,7 @@ protected:
                     const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
                     const std::vector<rgbd::Cloud::Ptr>& pcds1) const;
       
-  void visualizeInliers(const std::string& name, const Eigen::Affine3f& transform) const;
+  void visualizeInliers(const std::string& name, const Eigen::Affine3f& transform, const std::vector<size_t> &frames) const;
   void visualizeResult(const std::string& name, const Eigen::Affine3f& transform, double sync) const;
   void visualizeScenes(const std::string& name,
                        const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
@@ -143,6 +153,8 @@ protected:
 
          
 int seek(const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
+         double ts1, double dt_thresh);
+int seek(const Stream& pcds0,
          double ts1, double dt_thresh);
 int seek(const std::vector<rgbd::Cloud::Ptr>& pcds0,
          double ts1, double dt_thresh);

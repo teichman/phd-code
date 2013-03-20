@@ -9,6 +9,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <serializable/serializable.h>
 #include <eigen_extensions/eigen_extensions.h>
+#include <ros/console.h>
 #include <ros/assert.h>
 
 // Depth multipliers, used in PrimeSenseModel::estimateMapDepth and

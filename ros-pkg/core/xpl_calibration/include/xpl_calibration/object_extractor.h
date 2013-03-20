@@ -17,7 +17,7 @@ public:
     declareParam<int>("MinClusterPoints", 1000);
     declareParam<double>("ClusterTolerance", 0.1); // meters
     
-    declareInput<rgbd::Sequence::ConstPtr>("Sequence");
+    declareInput<Stream::ConstPtr>("Sequence");
     declareInput<const std::vector<cv::Mat1b>*>("ForegroundImages");
     declareInput<const std::vector< std::vector<int> >*>("ForegroundIndices");
     

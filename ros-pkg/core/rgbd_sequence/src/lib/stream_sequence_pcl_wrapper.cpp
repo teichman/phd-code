@@ -12,7 +12,7 @@ namespace rgbd
   {
   }
   
-  void StreamSequencePCLWrapper::load(const std::string& dir)
+  void StreamSequencePCLWrapper::loadImpl(const std::string& dir)
   {
     grabber_.reset (new pcl::ImageGrabber<pcl::PointXYZRGB> (dir, 0, false, true) ); // PCLZF mode
     grabber_->start ();
@@ -31,8 +31,9 @@ namespace rgbd
       timestamps_[i] = static_cast<double> (timestamp_microsec) * 1E-6;
     }
   }
+  
 
-  void StreamSequencePCLWrapper::readFrame(size_t idx, Frame* frame) const
+  void StreamSequencePCLWrapper::readFrameImpl(size_t idx, Frame* frame) const
   {
     ROS_ASSERT (idx < grabber_->size ());
     rgbd::Cloud::ConstPtr cloud = grabber_->at (idx);
@@ -56,11 +57,6 @@ namespace rgbd
     }
   }
 
-  void StreamSequencePCLWrapper::readFrame(double timestamp, double* dt, Frame* frame) const
-  {
-    size_t idx = seek(timestamp, dt);
-    readFrame(idx, frame);    
-  }
 
   size_t StreamSequencePCLWrapper::size() const
   {

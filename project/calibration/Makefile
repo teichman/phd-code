@@ -27,12 +27,14 @@ code:
 	rosmake xpl_calibration
 	rosmake cloud_calibration
 
-CONFIGURATIONS := $(shell ls $(DATA_DIR) | grep configuration)
+#CONFIGURATIONS := $(shell ls $(DATA_DIR) | grep configuration)
+CONFIGURATIONS := $(shell echo $(DATA_DIR)/*/*checker* | sed -e "s/ /\n/g" | xargs -I {} dirname {} | xargs -I {} basename {})
 
-CALIBRATE_DYNAMIC := DEBUG=1 rosrun xpl_calibration calibrate_sequences --dynamic
+CALIBRATE_DYNAMIC := rosrun xpl_calibration calibrate_sequences --dynamic
 CALIBRATE_ORB := rosrun xpl_calibration calibrate_sequences --orb
 VISUALIZE := rosrun xpl_calibration calibration_viewer_vis
 EVALUATE := rosrun xpl_calibration evaluate
+UNDISTORT := UNDISTORT=1
 
 ############################################################
 # -- Experiments
@@ -54,59 +56,63 @@ all_ground_truth: $(addprefix ground_truth/, $(addsuffix /transform.eig.txt, $(C
 all_ground_truth_user: $(addprefix ground_truth_user/, $(addsuffix /transform.eig.txt, $(CONFIGURATIONS)))
 
 visualize_dynamic-%: dynamic/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
-	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< dynamic/configuration$*/sync.eig.txt
+	$(UNDISTORT) $(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< dynamic/configuration$*/sync.eig.txt
+
+visualize_dynamic-tiny-%: dynamic-tiny/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
+	$(UNDISTORT) $(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< dynamic-tiny/configuration$*/sync.eig.txt
 
 visualize_ground_truth-%: ground_truth/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
-	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< ground_truth/configuration$*/sync.eig.txt
+	$(UNDISTORT) $(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< ground_truth/configuration$*/sync.eig.txt
 
 visualize_ground_truth_user-%: ground_truth_user/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
-	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< ground_truth_user/configuration$*/sync.eig.txt
+	$(UNDISTORT) $(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< ground_truth_user/configuration$*/sync.eig.txt
 
 visualize_keypoint-%: keypoint/configuration%/transform.eig.txt $(DATA_DIR)/configuration% 
-	$(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< keypoint/configuration$*/sync.eig.txt
+	$(UNDISTORT) $(VISUALIZE) $(DATA_DIR)/configuration$*/unstructured/* $< keypoint/configuration$*/sync.eig.txt
 
 ground_truth_sync-%: $(DATA_DIR)/configuration%
-	rosrun xpl_calibration offset_maker $(DATA_DIR)/configuration$*/unstructured/* ground_truth/configuration$*/sync.eig.txt ground_truth/configuration$*/sync.eig.txt
+	$(UNDISTORT) rosrun xpl_calibration offset_maker $(DATA_DIR)/configuration$*/unstructured/* ground_truth/configuration$*/sync.eig.txt `ls ground_truth/configuration$*/sync.eig.txt`
 
 dynamic/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) && ON=10 OFF=90 $(CALIBRATE_DYNAMIC) $</unstructured/* | tee transform.eig.txt-log.txt
+	cd $(@D) && $(UNDISTORT) ON=5 OFF=45 MAX_FRAMES=50 $(CALIBRATE_DYNAMIC) $</unstructured/* | tee transform.eig.txt-log.txt
 
 dynamic-tiny/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) && ON=20 OFF=900 $(CALIBRATE_DYNAMIC) $</unstructured/* | tee transform.eig.txt-log.txt
+	cd $(@D) && $(UNDISTORT) ON=20 OFF=900 $(CALIBRATE_DYNAMIC) $</unstructured/* | tee transform.eig.txt-log.txt
 
 MAX_DT := 0.015
 ground_truth/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	rosrun cloud_calibration checker_calibrate $(DATA_DIR)/$*/checkerboard/* $@ $(MAX_DT) > $@-log.txt
+	$(UNDISTORT) rosrun cloud_calibration checker_calibrate $(DATA_DIR)/$*/checkerboard/* $@ $(MAX_DT) | tee $@-log.txt
 
 ground_truth_user/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	rosrun cloud_calibration user_calibrate $(DATA_DIR)/$*/checkerboard/* $@ $(MAX_DT) > $@-log.txt
-	rosrun xpl_calibration offset_maker $(DATA_DIR)/$*/unstructured/* $(@D)/sync.eig.txt > $(@D)/sync.eig.txt-log.txt
+	$(UNDISTORT) rosrun cloud_calibration user_calibrate $(DATA_DIR)/$*/checkerboard/* $@ $(MAX_DT) | tee $@-log.txt
+	$(UNDISTORT) rosrun xpl_calibration offset_maker $(DATA_DIR)/$*/unstructured/* $(@D)/sync.eig.txt | tee $(@D)/sync.eig.txt-log.txt
 
 ground_truth_user-%: $(DATA_DIR)/configuration%
 	mkdir -p $(MAKE_ROOT)/ground_truth_user/configuration$*
-	rosrun cloud_calibration user_calibrate $(DATA_DIR)/configuration$*/checkerboard/* ground_truth_user/configuration$*/transform.eig.txt $(MAX_DT)
+	$(UNDISTORT) rosrun cloud_calibration user_calibrate $(DATA_DIR)/configuration$*/checkerboard/* ground_truth_user/configuration$*/transform.eig.txt $(MAX_DT)
 
 
 keypoint/%/transform.eig.txt: $(DATA_DIR)/% $$@-experiment_metadata.txt
 	mkdir -p $(@D)
-	cd $(@D) &&	$(CALIBRATE_ORB) $(DATA_DIR)/$*/unstructured/* > transform.eig.txt-log.txt
+	cd $(@D) &&	$(UNDISTORT) $(CALIBRATE_ORB) $(DATA_DIR)/$*/unstructured/* > transform.eig.txt-log.txt
 
 evaluations/%.txt: ground_truth/%/transform.eig.txt dynamic/%/transform.eig.txt
 	mkdir -p $(@D)
-	$(EVALUATE) $^ ground_truth/$*/sync.eig.txt dynamic/$*/sync.eig.txt
-	$(EVALUATE) $^ ground_truth/$*/sync.eig.txt dynamic/$*/sync.eig.txt > $@
+	$(UNDISTORT) $(EVALUATE) $^ ground_truth/$*/sync.eig.txt dynamic/$*/sync.eig.txt
+	$(UNDISTORT) $(EVALUATE) $^ ground_truth/$*/sync.eig.txt dynamic/$*/sync.eig.txt > $@
 
 
 ############################################################
 # -- Plots
 ############################################################
 
-bargraph.pdf: $(addprefix evaluations/, $(addsuffix .txt, $(CONFIGURATIONS)))
-	python $(MAKE_ROOT)/plot_bargraph.py
+img/bargraph.pdf: $(addprefix evaluations/, $(addsuffix .txt, $(CONFIGURATIONS)))
+	mkdir -p img && cd img && python $(MAKE_ROOT)/plot_bargraph.py
+	
 
 
 ############################################################

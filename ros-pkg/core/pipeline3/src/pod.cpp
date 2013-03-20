@@ -1,7 +1,10 @@
 #include <pipeline/pod.h>
+#define BOOST_FILESYSTEM_VERSION 2
+#include <boost/filesystem.hpp>
 
 using namespace std;
 using boost::any;
+namespace bfs = boost::filesystem;
 
 namespace pipeline
 {
@@ -138,7 +141,10 @@ namespace pipeline
   string Pod::getDebugPath() const
   {
     ostringstream oss;
-    oss << ".pipeline-debug/" << getRunName(4);
+    std::string dir = ".pipeline-debug";
+    if (!bfs::exists (dir))
+      bfs::create_directory (dir);
+    oss << dir << "/" << getRunName(4);
     return oss.str();
   }
   

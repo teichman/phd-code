@@ -1,0 +1,317 @@
+
+
+%2345678901234567890123456789012345678901234567890123456789012345678901234567890
+%        1         2         3         4         5         6         7         8
+
+\documentclass[letterpaper, 10 pt, conference]{ieeeconf}  % Comment this line out
+                                                          % if you need a4paper
+%\documentclass[a4paper, 10pt, conference]{ieeeconf}      % Use this line for a4
+                                                          % paper
+\usepackage[pdftex]{graphicx}
+
+\IEEEoverridecommandlockouts                              % This command is only
+                                                          % needed if you want to
+                                                          % use the \thanks command
+\overrideIEEEmargins
+% See the \addtolength command later in the file to balance the column lengths
+% on the last page of the document
+
+
+\usepackage{hyperref}
+% The following packages can be found on http:\\www.ctan.org
+\usepackage{mathptmx} % assumes new font selection scheme installed
+\usepackage{times} % assumes new font selection scheme installed
+\usepackage{amsmath} % assumes amsmath package installed
+\usepackage{amssymb}  % assumes amsmath package installed
+\usepackage{multirow}
+\usepackage[ruled,vlined,oldcommands]{algorithm2e}
+\usepackage{algorithmic}
+
+\title{\LARGE \bf
+Unsupervised Calibration of Multiple Depth Sensors (TODO come up with real title)}
+%TODO@SDM rename
+
+\author{Stephen Miller, Alex Teichman, and Sebastian Thrun
+\thanks{Stephen Miller, Alex Teichman, and Sebastian Thrun are with the Department of Computer Science at Stanford University. \newline E-mail: \{stephen, teichman, thrun\}@cs.stanford.edu } }
+
+
+
+\include{latex_macros}
+\newcommand{\img}{img}
+\newcommand{\simg}{static_img}
+\newcommand{\tables}{img}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\pagestyle{empty}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{abstract}
+aoeu
+TODO
+%TODO@SDM Write
+\end{abstract}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{INTRODUCTION}
+
+%TODO@SDM Some fluff about the growth of RGB-D
+With the recent introduction of inexpensive RGB-D sensors like the Microsoft Kinect \cite{kinect} or Asus Xtion Pro \cite{xtion}, virtually anyone 
+can now collect colored 3D pointclouds for the cost of a point-and-shoot camera.
+
+The impact of RGB-D data is undeniable. Rather than discerning information from a rectangular grid of pixels, algorithms 
+are able to reason in the intuitive world of Euclidian space---shape and relative distance can be precisely known. 
+This has impacted nearly every field of perception, be it reconstruction %TODO CITE, 
+, segmentation and tracking %TODO CITE
+, or object detection. %TODO CITE
+And with the availability of datasets such as \cite{rgbd-dataset} and \cite{nist-dataset}, algorithms continue to 
+be developed to exploit this new modality.
+
+%TODO@SDM say something about the problem of 2.5 D, how this is still not intuitive
+
+One can imagine instead a room with multiple RGB-D cameras, each with a novel view of the scene. With good 
+extrinsic calibration---knowledge of the translation, rotation, and time offset of each sensor with respect to a world frame---
+3D models of moving objects could be constructed on the fly, allowing algorithms to analyze dynamic 3D scenes. Such extrinsics 
+are often difficult to get, however, generally requiring ground-truth correspondences by means of a precise calibration pattern 
+\cite{checkerboard} or IR light source \cite{IRlight}. If any camera drifts or is bumped, as is the case in all but the most precise 
+scenarios, the entire routine must be redone. Any researcher who has recalibrated a stereo rig can attest to this.
+
+In this paper, we aim to make the extrinsic calibration task as painless and off-the-shelf as the sensors themselves, 
+requiring no intentional human effort. Rather than relying on structured calibration patterns, 
+we will use the dynamic scene itself to calibrate. As objects move within the scene, their positions at each time frame 
+provide candidate correspondences from which crude extrinsics can be inferred. 
+This initial hypothesis is then refined by densely aligning the frames of the sequence. 
+We make no assumptions about the objects in the scene or the way they move, nor do we assume anything 
+about the relative poses of the cameras, beyond the basic requirement that \emph{something} in the scene must be visible to every pair of cameras.
+
+%TODO say how rest of the paper is organized
+
+\begin{figure*}
+  \centering
+  %\includegraphics[width=\linewidth]{static_img/example_alignment.pdf}
+  \caption{An example calibration task. \textbf{Left}: the image and associated point cloud for both sensors. \textbf{Right}: The desired combined cloud.}
+  \label{fig:example_alignment}
+\end{figure*}
+
+\section{RELATED WORK}
+
+\subsection{2D Extrinsic Calibration}
+% Supervised techniques, like the checkerboard or ORB-based approaches
+The problem of registering two sensors together has been extremely well studied in Computer Vision. 
+By far the most common technique is the approach of CITE, which use a calibration object to get ground 
+truth correpondences between a stereo pair of cameras. Although this work used a checkerboard, others use 
+a BLANK CITE or BLANK CITE. 
+
+While no single paper appears to have proposed this, conventional wisdom suggests an 
+intuitive way to extend these methods to RGB-D sensors. For each pixel correspondence given by the 2D method, 
+associate the corresponding 3D points given by the registered depth maps and sensor intrinsics. Then, rather than 
+solving for a Homography matrix, solve directly for the pairwise transform which minimizes the point-to-point 
+distance between all correspondences in a Least Squares fashion. %CITE something?
+
+\subsection{3D Extrinsic Calibration}
+
+Extrinsic calibration techniques have also been designed explicitly for RGB-D sensors. CITE use a 
+point light source to track correspondences in the IR image. CITE (andrej video) uses a glass checkerboard 
+which can be seen directly in the depth image -- while this was used to learn intrinsics, the same target 
+could certainly be used for extrinsic registration without the need for registered RGB data. ORB?
+
+Unlike the above techniques, we do not make use of any calibration target -- or, indeed, any structured routine 
+on the part of the user. Once our correspondences are determined, however, our approach is fairly similar; with 
+the caveat that we use the entire dense scene to refine our extrinsics, rather than only sparse correspondences.
+
+TODO briefly touch upon the keypoint based approaches which must exist. Say why this can be unstable in an 
+untextured environment, and why it relies on an overlap in fields of view which may not exist.
+
+In recent years, a body of work has emerged which attempts to perform extrinsic calibration in an unsupervised 
+fashion, via expected statistics of the data. CITE (Jesse) proposed a method for calibrating 2D and 3D LIDAR sensors mounted on a moving platform, 
+using the observation that, on a small scale, local regions tend to be planar. CITE (Maddern Newman) propose 
+a similar technique, replacing the planarity assumption with Renyi's Quadratic Entropy to handle less planar environments. 
+While the task of aligning a sensor to a vehicle reference frame is distinct, the spirit of these approaches is quite 
+similar to our own. We note, however, that both approaches require an initial estimate of the sensor pose, which is 
+reasonable for a specialized vehicle but less convenient for a novice user in a home. We also 
+note that while similar statistics could be used in the RGB-D setting, depth discretization error is much more 
+extreme in the Primesense-style sensors we wish to calibrate than it is in LIDAR such as the Velodyne, and it is doubtful that a point-to-plane or entropy term alone would suffice in such noisy data.
+
+Perhaps most similar to ours in spirit is the work of (CITE 2D laser aligment), which track the motion of objects in a 
+scene to align the 2D poses of upright laser range finders on a common ground plane. This used a fairly sophisticated motion model so that it could directly 
+align the seen trajectories; while we too exploit motion, we are largely agnostic to the way in which things move, and only require that some 
+foreground object be visible across multiple frames. It is unclear whether the trajectory-based approach would 
+be robust to false foreground detections, or able to scale to the 6DOF problem we are considering.
+
+\subsection{Structure from Motion, Bundle Adjustment}
+
+The goal of sensor alignment is not unique to extrinsic calibration, and there is a large body of work in the 
+Structure from Motion community which aims to reconstruct the 3D structure of static scenes via multiple camera 
+views. In this task, the sensor pose is often estimated as an inner loop of an alternating optimization algorithm. 
+Recent work by (POLLEFEYS) and (SNAVELEY, seitz?) has shown great promise, able to leverage poor-quality cameras with 
+unknown calibration to reconstruct large environments. Recent advances like Autodek's OneTwo3D (CITE) have shown 
+similar performance on a small scale, given unordered images from a single cellphone camera. However, we note 
+that these techniques often work by leveraging an abundance of data and averaging out sensor poses: to our knowledge, 
+none can perform reconstruction using only two viewpoints. As these also use discrete observations, they are also 
+naturally unable to model dynamic environments.
+
+\subsection{Registration}
+Finally, we note that our task, in the end, is the registration of point clouds. As such, there is a wealth of 
+literature on the subject, be it the keypoint-based RGBD-SLAM (CITE) or the dense alignment of KinectFusion (CITE) 
+and Kintinuous (CITE). (Probably don't need)
+
+% TODO see if synchronization has been done
+
+% Unsupervised techniques: Jesse's stuff, Lost in Translation (and Rotation), ? Need to do a search tonight
+
+% We differentiate ourselves from these by A) being unsupervised, B) exploiting motion, C) being able to handle a full 6-DOF transform with no guess, and D) doing time synchronization
+
+
+
+\section{METHOD}
+
+We assume that we are given two sensors, $S_0$ and $S_1$ with corresponding sequences of frames $f_0^{(t)}$ and $f_1^{(t)}$. The goal of this work is to find a transformation $\mathcal{T}$ and time offset $\delta_t$ which takes points in $f_1^{(t+\delta_t)}$ into $f_0^{(t)}$'s reference frame.
+
+First need to motivate the idea: the data alone is enough to align, without a target -- we have a nearly infinite number of frames which all constrain a single transform. But it's simply too massive 
+and redundant to leverage all at once. Instead we'll first extract foreground objects in the scene at every timestep. 
+We observe that some foreground objects will be visible in both frames, and thus we initialize with the transform which aligns the most objects to each other. We'll then refine densely.
+
+\subsection{Initial synchronization}
+First need to explain how we go from unsynchronized frames into aligned pairs -- frames within 0.015s of each other, indexed from $t = 0{\dots}T$
+
+\subsection{Object extraction}
+Then explain how we extract foreground objects. Background found from a hue histogram -- this, in fact, is the 
+only time color is really used. Once background pixels are found, they're clustered and their centroids are 
+computed.
+
+\subsection{Initial alignment}
+Here we discuss the idea of centroid RANSAC: we have $NK^2$ possible correspondences, and we'll randomly sample
+them til we get the transform which yields the most inliers. Should make it very clear how this works across 
+time, such that even one moving object is enough to give us a good initialization. Show the results of 
+initialization (DEBUG=true).
+
+\subsection{Pose refinement}
+Discuss the grid search objective which refines. Need to motivate why we align just foreground objects to the scene. 
+Also need to mention that ICP is an alternative, though we found the grid search works better in practice and lets 
+us handle free space violation. Show scene where free space is crucial and ICP would clearly mush everything 
+together.
+
+\subsection{Synchronization refinement}
+Finally, discuss that we'll search for an offset which maximizes the grid search objective, keeping $\mathcal{T}$ 
+constant and optimizing only $\delta_t$. 
+% First motivate the approach: we have enough data to densely align the two clouds, shouldn't need a calibration target
+% However, this is hugely expensive, and difficult to search in. We can get a good initial guess by watching only moving objects: an object which moves in the foreground of one camera will likely be in the foreground of another. If in a single frame each sensor sees K foreground objects, this gives K! possible correspondences. Across N frames, this gives ~NK^2 possible corrspondences. Many of these may be outliers: we really don't care. We'll do RANSAC across time and space to get a global transform which aligns as many centroids as possible. 
+
+
+% Step 1: Extract foreground objects
+% Step 2: Centroid RANSAC
+% Step 3: Object-to-scene refinement
+% Step 4: Time synchronization
+
+%
+% we first assume that NTP or similar methods can provide synchronization to within about 100ms.  T``he core idea of the approach is to use the rough locations of moving objects to provide a reasonable starting point for ICP over transforms and grid search over synchronization offsets.
+%
+%However, naively running ICP on entire frames can result in very poor alignments, an example of which can be seen in Figure \todo{x}.  This is because ICP rewards transforms in which many points are nearby, and floors often have more observed points on them than the people or robots walking on them.  Running ICP on just the foreground objects in each frame produces much better results.
+%
+
+\begin{algorithm}
+  \caption{Algorithm sketch}
+  \label{alg:sketch}
+  \SetLine
+  \KwData{Two roughly synchronized RGBD videos}
+  \KwResult{Transform and synchronization offset}
+  \phantom{\;}
+  Background subtraction to find foreground points\;
+  Connected components to find large objects\;
+  $T$ = centroidRANSAC()\;
+  Apply $T$ to floating scenes\;
+  \While{$||T||_F > 0.001$}{
+    $T$ = updateTransformICP()\;
+    Apply $T$ to floating scenes\;
+    $s$ = updateSync()\;
+    Apply $s$ to floating scenes\;
+  }
+\end{algorithm}
+
+\begin{figure*}
+  \centering
+  \includegraphics[width=\linewidth]{\simg/intuition/intuition.pdf}
+  \caption{(A) Foreground pixels (shown in red) are extracted from the background. (B) Connected components in the foreground image is used to find candidate objects. (C) RANSAC on object centroids yields a rough initialization. (D) This initialization is refined with an alternating grid search on foreground obejcts across all frames simultaneously. }
+  \label{fig:}
+\end{figure*}
+
+
+updateSync was done by grid search over
+\newcommand{\dmax}{d_{\mbox{\tiny{max}}}}
+\begin{align*}
+  \frac{1}{M} \sum_{i=1}^M \frac{1}{N_i} \sum_{j=1}^{N_i}    (\dmax, ||p_j - p'||_2)
+\end{align*}
+where $i$ ranges over matched foreground scenes and $j$ over points in the floating sensor.  $p'$ is the nearest neighbor.
+
+
+referred to as \texttt{centroidRANSAC()} in Algorithm~\ref{alg:sketch}, provides a rough estimate of the transform which serves as a reasonable starting point for ICP.
+
+
+\begin{algorithm}
+  \caption{Centroid RANSAC}
+  \label{alg:cal}
+  \SetLine
+  \KwData{Two roughly synchronized sets of foreground objects from RGBD videos}
+  \KwResult{Rough guess of transform}
+  \phantom{\;}
+  inlier threshold 0.5m.  RANSAC, 1000 samples of correspondences.
+\end{algorithm}
+
+
+
+\section{EXPERIMENTS}
+
+Talk a little bit about the experimental setup here -- particularly implementation details. How we run an undistortion technique 
+prior to doing this, with a mention that that work is currently under review. Note that that approach did not make any use of a 
+calibration pattern either. How we subsample frames, 
+how we do object-to-frame alignment rather than frame-to-frame or object to object, and why that fails. Show an example of naive ICP failing.
+
+Finally, do a very brief runtime analysis.
+
+\subsection{Quantitative Evaluation Against a Checkerboard}
+
+Talk about getting ground truth from a checkerboard. Explain why even this isn't truly ``ground truth'', and try to get error bars 
+for the checkerboard steps. Get a visual of checkerboard correspondences on two point clouds.
+
+Show the table, plus a few pictures of results. Briefly comment on why the error, though it seems a bit high, is actually pretty ambiguous -- certain things, like trading pitch for Y, are pretty hard to define, and it's unclear that the checkerboard is actually in the 
+right here. 
+
+\subsection{Difficult Scenes}
+
+Show, here, a few scenes in which there is no way a checkerboard could possibly do this task, because the FOV overlap is small or 
+nonexistant. Talk a bit about why we are able to handle this case, even though no feature-based method could hope to.
+
+\subsection{Multiple Sensors}
+
+If there's time, try to get a full 360 going with 4 sensors. Explain how relating all to 0 works okay, but GraphSLAM does better. Show 
+results for both.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=\linewidth]{\img/bargraph.pdf}
+  \caption{}
+  \label{fig:bargraph}
+\end{figure}
+
+\begin{figure}
+  \centering
+  \input{\img/results_table.tex}
+  \label{fig:results}
+\end{figure}
+
+Angular error results are reported as the angle in the angle-axis representation of the rotation matrix 
+
+\section{CONCLUSIONS}
+
+Short and sweet conclusion. We took a common task, and found a way to solve it by leveraging an abundance of unstructured 
+data. Very briefly recap why it is now feasible to mount multiple sensors in a home, press a button, and have full 360 3D.
+
+\bibliographystyle{IEEEtran}
+\bibliography{icra2013}
+
+\end{document}
+

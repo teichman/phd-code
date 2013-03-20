@@ -1,5 +1,5 @@
 #include <boost/program_options.hpp>
-#include <xpl_calibration/discrete_depth_distortion_model.h>
+#include <rgbd_sequence/discrete_depth_distortion_model.h>
 
 using namespace std;
 namespace bpo = boost::program_options;

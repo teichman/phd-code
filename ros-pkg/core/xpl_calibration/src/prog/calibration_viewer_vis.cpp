@@ -8,6 +8,7 @@
 #include <opencv2/calib3d/calib3d.hpp>
 
 #define MAX_Z (getenv("MAX_Z") ? atof(getenv("MAX_Z")) : 3.5)
+#define UNDISTORT (getenv("UNDISTORT") ? atoi(getenv("UNDISTORT")) : 0)
 
 enum Mode_t{
   ALL, REF, TARGET, GROUND
@@ -77,6 +78,8 @@ int main(int argc, char** argv)
   StreamSequenceBase::Ptr sseq0 = StreamSequenceBase::initializeFromDirectory (argv[1]);
   StreamSequenceBase::Ptr sseq1 = StreamSequenceBase::initializeFromDirectory (argv[2]);
   sseq1->applyTimeOffset(sync(0));
+  sseq0->setUndistort (UNDISTORT);
+  sseq1->setUndistort (UNDISTORT);
 
   pcl::visualization::CloudViewer vis("Overlay");
   double thresh = 0.017;

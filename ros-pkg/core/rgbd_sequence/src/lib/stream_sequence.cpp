@@ -34,7 +34,7 @@ namespace rgbd
     bfs::create_directory(root_path_);
   }
 
-  void StreamSequence::load(const std::string& dir)
+  void StreamSequence::loadImpl(const std::string& dir)
   {
     root_path_ = dir;
     model_.load(root_path_ + "/primesense_model");
@@ -109,7 +109,7 @@ namespace rgbd
     timestamps_.push_back(frame.timestamp_);
   }
 
-  void StreamSequence::readFrame(size_t idx, Frame* frame) const
+  void StreamSequence::readFrameImpl(size_t idx, Frame* frame) const
   {
     ROS_ASSERT(idx < img_names_.size());
     frame->img_ = cv::imread(root_path_ + "/" + img_names_[idx], 1);
@@ -125,11 +125,6 @@ namespace rgbd
 
   }
 
-  void StreamSequence::readFrame(double timestamp, double* dt, Frame* frame) const
-  {
-    size_t idx = seek(timestamp, dt);
-    readFrame(idx, frame);    
-  }
 
 
   size_t StreamSequence::size() const

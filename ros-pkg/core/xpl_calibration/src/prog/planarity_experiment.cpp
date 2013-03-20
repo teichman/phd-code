@@ -3,7 +3,7 @@
 #include <pcl/sample_consensus/ransac.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
 #include <rgbd_sequence/stream_sequence_base.h>
-#include <xpl_calibration/discrete_depth_distortion_model.h>
+#include <rgbd_sequence/discrete_depth_distortion_model.h>
 
 using namespace std;
 using namespace Eigen;

@@ -15,6 +15,19 @@ rgbd::StreamSequenceBase::Ptr rgbd::StreamSequenceBase::initializeFromDirectory 
   return out;
 }
 
+void rgbd::StreamSequenceBase::load (const std::string &root_path)
+{
+  
+   loadImpl (root_path);
+   // Populate distortion model
+   if (boost::filesystem::exists (root_path + "/distortion_model"))
+   {
+     dddm_.reset (new DiscreteDepthDistortionModel);
+     dddm_->load (root_path + "/distortion_model");
+   }
+   root_path_ = root_path;
+}
+
 size_t rgbd::StreamSequenceBase::seek(double timestamp, double* dt) const
 {
   ROS_ASSERT(!timestamps_.empty());
@@ -69,4 +82,68 @@ cv::Mat3b rgbd::StreamSequenceBase::getImage(double timestamp, double* dt) const
   Frame frame;
   readFrame(timestamp, dt, &frame);
   return frame.img_;
+}
+
+
+rgbd::Cloud::ConstPtr rgbd::StreamSequenceBase::operator[] (size_t idx) const
+{
+  // With no cache, we just return the cloud
+  if (cache_size_ == 0)
+    return getCloud (idx);
+  // Otherwise we update cache -- not threadsafe
+  if (!pcds_cache_[idx])
+  {
+#pragma omp critical
+    {
+    if (!pcds_cache_[idx])
+    {
+      rgbd::Cloud::ConstPtr cloud = getCloud (idx);
+      addCloudToCache (idx, cloud);
+    }
+    }
+  }
+  return pcds_cache_[idx];
+}
+
+rgbd::Cloud::ConstPtr rgbd::StreamSequenceBase::at (size_t idx) const
+{
+  ROS_ASSERT (idx < size ());
+  return operator[] (idx);
+}
+
+void rgbd::StreamSequenceBase::addCloudToCache (
+    size_t idx, 
+    rgbd::Cloud::ConstPtr cloud) const
+{
+  if (frames_cache_.size () >= cache_size_)
+  {
+    size_t frame_to_remove = frames_cache_.back ();
+    rgbd::Cloud::ConstPtr &cloud_to_remove = pcds_cache_[frame_to_remove];
+    cloud_to_remove.reset ();
+    frames_cache_.pop_back ();
+  }
+  // Add to the cache
+  frames_cache_.push_front (idx);
+  pcds_cache_[idx] = cloud;
+}
+  
+size_t rgbd::StreamSequenceBase::readFrame(double timestamp, double* dt, Frame* frame) const
+{
+  size_t idx = seek(timestamp, dt);
+  readFrame(idx, frame);    
+  return idx;
+}
+
+void rgbd::StreamSequenceBase::readFrame(size_t idx, Frame* frame) const
+{
+  readFrameImpl (idx, frame);
+  if (undistort_)  
+  {
+    if (!dddm_)
+      PCL_WARN ("Attempted to undistort a frame, but no distortion model was found!\n");
+    else
+    {
+      dddm_->undistort (frame); 
+    }
+  }
 }

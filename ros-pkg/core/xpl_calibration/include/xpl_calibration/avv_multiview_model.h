@@ -1,5 +1,5 @@
 #include <xpl_calibration/asus_vs_velo_visualizer.h>
-#include <xpl_calibration/discrete_depth_distortion_model.h>
+#include <rgbd_sequence/discrete_depth_distortion_model.h>
 
 class AVVSequence
 {

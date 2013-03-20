@@ -7,14 +7,14 @@ namespace multi_sequence
   MultiSequence::MultiSequence(double dt): 
     aligned_(false), dt_(dt) { }
 
-  MultiSequence::MultiSequence(double dt, const std::vector<rgbd::StreamSequence::Ptr> &seqs):
+  MultiSequence::MultiSequence(double dt, const std::vector<rgbd::StreamSequenceBase::Ptr> &seqs):
     aligned_(false),
     dt_(dt),
     seqs_(seqs)
   {
     alignSequences();
   }
-  void MultiSequence::addSequence(const rgbd::StreamSequence::Ptr &seq )
+  void MultiSequence::addSequence(const rgbd::StreamSequenceBase::Ptr &seq )
   {
     seqs_.push_back(seq);
     alignSequences();
@@ -44,57 +44,6 @@ namespace multi_sequence
     {
       imgs[i] = seqs_[i]->getImage(alignments_[frame][i]);
     }
-  }
-
-  // void MultiSequence::save(const std::string &dir) const{
-  //   //ROS_ASSERT(!bfs::exists(dir));
-  //   if(bfs::exists(dir))
-  //     bfs::remove_all(dir);
-  //   bfs::create_directory(dir);
-  //   //Save my alignments
-  //   cv::FileStorage fs(dir+"/alignments.yaml", cv::FileStorage::WRITE);
-  //   fs << "dt" << dt_;
-  //   fs << "aligned" << aligned_;
-  //   fs << "num_sequences" << (int)seqs_.size();
-  //   fs << "alignments" << "[";
-  //   for(size_t i = 0; i < alignments_.size(); i++){
-  //     fs << "[";
-  //       for(size_t j = 0; j < alignments_[i].size(); j++){
-  //         fs << alignments_[i][j];
-  //       }
-  //     fs << "]";
-  //   }
-  //   fs << "]";
-  //   for(size_t i = 0; i < seqs_.size(); i++){
-  //     std::ostringstream oss;
-  //     oss << "seq" << std::setw(4) << std::setfill('0') << i;
-  //     seqs_[i]->save(dir + "/" + oss.str());
-  //   }
-  //   fs.release();
-  // }
-
-  void MultiSequence::load(const std::string &dir) {
-    cv::FileStorage fs(dir+"/alignments.yaml", cv::FileStorage::READ);
-    fs["dt"] >> dt_;
-    fs["aligned"] >> aligned_;
-    int num_sequences;
-    fs["num_sequences"] >> num_sequences;
-    cv::FileNode alignments = fs["alignments"];
-    cv::FileNodeIterator it = alignments.begin(), it_end = alignments.end();
-    for( ; it != it_end; ++it ){
-      std::vector<int> alignment_i;
-      (*it) >> alignment_i;
-      alignments_.push_back(alignment_i);
-    }
-    seqs_.clear();
-    seqs_.resize(num_sequences);
-    for( size_t i = 0; i < num_sequences; i++ ){
-      seqs_[i] = rgbd::StreamSequence::Ptr( new rgbd::StreamSequence );
-      std::ostringstream oss;
-      oss << "seq" << std::setw(4) << std::setfill('0') << i;
-      seqs_[i]->load(dir + "/" + oss.str());
-    }
-    fs.release();
   }
 
   void MultiSequence::alignSequences()

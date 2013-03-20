@@ -4,6 +4,9 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <rgbd_sequence/primesense_model.h>
 #include <bag_of_tricks/lockable.h>
+#include <ros/assert.h>
+#include <ros/console.h>
+#include <boost/shared_ptr.hpp>
 
 class Frustum : public Serializable, public SharedLockable
 {
@@ -34,6 +37,8 @@ protected:
 class DiscreteDepthDistortionModel : public Serializable
 {
 public:
+  typedef boost::shared_ptr<DiscreteDepthDistortionModel> Ptr;
+  typedef boost::shared_ptr<const DiscreteDepthDistortionModel> ConstPtr;
   DiscreteDepthDistortionModel() {}
   ~DiscreteDepthDistortionModel();
   DiscreteDepthDistortionModel(const rgbd::PrimeSenseModel& psm, int bin_width = 8, int bin_height = 6, double bin_depth = 2.0, int smoothing = 1);

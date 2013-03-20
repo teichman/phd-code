@@ -7,7 +7,7 @@
 #include <rgbd_sequence/stream_sequence_base.h>
 #include <xpl_calibration/trajectory.h>
 #include <xpl_calibration/frame_aligner.h>
-#include <xpl_calibration/discrete_depth_distortion_model.h>
+#include <rgbd_sequence/discrete_depth_distortion_model.h>
 #include <vector>
 
 #define MAX_RANGE_MAP 2.0
