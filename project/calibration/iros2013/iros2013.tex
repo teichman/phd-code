@@ -175,12 +175,12 @@ We observe that some foreground objects will be visible in both frames, and thus
 
 \subsection{Notation}
 
-We are given two calibrated sensors, $S_0$ and $S_1$ with corresponding sequences of frames $f_0^{(t)}$ and $f_1^{(t)}$, each with points and timestamps in the local reference frame of the sensor. The goal of this work is to find a transformation $\mathcal{T}$ and time offset $\delta_t$ which takes points in $f_1^{(t+\delta_t)}$ into $f_0^{(t)}$'s reference frame. 
+We are given two calibrated sensors, $S_0$ and $S_1$ with corresponding sequences of frames $f_0^{(t)}$ and $f_1^{(t)}$. 
+The goal of this work is to find a transformation $\mathcal{T}$ and time offset $\delta_t$ which takes points in $f_1^{(t+\delta_t)}$ into $f_0^{(t)}$'s reference frame. 
 
 While our timestamps $t$ are continuous, frames are only given at distinct points in time, as limited by the framerate of the sensor. 
-As there is no guarantee that the two sensors will be synchronized, these timestamps will not align precisely. 
-For notation simplicity, then, we let $f^{(t)}$ denote the frame whose timestamp is \emph{closest} to $t$.
-
+As there is no guarantee that the two sensors will be synchronized, these timestamps will never align precisely. 
+For notational simplicity, we let $f^{(t)}$ denote the frame whose timestamp is \emph{closest} to $t$.
 
 Each frame $f_k^{(t)}$ consists of an RGB image $I_k^{(t)}$ and registered depth map $D_k^{(t)}$. Given camera intrinsics 
 $(f_x,f_y,c_x,c_y)$, a pixel of the depth map can be converted to Euclidean coordinates by $X = (u-c_x)\frac{D(u,v)}{f_x}$ (and likewise for $Y$). 
