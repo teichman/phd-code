@@ -169,11 +169,25 @@ and Kintinuous (CITE). (Probably don't need)
 
 \section{METHOD}
 
-We assume that we are given two sensors, $S_0$ and $S_1$ with corresponding sequences of frames $f_0^{(t)}$ and $f_1^{(t)}$. The goal of this work is to find a transformation $\mathcal{T}$ and time offset $\delta_t$ which takes points in $f_1^{(t+\delta_t)}$ into $f_0^{(t)}$'s reference frame.
-
 First need to motivate the idea: the data alone is enough to align, without a target -- we have a nearly infinite number of frames which all constrain a single transform. But it's simply too massive 
 and redundant to leverage all at once. Instead we'll first extract foreground objects in the scene at every timestep. 
 We observe that some foreground objects will be visible in both frames, and thus we initialize with the transform which aligns the most objects to each other. We'll then refine densely.
+
+\subsection{Notation}
+
+We are given two calibrated sensors, $S_0$ and $S_1$ with corresponding sequences of frames $f_0^{(t)}$ and $f_1^{(t)}$, each with points and timestamps in the local reference frame of the sensor. The goal of this work is to find a transformation $\mathcal{T}$ and time offset $\delta_t$ which takes points in $f_1^{(t+\delta_t)}$ into $f_0^{(t)}$'s reference frame. 
+
+While our timestamps $t$ are continuous, frames are only given at distinct points in time, as limited by the framerate of the sensor. 
+As there is no guarantee that the two sensors will be synchronized, these timestamps will not align precisely. 
+For notation simplicity, then, we let $f^{(t)}$ denote the frame whose timestamp is \emph{closest} to $t$.
+
+
+Each frame $f_k^{(t)}$ consists of an RGB image $I_k^{(t)}$ and registered depth map $D_k^{(t)}$. Given camera intrinsics 
+$(f_x,f_y,c_x,c_y)$, a pixel of the depth map can be converted to Euclidean coordinates by $X = (u-c_x)\frac{D(u,v)}{f_x}$ (and likewise for $Y$). 
+For convenience, we make this conversion implicit by utilizing the notation of \emph{organized point clouds}.
+We say that each pixel $(u,v)$ indexes a point $p = f_k^{(t)}(u,v)$ such that $p_r$, $p_g$, and $p_b$ store its color information, and $p_x$, $p_y$, and $p_z$ store its Euclidean 
+position in the reference frame of the sensor. Here our coordinate system follows standard
+pinhole camera conventions, where the image plane lies in $XY$ and $+Z$ denotes forward distance from the sensor.
 
 \subsection{Initial synchronization}
 First need to explain how we go from unsynchronized frames into aligned pairs -- frames within 0.015s of each other, indexed from $t = 0{\dots}T$
