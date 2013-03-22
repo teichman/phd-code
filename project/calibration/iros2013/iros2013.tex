@@ -59,7 +59,7 @@ TODO
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{INTRODUCTION}
-
+\label{sec:intro}
 %TODO@SDM Some fluff about the growth of RGB-D
 With the recent introduction of inexpensive RGB-D sensors like the Microsoft Kinect \cite{kinect} or Asus Xtion Pro \cite{xtion}, virtually anyone 
 can now collect colored 3D pointclouds for the cost of a point-and-shoot camera.
@@ -166,22 +166,14 @@ and Kintinuous (CITE). (Probably don't need)
 
 % We differentiate ourselves from these by A) being unsupervised, B) exploiting motion, C) being able to handle a full 6-DOF transform with no guess, and D) doing time synchronization
 
-
-
-\section{METHOD}
-
-TODO First need to motivate the idea: the data alone is enough to align, without a target -- we have a nearly infinite number of frames which all constrain a single transform. But it's simply too massive 
-and redundant to leverage all at once. Instead we'll first extract foreground objects in the scene at every timestep. 
-We observe that some foreground objects will be visible in both frames, and thus we initialize with the transform which aligns the most objects to each other. We'll then refine densely.
-
-\subsection{Notation}
+\section{PRELIMINARIES}
 
 We are given two calibrated sensors, $S_0$ and $S_1$ with corresponding sequences of frames $f_0^{(t)}$ and $f_1^{(t)}$. 
 The goal of this work is to find a transformation $\mathcal{T}$ and time offset $\delta_t$ which takes points in $f_1^{(t+\delta_t)}$ into $f_0^{(t)}$'s reference frame. 
 
 While our timestamps $t$ are continuous, frames are only given at distinct points in time, as limited by the framerate of the sensor. 
 As there is no guarantee that the two sensors will be synchronized, these timestamps will never align precisely. 
-For notational simplicity, we let $f^{(t)}$ denote the frame whose timestamp is \emph{closest} to $t$.
+For notational simplicity, we let $f^{(t)}$ denote the frame whose timestamp is \emph{closest} to $t$, if the difference is within the sampling interval of the sensor.
 
 Each frame $f_k^{(t)}$ consists of an RGB image $I_k^{(t)}$ and registered depth map $D_k^{(t)}$. Given camera intrinsics 
 $(f_x,f_y,c_x,c_y)$, a pixel of the depth map can be converted to Euclidean coordinates by $X = (u-c_x)\frac{D(u,v)}{f_x}$ (and likewise for $Y$). 
@@ -189,6 +181,38 @@ For convenience, we make this conversion implicit by utilizing the notation of \
 We say that each pixel $(u,v)$ indexes a 3D point $p = f_k^{(t)}(u,v)$ such that $p_r$, $p_g$, and $p_b$ store its color information, and $p_x$, $p_y$, and $p_z$ store its Euclidean 
 position in the reference frame of the sensor. Here our coordinate system follows standard
 pinhole camera conventions, where the image plane lies in $XY$ and $+Z$ denotes forward distance from the sensor.
+
+\section{METHOD}
+
+As noted in Section~\ref{sec:intro}, this work hinges on the premise that the unstructured scene, alone, contains enough information to align two sensors. 
+In a similar vein to CITE Jesse and CITE Maddern, then, we wish to frame this as an optimization task, by formulating an energy term such that the correct $\mathcal{T}$ 
+and $\delta_t$ are its minimizers.  
+
+However, the search space is large and the problem non-convex, rendering a good initialization essential. In single-frame registration techniques, the solution to this is nearly ubiquitous: predict a rough transform via 
+sparse, descriminative frame-to-frame correspondences, and refine this prediction via a local optimization. A standard approach is to compute SIFT (CITE LOWE) or ORB (CITE ORB) keypoints matches between a 
+pair of images, use RANSAC CITE(?) or a Hough transform CITE(?) to find inliers, and refine this with a point-to-point or point-to-plane ICP (CITE ?).
+
+One reasonable approach would be to use an identical method on \emph{sequences}, with the minor modification that both keypoint- and dense- correspondences will be aggregated across multiple frames, and
+ a single global transform shared between them. However, keypoint-based approaches rely on having the same, textured surface visible from both views, and work best when relative out-of-plane rotation is fairly 
+ small. Even disregarding the requirement for distinctive texture, these constraints on viewing overlap are \emph{precisely the opposite} of what would be desirable 
+ for a multi-sensor setup, where the goal is to cover as much space, from as varied angles, as possible. For an extreme case, 
+ see the example in Figure~\ref{fig:extreme}. These sensors share very few, if any, keypoints between them, and in the regions where they might overlap they would do so from drastically different views.
+ Furthermore, vanilla ICP yields unstable results in the presence of too much missing data, as points are drawn towards each other even if they are perfectly explained by occlusion.
+ In short, this approach is completely infeasible for our task, resulting in nearly-random alignments such as ~\ref{fig:orb}.
+
+Instead, we observe that even if the viewing angles are wildly separate, one cue is fairly stable: the motion of foreground objects. These objects -- or more accurately, their centroids -- provide 
+a sparse set of candidate correspondences. Aggregated across all frames, these correspondences are used to predict an initial transform $\mathcal{T}$ via RANSAC. This prediction is then refined by 
+alternately optimizing $\mathcal{T}$ and $\delta_t$, via a robust objective which takes free space into account. Our overall approach is outlined in Algorithm~\ref{alg:sketch}. 
+
+\begin{figure}
+  \label{fig:extreme}
+  \caption{An extreme case of limited FOV overlap.}
+\end{figure}
+
+\begin{figure}
+  \label{fig:orb}
+  \caption{An example of ORB failing.}
+\end{figure}
 
 \subsection{Object extraction}
 
@@ -202,23 +226,27 @@ Where $b[\cdot]$ maps depth values to histogram bins. A foreground mask is then 
   FG_k^{(t)}(u,v) = H_{k}(u, v, b[D_{k}^{(t)}(u,v)]) < \text{p}_\text{min}
 \end{equation*}
 
-This is eroded and dilated to reduce noise. Objects $O_{k,i}^{(t)}$ are then extracted by finding connected components in the foreground mask.
+This is eroded and dilated to reduce false positives due to sensor noise. Objects $O_{k,i}^{(t)}$ are then extracted by finding connected components in the foreground mask. 
+If an object is too small, it is ignored. Thus for each frame, we have a relatively sparse collection of objects.
 
-\subsection{Initial alignment}
+\subsection{Initial alignment via Centroid RANSAC}
 
-Here we discuss the idea of centroid RANSAC: we have $NK^2$ possible correspondences, and we'll randomly sample
+We now wish to sample 
+
+
+TODO Here we discuss the idea of centroid RANSAC: we have $NK^2$ possible correspondences, and we'll randomly sample
 them til we get the transform which yields the most inliers. Should make it very clear how this works across 
 time, such that even one moving object is enough to give us a good initialization. Show the results of 
 initialization (DEBUG=true).
 
 \subsection{Pose refinement}
-Discuss the grid search objective which refines. Need to motivate why we align just foreground objects to the scene. 
+TODO Discuss the grid search objective which refines. Need to motivate why we align just foreground objects to the scene. 
 Also need to mention that ICP is an alternative, though we found the grid search works better in practice and lets 
 us handle free space violation. Show scene where free space is crucial and ICP would clearly mush everything 
 together.
 
 \subsection{Synchronization refinement}
-Finally, discuss that we'll search for an offset which maximizes the grid search objective, keeping $\mathcal{T}$ 
+TODO Finally, discuss that we'll search for an offset which maximizes the grid search objective, keeping $\mathcal{T}$ 
 constant and optimizing only $\delta_t$. 
 % First motivate the approach: we have enough data to densely align the two clouds, shouldn't need a calibration target
 % However, this is hugely expensive, and difficult to search in. We can get a good initial guess by watching only moving objects: an object which moves in the foreground of one camera will likely be in the foreground of another. If in a single frame each sensor sees K foreground objects, this gives K! possible correspondences. Across N frames, this gives ~NK^2 possible corrspondences. Many of these may be outliers: we really don't care. We'll do RANSAC across time and space to get a global transform which aligns as many centroids as possible. 
@@ -236,21 +264,27 @@ constant and optimizing only $\delta_t$.
 %
 
 \begin{algorithm}
-  \caption{Algorithm sketch}
+  \caption{Calibration Pipeline}
   \label{alg:sketch}
   \SetLine
-  \KwData{Two roughly synchronized RGBD videos}
-  \KwResult{Transform and synchronization offset}
+  \KwData{Two roughly synchronized sequences, $f_0^{(t)}$, $f_1^{(t')}$}
+  \KwResult{Transform $\mathcal{T}$ and time offset $\delta_{t}$}
   \phantom{\;}
-  Background subtraction to find foreground points\;
-  Connected components to find large objects\;
-  $T$ = centroidRANSAC()\;
-  Apply $T$ to floating scenes\;
-  \While{$||T||_F > 0.001$}{
-    $T$ = updateTransformICP()\;
-    Apply $T$ to floating scenes\;
-    $s$ = updateSync()\;
-    Apply $s$ to floating scenes\;
+  \For{$k \in (0,1)$}{
+    $H_k \leftarrow$ buildHistogram($f_{k}^{(0)} \dots f_{k}^{(T)}$)\; 
+    \For{$t \in T_k$}{
+      $FG_k^{(t)} \leftarrow$ backgroundSubtraction($f_{k}^{(t)}, H_k$)\;
+      $O_{k,i}^{(t)} \leftarrow$ connectedComponents($FG_k^{(t)}$)\;
+    }
+  }
+  $\delta_t \leftarrow 0$\;
+  $\mathcal{T} \leftarrow$  centroidRANSAC($O_{0,i}^{(t)},\dots,O_{1,i}^{(t)},\dots$)\;
+  Apply $\mathcal{T}$ to $f_{1}^{(t)}$, $\forall{t}$\;
+  \While{$||T||_F > \epsilon$}{
+    $\mathcal{T} \leftarrow$ spatialGridSearch($f_{0}^{(t)},\dots,f_{1}^{(t)},\dots$)\;
+    Apply $\mathcal{T}$ to $f_{1}^{(t)}$, $\forall{t}$\;
+    $\delta_t \leftarrow$ temporalGridSearch($f_{0}^{(t)},\dots,f_{1}^{(t)},\dots$)\;
+    Apply $\delta_t$ to $f_{1}^{(t)}$, $\forall{t}$\;
   }
 \end{algorithm}
 
@@ -277,10 +311,25 @@ referred to as \texttt{centroidRANSAC()} in Algorithm~\ref{alg:sketch}, provides
   \caption{Centroid RANSAC}
   \label{alg:cal}
   \SetLine
-  \KwData{Two roughly synchronized sets of foreground objects from RGBD videos}
-  \KwResult{Rough guess of transform}
+  \KwData{Two roughly synchronized sets of foreground objects, $O_{0,i}^{(t)}, O_{1,i}^{(t)}$}
+  \KwResult{Rough guess of transform, $\mathcal{T}$}
   \phantom{\;}
-  inlier threshold 0.5m.  RANSAC, 1000 samples of correspondences.
+  \For{it $\le$ Max Iterations}{
+    \For{numCorrespondences $\le$ 3}{
+      $t \leftarrow$ randomTimestamp()\;
+      $O_{0,i}^{(t)} \leftarrow$ randomObject($0,t$)\;
+      $C_{0} \leftarrow$ centroid(centroid($O_{0,i}^{(t)}$))\;
+      $O_{1,i'}^{(t)} \leftarrow$ randomObject($1,t$)\;
+      $C_{1} \leftarrow$ centroid(centroid($O_{1,i'}^{(t)}$))\;
+      addCorrespondence($C_0 \leftrightarrow C_1$)\;
+    }
+    $\mathcal{T}_\textit{guess} \leftarrow $ Estimate transform from correspondences\;
+    numInliers $\leftarrow$ findInliers($\mathcal{T}_\textit{guess}$)\;
+    \If{$numInliers > bestSoFar$}{
+      $\mathcal{T} \leftarrow$ Estimate transform from all inliers\;
+      bestSoFar $\leftarrow$ numInliers\;
+    }
+  }
 \end{algorithm}
 
 
