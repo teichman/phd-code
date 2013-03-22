@@ -26,6 +26,7 @@
 \usepackage{multirow}
 \usepackage[ruled,vlined,oldcommands]{algorithm2e}
 \usepackage{algorithmic}
+\usepackage{bbm}
 
 \title{\LARGE \bf
 Unsupervised Calibration of Multiple Depth Sensors (TODO come up with real title)}
@@ -169,7 +170,7 @@ and Kintinuous (CITE). (Probably don't need)
 
 \section{METHOD}
 
-First need to motivate the idea: the data alone is enough to align, without a target -- we have a nearly infinite number of frames which all constrain a single transform. But it's simply too massive 
+TODO First need to motivate the idea: the data alone is enough to align, without a target -- we have a nearly infinite number of frames which all constrain a single transform. But it's simply too massive 
 and redundant to leverage all at once. Instead we'll first extract foreground objects in the scene at every timestep. 
 We observe that some foreground objects will be visible in both frames, and thus we initialize with the transform which aligns the most objects to each other. We'll then refine densely.
 
@@ -185,19 +186,26 @@ For notational simplicity, we let $f^{(t)}$ denote the frame whose timestamp is 
 Each frame $f_k^{(t)}$ consists of an RGB image $I_k^{(t)}$ and registered depth map $D_k^{(t)}$. Given camera intrinsics 
 $(f_x,f_y,c_x,c_y)$, a pixel of the depth map can be converted to Euclidean coordinates by $X = (u-c_x)\frac{D(u,v)}{f_x}$ (and likewise for $Y$). 
 For convenience, we make this conversion implicit by utilizing the notation of \emph{organized point clouds}.
-We say that each pixel $(u,v)$ indexes a point $p = f_k^{(t)}(u,v)$ such that $p_r$, $p_g$, and $p_b$ store its color information, and $p_x$, $p_y$, and $p_z$ store its Euclidean 
+We say that each pixel $(u,v)$ indexes a 3D point $p = f_k^{(t)}(u,v)$ such that $p_r$, $p_g$, and $p_b$ store its color information, and $p_x$, $p_y$, and $p_z$ store its Euclidean 
 position in the reference frame of the sensor. Here our coordinate system follows standard
 pinhole camera conventions, where the image plane lies in $XY$ and $+Z$ denotes forward distance from the sensor.
 
-\subsection{Initial synchronization}
-First need to explain how we go from unsynchronized frames into aligned pairs -- frames within 0.015s of each other, indexed from $t = 0{\dots}T$
-
 \subsection{Object extraction}
-Then explain how we extract foreground objects. Background found from a hue histogram -- this, in fact, is the 
-only time color is really used. Once background pixels are found, they're clustered and their centroids are 
-computed.
+
+We first segment each frame into foreground and background pixels. To do so, we sweep through the entire sequence and build up a per-pixel depth histogram
+\begin{equation*}
+  H_{k}(u, v, \hat{z}) = \frac{1}{T} \sum\limits_{t} \textbf{1}\{ b[D_{k}^{(t)}(u,v)] = \hat{z} \}
+\end{equation*}
+
+Where $b[\cdot]$ maps depth values to histogram bins. A foreground mask is then computed for each frame by finding pixels whose depth values are relatively infrequent
+\begin{equation*}
+  FG_k^{(t)}(u,v) = H_{k}(u, v, b[D_{k}^{(t)}(u,v)]) < \text{p}_\text{min}
+\end{equation*}
+
+This is eroded and dilated to reduce noise. Objects $O_{k,i}^{(t)}$ are then extracted by finding connected components in the foreground mask.
 
 \subsection{Initial alignment}
+
 Here we discuss the idea of centroid RANSAC: we have $NK^2$ possible correspondences, and we'll randomly sample
 them til we get the transform which yields the most inliers. Should make it very clear how this works across 
 time, such that even one moving object is enough to give us a good initialization. Show the results of 
