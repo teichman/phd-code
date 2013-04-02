@@ -10,15 +10,15 @@ namespace pipeline
     void Sorter::compute()
     {
       PL_ASSERT(numIncoming("Points") == 1);
-      *sorted_ = *pull<VecConstPtr>("Points");
+      *sorted_ = *pull<Vec::ConstPtr>("Points");
       sort(sorted_->begin(), sorted_->end());
-      push<VecConstPtr>("Sorted", sorted_);
+      push<Vec::ConstPtr>("Sorted", sorted_);
     }
 
     void Summarizer::compute()
     {
       PL_ASSERT(numIncoming("Points") > 0);
-      const Vec& points = *pull<VecConstPtr>("Points");
+      const Vec& points = *pull<Vec::ConstPtr>("Points");
 
       double mean, stdev, mean_neighbor_separation;
       _compute(points, &mean, &stdev, &mean_neighbor_separation);
@@ -53,7 +53,7 @@ namespace pipeline
     {
       aggregated_->clear();
       
-      vector<VecConstPtr> point_sets;
+      vector<Vec::ConstPtr> point_sets;
       pull("PointSets", &point_sets);
 
       size_t num_points = 0;
@@ -83,7 +83,7 @@ namespace pipeline
       }
 
       assert(aggregated_->size() == num_points);
-      push<VecConstPtr>("Aggregated", aggregated_);
+      push<Vec::ConstPtr>("Aggregated", aggregated_);
     }
 
     void DescriptorAssembler::compute()
@@ -91,23 +91,23 @@ namespace pipeline
       descriptor_->clear();
       pull("Elements", descriptor_.get());
 
-      vector<VecConstPtr> subvectors;
+      vector<Vec::ConstPtr> subvectors;
       pull("SubVectors", &subvectors);
       for(size_t i = 0; i < subvectors.size(); ++i)
         descriptor_->insert(descriptor_->end(), subvectors[i]->begin(), subvectors[i]->end());
       
-      push<VecConstPtr>("Descriptor", descriptor_);
+      push<Vec::ConstPtr>("Descriptor", descriptor_);
     }
 
     void HistogramGenerator::compute()
     {
-      const Vec& points = *pull<VecConstPtr>("Points");
+      const Vec& points = *pull<Vec::ConstPtr>("Points");
       _compute(points, &hist_, &lower_bounds_);
-      push<VecConstPtr>("Histogram", hist_);
-      push<VecConstPtr>("LowerBounds", lower_bounds_);
+      push<Vec::ConstPtr>("Histogram", hist_);
+      push<Vec::ConstPtr>("LowerBounds", lower_bounds_);
     }
 
-    void HistogramGenerator::_compute(const Vec& points, VecPtr* hist, VecPtr* lower_bounds)
+    void HistogramGenerator::_compute(const Vec& points, Vec::Ptr* hist, Vec::Ptr* lower_bounds)
     {
       hist_->clear();
       lower_bounds_->clear();
@@ -198,14 +198,14 @@ namespace pipeline
 
     void ConcretePodA::compute()
     {
-      *vals_ = *pull<VecConstPtr>("Vals");
-      push<VecConstPtr>("ChangedVals", vals_);
+      *vals_ = *pull<Vec::ConstPtr>("Vals");
+      push<Vec::ConstPtr>("ChangedVals", vals_);
     }
 
     void ConcretePodB::compute()
     {
-      *vals_ = *pull<VecConstPtr>("Vals");
-      push<VecConstPtr>("ChangedVals", vals_);
+      *vals_ = *pull<Vec::ConstPtr>("Vals");
+      push<Vec::ConstPtr>("ChangedVals", vals_);
     }
 
   } // namespace example

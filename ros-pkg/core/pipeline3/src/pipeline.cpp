@@ -106,15 +106,15 @@ namespace pipeline {
     // TODO: Make this use explode()
     
     const string& c = connection;
-    string source_pod = c.substr(0, c.find_first_of(":"));
+    string source_pod = c.substr(0, c.find_first_of(separator()));
     //cout << "source_pod: " << source_pod << endl;
-    string source_output = c.substr(c.find_first_of(":") + 1, c.find_first_of(" ") - c.find_first_of(":") - 1);
+    string source_output = c.substr(c.find_first_of(separator()) + 1, c.find_first_of(" ") - c.find_first_of(separator()) - 1);
     //cout << "source_output: " << source_output << endl;
     string r = c.substr(c.find_first_of("-> ")).substr(4);
     //cout << "r: " << r << endl;
-    string sink_pod = r.substr(0, r.find_first_of(":"));
+    string sink_pod = r.substr(0, r.find_first_of(separator()));
     //cout << "sink_pod: " << sink_pod << endl;
-    string sink_input = r.substr(r.find_first_of(":") + 1);
+    string sink_input = r.substr(r.find_first_of(separator()) + 1);
     //cout << "sink_input: " << sink_input << endl;
 
     connect(source_pod, source_output, sink_pod, sink_input);
@@ -242,7 +242,6 @@ namespace pipeline {
     Pod* active = NULL;
     map<Pod*, double>::iterator it;
     for(it = times.begin(); it != times.end(); ++it) {
-      //cout << it->first->_getName() << ": " << it->second << endl;
       if(it->second > max) {
         max = it->second;
         active = it->first;
@@ -634,8 +633,8 @@ namespace pipeline {
       vector<string> output_names;
       while(!iss.eof()) {
         iss >> buf;
-        producer_pod_names.push_back(buf.substr(0, buf.find(':')));
-        output_names.push_back(buf.substr(buf.find(':') + 1));
+        producer_pod_names.push_back(buf.substr(0, buf.find(separator())));
+        output_names.push_back(buf.substr(buf.find(separator()) + 1));
         PL_ASSERT(pod_names.count(producer_pod_names.back()) == 1);
       }
       PL_ASSERT(!producer_pod_names.empty());

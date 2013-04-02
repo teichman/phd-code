@@ -183,14 +183,14 @@ namespace pipeline
   template<typename T> T Outlet::pull() const
   {
     if(!has_data_) {
-      PL_ABORT("Tried to pull from " << pod_->getName() << ":" << name_ << ", but Outlet does not have data!");
+      PL_ABORT("Tried to pull from " << pod_->getName() << separator() << name_ << ", but Outlet does not have data!");
     }
     
     try { 
       return boost::any_cast<T>(data_);
     }
     catch(boost::bad_any_cast& e) {
-      PL_ABORT("Type mismatch during pull from " << pod_->getName() << ":" << name_ << ".");
+      PL_ABORT("Type mismatch during pull from " << pod_->getName() << separator() << name_ << ".");
     }
     
     return boost::any_cast<T>(data_);
@@ -207,7 +207,7 @@ namespace pipeline
       boost::any_cast<T>(type_);
     }
     catch(boost::bad_any_cast& e) {
-      PL_ABORT("Type mismatch during push to " << pod_->getName() << ":" << name_ << "."
+      PL_ABORT("Type mismatch during push to " << pod_->getName() << separator() << name_ << "."
                << " You may need to explicitly specify the type, i.e. push<T>(...).");
     }
     data_ = data;

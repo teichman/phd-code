@@ -33,7 +33,7 @@ namespace pipeline
     void addPod(Pod* pod);
     void connect(std::string source_pod, std::string source_output,
                  std::string sink_pod, std::string sink_input);
-    //! "Pod:Output -> Pod:Input"
+    //! "Pod.Output -> Pod.Input"
     //! TODO: Maybe allow only this method of making connections.
     //! Then completeness is guaranteed.
     //! Also, it's hard to misinterpret this, whereas it's easy to mix up
@@ -268,7 +268,8 @@ namespace pipeline
   template<typename T> T Pipeline::pull(const std::string& address) const
   {
     std::vector<std::string> tokens;
-    boost::split(tokens, address, boost::is_any_of(":"));
+    boost::split(tokens, address, boost::is_any_of(separatorString()));
+    PL_ASSERT(tokens.size() == 2);
     return pull<T>(tokens[0], tokens[1]);
   }
 

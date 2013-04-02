@@ -21,7 +21,7 @@ namespace pipeline
 
   std::string Outlet::address() const
   {
-    return pod_->getName() + ":" + name_;
+    return pod_->getName() + separator() + name_;
   }
   
   Pod::Pod(std::string name) :
@@ -338,7 +338,7 @@ namespace pipeline
       const vector<const Outlet*>& outlets = it->second;
       out << name << " <-";
       for(size_t i = 0; i < outlets.size(); ++i) { 
-        out << " " << outlets[i]->pod()->getName() << ":" << outlets[i]->getName();
+        out << " " << outlets[i]->pod()->getName() << separator() << outlets[i]->getName();
       }
       out << endl;
     }

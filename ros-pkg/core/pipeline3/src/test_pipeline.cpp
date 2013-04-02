@@ -28,9 +28,9 @@ double sample()
   return val;
 }
 
-VecPtr generateVec(int num_points)
+Vec::Ptr generateVec(int num_points)
 {
-  VecPtr vec(new Vec(num_points));
+  Vec::Ptr vec(new Vec(num_points));
   for(size_t i = 0; i < vec->size(); ++i)
     vec->at(i) = sample();
 
@@ -39,7 +39,7 @@ VecPtr generateVec(int num_points)
 
 void registerPods()
 {
-  REGISTER_POD_TEMPLATE(EntryPoint, VecConstPtr);
+  REGISTER_POD_TEMPLATE(EntryPoint, Vec::ConstPtr);
   REGISTER_POD(Sorter);
   REGISTER_POD(Summarizer);
   REGISTER_POD(Aggregator);
@@ -51,9 +51,9 @@ void registerPods()
 
 void generateDefaultPipeline(Pipeline* pl)
 {
-  EntryPoint<VecConstPtr>* ep0 = new EntryPoint<VecConstPtr>("View0");
-  EntryPoint<VecConstPtr>* ep1 = new EntryPoint<VecConstPtr>("View1");
-  EntryPoint<VecConstPtr>* ep2 = new EntryPoint<VecConstPtr>("View2");
+  EntryPoint<Vec::ConstPtr>* ep0 = new EntryPoint<Vec::ConstPtr>("View0");
+  EntryPoint<Vec::ConstPtr>* ep1 = new EntryPoint<Vec::ConstPtr>("View1");
+  EntryPoint<Vec::ConstPtr>* ep2 = new EntryPoint<Vec::ConstPtr>("View2");
 
   Sorter* s0 = new Sorter("Sorter0");
   Sorter* s1 = new Sorter("Sorter1");
@@ -122,8 +122,8 @@ void generateDefaultPipeline(Pipeline* pl)
   pl->addPod(new ConcretePodA("ConcretePodA"));
   pl->addPod(new ConcretePodB("ConcretePodB"));
   pl->pod("ConcretePodB")->setParam("Something", true);
-  pl->connect("DescriptorAssembler:Descriptor -> ConcretePodA:Vals");
-  pl->connect("DescriptorAssembler:Descriptor -> ConcretePodB:Vals");
+  pl->connect("DescriptorAssembler.Descriptor -> ConcretePodA.Vals");
+  pl->connect("DescriptorAssembler.Descriptor -> ConcretePodB.Vals");
 }
 
 TEST(Pipeline, Serialize)
@@ -138,16 +138,16 @@ TEST(Pipeline, Serialize)
 
   cout << "Generating data..." << endl;
   int num_points = 1e5;
-  VecConstPtr v0 = generateVec(num_points);
-  VecConstPtr v1 = generateVec(num_points);
-  VecConstPtr v2 = generateVec(num_points);
+  Vec::ConstPtr v0 = generateVec(num_points);
+  Vec::ConstPtr v1 = generateVec(num_points);
+  Vec::ConstPtr v2 = generateVec(num_points);
   cout << "Done." << endl;
   
   pl.setInput("View0", v0);
   pl.setInput("View1", v1);
   pl.setInput("View2", v2);
   pl.compute();
-  VecConstPtr descriptor;
+  Vec::ConstPtr descriptor;
   pl.pull("DescriptorAssembler", "Descriptor", &descriptor);
   cout << pl.reportTiming() << endl;
 
@@ -162,7 +162,7 @@ TEST(Pipeline, Serialize)
   pl2.setInput("View1", v1);
   pl2.setInput("View2", v2);
   pl2.compute();
-  VecConstPtr descriptor2;
+  Vec::ConstPtr descriptor2;
   pl2.pull("DescriptorAssembler", "Descriptor", &descriptor2);
   cout << pl2.reportTiming() << endl;
 
@@ -184,7 +184,7 @@ TEST(Pipeline, UniqueString)
   // -- Changing the params of an upstream node should change the hash.
   uint64_t orig;
   {
-    EntryPoint<VecConstPtr>* ep0 = new EntryPoint<VecConstPtr>("View0");
+    EntryPoint<Vec::ConstPtr>* ep0 = new EntryPoint<Vec::ConstPtr>("View0");
     Sorter* s0 = new Sorter("Sorter0");
     s0->registerInput("Points", ep0, "Output");
     Summarizer* summarizer0 = new Summarizer("Summarizer0");
@@ -223,7 +223,7 @@ TEST(Pipeline, UniqueString)
 
   // -- Changing the order of registration should change the hash.
   {
-    EntryPoint<VecConstPtr>* ep0 = new EntryPoint<VecConstPtr>("View0");
+    EntryPoint<Vec::ConstPtr>* ep0 = new EntryPoint<Vec::ConstPtr>("View0");
     Sorter* s0 = new Sorter("Sorter0");
     s0->registerInput("Points", ep0, "Output");
     Summarizer* summarizer0 = new Summarizer("Summarizer0");
@@ -248,7 +248,7 @@ TEST(Pipeline, UniqueString)
 
   // -- Changing the structure should change the hash.
   {
-    EntryPoint<VecConstPtr>* ep0 = new EntryPoint<VecConstPtr>("View0");
+    EntryPoint<Vec::ConstPtr>* ep0 = new EntryPoint<Vec::ConstPtr>("View0");
     Sorter* s0 = new Sorter("Sorter0");
     s0->registerInput("Points", ep0, "Output");
     Summarizer* summarizer0 = new Summarizer("Summarizer0");
@@ -283,16 +283,16 @@ TEST(Pipeline, MultiCompute)
   pl.load("example.pl");
 
   int num_points = 1e3;
-  VecConstPtr v0 = generateVec(num_points);
-  VecConstPtr v1 = generateVec(num_points);
-  VecConstPtr v2 = generateVec(num_points);
+  Vec::ConstPtr v0 = generateVec(num_points);
+  Vec::ConstPtr v1 = generateVec(num_points);
+  Vec::ConstPtr v2 = generateVec(num_points);
   pl.setInput("View0", v0);
   pl.setInput("View1", v1);
   pl.setInput("View2", v2);
   pl.compute();
-  VecConstPtr descriptor = pl.pull<VecConstPtr>("DescriptorAssembler:Descriptor");
+  Vec::ConstPtr descriptor = pl.pull<Vec::ConstPtr>("DescriptorAssembler.Descriptor");
   pl.compute();
-  VecConstPtr descriptor2 = pl.pull<VecConstPtr>("DescriptorAssembler:Descriptor");
+  Vec::ConstPtr descriptor2 = pl.pull<Vec::ConstPtr>("DescriptorAssembler.Descriptor");
   EXPECT_TRUE(descriptor->size() == descriptor2->size());
   for(size_t i = 0; i < descriptor->size(); ++i)
     EXPECT_FLOAT_EQ(descriptor->at(i), descriptor2->at(i));
@@ -304,14 +304,14 @@ TEST(Pipeline, OutputFlush)
   pl.load("example.pl");
 
   int num_points = 1e3;
-  VecConstPtr v0 = generateVec(num_points);
-  VecConstPtr v1 = generateVec(num_points);
-  VecConstPtr v2 = generateVec(num_points);
+  Vec::ConstPtr v0 = generateVec(num_points);
+  Vec::ConstPtr v1 = generateVec(num_points);
+  Vec::ConstPtr v2 = generateVec(num_points);
   pl.setInput("View0", v0);
   pl.setInput("View1", v1);
   pl.setInput("View2", v2);
   pl.compute();
-  EXPECT_TRUE(pl.pull<VecConstPtr>("DescriptorAssembler", "Descriptor"));
+  EXPECT_TRUE(pl.pull<Vec::ConstPtr>("DescriptorAssembler", "Descriptor"));
 
   pl.pod("DescriptorAssembler")->disabled_ = true;
   pl.compute();
@@ -327,9 +327,9 @@ TEST(Pipeline, Debugging)
   generateDefaultPipeline(&pl);
 
   int num_points = 1e5;
-  VecConstPtr v0 = generateVec(num_points);
-  VecConstPtr v1 = generateVec(num_points);
-  VecConstPtr v2 = generateVec(num_points);
+  Vec::ConstPtr v0 = generateVec(num_points);
+  Vec::ConstPtr v1 = generateVec(num_points);
+  Vec::ConstPtr v2 = generateVec(num_points);
   
   pl.setInput("View0", v0);
   pl.setInput("View1", v1);
@@ -353,7 +353,7 @@ TEST(Pipeline, OptionalInputs)
   // pull(input_name, &vec<T> data) should not abort even if zero outputs are registered to input_name.
   
   {
-    EntryPoint<VecConstPtr>* ep0 = new EntryPoint<VecConstPtr>("View0");
+    EntryPoint<Vec::ConstPtr>* ep0 = new EntryPoint<Vec::ConstPtr>("View0");
     Sorter* s0 = new Sorter("Sorter0");
     s0->registerInput("Points", ep0, "Output");
     Summarizer* summarizer0 = new Summarizer("Summarizer0");
@@ -370,13 +370,13 @@ TEST(Pipeline, OptionalInputs)
 
     Pipeline pl(1);
     pl.addConnectedComponent(ep0);
-    pl.setInput<VecConstPtr>("View0", generateVec(100));
+    pl.setInput<Vec::ConstPtr>("View0", generateVec(100));
     pl.compute();
-    EXPECT_TRUE(pl.pull<VecConstPtr>("DescriptorAssembler", "Descriptor")->size() == 3);
+    EXPECT_TRUE(pl.pull<Vec::ConstPtr>("DescriptorAssembler", "Descriptor")->size() == 3);
   }
 
   {
-    EntryPoint<VecConstPtr>* ep0 = new EntryPoint<VecConstPtr>("View0");
+    EntryPoint<Vec::ConstPtr>* ep0 = new EntryPoint<Vec::ConstPtr>("View0");
     Sorter* s0 = new Sorter("Sorter0");
     s0->registerInput("Points", ep0, "Output");
     Summarizer* summarizer0 = new Summarizer("Summarizer0");
@@ -391,10 +391,10 @@ TEST(Pipeline, OptionalInputs)
 
     Pipeline pl(1);
     pl.addConnectedComponent(ep0);
-    pl.setInput<VecConstPtr>("View0", generateVec(100));
+    pl.setInput<Vec::ConstPtr>("View0", generateVec(100));
     pl.compute();
 
-    EXPECT_TRUE(pl.pull<VecConstPtr>("DescriptorAssembler", "Descriptor")->size() == 40);
+    EXPECT_TRUE(pl.pull<Vec::ConstPtr>("DescriptorAssembler", "Descriptor")->size() == 40);
   }
 }
 
@@ -403,7 +403,7 @@ TEST(Pod, ComputeOutsidePipeline)
   // Sometimes you want to access the functionality of a Pod
   // from outside of a Pipeline.  If this is the case, one solution
   // is to put the functionality into a static member function.
-  VecPtr points = generateVec(100);
+  Vec::Ptr points = generateVec(100);
   sort(points->begin(), points->end());
 
   double mean, stdev, mean_neighbor_separation;
@@ -417,7 +417,7 @@ TEST(Pod, ComputeOutsidePipeline)
   hg.setParam("Min", -2.0);
   hg.setParam("Max", 2.0);
 
-  VecPtr hist, lower_bounds;
+  Vec::Ptr hist, lower_bounds;
   hg._compute(*points, &hist, &lower_bounds);
   cout << "Got hist with " << hist->size() << " bins." << endl;
   hg.debug();

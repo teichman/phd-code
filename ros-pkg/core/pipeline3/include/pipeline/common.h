@@ -9,7 +9,11 @@
 
 //#include <ros/console.h>
 //#define PL_ABORT(x) ROS_FATAL_STREAM(x); abort();
-  
+
+// PodName.OutletName
+inline char separator() { return '.'; }
+inline std::string separatorString() { return std::string(1, separator()); }
+
 // ... for now we'll just use our own thing.
 #define PL_ABORT(x)                                                \
   do {                                                                \
@@ -34,7 +38,9 @@ namespace pipeline
 
   inline bool isInvalidChar(char c)
   {
-    return (!isalnum(c) && c != '_');  // TODO: Is the underscore OK?
+    // TODO: Are the underscore and colon ok?
+    //return (!isalnum(c) && c != '_' && c != '<' && c != '>' && c != ':');
+    return (!isalnum(c) && c != '_' && c != ':');  
   }
 
   inline bool isValidName(const std::string &name)
@@ -49,7 +55,7 @@ namespace pipeline
   inline void assertValidName(const std::string& name)
   {
     if(!isValidName(name))
-      PL_ABORT("Name \"" << name << "\" is invalid.  Use only alphanumeric characters and underscores.");  // TODO: Is the underscore OK?
+      PL_ABORT("Name \"" << name << "\" is invalid.  See isValidName().");
   }
   
 } // namespace pipeline
@@ -79,25 +85,25 @@ namespace pipeline
 // You'll probably want to use a typedef.
 
 // TODO: It'd be great to allow colons here, e.g. cv::Mat3b.
-#define DECLARE_POD_TEMPLATE(POD_TYPE)                                        \
-  static Pod* create(std::string name, pipeline::Params params)                \
-  {                                                                        \
-    POD_TYPE<T>* pod = new POD_TYPE<T>(name);                                \
-    pod->setParams(params);                                                \
-    return pod;                                                                \
-  }                                                                        \
-  std::string getClassName() const                                                \
-  {                                                                        \
-    std::map<std::string, std::string>::const_iterator it;                \
-    it = pipeline::Pod::template_map_.find(typeid(T).name());                \
-    if(it == pipeline::Pod::template_map_.end()) {                        \
-      PL_ABORT("Attempted to get class name of Pod \"" << getName()        \
+#define DECLARE_POD_TEMPLATE(POD_TYPE)                                  \
+  static Pod* create(std::string name, pipeline::Params params)         \
+  {                                                                     \
+    POD_TYPE<T>* pod = new POD_TYPE<T>(name);                           \
+    pod->setParams(params);                                             \
+    return pod;                                                         \
+  }                                                                     \
+  std::string getClassName() const                                      \
+  {                                                                     \
+    std::map<std::string, std::string>::const_iterator it;              \
+    it = pipeline::Pod::template_map_.find(typeid(T).name());           \
+    if(it == pipeline::Pod::template_map_.end()) {                      \
+      PL_ABORT("Attempted to get class name of Pod \"" << getName()     \
                << "\", but this template Pod is of unregistered template type" \
-               << " (typeid \"" << typeid(T).name() << "\")."                \
-               << " You probably need to call"                                \
+               << " (typeid \"" << typeid(T).name() << "\")."           \
+               << " You probably need to call"                          \
                << " REGISTER_POD_TEMPLATE(ClassName, TemplateTypeName)."); \
-    }                                                                        \
-    return std::string(#POD_TYPE) + "<" + it->second + ">";                \
+    }                                                                   \
+    return std::string(#POD_TYPE) + "<" + it->second + ">";             \
   }
 
 #define REGISTER_POD_TEMPLATE(POD_TYPE, T)                                \
