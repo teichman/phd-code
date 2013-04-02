@@ -207,14 +207,14 @@ namespace pipeline
     }
 
     if(!pod->hasOutput(output_name)) {
-      PL_ABORT("Tried to connect " << getName() << ":" << input_name << " <- " << pod->getName() << ":" << output_name
+      PL_ABORT("Tried to connect " << getName() << separator() << input_name << " <- " << pod->getName() << separator() << output_name
                << ", but Pod \"" << pod->getName() << "\" does not have an output named \"" << output_name << "\".");
     }
     
     const Outlet* outlet = pod->getOutlet(output_name);
     if(!outlet->checkType(declared_inputs_[input_name])) { 
       PL_ABORT(getClassName() << " \"" << getName() << "\" tried to register \"" << input_name << " <- "
-               << pod->getName() << ":" << output_name << "\", but types do not match.");
+               << pod->getName() << separator() << output_name << "\", but types do not match.");
     }
 
     inputs_[input_name].push_back(outlet);
