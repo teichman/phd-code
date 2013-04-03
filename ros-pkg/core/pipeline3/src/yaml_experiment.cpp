@@ -27,6 +27,12 @@ int main(int argc, char** argv)
     if(pod["Params"]) {
       Params params = pod["Params"].as<Params>();
       cout << params << endl;
+      // This should really be done automatically for me.
+      //YAML::Node node = params;
+      YAML::Node node = YAML::convert<Params>::encode(params);
+      
+      // They aren't equal, but it's only the ordering that changes.
+      //assert(node == pod["Params"]);
     }
   }
   
