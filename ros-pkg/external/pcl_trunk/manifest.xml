@@ -13,8 +13,8 @@
   <depend package="roscpp_serialization"/>
   
   <export>
-    <cpp cflags="`${prefix}/cmake-config PCL --version 1.7 --cflags-only-I --cflags-only-other --module-path=${prefix}/release_against_ros/share/pcl-1.7`"
-         lflags="-lvtkFiltering -L${prefix}/release_against_ros/lib -Wl,-rpath,${prefix}/release_against_ros/lib `${prefix}/cmake-config PCL --version 1.7 --libs-only-L --libs-only-l --module-path=${prefix}/release_against_ros/share/pcl-1.7`"/> 
+    <cpp cflags="`${prefix}/cmake-config PCL --version 1.7 --cflags-only-I --cflags-only-other --module-path=${prefix}/release_against_ros_git/share/pcl-1.7` -DUSE_ROS"
+         lflags="-lvtkFiltering -L${prefix}/release_against_ros_git/lib -Wl,-rpath,${prefix}/release_against_ros_git/lib `${prefix}/cmake-config PCL --version 1.7 --libs-only-L --libs-only-l --module-path=${prefix}/release_against_ros_git/share/pcl-1.7` -lvtkIO"/> 
   </export>
 
     
