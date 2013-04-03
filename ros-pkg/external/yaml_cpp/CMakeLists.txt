@@ -23,23 +23,37 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #common commands for building c++ executables and libraries
 rosbuild_add_library(${PROJECT_NAME}
-  src/pipeline.cpp
-  src/params.cpp
-  src/pod.cpp
-  src/example_pods.cpp
-  src/twiddler.cpp
+  src/binary.cpp
+  src/convert.cpp
+  src/directives.cpp
+  src/emit.cpp
+  src/emitfromevents.cpp
+  src/emitter.cpp
+  src/emitterstate.cpp
+  src/emitterutils.cpp
+  src/exp.cpp
+  src/memory.cpp
+  src/nodebuilder.cpp
+  src/node.cpp
+  src/node_data.cpp
+  src/nodeevents.cpp
+  src/null.cpp
+  src/ostream_wrapper.cpp
+  src/parse.cpp
+  src/parser.cpp
+  src/regex.cpp
+  src/scanner.cpp
+  src/scanscalar.cpp
+  src/scantag.cpp
+  src/scantoken.cpp
+  src/simplekey.cpp
+  src/singledocparser.cpp
+  src/stream.cpp
+  src/tag.cpp
   )
-#target_link_libraries(${PROJECT_NAME} yaml-cpp)
-rosbuild_add_boost_directories()
-rosbuild_link_boost(${PROJECT_NAME} filesystem system)
 
-rosbuild_add_gtest(test_pipeline src/test_pipeline.cpp)
-rosbuild_add_gtest_build_flags(test_pipeline)
-target_link_libraries(test_pipeline pipeline3)
-
-rosbuild_add_gtest(test_twiddler src/test_twiddler.cpp)
-rosbuild_add_gtest_build_flags(test_twiddler)
-target_link_libraries(test_twiddler pipeline3)
-
-rosbuild_add_executable(yaml_experiment src/yaml_experiment.cpp)
-target_link_libraries(yaml_experiment yaml-cpp)
+#target_link_libraries(${PROJECT_NAME} another_library)
+#rosbuild_add_boost_directories()
+#rosbuild_link_boost(${PROJECT_NAME} thread)
+#rosbuild_add_executable(example examples/example.cpp)
+#target_link_libraries(example ${PROJECT_NAME})
