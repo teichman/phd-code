@@ -1,6 +1,8 @@
 #ifndef PARAMS_H
 #define PARAMS_H
 
+#include <yaml-cpp/yaml.h>
+#include <yaml-cpp/node/node.h>
 #include <map>
 #include <boost/any.hpp>
 #include <serializable/serializable.h>
@@ -63,10 +65,51 @@ namespace pipeline
       }
       return boost::any_cast<T>(storage_.find(name)->second);
     }
-
-    
   };
+}
+  
+/* YAML encoder / decoder for Params.
+ * Only supports string and double types.
+ */
+namespace YAML {
+  template<>
+  struct convert<pipeline::Params> {
+    static Node encode(const pipeline::Params& params) {
+      Node node;
+      std::map<std::string, boost::any>::const_iterator it;
+      for(it = params.storage_.begin(); it != params.storage_.end(); ++it) {
+        std::string name = it->first;
+        boost::any any = it->second;
+        try {
+          std::string val = boost::any_cast<std::string>(any);
+          node[name] = val;
+        }
+        catch(...) {
+          double val = boost::any_cast<double>(any);
+          node[name] = val;
+        }
+      }       
+      return node;
+    }
+      
+    static bool decode(const Node& node, pipeline::Params& params) {
+      PL_ASSERT(node.IsMap());
+        
+      for(YAML::const_iterator it = node.begin(); it != node.end(); ++it) {
+        std::string name = it->first.as<std::string>();
+        try {
+          double val = it->second.as<double>();
+          params.set(name, val);
+        }
+        catch(...) {
+          std::string val = it->second.as<std::string>();
+          params.set(name, val);
+        }
+      }
 
+      return true;
+    }
+  };
 }
 
 #endif // PARAMS_H

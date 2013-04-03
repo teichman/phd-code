@@ -1,7 +1,9 @@
 #include <fstream>
 #include <yaml-cpp/yaml.h>
+#include <pipeline/params.h>
 
 using namespace std;
+using namespace pipeline;
 
 int main(int argc, char** argv)
 {
@@ -20,6 +22,11 @@ int main(int argc, char** argv)
       for(YAML::const_iterator it = inputs.begin(); it != inputs.end(); ++it) { 
         cout << it->first << " <- " << it->second << endl;
       }
+    }
+
+    if(pod["Params"]) {
+      Params params = pod["Params"].as<Params>();
+      cout << params << endl;
     }
   }
   

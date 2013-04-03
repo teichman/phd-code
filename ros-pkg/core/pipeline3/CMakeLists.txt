@@ -29,7 +29,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/example_pods.cpp
   src/twiddler.cpp
   )
-#target_link_libraries(${PROJECT_NAME} yaml-cpp)
+target_link_libraries(${PROJECT_NAME} yaml-cpp)
 rosbuild_add_boost_directories()
 rosbuild_link_boost(${PROJECT_NAME} filesystem system)
 
@@ -42,4 +42,4 @@ rosbuild_add_gtest_build_flags(test_twiddler)
 target_link_libraries(test_twiddler pipeline3)
 
 rosbuild_add_executable(yaml_experiment src/yaml_experiment.cpp)
-target_link_libraries(yaml_experiment yaml-cpp)
+target_link_libraries(yaml_experiment ${PROJECT_NAME})
