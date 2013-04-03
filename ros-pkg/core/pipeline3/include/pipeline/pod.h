@@ -127,6 +127,7 @@ namespace pipeline
     static void registerPodType(const Pod& pod);
     static Pod* createPod(std::string type_name, std::string name, Params params);
     virtual std::string getClassName() const = 0;
+    YAML::Node toYML() const;
     void serialize(std::ostream& out) const;
     void deserialize(std::istream& in);
     virtual ~Pod();

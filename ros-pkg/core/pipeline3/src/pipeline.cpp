@@ -532,86 +532,35 @@ namespace pipeline {
 
   void Pipeline::load(const std::string& filename)
   {
-    if(filename.substr(filename.size()-3).compare(".pl") != 0)
-      PL_ABORT("Tried to load Pipeline from \"" << filename << "\".  Pipeline files must have a .pl extension.");
-    
-    ifstream f;
-    f.open(filename.c_str());
-    if(!f.is_open())
-      PL_ABORT("Failed to open \"" << filename << "\".");
-    deserialize(f);
-    f.close();
-  }
-
-  void Pipeline::save(const std::string& filename) const
-  {
-    if(filename.substr(filename.size()-3).compare(".pl") != 0)
-      PL_ABORT("Tried to save Pipeline to \"" << filename << "\".  Pipeline files must have a .pl extension.");
-
-    ofstream f;
-    f.open(filename.c_str());
-    if(!f.is_open())
-      PL_ABORT("Failed to open \"" << filename << "\".");
-    serialize(f);
-    f.close();
-  }
-  
-  void Pipeline::serialize(std::ostream& out) const
-  {
-    out << "Pipeline" << endl;
-    out << "Serialization version 1" << endl;
-    out << "Pods (" << pods_.size() << ")" << endl << endl;
-    for(size_t i = 0; i < pods_.size(); ++i)
-      out << *pods_[i] << endl;
-  }
-  
-  void Pipeline::deserialize(std::istream& in)
-  {
+    // -- Clean up existing pipeline.
     for(size_t i = 0; i < pods_.size(); ++i)
       delete pods_[i];
     pods_.clear();
     pod_names_.clear();
 
-    string buf;
-    getline(in, buf);
-    if(buf.compare("Pipeline") != 0)
-      PL_ABORT("Error deserializing Pipeline. Expected \"Pipeline\", got \"" << buf << "\".");
-    getline(in, buf); // serialization version
-    in >> buf;
-    if(buf.compare("Pods") != 0)
-      PL_ABORT("Error deserializing Pipeline. Expected \"Pods\", got \"" << buf << "\".");
-    in >> buf;
-    size_t num_pods = atoi(buf.substr(1, buf.size() - 1).c_str());
-    getline(in, buf);
+    // -- Load the YAML.
+    if(filename.substr(filename.size()-3).compare(".pl") != 0)
+      PL_ABORT("Tried to load Pipeline from \"" << filename << "\".  Pipeline files must have a .pl extension.");
 
+    YAML::Node doc = YAML::LoadFile(filename);
+
+    // -- Set up everything but the connections.
+    //    This is unnecessarily complicated.
     vector<string> input_lines;
     vector<string> multi_input_lines;
     map<string, Pod*> pod_names; // Storage until we can get them hooked up.
     vector<Pod*> pods;
-    for(size_t i = 0; i < num_pods; ++i) {
-      string name;
-      getline(in, name); // empty line
-      getline(in, name);
-      string type;
-      getline(in, type);
+    for(size_t i = 0; i < doc["Pods"].size(); ++i) {
+      const YAML::Node& podyaml = doc["Pods"][i];
+      string name = podyaml["Name"].as<string>();
+      string type = podyaml["Type"].as<string>();
 
-      // Inputs
-      string buf;
-      in >> buf;
-      if(buf.compare("Inputs") != 0)
-        PL_ABORT("Error deserializing Pipeline. Expected \"Inputs\", got \"" << buf << "\".");
-      in >> buf;
-      size_t num_inputs = atoi(buf.substr(1, buf.size() - 1).c_str());
-      getline(in, buf);
-      
-      for(size_t i = 0; i < num_inputs; ++i) {
-        getline(in, buf);
-        input_lines.push_back(name + " " + buf);
+      const YAML::Node& inputs = podyaml["Inputs"];
+      for(YAML::const_iterator it = inputs.begin(); it != inputs.end(); ++it) {
+        input_lines.push_back(name + " " + it->first.as<string>() + " <- " + it->second.as<string>());
       }
 
-      // Params
-      Params params;
-      params.deserialize(in);
+      Params params = podyaml["Params"].as<Params>();
       Pod* pod = Pod::createPod(type, name, params);
 
       PL_ASSERT(pod_names.count(pod->getName()) == 0);
@@ -619,6 +568,7 @@ namespace pipeline {
       pods.push_back(pod);
     }
 
+    // -- Connect everything.
     for(size_t i = 0; i < input_lines.size(); ++i) {
       istringstream iss(input_lines[i]);
       string consumer_pod_name;
@@ -644,6 +594,33 @@ namespace pipeline {
     }
 
     addPods(pods);
+  }
+
+  void Pipeline::save(const std::string& filename) const
+  {
+    if(filename.substr(filename.size()-3).compare(".pl") != 0)
+      PL_ABORT("Tried to save Pipeline to \"" << filename << "\".  Pipeline files must have a .pl extension.");
+
+    ofstream f;
+    f.open(filename.c_str());
+    if(!f.is_open())
+      PL_ABORT("Failed to open \"" << filename << "\".");
+    serialize(f);
+    f.close();
+  }
+  
+  void Pipeline::serialize(std::ostream& out) const
+  {
+    YAML::Node doc;
+    for(size_t i = 0; i < pods_.size(); ++i)
+      doc["Pods"].push_back(pods_[i]->toYML());
+    
+    out << YAML::Dump(doc) << endl;
+  }
+  
+  void Pipeline::deserialize(std::istream& in)
+  {
+    PL_ABORT("Use Pipeline::load() instead of Pipeline::deserialize().");
   }
 
   Pod* Pipeline::pod(const std::string& name) const

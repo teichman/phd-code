@@ -20,7 +20,7 @@ int main(int argc, char** argv)
     if(pod["Inputs"]) {
       const YAML::Node& inputs = pod["Inputs"];
       for(YAML::const_iterator it = inputs.begin(); it != inputs.end(); ++it) { 
-        cout << it->first << " <- " << it->second << endl;
+        cout << it->first.as<string>() << " <- " << it->second.as<string>() << endl;
       }
     }
 

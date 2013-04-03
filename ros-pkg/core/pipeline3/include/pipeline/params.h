@@ -80,31 +80,80 @@ namespace YAML {
       for(it = params.storage_.begin(); it != params.storage_.end(); ++it) {
         std::string name = it->first;
         boost::any any = it->second;
+        bool success = false;
         try {
           std::string val = boost::any_cast<std::string>(any);
           node[name] = val;
+          success = true;
         }
         catch(...) {
-          double val = boost::any_cast<double>(any);
-          node[name] = val;
         }
+
+        if(!success) { 
+          try {
+            double val = boost::any_cast<double>(any);
+            node[name] = val;
+            success = true;
+          }
+          catch(...) {
+          }
+        }
+
+        if(!success) { 
+          try {
+            bool val = boost::any_cast<bool>(any);
+            if(val)
+              node[name] = "True";
+            else
+              node[name] = "False";
+            success = true;
+          }
+          catch(...) {
+          }
+        }
+        
+        if(!success)
+          PL_ABORT("YAML format only supports params of string, double, or bool type.  Offending param: \"" << name << "\".");
+
       }       
       return node;
     }
       
     static bool decode(const Node& node, pipeline::Params& params) {
-      PL_ASSERT(node.IsMap());
+      if(node.IsNull())
+        return true;
+      
+      //PL_ASSERT(node.IsMap());
         
       for(YAML::const_iterator it = node.begin(); it != node.end(); ++it) {
         std::string name = it->first.as<std::string>();
+        bool success = false;
         try {
           double val = it->second.as<double>();
           params.set(name, val);
+          success = true;
         }
         catch(...) {
-          std::string val = it->second.as<std::string>();
-          params.set(name, val);
         }
+
+        if(!success) {
+          try {
+            std::string val = it->second.as<std::string>();
+            if(val == "True")
+              params.set<bool>(name, true);
+            else if(val == "False")
+              params.set<bool>(name, false);
+            else
+              params.set(name, val);
+            success = true;
+          }
+          catch(...) {
+          }
+        }
+
+        if(!success)
+          PL_ABORT("YAML format only supports params of string, double, or bool type.  Offending param: \"" << name << "\".");
+        
       }
 
       return true;
