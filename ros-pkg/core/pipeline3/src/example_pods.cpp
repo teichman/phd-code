@@ -54,7 +54,7 @@ namespace pipeline
       aggregated_->clear();
       
       vector<Vec::ConstPtr> point_sets;
-      pull("PointSets", &point_sets);
+      multiPull("PointSets", &point_sets);
 
       size_t num_points = 0;
       for(size_t i = 0; i < point_sets.size(); ++i)
@@ -89,10 +89,10 @@ namespace pipeline
     void DescriptorAssembler::compute()
     {
       descriptor_->clear();
-      pull("Elements", descriptor_.get());
+      multiPull("Elements", descriptor_.get());
 
       vector<Vec::ConstPtr> subvectors;
-      pull("SubVectors", &subvectors);
+      multiPull("SubVectors", &subvectors);
       for(size_t i = 0; i < subvectors.size(); ++i)
         descriptor_->insert(descriptor_->end(), subvectors[i]->begin(), subvectors[i]->end());
       

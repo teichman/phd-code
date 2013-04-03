@@ -97,7 +97,7 @@ namespace pipeline
         Pod(name),
         aggregated_(new Vec)
       {
-        declareInput<Vec::ConstPtr>("PointSets");
+        declareMultiInput<Vec::ConstPtr>("PointSets");
         declareOutput<Vec::ConstPtr>("Aggregated");
       }
 
@@ -116,8 +116,8 @@ namespace pipeline
         Pod(name),
         descriptor_(new Vec)
       {
-        declareInput<double>("Elements");
-        declareInput<Vec::ConstPtr>("SubVectors");
+        declareMultiInput<double>("Elements");
+        declareMultiInput<Vec::ConstPtr>("SubVectors");
         declareOutput<Vec::ConstPtr>("Descriptor");
       }
 

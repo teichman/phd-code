@@ -217,6 +217,13 @@ namespace pipeline
                << pod->getName() << separator() << output_name << "\", but types do not match.");
     }
 
+    // -- Check multi status.
+    PL_ASSERT(multi_flags_.count(input_name));
+    bool multi = multi_flags_.find(input_name)->second;
+    if(!multi && !inputs_[input_name].empty()) {
+      PL_ABORT(getClassName() << " \"" << name_ << "\" tried to register single input \"" << input_name << "\" more than once.");
+    }
+    
     inputs_[input_name].push_back(outlet);
     parents_.push_back(pod);
     pod->children_.push_back(this);
