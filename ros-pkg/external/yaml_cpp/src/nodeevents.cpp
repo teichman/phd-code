@@ -80,14 +80,34 @@ namespace YAML
 					Emit(**it, handler, am);
 				handler.OnSequenceEnd();
 				break;
-			case NodeType::Map:
-				handler.OnMapStart(Mark(), node.tag(), anchor);
-				for(detail::const_node_iterator it=node.begin();it!=node.end();++it) {
-					Emit(*it->first, handler, am);
-					Emit(*it->second, handler, am);
-				}
-				handler.OnMapEnd();
-				break;
+                case NodeType::Map:
+                  
+                  handler.OnMapStart(Mark(), node.tag(), anchor);
+
+                  // -- Custom sorting.  Super gross and slow.
+                  std::vector< std::pair<const detail::node*, const detail::node*> > nodes;
+                  std::vector< std::pair<std::string, size_t> > index;
+                  size_t idx = 0;
+                  for(detail::const_node_iterator it=node.begin();it!=node.end();++it, ++idx) {
+                    index.push_back(std::pair<std::string, size_t>(it->first->scalar(), idx));
+                    nodes.push_back(std::pair<const detail::node*, const detail::node*>(it->first, it->second));
+                  }
+                  sort(index.begin(), index.end());
+                                
+                  for(size_t i = 0; i < index.size(); ++i) {
+                    size_t idx = index[i].second;
+                    Emit(*nodes[idx].first, handler, am);
+                    Emit(*nodes[idx].second, handler, am);
+                  }
+
+                  // -- The old way.
+                  // for(detail::const_node_iterator it=node.begin();it!=node.end();++it) {
+                  // 	Emit(*it->first, handler, am);
+                  // 	Emit(*it->second, handler, am);
+                  // }
+                  
+                  handler.OnMapEnd();
+                  break;
 		}
 	}
 
