@@ -5,7 +5,7 @@
 #include <pipeline/pod.h>
 #include <pipeline/common_pods.h>
 
-namespace pipeline
+namespace pl
 {
 
 /*
@@ -227,7 +227,7 @@ namespace pipeline
   template<typename T>
   T* Pipeline::pod() const
   {
-    return pipeline::pod<T>(pods_);
+    return pl::pod<T>(pods_);
   }
 
   template<typename T> T* pod(const std::string& name,
@@ -255,7 +255,7 @@ namespace pipeline
 
   template<typename T> T* Pipeline::pod(const std::string& name) const
   {
-    return pipeline::pod<T>(name, pods_);
+    return pl::pod<T>(name, pods_);
   }
 
   template<typename T> T Pipeline::pull(const std::string& pod_name, const std::string& outlet_name) const
@@ -283,6 +283,6 @@ namespace pipeline
     pod< EntryPoint<T> >(pod_name)->setData(data);
   }
   
-} // namespace pipeline
+} // namespace pl
 
 #endif // PIPELINE_H

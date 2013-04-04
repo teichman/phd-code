@@ -4,7 +4,7 @@ using namespace std;
 namespace bfs = boost::filesystem;
 using boost::any;
 
-namespace pipeline
+namespace pl
 {
 
   map<string, Pod::CreatorFnPtr> Pod::creator_map_ = map<string, Pod::CreatorFnPtr>();
@@ -368,4 +368,4 @@ namespace pipeline
     return outlets_.count(name);
   }
   
-} // namespace pipeline
+} // namespace pl

@@ -3,7 +3,7 @@
 
 #include <pipeline/pod.h>
 
-namespace pipeline
+namespace pl
 {
 
   template<typename T>

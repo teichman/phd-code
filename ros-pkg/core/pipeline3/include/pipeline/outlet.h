@@ -3,12 +3,12 @@
 
 #include <pipeline/common.h>
 
-namespace pipeline
+namespace pl
 {
   
   class Pod;
 
-  //! Generic class for passing data out of a pipeline::Pod.
+  //! Generic class for passing data out of a pl::Pod.
   //! The T will be copied a bit so it should generally be something small,
   //! like a pointer or shared_ptr.
   //!

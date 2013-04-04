@@ -6,7 +6,7 @@
 #include <serializable/serializable.h>
 #include <pipeline/common.h>
 
-namespace pipeline
+namespace pl
 {
   
   class Params : public Serializable, public YAMLizable
@@ -77,12 +77,12 @@ namespace pipeline
  */
 namespace YAML {
   template<>
-  struct convert<pipeline::Params> {
-    static Node encode(const pipeline::Params& params) {
+  struct convert<pl::Params> {
+    static Node encode(const pl::Params& params) {
       return params.YAMLize();
     }
       
-    static bool decode(const Node& node, pipeline::Params& params) {
+    static bool decode(const Node& node, pl::Params& params) {
       params.storage_.clear();
       if(!node.IsNull())
         params.deYAMLize(node);

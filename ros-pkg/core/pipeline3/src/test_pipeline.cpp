@@ -6,8 +6,8 @@
 
 using boost::any_cast;
 using boost::any;
-using namespace pipeline;
-using namespace pipeline::example;
+using namespace pl;
+using namespace pl::example;
 using namespace std;
 
 ostream& operator<<(ostream& out, const std::vector<double>& vec)

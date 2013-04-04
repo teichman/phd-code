@@ -4,7 +4,7 @@
 using namespace std;
 namespace bfs = boost::filesystem;
 
-namespace pipeline {
+namespace pl {
 
   Pipeline::Pipeline(int num_threads) :
     num_threads_(num_threads),
@@ -609,4 +609,4 @@ namespace pipeline {
     return it->second;
   }
   
-} // namespace pipeline
+} // namespace pl

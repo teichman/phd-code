@@ -2,7 +2,7 @@
 
 using namespace std;
 
-namespace pipeline
+namespace pl
 {
   namespace example
   {
@@ -209,4 +209,4 @@ namespace pipeline
     }
 
   } // namespace example
-} // namespace pipeline
+} // namespace pl

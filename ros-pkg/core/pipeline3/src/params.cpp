@@ -4,7 +4,7 @@ using namespace std;
 using boost::any;
 using boost::any_cast;
 
-namespace pipeline
+namespace pl
 {
   
   void Params::serialize(std::ostream& out) const
@@ -245,4 +245,4 @@ namespace pipeline
     return false;
   }
   
-} // namespace pipeline
+} // namespace pl

@@ -3,7 +3,7 @@
 #include <pipeline/params.h>
 
 using namespace std;
-using namespace pipeline;
+using namespace pl;
 
 int main(int argc, char** argv)
 {

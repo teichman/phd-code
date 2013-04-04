@@ -20,7 +20,7 @@
 #include <pipeline/params.h>
 #include <pipeline/outlet.h>
 
-namespace pipeline
+namespace pl
 {
   
   //! Abstract base class that represents a node in the computation graph.
