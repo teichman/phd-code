@@ -148,7 +148,7 @@ namespace pipeline
     void HistogramGenerator::debug() const
     {
       cout << "============================================================" << endl;
-      cout << *this << endl; // Print Pod text specification.
+      cout << YAML::Dump(YAMLize()) << endl; // Print Pod text specification.
 
       // -- Do something slow.
       //    This won't get counted in the timing report.

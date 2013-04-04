@@ -290,13 +290,13 @@ namespace pipeline
       podname_oss << "Pod" << i;
       (*nm)[upstream[i]->getName()] = podname_oss.str();
 
-      oss << *upstream[i];
+      oss << YAML::Dump(upstream[i]->YAMLize());
     }
 
     ostringstream podname_oss;
     podname_oss << "Pod" << nm->size();
     (*nm)[name_] = podname_oss.str();
-    oss << *this;
+    oss << YAML::Dump(YAMLize());
     
     return oss.str();
   }
@@ -333,7 +333,7 @@ namespace pipeline
     return hashDjb2(getUniqueString().c_str());
   }
 
-  YAML::Node Pod::toYML() const
+  YAML::Node Pod::YAMLize() const
   {
     YAML::Node pod;
     pod["Name"] = getName();
@@ -341,6 +341,7 @@ namespace pipeline
 
     // -- Inputs.
     map<string, std::vector<const Outlet*> >::const_iterator it;
+    YAML::Node inputs;
     for(it = inputs_.begin(); it != inputs_.end(); ++it) {
       // -- Get the string describing all connections.
       const vector<const Outlet*>& outlets = it->second;
@@ -352,43 +353,16 @@ namespace pipeline
       }
 
       // -- Add the YAML Node.
-      YAML::Node input;
-      input[it->first] = oss.str();
-      //pod["Inputs"].push_back(input);
-      pod["Inputs"][it->first] = oss.str();
+      inputs[it->first] = oss.str();
     }
+    pod["Inputs"] = inputs;  // If empty, we'll still have a placeholder in the YAML string.
 
     // -- Params.
-    pod["Params"] = YAML::convert<Params>::encode(params_);
+    pod["Params"] = params_.YAMLize();
 
     return pod;
   }
   
-  void Pod::serialize(std::ostream& out) const
-  {
-    out << getName() << endl;
-    out << getClassName() << endl;
-    
-    out << "Inputs (" << inputs_.size() << ")" << endl;
-    map<string, std::vector<const Outlet*> >::const_iterator it;
-    for(it = inputs_.begin(); it != inputs_.end(); ++it) {
-      string name = it->first;
-      const vector<const Outlet*>& outlets = it->second;
-      out << name << " <-";
-      for(size_t i = 0; i < outlets.size(); ++i) { 
-        out << " " << outlets[i]->pod()->getName() << separator() << outlets[i]->getName();
-      }
-      out << endl;
-    }
-    out << params_;
-
-  }
-  
-  void Pod::deserialize(std::istream& in)
-  {
-    PL_ABORT("Pods cannot be deserialized in isolation.");
-  }
-
   bool Pod::hasOutput(const std::string& name) const
   {
     return outlets_.count(name);

@@ -132,8 +132,8 @@ TEST(Pipeline, Serialize)
   Pipeline pl(1);
   generateDefaultPipeline(&pl);
 
-  string filename = "example.pl";
-  pl.save(filename);
+  string filename = "example.yml";
+  pl.saveYAML(filename);
   cout << "Serialized Pipeline specification to " << filename << endl;
 
   cout << "Generating data..." << endl;
@@ -152,7 +152,8 @@ TEST(Pipeline, Serialize)
   cout << pl.reportTiming() << endl;
 
   Pipeline pl2(10);
-  pl2.load(filename);
+  pl2.loadYAML(filename);
+  pl2.saveYAML(filename + ".2");
   cout << "Deserialized Pipeline specification from " << filename << endl;
   string graphvis_filename = "graphvis";
   pl2.writeGraphviz(graphvis_filename);
@@ -280,7 +281,7 @@ TEST(Pipeline, UniqueString)
 TEST(Pipeline, MultiCompute)
 {
   Pipeline pl(10);
-  pl.load("example.pl");
+  pl.loadYAML("example.pl");
 
   int num_points = 1e3;
   Vec::ConstPtr v0 = generateVec(num_points);
@@ -301,7 +302,7 @@ TEST(Pipeline, MultiCompute)
 TEST(Pipeline, OutputFlush)
 {
   Pipeline pl(10);
-  pl.load("example.pl");
+  pl.loadYAML("example.pl");
 
   int num_points = 1e3;
   Vec::ConstPtr v0 = generateVec(num_points);

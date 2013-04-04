@@ -25,7 +25,7 @@ namespace pipeline
   
   //! Abstract base class that represents a node in the computation graph.
   //! All pods inherit from this class, at least indirectly.
-  class Pod : public Serializable
+  class Pod : public YAMLizable
   {  
   public:
     //! Whether to call debug() after compute().
@@ -127,11 +127,11 @@ namespace pipeline
     static void registerPodType(const Pod& pod);
     static Pod* createPod(std::string type_name, std::string name, Params params);
     virtual std::string getClassName() const = 0;
-    YAML::Node toYML() const;
-    void serialize(std::ostream& out) const;
-    void deserialize(std::istream& in);
     virtual ~Pod();
     bool hasOutput(const std::string& name) const;
+
+    YAML::Node YAMLize() const;
+    void deYAMLize(const YAML::Node& in) { PL_ABORT("Pods cannot be deYAMLized in isolation."); }
 
   private:
     std::string name_;

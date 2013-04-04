@@ -89,6 +89,89 @@ namespace pipeline
             
   }
 
+  YAML::Node Params::YAMLize() const
+  {
+    YAML::Node node;
+    std::map<std::string, boost::any>::const_iterator it;
+    for(it = storage_.begin(); it != storage_.end(); ++it) {
+      std::string name = it->first;
+      boost::any any = it->second;
+      bool success = false;
+      try {
+        std::string val = boost::any_cast<std::string>(any);
+        node[name] = val;
+        success = true;
+      }
+      catch(...) {
+      }
+
+      if(!success) { 
+        try {
+          double val = boost::any_cast<double>(any);
+          node[name] = val;
+          success = true;
+        }
+        catch(...) {
+        }
+      }
+
+      if(!success) { 
+        try {
+          bool val = boost::any_cast<bool>(any);
+          if(val)
+            node[name] = "True";
+          else
+            node[name] = "False";
+          success = true;
+        }
+        catch(...) {
+        }
+      }
+        
+      if(!success)
+        PL_ABORT("YAML format only supports params of string, double, or bool type.  Offending param: \"" << name << "\".");
+
+    }
+    
+    return node;
+  }
+  
+  void Params::deYAMLize(const YAML::Node& in)
+  {
+    storage_.clear();
+
+    for(YAML::const_iterator it = in.begin(); it != in.end(); ++it) {
+      std::string name = it->first.as<std::string>();
+      bool success = false;
+      try {
+        double val = it->second.as<double>();
+        set(name, val);
+        success = true;
+      }
+      catch(...) {
+      }
+
+      if(!success) {
+        try {
+          std::string val = it->second.as<std::string>();
+          if(val == "True")
+            set<bool>(name, true);
+          else if(val == "False")
+            set<bool>(name, false);
+          else
+            set(name, val);
+          success = true;
+        }
+        catch(...) {
+        }
+      }
+
+      if(!success)
+        PL_ABORT("YAML format only supports params of string, double, or bool type.  Offending param: \"" << name << "\".");
+        
+    }
+  }
+  
   bool Params::exists(const std::string& name) const
   {
     return (storage_.count(name) != 0);

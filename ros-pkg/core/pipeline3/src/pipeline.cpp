@@ -530,7 +530,7 @@ namespace pipeline {
     return vec;
   }
 
-  void Pipeline::load(const std::string& filename)
+  void Pipeline::deYAMLize(const YAML::Node& in)
   {
     // -- Clean up existing pipeline.
     for(size_t i = 0; i < pods_.size(); ++i)
@@ -538,20 +538,14 @@ namespace pipeline {
     pods_.clear();
     pod_names_.clear();
 
-    // -- Load the YAML.
-    if(filename.substr(filename.size()-3).compare(".pl") != 0)
-      PL_ABORT("Tried to load Pipeline from \"" << filename << "\".  Pipeline files must have a .pl extension.");
-
-    YAML::Node doc = YAML::LoadFile(filename);
-
     // -- Set up everything but the connections.
     //    This is unnecessarily complicated.
     vector<string> input_lines;
     vector<string> multi_input_lines;
     map<string, Pod*> pod_names; // Storage until we can get them hooked up.
     vector<Pod*> pods;
-    for(size_t i = 0; i < doc["Pods"].size(); ++i) {
-      const YAML::Node& podyaml = doc["Pods"][i];
+    for(size_t i = 0; i < in["Pods"].size(); ++i) {
+      const YAML::Node& podyaml = in["Pods"][i];
       string name = podyaml["Name"].as<string>();
       string type = podyaml["Type"].as<string>();
 
@@ -596,33 +590,14 @@ namespace pipeline {
     addPods(pods);
   }
 
-  void Pipeline::save(const std::string& filename) const
-  {
-    if(filename.substr(filename.size()-3).compare(".pl") != 0)
-      PL_ABORT("Tried to save Pipeline to \"" << filename << "\".  Pipeline files must have a .pl extension.");
-
-    ofstream f;
-    f.open(filename.c_str());
-    if(!f.is_open())
-      PL_ABORT("Failed to open \"" << filename << "\".");
-    serialize(f);
-    f.close();
-  }
-  
-  void Pipeline::serialize(std::ostream& out) const
+  YAML::Node Pipeline::YAMLize() const
   {
     YAML::Node doc;
     for(size_t i = 0; i < pods_.size(); ++i)
-      doc["Pods"].push_back(pods_[i]->toYML());
-    
-    out << YAML::Dump(doc) << endl;
+      doc["Pods"].push_back(pods_[i]->YAMLize());
+    return doc;
   }
   
-  void Pipeline::deserialize(std::istream& in)
-  {
-    PL_ABORT("Use Pipeline::load() instead of Pipeline::deserialize().");
-  }
-
   Pod* Pipeline::pod(const std::string& name) const
   {
     PL_ASSERT(pod_names_.size() == pods_.size());

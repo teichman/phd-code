@@ -21,7 +21,7 @@ namespace pipeline
   
   //! Class that represents the entire computation graph and manages its execution.
   //! Pods added to a Pipeline will be deleted by that Pipeline.
-  class Pipeline : public Serializable {
+  class Pipeline : public YAMLizable {
   public:
     // ----------------------------------------
     // -- Setup
@@ -102,10 +102,8 @@ namespace pipeline
     // -- Things you don't need to care about
     // ----------------------------------------
     virtual ~Pipeline();
-    void serialize(std::ostream& out) const;
-    void deserialize(std::istream& in);
-    void save(const std::string& path) const;
-    void load(const std::string& path);
+    YAML::Node YAMLize() const;
+    void deYAMLize(const YAML::Node& in);
       
   private:
     std::vector<Pod*> pods_;
