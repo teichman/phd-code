@@ -1,7 +1,7 @@
 <package>
   <description brief="yaml_cpp">
 
-     yaml_cpp
+    WARNING: This package may have a horrible, gross hack that fixes the ordering of the YAML nodes when they are emitted.
 
   </description>
   <author>teichman</author>

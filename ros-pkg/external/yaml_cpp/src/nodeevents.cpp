@@ -93,7 +93,26 @@ namespace YAML
                     nodes.push_back(std::pair<const detail::node*, const detail::node*>(it->first, it->second));
                   }
                   sort(index.begin(), index.end());
-                                
+
+                  // -- OMG this is not good.
+                  for(size_t i = 0; i < index.size(); ++i) {
+                    if(index[i].first == "Name") {
+                      std::pair<std::string, size_t> tmp = index[0];
+                      index[0] = index[i];
+                      index[i] = tmp;
+                      break;
+                    }
+                  }
+                  for(size_t i = 0; i < index.size(); ++i) {
+                    if(index[i].first == "Type") {
+                      std::pair<std::string, size_t> tmp = index[1];
+                      index[1] = index[i];
+                      index[i] = tmp;
+                      break;
+                    }
+                  }
+                      
+                  // -- Emit in order.
                   for(size_t i = 0; i < index.size(); ++i) {
                     size_t idx = index[i].second;
                     Emit(*nodes[idx].first, handler, am);
