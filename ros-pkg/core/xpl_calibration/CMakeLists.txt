@@ -191,3 +191,7 @@ target_link_libraries(view_stream ${PROJECT_NAME})
 rosbuild_add_executable(visualize_map_depth_estimation src/prog/visualize_map_depth_estimation.cpp)
 rosbuild_link_boost(visualize_map_depth_estimation program_options filesystem)
 target_link_libraries(visualize_map_depth_estimation ${PROJECT_NAME})
+
+rosbuild_add_executable(generate_clams_video src/prog/generate_clams_video.cpp)
+rosbuild_link_boost(generate_clams_video program_options filesystem)
+target_link_libraries(generate_clams_video ${PROJECT_NAME})
