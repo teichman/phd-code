@@ -113,7 +113,7 @@ int main(int argc, char** argv)
       HighResTimer hrt("filtering");
       hrt.start();
       pcl::VoxelGrid<rgbd::Point> vg;
-      vg.setLeafSize(0.02, 0.02, 0.02);  // 2cm^3 voxel grid.
+      vg.setLeafSize(0.01, 0.01, 0.01);
       Cloud::Ptr tmp(new Cloud);
       vg.setInputCloud(map);
       vg.filter(*tmp);
