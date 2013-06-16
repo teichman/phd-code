@@ -61,8 +61,8 @@ rgbd::Cloud::Ptr SlamCalibrator::buildMap(StreamSequenceBase::ConstPtr sseq, con
     Frame frame;
 
     sseq->readFrame(i, &frame);
-    if(filter_fringe)
-      filterFringe(&frame);
+    //if(filter_fringe)
+    filterFringe(&frame);
     
     Cloud::Ptr tmp(new Cloud);
     sseq->model_.frameToCloud(frame, tmp.get(), max_range);
