@@ -15,7 +15,7 @@ TOP_DIR = $(PWD)
 
 # svn download
 SVN_URL =  https://svn.openslam.org/data/svn/g2o/trunk
-#SVN_REVISION = -r233
+SVN_REVISION = -r29
 #SVN_CMDLINE = svn --no-auth-cache --trust-server-cert --non-interactive
 SVN_CMDLINE = svn --non-interactive --config-dir $(TOP_DIR)/svnconf
 include $(shell rospack find mk)/svn_checkout.mk
