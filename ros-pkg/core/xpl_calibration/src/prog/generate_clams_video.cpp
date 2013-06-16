@@ -57,6 +57,7 @@ int main(int argc, char** argv)
   vis.addPointCloud(Cloud::Ptr(new Cloud), "map");
   vis.setBackgroundColor(0, 0, 0);
   vis.registerKeyboardCallback(keyboardCallback);
+  vis.setShowFPS(false);
 
   // -- Build map.
   Cloud::Ptr map = SlamCalibrator::buildMap(sseq, traj, MAX_RANGE_MAP, 0.05);
@@ -112,7 +113,7 @@ int main(int argc, char** argv)
       HighResTimer hrt("filtering");
       hrt.start();
       pcl::VoxelGrid<rgbd::Point> vg;
-      vg.setLeafSize(0.01, 0.01, 0.01);  // 1cm^3 voxel grid.
+      vg.setLeafSize(0.02, 0.02, 0.02);  // 2cm^3 voxel grid.
       Cloud::Ptr tmp(new Cloud);
       vg.setInputCloud(map);
       vg.filter(*tmp);
