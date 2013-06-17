@@ -60,7 +60,8 @@ int main(int argc, char** argv)
   vis.setShowFPS(false);
 
   // -- Build map.
-  Cloud::Ptr map = SlamCalibrator::buildMap(sseq, traj, MAX_RANGE_MAP, 0.05);
+  double leafsize = 0.01;
+  Cloud::Ptr map = SlamCalibrator::buildMap(sseq, traj, MAX_RANGE_MAP, leafsize);
 
   // -- Display the map so you can set the camera angle.
   vis.updatePointCloud(map, "map");
@@ -113,7 +114,7 @@ int main(int argc, char** argv)
       HighResTimer hrt("filtering");
       hrt.start();
       pcl::VoxelGrid<rgbd::Point> vg;
-      vg.setLeafSize(0.01, 0.01, 0.01);
+      vg.setLeafSize(leafsize, leafsize, leafsize);
       Cloud::Ptr tmp(new Cloud);
       vg.setInputCloud(map);
       vg.filter(*tmp);
