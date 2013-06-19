@@ -14,7 +14,8 @@ rosbuild_init()
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
-
+find_package(Eigen REQUIRED)
+include_directories(${Eigen_INCLUDE_DIRS})
 
 rosbuild_add_library(${PROJECT_NAME}
   src/random.cpp
@@ -34,3 +35,5 @@ rosbuild_link_boost(cat filesystem system)
 
 rosbuild_add_executable(convert src/convert.cpp)
 rosbuild_link_boost(convert filesystem system)
+
+
