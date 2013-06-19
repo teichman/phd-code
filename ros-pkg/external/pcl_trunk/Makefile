@@ -93,6 +93,7 @@ built_against_ros_git: git
 	done
 	touch git/rospack_nosubdirs
 	rm -f release_against_ros_git/rospack_nosubdirs
+	cd git/common/include/pcl && cp PolygonMesh.h PointIndices.h ModelCoefficients.h TextureMesh.h Vertices.h ../../../../release_against_ros_git/include/pcl-1.7/pcl/
 	touch $@
 
 # was 5600
