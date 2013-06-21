@@ -1,4 +1,5 @@
 #include <xpl_calibration/depth_distortion_learner.h>
+#include <numeric>
 
 using namespace std;
 using namespace Eigen;
@@ -337,7 +338,8 @@ DiscreteDepthDistortionModel DepthDistortionLearner::fitDiscreteModel()
   ROS_ASSERT(frames_.size() == transforms_.size());
 
   DiscreteDepthDistortionModel dddm(initial_model_);
-  size_t max_i_sm = frames_.size () / DDL_INCR; 
+  size_t max_i_sm = frames_.size () / DDL_INCR;
+  vector<size_t> counts(max_i_sm, 0);
 #pragma omp parallel for
   for(size_t i_sm = 0; i_sm < max_i_sm; i_sm++) {
     size_t i = i_sm * DDL_INCR;
@@ -350,8 +352,11 @@ DiscreteDepthDistortionModel DepthDistortionLearner::fitDiscreteModel()
     Frame mapframe;
     mapframe.depth_ = DepthMatPtr(new DepthMat);
     localmodel.estimateMapDepth(*pcds_[i], transforms_[i].cast<float>(), frames_[i], mapframe.depth_.get());
-    dddm.accumulate(mapframe, frames_[i]);
+    counts[i] = dddm.accumulate(mapframe, frames_[i]);
   }	
+
+  size_t total = accumulate(counts.begin(), counts.end(), (size_t)0);
+  cout << "Total training examples used in DepthDistortionLearner::fitDiscreteModel: " << total << endl;
   
   return dddm;
 }

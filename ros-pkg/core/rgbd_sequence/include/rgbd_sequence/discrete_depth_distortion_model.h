@@ -45,8 +45,8 @@ public:
   DiscreteDepthDistortionModel(const DiscreteDepthDistortionModel& other);
   DiscreteDepthDistortionModel& operator=(const DiscreteDepthDistortionModel& other);
   void undistort(rgbd::Frame* frame) const;
-  void accumulate(const rgbd::Frame& ground_truth, const rgbd::Frame& measurement);
-//  void accumulate(const rgbd::Frame& measurement, const Eigen::MatrixXd& multipliers);
+  //! Returns the number of training examples it used from this pair.
+  size_t accumulate(const rgbd::Frame& ground_truth, const rgbd::Frame& measurement);
   void addExample(const rgbd::ProjectivePoint& ppt, double ground_truth, double measurement);
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);

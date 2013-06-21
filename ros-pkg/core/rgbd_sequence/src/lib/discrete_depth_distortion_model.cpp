@@ -215,13 +215,14 @@ void DiscreteDepthDistortionModel::addExample(const ProjectivePoint& ppt, double
   frustum(ppt.v_, ppt.u_).addExample(ground_truth, measurement);
 }
 
-void DiscreteDepthDistortionModel::accumulate(const Frame& ground_truth, const Frame& measurement)
+size_t DiscreteDepthDistortionModel::accumulate(const Frame& ground_truth, const Frame& measurement)
 {
   ROS_ASSERT(psm_.width_ == ground_truth.depth_->cols());
   ROS_ASSERT(psm_.height_ == ground_truth.depth_->rows());
   ROS_ASSERT(psm_.width_ == measurement.depth_->cols());
   ROS_ASSERT(psm_.height_ == measurement.depth_->rows());
 
+  size_t num_training_examples = 0;
   ProjectivePoint ppt;
   Point pt;
   for(ppt.v_ = 0; ppt.v_ < psm_.height_; ++ppt.v_) {
@@ -242,8 +243,11 @@ void DiscreteDepthDistortionModel::accumulate(const Frame& ground_truth, const F
       double gt = ground_truth.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
       double meas = measurement.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
       frustum(ppt.v_, ppt.u_).addExample(gt, meas);
+      ++num_training_examples;
     }
   }
+
+  return num_training_examples;
 }
 
 void DiscreteDepthDistortionModel::serialize(std::ostream& out) const
