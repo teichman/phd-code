@@ -25,9 +25,14 @@ protected:
   bool use_intrinsics_;
 
   void mouseEvent(int event, int x, int y, int flags, void* param);
-  void callback(const boost::shared_ptr<openni_wrapper::DepthImage>&);
-  void updateDepth(const openni_wrapper::DepthImage& oni);
-  std::vector< boost::shared_ptr<openni_wrapper::DepthImage> > buffer_;
+  cv::Mat3b oniToCV(const openni_wrapper::Image& oni) const;
+  void idiCallback(const boost::shared_ptr<openni_wrapper::Image>& img,
+                   const boost::shared_ptr<openni_wrapper::DepthImage>& depth,
+                   float callback);
+  void updateDepth(const openni_wrapper::Image& img,
+                   const openni_wrapper::DepthImage& depth);
+  std::vector< boost::shared_ptr<openni_wrapper::Image> > image_buffer_;
+  std::vector< boost::shared_ptr<openni_wrapper::DepthImage> > depth_buffer_;
 };
 
 Inspector::Inspector() :
@@ -57,19 +62,29 @@ void Inspector::run()
   vis_ = cv::Mat3b(sz, cv::Vec3b(0, 0, 0));
   
   pcl::OpenNIGrabber grabber("", mode, mode);
-  boost::function<void (const boost::shared_ptr<openni_wrapper::DepthImage>&)> cb;
-  cb = boost::bind(&Inspector::callback, this, _1);
+  // -- Register a callback that just gets the depth image.
+  // boost::function<void (const boost::shared_ptr<openni_wrapper::DepthImage>&)> cb;
+  // cb = boost::bind(&Inspector::callback, this, _1);
+  // grabber.registerCallback(cb);
+
+  // -- Register a callback for both the depth image and the camera image.
+  boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&,
+                        const boost::shared_ptr<openni_wrapper::DepthImage>&,
+                        float)> cb;
+  cb = boost::bind(&Inspector::idiCallback, this, _1, _2, _3);
   grabber.registerCallback(cb);
+  
   grabber.start();
 
   bool done = false;
   while(!done) {
     lock();
-    if(!buffer_.empty()) {
+    if(!image_buffer_.empty()) {
       view_.updateImage(vis_);
-      updateDepth(*buffer_.back());
+      updateDepth(*image_buffer_.back(), *depth_buffer_.back());
     }
-    buffer_.clear();
+    image_buffer_.clear();
+    depth_buffer_.clear();
     unlock();
     char key = view_.cvWaitKey(10);
     switch(key) {
@@ -90,15 +105,33 @@ void Inspector::run()
   }
 }
 
-void Inspector::updateDepth(const openni_wrapper::DepthImage& oni)
+cv::Mat3b Inspector::oniToCV(const openni_wrapper::Image& oni) const
+{
+  cv::Mat3b img(oni.getHeight(), oni.getWidth());
+  uchar data[img.rows * img.cols * 3];
+  oni.fillRGB(img.cols, img.rows, data);
+  int i = 0;
+  for(int y = 0; y < img.rows; ++y) {
+    for(int x = 0; x < img.cols; ++x, i+=3) {
+      img(y, x)[0] = data[i+2];
+      img(y, x)[1] = data[i+1];
+      img(y, x)[2] = data[i];
+    }
+  }
+    
+  return img;
+}
+
+void Inspector::updateDepth(const openni_wrapper::Image& image,
+                            const openni_wrapper::DepthImage& depth)
 {
   frame_.depth_->setZero();
-  ushort data[oni.getHeight() * oni.getWidth()];
-  oni.fillDepthImageRaw(oni.getWidth(), oni.getHeight(), data);
+  ushort data[depth.getHeight() * depth.getWidth()];
+  depth.fillDepthImageRaw(depth.getWidth(), depth.getHeight(), data);
   int i = 0;
-  for(size_t y = 0; y < oni.getHeight(); ++y) {
-    for(size_t x = 0; x < oni.getWidth(); ++x, ++i) {
-      if(data[i] == oni.getNoSampleValue() || data[i] == oni.getShadowValue())
+  for(size_t y = 0; y < depth.getHeight(); ++y) {
+    for(size_t x = 0; x < depth.getWidth(); ++x, ++i) {
+      if(data[i] == depth.getNoSampleValue() || data[i] == depth.getShadowValue())
         continue;
       frame_.depth_->coeffRef(y, x) = data[i];
     }
@@ -106,11 +139,16 @@ void Inspector::updateDepth(const openni_wrapper::DepthImage& oni)
 
   if(dddm_ && use_intrinsics_)
     dddm_->undistort(&frame_);
+
+  // Use the actual rgb data from the sensor.
+  frame_.img_ = oniToCV(image);
   
-  // vis_ = frame_.depthImage();
-  // frame_.img_ = vis_.clone();
-  static cv::Mat3b blank(cv::Size(oni.getWidth(), oni.getHeight()), cv::Vec3b(0, 0, 0));
-  frame_.img_ = blank;
+  // something else
+  //frame_.img_ = vis_.clone();
+
+  // Don't show colors at all.
+  // static cv::Mat3b blank(cv::Size(depth.getWidth(), depth.getHeight()), cv::Vec3b(255, 255, 255));
+  // frame_.img_ = blank;
   
   static pcl::visualization::CloudViewer viewer("pcd");
 
@@ -128,10 +166,13 @@ void Inspector::updateDepth(const openni_wrapper::DepthImage& oni)
   }  
 }
 
-void Inspector::callback(const boost::shared_ptr<openni_wrapper::DepthImage>& oni)
+void Inspector::idiCallback(const boost::shared_ptr<openni_wrapper::Image>& img,
+                            const boost::shared_ptr<openni_wrapper::DepthImage>& depth,
+                            float constant)
 {
   lock();
-  buffer_.push_back(oni);
+  image_buffer_.push_back(img);
+  depth_buffer_.push_back(depth);
   unlock();
 }
 
