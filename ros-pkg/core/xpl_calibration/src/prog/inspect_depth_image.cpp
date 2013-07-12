@@ -35,6 +35,7 @@ protected:
   void updateDepth(const openni_wrapper::Image& img,
                    const openni_wrapper::DepthImage& depth);
   void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie);
+  void pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie);
 };
 
 Inspector::Inspector() :
@@ -53,6 +54,7 @@ Inspector::Inspector() :
   Cloud::Ptr cloud(new Cloud);
   pcd_vis_.addPointCloud(cloud, "cloud");
   pcd_vis_.registerKeyboardCallback(&Inspector::keyboardCallback, *this);
+  pcd_vis_.registerPointPickingCallback(&Inspector::pointPickingCallback, *this);
 }
 
 void Inspector::mouseEvent(int event, int x, int y, int flags, void* param)
@@ -66,10 +68,29 @@ void Inspector::mouseEvent(int event, int x, int y, int flags, void* param)
 
 void Inspector::keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie)
 {
-  if(event.keyDown() && event.getKeyCode() == 'm') {
-    use_intrinsics_ = !use_intrinsics_;
-    cout << "use_intrinsics_: " << use_intrinsics_ << endl;
+  if(event.keyDown()) {
+    if(event.getKeyCode() == 'm') {
+      use_intrinsics_ = !use_intrinsics_;
+      cout << "use_intrinsics_: " << use_intrinsics_ << endl;
+    }
+    else if(event.getKeyCode() == 'c') {
+      pcd_vis_.removeAllShapes();
+    }
   }
+}
+
+void Inspector::pointPickingCallback(const pcl::visualization::PointPickingEvent& event, void* cookie)
+{
+  if(event.getPointIndex() == -1)
+    return;
+    
+  Point pt;
+  event.getPoint(pt.x, pt.y, pt.z);
+  cout << "Selected point: " << pt.x << ", " << pt.y << ", " << pt.z << endl;
+  pcd_vis_.removeAllShapes();
+  
+  Point origin(0, 0, 0);
+  pcd_vis_.addArrow<Point, Point>(origin, pt, 0.0, 0.0, 0.8, 0.9, 0.9, 0.9, "line");
 }
 
 void Inspector::run()
