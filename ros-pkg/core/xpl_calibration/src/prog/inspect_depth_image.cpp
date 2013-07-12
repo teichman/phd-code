@@ -20,9 +20,12 @@ public:
   
 protected:
   Frame frame_;
-  cv::Mat3b vis_;
+  cv::Mat3b img_vis_;
   OpenCVView view_;
   bool use_intrinsics_;
+  pcl::visualization::PCLVisualizer pcd_vis_;
+  std::vector< boost::shared_ptr<openni_wrapper::Image> > image_buffer_;
+  std::vector< boost::shared_ptr<openni_wrapper::DepthImage> > depth_buffer_;
 
   void mouseEvent(int event, int x, int y, int flags, void* param);
   cv::Mat3b oniToCV(const openni_wrapper::Image& oni) const;
@@ -31,19 +34,25 @@ protected:
                    float callback);
   void updateDepth(const openni_wrapper::Image& img,
                    const openni_wrapper::DepthImage& depth);
-  std::vector< boost::shared_ptr<openni_wrapper::Image> > image_buffer_;
-  std::vector< boost::shared_ptr<openni_wrapper::DepthImage> > depth_buffer_;
+  void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie);
 };
 
 Inspector::Inspector() :
   dddm_(NULL),
   show_pcd_(false),
   view_("Depth image"),
-  use_intrinsics_(false)
+  use_intrinsics_(false),
+  pcd_vis_("Cloud")
 {
   view_.setDelegate(this);
   frame_.depth_ = DepthMatPtr(new DepthMat(480, 640));
   frame_.depth_->setZero();
+
+  pcd_vis_.addCoordinateSystem(0.3);
+  pcd_vis_.setBackgroundColor(0, 0, 0);
+  Cloud::Ptr cloud(new Cloud);
+  pcd_vis_.addPointCloud(cloud, "cloud");
+  pcd_vis_.registerKeyboardCallback(&Inspector::keyboardCallback, *this);
 }
 
 void Inspector::mouseEvent(int event, int x, int y, int flags, void* param)
@@ -55,11 +64,19 @@ void Inspector::mouseEvent(int event, int x, int y, int flags, void* param)
   unlock();
 }
 
+void Inspector::keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie)
+{
+  if(event.keyDown() && event.getKeyCode() == 'm') {
+    use_intrinsics_ = !use_intrinsics_;
+    cout << "use_intrinsics_: " << use_intrinsics_ << endl;
+  }
+}
+
 void Inspector::run()
 {
   pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_VGA_30Hz;
   cv::Size sz(640, 480);
-  vis_ = cv::Mat3b(sz, cv::Vec3b(0, 0, 0));
+  img_vis_ = cv::Mat3b(sz, cv::Vec3b(0, 0, 0));
   
   pcl::OpenNIGrabber grabber("", mode, mode);
   // -- Register a callback that just gets the depth image.
@@ -80,7 +97,7 @@ void Inspector::run()
   while(!done) {
     lock();
     if(!image_buffer_.empty()) {
-      view_.updateImage(vis_);
+      view_.updateImage(img_vis_);
       updateDepth(*image_buffer_.back(), *depth_buffer_.back());
     }
     image_buffer_.clear();
@@ -144,14 +161,12 @@ void Inspector::updateDepth(const openni_wrapper::Image& image,
   frame_.img_ = oniToCV(image);
   
   // something else
-  //frame_.img_ = vis_.clone();
+  //frame_.img_ = img_vis_.clone();
 
   // Don't show colors at all.
   // static cv::Mat3b blank(cv::Size(depth.getWidth(), depth.getHeight()), cv::Vec3b(255, 255, 255));
   // frame_.img_ = blank;
   
-  static pcl::visualization::CloudViewer viewer("pcd");
-
   if(show_pcd_) {
     Cloud::Ptr cloud(new Cloud);
     PrimeSenseModel model;
@@ -162,7 +177,8 @@ void Inspector::updateDepth(const openni_wrapper::Image& image,
     model.fx_ = 525;
     model.fy_ = 525;
     model.frameToCloud(frame_, cloud.get());
-    viewer.showCloud(cloud);
+    pcd_vis_.updatePointCloud(cloud, "cloud");
+    pcd_vis_.spinOnce(2);
   }  
 }
 
