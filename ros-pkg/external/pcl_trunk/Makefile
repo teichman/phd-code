@@ -6,7 +6,13 @@ CUDA_BINDIR := /tmp/gcc-4.4
 C_COMPILER:=/usr/bin/gcc
 CXX_COMPILER:=/usr/bin/g++
 
-default: built
+GIT_BRANCH:=kinfu_mod
+
+default: built_against_ros_git
+
+git:
+	git clone git@github.com:sdmiller/pcl.git $@
+	cd $@ && git checkout ${GIT_BRANCH}
 
 built_against_ros: svn svn/PATCHED_KINFU svn/PATCHED_USE_ROS
 	mkdir -p msgs_tmp
@@ -27,9 +33,8 @@ built_against_ros: svn svn/PATCHED_KINFU svn/PATCHED_USE_ROS
 	-DBUILD_apps:BOOL=ON \
 	-DBUILD_gpu_surface:BOOL=ON \
 	-DCUDA_NVCC_FLAGS:="--compiler-bindir=${CUDA_BINDIR}" \
-	-DCMAKE_CXX_FLAGS:STRING="-Wl,--no-as-needed -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}`" \
+	-DCMAKE_CXX_FLAGS:STRING="-Wl,--no-as-needed -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}` `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_linker_flags {}`" \
 	-DCMAKE_C_FLAGS:=" -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}`" \
-	-DCMAKE_EXE_LINKER_FLAGS="-Wl,--no-as-needed `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_linker_flags {}` -Wl,-rpath,`rospack find pcl_trunk`/release_against_ros/lib" \
 	-DCMAKE_BUILD_TYPE:="Release" \
 	-DBUILD_examples:BOOL=OFF \
 	-DCMAKE_INSTALL_PREFIX:=`rospack find pcl_trunk`/release_against_ros
@@ -49,6 +54,45 @@ built_against_ros: svn svn/PATCHED_KINFU svn/PATCHED_USE_ROS
 	done
 	touch svn/rospack_nosubdirs
 	rm -f release_against_ros/rospack_nosubdirs
+	touch $@
+
+built_against_ros_git: git
+	mkdir -p msgs_tmp
+	for d in `ls git/common/include | grep msgs`; do \
+		echo Moving $$d; \
+	  mv git/common/include/$${d} msgs_tmp; \
+  done
+	cd git && mkdir -p build_against_ros
+	mkdir -p ${CUDA_BINDIR}
+	cd ${CUDA_BINDIR} && ln -sf /usr/bin/gcc-4.6 gcc && ln -sf /usr/bin/g++-4.6 g++ && ln -sf /usr/bin/gcc-4.6 cc && ln -sf /usr/bin/g++-4.6 c++
+	cd git/build_against_ros && cmake ../ \
+	-DCMAKE_C_COMPILER:FILEPATH=${C_COMPILER} \
+	-DCMAKE_CXX_COMPILER:FILEPATH=${CXX_COMPILER} \
+	-DUSE_ROS:BOOL=ON \
+	-DBUILD_CUDA:BOOL=OFF \
+	-DBUILD_GPU:BOOL=OFF \
+	-DBUILD_global_tests:BOOL=OFF \
+	-DBUILD_apps:BOOL=ON \
+	-DBUILD_gpu_surface:BOOL=ON \
+	-DBUILD_simulation:BOOL=ON \
+	-DCUDA_NVCC_FLAGS:="--compiler-bindir=${CUDA_BINDIR}" \
+	-DCMAKE_CXX_FLAGS:STRING="-Wl,--no-as-needed -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}` `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_linker_flags {}`" \
+	-DCMAKE_C_FLAGS:=" -Wno-invalid-offsetof -Wno-deprecated-declarations `rospack depends1 pcl_trunk | xargs -I {} ../../rospack_to_flags {}`" \
+	-DCMAKE_BUILD_TYPE:="Release" \
+	-DBUILD_examples:BOOL=OFF \
+	-DCMAKE_INSTALL_PREFIX:=`rospack find pcl_trunk`/release_against_ros_git
+	cd git/build_against_ros && make -j4 && make install
+	rm -rf ${CUDA_BINDIR}
+	for d in `echo msgs_tmp/*`; do \
+		mv $$d git/common/include; \
+	done
+	for f in `ls /opt/ros/groovy/include/pcl`; do rm -f release_against_ros_git/include/pcl/$f; done
+	# Make rospack only look in the installed location
+	for f in release*; do \
+		touch $${f}/rospack_nosubdirs; \
+	done
+	touch git/rospack_nosubdirs
+	rm -f release_against_ros_git/rospack_nosubdirs
 	touch $@
 
 # was 5600
@@ -177,3 +221,5 @@ wipe:
 	cd 3rdparty/flann-1.7.1-src/build && cmake ../ -DBUILD_CUDA_LIB:BOOL=OFF -DCMAKE_INSTALL_PREFIX:STRING=/usr
 	cd 3rdparty/flann-1.7.1-src/build && make
 	cd 3rdparty/flann-1.7.1-src/build && sudo make install
+
+
