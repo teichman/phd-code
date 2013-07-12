@@ -8,10 +8,40 @@
 #include <ros/console.h>
 #include <boost/shared_ptr.hpp>
 
-class Frustum : public Serializable, public SharedLockable
+class DepthDistortionModel : public Serializable
 {
 public:
-  Frustum(int smoothing = 1, double bin_depth = 1.0);
+  DepthDistortionModel() {}
+  virtual ~DepthDistortionModel() {}
+
+  virtual void undistort(rgbd::Frame* frame) const = 0;
+};
+
+class ExponentialFrustum : public Serializable, public SharedLockable
+{
+public:
+  ExponentialFrustum();
+  void fitParams(const std::vector<double>& ground_truth, const std::vector<double>& measurements);
+  void undistort(double* z) const;
+  void serialize(std::ostream& out) const;
+  void deserialize(std::istream& in);
+
+protected:
+};
+
+class ExponentialDepthDistortionModel : public DepthDistortionModel
+{
+public:
+  ExponentialDepthDistortionModel();
+  ~ExponentialDepthDistortionModel();
+
+  void undistort(rgbd::Frame* frame) const;
+};
+
+class DiscreteFrustum : public Serializable, public SharedLockable
+{
+public:
+  DiscreteFrustum(int smoothing = 1, double bin_depth = 1.0);
   //! z value, not distance to origin.
   void addExample(double ground_truth, double measurement);
   int index(double z) const;
@@ -34,7 +64,7 @@ protected:
   friend class DiscreteDepthDistortionModel;
 };
 
-class DiscreteDepthDistortionModel : public Serializable
+class DiscreteDepthDistortionModel : public DepthDistortionModel
 {
 public:
   typedef boost::shared_ptr<DiscreteDepthDistortionModel> Ptr;
@@ -70,12 +100,12 @@ protected:
   mutable Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> multiplier_cache_;
 
   //! frustums_[y][x]
-  std::vector< std::vector<Frustum*> > frustums_;
+  std::vector< std::vector<DiscreteFrustum*> > frustums_;
 
   void deleteFrustums();
   //! depth is in meters
-  Frustum& frustum(int y, int x);
-  const Frustum& frustum(int y, int x) const;
+  DiscreteFrustum& frustum(int y, int x);
+  const DiscreteFrustum& frustum(int y, int x) const;
 };
 
 #endif // DISCRETE_DEPTH_DISTORTION_MODEL_H
