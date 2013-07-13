@@ -17,6 +17,7 @@ public:
   virtual void undistort(rgbd::Frame* frame) const = 0;
 };
 
+//! Models the depth multiplier in this block as \exp(\alpha z + \beta).
 class ExponentialFrustum : public Serializable, public SharedLockable
 {
 public:
@@ -27,6 +28,8 @@ public:
   void deserialize(std::istream& in);
 
 protected:
+  double alpha_;
+  double beta_;
 };
 
 class ExponentialDepthDistortionModel : public DepthDistortionModel
