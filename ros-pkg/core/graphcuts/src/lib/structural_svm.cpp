@@ -5,7 +5,7 @@ namespace bfs = boost::filesystem;
 namespace bpt = boost::posix_time;
 using namespace Eigen;
 
-namespace graphcuts
+namespace gc
 {
 
   StructuralSVM::StructuralSVM(double c,

@@ -78,8 +78,8 @@ namespace asp
       asp->addPod(new RandomNPG("RandomNPG0"));
       // When RandomNPG0 calls pull<cv::Mat3b>("Image"), it will get the img that
       // ImageEntryPoint pushed to its "Output" port with push<cv::Mat3b>("Output", img).
-      asp->connect("ImageEntryPoint:Output -> RandomNPG0:Image");
-      asp->connect("RandomNPG0:Node -> NodePotentialAggregator:UnweightedNode");
+      asp->connect("ImageEntryPoint.Output -> RandomNPG0.Image");
+      asp->connect("RandomNPG0.Node -> NodePotentialAggregator.UnweightedNode");
 
       // An EdgeStructureGenerator is just a way of saying what edges should be computed
       // by downstream EdgePotentialGenerators.
@@ -89,40 +89,40 @@ namespace asp
       // library has special handling for pod params.
       // This just says that our EdgeStructureGenerator is going to use a simple grid.
       asp->setParam("GridESG", "Grid", true);
-      asp->connect("ImageEntryPoint:Output -> GridESG:Image");
-      asp->connect("MaskEntryPoint:Output -> GridESG:Mask");
+      asp->connect("ImageEntryPoint.Output -> GridESG.Image");
+      asp->connect("MaskEntryPoint.Output -> GridESG.Mask");
       // We'll also add some other EdgeStructureGenerators that use different edge structures.
       asp->addPod(new EdgeStructureGenerator("DiagonalESG"));
       asp->setParam("DiagonalESG", "Diagonal", true);
-      asp->connect("ImageEntryPoint:Output -> DiagonalESG:Image");
-      asp->connect("MaskEntryPoint:Output -> DiagonalESG:Mask");
+      asp->connect("ImageEntryPoint.Output -> DiagonalESG.Image");
+      asp->connect("MaskEntryPoint.Output -> DiagonalESG.Mask");
       asp->addPod(new EdgeStructureGenerator("WebESG"));
       asp->setParam("WebESG", "Web", true);
       asp->setParam("WebESG", "WebNumOutgoing", 5);
-      asp->connect("ImageEntryPoint:Output -> WebESG:Image");
-      asp->connect("MaskEntryPoint:Output -> WebESG:Mask");
+      asp->connect("ImageEntryPoint.Output -> WebESG.Image");
+      asp->connect("MaskEntryPoint.Output -> WebESG.Mask");
   
       asp->addPod(new SmoothnessEPG("SmoothnessEPG0"));
-      asp->connect("ImageEntryPoint:Output -> SmoothnessEPG0:Image");
-      asp->connect("SmoothnessEPG0:Edge -> EdgePotentialAggregator:UnweightedEdge");
-      asp->connect("GridESG:EdgeStructure -> SmoothnessEPG0:EdgeStructure");
+      asp->connect("ImageEntryPoint.Output -> SmoothnessEPG0.Image");
+      asp->connect("SmoothnessEPG0.Edge -> EdgePotentialAggregator.UnweightedEdge");
+      asp->connect("GridESG.EdgeStructure -> SmoothnessEPG0.EdgeStructure");
       asp->addPod(new SmoothnessEPG("SmoothnessEPG1"));
-      asp->connect("ImageEntryPoint:Output -> SmoothnessEPG1:Image");
-      asp->connect("SmoothnessEPG1:Edge -> EdgePotentialAggregator:UnweightedEdge");
-      asp->connect("DiagonalESG:EdgeStructure -> SmoothnessEPG1:EdgeStructure");
+      asp->connect("ImageEntryPoint.Output -> SmoothnessEPG1.Image");
+      asp->connect("SmoothnessEPG1.Edge -> EdgePotentialAggregator.UnweightedEdge");
+      asp->connect("DiagonalESG.EdgeStructure -> SmoothnessEPG1.EdgeStructure");
 
       asp->addPod(new SimpleColorDifferenceEPG("GridSimpleColorDifferenceEPG"));
-      asp->connect("ImageEntryPoint:Output -> GridSimpleColorDifferenceEPG:Image");
-      asp->connect("GridESG:EdgeStructure -> GridSimpleColorDifferenceEPG:EdgeStructure");
-      asp->connect("GridSimpleColorDifferenceEPG:Edge -> EdgePotentialAggregator:UnweightedEdge");
+      asp->connect("ImageEntryPoint.Output -> GridSimpleColorDifferenceEPG.Image");
+      asp->connect("GridESG.EdgeStructure -> GridSimpleColorDifferenceEPG.EdgeStructure");
+      asp->connect("GridSimpleColorDifferenceEPG.Edge -> EdgePotentialAggregator.UnweightedEdge");
       asp->addPod(new SimpleColorDifferenceEPG("DiagonalSimpleColorDifferenceEPG"));
-      asp->connect("ImageEntryPoint:Output -> DiagonalSimpleColorDifferenceEPG:Image");
-      asp->connect("DiagonalESG:EdgeStructure -> DiagonalSimpleColorDifferenceEPG:EdgeStructure");
-      asp->connect("DiagonalSimpleColorDifferenceEPG:Edge -> EdgePotentialAggregator:UnweightedEdge");
+      asp->connect("ImageEntryPoint.Output -> DiagonalSimpleColorDifferenceEPG.Image");
+      asp->connect("DiagonalESG.EdgeStructure -> DiagonalSimpleColorDifferenceEPG.EdgeStructure");
+      asp->connect("DiagonalSimpleColorDifferenceEPG.Edge -> EdgePotentialAggregator.UnweightedEdge");
       asp->addPod(new SimpleColorDifferenceEPG("WebSimpleColorDifferenceEPG"));
-      asp->connect("ImageEntryPoint:Output -> WebSimpleColorDifferenceEPG:Image");
-      asp->connect("WebESG:EdgeStructure -> WebSimpleColorDifferenceEPG:EdgeStructure");
-      asp->connect("WebSimpleColorDifferenceEPG:Edge -> EdgePotentialAggregator:UnweightedEdge");
+      asp->connect("ImageEntryPoint.Output -> WebSimpleColorDifferenceEPG.Image");
+      asp->connect("WebESG.EdgeStructure -> WebSimpleColorDifferenceEPG.EdgeStructure");
+      asp->connect("WebSimpleColorDifferenceEPG.Edge -> EdgePotentialAggregator.UnweightedEdge");
 
       // For now, we'll just set some weights by hand.
       // This shows how to generate a default model based on what inputs

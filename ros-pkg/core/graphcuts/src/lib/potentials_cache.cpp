@@ -2,7 +2,7 @@
 
 using namespace Eigen;
 
-namespace graphcuts
+namespace gc
 {
 
   long int PotentialsCache::bytes() const

@@ -10,8 +10,8 @@
 
 namespace asp
 {
-  using namespace graphcuts;
-  using namespace pipeline;
+  using namespace gc;
+  using namespace pl;
 
   typedef boost::shared_ptr<Eigen::MatrixXd> MatrixXdPtr;
   typedef boost::shared_ptr<const Eigen::MatrixXd> MatrixXdConstPtr;
@@ -92,7 +92,7 @@ namespace asp
     NodePotentialAggregator(std::string name) :
       NodePotentialGenerator(name)
     {
-      declareInput<const Eigen::MatrixXd*>("UnweightedNode");
+      declareMultiInput<const Eigen::MatrixXd*>("UnweightedNode");
     }
 
     NameMapping generateNameMapping() const;
@@ -141,7 +141,7 @@ namespace asp
     EdgePotentialAggregator(std::string name) :
       EdgePotentialGenerator(name)
     {
-      declareInput<const SparseMat*>("UnweightedEdge");
+      declareMultiInput<const SparseMat*>("UnweightedEdge");
     }
 
     NameMapping generateNameMapping() const;

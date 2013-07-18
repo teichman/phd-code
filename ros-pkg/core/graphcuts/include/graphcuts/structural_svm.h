@@ -8,7 +8,7 @@
 #include <bag_of_tricks/agent.h>
 #include <graphcuts/maxflow_inference.h>
 
-namespace graphcuts
+namespace gc
 {
   class Constraint;
   class ConstraintGenerator;

@@ -5,7 +5,7 @@
 #include <name_mapping/name_mapping.h>
 #include <eigen_extensions/eigen_extensions.h>
 
-namespace graphcuts
+namespace gc
 {
 
   class Model : public Serializable, public NameMappable

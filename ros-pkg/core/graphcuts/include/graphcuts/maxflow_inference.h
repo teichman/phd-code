@@ -5,7 +5,7 @@
 #include <graphcuts/potentials_cache.h>
 #include <graphcuts/model.h>
 
-namespace graphcuts
+namespace gc
 {
   
   class MaxflowInference

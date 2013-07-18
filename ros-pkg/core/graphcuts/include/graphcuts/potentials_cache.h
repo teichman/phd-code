@@ -6,7 +6,7 @@
 #include <graphcuts/typedefs.h>
 #include <graphcuts/model.h>
 
-namespace graphcuts
+namespace gc
 {
 
   //! Represents a function that maps segmentations to score vectors

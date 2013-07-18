@@ -3,7 +3,7 @@
 using namespace Eigen;
 using namespace std;
 
-namespace graphcuts
+namespace gc
 {
 
   MaxflowInference::MaxflowInference(const Model& model) :

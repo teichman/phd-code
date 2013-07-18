@@ -6,7 +6,7 @@
 #include <Eigen/Sparse>
 #include <maxflow/graph.h>
 
-namespace graphcuts
+namespace gc
 {
 
   typedef Graph<double, double, double> Graph3d;

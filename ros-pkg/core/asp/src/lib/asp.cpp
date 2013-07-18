@@ -1,7 +1,7 @@
 #include <asp/asp.h>
 
 using namespace std;
-using namespace pipeline;
+using namespace pl;
 using namespace Eigen;
 
 namespace asp
@@ -20,19 +20,19 @@ namespace asp
     addPod(new EntryPoint<cv::Mat1b>("SeedEntryPoint"));
     addPod(new NodePotentialAggregator("NodePotentialAggregator"));
     addPod(new EdgePotentialAggregator("EdgePotentialAggregator"));
-    connect("ImageEntryPoint:Output -> NodePotentialAggregator:Image");
-    connect("ImageEntryPoint:Output -> EdgePotentialAggregator:Image");
+    connect("ImageEntryPoint.Output -> NodePotentialAggregator.Image");
+    connect("ImageEntryPoint.Output -> EdgePotentialAggregator.Image");
     addPod(new GraphcutsPod("GraphcutsPod"));
-    connect("NodePotentialAggregator:Node -> GraphcutsPod:AggregatedNodePotentials");
-    connect("EdgePotentialAggregator:Edge -> GraphcutsPod:AggregatedEdgePotentials");
-    connect("ImageEntryPoint:Output -> GraphcutsPod:Image");
+    connect("NodePotentialAggregator.Node -> GraphcutsPod.AggregatedNodePotentials");
+    connect("EdgePotentialAggregator.Edge -> GraphcutsPod.AggregatedEdgePotentials");
+    connect("ImageEntryPoint.Output -> GraphcutsPod.Image");
     addPod(new SeedNPG("SeedNPG"));
-    connect("ImageEntryPoint:Output -> SeedNPG:Image");
-    connect("SeedEntryPoint:Output -> SeedNPG:SeedImage");
-    connect("SeedNPG:Node -> NodePotentialAggregator:UnweightedNode");
+    connect("ImageEntryPoint.Output -> SeedNPG.Image");
+    connect("SeedEntryPoint.Output -> SeedNPG.SeedImage");
+    connect("SeedNPG.Node -> NodePotentialAggregator.UnweightedNode");
     addPod(new PriorNPG("PriorNPG"));
-    connect("ImageEntryPoint:Output -> PriorNPG:Image");
-    connect("PriorNPG:Node -> NodePotentialAggregator:UnweightedNode");
+    connect("ImageEntryPoint.Output -> PriorNPG.Image");
+    connect("PriorNPG.Node -> NodePotentialAggregator.UnweightedNode");
   }
 
   Model Asp::defaultModel() const
@@ -193,7 +193,7 @@ namespace asp
     initializeStorage();
     
     vector<const MatrixXd*> node;
-    pull("UnweightedNode", &node);
+    multiPull("UnweightedNode", &node);
     ROS_ASSERT((size_t)nweights_.rows() == node.size());
     for(size_t i = 0; i < node.size(); ++i)
       node_ += (*node[i]) * nweights_[i];
@@ -247,7 +247,7 @@ namespace asp
     initializeStorage();
 
     vector<const SparseMat*> unweighted;
-    pull("UnweightedEdge", &unweighted);
+    multiPull("UnweightedEdge", &unweighted);
     ROS_ASSERT((size_t)eweights_.rows() == unweighted.size());
     for(size_t i = 0; i < unweighted.size(); ++i) {
       edge_ += eweights_(i) * (*unweighted[i]);
@@ -294,7 +294,7 @@ namespace asp
     pc->applyNameMapping("emap", generateNameMapping());
 
     vector<const SparseMat*> edge;
-    pull("UnweightedEdge", &edge);
+    multiPull("UnweightedEdge", &edge);
     pc->edge_.resize(edge.size());
     for(size_t i = 0; i < edge.size(); ++i)
       pc->edge_[i] = *edge[i];
