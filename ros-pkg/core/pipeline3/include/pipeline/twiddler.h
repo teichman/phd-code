@@ -11,7 +11,7 @@
 #include <bag_of_tricks/high_res_timer.h>
 #include <pipeline/params.h>
 
-namespace pipeline
+namespace pl
 {
 
   //! Twiddles a Params object and saves output.  The output is saved in a Dictionary<string, double>

@@ -5,7 +5,7 @@ using namespace std;
 using boost::any;
 namespace bfs = boost::filesystem;
 
-namespace pipeline
+namespace pl
 {
 
   Twiddler::Twiddler()

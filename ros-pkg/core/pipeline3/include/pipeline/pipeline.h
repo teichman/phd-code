@@ -5,7 +5,7 @@
 #include <pipeline/pod.h>
 #include <pipeline/common_pods.h>
 
-namespace pipeline
+namespace pl
 {
 
 /*
@@ -21,7 +21,7 @@ namespace pipeline
   
   //! Class that represents the entire computation graph and manages its execution.
   //! Pods added to a Pipeline will be deleted by that Pipeline.
-  class Pipeline : public Serializable {
+  class Pipeline : public YAMLizable {
   public:
     // ----------------------------------------
     // -- Setup
@@ -33,7 +33,7 @@ namespace pipeline
     void addPod(Pod* pod);
     void connect(std::string source_pod, std::string source_output,
                  std::string sink_pod, std::string sink_input);
-    //! "Pod:Output -> Pod:Input"
+    //! "Pod.Output -> Pod.Input"
     //! TODO: Maybe allow only this method of making connections.
     //! Then completeness is guaranteed.
     //! Also, it's hard to misinterpret this, whereas it's easy to mix up
@@ -102,10 +102,8 @@ namespace pipeline
     // -- Things you don't need to care about
     // ----------------------------------------
     virtual ~Pipeline();
-    void serialize(std::ostream& out) const;
-    void deserialize(std::istream& in);
-    void save(const std::string& path) const;
-    void load(const std::string& path);
+    YAML::Node YAMLize() const;
+    void deYAMLize(const YAML::Node& in);
       
   private:
     std::vector<Pod*> pods_;
@@ -229,7 +227,7 @@ namespace pipeline
   template<typename T>
   T* Pipeline::pod() const
   {
-    return pipeline::pod<T>(pods_);
+    return pl::pod<T>(pods_);
   }
 
   template<typename T> T* pod(const std::string& name,
@@ -257,7 +255,7 @@ namespace pipeline
 
   template<typename T> T* Pipeline::pod(const std::string& name) const
   {
-    return pipeline::pod<T>(name, pods_);
+    return pl::pod<T>(name, pods_);
   }
 
   template<typename T> T Pipeline::pull(const std::string& pod_name, const std::string& outlet_name) const
@@ -268,7 +266,8 @@ namespace pipeline
   template<typename T> T Pipeline::pull(const std::string& address) const
   {
     std::vector<std::string> tokens;
-    boost::split(tokens, address, boost::is_any_of(":"));
+    boost::split(tokens, address, boost::is_any_of(separatorString()));
+    PL_ASSERT(tokens.size() == 2);
     return pull<T>(tokens[0], tokens[1]);
   }
 
@@ -284,6 +283,6 @@ namespace pipeline
     pod< EntryPoint<T> >(pod_name)->setData(data);
   }
   
-} // namespace pipeline
+} // namespace pl
 
 #endif // PIPELINE_H

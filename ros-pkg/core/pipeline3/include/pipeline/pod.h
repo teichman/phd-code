@@ -20,12 +20,12 @@
 #include <pipeline/params.h>
 #include <pipeline/outlet.h>
 
-namespace pipeline
+namespace pl
 {
   
   //! Abstract base class that represents a node in the computation graph.
   //! All pods inherit from this class, at least indirectly.
-  class Pod : public Serializable
+  class Pod : public YAMLizable
   {  
   public:
     //! Whether to call debug() after compute().
@@ -89,6 +89,7 @@ namespace pipeline
     template<typename T> void declareParam(std::string name, T default_value);
     template<typename T> void declareParam(std::string name);
     template<typename T> void declareInput(std::string name);
+    template<typename T> void declareMultiInput(std::string name);
     template<typename T> void declareOutput(std::string name);
 
     // ----------------------------------------
@@ -101,7 +102,7 @@ namespace pipeline
     //! Pulls from exactly one output connected to an input.
     template<typename T> T pull(std::string input_name) const;
     //! Pulls from any number of outputs connected to an input.
-    template<typename T> void pull(std::string input_name, std::vector<T>* dest) const;
+    template<typename T> void multiPull(std::string input_name, std::vector<T>* dest) const;
     //! Pushes data to an output.
     template<typename T> void push(std::string output_name, T val);
     //! Gets the value of a param.
@@ -126,10 +127,11 @@ namespace pipeline
     static void registerPodType(const Pod& pod);
     static Pod* createPod(std::string type_name, std::string name, Params params);
     virtual std::string getClassName() const = 0;
-    void serialize(std::ostream& out) const;
-    void deserialize(std::istream& in);
     virtual ~Pod();
     bool hasOutput(const std::string& name) const;
+
+    YAML::Node YAMLize() const;
+    void deYAMLize(const YAML::Node& in) { PL_ABORT("Pods cannot be deYAMLized in isolation."); }
 
   private:
     std::string name_;
@@ -139,6 +141,7 @@ namespace pipeline
     //! Stores name and type.
     std::map<std::string, boost::any> declared_params_;
     std::map<std::string, std::vector<const Outlet*> > inputs_;
+    std::map<std::string, bool> multi_flags_;
     std::map<std::string, Outlet*> outlets_;
     std::vector<Pod*> parents_;
     std::vector<Pod*> children_;
@@ -183,14 +186,14 @@ namespace pipeline
   template<typename T> T Outlet::pull() const
   {
     if(!has_data_) {
-      PL_ABORT("Tried to pull from " << pod_->getName() << ":" << name_ << ", but Outlet does not have data!");
+      PL_ABORT("Tried to pull from " << pod_->getName() << separator() << name_ << ", but Outlet does not have data!");
     }
     
     try { 
       return boost::any_cast<T>(data_);
     }
     catch(boost::bad_any_cast& e) {
-      PL_ABORT("Type mismatch during pull from " << pod_->getName() << ":" << name_ << ".");
+      PL_ABORT("Type mismatch during pull from " << pod_->getName() << separator() << name_ << ".");
     }
     
     return boost::any_cast<T>(data_);
@@ -207,7 +210,7 @@ namespace pipeline
       boost::any_cast<T>(type_);
     }
     catch(boost::bad_any_cast& e) {
-      PL_ABORT("Type mismatch during push to " << pod_->getName() << ":" << name_ << "."
+      PL_ABORT("Type mismatch during push to " << pod_->getName() << separator() << name_ << "."
                << " You may need to explicitly specify the type, i.e. push<T>(...).");
     }
     data_ = data;
@@ -267,6 +270,16 @@ namespace pipeline
     PL_ASSERT(declared_inputs_.count(name) == 0);
     T tmp;
     declared_inputs_[name] = tmp;
+    multi_flags_[name] = false;
+  }
+
+  template<typename T> void Pod::declareMultiInput(std::string name)
+  {
+    assertValidName(name);
+    PL_ASSERT(declared_inputs_.count(name) == 0);
+    T tmp;
+    declared_inputs_[name] = tmp;
+    multi_flags_[name] = true;
   }
 
   template<typename T> void Pod::push(std::string name, T val)
@@ -296,21 +309,29 @@ namespace pipeline
                << "\" but this input has not been registered.");
     }
 
-    const std::vector<const Outlet*>& outlets = it->second;
-    if(outlets.size() != 1) { 
-      PL_ABORT(getClassName() << " \"" << name_ << "\" tried to pull \"" << name << "\" expecting exactly one input, but got "
-               << outlets.size() << " inputs. You probably want the alternate form of Pod::pull.");
+    PL_ASSERT(multi_flags_.count(name));
+    bool multi = multi_flags_.find(name)->second;
+    if(multi) {
+      PL_ABORT(getClassName() << " \"" << name_ << "\" tried to (single) pull from multi input \"" << name << "\".  Maybe you want multiPull()?");
     }
 
+    const std::vector<const Outlet*>& outlets = it->second;
+    PL_ASSERT(outlets.size() == 1);
     return outlets[0]->pull<T>();
   }
   
-  template<typename T> void Pod::pull(std::string name, std::vector<T>* dest) const
+  template<typename T> void Pod::multiPull(std::string name, std::vector<T>* dest) const
   {
     PL_ASSERT(dest->empty());
     
     if(!declared_inputs_.count(name))
       PL_ABORT(getClassName() << " \"" << name_ << "\" tried to pull from undeclared input \"" << name << "\".");
+
+    PL_ASSERT(multi_flags_.count(name));
+    bool multi = multi_flags_.find(name)->second;
+    if(!multi) {
+      PL_ABORT(getClassName() << " \"" << name_ << "\" tried to multiPull from non-multi input \"" << name << "\".");
+    }
     
     // --  If there are no registered inputs, just return.
     std::map<std::string, std::vector<const Outlet*> >::const_iterator it;
