@@ -13,7 +13,7 @@
 /** \brief @b OrbExtractor produces nicely-formatted Orb features and descriptors.
  *   It is a wrapper around the OpenCV functionality.
  */
-class OrbExtractor : public pipeline::Pod
+class OrbExtractor : public pl::Pod
 {
 public:  
   typedef Eigen::Matrix<uchar, 32, Eigen::Dynamic> PackedDescriptors;

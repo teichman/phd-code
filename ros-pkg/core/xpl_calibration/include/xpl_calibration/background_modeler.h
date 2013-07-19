@@ -34,7 +34,7 @@ public:
   virtual size_t size() const = 0;
 };
 
-class HistogramBackgroundModeler : public pipeline::Pod, public BackgroundModel
+class HistogramBackgroundModeler : public pl::Pod, public BackgroundModel
 {
 public:
   typedef bool (*QueryFunction)(size_t, double);

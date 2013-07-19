@@ -10,7 +10,7 @@
 #include <pipeline/twiddler.h>
 
 using namespace std;
-using namespace pipeline;
+using namespace pl;
 namespace bpo = boost::program_options;
 namespace bfs = boost::filesystem;
 

@@ -576,7 +576,7 @@ Eigen::Affine3f LoopCloser::alignFrames(const rgbd::Frame &frame0, const rgbd::F
   //vector<Cloud::Ptr> clouds1;
   //Cloud::Ptr cloud1(new Cloud); sseq_->model_.frameToCloud(frame1, cloud1.get());
   //clouds1.push_back(cloud1);
-  //pipeline::Params params;
+  //pl::Params params;
   //params.set("TimeCorrespondenceThreshold", numeric_limits<double>::infinity());
   //params.set("DistanceThreshold", (double) 0.03);
   //params.set("Seq0Fx", (double)0);

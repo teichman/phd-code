@@ -50,10 +50,10 @@ public:
   FeaturesPtr getFeatures(const rgbd::Frame &frame, std::vector<cv::KeyPoint> &keypoints,
       rgbd::Cloud::ConstPtr &keycloud) const;
 
-  pipeline::Params params_;
-  static inline pipeline::Params defaultParams()
+  pl::Params params_;
+  static inline pl::Params defaultParams()
   {
-    pipeline::Params params;
+    pl::Params params;
     params.load(ros::package::getPath("xpl_calibration") + "/data/default_slam_params.txt");
     return params;
   }

@@ -5,7 +5,7 @@
 using namespace std;
 using namespace pcl;
 using namespace rgbd;
-using namespace pipeline;
+using namespace pl;
 
 #define NUM_THREADS (getenv("NUM_THREADS") ? atoi(getenv("NUM_THREADS")) : 1)
 

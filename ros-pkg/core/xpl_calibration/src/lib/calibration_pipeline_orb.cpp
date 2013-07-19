@@ -3,7 +3,7 @@
 using namespace std;
 using namespace Eigen;
 using namespace rgbd;
-using namespace pipeline;
+using namespace pl;
 
 CalibrationPipelineOrb::CalibrationPipelineOrb(int num_threads, std::string pipeline_file) :
   pl_(num_threads)

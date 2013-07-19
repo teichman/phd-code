@@ -3,7 +3,7 @@
 
 #include <xpl_calibration/common.h>
 
-class TransformValidator : public pipeline::Pod
+class TransformValidator : public pl::Pod
 {
 public:
   typedef std::vector<Eigen::Affine3f> Candidates;

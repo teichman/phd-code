@@ -99,7 +99,7 @@ void keypointError(const rgbd::PrimeSenseModel& model0, rgbd::Frame frame0, cons
   // cv::waitKey(3);
 }
 
-FrameAlignmentMDE::FrameAlignmentMDE(const pipeline::Params& params,
+FrameAlignmentMDE::FrameAlignmentMDE(const pl::Params& params,
                                      const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
                                      rgbd::Frame frame0, rgbd::Frame frame1,
                                      const std::vector<cv::Point2d>& correspondences0, const std::vector<cv::Point2d>& correspondences1) :

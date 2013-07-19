@@ -3,7 +3,7 @@
 
 #include <xpl_calibration/common.h>
 
-class FrameSelector : public pipeline::Pod
+class FrameSelector : public pl::Pod
 {
 public:
   DECLARE_POD(FrameSelector);

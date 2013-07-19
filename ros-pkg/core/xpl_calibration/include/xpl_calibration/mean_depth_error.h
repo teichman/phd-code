@@ -14,7 +14,7 @@ public:
   
   //! fraction is how much of the depth data to use.
   //! Default params can come from FrameAligner::defaultParams().
-  FrameAlignmentMDE(const pipeline::Params& params,
+  FrameAlignmentMDE(const pl::Params& params,
                     const rgbd::PrimeSenseModel& model0, const rgbd::PrimeSenseModel& model1,
                     rgbd::Frame frame0, rgbd::Frame frame1,
                     const std::vector<cv::Point2d>& correspondences0 = std::vector<cv::Point2d>(),
@@ -31,7 +31,7 @@ public:
   double* depth_error_;
   
 protected:
-  pipeline::Params params_;
+  pl::Params params_;
   rgbd::PrimeSenseModel model0_;
   rgbd::PrimeSenseModel model1_;
   rgbd::Frame frame0_;

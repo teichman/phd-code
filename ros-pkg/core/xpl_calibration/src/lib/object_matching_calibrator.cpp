@@ -616,7 +616,7 @@ Affine3f ObjectMatchingCalibrator::updateTransformICP(const std::vector<KdTree::
 LossFunction::LossFunction(const std::vector<KdTree::Ptr>& trees0,
                            const std::vector<Cloud::ConstPtr>& pcds0,
                            const std::vector<Cloud::Ptr>& pcds1,
-                           const pipeline::Params& params) :
+                           const pl::Params& params) :
   trees0_(trees0),
   pcds0_(pcds0),
   pcds1_(pcds1),

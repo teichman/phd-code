@@ -3,7 +3,7 @@
 
 #include <xpl_calibration/common.h>
 
-class KdTreePod : public pipeline::Pod
+class KdTreePod : public pl::Pod
 {
 public:
   typedef pcl::KdTreeFLANN<rgbd::Point> KdTree;

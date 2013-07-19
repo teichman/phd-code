@@ -3,7 +3,7 @@
 
 #include <xpl_calibration/common.h>
 
-class OrbMatcher : public pipeline::Pod
+class OrbMatcher : public pl::Pod
 {
 public:
   typedef Eigen::Matrix<uchar, 32, Eigen::Dynamic> PackedDescriptors;

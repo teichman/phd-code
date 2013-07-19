@@ -36,10 +36,10 @@ public:
 
   GridSearchViewHandler* view_handler_;
 
-  pipeline::Params params_;
-  static inline pipeline::Params defaultParams()
+  pl::Params params_;
+  static inline pl::Params defaultParams()
   {
-    pipeline::Params params;
+    pl::Params params;
     params.load(ros::package::getPath("xpl_calibration") + "/data/default_frame_alignment_params.txt");
     return params;
   }

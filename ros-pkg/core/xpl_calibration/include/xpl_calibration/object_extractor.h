@@ -3,7 +3,7 @@
 
 #include <xpl_calibration/common.h>
 
-class ObjectExtractor : public pipeline::Pod
+class ObjectExtractor : public pl::Pod
 {
 public:
   typedef std::vector< std::vector<rgbd::Cloud::ConstPtr> > Objects;

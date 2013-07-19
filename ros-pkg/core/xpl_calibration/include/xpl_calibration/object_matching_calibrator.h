@@ -17,7 +17,7 @@ public:
   LossFunction(const std::vector<KdTree::Ptr>& trees0,
                const std::vector<rgbd::Cloud::ConstPtr>& pcds0,
                const std::vector<rgbd::Cloud::Ptr>& pcds1,
-               const pipeline::Params& params);
+               const pl::Params& params);
   double eval(const Eigen::VectorXd& x) const;
   double computeLoss(KdTree::Ptr tree0, const rgbd::Cloud& pcd0, const rgbd::Cloud& pcd1) const;
 
@@ -37,7 +37,7 @@ protected:
                    int* u, int* v) const;
 };
 
-class ObjectMatchingCalibrator : public pipeline::Pod
+class ObjectMatchingCalibrator : public pl::Pod
 {
 public:
   typedef std::vector< std::vector<rgbd::Cloud::ConstPtr> > ObjectClouds;

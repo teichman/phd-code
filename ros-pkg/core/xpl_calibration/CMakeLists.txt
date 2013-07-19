@@ -27,7 +27,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/orb_extractor.cpp
   src/lib/orb_matcher.cpp
   src/lib/descriptor_database.cpp
-  src/lib/calibration_pipeline_orb.cpp
+#  src/lib/calibration_pipeline_orb.cpp
   src/lib/background_modeler.cpp
   src/lib/gaussian_background_modeler.cpp
   src/lib/background_subtractor.cpp

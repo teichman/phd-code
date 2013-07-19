@@ -3,7 +3,7 @@
 
 #include <xpl_calibration/common.h>
 
-class GaussianBackgroundModeler : public pipeline::Pod
+class GaussianBackgroundModeler : public pl::Pod
 {
 public:
   DECLARE_POD(GaussianBackgroundModeler);

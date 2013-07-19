@@ -3,7 +3,7 @@
 using namespace std;
 using namespace Eigen;
 using namespace rgbd;
-using namespace pipeline;
+using namespace pl;
 
 #define DEBUG (getenv("DEBUG") ? atoi(getenv("DEBUG")) : 0)
 #define MAX_Z (getenv("MAX_Z") ? atof(getenv("MAX_Z")) : 3.5)

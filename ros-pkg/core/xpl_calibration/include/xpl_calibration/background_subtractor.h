@@ -3,7 +3,7 @@
 
 #include <xpl_calibration/background_modeler.h>
 
-class BackgroundSubtractor : public pipeline::Pod
+class BackgroundSubtractor : public pl::Pod
 {
 public:
   DECLARE_POD(BackgroundSubtractor);

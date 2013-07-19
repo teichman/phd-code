@@ -29,7 +29,7 @@ public:
                             rgbd::StreamSequenceBase::ConstPtr seq1);
   
 protected:
-  pipeline::Pipeline pl_;
+  pl::Pipeline pl_;
   void registerPods() const;
   void initializePipeline();
 };
