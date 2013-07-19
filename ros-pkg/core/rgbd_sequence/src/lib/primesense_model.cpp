@@ -71,7 +71,7 @@ namespace rgbd
     ROS_ASSERT(frame);
     ROS_ASSERT(width_ != -1 && height_ != -1 && cx_ != -1 && cy_ != -1 && fx_ != -1 && fy_ != -1);
 
-    frame->timestamp_ = pcd.header.stamp.toSec();
+    frame->timestamp_ = pcd.header.stamp * 1e-9;
     frame->depth_ = DepthMatPtr(new DepthMat(height_, width_));
     frame->depth_->setZero();  // 0 indicates a bad point.
     frame->img_ = cv::Mat3b(height_, width_);
@@ -128,7 +128,7 @@ namespace rgbd
     pcd->width = dm.cols();
     pcd->is_dense = false;
     pcd->resize(dm.rows() * dm.cols());
-    pcd->header.stamp.fromSec(frame.timestamp_);
+    pcd->header.stamp = (frame.timestamp_) * 1e9;
 
     int idx = 0;
     ProjectivePoint ppt;

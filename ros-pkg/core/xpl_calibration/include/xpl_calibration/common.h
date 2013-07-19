@@ -7,6 +7,7 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <ros/console.h>
+#include <pcl/common/distances.h>
 #include <pcl/common/transforms.h>
 #include <pcl/common/transformation_from_correspondences.h>
 #include <pcl/segmentation/extract_clusters.h>

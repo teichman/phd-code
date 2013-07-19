@@ -1,5 +1,6 @@
 #include <dst/realtime_interface.h>
 #include <bag_of_tricks/high_res_timer.h>
+#include <std_msgs/Header.h>
 
 #define SHOW_IR (getenv("SHOW_IR"))
 #define NUM_THREADS (getenv("NUM_THREADS") ? atoi(getenv("NUM_THREADS")) : 1)
@@ -160,12 +161,21 @@ namespace dst
   
   void RealTimeInterface::cloudCallback(const KinectCloud::ConstPtr& cloud)
   {
+    KinectCloud::Ptr thresholded(new KinectCloud(*cloud));
+    Point bad;
+    bad.x = numeric_limits<float>::quiet_NaN();
+    bad.y = numeric_limits<float>::quiet_NaN();
+    bad.z = numeric_limits<float>::quiet_NaN();
+    for(size_t i = 0; i < thresholded->size(); ++i)
+      if(thresholded->at(i).z > 2.5)
+        thresholded->at(i) = bad;
+    
     lock();
-    cout << "Cloud timestamp: " << cloud->header.stamp.toSec() << endl;
+    //cout << "Cloud timestamp: " << cloud->header.stamp.toSec() << endl;
     if(!segmenting_)
-      cloud_viewer_.showCloud(cloud);
-    else { 
-      pcd_queue_.push_back(cloud);
+      cloud_viewer_.showCloud(thresholded);
+    else {
+      pcd_queue_.push_back(thresholded);
       processQueues();
     }
     unlock();
@@ -225,7 +235,8 @@ namespace dst
       return;
 
     double its = img_stamp_queue_.back();
-    double pts = pcd_queue_.back()->header.stamp.toSec();
+    double pts = pcd_queue_.back()->header.stamp * 1e-9;
+    cout << "its: " << its << ", pts: " << pts << endl;
     if(fabs(its - pts) < thresh_) {
       cout << "Backs are equal. Adding pair at " << pts << " with delta " << fabs(its - pts) << endl;
       imgs_.push_back(img_queue_.back());
@@ -236,10 +247,10 @@ namespace dst
       segmentLatest();
     }
     else if(its < pts) {
-      double delta = fabs(pcd_queue_.front()->header.stamp.toSec() - its);
+      double delta = fabs(pcd_queue_.front()->header.stamp * 1e-9 - its);
       while(!pcd_queue_.empty()) {
         if(delta < thresh_) {
-          cout << "PCD more recent. Adding pair at " << pcd_queue_.front()->header.stamp.toSec() << " with delta " << delta << endl;
+          cout << "PCD more recent. Adding pair at " << pcd_queue_.front()->header.stamp * 1e-9 << " with delta " << delta << endl;
           imgs_.push_back(img_queue_.back());
           pcds_.push_back(pcd_queue_.front());
           
@@ -250,7 +261,7 @@ namespace dst
           segmentLatest();
           break;
         }
-        else if(pcd_queue_.front()->header.stamp.toSec() < its)
+        else if(pcd_queue_.front()->header.stamp * 1e-9 < its)
           pcd_queue_.pop_front();
         else
           break;
@@ -286,7 +297,7 @@ namespace dst
   
   void RealTimeInterface::segmentLatest()
   {
-    cout << "Segmenting pair with timestamp " << pcds_.back()->header.stamp.toSec() << endl;
+    cout << "Segmenting pair with timestamp " << pcds_.back()->header.stamp * 1e-9  << endl;
     cout << "Aligned queue sizes: " << pcds_.size() << " " << imgs_.size() << endl;
     ROS_ASSERT(pcds_.size() == imgs_.size());
     ROS_ASSERT(segmentations_.size() == pcd_results_.size());

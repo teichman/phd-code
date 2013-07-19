@@ -3,7 +3,7 @@
 using namespace Eigen;
 using namespace std;
 
-namespace graphcuts
+namespace gc
 {
 
   MaxflowInference::MaxflowInference(const Model& model) :
@@ -19,15 +19,12 @@ namespace graphcuts
     // -- Check for monkey business and allocate.
     ROS_ASSERT(pc->numEdgePotentials() == model_.eweights_.rows());
     ROS_ASSERT(pc->numNodePotentials() == model_.nweights_.rows());
-    ROS_ASSERT(pc->source_.size() == pc->sink_.size());
 
     if(seg->rows() != pc->numNodes())
       *seg = VecXi::Zero(pc->numNodes());
-      
-    for(size_t i = 0; i < pc->source_.size(); ++i) { 
-      ROS_ASSERT(seg->rows() == pc->source_[i].rows());
-      ROS_ASSERT(seg->rows() == pc->sink_[i].rows());
-    }
+
+    for(size_t i = 0; i < pc->node_.size(); ++i) 
+      ROS_ASSERT(seg->rows() == pc->node_[i].rows());
 
     int num_edges = 0;
     for(size_t i = 0; i < pc->edge_.size(); ++i) { 
@@ -39,14 +36,14 @@ namespace graphcuts
     Graph3d graph(seg->rows(), num_edges);
     graph.add_node(seg->rows());
                         
-    Eigen::VectorXd weighted_source(seg->rows());
-    Eigen::VectorXd weighted_sink(seg->rows());
+
+    Eigen::VectorXd weighted_node(seg->rows());
     SparseMat weighted_edge(seg->rows(), seg->rows());
-    pc->applyWeights(model_, &weighted_edge, &weighted_source, &weighted_sink);
+    pc->applyWeights(model_, &weighted_edge, &weighted_node);
     
     // -- Fill the graph with weighted node potentials.
-    for(int i = 0; i < weighted_source.rows(); ++i)
-     graph.add_tweights(i, weighted_source(i), weighted_sink(i));
+    for(int i = 0; i < weighted_node.rows(); ++i)
+     graph.add_tweights(i, weighted_node(i), 0);
     
     // -- Fill the graph with edge potentials.  Assumes symmetry & upper triangular.
     for(int i = 0; i < weighted_edge.outerSize(); ++i) {

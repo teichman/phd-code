@@ -16,12 +16,10 @@
   <depend package="pipeline2"/>
   <depend package="optimization"/>
   <depend package="maxflow"/>
-  <!--depend package="cv_bridge"/-->
   <depend package="opencv_bleeding"/>
   <depend package="image_labeler"/>
-  <depend package="quadprog"/>
   <depend package="graphcuts"/>
-  
+
   <export>
     <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath ${prefix}/lib -ldst `rosboost-cfg --lflags system`"/>
   </export>

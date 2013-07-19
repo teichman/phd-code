@@ -10,7 +10,7 @@
   <depend package="tf"/>
   <depend package="g2o"/>
   <depend package="pcl"/>
-  <depend package="eigen"/>
+  <depend package="eigen_flags"/>
   <depend package="rospy"/>
   <depend package="roscpp"/>
   <depend package="rosbag"/>

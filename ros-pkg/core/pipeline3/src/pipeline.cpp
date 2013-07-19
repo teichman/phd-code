@@ -4,7 +4,7 @@
 using namespace std;
 namespace bfs = boost::filesystem;
 
-namespace pipeline {
+namespace pl {
 
   Pipeline::Pipeline(int num_threads) :
     num_threads_(num_threads),
@@ -34,8 +34,10 @@ namespace pipeline {
   void Pipeline::setDebug(bool debug)
   {
     debug_ = debug;
-    for(size_t i = 0; i < pods_.size(); ++i)
+    for(size_t i = 0; i < pods_.size(); ++i) {
+      cout << "Setting debug to " << debug << " for pod \"" << pods_[i]->getName() << "\"" << endl;
       pods_[i]->debug_ = debug;
+    }
 
     if(debug && !bfs::exists(".pipeline-debug"))
       bfs::create_directory(".pipeline-debug");
@@ -74,19 +76,50 @@ namespace pipeline {
   void Pipeline::addConnectedComponent(Pod* pod)
   {
     addPods(getComponent(pod));
+    assertCompleteness();
   }
 
-  void Pipeline::addPods(const std::vector<Pod*> pods)
+  void Pipeline::addPod(Pod* pod)
   {
-    for(size_t i = 0; i < pods.size(); ++i) { 
-      pods_.push_back(pods[i]);
-      pod_names_[pods[i]->getName()] = pods[i];
-    }
-    assertCompleteness();
+    pods_.push_back(pod);
+    pod_names_[pod->getName()] = pod;
+    //assertCompleteness();
     assertNoDuplicates();
     PL_ASSERT(pods_.size() == pod_names_.size());
   }
+
+  void Pipeline::addPods(const std::vector<Pod*>& pods)
+  {
+    for(size_t i = 0; i < pods.size(); ++i)
+      addPod(pods[i]);
+  }
   
+  void Pipeline::connect(std::string source_pod, std::string source_output,
+                         std::string sink_pod, std::string sink_input)
+  {
+    pod(sink_pod)->registerInput(sink_input, pod(source_pod), source_output);
+    assertCompleteness();
+  }
+  
+  void Pipeline::connect(std::string connection)
+  {
+    // TODO: Make this use explode()
+    
+    const string& c = connection;
+    string source_pod = c.substr(0, c.find_first_of(separator()));
+    //cout << "source_pod: " << source_pod << endl;
+    string source_output = c.substr(c.find_first_of(separator()) + 1, c.find_first_of(" ") - c.find_first_of(separator()) - 1);
+    //cout << "source_output: " << source_output << endl;
+    string r = c.substr(c.find_first_of("-> ")).substr(4);
+    //cout << "r: " << r << endl;
+    string sink_pod = r.substr(0, r.find_first_of(separator()));
+    //cout << "sink_pod: " << sink_pod << endl;
+    string sink_input = r.substr(r.find_first_of(separator()) + 1);
+    //cout << "sink_input: " << sink_input << endl;
+
+    connect(source_pod, source_output, sink_pod, sink_input);
+  }
+    
   bool Pipeline::trylock() {
     if(pthread_mutex_trylock(&mutex_) == EBUSY)
       return false;
@@ -113,7 +146,7 @@ namespace pipeline {
     while(!to_check.empty()) {
       Pod* active = to_check.front();
       to_check.pop();
-      found.insert(active); //Won't insert duplicates.
+      found.insert(active);  // Won't insert duplicates.
       for(size_t i = 0; i < active->children_.size(); ++i) {
         to_check.push(active->children_[i]);
       }
@@ -209,7 +242,6 @@ namespace pipeline {
     Pod* active = NULL;
     map<Pod*, double>::iterator it;
     for(it = times.begin(); it != times.end(); ++it) {
-      //cout << it->first->_getName() << ": " << it->second << endl;
       if(it->second > max) {
         max = it->second;
         active = it->first;
@@ -498,88 +530,31 @@ namespace pipeline {
     return vec;
   }
 
-  void Pipeline::load(const std::string& filename)
+  void Pipeline::deYAMLize(const YAML::Node& in)
   {
-    if(filename.substr(filename.size()-3).compare(".pl") != 0)
-      PL_ABORT("Tried to load Pipeline from \"" << filename << "\".  Pipeline files must have a .pl extension.");
-    
-    ifstream f;
-    f.open(filename.c_str());
-    if(!f.is_open())
-      PL_ABORT("Failed to open \"" << filename << "\".");
-    deserialize(f);
-    f.close();
-  }
-
-  void Pipeline::save(const std::string& filename) const
-  {
-    if(filename.substr(filename.size()-3).compare(".pl") != 0)
-      PL_ABORT("Tried to save Pipeline to \"" << filename << "\".  Pipeline files must have a .pl extension.");
-
-    ofstream f;
-    f.open(filename.c_str());
-    if(!f.is_open())
-      PL_ABORT("Failed to open \"" << filename << "\".");
-    serialize(f);
-    f.close();
-  }
-  
-  void Pipeline::serialize(std::ostream& out) const
-  {
-    out << "Pipeline" << endl;
-    out << "Serialization version 1" << endl;
-    out << "Pods (" << pods_.size() << ")" << endl << endl;
-    for(size_t i = 0; i < pods_.size(); ++i)
-      out << *pods_[i] << endl;
-  }
-  
-  void Pipeline::deserialize(std::istream& in)
-  {
+    // -- Clean up existing pipeline.
     for(size_t i = 0; i < pods_.size(); ++i)
       delete pods_[i];
     pods_.clear();
     pod_names_.clear();
 
-    string buf;
-    getline(in, buf);
-    if(buf.compare("Pipeline") != 0)
-      PL_ABORT("Error deserializing Pipeline. Expected \"Pipeline\", got \"" << buf << "\".");
-    getline(in, buf); // serialization version
-    in >> buf;
-    if(buf.compare("Pods") != 0)
-      PL_ABORT("Error deserializing Pipeline. Expected \"Pods\", got \"" << buf << "\".");
-    in >> buf;
-    size_t num_pods = atoi(buf.substr(1, buf.size() - 1).c_str());
-    getline(in, buf);
-
+    // -- Set up everything but the connections.
+    //    This is unnecessarily complicated.
     vector<string> input_lines;
     vector<string> multi_input_lines;
     map<string, Pod*> pod_names; // Storage until we can get them hooked up.
     vector<Pod*> pods;
-    for(size_t i = 0; i < num_pods; ++i) {
-      string name;
-      getline(in, name); // empty line
-      getline(in, name);
-      string type;
-      getline(in, type);
+    for(size_t i = 0; i < in["Pods"].size(); ++i) {
+      const YAML::Node& podyaml = in["Pods"][i];
+      string name = podyaml["Name"].as<string>();
+      string type = podyaml["Type"].as<string>();
 
-      // Inputs
-      string buf;
-      in >> buf;
-      if(buf.compare("Inputs") != 0)
-        PL_ABORT("Error deserializing Pipeline. Expected \"Inputs\", got \"" << buf << "\".");
-      in >> buf;
-      size_t num_inputs = atoi(buf.substr(1, buf.size() - 1).c_str());
-      getline(in, buf);
-      
-      for(size_t i = 0; i < num_inputs; ++i) {
-        getline(in, buf);
-        input_lines.push_back(name + " " + buf);
+      const YAML::Node& inputs = podyaml["Inputs"];
+      for(YAML::const_iterator it = inputs.begin(); it != inputs.end(); ++it) {
+        input_lines.push_back(name + " " + it->first.as<string>() + " <- " + it->second.as<string>());
       }
 
-      // Params
-      Params params;
-      params.deserialize(in);
+      Params params = podyaml["Params"].as<Params>();
       Pod* pod = Pod::createPod(type, name, params);
 
       PL_ASSERT(pod_names.count(pod->getName()) == 0);
@@ -587,6 +562,7 @@ namespace pipeline {
       pods.push_back(pod);
     }
 
+    // -- Connect everything.
     for(size_t i = 0; i < input_lines.size(); ++i) {
       istringstream iss(input_lines[i]);
       string consumer_pod_name;
@@ -601,8 +577,8 @@ namespace pipeline {
       vector<string> output_names;
       while(!iss.eof()) {
         iss >> buf;
-        producer_pod_names.push_back(buf.substr(0, buf.find(':')));
-        output_names.push_back(buf.substr(buf.find(':') + 1));
+        producer_pod_names.push_back(buf.substr(0, buf.find(separator())));
+        output_names.push_back(buf.substr(buf.find(separator()) + 1));
         PL_ASSERT(pod_names.count(producer_pod_names.back()) == 1);
       }
       PL_ASSERT(!producer_pod_names.empty());
@@ -614,15 +590,23 @@ namespace pipeline {
     addPods(pods);
   }
 
-  Pod* Pipeline::getPod(const std::string& name) const
+  YAML::Node Pipeline::YAMLize() const
+  {
+    YAML::Node doc;
+    for(size_t i = 0; i < pods_.size(); ++i)
+      doc["Pods"].push_back(pods_[i]->YAMLize());
+    return doc;
+  }
+  
+  Pod* Pipeline::pod(const std::string& name) const
   {
     PL_ASSERT(pod_names_.size() == pods_.size());
     map<string, Pod*>::const_iterator it;
     it = pod_names_.find(name);
     if(it == pod_names_.end()) {
-      PL_ABORT("Called getPod(\"" << name << "\"), but no Pod with that name exists.");
+      PL_ABORT("Called pod(\"" << name << "\"), but no Pod with that name exists.");
     }
     return it->second;
   }
   
-} // namespace pipeline
+} // namespace pl

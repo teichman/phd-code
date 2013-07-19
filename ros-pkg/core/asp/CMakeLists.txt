@@ -30,6 +30,15 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #target_link_libraries(example ${PROJECT_NAME})
 
 
-rosbuild_add_library(asp src/lib/asp.cpp)
+rosbuild_add_library(asp src/lib/asp.cpp src/lib/aspvis.cpp)
 rosbuild_add_gtest(test_asp src/test/test_asp.cpp)
 target_link_libraries(test_asp asp)
+rosbuild_link_boost(asp filesystem)
+
+rosbuild_add_executable(simple_segmenter src/prog/simple_segmenter.cpp)
+target_link_libraries(simple_segmenter asp)
+rosbuild_link_boost(simple_segmenter program_options)
+
+rosbuild_add_executable(train_simple_segmenter src/prog/train_simple_segmenter.cpp)
+target_link_libraries(train_simple_segmenter asp)
+rosbuild_link_boost(train_simple_segmenter program_options)

@@ -3,15 +3,22 @@
 
 #include <pipeline/pod.h>
 
-namespace pipeline
+namespace pl
 {
   namespace example
   {
 
-    typedef std::vector<double> Vec;
-    typedef boost::shared_ptr<Vec> VecPtr;
-    typedef boost::shared_ptr<const Vec> VecConstPtr;
-
+    class Vec : public std::vector<double>
+    {
+    public:
+      typedef boost::shared_ptr<Vec> Ptr;
+      typedef boost::shared_ptr<Vec> ConstPtr;
+      Vec() {}
+      Vec(size_t num) : std::vector<double>(num)
+      {
+      }
+    };
+    
     //! Sorts a set of points.
     class Sorter : public Pod
     {
@@ -21,11 +28,11 @@ namespace pipeline
         Pod(name),
         sorted_(new Vec)
       {
-        declareInput<VecConstPtr>("Points");
-        declareOutput<VecConstPtr>("Sorted");
+        declareInput<Vec::ConstPtr>("Points");
+        declareOutput<Vec::ConstPtr>("Sorted");
       }
 
-      VecPtr sorted_;
+      Vec::Ptr sorted_;
       void compute();
     };
 
@@ -38,7 +45,7 @@ namespace pipeline
       Summarizer(std::string name) :
         Pod(name)
       {
-        declareInput<VecConstPtr>("Points"); // Must be sorted.
+        declareInput<Vec::ConstPtr>("Points"); // Must be sorted.
         declareOutput<double>("Mean");
         declareOutput<double>("Stdev");
         declareOutput<double>("MeanNeighborSeparation");
@@ -64,18 +71,19 @@ namespace pipeline
         declareParam<double>("Min");
         declareParam<double>("Max");
         declareParam<bool>("Normalize", false); // Whether or not the final histogram should sum to one. Default false.
-        declareInput<VecConstPtr>("Points"); // Must be sorted.
-        declareOutput<VecConstPtr>("Histogram");
-        declareOutput<VecConstPtr>("LowerBounds"); // Vector of the lower bounds of each bin.
+        declareInput<Vec::ConstPtr>("Points"); // Must be sorted.
+        declareOutput<Vec::ConstPtr>("Histogram");
+        declareOutput<Vec::ConstPtr>("LowerBounds"); // Vector of the lower bounds of each bin.
       }
 
-      VecPtr hist_;
-      VecPtr lower_bounds_;
+      Vec::Ptr hist_;
+      Vec::Ptr lower_bounds_;
       double num_points_;
       
       void compute();
       //! This demonstrates another method of making Pod functionality available outside of a Pipeline.
-      void _compute(const Vec& points, VecPtr* hist, VecPtr* lower_bounds);
+      void _compute(const Vec& points, Vec::Ptr* hist, Vec::Ptr* lower_bounds);
+      //! Common mistake: not making this method const.  It will silently just not get called.
       void debug() const;
     };
     
@@ -89,11 +97,11 @@ namespace pipeline
         Pod(name),
         aggregated_(new Vec)
       {
-        declareInput<VecConstPtr>("PointSets");
-        declareOutput<VecConstPtr>("Aggregated");
+        declareMultiInput<Vec::ConstPtr>("PointSets");
+        declareOutput<Vec::ConstPtr>("Aggregated");
       }
 
-      VecPtr aggregated_;
+      Vec::Ptr aggregated_;
       void compute();
     };
 
@@ -108,12 +116,12 @@ namespace pipeline
         Pod(name),
         descriptor_(new Vec)
       {
-        declareInput<double>("Elements");
-        declareInput<VecConstPtr>("SubVectors");
-        declareOutput<VecConstPtr>("Descriptor");
+        declareMultiInput<double>("Elements");
+        declareMultiInput<Vec::ConstPtr>("SubVectors");
+        declareOutput<Vec::ConstPtr>("Descriptor");
       }
 
-      VecPtr descriptor_;
+      Vec::Ptr descriptor_;
       void compute();
     };
 
@@ -127,11 +135,11 @@ namespace pipeline
         Pod(name),
         vals_(new Vec)
       {
-        declareInput<VecConstPtr>("Vals");
-        declareOutput<VecConstPtr>("ChangedVals");
+        declareInput<Vec::ConstPtr>("Vals");
+        declareOutput<Vec::ConstPtr>("ChangedVals");
       }
 
-      VecPtr vals_;
+      Vec::Ptr vals_;
       void display(const Vec& vector) const;
       void debug() const { display(*vals_); }
     };

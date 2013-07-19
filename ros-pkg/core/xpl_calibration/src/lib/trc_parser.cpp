@@ -36,7 +36,7 @@ void TRCParser::deserialize(std::istream& in)
 
     ROS_ASSERT((size_t)fields[0] == frames_.size() + 1);
     Cloud::Ptr frame(new Cloud);
-    frame->header.stamp.fromSec(fields[1]);
+    frame->header.stamp = (fields[1]) * 1e9;
     for(size_t i = 2; i < fields.size(); i+=3) {
       Point pt;
       pt.x = fields[i] * 0.001f;
@@ -48,7 +48,7 @@ void TRCParser::deserialize(std::istream& in)
       frame->push_back(pt);
     }
     frames_.push_back(frame);
-    //cout << "Added frame " << fields[0] << " at ts = " << frame->header.stamp.toSec() << " with " << frame->size() << " points." << endl;
+    //cout << "Added frame " << fields[0] << " at ts = " << frame->header.stamp * 1e-9  << " with " << frame->size() << " points." << endl;
   }
 }
 

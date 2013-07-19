@@ -37,6 +37,9 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  int retval = system("killall XnSensorServer");
+  cout << "killall XnSensorServer returned: " << retval << endl;
+  
   VectorXd weights;
   eigen_extensions::loadASCII(opts["weights"].as<string>(), &weights);
 

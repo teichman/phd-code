@@ -96,7 +96,7 @@ int main(int argc, char** argv)
   pl.setInput<Sequence::ConstPtr>("Sequence", seq);
   pl.compute();
   const vector< vector<int> >* fg_indices;
-  pl.getOutput("BackgroundSubtractor", "ForegroundIndices", &fg_indices);
+  pl.pull("BackgroundSubtractor", "ForegroundIndices", &fg_indices);
 
   pcl::visualization::CloudViewer vis("Foreground");
   // KBHandler h;
@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 
       pl.setInput<Sequence::ConstPtr>("Sequence", seq);
       pl.compute();
-      pl.getOutput("BackgroundSubtractor", "ForegroundIndices", &fg_indices);
+      pl.pull("BackgroundSubtractor", "ForegroundIndices", &fg_indices);
     }
   }
     

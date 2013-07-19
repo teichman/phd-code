@@ -44,7 +44,7 @@ int main(int argc, char** argv)
   ROS_WARN_STREAM("Showing clouds dt of less than " << thresh << ".");
   for(size_t i = 0; i < sseq0->size(); ++i) {
     Cloud::Ptr overlay = sseq0->getCloud(i);
-    double ts0 = overlay->header.stamp.toSec();
+    double ts0 = overlay->header.stamp * 1e-9 ;
     double dt;
     Cloud::Ptr pcd1 = sseq1->getCloud(ts0, &dt);
     Cloud::Ptr transformed(new Cloud);

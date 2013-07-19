@@ -105,7 +105,8 @@ bool gaussianTest(const PrimeSenseModel& model, const DepthMat& mapdepth, const 
 
   //cout << "z " << ppt.z_ << ", num " << num << ", mean " << mean << ", var " << var << endl;
   double stdev = sqrt(var);
-  double stdev_thresh = 0.02 * ppt.z_ * 0.0005;
+  double stdev_thresh = 0.03;
+  //double stdev_thresh = 0.02 * ppt.z_ * 0.0005;
   double val = min(1.0, stdev / stdev_thresh);
   (*visualization)(vc, uc) = cv::Vec3b(0, 255 * (1.0 - val), 255 * val);
   if(stdev > stdev_thresh)

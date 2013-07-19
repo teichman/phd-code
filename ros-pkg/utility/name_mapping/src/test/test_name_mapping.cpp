@@ -1,4 +1,5 @@
 #include <name_mapping/name_mapping.h>
+#include <name_mapping/common_name_mappables.h>
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -353,6 +354,33 @@ TEST(NameTranslatable, NameTranslatable)
   EXPECT_TRUE(dataset.nameMapping("cmap") == cmap2);
   cout << "------------------------------------------------------------" << endl;
   cout << dataset.status() << endl;
+}
+
+TEST(ColorWheel, ColorWheel)
+{
+  ColorWheel cw;
+  NameMapping cmap;
+  cmap.addName("car");
+  cmap.addName("pedestrian");
+  cmap.addName("bicyclist");
+  cw.applyNameMapping("cmap", cmap);
+  EXPECT_TRUE(cw.size() == cmap.size());
+  cout << cw.status() << endl;
+
+  cw.setColor("car", Vector3i(255, 0, 0));
+  cout << cw.status() << endl;
+  Vector3i orig_bicyclist = cw.color("bicyclist");
+  Vector3i orig_car = cw.color("car");
+  NameMapping cmap2;
+  cmap2.addName("motorcycle");
+  cmap2.addName("bicyclist");
+  cmap2.addName("car");
+  cmap2.addName("pedestrian");
+  cw.applyNameMapping("cmap", cmap2);
+  cout << cw.status() << endl;
+  
+  EXPECT_TRUE((orig_bicyclist.array() == cw.color("bicyclist").array()).all());
+  EXPECT_TRUE((orig_car.array() == cw.color("car").array()).all());
 }
 
 int main(int argc, char** argv) {

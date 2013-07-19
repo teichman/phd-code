@@ -89,7 +89,7 @@ int main(int argc, char** argv)
   for(size_t i = 0; i < sseq0->size(); ) {
     Cloud::Ptr overlay = sseq0->getCloud(i);
     cv::Mat3b img0 = sseq0->getImage(i);
-    double ts0 = overlay->header.stamp.toSec();
+    double ts0 = overlay->header.stamp * 1e-9 ;
     double dt;
     Cloud::Ptr pcd1 = sseq1->getCloud(ts0, &dt);
     cv::Mat3b img1 = sseq1->getImage(ts0, &dt);

@@ -8,7 +8,7 @@
 #include <bag_of_tricks/agent.h>
 #include <graphcuts/maxflow_inference.h>
 
-namespace graphcuts
+namespace gc
 {
   class Constraint;
   class ConstraintGenerator;
@@ -60,6 +60,9 @@ namespace graphcuts
     Model model_;
     PotentialsCache::ConstPtr cache_;
     VecXiConstPtr labels_;
+
+    ConstraintGenerator& operator=(const ConstraintGenerator& other);
+    ConstraintGenerator(const ConstraintGenerator& other);
   };
 
   double hammingLoss(const Eigen::VectorXi& label,

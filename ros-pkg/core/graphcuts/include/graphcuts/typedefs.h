@@ -6,12 +6,13 @@
 #include <Eigen/Sparse>
 #include <maxflow/graph.h>
 
-namespace graphcuts
+namespace gc
 {
 
   typedef Graph<double, double, double> Graph3d;
   typedef boost::shared_ptr<Graph3d> Graph3dPtr;
 
+  // See "Filling a Sparse Matrix" at http://eigen.tuxfamily.org/dox/TutorialSparse.html.
   typedef Eigen::SparseMatrix<double, Eigen::RowMajor> SparseMat;
   typedef boost::shared_ptr<SparseMat> SparseMatPtr;
   typedef boost::shared_ptr<const SparseMat> SparseMatConstPtr;

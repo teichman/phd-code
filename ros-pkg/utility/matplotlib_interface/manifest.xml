@@ -8,7 +8,7 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>aoeu</url>
-  <depend package="eigen"/>
+  <depend package="eigen_flags"/>
 
   <export>
     <cpp cflags="-I${prefix}/include `pkg-config --cflags-only-I python`" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -lmatplotlib_interface `pkg-config --libs-only-l python`" />

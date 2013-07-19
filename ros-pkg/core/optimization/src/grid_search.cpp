@@ -89,7 +89,6 @@ Eigen::ArrayXd GridSearch::search(const ArrayXd& x)
 
   HighResTimer hrt;
   hrt.start();
-
   vector< vector<int> > couplings;
   for(int i = 0; i < x.rows(); ++i) {
     vector<int> coup;

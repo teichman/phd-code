@@ -2,7 +2,7 @@
 #include <pipeline/twiddler.h>
 
 using namespace std;
-using namespace pipeline;
+using namespace pl;
 
 class TestTwiddler : public Twiddler
 {

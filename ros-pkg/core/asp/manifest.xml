@@ -9,8 +9,15 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/asp</url>
   <depend package="pipeline3"/>
+  <depend package="bag_of_tricks"/>
+  <depend package="image_labeler"/>
   <depend package="graphcuts"/>
+  <depend package="opencv_bleeding"/>
 
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath ${prefix}/lib -lasp `rosboost-cfg --lflags filesystem`"/>
+  </export>
+  
 </package>
 
 

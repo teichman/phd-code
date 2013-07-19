@@ -160,5 +160,5 @@ void OrbMatcher::debug() const
     }
   }
           
-  cv::imwrite(getDebugPath() + "-matches.png", vis);
+  cv::imwrite(debugBasePath() + "-matches.png", vis);
 }

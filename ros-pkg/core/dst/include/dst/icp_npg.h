@@ -1,7 +1,6 @@
 #ifndef ICP_NPG_H
 #define ICP_NPG_H
 
-//#include <pcl/win32_macros.h>  // pcl_isfinite.  This should have been included in centroid.h.
 #include <pcl/common/centroid.h>
 #include <dst/depth_projector.h>
 #include <dst/kdtree_node.h>

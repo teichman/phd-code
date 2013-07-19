@@ -6,21 +6,27 @@
 #include <serializable/serializable.h>
 #include <pipeline/common.h>
 
-namespace pipeline
+namespace pl
 {
   
-  class Params : public Serializable
+  class Params : public Serializable, public YAMLizable
   {
   public:
     std::map<std::string, boost::any> storage_;
 
     Params() {}
     ~Params() {}
-    void serialize(std::ostream& out) const;
-    void deserialize(std::istream& in);
+    
     bool exists(const std::string& name) const;
+    size_t size() const { return storage_.size(); }
+    bool empty() const { return storage_.empty(); }
     bool operator==(const Params& other) const;
     bool operator<(const Params& other) const;
+
+    void serialize(std::ostream& out) const;
+    void deserialize(std::istream& in);
+    YAML::Node YAMLize() const;
+    void deYAMLize(const YAML::Node& in);
     
     template<typename T> bool isType(const std::string& name) const
     {
@@ -63,10 +69,27 @@ namespace pipeline
       }
       return boost::any_cast<T>(storage_.find(name)->second);
     }
-
-    
   };
-
+}
+  
+/* YAML encoder / decoder for Params.
+ * Limited type support.
+ */
+namespace YAML {
+  template<>
+  struct convert<pl::Params> {
+    static Node encode(const pl::Params& params) {
+      return params.YAMLize();
+    }
+      
+    static bool decode(const Node& node, pl::Params& params) {
+      params.storage_.clear();
+      if(!node.IsNull())
+        params.deYAMLize(node);
+      
+      return true;
+    }
+  };
 }
 
 #endif // PARAMS_H

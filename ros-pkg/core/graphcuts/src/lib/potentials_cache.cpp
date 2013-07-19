@@ -2,7 +2,7 @@
 
 using namespace Eigen;
 
-namespace graphcuts
+namespace gc
 {
 
   long int PotentialsCache::bytes() const
@@ -10,9 +10,8 @@ namespace graphcuts
     long int bytes = 0;
     for(size_t i = 0; i < edge_.size(); ++i)
       bytes += sizeof(double) * edge_[i].nonZeros();
-    for(size_t i = 0; i < source_.size(); ++i) { 
-      bytes += sizeof(double) * source_[i].rows() * source_[i].cols();
-      bytes += sizeof(double) * sink_[i].rows() * sink_[i].cols();
+    for(size_t i = 0; i < node_.size(); ++i) { 
+      bytes += sizeof(double) * node_[i].rows() * node_[i].cols();
     }
     
     return bytes;
@@ -20,15 +19,8 @@ namespace graphcuts
 
   int PotentialsCache::numNodes() const
   {
-    ROS_ASSERT(sink_.size() == source_.size());
-    ROS_ASSERT(!sink_.empty());
-    ROS_ASSERT(sink_[0].rows() == source_[0].rows());
-    for(size_t i = 1; i < sink_.size(); ++i) {
-      ROS_ASSERT(sink_[i].rows() == sink_[i-1].rows());
-      ROS_ASSERT(source_[i].rows() == source_[i-1].rows());
-    }
-
-    return sink_[0].rows();
+    ROS_ASSERT(!node_.empty());
+    return node_[0].rows();
   }
   
   int PotentialsCache::numPotentials() const
@@ -38,8 +30,7 @@ namespace graphcuts
 
   int PotentialsCache::numNodePotentials() const
   {
-    ROS_ASSERT(sink_.size() == source_.size());
-    return sink_.size();
+    return node_.size();
   }
 
   void PotentialsCache::symmetrizeEdges()
@@ -51,32 +42,22 @@ namespace graphcuts
   
   void PotentialsCache::applyWeights(const Model& model,
                                      SparseMat* edge,
-                                     Eigen::VectorXd* src,
-                                     Eigen::VectorXd* snk) const
-                                     
+                                     Eigen::VectorXd* node) const
   {
-    ROS_ASSERT(src->rows() == snk->rows());
-    ROS_ASSERT(src->rows() == edge->rows());
-    ROS_ASSERT(src->rows() == edge->cols());
+    ROS_ASSERT(node->rows() == edge->rows());
+    ROS_ASSERT(node->rows() == edge->cols());
     ROS_ASSERT(model.nweights_.rows() == numNodePotentials());
     ROS_ASSERT(model.eweights_.rows() == numEdgePotentials());
-    ROS_ASSERT(src->rows() == edge->cols());
+    ROS_ASSERT(!node_.empty());
     ROS_ASSERT(!edge_.empty());
-    ROS_ASSERT(!source_.empty());
-    ROS_ASSERT(source_.size() == sink_.size());
 
-    src->setZero();
-    snk->setZero();
+    node->setZero();
     edge->setZero();
-    for(size_t i = 0; i < source_.size(); ++i) { 
-      *src += model.nweights_(i) * source_[i];
-      *snk += model.nweights_(i) * sink_[i];
-    }
-
+    for(size_t i = 0; i < node_.size(); ++i)
+      *node += model.nweights_(i) * node_[i];
     for(size_t i = 0; i < edge_.size(); ++i)
       *edge += model.eweights_(i) * edge_[i];
   }
-
   
   Eigen::VectorXd PotentialsCache::psi(const Eigen::VectorXi& seg) const
   {
@@ -96,17 +77,12 @@ namespace graphcuts
     }
 
     // -- Add up scores for node potentials.
-    for(size_t i = 0; i < source_.size(); ++i) {
+    for(size_t i = 0; i < node_.size(); ++i) {
       int idx = i + edge_.size();
-      ROS_ASSERT(source_[i].size() == seg.rows());
-      for(int j = 0; j < seg.rows(); ++j) {
-        if(seg(j) == -1)
-          psi(idx) += sink_[i](j);
-        else if(seg(j) == 1)
-          psi(idx) += source_[i](j);
-        else
-          abort();
-      }
+      ROS_ASSERT(node_[i].size() == seg.rows());
+      for(int j = 0; j < seg.rows(); ++j)
+        if(seg(j) == 1)
+          psi(idx) += node_[i][j];
     }
      
     return psi;
@@ -119,8 +95,7 @@ namespace graphcuts
       translator.translate(&edge_, SparseMat());
     }
     else if(id == "nmap") {
-      translator.translate(&sink_, VectorXd());
-      translator.translate(&source_, VectorXd());
+      translator.translate(&node_, VectorXd());
     }
   }
 }

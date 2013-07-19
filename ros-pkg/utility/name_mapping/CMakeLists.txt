@@ -22,7 +22,10 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
-rosbuild_add_library(name_mapping src/lib/name_mapping.cpp)
+rosbuild_add_library(name_mapping
+  src/lib/name_mapping.cpp
+  src/lib/common_name_mappables.cpp
+  )
 rosbuild_add_gtest(test_name_mapping src/test/test_name_mapping.cpp)
 target_link_libraries(test_name_mapping name_mapping)
 

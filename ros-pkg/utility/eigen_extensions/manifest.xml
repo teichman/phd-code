@@ -8,6 +8,7 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/eigen_extensions</url>
+  <depend package="eigen_flags"/>
   <depend package="gzstream"/>
   <depend package="timer"/>
 

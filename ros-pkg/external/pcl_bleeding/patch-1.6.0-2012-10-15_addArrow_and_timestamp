@@ -1,0 +1,238 @@
+Index: visualization/include/pcl/visualization/impl/pcl_visualizer.hpp
+===================================================================
+--- visualization/include/pcl/visualization/impl/pcl_visualizer.hpp	(revision 7049)
++++ visualization/include/pcl/visualization/impl/pcl_visualizer.hpp	(working copy)
+@@ -361,6 +361,39 @@
+ 
+ ////////////////////////////////////////////////////////////////////////////////////////////
+ template <typename P1, typename P2> bool
++pcl::visualization::PCLVisualizer::addArrow (const P1 &pt1, const P2 &pt2,
++					     double r_line, double g_line, double b_line,
++					     double r_text, double g_text, double b_text,
++					     const std::string &id, int viewport)
++{
++  // Check to see if this ID entry already exists (has it been already added to the visualizer?)
++  ShapeActorMap::iterator am_it = shape_actor_map_->find (id);
++  if (am_it != shape_actor_map_->end ())
++  {
++    PCL_WARN ("[addArrow] A shape with id <%s> already exists! Please choose a different id and retry.\n", id.c_str ());
++    return (false);
++  }
++
++  // Create an Actor
++  vtkSmartPointer<vtkLeaderActor2D> leader = vtkSmartPointer<vtkLeaderActor2D>::New ();
++  leader->GetPositionCoordinate ()->SetCoordinateSystemToWorld ();
++  leader->GetPositionCoordinate ()->SetValue (pt1.x, pt1.y, pt1.z);
++  leader->GetPosition2Coordinate ()->SetCoordinateSystemToWorld ();
++  leader->GetPosition2Coordinate ()->SetValue (pt2.x, pt2.y, pt2.z);
++  leader->SetArrowStyleToFilled ();
++  leader->AutoLabelOn ();
++
++  leader->GetLabelTextProperty()->SetColor(r_text, g_text, b_text);
++  
++  leader->GetProperty ()->SetColor (r_line, g_line, b_line);
++  addActorToRenderer (leader, viewport);
++
++  // Save the pointer/ID pair to the global actor map
++  (*shape_actor_map_)[id] = leader;
++  return (true);
++}
++
++template <typename P1, typename P2> bool
+ pcl::visualization::PCLVisualizer::addArrow (const P1 &pt1, const P2 &pt2, double r, double g, double b, const std::string &id, int viewport)
+ {
+   // Check to see if this ID entry already exists (has it been already added to the visualizer?)
+Index: visualization/include/pcl/visualization/pcl_visualizer.h
+===================================================================
+--- visualization/include/pcl/visualization/pcl_visualizer.h	(revision 7049)
++++ visualization/include/pcl/visualization/pcl_visualizer.h	(working copy)
+@@ -1068,6 +1068,13 @@
+         addArrow (const P1 &pt1, const P2 &pt2, double r, double g, double b, bool display_length,
+                   const std::string &id = "arrow", int viewport = 0);
+ 
++	template <typename P1, typename P2> bool
++	addArrow (const P1 &pt1, const P2 &pt2,
++		  double r_line, double g_line, double b_line,
++		  double r_text, double g_text, double b_text,
++		  const std::string &id = "arrow", int viewport = 0);
++	  
++
+         /** \brief Add a sphere shape from a point and a radius
+           * \param[in] center the center of the sphere
+           * \param[in] radius the radius of the sphere
+Index: io/include/pcl/io/openni_camera/openni_depth_image.h
+===================================================================
+--- io/include/pcl/io/openni_camera/openni_depth_image.h	(revision 7049)
++++ io/include/pcl/io/openni_camera/openni_depth_image.h	(working copy)
+@@ -71,7 +71,7 @@
+      * @param[in] no_sample_value defines which values in the depth data are indicating that no depth (disparity) could be determined .
+      * @attention The focal length may change, depending whether the depth stream is registered/mapped to the RGB stream or not.
+      */
+-    inline DepthImage (boost::shared_ptr<xn::DepthMetaData> depth_meta_data, float baseline, float focal_length, XnUInt64 shadow_value, XnUInt64 no_sample_value) throw ();
++    inline DepthImage (boost::shared_ptr<xn::DepthMetaData> depth_meta_data, float baseline, float focal_length, XnUInt64 shadow_value, XnUInt64 no_sample_value, double system_timestamp) throw ();
+ 
+     /**
+      * @author Suat Gedikli
+@@ -173,20 +173,24 @@
+      *            But definitely synchronized with other streams
+      */
+     inline unsigned long getTimeStamp () const throw ();
++    inline double getSystemTimeStamp () const { return system_timestamp_; }
+   protected:
+     boost::shared_ptr<xn::DepthMetaData> depth_md_;
+     float baseline_;
+     float focal_length_;
+     XnUInt64 shadow_value_;
+     XnUInt64 no_sample_value_;
++    double system_timestamp_;
+   } ;
+ 
+-  DepthImage::DepthImage (boost::shared_ptr<xn::DepthMetaData> depth_meta_data, float baseline, float focal_length, XnUInt64 shadow_value, XnUInt64 no_sample_value) throw ()
++  DepthImage::DepthImage (boost::shared_ptr<xn::DepthMetaData> depth_meta_data, float baseline, float focal_length, XnUInt64 shadow_value, XnUInt64 no_sample_value, double system_timestamp = -1) throw ()
+   : depth_md_ (depth_meta_data)
+   , baseline_ (baseline)
+   , focal_length_ (focal_length)
+   , shadow_value_ (shadow_value)
+-  , no_sample_value_ (no_sample_value) { }
++  , no_sample_value_ (no_sample_value)
++  , system_timestamp_(system_timestamp)
++  { }
+ 
+   DepthImage::~DepthImage () throw () { }
+ 
+Index: io/src/openni_grabber.cpp
+===================================================================
+--- io/src/openni_grabber.cpp	(revision 7049)
++++ io/src/openni_grabber.cpp	(working copy)
+@@ -48,6 +48,45 @@
+ #include <boost/filesystem.hpp>
+ #include <iostream>
+ 
++// namespace ros
++// {
++
++//   void normalizeSecNSec(uint32_t& sec, uint32_t& nsec)
++//   {
++//     uint64_t sec64 = sec;
++//     uint64_t nsec64 = nsec;
++
++//     normalizeSecNSec(sec64, nsec64);
++
++//     sec = (uint32_t)sec64;
++//     nsec = (uint32_t)nsec64;
++//   }
++
++//   void normalizeSecNSec(uint64_t& sec, uint64_t& nsec)
++//   {
++//     uint64_t nsec_part = nsec % 1000000000UL;
++//     uint64_t sec_part = nsec / 1000000000UL;
++
++//     if (sec_part > UINT_MAX)
++//       throw std::runtime_error("Time is out of dual 32-bit range");
++
++//     sec += sec_part;
++//     nsec = nsec_part;
++//   }
++  
++//   template<class T, class D>
++//   T& TimeBase<T, D>::fromNSec(uint64_t t)
++//   {
++//     sec  = (int32_t)(t / 1000000000);
++//     nsec = (int32_t)(t % 1000000000);
++
++//     normalizeSecNSec(sec, nsec);
++
++//     return *static_cast<T*>(this);
++//   }
++
++// }
++
+ namespace pcl
+ {
+   typedef union
+@@ -624,6 +663,7 @@
+   boost::shared_ptr<pcl::PointCloud<PointT> > cloud (new pcl::PointCloud<PointT>);
+ 
+   cloud->header.frame_id = rgb_frame_id_;
++  cloud->header.stamp = 1000 * depth_image->getTimeStamp();
+   cloud->height = std::max (image_height_, depth_height_);
+   cloud->width = std::max (image_width_, depth_width_);
+   cloud->is_dense = false;
+@@ -830,6 +870,8 @@
+   boost::shared_ptr<pcl::PointCloud<pcl::PointXYZI> > cloud (new pcl::PointCloud<pcl::PointXYZI > ());
+ 
+   cloud->header.frame_id = rgb_frame_id_;
++  cloud->header.stamp = 1000 * depth_image->getTimeStamp();
++  //cloud->header.stamp.fromNSec(1000 * depth_image->getTimeStamp());
+   cloud->height = depth_height_;
+   cloud->width = depth_width_;
+   cloud->is_dense = false;
+Index: io/src/openni_camera/openni_device.cpp
+===================================================================
+--- io/src/openni_camera/openni_device.cpp	(revision 7049)
++++ io/src/openni_camera/openni_device.cpp	(working copy)
+@@ -730,7 +730,7 @@
+     image_generator_.GetMetaData (*image_data);
+     image_lock.unlock ();
+ 
+-    boost::shared_ptr<Image> image = getCurrentImage (image_data);
++    boost::shared_ptr<Image> image = getCurrentImage(image_data);
+     for (map< OpenNIDevice::CallbackHandle, ActualImageCallbackFunction >::iterator callbackIt = image_callback_.begin (); callbackIt != image_callback_.end (); ++callbackIt)
+     {
+       callbackIt->second.operator()(image);
+@@ -753,12 +753,17 @@
+       return;
+ 
+     depth_generator_.WaitAndUpdateData ();
++    timespec clk;
++    clock_gettime(CLOCK_REALTIME, &clk); // System time before PCL processing happens.
++    double system_timestamp = (double)clk.tv_sec + (double)clk.tv_nsec * (double)1e-9;
++    
+     boost::shared_ptr<xn::DepthMetaData> depth_data (new xn::DepthMetaData);
+     depth_generator_.GetMetaData (*depth_data);
+     depth_lock.unlock ();
+ 
+-    boost::shared_ptr<DepthImage> depth_image ( new DepthImage (depth_data, baseline_, getDepthFocalLength (), shadow_value_, no_sample_value_) );
+-
++    boost::shared_ptr<DepthImage> depth_image ( new DepthImage (depth_data, baseline_, getDepthFocalLength (),
++								shadow_value_, no_sample_value_, system_timestamp) );
++      
+     for (map< OpenNIDevice::CallbackHandle, ActualDepthImageCallbackFunction >::iterator callbackIt = depth_callback_.begin ();
+          callbackIt != depth_callback_.end (); ++callbackIt)
+     {
+Index: common/include/pcl/point_cloud.h
+===================================================================
+--- common/include/pcl/point_cloud.h	(revision 7049)
++++ common/include/pcl/point_cloud.h	(working copy)
+@@ -53,6 +53,21 @@
+ #include <map>
+ #include <boost/mpl/size.hpp>
+ 
++// namespace ros
++// {
++
++//   template<class T, class D>
++//   bool TimeBase<T, D>::operator>(const T &rhs) const
++//   {
++//     if (sec > rhs.sec)
++//       return true;
++//     else if (sec == rhs.sec && nsec > rhs.nsec)
++//       return true;
++//     return false;
++//   }
++
++// }
++
+ namespace pcl
+ {
+   namespace detail
+@@ -649,7 +664,8 @@
+         width (pc.width), height (pc.height), is_dense (pc.is_dense)
+       {
+         // Copy the obvious
+-        properties.acquisition_time   = pc.header.stamp;
++        //properties.acquisition_time   = pc.header.stamp.toSec();
++	properties.acquisition_time   = pc.header.stamp;
+         properties.sensor_origin      = pc.sensor_origin_;//.head<3> ();
+         properties.sensor_orientation = pc.sensor_orientation_;
+ 

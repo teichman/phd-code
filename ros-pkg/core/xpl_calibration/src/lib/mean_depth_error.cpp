@@ -351,7 +351,7 @@ double SequenceAlignmentMDE::eval(const Eigen::VectorXd& x) const
   Frame transformed_frame;
   int num_pcds = 0;
   for(size_t i = 0; i < pcds_.size(); ++i) {
-    int idx = seek(frames_, offset + pcds_[i]->header.stamp.toSec(), dt_thresh_);
+    int idx = seek(frames_, offset + pcds_[i]->header.stamp * 1e-9, dt_thresh_);
     if(idx == -1)
       continue;
 

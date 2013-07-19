@@ -182,6 +182,7 @@ int main(int argc, char** argv)
     oss << output_path << "/" << names[i];
     string eval_path = oss.str();
     cout << "Saving evaluation results to " << eval_path << endl;
+    ROS_ASSERT(!bfs::exists(eval_path));
     
     DiscreteDepthDistortionModel intrinsics = calibrateLOO(opts, sseqs, trajectories, i);
     evaluate(opts, intrinsics, sseqs[i], trajectories[i], eval_path);

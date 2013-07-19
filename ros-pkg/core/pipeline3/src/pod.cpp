@@ -3,10 +3,11 @@
 #include <boost/filesystem.hpp>
 
 using namespace std;
+namespace bfs = boost::filesystem;
 using boost::any;
 namespace bfs = boost::filesystem;
 
-namespace pipeline
+namespace pl
 {
 
   map<string, Pod::CreatorFnPtr> Pod::creator_map_ = map<string, Pod::CreatorFnPtr>();
@@ -19,6 +20,11 @@ namespace pipeline
   {
     PL_ASSERT(type_.empty());
     assertValidName(name);
+  }
+
+  std::string Outlet::address() const
+  {
+    return pod_->getName() + separator() + name_;
   }
   
   Pod::Pod(std::string name) :
@@ -42,6 +48,23 @@ namespace pipeline
     for(it = outlets_.begin(); it != outlets_.end(); ++it)
       delete it->second;
   }
+
+  std::vector<std::string> Pod::upstreamOutputNames(const std::string& input_name) const
+  {
+    std::map<std::string, std::vector<const Outlet*> >::const_iterator it;
+    it = inputs_.find(input_name);
+    if(it == inputs_.end()) {
+      PL_ABORT(getClassName() << " \"" << name_
+               << "\" tried to check if \"" << input_name
+               << "\" has data, but this input has not been registered.");
+    }
+
+    const vector<const Outlet*>& inputs = it->second;
+    vector<string> names;
+    for(size_t i = 0; i < inputs.size(); ++i)
+      names.push_back(inputs[i]->pod()->getName());
+    return names;
+  }
   
   void Pod::registerPodType(std::string type_name, CreatorFnPtr fp)
   {
@@ -58,6 +81,25 @@ namespace pipeline
     return it->second(name, params);
   }
 
+  int Pod::numIncoming(std::string input_name) const
+  {
+    std::map<std::string, std::vector<const Outlet*> >::const_iterator it;
+    it = inputs_.find(input_name);
+    if(it == inputs_.end()) {
+      PL_ABORT(getClassName() << " \"" << name_
+               << "\" tried to check if \"" << input_name
+               << "\" has data, but this input has not been registered.");
+    }
+
+    const std::vector<const Outlet*>& outlets = it->second;
+    int num = 0;
+    for(size_t i = 0; i < outlets.size(); ++i)
+      if(outlets[i]->hasData())
+        ++num;
+
+    return num;
+  }
+  
   bool Pod::trylock() {
     if(pthread_mutex_trylock(&mutex_) == EBUSY)
       return false;
@@ -131,21 +173,24 @@ namespace pipeline
     ++num_times_computed_;
   }
   
-  string Pod::getRunName(int width) const
+  inline string Pod::runName(int width) const
   {
     ostringstream oss;
     oss << setw(width) << setfill('0') << num_times_computed_ << "-" << name_;
     return oss.str();
   }
 
-  string Pod::getDebugPath() const
+  inline string Pod::debugDirectory() const
   {
-    ostringstream oss;
-    std::string dir = ".pipeline-debug";
-    if (!bfs::exists (dir))
-      bfs::create_directory (dir);
-    oss << dir << "/" << getRunName(4);
-    return oss.str();
+    string name = ".pipeline-debug";
+    if(!bfs::exists(name))
+      bfs::create_directory(name);
+    return name;
+  }
+
+  string Pod::debugBasePath() const
+  {
+    return debugDirectory() + "/" + runName(4);
   }
   
   bool Pod::ready() {
@@ -165,16 +210,23 @@ namespace pipeline
     }
 
     if(!pod->hasOutput(output_name)) {
-      PL_ABORT("Tried to connect " << getName() << ":" << input_name << " <- " << pod->getName() << ":" << output_name
+      PL_ABORT("Tried to connect " << getName() << separator() << input_name << " <- " << pod->getName() << separator() << output_name
                << ", but Pod \"" << pod->getName() << "\" does not have an output named \"" << output_name << "\".");
     }
     
     const Outlet* outlet = pod->getOutlet(output_name);
     if(!outlet->checkType(declared_inputs_[input_name])) { 
       PL_ABORT(getClassName() << " \"" << getName() << "\" tried to register \"" << input_name << " <- "
-               << pod->getName() << ":" << output_name << "\", but types do not match.");
+               << pod->getName() << separator() << output_name << "\", but types do not match.");
     }
 
+    // -- Check multi status.
+    PL_ASSERT(multi_flags_.count(input_name));
+    bool multi = multi_flags_.find(input_name)->second;
+    if(!multi && !inputs_[input_name].empty()) {
+      PL_ABORT(getClassName() << " \"" << name_ << "\" tried to register single input \"" << input_name << "\" more than once.");
+    }
+    
     inputs_[input_name].push_back(outlet);
     parents_.push_back(pod);
     pod->children_.push_back(this);
@@ -241,13 +293,13 @@ namespace pipeline
       podname_oss << "Pod" << i;
       (*nm)[upstream[i]->getName()] = podname_oss.str();
 
-      oss << *upstream[i];
+      oss << YAML::Dump(upstream[i]->YAMLize());
     }
 
     ostringstream podname_oss;
     podname_oss << "Pod" << nm->size();
     (*nm)[name_] = podname_oss.str();
-    oss << *this;
+    oss << YAML::Dump(YAMLize());
     
     return oss.str();
   }
@@ -284,34 +336,39 @@ namespace pipeline
     return hashDjb2(getUniqueString().c_str());
   }
 
-  void Pod::serialize(std::ostream& out) const
+  YAML::Node Pod::YAMLize() const
   {
-    out << getName() << endl;
-    out << getClassName() << endl;
-    
-    out << "Inputs (" << inputs_.size() << ")" << endl;
-    map<string, std::vector<const Outlet*> >::const_iterator it;
-    for(it = inputs_.begin(); it != inputs_.end(); ++it) {
-      string name = it->first;
-      const vector<const Outlet*>& outlets = it->second;
-      out << name << " <-";
-      for(size_t i = 0; i < outlets.size(); ++i) { 
-        out << " " << outlets[i]->getPod()->getName() << ":" << outlets[i]->getName();
-      }
-      out << endl;
-    }
-    out << params_;
+    YAML::Node pod;
+    pod["Name"] = getName();
+    pod["Type"] = getClassName();
 
+    // -- Inputs.
+    map<string, std::vector<const Outlet*> >::const_iterator it;
+    YAML::Node inputs;
+    for(it = inputs_.begin(); it != inputs_.end(); ++it) {
+      // -- Get the string describing all connections.
+      const vector<const Outlet*>& outlets = it->second;
+      ostringstream oss;
+      for(size_t i = 0; i < outlets.size(); ++i) {
+        oss << outlets[i]->pod()->getName() << separator() << outlets[i]->getName();
+        if(i < outlets.size() - 1)
+          oss << " ";
+      }
+
+      // -- Add the YAML Node.
+      inputs[it->first] = oss.str();
+    }
+    pod["Inputs"] = inputs;  // If empty, we'll still have a placeholder in the YAML string.
+
+    // -- Params.
+    pod["Params"] = params_.YAMLize();
+
+    return pod;
   }
   
-  void Pod::deserialize(std::istream& in)
-  {
-    PL_ABORT("Pods cannot be deserialized in isolation.");
-  }
-
   bool Pod::hasOutput(const std::string& name) const
   {
     return outlets_.count(name);
   }
   
-} // namespace pipeline
+} // namespace pl

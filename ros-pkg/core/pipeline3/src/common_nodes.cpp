@@ -2,7 +2,7 @@
 
 using namespace std;
 
-namespace pipeline
+namespace pl
 {
 
   void PlaceholderNode::_compute()
@@ -12,4 +12,4 @@ namespace pipeline
     push<int>("outgoing", val * param<int>("foo"));
   }
     
-} // namespace pipeline
+} // namespace pl

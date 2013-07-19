@@ -45,7 +45,7 @@ namespace rgbd
       ofstream fs( (dir+"/" +oss.str()).c_str());
       fs.precision(10);
       fs.setf(ios::fixed,ios::floatfield);
-      fs << pcds_[i]->header.stamp.toSec() << endl;
+      fs << pcds_[i]->header.stamp * 1e-9  << endl;
       fs.close();
     }
   }
@@ -86,7 +86,7 @@ namespace rgbd
       double stamp;
       fs >> stamp;
       fs.close();
-      pcds_[i]->header.stamp.fromSec( stamp );
+      pcds_[i]->header.stamp = ( stamp ) * 1e9;
     }
   }
   

@@ -41,7 +41,7 @@ namespace slam_interface
       //Publish RGB
       cv_bridge::CvImage im;
       im.encoding = sensor_msgs::image_encodings::RGB8;
-      im.header.stamp.fromSec(i);//ros::Time::now();
+      im.header.stamp = i * 1e9;//ros::Time::now();
       cv::cvtColor(seq->getImage(i),im.image, CV_BGR2RGB);
       image_pub_.publish(im.toImageMsg());
       //Publish both camera infos

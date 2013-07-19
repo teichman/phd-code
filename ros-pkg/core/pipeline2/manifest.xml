@@ -8,7 +8,7 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/pipeline2</url>
-  <depend package="eigen"/>
+  <depend package="eigen_flags"/>
   <depend package="rosconsole"/>
   <depend package="timer"/>
   <export>

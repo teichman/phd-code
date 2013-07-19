@@ -14,7 +14,7 @@ namespace eigen_extensions
 
   double UniformSampler::sample()
   {
-    return mersenne_();
+    return (double)mersenne_() / mersenne_.max();
   }
 
   GaussianSampler::GaussianSampler(double mean, double stdev, uint64_t seed) :

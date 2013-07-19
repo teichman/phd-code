@@ -2,6 +2,7 @@
 #define ORGANIZED_CONNECTED_COMPONENTS_H
 
 #include <queue>
+#include <pcl/common/distances.h>
 #include <bag_of_tricks/high_res_timer.h>
 #include <rgbd_sequence/rgbd_sequence.h>
 #include <bag_of_tricks/image_region_iterator.h>

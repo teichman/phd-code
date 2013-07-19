@@ -41,7 +41,8 @@ rgbd::Cloud::Ptr AVVMultiviewModel::filterVelo(const VeloToAsusCalibration& extr
     filtered->push_back(pt);
   }
 
-  filtered->header.stamp.fromSec(velo->header.stamp.toSec());
+  //filtered->header.stamp.fromSec(velo->header.stamp.toSec());
+  filtered->header.stamp = velo->header.stamp;
   return filtered;
 }
 

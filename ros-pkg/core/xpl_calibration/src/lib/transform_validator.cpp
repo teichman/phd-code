@@ -135,7 +135,7 @@ double TransformValidator::computeLoss(const Cloud& cloud0,
 void TransformValidator::debug() const
 {
   const Candidates& candidates = *pull<const Candidates*>("Candidates");
-  ofstream f((getDebugPath() + ".txt").c_str(), std::ios::out);
+  ofstream f((debugBasePath() + ".txt").c_str(), std::ios::out);
   f << "Checked " << candidates.size() << " transforms." << endl;
   f << "Best loss: " << best_loss_ << endl;
   f << "Best transform: " << endl << best_transform_.matrix() << endl;

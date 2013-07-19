@@ -83,10 +83,12 @@ SLAM_RUNS_TESTING_xpl01		:=	2012-11-16_2a_backandforth_7 \
 					2012-11-16_2a_backandforth_6 \
 					2012-12-19_xpl01_boardroom_2
 
-#SLAM_RUNS_TRAINING_xpl01	:= 	2012-10-22_2a_backandforth_2
-#SLAM_RUNS_TESTING_xpl01		:=	2012-11-16_2a_backandforth_7
+SLAM_RUNS_TRAINING_xpl03	:= 	2012-12-19_xpl03_boardroom_0 \
+					2012-12-19_xpl03_boardroom_1 \
+					2012-12-19_xpl03_boardroom_2
+SLAM_RUNS_TESTING_xpl03		:= 	2012-12-19_xpl03_boardroom_3
+SLAM_RUNS_xpl03			:= 	$(SLAM_RUNS_TRAINING_xpl03) $(SLAM_RUNS_TESTING_xpl03)
 
-SLAM_RUNS_xpl01			:= 	$(SLAM_RUNS_TRAINING_xpl01) $(SLAM_RUNS_TESTING_xpl01)
 
 #2012-12-19_xpl03_boardroom_0
 #2012-12-19_xpl03_boardroom_1
@@ -450,6 +452,7 @@ $(1)-visualize-slam: $$(TRAJDIRS_$(1))
 	rosrun xpl_calibration calibrate_slam --only-visualize \
 	$$$$(for f in $$(SLAM_RUNS_DUPL_$(1)); do echo --sseq $$$$f; done) \
 	$$$$(for f in $$(TRAJECTORIES_SUB_$(1)); do echo --traj $$$$f; done)
+
 
 .PHONY: $(1)/slam_results
 $(1)/slam_results: $$(TRAJDIRS_$(1))

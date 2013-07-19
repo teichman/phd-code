@@ -28,12 +28,12 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequenceBase::ConstPtr ss
                                            Eigen::Affine3f* transform,
                                            double* sync)
 {
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fx", sseq0->model_.fx_);
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fy", sseq0->model_.fy_);
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cx", sseq0->model_.cx_);
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cy", sseq0->model_.cy_);
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<int>("MaxConsecutiveFrames", ON);
-  pl_.getPod("ObjectMatchingCalibrator")->setParam<int>("MaxFrames", MAX_FRAMES);
+  pl_.pod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fx", sseq0->model_.fx_);
+  pl_.pod("ObjectMatchingCalibrator")->setParam<double>("Seq0Fy", sseq0->model_.fy_);
+  pl_.pod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cx", sseq0->model_.cx_);
+  pl_.pod("ObjectMatchingCalibrator")->setParam<double>("Seq0Cy", sseq0->model_.cy_);
+  pl_.pod("ObjectMatchingCalibrator")->setParam<int>("MaxConsecutiveFrames", ON);
+  pl_.pod("ObjectMatchingCalibrator")->setParam<int>("MaxFrames", MAX_FRAMES);
 
   cout << "Intrinsics: " << endl;
   cout << "fx: " << sseq0->model_.fx_ << endl;
@@ -103,8 +103,8 @@ void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequenceBase::ConstPtr ss
   pl_.compute();
 
 
-  *transform = *pl_.getOutput<const Affine3f*>("ObjectMatchingCalibrator", "FinalTransform");
-  *sync = pl_.getOutput<double>("ObjectMatchingCalibrator", "SyncOffset");
+  *transform = *pl_.pull<const Affine3f*>("ObjectMatchingCalibrator", "FinalTransform");
+  *sync = pl_.pull<double>("ObjectMatchingCalibrator", "SyncOffset");
   cout << "Got sync offset of " << *sync << endl;
   cout << "transform: " << endl << transform->matrix() << endl;
 }

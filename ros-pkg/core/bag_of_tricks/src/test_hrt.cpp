@@ -62,7 +62,7 @@ TEST(HighResTimer, AllocationTime)
 }
 
 template<typename S, typename T>
-void accessDictionary(const Dictionary<S, T>& nm)
+void accessConstDictionary(const Dictionary<S, T>& nm)
 {
   cout << "The value of \"bar\" is: " << nm["bar"] << endl;
 }
@@ -74,8 +74,9 @@ TEST(Dictionary, Dictionary)
   (*dptr)["foo"] = 1;
   map<string, int>* bptr = dptr;
   (*bptr)["bar"] = 2;
-  accessDictionary(*dptr);
-
+  accessConstDictionary(*dptr);
+  cout << "The value of \"bar\" is: " << (*dptr)["bar"] << endl;
+  
   dptr->save("dict");
   Dictionary<string, int> dict;
   dict.load("dict");

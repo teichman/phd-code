@@ -53,7 +53,7 @@ Eigen::Affine3f CalibrationPipelineOrb::calibrate(rgbd::StreamSequenceBase::Cons
   pl_.setDebug(true);
   pl_.compute();
 
-  return *pl_.getOutput<const Affine3f*>("TransformValidator", "BestTransform");
+  return *pl_.pull<const Affine3f*>("TransformValidator", "BestTransform");
 }
 
 void CalibrationPipelineOrb::initializePipeline()

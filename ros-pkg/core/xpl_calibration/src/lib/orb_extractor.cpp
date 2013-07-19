@@ -55,5 +55,5 @@ void OrbExtractor::debug() const
   for(size_t i = 0; i < keypoints_.size(); ++i)
     cv::circle(vis, keypoints_[i].pt, 2, cv::Scalar(0, 0, 255), -1);
 
-  cv::imwrite(getDebugPath() + "-keypoints.png", vis);
+  cv::imwrite(debugBasePath() + "-keypoints.png", vis);
 }

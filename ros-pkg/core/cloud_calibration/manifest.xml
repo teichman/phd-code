@@ -10,7 +10,7 @@
   <url>http://ros.org/wiki/cloud_calibration</url>
   <depend package="roscpp"/>
   <depend package="opencv2"/>
-  <depend package="eigen"/>
+  <depend package="eigen_flags"/>
   <depend package="pcl_trunk"/>
   <depend package="rgbd_sequence"/>
   <depend package="multi_sequence"/>

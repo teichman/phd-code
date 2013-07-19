@@ -21,6 +21,7 @@ namespace eigen_extensions
   {
   public:
     UniformSampler(uint64_t seed = 0);
+    //! In [0, 1].
     double sample();
     
   protected:

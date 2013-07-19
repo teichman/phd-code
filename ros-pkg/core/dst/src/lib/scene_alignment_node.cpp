@@ -119,7 +119,12 @@ namespace dst
 
     if(debug_)
       cout << "Found " << num_valid << " valid correspondences." << endl;
-    ROS_ASSERT(num_valid > 5); // TODO: Fallback to regular ICP or just don't use this node's output.
+
+    if(num_valid <= 5) {
+      ROS_WARN_STREAM("Not enough valid correspondences found when aligning scenes.  Num found: " << num_valid);
+      ROS_FATAL_STREAM("TODO: Ignore scene alignment node if not enough correspondences found.");
+      abort();
+    }
 
     // -- Get list of corresponding 3D points.
     KinectCloud::ConstPtr current_pcd = index_otl_->pull().current_pcd_;
