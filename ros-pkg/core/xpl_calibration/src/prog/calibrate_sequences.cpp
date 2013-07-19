@@ -1,5 +1,5 @@
 #include <eigen_extensions/eigen_extensions.h>
-#include <xpl_calibration/calibration_pipeline_orb.h>
+//#include <xpl_calibration/calibration_pipeline_orb.h>
 #include <xpl_calibration/calibration_pipeline_dynamic.h>
 
 using namespace std;
@@ -28,8 +28,10 @@ int main(int argc, char** argv)
   string mode = argv[1];
   string path0 = argv[2];
   string path1 = argv[3];
-  if(mode.compare("--orb") == 0) 
+  if(mode.compare("--orb") == 0) {
     cout << "Using orb method." << endl;
+    ROS_ASSERT(0);  // should throw the orb stuff out.
+  }
   else if(mode.compare("--dynamic") == 0)
     cout << "Using dynamic method." << endl;
   else {
@@ -53,19 +55,14 @@ int main(int argc, char** argv)
   }
   
   Eigen::Affine3f transform;
-  if(mode.compare("--orb") == 0) { 
-    CalibrationPipelineOrb cp(NUM_THREADS, pipeline_path);
-    transform = cp.calibrate(sseq0, sseq1);
-  }
-  else { 
-    CalibrationPipelineDynamic cp(NUM_THREADS, pipeline_path);
-    double sync;
-    cp.calibrate(sseq0, sseq1, &transform, &sync);
-    cout << "Sync offset: " << sync << endl;
-    Eigen::VectorXd vdt(1);
-    vdt(0) = sync;
-    eigen_extensions::saveASCII(vdt, "sync.eig.txt");
-  }
+  CalibrationPipelineDynamic cp(NUM_THREADS, pipeline_path);
+  double sync;
+  cp.calibrate(sseq0, sseq1, &transform, &sync);
+  cout << "Sync offset: " << sync << endl;
+  Eigen::VectorXd vdt(1);
+  vdt(0) = sync;
+  eigen_extensions::saveASCII(vdt, "sync.eig.txt");
+
   cout << "Final transform" << endl;
   cout << transform.matrix() << endl;
   eigen_extensions::saveASCII(transform.matrix(), "transform.eig.txt");

@@ -27,7 +27,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/orb_extractor.cpp
   src/lib/orb_matcher.cpp
   src/lib/descriptor_database.cpp
-#  src/lib/calibration_pipeline_orb.cpp
+  #  src/lib/calibration_pipeline_orb.cpp
   src/lib/background_modeler.cpp
   src/lib/gaussian_background_modeler.cpp
   src/lib/background_subtractor.cpp
@@ -50,7 +50,6 @@ rosbuild_add_library(${PROJECT_NAME}
 #  src/lib/slam_lightweight.cpp
   src/lib/primesense_slam.cpp
   src/lib/link_visualizer.cpp
-#  src/lib/discrete_depth_distortion_model.cpp
   )
 
 # memory fragmentation is a problem for data quantity experiment?
@@ -75,8 +74,8 @@ target_link_libraries(interactive_calibration_viewer ${PROJECT_NAME})
 rosbuild_add_executable(evaluate src/prog/evaluate.cpp)
 target_link_libraries(evaluate ${PROJECT_NAME})
 
-rosbuild_add_executable(visualize_background_subtraction src/prog/visualize_background_subtraction.cpp)
-target_link_libraries(visualize_background_subtraction ${PROJECT_NAME})
+#rosbuild_add_executable(visualize_background_subtraction src/prog/visualize_background_subtraction.cpp)
+#target_link_libraries(visualize_background_subtraction ${PROJECT_NAME})
 
 rosbuild_add_executable(offset_maker src/prog/offset_maker.cpp)
 target_link_libraries(offset_maker ${PROJECT_NAME})
