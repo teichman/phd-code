@@ -96,7 +96,6 @@ void ObjectExtractor::extractObjectsFromFrame(const rgbd::Cloud& pcd,
 
 void ObjectExtractor::debug() const
 {
-  //cout << *this << endl;
   const Stream& strm = *pull<Stream::ConstPtr>("Sequence");
   
   for(size_t i = 0; i < strm.size(); ++i) {

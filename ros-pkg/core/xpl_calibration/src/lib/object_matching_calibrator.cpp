@@ -779,7 +779,7 @@ int seek(const Stream& strm0, double ts1, double dt_thresh)
   double min = numeric_limits<double>::max();
   // TODO: This could be faster than linear search.
   for(size_t i = 0; i < strm0.size(); ++i) {
-    double ts0 = strm0[i]->header.stamp.toSec();
+    double ts0 = strm0[i]->header.stamp * 1e-9;
     double dt = fabs(ts0 - ts1);
     if(dt < min) {
       min = dt;

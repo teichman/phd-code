@@ -132,7 +132,6 @@ pcl::PointXYZRGB OrbMatcher::getPoint(const cv::KeyPoint& keypoint, const Cloud&
 
 void OrbMatcher::debug() const
 {
-  cout << *this << endl;
   cout << "Found " << transforms_.size() << " candidate transforms." << endl;
   cout << "Found " << pruned_.size() << " candidate transforms after pruning." << endl;
 

@@ -20,7 +20,7 @@ CalibrationPipelineDynamic::CalibrationPipelineDynamic(int num_threads, std::str
   if(pipeline_file.empty())
     initializePipeline();
   else
-    pl_.load(pipeline_file);
+    pl_.loadYAML(pipeline_file);
 }
 
 void CalibrationPipelineDynamic::calibrate(rgbd::StreamSequenceBase::ConstPtr sseq0,
@@ -162,7 +162,7 @@ void CalibrationPipelineDynamic::initializePipeline()
     
   pl_.addConnectedComponent(ep0);
   pl_.writeGraphviz("graphviz");
-  pl_.save("calibration_pipeline_dynamic.pl");
+  pl_.saveYAML("calibration_pipeline_dynamic.yaml");
 }
 
 void CalibrationPipelineDynamic::registerPods() const
