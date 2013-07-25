@@ -42,12 +42,6 @@ inline void DiscreteFrustum::undistort(double* z) const
   *z *= multipliers_.coeffRef(index(*z));
 }
 
-// inline void DiscreteFrustum::undistort(int idx, float* z, float* mult) const
-// {
-//   *mult = multipliers_.coeffRef(idx);
-//   *z *= *mult;
-// }
-
 void DiscreteFrustum::interpolatedUndistort(double* z) const
 {
   int idx = index(*z);
@@ -64,30 +58,11 @@ void DiscreteFrustum::interpolatedUndistort(double* z) const
   }
 
   double z0 = (idx0 + 1) * bin_depth_ - bin_depth_ * 0.5;
-  // ROS_ASSERT(z0 <= *z && z1 >= *z);
-  // if(!(fabs(z1 - z0 - bin_depth_) < 1e-6)) {
-  //   cout << z0 << " " << z1 << " " << bin_depth_ << endl;
-  //   ROS_ASSERT(0);
-  // }
-
   double coeff1 = (*z - z0) / bin_depth_;
-  //ROS_ASSERT(coeff1 >= 0 && coeff1 <= 1);
   double coeff0 = 1.0 - coeff1;
   double mult = coeff0 * multipliers_.coeffRef(idx0) + coeff1 * multipliers_.coeffRef(idx1);
   *z *= mult;
 }
-
-// inline void DiscreteFrustum::interpolatedUndistort(int idx, float* z, float* mult) const
-// {
-// }
-
-// void DiscreteFrustum::undistort(rgbd::Point* pt) const
-// {
-//   double dist = pt->getVector3fMap().norm();
-//   int idx = min(num_bins_ - 1, (int)floor(dist / bin_depth_));
-//   ROS_ASSERT(idx >= 0);
-//   pt->getVector3fMap() *= multipliers_(idx);
-// }
 
 void DiscreteFrustum::serialize(std::ostream& out) const
 {
@@ -152,7 +127,6 @@ DiscreteDepthDistortionModel::DiscreteDepthDistortionModel(const PrimeSenseModel
   num_bins_y_ = psm_.height_ / bin_height_;
   idx_cache_ = Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Ones(psm_.height_, psm_.width_) * -1;
   multiplier_cache_ = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>::Zero(psm_.height_, psm_.width_);
-  //multiplier_cache_ = MatrixXf::Zero(num_bins_y_, num_bins_x_);  // Why does this compile?
   
   frustums_.resize(num_bins_y_);
   for(size_t i = 0; i < frustums_.size(); ++i) {
@@ -188,24 +162,9 @@ void DiscreteDepthDistortionModel::undistort(Frame* frame) const
       if(frame->depth_->coeffRef(v, u) == 0)
         continue;
 
-      // Non-caching version.
       double z = frame->depth_->coeffRef(v, u) * 0.001;
-      //frustum(v, u).undistort(&z);
       frustum(v, u).interpolatedUndistort(&z);
       frame->depth_->coeffRef(v, u) = z * 1000;
-
-      // Caching version.
-      // float z = frame->depth_->coeffRef(v, u) * 0.001;
-      // int idx = frustum(v, u).index(z);
-      // if(idx_cache_.coeffRef(v, u) == idx)
-      //         z *= multiplier_cache_.coeffRef(v, u);
-      // else {
-      //         float mult;
-      //         frustum(v, u).undistort(idx, &z, &mult);
-      //         idx_cache_.coeffRef(v, u) = idx;
-      //         multiplier_cache_.coeffRef(v, u) = mult;
-      // }
-      // frame->depth_->coeffRef(v, u) = z * 1000;
     }
   }
 }
@@ -231,14 +190,6 @@ size_t DiscreteDepthDistortionModel::accumulate(const Frame& ground_truth, const
         continue;
       if(measurement.depth_->coeffRef(ppt.v_, ppt.u_) == 0)
         continue;
-      
-      // ppt.z_ = ground_truth.depth_->coeffRef(ppt.v_, ppt.u_);
-      // psm_.project(ppt, &pt);
-      // double gt = pt.getVector3fMap().norm();
-      // ppt.z_ = measurement.depth_->coeffRef(ppt.v_, ppt.u_);
-      // psm_.project(ppt, &pt);
-      // double meas = pt.getVector3fMap().norm();
-      // frustum(ppt.v_, ppt.u_).addExample(gt, meas);
 
       double gt = ground_truth.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
       double meas = measurement.depth_->coeffRef(ppt.v_, ppt.u_) * 0.001;
