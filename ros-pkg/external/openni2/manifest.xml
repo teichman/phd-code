@@ -1,0 +1,21 @@
+<package>
+  <description brief="openni2">
+
+    This package assumes you've run
+      sudo ./git/Packaging/Linux/install.sh
+    to install udev rules.
+
+  </description>
+  <author>Demo User</author>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/openni2</url>
+
+  <export>
+    <cpp cflags="-I${prefix}/git/Include"
+         lflags="-Wl,-rpath,${prefix}/git/Bin/Arm-Release -L${prefix}/git/Bin/Arm-Release -lOpenNI2" />
+  </export>
+
+  
+</package>
+
+
