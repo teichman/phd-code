@@ -1,0 +1,14 @@
+<package>
+  <description brief="openni1">
+
+     sudo apt-get install unzip
+     
+  </description>
+  <author>Demo User</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/openni1</url>
+
+</package>
+
+
