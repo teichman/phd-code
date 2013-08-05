@@ -1,7 +1,10 @@
 <package>
   <description brief="openni1">
 
-     sudo apt-get install unzip
+    After building this via ros, you'll need to install it globally:
+
+    cd jarvis/ros-pkg/external/openni1/git/Platform/Linux/Redist/OpenNI-Bin-Dev-Linux-Arm-v1.5.2.23
+    sudo ./install.sh
      
   </description>
   <author>Demo User</author>
@@ -9,6 +12,12 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/openni1</url>
 
+  <export>
+    <cpp cflags="-I${prefix}/git/Include"
+         lflags="-Wl,-rpath,${prefix}/git/Platform/Linux/Bin/Arm-Release -L${prefix}/git/Platform/Linux/Bin/Arm-Release -lOpenNI" />
+  </export>
+
+  
 </package>
 
 
