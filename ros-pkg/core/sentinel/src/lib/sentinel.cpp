@@ -2,7 +2,6 @@
 
 using namespace std;
 namespace bfs = boost::filesystem;
-using namespace rgbd;
 
 Sentinel::Sentinel(std::string name,
                    double update_interval,

@@ -9,8 +9,6 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <Eigen/Eigen>
 #include <bag_of_tricks/high_res_timer.h>
-#include <rgbd_sequence/stream_sequence.h>
-#include <rgbd_sequence/stream_recorder.h>
 #include <sentinel/background_model.h>
 
 class Sentinel
@@ -31,7 +29,7 @@ public:
 protected:
   pcl::OpenNIGrabber grabber_;
   BackgroundModel model_;
-  std::queue<rgbd::DepthMatConstPtr> training_;
+  std::queue<DepthMatConstPtr> training_;
   double update_interval_;
   double save_interval_;
   int max_training_imgs_;
@@ -42,10 +40,10 @@ protected:
   std::string dir_;
   cv::Mat1b mask_;
   
-  void process(rgbd::DepthMatConstPtr depth, cv::Mat3b img, double ts);
-  void updateModel(rgbd::DepthMatConstPtr depth);
-  void save(rgbd::DepthMatConstPtr depth, cv::Mat3b img, cv::Mat3b vis, double ts) const;
-  cv::Mat1b depthMatToCV(const rgbd::DepthMat& depth) const;
+  void process(DepthMatConstPtr depth, cv::Mat3b img, double ts);
+  void updateModel(DepthMatConstPtr depth);
+  void save(DepthMatConstPtr depth, cv::Mat3b img, cv::Mat3b vis, double ts) const;
+  cv::Mat1b depthMatToCV(const DepthMat& depth) const;
 };
 
 #endif // SENTINEL_H

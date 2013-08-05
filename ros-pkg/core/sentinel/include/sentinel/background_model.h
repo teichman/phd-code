@@ -1,7 +1,13 @@
 #ifndef BACKGROUND_MODEL_H
 #define BACKGROUND_MODEL_H
 
-#include <rgbd_sequence/stream_recorder.h>
+#include <vector>
+#include <boost/shared_ptr.hpp>
+#include <Eigen/Eigen>
+
+typedef Eigen::Matrix<unsigned short, Eigen::Dynamic, Eigen::Dynamic> DepthMat;  
+typedef boost::shared_ptr<DepthMat> DepthMatPtr;
+typedef boost::shared_ptr<const DepthMat> DepthMatConstPtr;
 
 class DepthHistogram
 {
@@ -32,7 +38,7 @@ class BackgroundModel
 public:
   BackgroundModel(int num_pixels, double min_pct = 0.2, double max_depth = 10, double res = 0.1);
   //! Increments bins by num.
-  void increment(const rgbd::DepthMat& depth, int num = 1);
+  void increment(const DepthMat& depth, int num = 1);
   void finalize();
 
   bool isBackground(size_t idx, double z) const;

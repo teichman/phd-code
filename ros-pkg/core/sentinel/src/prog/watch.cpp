@@ -1,7 +1,6 @@
 #include <sentinel/sentinel.h>
 
 using namespace std;
-using namespace rgbd;
 
 string usageString()
 {

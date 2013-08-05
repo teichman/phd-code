@@ -8,7 +8,11 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/sentinel</url>
-  <depend package="rgbd_sequence"/>
+
+  <depend package="pcl_1_7_io_only"/>
+  <depend package="eigen_flags"/>
+  <depend package="bag_of_tricks"/>
+  <depend package="opencv_bleeding"/>
 
 </package>
 

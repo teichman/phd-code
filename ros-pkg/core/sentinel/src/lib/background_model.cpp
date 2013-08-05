@@ -3,7 +3,6 @@
 using namespace std;
 using namespace Eigen;
 using namespace pcl;
-using namespace rgbd;
 
 DepthHistogram::DepthHistogram(double min_depth, double max_depth, double binwidth) :
   finalized_(false)
