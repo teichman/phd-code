@@ -3,7 +3,7 @@
 
     Shell package for PCL 1.7.
 
-    This assumes you have openni installed.
+    This assumes you have openni1 installed.  If you don't, the jarvis repo includes openni1 as a ros package, so you can easily install it with rosmake openni1.  There is a global install step you'll need to run manually; see the openni1 manifest.
 
   </description>
   <author>teichman</author>
