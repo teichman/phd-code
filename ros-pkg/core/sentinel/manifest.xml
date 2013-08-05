@@ -13,6 +13,7 @@
   <depend package="eigen_flags"/>
   <depend package="bag_of_tricks"/>
   <depend package="opencv_bleeding"/>
+  <depend package="rosconsole"/>
 
 </package>
 

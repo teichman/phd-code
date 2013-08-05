@@ -2,12 +2,7 @@
 #define BACKGROUND_MODEL_H
 
 #include <vector>
-#include <boost/shared_ptr.hpp>
-#include <Eigen/Eigen>
-
-typedef Eigen::Matrix<unsigned short, Eigen::Dynamic, Eigen::Dynamic> DepthMat;  
-typedef boost::shared_ptr<DepthMat> DepthMatPtr;
-typedef boost::shared_ptr<const DepthMat> DepthMatConstPtr;
+#include <sentinel/openni_helpers.h>
 
 class DepthHistogram
 {

@@ -1,8 +1,8 @@
 #include <sentinel/background_model.h>
+#include <ros/assert.h>
 
 using namespace std;
 using namespace Eigen;
-using namespace pcl;
 
 DepthHistogram::DepthHistogram(double min_depth, double max_depth, double binwidth) :
   finalized_(false)

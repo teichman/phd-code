@@ -3,11 +3,8 @@
 
 #include <ctime>
 #include <queue>
-#include <pcl/io/openni_grabber.h>
-#include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <Eigen/Eigen>
 #include <bag_of_tricks/high_res_timer.h>
 #include <sentinel/background_model.h>
 

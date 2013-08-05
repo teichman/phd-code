@@ -1,4 +1,6 @@
 #include <sentinel/sentinel.h>
+#include <ros/assert.h>
+#include <ros/console.h>
 
 using namespace std;
 namespace bfs = boost::filesystem;
@@ -56,8 +58,8 @@ void Sentinel::rgbdCallback(const boost::shared_ptr<openni_wrapper::Image>& oni_
                     << depth_timestamp - image_timestamp);
   }
 
-  DepthMatPtr depth = StreamRecorder::oniDepthToEigenPtr(oni_depth);
-  cv::Mat3b img = StreamRecorder::oniToCV(oni_rgb);
+  DepthMatPtr depth = oniDepthToEigenPtr(*oni_depth);
+  cv::Mat3b img = oniToCV(*oni_rgb);
   process(depth, img, callback_timestamp);
 }
 
