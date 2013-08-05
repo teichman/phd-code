@@ -1,14 +1,6 @@
 
 all: release-io-only/built
 
-release/built: git
-	mkdir -p ${@D}
-	cd ${@D} && cmake \
-	-DCMAKE_BUILD_TYPE=Release \
-	../git
-	cd ${@D} && make -j`cat /proc/cpuinfo  | grep processor | wc -l`  # Use as many cores as you have.
-	touch $@
-
 # Aggravatingly, if you don't enable octree, io will just not build.
 release-io-only/built: git
 	mkdir -p ${@D}
@@ -33,7 +25,7 @@ release-io-only/built: git
 	cd ${@D} && make -j`cat /proc/cpuinfo  | grep processor | wc -l`  # Use as many cores as you have.
 	touch $@
 
-# HTTPS clone is not working on some machines.  Unclear why.  Using ssh (which requires  as a fallback.
+# HTTPS clone is not working on some machines.  Unclear why.  Using ssh as a fallback.
 git:
 	@git clone https://github.com/PointCloudLibrary/pcl.git git; \
 	RES=$$?; \
@@ -45,7 +37,7 @@ git:
 	cd git && git checkout pcl-1.7.0
 
 clean:
-	cd release && make clean
+	cd release-io-only && make clean
 
 wipe:
-	rm -rf release git
+	rm -rf release-io-only git
