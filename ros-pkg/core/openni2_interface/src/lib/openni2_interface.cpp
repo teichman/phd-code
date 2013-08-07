@@ -7,7 +7,8 @@ using namespace openni;
 
 #define SAMPLE_READ_WAIT_TIMEOUT 2000  // ms
 
-OpenNI2Interface::OpenNI2Interface()
+OpenNI2Interface::OpenNI2Interface() :
+  sync_(0.1)
 {
 }
 
@@ -28,39 +29,54 @@ void OpenNI2Interface::run()
   VideoStream* streams[] = { &color_stream_, &depth_stream_ };
   
   while(true) {
-    int changedStreamDummy;
-    VideoStream* pStream = &depth_stream_;
-    Status rc = OpenNI::waitForAnyStream(&pStream, 1, &changedStreamDummy, SAMPLE_READ_WAIT_TIMEOUT);
-    if (rc != STATUS_OK)
-    {
-      printf("Wait failed! (timeout is %d ms)\n%s\n", SAMPLE_READ_WAIT_TIMEOUT, OpenNI::getExtendedError());
-      continue;
-    }
+    // int changedStreamDummy;
+    // VideoStream* pStream = &depth_stream_;
+    // Status rc = OpenNI::waitForAnyStream(&pStream, 1, &changedStreamDummy, SAMPLE_READ_WAIT_TIMEOUT);
+    // if (rc != STATUS_OK)
+    // {
+    //   printf("Wait failed! (timeout is %d ms)\n%s\n", SAMPLE_READ_WAIT_TIMEOUT, OpenNI::getExtendedError());
+    //   continue;
+    // }
 
-    int idx;
-    OpenNI::waitForAnyStream(streams, 2, &idx);
+    int idx = -1;
+    OpenNI::waitForAnyStream(streams, 2, &idx, SAMPLE_READ_WAIT_TIMEOUT);
     if(idx == 0)
       processColor();
-    else
+    else if(idx == 1)
       processDepth();
-    
-    //handler_->rgbdCallback(color_frame_, depth_frame_);
+    else
+      cout << "Did not get stream data..." << endl;
   }
 
 }
 
 void OpenNI2Interface::processColor()
 {
-  cout << "processColor" << endl;
-  Status rc = color_stream_.readFrame(&color_frame_);
+  openni::VideoFrameRef color_frame;
+  Status rc = color_stream_.readFrame(&color_frame);
   ROS_ASSERT(rc == STATUS_OK);
+  cout << "Got new color frame with ts: " << color_frame.getTimestamp() * 1e-6 << endl;
+  sync_.addT0(color_frame, color_frame.getTimestamp() * 1e-6);
+  processSynchronized();
 }
 
 void OpenNI2Interface::processDepth()
 {
-  cout << "processDepth" << endl;
-  Status rc = depth_stream_.readFrame(&depth_frame_);
+  openni::VideoFrameRef depth_frame;
+  Status rc = depth_stream_.readFrame(&depth_frame);
   ROS_ASSERT(rc == STATUS_OK);
+  cout << "Got new depth frame with ts: " << depth_frame.getTimestamp() * 1e-6 << endl;
+  sync_.addT1(depth_frame, depth_frame.getTimestamp() * 1e-6);
+  processSynchronized();
+}
+
+void OpenNI2Interface::processSynchronized()
+{
+  if(sync_.updated_) {
+    cout << "New sync'd frame is available!  dt: " << sync_.ts0_ - sync_.ts1_ << endl;
+    handler_->rgbdCallback(sync_.current0_, sync_.current1_);
+    sync_.updated_ = false;
+  }
 }
 
 int OpenNI2Interface::connect()
@@ -116,6 +132,8 @@ int OpenNI2Interface::connect()
     openni::OpenNI::shutdown();
     return 2;
   }
+  
+  device_.setDepthColorSyncEnabled(true);
 
   VideoMode depth_video_mode = depth_stream_.getVideoMode();
   VideoMode color_video_mode = color_stream_.getVideoMode();

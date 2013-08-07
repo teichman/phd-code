@@ -2,6 +2,7 @@
 #define OPENNI2_INTERFACE_H
 
 #include <OpenNI.h>
+#include <openni2_interface/synchronizer.h>
 
 class OpenNI2Handler
 {
@@ -22,13 +23,15 @@ private:
   OpenNI2Handler* handler_;
   openni::Device device_;
   openni::VideoStream color_stream_;
-  openni::VideoFrameRef color_frame_;
   openni::VideoStream depth_stream_;
-  openni::VideoFrameRef depth_frame_;
-
+  //! color, depth.
+  Synchronizer<openni::VideoFrameRef, openni::VideoFrameRef> sync_; 
+  
+  
   int connect();
   void processColor();
   void processDepth();
+  void processSynchronized();
 };
 
 #endif // OPENNI2_INTERFACE_H
