@@ -3,7 +3,10 @@
 
     After building this via ros, you'll need to install it globally:
 
-    cd jarvis/ros-pkg/external/openni1/git/Platform/Linux/Redist/OpenNI-Bin-Dev-Linux-Arm-v1.5.2.23
+    cd git/Platform/Linux/Redist/OpenNI-Bin-Dev-Linux-Arm-v1.5.2.23
+    sudo ./install.sh
+    cd -
+    cd git-driver/Platform/Linux/Redist/XXX
     sudo ./install.sh
      
   </description>

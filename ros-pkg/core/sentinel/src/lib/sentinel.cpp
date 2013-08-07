@@ -10,13 +10,15 @@ Sentinel::Sentinel(std::string name,
                    double update_interval,
                    double save_interval,
                    int max_training_imgs,
-                   double threshold) :
+                   double threshold,
+                   bool visualize) :
   model_(320*240),
   update_interval_(update_interval),
   save_interval_(save_interval),
   max_training_imgs_(max_training_imgs),
   threshold_(threshold),
-  dir_(".sentinel-" + name)
+  dir_(".sentinel-" + name),
+  visualize_(visualize)
 {
   oni_.setHandler(this);
 }
@@ -113,8 +115,10 @@ void Sentinel::process(DepthMatConstPtr depth, cv::Mat3b img, double ts)
   }
   
   // -- Visualize.
-  cv::imshow("Sentinel", vis_);
-  cv::waitKey(2);
+  if(visualize_) {
+    cv::imshow("Sentinel", vis_);
+    cv::waitKey(2);
+  }
 }
 
 void Sentinel::updateModel(DepthMatConstPtr depth)

@@ -16,7 +16,8 @@ public:
            double update_interval,
            double save_interval,
            int max_training_imgs,
-           double threshold);
+           double threshold,
+           bool visualize);
   void rgbdCallback(const openni::VideoFrameRef& color,
                     const openni::VideoFrameRef& depth);
   void run();
@@ -34,6 +35,7 @@ protected:
   double threshold_;
   std::string dir_;
   cv::Mat1b mask_;
+  bool visualize_;
   
   void process(DepthMatConstPtr depth, cv::Mat3b img, double ts);
   void updateModel(DepthMatConstPtr depth);
