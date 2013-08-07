@@ -1,21 +1,34 @@
 #include <openni2_interface/openni2_interface.h>
 #include <ros/assert.h>
 #include <ros/console.h>
+#include <signal.h>
 
 using namespace std;
 using namespace openni;
 
 #define SAMPLE_READ_WAIT_TIMEOUT 2000  // ms
 
+bool g_int = false;
+
+void sigint(int none) {
+  cout << "OpenNI2Interface caught user signal.  Shutting down..." << endl;
+  g_int = true;
+}
+
 OpenNI2Interface::OpenNI2Interface() :
-  sync_(0.1)
+  sync_(0.1),
+  terminating_(false)
 {
+  signal(SIGINT, sigint);
 }
 
 OpenNI2Interface::~OpenNI2Interface()
 {
+  cout << "Destroying OpenNI2Interface." << endl;
   depth_stream_.stop();
   depth_stream_.destroy();
+  color_stream_.stop();
+  color_stream_.destroy();
   device_.close();
   OpenNI::shutdown();
 }
@@ -28,7 +41,7 @@ void OpenNI2Interface::run()
 
   VideoStream* streams[] = { &color_stream_, &depth_stream_ };
   
-  while(true) {
+  while(!terminating_ && !g_int) {
     // int changedStreamDummy;
     // VideoStream* pStream = &depth_stream_;
     // Status rc = OpenNI::waitForAnyStream(&pStream, 1, &changedStreamDummy, SAMPLE_READ_WAIT_TIMEOUT);
@@ -94,6 +107,8 @@ int OpenNI2Interface::connect()
     return 2;
   }
 
+  device_.setDepthColorSyncEnabled(true);
+  
   if (device_.getSensorInfo(SENSOR_DEPTH) != NULL)
   {
     rc = depth_stream_.create(device_, SENSOR_DEPTH);
@@ -102,13 +117,6 @@ int OpenNI2Interface::connect()
       printf("Couldn't create depth stream\n%s\n", OpenNI::getExtendedError());
       return 3;
     }
-  }
-
-  rc = depth_stream_.start();
-  if (rc != STATUS_OK)
-  {
-    printf("Couldn't start the depth stream\n%s\n", OpenNI::getExtendedError());
-    return 4;
   }
 
   rc = color_stream_.create(device_, openni::SENSOR_COLOR);
@@ -126,14 +134,20 @@ int OpenNI2Interface::connect()
     printf("SimpleViewer: Couldn't find color stream:\n%s\n", openni::OpenNI::getExtendedError());
   }
 
+  rc = depth_stream_.start();
+  if (rc != STATUS_OK)
+  {
+    printf("Couldn't start the depth stream\n%s\n", OpenNI::getExtendedError());
+    return 4;
+  }
+  
   if (!depth_stream_.isValid() || !color_stream_.isValid())
   {
     printf("SimpleViewer: No valid streams. Exiting\n");
     openni::OpenNI::shutdown();
     return 2;
   }
-  
-  device_.setDepthColorSyncEnabled(true);
+ 
 
   VideoMode depth_video_mode = depth_stream_.getVideoMode();
   VideoMode color_video_mode = color_stream_.getVideoMode();

@@ -15,9 +15,13 @@ class OpenNI2Interface
 {
 public:
   OpenNI2Interface();
+  //! Take care to call the destructor on shut down.
+  //! Starting OpenNI the next time can be annoying if you
+  //! don't shut it down properly.
   ~OpenNI2Interface();
   void setHandler(OpenNI2Handler* handler) { handler_ = handler; }
   void run();
+  void terminate() { terminating_ = true; }
   
 private:
   OpenNI2Handler* handler_;
@@ -25,8 +29,8 @@ private:
   openni::VideoStream color_stream_;
   openni::VideoStream depth_stream_;
   //! color, depth.
-  Synchronizer<openni::VideoFrameRef, openni::VideoFrameRef> sync_; 
-  
+  Synchronizer<openni::VideoFrameRef, openni::VideoFrameRef> sync_;
+  bool terminating_;
   
   int connect();
   void processColor();

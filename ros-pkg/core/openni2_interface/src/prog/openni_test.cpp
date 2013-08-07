@@ -77,10 +77,13 @@ int main(int argc, char** argv)
     printf("[%08llu] %d x %d;  %8d\n", (long long)frame.getTimestamp(), frame.getWidth(), frame.getHeight(), pDepth[middleIndex]);
   }
 
+  cout << "Shutting things down." << endl;
+  
   depth.stop();
   depth.destroy();
   device.close();
   OpenNI::shutdown();
-  
+
+  cout << "Done shutting down." << endl;
   return 0;
 }
