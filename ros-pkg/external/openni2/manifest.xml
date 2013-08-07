@@ -1,9 +1,16 @@
 <package>
   <description brief="openni2">
 
-    This package assumes you've run
-      sudo ./git/Packaging/Linux/install.sh
+    You'll need to install the following:
+      sudo apt-get install libudev-dev
+    ... and probably a few other things of which I'm not aware.
+    'apt-file find' is your friend.
+    
+    Once this package has been built, you must run
+      make install
     to install udev rules.
+
+    If it dies complaining about java, you probably don't even need that part.
 
   </description>
   <author>Demo User</author>
@@ -12,9 +19,8 @@
 
   <export>
     <cpp cflags="-I${prefix}/git/Include"
-         lflags="-Wl,-rpath,${prefix}/git/Bin/Arm-Release -L${prefix}/git/Bin/Arm-Release -lOpenNI2" />
+         lflags="-Wl,-rpath,${prefix}/git/Bin/Arm-Release -L${prefix}/git/Bin/Arm-Release -Wl,-rpath,${prefix}/git/Bin/x64-Release -L${prefix}/git/Bin/x64-Release -lOpenNI2" />
   </export>
-
   
 </package>
 

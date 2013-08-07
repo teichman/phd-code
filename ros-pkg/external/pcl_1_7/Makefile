@@ -31,7 +31,7 @@ release-io-only/built: git
 	cd ${@D} && make -j`cat /proc/cpuinfo  | grep processor | wc -l`  # Use as many cores as you have.
 	touch $@
 
-# HTTPS clone is not working on some machines.  Unclear why.  Using ssh (which requires  as a fallback.
+# HTTPS clone is not working on some machines.  Unclear why.  Using ssh as a fallback.
 git:
 	@git clone https://github.com/PointCloudLibrary/pcl.git git; \
 	RES=$$?; \

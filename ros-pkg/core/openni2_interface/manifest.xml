@@ -1,0 +1,15 @@
+<package>
+  <description brief="openni2_interface">
+
+     openni2_interface
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/openni2_interface</url>
+  <depend package="openni2"/>
+
+</package>
+
+

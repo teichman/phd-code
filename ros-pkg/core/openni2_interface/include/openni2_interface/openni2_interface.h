@@ -1,0 +1,6 @@
+#ifndef OPENNI2_INTERFACE_H
+#define OPENNI2_INTERFACE_H
+
+
+
+#endif // OPENNI2_INTERFACE_H
