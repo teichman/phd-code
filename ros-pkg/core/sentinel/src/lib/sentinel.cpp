@@ -1,6 +1,7 @@
 #include <sentinel/sentinel.h>
 #include <ros/assert.h>
 #include <ros/console.h>
+#include <boost/filesystem.hpp>
 
 using namespace std;
 namespace bfs = boost::filesystem;
@@ -9,24 +10,15 @@ Sentinel::Sentinel(std::string name,
                    double update_interval,
                    double save_interval,
                    int max_training_imgs,
-                   double threshold,
-                   const std::string& device_id,
-                   pcl::OpenNIGrabber::Mode mode) :
-  grabber_(device_id, mode, mode),
-  model_((mode == pcl::OpenNIGrabber::OpenNI_QQVGA_30Hz) ? 320*240 : 640*480),
+                   double threshold) :
+  model_(320*240),
   update_interval_(update_interval),
   save_interval_(save_interval),
   max_training_imgs_(max_training_imgs),
   threshold_(threshold),
   dir_(".sentinel-" + name)
 {
-  boost::function<void(const boost::shared_ptr<openni_wrapper::Image>&,
-                       const boost::shared_ptr<openni_wrapper::DepthImage>&,
-                       float)> rgbd_cb;
-  rgbd_cb = boost::bind(&Sentinel::rgbdCallback, this, _1, _2, _3);
-  grabber_.registerCallback(rgbd_cb);
-
-  //grabber_.registerCallback(boost::bind(&Sentinel::rgbdCallback, this, _1, _2, _3));
+  oni_.setHandler(this);
 }
 
 void Sentinel::run()
@@ -34,20 +26,16 @@ void Sentinel::run()
   if(!bfs::exists(dir_))
     bfs::create_directory(dir_);
   
-  grabber_.start();
   update_timer_.start();
   save_timer_.start();
-  while(true)
-    usleep(1e6);
-  grabber_.stop();
+  oni_.run();
 }
 
-void Sentinel::rgbdCallback(const boost::shared_ptr<openni_wrapper::Image>& oni_rgb,
-                            const boost::shared_ptr<openni_wrapper::DepthImage>& oni_depth,
-                            float f_inv)
+void Sentinel::rgbdCallback(const openni::VideoFrameRef& oni_color,
+                            const openni::VideoFrameRef& oni_depth)
 {
-  double depth_timestamp = (double)oni_depth->getTimeStamp() / (double)1e6;
-  double image_timestamp = (double)oni_rgb->getTimeStamp() / (double)1e6;
+  double image_timestamp = (double)oni_color.getTimestamp() * 1e-6;
+  double depth_timestamp = (double)oni_depth.getTimestamp() * 1e-6;
   timespec clk;
   clock_gettime(CLOCK_REALTIME, &clk);
   double callback_timestamp = clk.tv_sec + clk.tv_nsec * 1e-9;
@@ -58,8 +46,8 @@ void Sentinel::rgbdCallback(const boost::shared_ptr<openni_wrapper::Image>& oni_
                     << depth_timestamp - image_timestamp);
   }
 
-  DepthMatPtr depth = oniDepthToEigenPtr(*oni_depth);
-  cv::Mat3b img = oniToCV(*oni_rgb);
+  cv::Mat3b img = oniToCV(oni_color);
+  DepthMatPtr depth = oniDepthToEigenPtr(oni_depth);
   process(depth, img, callback_timestamp);
 }
 

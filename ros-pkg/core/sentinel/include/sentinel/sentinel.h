@@ -7,24 +7,22 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <bag_of_tricks/high_res_timer.h>
 #include <sentinel/background_model.h>
+#include <openni2_interface/openni2_interface.h>
 
-class Sentinel
+class Sentinel : public OpenNI2Handler
 {
 public:
   Sentinel(std::string name,
            double update_interval,
            double save_interval,
            int max_training_imgs,
-           double threshold,
-           const std::string& device_id = "",
-           pcl::OpenNIGrabber::Mode mode = pcl::OpenNIGrabber::OpenNI_QVGA_30Hz);
-  void rgbdCallback(const boost::shared_ptr<openni_wrapper::Image>& rgb,
-                    const boost::shared_ptr<openni_wrapper::DepthImage>& depth,
-                    float f_inv);
+           double threshold);
+  void rgbdCallback(const openni::VideoFrameRef& color,
+                    const openni::VideoFrameRef& depth);
   void run();
 
 protected:
-  pcl::OpenNIGrabber grabber_;
+  OpenNI2Interface oni_;
   BackgroundModel model_;
   std::queue<DepthMatConstPtr> training_;
   double update_interval_;

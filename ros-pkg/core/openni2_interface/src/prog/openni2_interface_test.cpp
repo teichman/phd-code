@@ -1,5 +1,6 @@
 #include <openni2_interface/openni2_interface.h>
 #include <iostream>
+#include <opencv2/highgui/highgui.hpp>
 
 using namespace std;
 
