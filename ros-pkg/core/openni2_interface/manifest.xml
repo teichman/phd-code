@@ -8,7 +8,9 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/openni2_interface</url>
+
   <depend package="openni2"/>
+  <depend package="rosconsole"/>
 
 </package>
 
