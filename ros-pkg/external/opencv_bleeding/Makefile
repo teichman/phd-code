@@ -2,6 +2,7 @@ built: source
 	cd source/OpenCV-2.4.0 && mkdir -p release
 	cd source/OpenCV-2.4.0/release && cmake -D CMAKE_BUILD_TYPE=RELEASE -D BUILD_PYTHON_SUPPORT=ON ../
 	cd source/OpenCV-2.4.0/release && make -j`cat /proc/cpuinfo  | grep processor | wc -l`
+	touch $@
 
 source:
 	mkdir -p $@
