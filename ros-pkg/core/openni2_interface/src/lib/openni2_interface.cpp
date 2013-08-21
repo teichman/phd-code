@@ -7,6 +7,8 @@ using namespace std;
 using namespace openni;
 
 #define SAMPLE_READ_WAIT_TIMEOUT 2000  // ms
+#define IMAGE_WIDTH 640
+#define IMAGE_HEIGHT 480
 
 bool g_int = false;
 
@@ -122,7 +124,7 @@ int OpenNI2Interface::connect()
     cout << "Depth modes: " << endl;
     for(int i = 0; i < dmodes.getSize(); ++i) {
       cout << "  " << dmodes[i].getResolutionX() << " " << dmodes[i].getResolutionY() << " " << dmodes[i].getPixelFormat() << " " << dmodes[i].getFps() << endl;
-      if(dmodes[i].getResolutionX() == 320 && dmodes[i].getResolutionY() == 240 &&
+      if(dmodes[i].getResolutionX() == IMAGE_WIDTH && dmodes[i].getResolutionY() == IMAGE_HEIGHT &&
          dmodes[i].getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM && dmodes[i].getFps() == 30)
       {
         rc = depth_stream_.setVideoMode(dmodes[i]);
@@ -141,7 +143,7 @@ int OpenNI2Interface::connect()
     cout << "Color modes: " << endl;
     for(int i = 0; i < cmodes.getSize(); ++i) {
       cout << "  " << cmodes[i].getResolutionX() << " " << cmodes[i].getResolutionY() << " " << cmodes[i].getPixelFormat() << " " << cmodes[i].getFps() << endl;
-      if(cmodes[i].getResolutionX() == 320 && cmodes[i].getResolutionY() == 240 &&
+      if(cmodes[i].getResolutionX() == IMAGE_WIDTH && cmodes[i].getResolutionY() == IMAGE_HEIGHT &&
          cmodes[i].getPixelFormat() == openni::PIXEL_FORMAT_RGB888 && cmodes[i].getFps() == 30)
       {
         rc = color_stream_.setVideoMode(cmodes[i]);

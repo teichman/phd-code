@@ -12,7 +12,7 @@ Sentinel::Sentinel(std::string name,
                    int max_training_imgs,
                    double threshold,
                    bool visualize) :
-  model_(320*240),
+  model_(640*480),
   update_interval_(update_interval),
   save_interval_(save_interval),
   max_training_imgs_(max_training_imgs),
