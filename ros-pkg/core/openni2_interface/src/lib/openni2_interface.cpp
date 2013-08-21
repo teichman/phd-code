@@ -108,7 +108,7 @@ int OpenNI2Interface::connect()
   }
 
   device_.setDepthColorSyncEnabled(true);
-  
+
   if (device_.getSensorInfo(SENSOR_DEPTH) != NULL)
   {
     rc = depth_stream_.create(device_, SENSOR_DEPTH);
@@ -117,11 +117,39 @@ int OpenNI2Interface::connect()
       printf("Couldn't create depth stream\n%s\n", OpenNI::getExtendedError());
       return 3;
     }
+
+    const Array<VideoMode>& dmodes = device_.getSensorInfo(SENSOR_DEPTH)->getSupportedVideoModes();
+    cout << "Depth modes: " << endl;
+    for(int i = 0; i < dmodes.getSize(); ++i) {
+      cout << "  " << dmodes[i].getResolutionX() << " " << dmodes[i].getResolutionY() << " " << dmodes[i].getPixelFormat() << " " << dmodes[i].getFps() << endl;
+      if(dmodes[i].getResolutionX() == 320 && dmodes[i].getResolutionY() == 240 &&
+         dmodes[i].getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM && dmodes[i].getFps() == 30)
+      {
+        rc = depth_stream_.setVideoMode(dmodes[i]);
+        cout << "Set." << endl;
+        ROS_ASSERT(rc == STATUS_OK);
+      }
+    }
+
   }
 
   rc = color_stream_.create(device_, openni::SENSOR_COLOR);
   if (rc == openni::STATUS_OK)
   {
+    
+    const Array<VideoMode>& cmodes = device_.getSensorInfo(SENSOR_COLOR)->getSupportedVideoModes();
+    cout << "Color modes: " << endl;
+    for(int i = 0; i < cmodes.getSize(); ++i) {
+      cout << "  " << cmodes[i].getResolutionX() << " " << cmodes[i].getResolutionY() << " " << cmodes[i].getPixelFormat() << " " << cmodes[i].getFps() << endl;
+      if(cmodes[i].getResolutionX() == 320 && cmodes[i].getResolutionY() == 240 &&
+         cmodes[i].getPixelFormat() == openni::PIXEL_FORMAT_RGB888 && cmodes[i].getFps() == 30)
+      {
+        rc = color_stream_.setVideoMode(cmodes[i]);
+        cout << "Set." << endl;
+        ROS_ASSERT(rc == STATUS_OK);
+      }
+    }
+
     rc = color_stream_.start();
     if (rc != openni::STATUS_OK)
     {
