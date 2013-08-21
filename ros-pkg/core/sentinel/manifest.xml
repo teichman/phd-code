@@ -14,6 +14,7 @@
   <depend package="bag_of_tricks"/>
   <depend package="opencv_bleeding"/>
   <depend package="rosconsole"/>
+  <depend package="timer"/>
 
 </package>
 

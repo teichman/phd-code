@@ -21,6 +21,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #set(BIN_DEPENDENCIES "")
 #set(BIN_BOOST_DEPENDENCIES "")
 
+find_package(VTK REQUIRED)
+include(${VTK_USE_FILE})
+
 # -- Everything in src/*cpp is a library file
 FILE(GLOB LIB_CPP "${PROJECT_SOURCE_DIR}/src/lib/*.cpp")
 set(HAS_LIBRARIES ${LIB_CPP})

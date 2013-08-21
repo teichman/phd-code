@@ -1,5 +1,6 @@
 #include <sentinel/background_model.h>
 #include <ros/assert.h>
+#include <timer/timer.h>
 
 using namespace std;
 using namespace Eigen;
@@ -89,6 +90,7 @@ BackgroundModel::BackgroundModel(int num_pixels, double min_pct,
 
 void BackgroundModel::increment(const DepthMat& depth, int num)
 {
+  ScopedTimer st("BackgroundModel::increment");
   ROS_ASSERT(depth.rows() * depth.cols() == (int)histograms_.size());
   // -- Compute histograms of z values.
   int idx = 0;
@@ -102,6 +104,7 @@ void BackgroundModel::increment(const DepthMat& depth, int num)
 
 void BackgroundModel::finalize()
 {
+  ScopedTimer st("BackgroundModel::finalize");
   for(size_t i = 0; i < histograms_.size(); ++i)
     histograms_[i]->finalize();
 

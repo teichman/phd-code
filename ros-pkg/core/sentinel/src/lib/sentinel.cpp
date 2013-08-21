@@ -67,6 +67,8 @@ void Sentinel::process(DepthMatConstPtr depth, cv::Mat3b img, double ts)
     
     updateModel(depth);
   }
+
+  ScopedTimer st("Sentinel::process after update");
   
   // -- If the model has been trained suffificiently, make predictions.
   if((int)training_.size() == 0)
@@ -76,46 +78,59 @@ void Sentinel::process(DepthMatConstPtr depth, cv::Mat3b img, double ts)
     mask_ = cv::Mat1b(img.size());
 
   // -- Get raw mask.
-  mask_ = 0;
-  int idx = 0;
-  for(int y = 0; y < depth->rows(); ++y) {
-    for(int x = 0; x < depth->cols(); ++x, ++idx) {
-      if(depth->coeff(y, x) == 0)
-        continue;
-      if(!model_.isBackground(idx, depth->coeff(y, x) / 1000.0))
-        mask_(y, x) = 255;
-    }
-  }
-
-  // -- Get rid of noise.
-  cv::erode(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 4);
-  cv::dilate(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 4);
-
-  // -- Count up.
-  vis_ = img.clone();
-  double num_fg = 0;
-  for(int y = 0; y < depth->rows(); ++y) { 
-    for(int x = 0; x < depth->cols(); ++x, ++idx) { 
-      if(mask_(y, x) == 255) { 
-        ++num_fg;
-        vis_(y, x)[2] = 255;
+  {
+    ScopedTimer st("Getting raw mask");
+    mask_ = 0;
+    int idx = 0;
+    for(int y = 0; y < depth->rows(); ++y) {
+      for(int x = 0; x < depth->cols(); ++x, ++idx) {
+        if(depth->coeff(y, x) == 0)
+          continue;
+        if(!model_.isBackground(idx, depth->coeff(y, x) / 1000.0))
+          mask_(y, x) = 255;
       }
     }
   }
 
+  // -- Get rid of noise.
+  {
+    ScopedTimer st("noise reduction");
+    cv::erode(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 4);
+    cv::dilate(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 4);
+  }
+
+  // -- Count up.
+  double num_fg = 0;
+  {
+    ScopedTimer st("counting");
+    for(int y = 0; y < depth->rows(); ++y)
+      for(int x = 0; x < depth->cols(); ++x)
+        if(mask_(y, x) == 255)
+          ++num_fg;
+  }
+  
   // -- Save.
-  double total = depth->rows() * depth->cols();
-  if(num_fg / total > threshold_) {
-    if(save_timer_.getSeconds() > save_interval_) { 
-      cout << "Saving.  pct fg: " << num_fg / total << endl;
-      save(depth, img, vis_, ts);
-      save_timer_.reset();
+  {
+    ScopedTimer st("Saving");
+    double total = depth->rows() * depth->cols();
+    if(num_fg / total > threshold_) {
+      if(save_timer_.getSeconds() > save_interval_) { 
+        cout << "Saving.  pct fg: " << num_fg / total << endl;
+        save(depth, img, vis_, ts);
+        save_timer_.reset();
       save_timer_.start();
+      }
     }
   }
   
   // -- Visualize.
   if(visualize_) {
+    vis_ = img.clone();
+    for(int y = 0; y < depth->rows(); ++y)
+      for(int x = 0; x < depth->cols(); ++x)
+        if(mask_(y, x) == 255)
+          vis_(y, x)[2] = 255;
+    
     cv::imshow("Sentinel", vis_);
     cv::waitKey(2);
   }
@@ -123,6 +138,7 @@ void Sentinel::process(DepthMatConstPtr depth, cv::Mat3b img, double ts)
 
 void Sentinel::updateModel(DepthMatConstPtr depth)
 {
+  ScopedTimer st("Sentinel::updateModel");
   cout << "Updating model." << endl;
   ROS_ASSERT(depth);
   

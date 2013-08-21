@@ -1,8 +1,10 @@
 #include <sentinel/openni_helpers.h>
 #include <ros/assert.h>
+#include <timer/timer.h>
 
 cv::Mat3b oniToCV(const openni::VideoFrameRef& oni)
 {
+  ScopedTimer st("oniToCV");
   ROS_ASSERT(oni.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_RGB888);
   
   cv::Mat3b img(oni.getHeight(), oni.getWidth());
@@ -21,6 +23,7 @@ cv::Mat3b oniToCV(const openni::VideoFrameRef& oni)
 
 DepthMatPtr oniDepthToEigenPtr(const openni::VideoFrameRef& oni)
 {
+  ScopedTimer st("oniDepthToEigenPtr");
   ROS_ASSERT(oni.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM);
 
   DepthMatPtr depth(new DepthMat(oni.getHeight(), oni.getWidth()));
