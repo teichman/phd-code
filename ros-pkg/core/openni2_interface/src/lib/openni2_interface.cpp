@@ -70,7 +70,7 @@ void OpenNI2Interface::processColor()
   openni::VideoFrameRef color_frame;
   Status rc = color_stream_.readFrame(&color_frame);
   ROS_ASSERT(rc == STATUS_OK);
-  cout << "Got new color frame with ts: " << color_frame.getTimestamp() * 1e-6 << endl;
+  //cout << "Got new color frame with ts: " << color_frame.getTimestamp() * 1e-6 << endl;
   sync_.addT0(color_frame, color_frame.getTimestamp() * 1e-6);
   processSynchronized();
 }
@@ -80,7 +80,7 @@ void OpenNI2Interface::processDepth()
   openni::VideoFrameRef depth_frame;
   Status rc = depth_stream_.readFrame(&depth_frame);
   ROS_ASSERT(rc == STATUS_OK);
-  cout << "Got new depth frame with ts: " << depth_frame.getTimestamp() * 1e-6 << endl;
+  //cout << "Got new depth frame with ts: " << depth_frame.getTimestamp() * 1e-6 << endl;
   sync_.addT1(depth_frame, depth_frame.getTimestamp() * 1e-6);
   processSynchronized();
 }
@@ -88,7 +88,7 @@ void OpenNI2Interface::processDepth()
 void OpenNI2Interface::processSynchronized()
 {
   if(sync_.updated_) {
-    cout << "New sync'd frame is available!  dt: " << sync_.ts0_ - sync_.ts1_ << endl;
+    //cout << "New sync'd frame is available!  dt: " << sync_.ts0_ - sync_.ts1_ << endl;
     handler_->rgbdCallback(sync_.current0_, sync_.current1_);
     sync_.updated_ = false;
   }
@@ -121,14 +121,14 @@ int OpenNI2Interface::connect()
     }
 
     const Array<VideoMode>& dmodes = device_.getSensorInfo(SENSOR_DEPTH)->getSupportedVideoModes();
-    cout << "Depth modes: " << endl;
+    //cout << "Depth modes: " << endl;
     for(int i = 0; i < dmodes.getSize(); ++i) {
-      cout << "  " << dmodes[i].getResolutionX() << " " << dmodes[i].getResolutionY() << " " << dmodes[i].getPixelFormat() << " " << dmodes[i].getFps() << endl;
+      //cout << "  " << dmodes[i].getResolutionX() << " " << dmodes[i].getResolutionY() << " " << dmodes[i].getPixelFormat() << " " << dmodes[i].getFps() << endl;
       if(dmodes[i].getResolutionX() == IMAGE_WIDTH && dmodes[i].getResolutionY() == IMAGE_HEIGHT &&
          dmodes[i].getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM && dmodes[i].getFps() == 30)
       {
         rc = depth_stream_.setVideoMode(dmodes[i]);
-        cout << "Set." << endl;
+        //cout << "Set." << endl;
         ROS_ASSERT(rc == STATUS_OK);
       }
     }
@@ -140,14 +140,14 @@ int OpenNI2Interface::connect()
   {
     
     const Array<VideoMode>& cmodes = device_.getSensorInfo(SENSOR_COLOR)->getSupportedVideoModes();
-    cout << "Color modes: " << endl;
+    //cout << "Color modes: " << endl;
     for(int i = 0; i < cmodes.getSize(); ++i) {
-      cout << "  " << cmodes[i].getResolutionX() << " " << cmodes[i].getResolutionY() << " " << cmodes[i].getPixelFormat() << " " << cmodes[i].getFps() << endl;
+      //cout << "  " << cmodes[i].getResolutionX() << " " << cmodes[i].getResolutionY() << " " << cmodes[i].getPixelFormat() << " " << cmodes[i].getFps() << endl;
       if(cmodes[i].getResolutionX() == IMAGE_WIDTH && cmodes[i].getResolutionY() == IMAGE_HEIGHT &&
          cmodes[i].getPixelFormat() == openni::PIXEL_FORMAT_RGB888 && cmodes[i].getFps() == 30)
       {
         rc = color_stream_.setVideoMode(cmodes[i]);
-        cout << "Set." << endl;
+        //cout << "Set." << endl;
         ROS_ASSERT(rc == STATUS_OK);
       }
     }

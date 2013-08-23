@@ -30,10 +30,10 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  double update_interval = 0;
+  double update_interval = 1;
   double save_interval = 1;
   double threshold = 0.00001;
-  int max_training_imgs = 180;
+  int max_training_imgs = 600;
   Sentinel sen(name, update_interval,
                save_interval, max_training_imgs,
                threshold, opts.count("visualize"));

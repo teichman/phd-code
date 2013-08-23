@@ -96,22 +96,12 @@ void Sentinel::process(DepthMatConstPtr depth, cv::Mat3b img, double ts)
   }
 
   // -- Get rid of noise.
-  // {
-  //   ScopedTimer st("noise reduction");
-  //   cv::erode(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 4);
-  //   cv::dilate(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 4);
-  // }
+  {
+    ScopedTimer st("noise reduction");
+    cv::erode(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 5);
+    cv::dilate(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 3);
+  }
 
-  // // -- Count up.
-  // double num_fg = 0;
-  // {
-  //   ScopedTimer st("counting");
-  //   for(int y = 0; y < depth->rows(); ++y)
-  //     for(int x = 0; x < depth->cols(); ++x)
-  //       if(mask_(y, x) == 255)
-  //         ++num_fg;
-  // }
-  
   // -- Save.
   {
     ScopedTimer st("Saving");

@@ -93,20 +93,16 @@ void BackgroundModel::increment(const DepthMat& depth, int num)
   ScopedTimer st("BackgroundModel::increment");
   ROS_ASSERT(depth.rows() * depth.cols() == (int)histograms_.size());
 
+  // -- Compute histograms of z values.
   int idx = 0;
   for(int y = 0; y < depth.rows(); ++y)
     for(int x = 0; x < depth.cols(); ++x, ++idx)
-      histograms_[idx]->increment(depth(y, x) / 1000.0, num);
+      if(depth(y, x) != 0)
+        histograms_[idx]->increment(depth(y, x) / 1000.0, num);
 }
 
 bool BackgroundModel::isBackground(size_t idx, double z) const
 {
   ROS_ASSERT(idx < histograms_.size());
-
-  double num = histograms_[idx]->getNum(z);
-  double pct = num / histograms_[idx]->total();
-  if(pct > min_pct_)
-    return true;
-  else
-    return false;
+  return histograms_[idx]->getNum(z) / histograms_[idx]->total() > min_pct_;
 }
