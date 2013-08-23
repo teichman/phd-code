@@ -12,7 +12,7 @@ Sentinel::Sentinel(std::string name,
                    int max_training_imgs,
                    double threshold,
                    bool visualize) :
-  model_(640*480),
+  model_(640*480, 0.3, 10, 0.2),
   update_interval_(update_interval),
   save_interval_(save_interval),
   max_training_imgs_(max_training_imgs),
@@ -78,6 +78,7 @@ void Sentinel::process(DepthMatConstPtr depth, cv::Mat3b img, double ts)
     mask_ = cv::Mat1b(img.size());
 
   // -- Get raw mask.
+  double num_fg = 0;
   {
     ScopedTimer st("Getting raw mask");
     mask_ = 0;
@@ -86,28 +87,30 @@ void Sentinel::process(DepthMatConstPtr depth, cv::Mat3b img, double ts)
       for(int x = 0; x < depth->cols(); ++x, ++idx) {
         if(depth->coeff(y, x) == 0)
           continue;
-        if(!model_.isBackground(idx, depth->coeff(y, x) / 1000.0))
+        if(!model_.isBackground(idx, depth->coeff(y, x) / 1000.0)) {
           mask_(y, x) = 255;
+          ++num_fg;
+        }
       }
     }
   }
 
   // -- Get rid of noise.
-  {
-    ScopedTimer st("noise reduction");
-    cv::erode(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 4);
-    cv::dilate(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 4);
-  }
+  // {
+  //   ScopedTimer st("noise reduction");
+  //   cv::erode(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 4);
+  //   cv::dilate(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 4);
+  // }
 
-  // -- Count up.
-  double num_fg = 0;
-  {
-    ScopedTimer st("counting");
-    for(int y = 0; y < depth->rows(); ++y)
-      for(int x = 0; x < depth->cols(); ++x)
-        if(mask_(y, x) == 255)
-          ++num_fg;
-  }
+  // // -- Count up.
+  // double num_fg = 0;
+  // {
+  //   ScopedTimer st("counting");
+  //   for(int y = 0; y < depth->rows(); ++y)
+  //     for(int x = 0; x < depth->cols(); ++x)
+  //       if(mask_(y, x) == 255)
+  //         ++num_fg;
+  // }
   
   // -- Save.
   {
@@ -118,7 +121,7 @@ void Sentinel::process(DepthMatConstPtr depth, cv::Mat3b img, double ts)
         cout << "Saving.  pct fg: " << num_fg / total << endl;
         save(depth, img, vis_, ts);
         save_timer_.reset();
-      save_timer_.start();
+        save_timer_.start();
       }
     }
   }
@@ -149,8 +152,6 @@ void Sentinel::updateModel(DepthMatConstPtr depth)
     model_.increment(*training_.front(), -1);
     training_.pop();
   }
-
-  model_.finalize();
 }
 
 void Sentinel::save(DepthMatConstPtr depth, cv::Mat3b img, cv::Mat3b vis, double ts) const

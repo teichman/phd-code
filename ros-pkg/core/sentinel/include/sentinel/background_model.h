@@ -13,38 +13,39 @@ public:
   void initialize(double min_depth, double max_depth, double binwidth);
   void increment(double z, int num);
   void clear();
-  size_t total() const { return total_; }
-  int getNumNearby(double z) const;
-  void finalize();
-    
+  double total() const { return total_; }
+  double getNum(double z) const;
+  void indices(double z,
+               size_t* lower_idx, size_t* upper_idx,
+               double* lower_weight, double* upper_weight) const;
+               
+  
 protected:
   double min_depth_;
   double max_depth_;
   double binwidth_;
   std::vector<double> lower_limits_;
-  std::vector<size_t> bins_;
-  std::vector<size_t> num_nearby_;
-  size_t total_;
-  bool finalized_;
+  std::vector<double> bins_;
+  double total_;
 };
 
 class BackgroundModel
 {
 public:
-  BackgroundModel(int num_pixels, double min_pct = 0.2, double max_depth = 10, double res = 0.1);
+  BackgroundModel(int num_pixels, double min_pct, double max_depth, double res);
   //! Increments bins by num.
   void increment(const DepthMat& depth, int num = 1);
-  void finalize();
 
   bool isBackground(size_t idx, double z) const;
   size_t size() const { return histograms_.size(); }
   
 protected:
   std::vector<DepthHistogram::Ptr> histograms_; // row major
+  //! Percentage of histogram that a bin must contain to count as background.
   double min_pct_;
   double max_depth_;
+  //! Bin width in z.
   double res_;
-  bool finalized_;
 };
 
 #endif // BACKGROUND_MODEL_H
