@@ -178,7 +178,8 @@ int OpenNI2Interface::connect()
     return 2;
   }
  
-
+  device_.setImageRegistrationMode(openni::IMAGE_REGISTRATION_DEPTH_TO_COLOR);
+  
   VideoMode depth_video_mode = depth_stream_.getVideoMode();
   VideoMode color_video_mode = color_stream_.getVideoMode();
   
@@ -194,6 +195,7 @@ int OpenNI2Interface::connect()
                    << depth_width << " x " << depth_height << " resolution.");
   ROS_DEBUG_STREAM("Depth pixel format: " << depth_video_mode.getPixelFormat());
   ROS_DEBUG_STREAM("Color pixel format: " << color_video_mode.getPixelFormat());
+  ROS_DEBUG_STREAM("Device registration mode: " << device_.getImageRegistrationMode());
 
 // typedef enum
 // {
