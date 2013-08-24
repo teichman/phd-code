@@ -4,7 +4,10 @@
 
 cv::Mat3b oniToCV(const openni::VideoFrameRef& oni)
 {
+  #if TIMING
   ScopedTimer st("oniToCV");
+  #endif
+  
   ROS_ASSERT(oni.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_RGB888);
   
   cv::Mat3b img(oni.getHeight(), oni.getWidth());
@@ -23,7 +26,10 @@ cv::Mat3b oniToCV(const openni::VideoFrameRef& oni)
 
 DepthMatPtr oniDepthToEigenPtr(const openni::VideoFrameRef& oni)
 {
+  #if TIMING
   ScopedTimer st("oniDepthToEigenPtr");
+  #endif
+  
   ROS_ASSERT(oni.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM);
 
   DepthMatPtr depth(new DepthMat(oni.getHeight(), oni.getWidth()));

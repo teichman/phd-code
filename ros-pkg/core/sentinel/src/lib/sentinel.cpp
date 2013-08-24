@@ -46,9 +46,7 @@ cv::Mat3b falseColor(const DepthMat& depth)
   return cvimg;
 }
 
-Sentinel::Sentinel(std::string name,
-                   double update_interval,
-                   double save_interval,
+Sentinel::Sentinel(double update_interval,
                    int max_training_imgs,
                    double threshold,
                    bool visualize,
@@ -56,10 +54,8 @@ Sentinel::Sentinel(std::string name,
   oni_(resolution),
   model_(resolution == OpenNI2Interface::VGA ? 640*480 : 320*240, 0.3, 10, 0.2),
   update_interval_(update_interval),
-  save_interval_(save_interval),
   max_training_imgs_(max_training_imgs),
   threshold_(threshold),
-  dir_(".sentinel-" + name),
   visualize_(visualize)
 {
   oni_.setHandler(this);
@@ -67,11 +63,7 @@ Sentinel::Sentinel(std::string name,
 
 void Sentinel::run()
 {
-  if(!bfs::exists(dir_))
-    bfs::create_directory(dir_);
-  
   update_timer_.start();
-  save_timer_.start();
   oni_.run();
 }
 
@@ -90,17 +82,15 @@ void Sentinel::rgbdCallback(const openni::VideoFrameRef& oni_color,
                     << depth_timestamp - image_timestamp);
   }
 
-  cv::Mat3b img = oniToCV(oni_color);
+  cv::Mat3b color = oniToCV(oni_color);
   DepthMatPtr depth = oniDepthToEigenPtr(oni_depth);
-  process(depth, img, callback_timestamp);
+  process(color, depth, callback_timestamp);
 }
 
-void Sentinel::process(DepthMatConstPtr depth, cv::Mat3b img, double ts)
+void Sentinel::process(cv::Mat3b color, DepthMatConstPtr depth, double ts)
 {
-  // cout << "Processing." << endl;
-  // cout << img.rows << " " << img.cols << " " << depth->rows() << " " << depth->cols() << endl;
-  ROS_ASSERT(depth->rows() == img.rows);
-  ROS_ASSERT(depth->cols() == img.cols);
+  ROS_ASSERT(depth->rows() == color.rows);
+  ROS_ASSERT(depth->cols() == color.cols);
   
   // -- Update model.
   if(update_timer_.getSeconds() > update_interval_) {
@@ -110,19 +100,24 @@ void Sentinel::process(DepthMatConstPtr depth, cv::Mat3b img, double ts)
     updateModel(depth);
   }
 
+  #if TIMING
   ScopedTimer st("Sentinel::process after update");
+  #endif
   
   // -- If the model has been trained suffificiently, make predictions.
   if((int)training_.size() == 0)
     return;
   
-  if(mask_.rows != img.rows)
-    mask_ = cv::Mat1b(img.size());
+  if(mask_.rows != color.rows)
+    mask_ = cv::Mat1b(color.size());
 
   // -- Get raw mask.
   double num_fg = 0;
   {
+    #if TIMING
     ScopedTimer st("Getting raw mask");
+    #endif
+    
     mask_ = 0;
     int idx = 0;
     for(int y = 0; y < depth->rows(); ++y) {
@@ -139,28 +134,23 @@ void Sentinel::process(DepthMatConstPtr depth, cv::Mat3b img, double ts)
 
   // -- Get rid of noise.
   {
+    #if TIMING
     ScopedTimer st("noise reduction");
+    #endif
+    
     cv::erode(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 5);
     cv::dilate(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 3);
   }
 
-  // -- Save.
-  {
-    ScopedTimer st("Saving");
-    double total = depth->rows() * depth->cols();
-    if(num_fg / total > threshold_) {
-      if(save_timer_.getSeconds() > save_interval_) { 
-        cout << "Saving.  pct fg: " << num_fg / total << endl;
-        save(depth, img, vis_, ts);
-        save_timer_.reset();
-        save_timer_.start();
-      }
-    }
+  // -- Process the detection.
+  double total = depth->rows() * depth->cols();
+  if(num_fg / total > threshold_) {
+    handleDetection(color, depth, mask_, ts);
   }
   
   // -- Visualize.
   if(visualize_) {
-    vis_ = img.clone();
+    vis_ = color.clone();
     for(int y = 0; y < depth->rows(); ++y)
       for(int x = 0; x < depth->cols(); ++x)
         if(mask_(y, x) == 255)
@@ -168,13 +158,18 @@ void Sentinel::process(DepthMatConstPtr depth, cv::Mat3b img, double ts)
     
     cv::imshow("Sentinel", vis_);
     cv::imshow("Depth", falseColor(*depth));
-    cv::waitKey(2);
+    char key = cv::waitKey(2);
+    if(key == 'q')
+      oni_.terminate();
   }
 }
 
 void Sentinel::updateModel(DepthMatConstPtr depth)
 {
+  #if TIMING
   ScopedTimer st("Sentinel::updateModel");
+  #endif
+  
   cout << "Updating model." << endl;
   ROS_ASSERT(depth);
   
@@ -187,7 +182,22 @@ void Sentinel::updateModel(DepthMatConstPtr depth)
   }
 }
 
-void Sentinel::save(DepthMatConstPtr depth, cv::Mat3b img, cv::Mat3b vis, double ts) const
+DiskStreamingSentinel::DiskStreamingSentinel(std::string dir,
+                                             double save_interval,
+                                             double update_interval,
+                                             int max_training_imgs,
+                                             double threshold,
+                                             bool visualize,
+                                             OpenNI2Interface::Resolution res) :
+  Sentinel(update_interval, max_training_imgs, threshold, visualize, res),
+  dir_(dir),
+  save_interval_(save_interval)
+{
+  save_timer_.start();
+}
+
+void DiskStreamingSentinel::save(cv::Mat3b color, DepthMatConstPtr depth,
+                                 cv::Mat3b vis, double ts) const
 {
   time_t rawtime = ts;
   struct tm* timeinfo;
@@ -211,18 +221,17 @@ void Sentinel::save(DepthMatConstPtr depth, cv::Mat3b img, cv::Mat3b vis, double
   depthpath << setiosflags(ios::fixed) << setprecision(3) << ts - floor(ts);
   depthpath << "-depth.png";
   cout << "Saving to " << depthpath.str() << endl;
-  cv::imwrite(depthpath.str(), depthMatToCV(*depth));
+  cv::imwrite(depthpath.str(), falseColor(*depth));
   
   ostringstream imagepath;
   imagepath << imagedir << "/" << buffer << ":";
   imagepath << setiosflags(ios::fixed) << setprecision(3) << ts - floor(ts);
   imagepath << "-image.jpg";
   cout << "Saving to " << imagepath.str() << endl;
-  cv::imwrite(imagepath.str(), img);
-  
+  cv::imwrite(imagepath.str(), color);
 }
 
-cv::Mat1b Sentinel::depthMatToCV(const DepthMat& depth) const
+cv::Mat1b DiskStreamingSentinel::depthMatToCV(const DepthMat& depth) const
 {
   cv::Mat1b vis(cv::Size(depth.cols(), depth.rows()), 0);
   double max_dist = 7.5;
@@ -236,3 +245,21 @@ cv::Mat1b Sentinel::depthMatToCV(const DepthMat& depth) const
 
   return vis;
 }
+
+void DiskStreamingSentinel::handleDetection(cv::Mat3b color, DepthMatConstPtr depth,
+                                            cv::Mat1b mask, double timestamp)
+{
+  if(save_timer_.getSeconds() < save_interval_)
+    return;
+
+  #if TIMING
+  ScopedTimer st("Saving");
+  #endif
+  
+  if(!bfs::exists(dir_))
+    bfs::create_directory(dir_);
+  save(color, depth, vis_, timestamp);
+  save_timer_.reset();
+  save_timer_.start();
+}
+

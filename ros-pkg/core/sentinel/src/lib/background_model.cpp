@@ -90,7 +90,10 @@ BackgroundModel::BackgroundModel(int num_pixels, double min_pct,
 
 void BackgroundModel::increment(const DepthMat& depth, int num)
 {
+  #if TIMING
   ScopedTimer st("BackgroundModel::increment");
+  #endif
+  
   ROS_ASSERT(depth.rows() * depth.cols() == (int)histograms_.size());
 
   // -- Compute histograms of z values.

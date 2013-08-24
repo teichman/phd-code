@@ -42,13 +42,13 @@ int main(int argc, char** argv)
     }
   }
   
-  double update_interval = 1;
   double save_interval = 0.1;
-  double threshold = 0.00001;
+  double update_interval = 1;
   int max_training_imgs = 600;
-  Sentinel sen(name, update_interval,
-               save_interval, max_training_imgs,
-               threshold, opts.count("visualize"), res);
+  double threshold = 0.01;
+  DiskStreamingSentinel sen("sentinal-" + name, save_interval,
+                            update_interval, max_training_imgs,
+                            threshold, opts.count("visualize"), res);
   sen.run();
 
   return 0;

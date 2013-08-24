@@ -12,36 +12,59 @@
 class Sentinel : public OpenNI2Handler
 {
 public:
-  Sentinel(std::string name,
-           double update_interval,
-           double save_interval,
+  Sentinel(double update_interval,
            int max_training_imgs,
            double threshold,
            bool visualize,
-           OpenNI2Interface::Resolution res);
+           OpenNI2Interface::Resolution resolution);
   void rgbdCallback(const openni::VideoFrameRef& color,
                     const openni::VideoFrameRef& depth);
   void run();
+  virtual void handleDetection(cv::Mat3b color, DepthMatConstPtr depth,
+                               cv::Mat1b mask, double timestamp) = 0;
+                               
 
 protected:
   OpenNI2Interface oni_;
   BackgroundModel model_;
   std::queue<DepthMatConstPtr> training_;
   double update_interval_;
-  double save_interval_;
   int max_training_imgs_;
   HighResTimer update_timer_;
-  HighResTimer save_timer_;
   cv::Mat3b vis_;
   double threshold_;
-  std::string dir_;
   cv::Mat1b mask_;
   bool visualize_;
   
-  void process(DepthMatConstPtr depth, cv::Mat3b img, double ts);
+  void process(cv::Mat3b color, DepthMatConstPtr depth, double ts);
   void updateModel(DepthMatConstPtr depth);
-  void save(DepthMatConstPtr depth, cv::Mat3b img, cv::Mat3b vis, double ts) const;
+};
+
+class DiskStreamingSentinel : public Sentinel
+{
+public:
+  DiskStreamingSentinel(std::string dir,
+                        double save_interval,
+                        double update_interval,
+                        int max_training_imgs,
+                        double threshold,
+                        bool visualize,
+                        OpenNI2Interface::Resolution res);
+
+  void handleDetection(cv::Mat3b color, DepthMatConstPtr depth,
+                       cv::Mat1b mask, double timestamp);
+
+protected:
+  std::string dir_;
+  double save_interval_;
+  HighResTimer save_timer_;
+  
+  void save(cv::Mat3b color, DepthMatConstPtr depth, cv::Mat3b vis, double ts) const;
   cv::Mat1b depthMatToCV(const DepthMat& depth) const;
 };
+
+// class ROSStreamingSentinel : public Sentinel
+// {
+// };
 
 #endif // SENTINEL_H
