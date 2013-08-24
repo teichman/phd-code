@@ -51,8 +51,10 @@ Sentinel::Sentinel(std::string name,
                    double save_interval,
                    int max_training_imgs,
                    double threshold,
-                   bool visualize) :
-  model_(640*480, 0.3, 10, 0.2),
+                   bool visualize,
+                   OpenNI2Interface::Resolution resolution) :
+  oni_(resolution),
+  model_(resolution == OpenNI2Interface::VGA ? 640*480 : 320*240, 0.3, 10, 0.2),
   update_interval_(update_interval),
   save_interval_(save_interval),
   max_training_imgs_(max_training_imgs),

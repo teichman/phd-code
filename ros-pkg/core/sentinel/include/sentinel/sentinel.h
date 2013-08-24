@@ -17,7 +17,8 @@ public:
            double save_interval,
            int max_training_imgs,
            double threshold,
-           bool visualize);
+           bool visualize,
+           OpenNI2Interface::Resolution res);
   void rgbdCallback(const openni::VideoFrameRef& color,
                     const openni::VideoFrameRef& depth);
   void run();
