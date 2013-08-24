@@ -31,7 +31,7 @@ int main(int argc, char** argv)
   }
 
   double update_interval = 1;
-  double save_interval = 1;
+  double save_interval = 0.1;
   double threshold = 0.00001;
   int max_training_imgs = 600;
   Sentinel sen(name, update_interval,
