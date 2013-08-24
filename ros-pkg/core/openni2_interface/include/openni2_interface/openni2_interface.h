@@ -14,7 +14,9 @@ public:
 class OpenNI2Interface
 {
 public:
-  OpenNI2Interface();
+  enum Resolution { VGA = 0, QVGA = 1 };
+  
+  OpenNI2Interface(Resolution resolution);
   //! Take care to call the destructor on shut down.
   //! Starting OpenNI the next time can be annoying if you
   //! don't shut it down properly.
@@ -24,6 +26,7 @@ public:
   void terminate() { terminating_ = true; }
   
 private:
+  Resolution resolution_;
   OpenNI2Handler* handler_;
   openni::Device device_;
   openni::VideoStream color_stream_;

@@ -7,8 +7,6 @@ using namespace std;
 using namespace openni;
 
 #define SAMPLE_READ_WAIT_TIMEOUT 2000  // ms
-#define IMAGE_WIDTH 640
-#define IMAGE_HEIGHT 480
 
 bool g_int = false;
 
@@ -17,7 +15,8 @@ void sigint(int none) {
   g_int = true;
 }
 
-OpenNI2Interface::OpenNI2Interface() :
+OpenNI2Interface::OpenNI2Interface(Resolution resolution) :
+  resolution_(resolution),
   sync_(0.1),
   terminating_(false)
 {
@@ -44,15 +43,6 @@ void OpenNI2Interface::run()
   VideoStream* streams[] = { &color_stream_, &depth_stream_ };
   
   while(!terminating_ && !g_int) {
-    // int changedStreamDummy;
-    // VideoStream* pStream = &depth_stream_;
-    // Status rc = OpenNI::waitForAnyStream(&pStream, 1, &changedStreamDummy, SAMPLE_READ_WAIT_TIMEOUT);
-    // if (rc != STATUS_OK)
-    // {
-    //   printf("Wait failed! (timeout is %d ms)\n%s\n", SAMPLE_READ_WAIT_TIMEOUT, OpenNI::getExtendedError());
-    //   continue;
-    // }
-
     int idx = -1;
     OpenNI::waitForAnyStream(streams, 2, &idx, SAMPLE_READ_WAIT_TIMEOUT);
     if(idx == 0)
@@ -121,14 +111,19 @@ int OpenNI2Interface::connect()
     }
 
     const Array<VideoMode>& dmodes = device_.getSensorInfo(SENSOR_DEPTH)->getSupportedVideoModes();
-    //cout << "Depth modes: " << endl;
     for(int i = 0; i < dmodes.getSize(); ++i) {
-      //cout << "  " << dmodes[i].getResolutionX() << " " << dmodes[i].getResolutionY() << " " << dmodes[i].getPixelFormat() << " " << dmodes[i].getFps() << endl;
-      if(dmodes[i].getResolutionX() == IMAGE_WIDTH && dmodes[i].getResolutionY() == IMAGE_HEIGHT &&
+      if(resolution_ == VGA &&
+         dmodes[i].getResolutionX() == 640 && dmodes[i].getResolutionY() == 480 &&
          dmodes[i].getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM && dmodes[i].getFps() == 30)
       {
         rc = depth_stream_.setVideoMode(dmodes[i]);
-        //cout << "Set." << endl;
+        ROS_ASSERT(rc == STATUS_OK);
+      }
+      else if(resolution_ == QVGA &&
+         dmodes[i].getResolutionX() == 320 && dmodes[i].getResolutionY() == 240 &&
+         dmodes[i].getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM && dmodes[i].getFps() == 30)
+      {
+        rc = depth_stream_.setVideoMode(dmodes[i]);
         ROS_ASSERT(rc == STATUS_OK);
       }
     }
@@ -140,14 +135,19 @@ int OpenNI2Interface::connect()
   {
     
     const Array<VideoMode>& cmodes = device_.getSensorInfo(SENSOR_COLOR)->getSupportedVideoModes();
-    //cout << "Color modes: " << endl;
     for(int i = 0; i < cmodes.getSize(); ++i) {
-      //cout << "  " << cmodes[i].getResolutionX() << " " << cmodes[i].getResolutionY() << " " << cmodes[i].getPixelFormat() << " " << cmodes[i].getFps() << endl;
-      if(cmodes[i].getResolutionX() == IMAGE_WIDTH && cmodes[i].getResolutionY() == IMAGE_HEIGHT &&
+      if(resolution_ == VGA &&
+         cmodes[i].getResolutionX() == 640 && cmodes[i].getResolutionY() == 480 &&
          cmodes[i].getPixelFormat() == openni::PIXEL_FORMAT_RGB888 && cmodes[i].getFps() == 30)
       {
         rc = color_stream_.setVideoMode(cmodes[i]);
-        //cout << "Set." << endl;
+        ROS_ASSERT(rc == STATUS_OK);
+      }
+      else if(resolution_ == QVGA &&
+              cmodes[i].getResolutionX() == 320 && cmodes[i].getResolutionY() == 240 &&
+              cmodes[i].getPixelFormat() == openni::PIXEL_FORMAT_RGB888 && cmodes[i].getFps() == 30)
+      {
+        rc = color_stream_.setVideoMode(cmodes[i]);
         ROS_ASSERT(rc == STATUS_OK);
       }
     }

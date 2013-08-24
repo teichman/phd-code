@@ -17,6 +17,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_library(openni2_interface src/lib/openni2_interface.cpp)
+rosbuild_link_boost(openni2_interface filesystem program_options)
 rosbuild_add_executable(openni_test src/prog/openni_test.cpp)
 rosbuild_add_executable(openni2_interface_test src/prog/openni2_interface_test.cpp)
 target_link_libraries(openni2_interface_test openni2_interface)
