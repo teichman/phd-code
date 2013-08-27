@@ -16,14 +16,15 @@ public:
   double total() const { return total_; }
   double getNum(double z) const;
   void indices(double z,
-               size_t* lower_idx, size_t* upper_idx,
-               double* lower_weight, double* upper_weight) const;
+               size_t* lower_idx,
+               double* upper_weight) const;
                
   
 protected:
   double min_depth_;
   double max_depth_;
   double binwidth_;
+  double inv_binwidth_;
   std::vector<double> lower_limits_;
   std::vector<double> bins_;
   double total_;

@@ -18,6 +18,7 @@ void DepthHistogram::initialize(double min_depth, double max_depth, double binwi
   min_depth_ = min_depth;
   max_depth_ = max_depth;
   binwidth_ = binwidth;
+  inv_binwidth_ = 1.0 / binwidth_;
 
   int num_bins = ceil((max_depth_ - min_depth_) / binwidth_);
   bins_.resize(num_bins, 0);
@@ -28,13 +29,13 @@ void DepthHistogram::initialize(double min_depth, double max_depth, double binwi
 
 void DepthHistogram::increment(double z, int num)
 {
-  size_t lower_idx, upper_idx;
-  double lower_weight, upper_weight;
-  indices(z, &lower_idx, &upper_idx, &lower_weight, &upper_weight);
+  size_t lower_idx;
+  double upper_weight;
+  indices(z, &lower_idx, &upper_weight);
   
   total_ += num;
-  bins_[lower_idx] += num * lower_weight;
-  bins_[upper_idx] += num * upper_weight;
+  bins_[lower_idx] += num * (1.0 - upper_weight);
+  bins_[lower_idx+1] += num * upper_weight;
 }
 
 void DepthHistogram::clear()
@@ -42,36 +43,25 @@ void DepthHistogram::clear()
   min_depth_ = -1;
   max_depth_ = -1;
   binwidth_ = -1;
+  inv_binwidth_ = -1;
   lower_limits_.clear();
   bins_.clear();
   total_ = 0;
 }
 
-void DepthHistogram::indices(double z,
-                             size_t* lower_idx, size_t* upper_idx,
-                             double* lower_weight, double* upper_weight) const
+void DepthHistogram::indices(double z, size_t* lower_idx, double* upper_weight) const
 {
-  *lower_idx = max<size_t>(0, (z - min_depth_) / binwidth_);
-  *upper_idx = *lower_idx + 1;
-  *upper_weight = (z - lower_limits_[*lower_idx]) / binwidth_;
-  *lower_weight = 1.0 - *upper_weight;
-
-  // cout << "--------------------" << endl;
-  // cout << "z: " << z << endl;
-  // cout << "lower_idx: " << *lower_idx << endl;
-  // cout << "upper_idx: " << *upper_idx << endl;
-  // cout << "lower_weight: " << *lower_weight << endl;
-  // cout << "upper_weight: " << *upper_weight << endl;
+  *lower_idx = max<size_t>(0, (z - min_depth_) * inv_binwidth_);
+  *upper_weight = (z - lower_limits_[*lower_idx]) * inv_binwidth_;
 }
-
 
 double DepthHistogram::getNum(double z) const
 {
-  size_t lower_idx, upper_idx;
-  double lower_weight, upper_weight;
-  indices(z, &lower_idx, &upper_idx, &lower_weight, &upper_weight);
+  size_t lower_idx;
+  double upper_weight;
+  indices(z, &lower_idx, &upper_weight);
 
-  return bins_[lower_idx] * lower_weight + bins_[upper_idx] * upper_weight;
+  return bins_[lower_idx] * (1.0 - upper_weight) + bins_[lower_idx + 1] * (upper_weight);
 }
 
 BackgroundModel::BackgroundModel(int num_pixels, double min_pct,
