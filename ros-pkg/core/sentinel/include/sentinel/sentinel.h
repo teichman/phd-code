@@ -17,6 +17,8 @@ public:
            double threshold,
            bool visualize,
            OpenNI2Interface::Resolution resolution);
+  virtual ~Sentinel() {}
+  
   void rgbdCallback(const openni::VideoFrameRef& color,
                     const openni::VideoFrameRef& depth);
   void run();
