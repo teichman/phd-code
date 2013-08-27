@@ -51,12 +51,12 @@ Sentinel::Sentinel(double update_interval,
                    double threshold,
                    bool visualize,
                    OpenNI2Interface::Resolution resolution) :
-  oni_(resolution),
   model_(resolution == OpenNI2Interface::VGA ? 640*480 : 320*240, 0.3, 10, 0.2),
   update_interval_(update_interval),
   max_training_imgs_(max_training_imgs),
   threshold_(threshold),
-  visualize_(visualize)
+  visualize_(visualize),
+  oni_(resolution)
 {
   oni_.setHandler(this);
 }

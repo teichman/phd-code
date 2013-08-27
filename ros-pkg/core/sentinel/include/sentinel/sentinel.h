@@ -32,7 +32,6 @@ public:
                                
 
 protected:
-  OpenNI2Interface oni_;
   BackgroundModel model_;
   std::queue<DepthMatConstPtr> training_;
   double update_interval_;
@@ -42,6 +41,7 @@ protected:
   double threshold_;
   cv::Mat1b mask_;
   bool visualize_;
+  OpenNI2Interface oni_;
   
   void process(cv::Mat3b color, DepthMatConstPtr depth, double ts);
   void updateModel(DepthMatConstPtr depth);
