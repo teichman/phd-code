@@ -17,7 +17,12 @@ public:
            double threshold,
            bool visualize,
            OpenNI2Interface::Resolution resolution);
-  virtual ~Sentinel() {}
+  virtual ~Sentinel()
+  {
+    #if TIMING
+    std::cout << __FUNCTION__ << std::endl;
+    #endif
+  }
   
   void rgbdCallback(const openni::VideoFrameRef& color,
                     const openni::VideoFrameRef& depth);
@@ -52,7 +57,13 @@ public:
                         double threshold,
                         bool visualize,
                         OpenNI2Interface::Resolution res);
-
+  ~DiskStreamingSentinel()
+  {
+    #if TIMING
+    std::cout << __FUNCTION__ << std::endl;
+    #endif
+  }
+  
   void handleDetection(cv::Mat3b color, DepthMatConstPtr depth,
                        cv::Mat1b mask, double timestamp);
 

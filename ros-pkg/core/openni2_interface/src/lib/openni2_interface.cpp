@@ -25,6 +25,10 @@ OpenNI2Interface::OpenNI2Interface(Resolution resolution) :
 
 OpenNI2Interface::~OpenNI2Interface()
 {
+#if TIMING
+  std::cout << __FUNCTION__ << std::endl;
+#endif
+
   cout << "Destroying OpenNI2Interface." << endl;
   depth_stream_.stop();
   depth_stream_.destroy();
@@ -32,6 +36,10 @@ OpenNI2Interface::~OpenNI2Interface()
   color_stream_.destroy();
   device_.close();
   OpenNI::shutdown();
+
+#if TIMING
+  std::cout << __FUNCTION__ << std::endl;
+#endif
 }
 
 void OpenNI2Interface::run()

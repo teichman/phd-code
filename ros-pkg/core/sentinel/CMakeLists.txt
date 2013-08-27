@@ -34,4 +34,4 @@ rosbuild_link_boost(${PROJECT_NAME} filesystem program_options)
 
 rosbuild_add_executable(watch src/prog/watch.cpp)
 target_link_libraries(watch ${PROJECT_NAME})
-rosbuild_add_compile_flags(watch -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)
+rosbuild_add_compile_flags(watch -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas -DTIMING)
