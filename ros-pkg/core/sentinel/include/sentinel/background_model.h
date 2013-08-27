@@ -47,6 +47,12 @@ class BackgroundModel
 {
 public:
   BackgroundModel(int num_pixels, double min_pct, double max_depth, double res);
+  ~BackgroundModel() {
+    #if TIMING
+    std::cout << __FUNCTION__ << std::endl;
+    #endif
+  }
+
   //! Increments bins by num.
   void increment(const DepthMat& depth, int num = 1);
 
