@@ -229,6 +229,14 @@ void DiskStreamingSentinel::save(cv::Mat3b color, DepthMatConstPtr depth,
   imagepath << "-image.jpg";
   cout << "Saving to " << imagepath.str() << endl;
   cv::imwrite(imagepath.str(), color);
+
+  string color_symlink_path = dir_ + "/recent_color_image.jpg";
+  if(bfs::exists(color_symlink_path)) {
+    cout << "exists.  removing." << endl;
+    bfs::remove(color_symlink_path);
+  }
+  ROS_ASSERT(!bfs::exists(color_symlink_path));
+  bfs::create_symlink(imagepath.str().substr(dir_.size() + 1), color_symlink_path);
 }
 
 cv::Mat1b DiskStreamingSentinel::depthMatToCV(const DepthMat& depth) const
