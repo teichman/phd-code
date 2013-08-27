@@ -49,21 +49,6 @@ void DepthHistogram::clear()
   total_ = 0;
 }
 
-void DepthHistogram::indices(double z, size_t* lower_idx, double* upper_weight) const
-{
-  *lower_idx = max<size_t>(0, (z - min_depth_) * inv_binwidth_);
-  *upper_weight = (z - lower_limits_[*lower_idx]) * inv_binwidth_;
-}
-
-double DepthHistogram::getNum(double z) const
-{
-  size_t lower_idx;
-  double upper_weight;
-  indices(z, &lower_idx, &upper_weight);
-
-  return bins_[lower_idx] * (1.0 - upper_weight) + bins_[lower_idx + 1] * (upper_weight);
-}
-
 BackgroundModel::BackgroundModel(int num_pixels, double min_pct,
                                  double max_depth, double res) :
   min_pct_(min_pct),
@@ -96,6 +81,5 @@ void BackgroundModel::increment(const DepthMat& depth, int num)
 
 bool BackgroundModel::isBackground(size_t idx, double z) const
 {
-  ROS_ASSERT(idx < histograms_.size());
   return histograms_[idx]->getNum(z) / histograms_[idx]->total() > min_pct_;
 }

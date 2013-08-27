@@ -2,6 +2,7 @@
 #define BACKGROUND_MODEL_H
 
 #include <vector>
+#include <algorithm>
 #include <sentinel/openni_helpers.h>
 
 class DepthHistogram
@@ -14,10 +15,22 @@ public:
   void increment(double z, int num);
   void clear();
   double total() const { return total_; }
-  double getNum(double z) const;
-  void indices(double z,
-               size_t* lower_idx,
-               double* upper_weight) const;
+
+  // Inline for speed.
+  double getNum(double z) const
+  {
+    size_t lower_idx;
+    double upper_weight;
+    indices(z, &lower_idx, &upper_weight);
+    return bins_[lower_idx] * (1.0 - upper_weight) + bins_[lower_idx + 1] * (upper_weight);
+  }
+
+  // Inline for speed.
+  void indices(double z, size_t* lower_idx, double* upper_weight) const
+  {
+    *lower_idx = std::max<size_t>(0, (z - min_depth_) * inv_binwidth_);
+    *upper_weight = (z - lower_limits_[*lower_idx]) * inv_binwidth_;
+  }
                
   
 protected:
