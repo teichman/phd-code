@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <iostream>
 #include <sentinel/openni_helpers.h>
 
 class DepthHistogram
@@ -49,7 +50,7 @@ public:
   BackgroundModel(int num_pixels, double min_pct, double max_depth, double res);
   ~BackgroundModel() {
     #if TIMING
-    std::cout << __FUNCTION__ << std::endl;
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
     #endif
   }
 
