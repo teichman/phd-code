@@ -20,7 +20,7 @@ public:
   virtual ~Sentinel()
   {
     #if TIMING
-    std::cout << __FUNCTION__ << std::endl;
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
     #endif
   }
   
@@ -60,7 +60,7 @@ public:
   ~DiskStreamingSentinel()
   {
     #if TIMING
-    std::cout << __FUNCTION__ << std::endl;
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
     #endif
   }
   

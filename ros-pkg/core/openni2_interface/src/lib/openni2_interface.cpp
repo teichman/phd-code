@@ -26,7 +26,7 @@ OpenNI2Interface::OpenNI2Interface(Resolution resolution) :
 OpenNI2Interface::~OpenNI2Interface()
 {
 #if TIMING
-  std::cout << __FUNCTION__ << std::endl;
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
 #endif
 
   cout << "Destroying OpenNI2Interface." << endl;
@@ -38,7 +38,7 @@ OpenNI2Interface::~OpenNI2Interface()
   OpenNI::shutdown();
 
 #if TIMING
-  std::cout << __FUNCTION__ << std::endl;
+  std::cout << __PRETTY_FUNCTION__ << std::endl;
 #endif
 }
 

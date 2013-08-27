@@ -1,12 +1,19 @@
 #ifndef OPENNI2_INTERFACE_H
 #define OPENNI2_INTERFACE_H
 
+#include <iostream>
 #include <OpenNI.h>
 #include <openni2_interface/synchronizer.h>
 
 class OpenNI2Handler
 {
 public:
+  virtual ~OpenNI2Handler()
+  {
+#if TIMING
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+#endif
+  }
   virtual void rgbdCallback(const openni::VideoFrameRef& color,
                             const openni::VideoFrameRef& depth) = 0;
 };
