@@ -6,7 +6,7 @@
 #include <opencv2/core/core.hpp>
 #include <OpenNI.h>
 
-typedef Eigen::Matrix<unsigned short, Eigen::Dynamic, Eigen::Dynamic> DepthMat;  
+typedef Eigen::Matrix<unsigned short, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> DepthMat;  
 typedef boost::shared_ptr<DepthMat> DepthMatPtr;
 typedef boost::shared_ptr<const DepthMat> DepthMatConstPtr;
 

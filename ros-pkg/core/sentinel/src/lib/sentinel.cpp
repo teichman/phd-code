@@ -124,7 +124,7 @@ void Sentinel::process(cv::Mat3b color, DepthMatConstPtr depth, double ts)
       for(int x = 0; x < depth->cols(); ++x, ++idx) {
         if(depth->coeff(y, x) == 0)
           continue;
-        if(!model_.isBackground(idx, depth->coeff(y, x) / 1000.0)) {
+        if(!model_.isBackground(idx, depth->coeff(y, x) * 0.001)) {
           mask_(y, x) = 255;
           ++num_fg;
         }
