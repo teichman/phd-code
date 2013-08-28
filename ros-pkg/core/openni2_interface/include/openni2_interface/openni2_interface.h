@@ -10,7 +10,7 @@ class OpenNI2Handler
 public:
   virtual ~OpenNI2Handler()
   {
-#if TIMING
+#if JARVIS_DEBUG
     std::cout << __PRETTY_FUNCTION__ << std::endl;
 #endif
   }

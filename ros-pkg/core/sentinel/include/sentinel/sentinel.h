@@ -19,7 +19,7 @@ public:
            OpenNI2Interface::Resolution resolution);
   virtual ~Sentinel()
   {
-    #if TIMING
+    #if JARVIS_DEBUG
     std::cout << __PRETTY_FUNCTION__ << std::endl;
     #endif
   }
@@ -59,7 +59,7 @@ public:
                         OpenNI2Interface::Resolution res);
   ~DiskStreamingSentinel()
   {
-    #if TIMING
+    #if JARVIS_DEBUG
     std::cout << __PRETTY_FUNCTION__ << std::endl;
     #endif
   }

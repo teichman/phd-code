@@ -25,7 +25,7 @@ OpenNI2Interface::OpenNI2Interface(Resolution resolution) :
 
 OpenNI2Interface::~OpenNI2Interface()
 {
-#if TIMING
+#if JARVIS_DEBUG
   std::cout << __PRETTY_FUNCTION__ << std::endl;
 #endif
 
@@ -37,7 +37,7 @@ OpenNI2Interface::~OpenNI2Interface()
   device_.close();
   OpenNI::shutdown();
 
-#if TIMING
+#if JARVIS_DEBUG
   std::cout << __PRETTY_FUNCTION__ << std::endl;
 #endif
 }

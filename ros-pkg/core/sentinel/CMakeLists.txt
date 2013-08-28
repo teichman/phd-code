@@ -27,11 +27,11 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/background_model.cpp
   src/lib/openni_helpers.cpp
   )
-rosbuild_add_compile_flags(sentinel -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas -DTIMING)
+rosbuild_add_compile_flags(sentinel -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas -DJARVIS_DEBUG)
 #target_link_libraries(${PROJECT_NAME} another_library)
 rosbuild_add_boost_directories()
 rosbuild_link_boost(${PROJECT_NAME} filesystem program_options)
 
 rosbuild_add_executable(watch src/prog/watch.cpp)
 target_link_libraries(watch ${PROJECT_NAME})
-rosbuild_add_compile_flags(watch -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas -DTIMING)
+rosbuild_add_compile_flags(watch -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas -DJARVIS_DEBUG)

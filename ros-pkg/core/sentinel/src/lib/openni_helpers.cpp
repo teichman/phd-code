@@ -4,7 +4,7 @@
 
 cv::Mat3b oniToCV(const openni::VideoFrameRef& oni)
 {
-  #if TIMING
+  #if JARVIS_DEBUG
   ScopedTimer st("oniToCV");
   #endif
   
@@ -26,7 +26,7 @@ cv::Mat3b oniToCV(const openni::VideoFrameRef& oni)
 
 DepthMatPtr oniDepthToEigenPtr(const openni::VideoFrameRef& oni)
 {
-  #if TIMING
+  #if JARVIS_DEBUG
   ScopedTimer st("oniDepthToEigenPtr");
   #endif
   

@@ -62,8 +62,9 @@ Sentinel::Sentinel(double update_interval,
     model_ = BackgroundModel::Ptr(new BackgroundModel(640, 480, 16, 12, 0.3, 7, 0.2));
   else if(resolution == OpenNI2Interface::QVGA)
     model_ = BackgroundModel::Ptr(new BackgroundModel(320, 240, 8, 6, 0.3, 7, 0.2));
-  else
+  else {
     ROS_ASSERT(0);
+  }
 }
 
 void Sentinel::run()
@@ -75,7 +76,7 @@ void Sentinel::run()
 void Sentinel::rgbdCallback(const openni::VideoFrameRef& oni_color,
                             const openni::VideoFrameRef& oni_depth)
 {
-  #if TIMING
+  #if JARVIS_DEBUG
   ScopedTimer st("Sentinel::rgbdCallback");
   #endif
 
@@ -109,7 +110,7 @@ void Sentinel::process(cv::Mat3b color, DepthMatConstPtr depth, double ts)
     updateModel(depth);
   }
 
-  #if TIMING
+  #if JARVIS_DEBUG
   ScopedTimer st("Sentinel::process after update");
   #endif
   
@@ -123,7 +124,7 @@ void Sentinel::process(cv::Mat3b color, DepthMatConstPtr depth, double ts)
   // -- Get raw mask.
   double num_fg = 0;
   {
-    #if TIMING
+    #if JARVIS_DEBUG
     ScopedTimer st("Getting raw mask");
     #endif
     
@@ -144,7 +145,7 @@ void Sentinel::process(cv::Mat3b color, DepthMatConstPtr depth, double ts)
 
   // -- Get rid of noise.
   //{
-    // #if TIMING
+    // #if JARVIS_DEBUG
     // ScopedTimer st("noise reduction");
     // #endif
     
@@ -175,7 +176,7 @@ void Sentinel::process(cv::Mat3b color, DepthMatConstPtr depth, double ts)
 
 void Sentinel::updateModel(DepthMatConstPtr depth)
 {
-  #if TIMING
+  #if JARVIS_DEBUG
   ScopedTimer st("Sentinel::updateModel");
   #endif
   
@@ -269,7 +270,7 @@ void DiskStreamingSentinel::handleDetection(cv::Mat3b color, DepthMatConstPtr de
   if(save_timer_.getSeconds() < save_interval_)
     return;
 
-  #if TIMING
+  #if JARVIS_DEBUG
   ScopedTimer st("Saving");
   #endif
   

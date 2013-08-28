@@ -71,7 +71,7 @@ BackgroundModel::BackgroundModel(int width, int height,
 
 void BackgroundModel::increment(const DepthMat& depth, int num)
 {
-  #if TIMING
+  #if JARVIS_DEBUG
   ScopedTimer st("BackgroundModel::increment");
   #endif
 
