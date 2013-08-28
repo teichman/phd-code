@@ -107,7 +107,12 @@ int OpenNI2Interface::connect()
     return 2;
   }
 
-  device_.setDepthColorSyncEnabled(true);
+  rc = device_.setDepthColorSyncEnabled(true);
+  if(rc != STATUS_OK) {
+    cout << "setDepthColorSyncEnabled failed.  " << OpenNI::getExtendedError() << endl;
+    return 3;
+  }
+  
 
   if (device_.getSensorInfo(SENSOR_DEPTH) != NULL)
   {
@@ -186,7 +191,11 @@ int OpenNI2Interface::connect()
     return 2;
   }
  
-  device_.setImageRegistrationMode(openni::IMAGE_REGISTRATION_DEPTH_TO_COLOR);
+  rc = device_.setImageRegistrationMode(openni::IMAGE_REGISTRATION_DEPTH_TO_COLOR);
+  if(rc != STATUS_OK) {
+    cout << "setImageRegistrationMode failed.  " << OpenNI::getExtendedError() << endl;
+    return 4;
+  }
   
   VideoMode depth_video_mode = depth_stream_.getVideoMode();
   VideoMode color_video_mode = color_stream_.getVideoMode();
@@ -205,6 +214,13 @@ int OpenNI2Interface::connect()
   ROS_DEBUG_STREAM("Color pixel format: " << color_video_mode.getPixelFormat());
   ROS_DEBUG_STREAM("Device registration mode: " << device_.getImageRegistrationMode());
 
+  ROS_DEBUG_STREAM("URI: " << device_.getDeviceInfo().getUri());
+  ROS_DEBUG_STREAM("Vendor: " << device_.getDeviceInfo().getVendor());
+  ROS_DEBUG_STREAM("Name: " << device_.getDeviceInfo().getName());
+  ROS_DEBUG_STREAM("Vendor ID: " << device_.getDeviceInfo().getUsbVendorId());
+  ROS_DEBUG_STREAM("USB Product ID: " << device_.getDeviceInfo().getUsbProductId());
+  
+  
 // typedef enum
 // {
 // 	// Depth
