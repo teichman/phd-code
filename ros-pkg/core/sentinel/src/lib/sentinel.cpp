@@ -130,28 +130,7 @@ void Sentinel::process(cv::Mat3b color, DepthMatConstPtr depth, double ts)
     
     mask_ = 0;
     num_fg = model_->predict(*depth, mask_);
-    // int idx = 0;
-    // for(int y = 0; y < depth->rows(); ++y) {
-    //   for(int x = 0; x < depth->cols(); ++x, ++idx) {
-    //     if(depth->coeffRef(y, x) == 0)
-    //       continue;
-    //     if(!model_->isBackground(idx, depth->coeffRef(y, x) * 0.001)) {
-    //       mask_(y, x) = 255;
-    //       ++num_fg;
-    //     }
-    //   }
-    // }
   }
-
-  // -- Get rid of noise.
-  //{
-    // #if JARVIS_DEBUG
-    // ScopedTimer st("noise reduction");
-    // #endif
-    
-    // cv::erode(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 5);
-    // cv::dilate(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 3);
-    //}
 
   // -- Process the detection.
   if(num_fg / model_->size() > threshold_) {
