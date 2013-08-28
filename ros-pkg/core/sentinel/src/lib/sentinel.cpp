@@ -50,17 +50,18 @@ Sentinel::Sentinel(double update_interval,
                    int max_training_imgs,
                    double threshold,
                    bool visualize,
-                   OpenNI2Interface::Resolution resolution) :
+                   OpenNI2Interface::Resolution color_res,
+                   OpenNI2Interface::Resolution depth_res) :
   update_interval_(update_interval),
   max_training_imgs_(max_training_imgs),
   threshold_(threshold),
   visualize_(visualize),
-  oni_(resolution)
+  oni_(color_res, depth_res)
 {
   oni_.setHandler(this);
-  if(resolution == OpenNI2Interface::VGA)
+  if(depth_res == OpenNI2Interface::VGA)
     model_ = BackgroundModel::Ptr(new BackgroundModel(640, 480, 16, 12, 0.3, 7, 0.2));
-  else if(resolution == OpenNI2Interface::QVGA)
+  else if(depth_res == OpenNI2Interface::QVGA)
     model_ = BackgroundModel::Ptr(new BackgroundModel(320, 240, 8, 6, 0.3, 7, 0.2));
   else {
     ROS_ASSERT(0);
@@ -101,9 +102,6 @@ void Sentinel::rgbdCallback(const openni::VideoFrameRef& oni_color,
 
 void Sentinel::process(cv::Mat3b color, DepthMatConstPtr depth, double ts)
 {
-  ROS_ASSERT(depth->rows() == color.rows);
-  ROS_ASSERT(depth->cols() == color.cols);
-  
   // -- Update model.
   if(update_timer_.getSeconds() > update_interval_) {
     update_timer_.reset();
@@ -120,8 +118,8 @@ void Sentinel::process(cv::Mat3b color, DepthMatConstPtr depth, double ts)
   if((int)training_.size() == 0)
     return;
   
-  if(mask_.rows != color.rows)
-    mask_ = cv::Mat1b(color.size());
+  if(mask_.rows != depth->cols())
+    mask_ = cv::Mat1b(cv::Size(depth->cols(), depth->rows()));
 
   // -- Get raw mask.
   double num_fg = 0;
@@ -141,7 +139,7 @@ void Sentinel::process(cv::Mat3b color, DepthMatConstPtr depth, double ts)
   
   // -- Visualize.
   if(visualize_) {
-    vis_ = color.clone();
+    cv::resize(color, vis_, cv::Size(depth->cols(), depth->rows()), cv::INTER_NEAREST);
     for(int y = 0; y < depth->rows(); ++y)
       for(int x = 0; x < depth->cols(); ++x)
         if(mask_(y, x) == 255)
@@ -179,8 +177,9 @@ DiskStreamingSentinel::DiskStreamingSentinel(std::string dir,
                                              int max_training_imgs,
                                              double threshold,
                                              bool visualize,
-                                             OpenNI2Interface::Resolution res) :
-  Sentinel(update_interval, max_training_imgs, threshold, visualize, res),
+                                             OpenNI2Interface::Resolution color_res,
+                                             OpenNI2Interface::Resolution depth_res) :
+  Sentinel(update_interval, max_training_imgs, threshold, visualize, color_res, depth_res),
   dir_(dir),
   save_interval_(save_interval)
 {

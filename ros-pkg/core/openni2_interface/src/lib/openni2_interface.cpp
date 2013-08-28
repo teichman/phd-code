@@ -15,8 +15,9 @@ void sigint(int none) {
   g_int = true;
 }
 
-OpenNI2Interface::OpenNI2Interface(Resolution resolution) :
-  resolution_(resolution),
+OpenNI2Interface::OpenNI2Interface(Resolution color_res, Resolution depth_res) :
+  color_res_(color_res),
+  depth_res_(depth_res),
   sync_(0.018),
   terminating_(false)
 {
@@ -123,14 +124,14 @@ int OpenNI2Interface::connect()
 
     const Array<VideoMode>& dmodes = device_.getSensorInfo(SENSOR_DEPTH)->getSupportedVideoModes();
     for(int i = 0; i < dmodes.getSize(); ++i) {
-      if(resolution_ == VGA &&
+      if(depth_res_ == VGA &&
          dmodes[i].getResolutionX() == 640 && dmodes[i].getResolutionY() == 480 &&
          dmodes[i].getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM && dmodes[i].getFps() == 30)
       {
         rc = depth_stream_.setVideoMode(dmodes[i]);
         ROS_ASSERT(rc == STATUS_OK);
       }
-      else if(resolution_ == QVGA &&
+      else if(depth_res_ == QVGA &&
          dmodes[i].getResolutionX() == 320 && dmodes[i].getResolutionY() == 240 &&
          dmodes[i].getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM && dmodes[i].getFps() == 30)
       {
@@ -147,14 +148,14 @@ int OpenNI2Interface::connect()
     
     const Array<VideoMode>& cmodes = device_.getSensorInfo(SENSOR_COLOR)->getSupportedVideoModes();
     for(int i = 0; i < cmodes.getSize(); ++i) {
-      if(resolution_ == VGA &&
+      if(color_res_ == VGA &&
          cmodes[i].getResolutionX() == 640 && cmodes[i].getResolutionY() == 480 &&
          cmodes[i].getPixelFormat() == openni::PIXEL_FORMAT_RGB888 && cmodes[i].getFps() == 30)
       {
         rc = color_stream_.setVideoMode(cmodes[i]);
         ROS_ASSERT(rc == STATUS_OK);
       }
-      else if(resolution_ == QVGA &&
+      else if(color_res_ == QVGA &&
               cmodes[i].getResolutionX() == 320 && cmodes[i].getResolutionY() == 240 &&
               cmodes[i].getPixelFormat() == openni::PIXEL_FORMAT_RGB888 && cmodes[i].getFps() == 30)
       {
@@ -203,11 +204,13 @@ int OpenNI2Interface::connect()
   int color_width = color_video_mode.getResolutionX();
   int color_height = color_video_mode.getResolutionY();
 
-  ROS_ASSERT(depth_width == color_width);
-  ROS_ASSERT(depth_height == color_height);
+  // ROS_ASSERT(depth_width == color_width);
+  // ROS_ASSERT(depth_height == color_height);
 
   ROS_DEBUG_STREAM("Connected to OpenNI RGBD sensor with "
-                   << depth_width << " x " << depth_height << " resolution.");
+                   << depth_width << " x " << depth_height << " depth resolution and "
+                   << color_width << " x " << color_height << " color resolution");
+
   ROS_DEBUG_STREAM("Depth pixel format: " << depth_video_mode.getPixelFormat());
   ROS_DEBUG_STREAM("Color pixel format: " << color_video_mode.getPixelFormat());
   ROS_DEBUG_STREAM("Device registration mode: " << device_.getImageRegistrationMode());

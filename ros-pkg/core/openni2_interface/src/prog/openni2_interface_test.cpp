@@ -11,7 +11,12 @@ class OniHandlerExample : OpenNI2Handler
 public:
   OpenNI2Interface oni_;
 
-  OniHandlerExample(OpenNI2Interface::Resolution resolution) : oni_(resolution) {}
+  OniHandlerExample(OpenNI2Interface::Resolution color_res,
+                    OpenNI2Interface::Resolution depth_res) :
+    oni_(color_res, depth_res)
+  {
+  }
+  
   void run()
   {
     oni_.setHandler(this);
@@ -24,7 +29,11 @@ public:
     cout << "In OniHandlerExample::rgbdCallback." << endl;
     openni::DepthPixel* pDepth = (openni::DepthPixel*)depth.getData();
     int middleIndex = (depth.getHeight()+1)*depth.getWidth()/2;
-    printf("[%08llu] %d x %d;  %8d\n", (long long)depth.getTimestamp(), depth.getWidth(), depth.getHeight(), pDepth[middleIndex]);
+    printf("[%08llu] color %d x %d; depth %d x %d; middle pixel depth:  %8d\n",
+           (long long)depth.getTimestamp(),
+           color.getWidth(), color.getHeight(),
+           depth.getWidth(), depth.getHeight(),
+           pDepth[middleIndex]);
 
     static int counter = 0;
     ++counter;
@@ -40,10 +49,12 @@ int main(int argc, char** argv)
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
 
-  string resolution;
+  string color_resolution;
+  string depth_resolution;
   opts_desc.add_options()
     ("help,h", "produce help message")
-    ("resolution,r", bpo::value(&resolution), "")
+    ("color-res", bpo::value(&color_resolution), "")
+    ("depth-res", bpo::value(&depth_resolution), "")
     ;
 
   bpo::variables_map opts;
@@ -58,17 +69,30 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  OpenNI2Interface::Resolution res = OpenNI2Interface::VGA;
-  if(opts.count("resolution")) {
-    if(resolution == "QVGA" || resolution == "qvga")
-      res = OpenNI2Interface::QVGA;
+  OpenNI2Interface::Resolution color_res = OpenNI2Interface::VGA;
+  if(opts.count("color-res")) {
+    if(color_resolution == "QVGA" || color_resolution == "qvga")
+      color_res = OpenNI2Interface::QVGA;
+    else if(color_resolution == "VGA" || color_resolution == "vga")
+      color_res = OpenNI2Interface::VGA;
     else {
-      cout << "Unrecognized resolution \"" << resolution << "\"." << endl;
+      cout << "Unrecognized resolution \"" << color_res << "\"." << endl;
+      return 1;
+    }
+  }
+  OpenNI2Interface::Resolution depth_res = OpenNI2Interface::VGA;
+  if(opts.count("depth-res")) {
+    if(depth_resolution == "QVGA" || depth_resolution == "qvga")
+      depth_res = OpenNI2Interface::QVGA;
+    else if(depth_resolution == "VGA" || depth_resolution == "vga")
+      depth_res = OpenNI2Interface::VGA;
+    else {
+      cout << "Unrecognized resolution \"" << depth_res << "\"." << endl;
       return 1;
     }
   }
 
-  OniHandlerExample ex(res);
+  OniHandlerExample ex(color_res, depth_res);
   ex.run();
   
   return 0;

@@ -16,7 +16,8 @@ public:
            int max_training_imgs,
            double threshold,
            bool visualize,
-           OpenNI2Interface::Resolution resolution);
+           OpenNI2Interface::Resolution color_res,
+           OpenNI2Interface::Resolution depth_res);
   virtual ~Sentinel()
   {
     #if JARVIS_DEBUG
@@ -58,7 +59,8 @@ public:
                         int max_training_imgs,
                         double threshold,
                         bool visualize,
-                        OpenNI2Interface::Resolution res);
+                        OpenNI2Interface::Resolution color_res,
+                        OpenNI2Interface::Resolution depth_res);
   ~DiskStreamingSentinel()
   {
     #if JARVIS_DEBUG
