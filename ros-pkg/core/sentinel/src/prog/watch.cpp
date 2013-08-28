@@ -13,6 +13,7 @@ int main(int argc, char** argv)
   string resolution;
   double threshold;
   double save_interval;
+  double update_interval;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("name", bpo::value(&name)->required(), "Data will be saved to .sentinel-name")
