@@ -6,6 +6,15 @@
 #include <iostream>
 #include <sentinel/openni_helpers.h>
 
+class GMM
+{
+public:
+  GMM(double variance);
+
+protected:
+  double variance_;
+}
+
 class DepthHistogram
 {
 public:

@@ -133,14 +133,14 @@ void Sentinel::process(cv::Mat3b color, DepthMatConstPtr depth, double ts)
   }
 
   // -- Get rid of noise.
-  {
-    #if TIMING
-    ScopedTimer st("noise reduction");
-    #endif
+  //{
+    // #if TIMING
+    // ScopedTimer st("noise reduction");
+    // #endif
     
-    cv::erode(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 5);
-    cv::dilate(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 3);
-  }
+    // cv::erode(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 5);
+    // cv::dilate(mask_, mask_, cv::Mat(), cv::Point(-1, -1), 3);
+    //}
 
   // -- Process the detection.
   double total = depth->rows() * depth->cols();
