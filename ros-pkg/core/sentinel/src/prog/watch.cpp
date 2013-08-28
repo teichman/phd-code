@@ -11,11 +11,16 @@ int main(int argc, char** argv)
   
   string name;
   string resolution;
+  double threshold;
+  double save_interval;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("name", bpo::value(&name)->required(), "Data will be saved to .sentinel-name")
     ("visualize", "Whether to show the rgb stream")
     ("resolution,r", bpo::value(&resolution), "")
+    ("threshold,t", bpo::value(&threshold)->default_value(0.03), "")
+    ("save-interval,s", bpo::value(&save_interval)->default_value(1), "How often to save, in seconds")
+    ("update-interval,u", bpo::value(&update_interval)->default_value(1), "How often to update, in seconds")
     ;
 
   p.add("name", 1);
@@ -42,10 +47,7 @@ int main(int argc, char** argv)
     }
   }
   
-  double save_interval = 0.1;
-  double update_interval = 1;
   int max_training_imgs = 1000;
-  double threshold = 0.02;
   DiskStreamingSentinel sen("sentinal-" + name, save_interval,
                             update_interval, max_training_imgs,
                             threshold, opts.count("visualize"), res);
