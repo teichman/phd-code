@@ -75,6 +75,10 @@ void Sentinel::run()
 void Sentinel::rgbdCallback(const openni::VideoFrameRef& oni_color,
                             const openni::VideoFrameRef& oni_depth)
 {
+  #if TIMING
+  ScopedTimer st("Sentinel::rgbdCallback");
+  #endif
+
   double image_timestamp = (double)oni_color.getTimestamp() * 1e-6;
   double depth_timestamp = (double)oni_depth.getTimestamp() * 1e-6;
   timespec clk;
