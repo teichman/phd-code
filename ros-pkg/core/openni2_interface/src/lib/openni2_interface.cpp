@@ -17,7 +17,7 @@ void sigint(int none) {
 
 OpenNI2Interface::OpenNI2Interface(Resolution resolution) :
   resolution_(resolution),
-  sync_(0.1),
+  sync_(0.018),
   terminating_(false)
 {
   signal(SIGINT, sigint);
@@ -68,7 +68,6 @@ void OpenNI2Interface::processColor()
   openni::VideoFrameRef color_frame;
   Status rc = color_stream_.readFrame(&color_frame);
   ROS_ASSERT(rc == STATUS_OK);
-  //cout << "Got new color frame with ts: " << color_frame.getTimestamp() * 1e-6 << endl;
   sync_.addT0(color_frame, color_frame.getTimestamp() * 1e-6);
   processSynchronized();
 }
@@ -78,7 +77,6 @@ void OpenNI2Interface::processDepth()
   openni::VideoFrameRef depth_frame;
   Status rc = depth_stream_.readFrame(&depth_frame);
   ROS_ASSERT(rc == STATUS_OK);
-  //cout << "Got new depth frame with ts: " << depth_frame.getTimestamp() * 1e-6 << endl;
   sync_.addT1(depth_frame, depth_frame.getTimestamp() * 1e-6);
   processSynchronized();
 }

@@ -94,7 +94,6 @@ void Sentinel::rgbdCallback(const openni::VideoFrameRef& oni_color,
 
   if(color_.cols != oni_color.getWidth())
     color_ = cv::Mat3b(oni_color.getHeight(), oni_color.getWidth());
-  
   oniToCV(oni_color, color_);
   DepthMatPtr depth = oniDepthToEigenPtr(oni_depth);
   process(color_, depth, callback_timestamp);
