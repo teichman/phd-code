@@ -92,9 +92,12 @@ void Sentinel::rgbdCallback(const openni::VideoFrameRef& oni_color,
                     << depth_timestamp - image_timestamp);
   }
 
-  cv::Mat3b color = oniToCV(oni_color);
+  if(color_.cols != oni_color.getWidth())
+    color_ = cv::Mat3b(oni_color.getHeight(), oni_color.getWidth());
+  
+  oniToCV(oni_color, color_);
   DepthMatPtr depth = oniDepthToEigenPtr(oni_depth);
-  process(color, depth, callback_timestamp);
+  process(color_, depth, callback_timestamp);
 }
 
 void Sentinel::process(cv::Mat3b color, DepthMatConstPtr depth, double ts)

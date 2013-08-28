@@ -42,6 +42,8 @@ protected:
   cv::Mat1b mask_;
   bool visualize_;
   OpenNI2Interface oni_;
+  cv::Mat3b color_;
+  DepthMatPtr depth_;
   
   void process(cv::Mat3b color, DepthMatConstPtr depth, double ts);
   void updateModel(DepthMatConstPtr depth);
