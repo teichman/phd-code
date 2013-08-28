@@ -49,18 +49,24 @@ void DepthHistogram::clear()
   total_ = 0;
 }
 
-BackgroundModel::BackgroundModel(int num_pixels, double min_pct,
-                                 double max_depth, double res) :
+BackgroundModel::BackgroundModel(int width, int height,
+                                 int width_step, int height_step,
+                                 double min_pct, double max_depth,
+                                 double bin_width) :
+  width_(width),
+  height_(height),
+  width_step_(width_step),
+  height_step_(height_step),
   min_pct_(min_pct),
   max_depth_(max_depth),
-  res_(res)
+  bin_width_(bin_width)
 {
-  cout << "Initializing with " << num_pixels << " pixels." << endl;
-  histograms_.reserve(num_pixels);
-  for(int i = 0; i < num_pixels; ++i) { 
-    DepthHistogram::Ptr dh(new DepthHistogram(0, max_depth_, res_));
-    histograms_.push_back(dh);
-  }
+  size_t num = 0;
+  for(int y = height_step_; y < height; y += height_step_)
+    for(int x = width_step_; x < width; x += width_step_)
+      ++num;
+  histograms_.resize(num, DepthHistogram(0, max_depth_, bin_width_));
+  cout << "Initialized " << histograms_.size() << " histograms." << endl;
 }
 
 void BackgroundModel::increment(const DepthMat& depth, int num)
@@ -68,18 +74,32 @@ void BackgroundModel::increment(const DepthMat& depth, int num)
   #if TIMING
   ScopedTimer st("BackgroundModel::increment");
   #endif
-  
-  ROS_ASSERT(depth.rows() * depth.cols() == (int)histograms_.size());
 
-  // -- Compute histograms of z values.
-  int idx = 0;
-  for(int y = 0; y < depth.rows(); ++y)
-    for(int x = 0; x < depth.cols(); ++x, ++idx)
-      if(depth(y, x) != 0)
-        histograms_[idx]->increment(depth(y, x) / 1000.0, num);
+  size_t idx = 0;
+  for(int y = height_step_; y < height_; y += height_step_)
+    for(int x = width_step_; x < width_; x += width_step_, ++idx)
+      histograms_[idx].increment(depth(y, x) * 0.001, num);
 }
 
-bool BackgroundModel::isBackground(size_t idx, double z) const
+size_t BackgroundModel::predict(const DepthMat& depth, cv::Mat1b mask) const
 {
-  return histograms_[idx]->getNum(z) / histograms_[idx]->total() > min_pct_;
+  // cout << "BackgroundModel::predict" << endl;
+  // cout << height_ << " " << height_step_ << " " << width_ << " " << width_step_ << endl;
+  size_t idx = 0;
+  size_t num = 0;
+  for(int y = height_step_; y < height_; y += height_step_) {
+    for(int x = width_step_; x < width_; x += width_step_, ++idx) {
+      if(depth.coeffRef(y, x) == 0)
+        continue;
+      
+      double pct = histograms_[idx].getNum(depth.coeffRef(y, x) * .001) / histograms_[idx].total();
+      //cout << y << " " << x << " " << pct << endl;
+      if(pct < min_pct_) {
+        mask(y, x) = 255;
+        ++num;
+      }
+    }
+  }
+  return num;
 }
+

@@ -6,6 +6,42 @@
 #include <iostream>
 #include <sentinel/openni_helpers.h>
 
+class DepthHistogram;
+
+class BackgroundModel
+{
+public:
+  typedef boost::shared_ptr<BackgroundModel> Ptr;
+  typedef boost::shared_ptr<const BackgroundModel> ConstPtr;
+  
+  BackgroundModel(int width, int height,
+                  int width_step, int height_step,
+                  double min_pct, double max_depth,
+                  double bin_width);
+  ~BackgroundModel() {
+    #if TIMING
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    #endif
+  }
+
+  //! Increments bins by num.
+  void increment(const DepthMat& depth, int num = 1);
+  size_t predict(const DepthMat& depth, cv::Mat1b mask) const;
+  size_t size() const { return histograms_.size(); }
+  
+protected:
+  int width_;
+  int height_;
+  int width_step_;
+  int height_step_;
+  std::vector<DepthHistogram> histograms_; // row major
+  //! Percentage of histogram that a bin must contain to count as background.
+  double min_pct_;
+  double max_depth_;
+  //! Bin width in z.
+  double bin_width_;
+};
+
 class DepthHistogram
 {
 public:
@@ -44,29 +80,5 @@ protected:
   double total_;
 };
 
-class BackgroundModel
-{
-public:
-  BackgroundModel(int num_pixels, double min_pct, double max_depth, double res);
-  ~BackgroundModel() {
-    #if TIMING
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
-    #endif
-  }
-
-  //! Increments bins by num.
-  void increment(const DepthMat& depth, int num = 1);
-
-  bool isBackground(size_t idx, double z) const;
-  size_t size() const { return histograms_.size(); }
-  
-protected:
-  std::vector<DepthHistogram::Ptr> histograms_; // row major
-  //! Percentage of histogram that a bin must contain to count as background.
-  double min_pct_;
-  double max_depth_;
-  //! Bin width in z.
-  double res_;
-};
 
 #endif // BACKGROUND_MODEL_H

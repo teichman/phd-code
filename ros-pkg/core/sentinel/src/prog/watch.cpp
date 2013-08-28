@@ -44,8 +44,8 @@ int main(int argc, char** argv)
   
   double save_interval = 0.1;
   double update_interval = 1;
-  int max_training_imgs = 600;
-  double threshold = 0.03;
+  int max_training_imgs = 1000;
+  double threshold = 0.02;
   DiskStreamingSentinel sen("sentinal-" + name, save_interval,
                             update_interval, max_training_imgs,
                             threshold, opts.count("visualize"), res);

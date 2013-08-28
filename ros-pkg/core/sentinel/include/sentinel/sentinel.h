@@ -32,7 +32,7 @@ public:
                                
 
 protected:
-  BackgroundModel model_;
+  BackgroundModel::Ptr model_;
   std::queue<DepthMatConstPtr> training_;
   double update_interval_;
   int max_training_imgs_;

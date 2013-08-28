@@ -51,7 +51,6 @@ Sentinel::Sentinel(double update_interval,
                    double threshold,
                    bool visualize,
                    OpenNI2Interface::Resolution resolution) :
-  model_(resolution == OpenNI2Interface::VGA ? 640*480 : 320*240, 0.3, 10, 0.2),
   update_interval_(update_interval),
   max_training_imgs_(max_training_imgs),
   threshold_(threshold),
@@ -59,6 +58,12 @@ Sentinel::Sentinel(double update_interval,
   oni_(resolution)
 {
   oni_.setHandler(this);
+  if(resolution == OpenNI2Interface::VGA)
+    model_ = BackgroundModel::Ptr(new BackgroundModel(640, 480, 16, 12, 0.3, 7, 0.2));
+  else if(resolution == OpenNI2Interface::QVGA)
+    model_ = BackgroundModel::Ptr(new BackgroundModel(320, 240, 8, 6, 0.3, 7, 0.2));
+  else
+    ROS_ASSERT(0);
 }
 
 void Sentinel::run()
@@ -119,17 +124,18 @@ void Sentinel::process(cv::Mat3b color, DepthMatConstPtr depth, double ts)
     #endif
     
     mask_ = 0;
-    int idx = 0;
-    for(int y = 0; y < depth->rows(); ++y) {
-      for(int x = 0; x < depth->cols(); ++x, ++idx) {
-        if(depth->coeffRef(y, x) == 0)
-          continue;
-        if(!model_.isBackground(idx, depth->coeffRef(y, x) * 0.001)) {
-          mask_(y, x) = 255;
-          ++num_fg;
-        }
-      }
-    }
+    num_fg = model_->predict(*depth, mask_);
+    // int idx = 0;
+    // for(int y = 0; y < depth->rows(); ++y) {
+    //   for(int x = 0; x < depth->cols(); ++x, ++idx) {
+    //     if(depth->coeffRef(y, x) == 0)
+    //       continue;
+    //     if(!model_->isBackground(idx, depth->coeffRef(y, x) * 0.001)) {
+    //       mask_(y, x) = 255;
+    //       ++num_fg;
+    //     }
+    //   }
+    // }
   }
 
   // -- Get rid of noise.
@@ -143,8 +149,7 @@ void Sentinel::process(cv::Mat3b color, DepthMatConstPtr depth, double ts)
     //}
 
   // -- Process the detection.
-  double total = depth->rows() * depth->cols();
-  if(num_fg / total > threshold_) {
+  if(num_fg / model_->size() > threshold_) {
     handleDetection(color, depth, mask_, ts);
   }
   
@@ -174,10 +179,10 @@ void Sentinel::updateModel(DepthMatConstPtr depth)
   ROS_ASSERT(depth);
   
   training_.push(depth);
-  model_.increment(*depth);
+  model_->increment(*depth);
   
   if((int)training_.size() > max_training_imgs_) { 
-    model_.increment(*training_.front(), -1);
+    model_->increment(*training_.front(), -1);
     training_.pop();
   }
 }
