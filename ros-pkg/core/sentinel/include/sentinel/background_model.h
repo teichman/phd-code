@@ -25,8 +25,8 @@ public:
   }
 
   //! Increments bins by num.
-  void increment(const DepthMat& depth, int num = 1);
-  size_t predict(const DepthMat& depth, cv::Mat1b mask) const;
+  void increment(openni::VideoFrameRef depth, int num = 1);
+  size_t predict(openni::VideoFrameRef depth, cv::Mat1b mask) const;
   size_t size() const { return histograms_.size(); }
   
 protected:

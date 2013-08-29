@@ -3,7 +3,6 @@
 #include <timer/timer.h>
 
 using namespace std;
-using namespace Eigen;
 
 DepthHistogram::DepthHistogram(double min_depth, double max_depth, double binwidth) 
 {
@@ -69,31 +68,33 @@ BackgroundModel::BackgroundModel(int width, int height,
   cout << "Initialized " << histograms_.size() << " histograms." << endl;
 }
 
-void BackgroundModel::increment(const DepthMat& depth, int num)
+void BackgroundModel::increment(openni::VideoFrameRef depth, int num)
 {
   #if TIMING
   ScopedTimer st("BackgroundModel::increment");
   #endif
 
+  ROS_ASSERT(depth.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_RGB888);
+  uint16_t* data = (uint16_t*)depth.getData();
   size_t idx = 0;
   for(int y = height_step_; y < height_; y += height_step_)
     for(int x = width_step_; x < width_; x += width_step_, ++idx)
-      histograms_[idx].increment(depth(y, x) * 0.001, num);
+      histograms_[idx].increment(data[y * depth.getWidth() + x] * 0.001, num);
 }
 
-size_t BackgroundModel::predict(const DepthMat& depth, cv::Mat1b mask) const
+// TODO: mask is mirrored.
+size_t BackgroundModel::predict(openni::VideoFrameRef depth, cv::Mat1b mask) const
 {
-  // cout << "BackgroundModel::predict" << endl;
-  // cout << height_ << " " << height_step_ << " " << width_ << " " << width_step_ << endl;
   size_t idx = 0;
   size_t num = 0;
+  uint16_t* data = (uint16_t*)depth.getData();
   for(int y = height_step_; y < height_; y += height_step_) {
     for(int x = width_step_; x < width_; x += width_step_, ++idx) {
-      if(depth.coeffRef(y, x) == 0)
+      uint16_t val = data[y * depth.getWidth() + x];
+      if(val == 0)
         continue;
       
-      double pct = histograms_[idx].getNum(depth.coeffRef(y, x) * .001) / histograms_[idx].total();
-      //cout << y << " " << x << " " << pct << endl;
+      double pct = histograms_[idx].getNum(val * .001) / histograms_[idx].total();
       if(pct < min_pct_) {
         mask(y, x) = 255;
         ++num;

@@ -24,16 +24,15 @@ public:
     #endif
   }
   
-  void rgbdCallback(const openni::VideoFrameRef& color,
-                    const openni::VideoFrameRef& depth);
+  void rgbdCallback(openni::VideoFrameRef color, openni::VideoFrameRef depth);
   void run();
-  virtual void handleDetection(cv::Mat3b color, DepthMatConstPtr depth,
+  virtual void handleDetection(openni::VideoFrameRef color, openni::VideoFrameRef depth,
                                cv::Mat1b mask, double timestamp) = 0;
                                
 
 protected:
   BackgroundModel::Ptr model_;
-  std::queue<DepthMatConstPtr> training_;
+  std::queue<openni::VideoFrameRef> training_;
   double update_interval_;
   int max_training_imgs_;
   HighResTimer update_timer_;
@@ -43,8 +42,10 @@ protected:
   bool visualize_;
   OpenNI2Interface oni_;
   
-  void process(cv::Mat3b color, DepthMatConstPtr depth, double ts);
-  void updateModel(DepthMatConstPtr depth);
+  void process(openni::VideoFrameRef color,
+               openni::VideoFrameRef depth,
+               double ts);
+  void updateModel(openni::VideoFrameRef depth);
 };
 
 class DiskStreamingSentinel : public Sentinel
