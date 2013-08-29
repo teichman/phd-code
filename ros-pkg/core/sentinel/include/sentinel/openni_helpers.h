@@ -11,6 +11,7 @@ typedef boost::shared_ptr<DepthMat> DepthMatPtr;
 typedef boost::shared_ptr<const DepthMat> DepthMatConstPtr;
 
 void oniToCV(const openni::VideoFrameRef& color, cv::Mat3b img);
+cv::Mat3b oniToCV(const openni::VideoFrameRef& oni);
 DepthMat oniDepthToEigen(const openni::VideoFrameRef& depth);
 DepthMatPtr oniDepthToEigenPtr(const openni::VideoFrameRef& depth);
 

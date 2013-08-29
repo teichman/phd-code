@@ -23,8 +23,8 @@ public:
     oni_.run();
   }
 
-  void rgbdCallback(const openni::VideoFrameRef& color,
-                    const openni::VideoFrameRef& depth)
+  void rgbdCallback(openni::VideoFrameRef color,
+                    openni::VideoFrameRef depth)
   {
     cout << "In OniHandlerExample::rgbdCallback." << endl;
     openni::DepthPixel* pDepth = (openni::DepthPixel*)depth.getData();

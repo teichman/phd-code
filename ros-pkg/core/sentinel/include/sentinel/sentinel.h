@@ -68,8 +68,9 @@ public:
     std::cout << __PRETTY_FUNCTION__ << std::endl;
     #endif
   }
-  
-  void handleDetection(cv::Mat3b color, DepthMatConstPtr depth,
+
+  void handleDetection(openni::VideoFrameRef color,
+                       openni::VideoFrameRef depth,
                        cv::Mat1b mask, double timestamp);
 
 protected:

@@ -115,8 +115,8 @@ void Sentinel::process(openni::VideoFrameRef color,
   if((int)training_.size() == 0)
     return;
   
-  if(mask_.rows != depth->cols())
-    mask_ = cv::Mat1b(cv::Size(depth->cols(), depth->rows()));
+  if(mask_.rows != depth.getWidth())
+    mask_ = cv::Mat1b(cv::Size(depth.getWidth(), depth.getHeight()));
 
   // -- Get raw mask.
   double num_fg = 0;
@@ -136,7 +136,7 @@ void Sentinel::process(openni::VideoFrameRef color,
   
   // -- Visualize.
   if(visualize_) {
-    vis_ = oniToCV(color);
+    oniToCV(color, vis_);
     cv::Mat1b mask;
     cv::resize(mask_, mask, vis_.size(), cv::INTER_NEAREST);
 
@@ -160,8 +160,6 @@ void Sentinel::updateModel(openni::VideoFrameRef depth)
   #endif
   
   cout << "Updating model." << endl;
-  ROS_ASSERT(depth);
-  
   training_.push(depth);
   model_->increment(depth);
   
@@ -244,7 +242,8 @@ cv::Mat1b DiskStreamingSentinel::depthMatToCV(const DepthMat& depth) const
   return vis;
 }
 
-void DiskStreamingSentinel::handleDetection(cv::Mat3b color, DepthMatConstPtr depth,
+void DiskStreamingSentinel::handleDetection(openni::VideoFrameRef color,
+                                            openni::VideoFrameRef depth,
                                             cv::Mat1b mask, double timestamp)
 {
   if(save_timer_.getSeconds() < save_interval_)
@@ -256,7 +255,8 @@ void DiskStreamingSentinel::handleDetection(cv::Mat3b color, DepthMatConstPtr de
   
   if(!bfs::exists(dir_))
     bfs::create_directory(dir_);
-  save(color, depth, vis_, timestamp);
+    
+  save(oniToCV(color), oniDepthToEigenPtr(depth), vis_, timestamp);
   save_timer_.reset();
   save_timer_.start();
 }

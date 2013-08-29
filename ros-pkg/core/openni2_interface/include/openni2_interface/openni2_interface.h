@@ -14,8 +14,8 @@ public:
     std::cout << __PRETTY_FUNCTION__ << std::endl;
 #endif
   }
-  virtual void rgbdCallback(const openni::VideoFrameRef& color,
-                            const openni::VideoFrameRef& depth) = 0;
+  virtual void rgbdCallback(openni::VideoFrameRef color,
+                            openni::VideoFrameRef depth) = 0;
 };
 
 class OpenNI2Interface

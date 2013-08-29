@@ -21,6 +21,13 @@ void oniToCV(const openni::VideoFrameRef& oni, cv::Mat3b img)
   }
 }
 
+cv::Mat3b oniToCV(const openni::VideoFrameRef& oni)
+{
+  cv::Mat3b cv;
+  oniToCV(oni, cv);
+  return cv;
+}
+
 DepthMatPtr oniDepthToEigenPtr(const openni::VideoFrameRef& oni)
 {
   #if JARVIS_DEBUG
