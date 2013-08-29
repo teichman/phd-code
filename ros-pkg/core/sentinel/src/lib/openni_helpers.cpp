@@ -23,7 +23,7 @@ void oniToCV(const openni::VideoFrameRef& oni, cv::Mat3b img)
 
 cv::Mat3b oniToCV(const openni::VideoFrameRef& oni)
 {
-  cv::Mat3b cv;
+  cv::Mat3b cv(cv::Size(oni.getWidth(), oni.getHeight()));
   oniToCV(oni, cv);
   return cv;
 }

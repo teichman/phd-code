@@ -115,7 +115,7 @@ void Sentinel::process(openni::VideoFrameRef color,
   if((int)training_.size() == 0)
     return;
   
-  if(mask_.rows != depth.getWidth())
+  if(mask_.rows != depth.getHeight())
     mask_ = cv::Mat1b(cv::Size(depth.getWidth(), depth.getHeight()));
 
   // -- Get raw mask.
@@ -136,6 +136,9 @@ void Sentinel::process(openni::VideoFrameRef color,
   
   // -- Visualize.
   if(visualize_) {
+    if(vis_.rows != color.getHeight())
+      vis_ = cv::Mat3b(cv::Size(color.getWidth(), color.getHeight()));
+      
     oniToCV(color, vis_);
     cv::Mat1b mask;
     cv::resize(mask_, mask, vis_.size(), cv::INTER_NEAREST);

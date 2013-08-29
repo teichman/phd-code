@@ -74,7 +74,7 @@ void BackgroundModel::increment(openni::VideoFrameRef depth, int num)
   ScopedTimer st("BackgroundModel::increment");
   #endif
 
-  ROS_ASSERT(depth.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_RGB888);
+  ROS_ASSERT(depth.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM);
   uint16_t* data = (uint16_t*)depth.getData();
   size_t idx = 0;
   for(int y = height_step_; y < height_; y += height_step_)
