@@ -19,7 +19,7 @@ public:
                   double min_pct, double max_depth,
                   double bin_width);
   ~BackgroundModel() {
-    #if TIMING
+    #if JARVIS_DEBUG
     std::cout << __PRETTY_FUNCTION__ << std::endl;
     #endif
   }

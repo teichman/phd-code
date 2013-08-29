@@ -50,20 +50,22 @@ Sentinel::Sentinel(double update_interval,
                    int max_training_imgs,
                    double threshold,
                    bool visualize,
-                   OpenNI2Interface::Resolution resolution) :
+                   OpenNI2Interface::Resolution color_res,
+                   OpenNI2Interface::Resolution depth_res) :
   update_interval_(update_interval),
   max_training_imgs_(max_training_imgs),
   threshold_(threshold),
   visualize_(visualize),
-  oni_(resolution)
+  oni_(color_res, depth_res)
 {
   oni_.setHandler(this);
-  if(resolution == OpenNI2Interface::VGA)
+  if(depth_res == OpenNI2Interface::VGA)
     model_ = BackgroundModel::Ptr(new BackgroundModel(640, 480, 16, 12, 0.3, 7, 0.2));
-  else if(resolution == OpenNI2Interface::QVGA)
+  else if(depth_res == OpenNI2Interface::QVGA)
     model_ = BackgroundModel::Ptr(new BackgroundModel(320, 240, 8, 6, 0.3, 7, 0.2));
-  else
+  else {
     ROS_ASSERT(0);
+  }
 }
 
 void Sentinel::run()
@@ -74,7 +76,7 @@ void Sentinel::run()
 
 void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameRef oni_depth)
 {
-  #if TIMING
+  #if JARVIS_DEBUG
   ScopedTimer st("Sentinel::rgbdCallback");
   #endif
 
@@ -105,7 +107,7 @@ void Sentinel::process(openni::VideoFrameRef color,
     updateModel(depth);
   }
 
-  #if TIMING
+  #if JARVIS_DEBUG
   ScopedTimer st("Sentinel::process after update");
   #endif
   
@@ -113,13 +115,13 @@ void Sentinel::process(openni::VideoFrameRef color,
   if((int)training_.size() == 0)
     return;
   
-  if(mask_.rows != color.rows)
-    mask_ = cv::Mat1b(color.size());
+  if(mask_.rows != depth->cols())
+    mask_ = cv::Mat1b(cv::Size(depth->cols(), depth->rows()));
 
   // -- Get raw mask.
   double num_fg = 0;
   {
-    #if TIMING
+    #if JARVIS_DEBUG
     ScopedTimer st("Getting raw mask");
     #endif
     
@@ -135,9 +137,12 @@ void Sentinel::process(openni::VideoFrameRef color,
   // -- Visualize.
   if(visualize_) {
     vis_ = oniToCV(color);
+    cv::Mat1b mask;
+    cv::resize(mask_, mask, vis_.size(), cv::INTER_NEAREST);
+
     for(int y = 0; y < vis_.rows; ++y)
       for(int x = 0; x < vis_.cols; ++x)
-        if(mask_(y, vis_.cols - x - 1) == 255)
+        if(mask(y, mask.cols - x - 1) == 255)
           vis_(y, x)[2] = 255;
     
     cv::imshow("Sentinel", vis_);
@@ -150,7 +155,7 @@ void Sentinel::process(openni::VideoFrameRef color,
 
 void Sentinel::updateModel(openni::VideoFrameRef depth)
 {
-  #if TIMING
+  #if JARVIS_DEBUG
   ScopedTimer st("Sentinel::updateModel");
   #endif
   
@@ -172,8 +177,9 @@ DiskStreamingSentinel::DiskStreamingSentinel(std::string dir,
                                              int max_training_imgs,
                                              double threshold,
                                              bool visualize,
-                                             OpenNI2Interface::Resolution res) :
-  Sentinel(update_interval, max_training_imgs, threshold, visualize, res),
+                                             OpenNI2Interface::Resolution color_res,
+                                             OpenNI2Interface::Resolution depth_res) :
+  Sentinel(update_interval, max_training_imgs, threshold, visualize, color_res, depth_res),
   dir_(dir),
   save_interval_(save_interval)
 {
@@ -244,7 +250,7 @@ void DiskStreamingSentinel::handleDetection(cv::Mat3b color, DepthMatConstPtr de
   if(save_timer_.getSeconds() < save_interval_)
     return;
 
-  #if TIMING
+  #if JARVIS_DEBUG
   ScopedTimer st("Saving");
   #endif
   

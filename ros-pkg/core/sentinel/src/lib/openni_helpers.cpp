@@ -2,15 +2,14 @@
 #include <ros/assert.h>
 #include <timer/timer.h>
 
-cv::Mat3b oniToCV(const openni::VideoFrameRef& oni)
+void oniToCV(const openni::VideoFrameRef& oni, cv::Mat3b img)
 {
-  #if TIMING
+  #if JARVIS_DEBUG
   ScopedTimer st("oniToCV");
+  ROS_ASSERT(oni.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_RGB888);
+  ROS_ASSERT(oni.getWidth() == img.cols && oni.getHeight() == img.rows);
   #endif
   
-  ROS_ASSERT(oni.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_RGB888);
-  
-  cv::Mat3b img(oni.getHeight(), oni.getWidth());
   uchar* data = (uchar*)oni.getData();
   int i = 0;
   for(int y = 0; y < img.rows; ++y) {
@@ -20,13 +19,11 @@ cv::Mat3b oniToCV(const openni::VideoFrameRef& oni)
       img(y, x)[2] = data[i];
     }
   }
-    
-  return img;
 }
 
 DepthMatPtr oniDepthToEigenPtr(const openni::VideoFrameRef& oni)
 {
-  #if TIMING
+  #if JARVIS_DEBUG
   ScopedTimer st("oniDepthToEigenPtr");
   #endif
   

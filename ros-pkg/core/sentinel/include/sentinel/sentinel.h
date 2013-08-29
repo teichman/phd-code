@@ -16,10 +16,11 @@ public:
            int max_training_imgs,
            double threshold,
            bool visualize,
-           OpenNI2Interface::Resolution resolution);
+           OpenNI2Interface::Resolution color_res,
+           OpenNI2Interface::Resolution depth_res);
   virtual ~Sentinel()
   {
-    #if TIMING
+    #if JARVIS_DEBUG
     std::cout << __PRETTY_FUNCTION__ << std::endl;
     #endif
   }
@@ -41,6 +42,8 @@ protected:
   cv::Mat1b mask_;
   bool visualize_;
   OpenNI2Interface oni_;
+  cv::Mat3b color_;
+  DepthMatPtr depth_;
   
   void process(openni::VideoFrameRef color,
                openni::VideoFrameRef depth,
@@ -57,10 +60,11 @@ public:
                         int max_training_imgs,
                         double threshold,
                         bool visualize,
-                        OpenNI2Interface::Resolution res);
+                        OpenNI2Interface::Resolution color_res,
+                        OpenNI2Interface::Resolution depth_res);
   ~DiskStreamingSentinel()
   {
-    #if TIMING
+    #if JARVIS_DEBUG
     std::cout << __PRETTY_FUNCTION__ << std::endl;
     #endif
   }

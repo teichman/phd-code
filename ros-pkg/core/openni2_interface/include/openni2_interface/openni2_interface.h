@@ -10,7 +10,7 @@ class OpenNI2Handler
 public:
   virtual ~OpenNI2Handler()
   {
-#if TIMING
+#if JARVIS_DEBUG
     std::cout << __PRETTY_FUNCTION__ << std::endl;
 #endif
   }
@@ -23,7 +23,7 @@ class OpenNI2Interface
 public:
   enum Resolution { VGA = 0, QVGA = 1 };
   
-  OpenNI2Interface(Resolution resolution);
+  OpenNI2Interface(Resolution color_res, Resolution depth_res);
   //! Take care to call the destructor on shut down.
   //! Starting OpenNI the next time can be annoying if you
   //! don't shut it down properly.
@@ -33,7 +33,8 @@ public:
   void terminate() { terminating_ = true; }
   
 private:
-  Resolution resolution_;
+  Resolution color_res_;
+  Resolution depth_res_;
   OpenNI2Handler* handler_;
   openni::Device device_;
   openni::VideoStream color_stream_;

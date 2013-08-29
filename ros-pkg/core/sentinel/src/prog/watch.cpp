@@ -10,7 +10,8 @@ int main(int argc, char** argv)
   bpo::positional_options_description p;
   
   string name;
-  string resolution;
+  string color_resolution;
+  string depth_resolution;
   double threshold;
   double save_interval;
   double update_interval;
@@ -18,7 +19,8 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("name", bpo::value(&name)->required(), "Data will be saved to .sentinel-name")
     ("visualize", "Whether to show the rgb stream")
-    ("resolution,r", bpo::value(&resolution), "")
+    ("color-res", bpo::value(&color_resolution), "")
+    ("depth-res", bpo::value(&depth_resolution), "")
     ("threshold,t", bpo::value(&threshold)->default_value(0.03), "")
     ("save-interval,s", bpo::value(&save_interval)->default_value(1), "How often to save, in seconds")
     ("update-interval,u", bpo::value(&update_interval)->default_value(1), "How often to update, in seconds")
@@ -38,12 +40,26 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  OpenNI2Interface::Resolution res = OpenNI2Interface::VGA;
-  if(opts.count("resolution")) {
-    if(resolution == "QVGA" || resolution == "qvga")
-      res = OpenNI2Interface::QVGA;
+
+  OpenNI2Interface::Resolution color_res = OpenNI2Interface::VGA;
+  if(opts.count("color-res")) {
+    if(color_resolution == "QVGA" || color_resolution == "qvga")
+      color_res = OpenNI2Interface::QVGA;
+    else if(color_resolution == "VGA" || color_resolution == "vga")
+      color_res = OpenNI2Interface::VGA;
     else {
-      cout << "Unrecognized resolution \"" << resolution << "\"." << endl;
+      cout << "Unrecognized resolution \"" << color_res << "\"." << endl;
+      return 1;
+    }
+  }
+  OpenNI2Interface::Resolution depth_res = OpenNI2Interface::VGA;
+  if(opts.count("depth-res")) {
+    if(depth_resolution == "QVGA" || depth_resolution == "qvga")
+      depth_res = OpenNI2Interface::QVGA;
+    else if(depth_resolution == "VGA" || depth_resolution == "vga")
+      depth_res = OpenNI2Interface::VGA;
+    else {
+      cout << "Unrecognized resolution \"" << depth_res << "\"." << endl;
       return 1;
     }
   }
@@ -51,7 +67,8 @@ int main(int argc, char** argv)
   int max_training_imgs = 1000;
   DiskStreamingSentinel sen("sentinal-" + name, save_interval,
                             update_interval, max_training_imgs,
-                            threshold, opts.count("visualize"), res);
+                            threshold, opts.count("visualize"),
+                            color_res, depth_res);
   sen.run();
 
   return 0;
