@@ -1,0 +1,16 @@
+<package>
+  <description brief="nutcracker">
+
+     nutcracker
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/nutcracker</url>
+  <depend package="opencv_bleeding"/>
+  <depend package="timer"/>
+
+</package>
+
+
