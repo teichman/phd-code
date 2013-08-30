@@ -108,9 +108,11 @@ size_t BackgroundModel::predict(openni::VideoFrameRef depth, vector<uint8_t>* ma
         int r = idx / blocks_per_row_;
         int c = idx - r * blocks_per_row_;
         for(int y2 = r * height_step_; y2 < (r+1) * height_step_; ++y2) {
-          for(int x2 = c * width_step_; x2 < (c+1) * width_step_; ++x2) {
-            (*mask)[y2 * width_ + x2] = 255;
-            ++num;
+          for(int x2 = c * width_step_; x2 < (c+1) * width_step_; ++x2) { 
+            if(fabs(val - data[y2 * width_ + x2]) < 200) {
+              (*mask)[y2 * width_ + x2] = 255;
+              ++num;
+            }
           }
         }
       }
