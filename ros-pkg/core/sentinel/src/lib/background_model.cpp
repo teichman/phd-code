@@ -60,9 +60,15 @@ BackgroundModel::BackgroundModel(int width, int height,
   max_depth_(max_depth),
   bin_width_(bin_width)
 {
+  ROS_ASSERT(height_step_ % 2 == 0 && width_step_ % 2 == 0);
+  ROS_ASSERT(height_ % height_step_ == 0 && width_ % width_step_ == 0);
+
+  blocks_per_row_ = width_ / width_step_;
+  blocks_per_col_ = height_ / height_step_;
+  
   size_t num = 0;
-  for(int y = height_step_; y < height; y += height_step_)
-    for(int x = width_step_; x < width; x += width_step_)
+  for(int y = height_step_ / 2; y < height; y += height_step_)
+    for(int x = width_step_ / 2; x < width; x += width_step_)
       ++num;
   histograms_.resize(num, DepthHistogram(0, max_depth_, bin_width_));
   cout << "Initialized " << histograms_.size() << " histograms." << endl;
@@ -77,8 +83,8 @@ void BackgroundModel::increment(openni::VideoFrameRef depth, int num)
   ROS_ASSERT(depth.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM);
   uint16_t* data = (uint16_t*)depth.getData();
   size_t idx = 0;
-  for(int y = height_step_; y < height_; y += height_step_)
-    for(int x = width_step_; x < width_; x += width_step_, ++idx)
+  for(int y = height_step_ / 2; y < height_; y += height_step_)
+    for(int x = width_step_ / 2; x < width_; x += width_step_, ++idx)
       histograms_[idx].increment(data[y * depth.getWidth() + x] * 0.001, num);
 }
 
@@ -90,16 +96,23 @@ size_t BackgroundModel::predict(openni::VideoFrameRef depth, vector<uint8_t>* ma
   size_t idx = 0;
   size_t num = 0;
   uint16_t* data = (uint16_t*)depth.getData();
-  for(int y = height_step_; y < height_; y += height_step_) {
-    for(int x = width_step_; x < width_; x += width_step_, ++idx) {
+
+  for(int y = height_step_ / 2; y < height_; y += height_step_) {
+    for(int x = width_step_ / 2; x < width_; x += width_step_, ++idx) {
       uint16_t val = data[y * width_ + x];
       if(val == 0)
         continue;
       
       double pct = histograms_[idx].getNum(val * .001) / histograms_[idx].total();
       if(pct < min_pct_) {
-        (*mask)[y * width_ + x] = 255;
-        ++num;
+        int r = idx / blocks_per_row_;
+        int c = idx - r * blocks_per_row_;
+        for(int y2 = r * height_step_; y2 < (r+1) * height_step_; ++y2) {
+          for(int x2 = c * width_step_; x2 < (c+1) * width_step_; ++x2) {
+            (*mask)[y2 * width_ + x2] = 255;
+            ++num;
+          }
+        }
       }
     }
   }

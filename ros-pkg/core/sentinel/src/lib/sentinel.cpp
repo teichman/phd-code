@@ -131,7 +131,7 @@ void Sentinel::process(openni::VideoFrameRef color,
   }
 
   // -- Process the detection.
-  if((double)num_fg / model_->size() > threshold_) {
+  if((double)num_fg / mask_.size() > threshold_) {
     handleDetection(color, depth, mask_, num_fg, ts);
   }
   
@@ -148,7 +148,8 @@ void Sentinel::process(openni::VideoFrameRef color,
     for(int y = 0; y < vis_.rows; ++y)
       for(int x = 0; x < vis_.cols; ++x)
         if(mask_[y * vis_.cols + vis_.cols - x - 1] == 255)
-          cv::circle(vis_, cv::Point(x, y), 2, cv::Scalar(0, 0, 255), -1);
+          vis_(y, x)[2] = 255;
+          //cv::circle(vis_, cv::Point(x, y), 2, cv::Scalar(0, 0, 255), -1);
     
     cv::imshow("Sentinel", vis_);
     cv::imshow("Depth", falseColor(oniDepthToEigen(depth)));
@@ -283,10 +284,14 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
                                            const std::vector<uint8_t>& mask,
                                            size_t num_fg, double timestamp)
 {
+  #if JARVIS_DEBUG
+  ScopedTimer st("ROSStreamingSentinel::handleDetection");
+  #endif
+  
   if(!ros::ok())
     oni_.terminate();
 
-  cout << "Publishing detection..." << endl;
+  cout << "Streaming a detection with " << num_fg << " / " << mask.size() << " points." << endl;
   
   sentinel::Detection msg;
   msg.indices.resize(num_fg);

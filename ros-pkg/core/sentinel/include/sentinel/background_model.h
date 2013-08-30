@@ -25,12 +25,18 @@ public:
   void increment(openni::VideoFrameRef depth, int num = 1);
   size_t predict(openni::VideoFrameRef depth, std::vector<uint8_t>* mask) const;
   size_t size() const { return histograms_.size(); }
+  int height() const { return height_; }
+  int width() const { return width_; }
+  int heightStep() const { return height_step_; }
+  int widthStep() const { return width_step_; }
   
 protected:
   int width_;
   int height_;
   int width_step_;
   int height_step_;
+  int blocks_per_row_;
+  int blocks_per_col_;
   std::vector<DepthHistogram> histograms_; // row major
   //! Percentage of histogram that a bin must contain to count as background.
   double min_pct_;
