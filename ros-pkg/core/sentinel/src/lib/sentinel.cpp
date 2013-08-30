@@ -120,18 +120,18 @@ void Sentinel::process(openni::VideoFrameRef color,
   memset(&mask_[0], 0, mask_.size());
 
   // -- Get raw mask.
-  size_t num_fg = 0;
+  size_t num_in_mask = 0;
   {
     #if JARVIS_DEBUG
     ScopedTimer st("Getting raw mask");
     #endif
     
-    num_fg = model_->predict(depth, &mask_);
+    num_in_mask = model_->predict(depth, &mask_);
   }
 
   // -- Process the detection.
-  if((double)num_fg / mask_.size() > threshold_) {
-    handleDetection(color, depth, mask_, num_fg, ts);
+  if((double)num_in_mask / mask_.size() > threshold_) {
+    handleDetection(color, depth, mask_, num_in_mask, ts);
   }
   
   // -- Visualize.
@@ -253,7 +253,7 @@ cv::Mat1b DiskStreamingSentinel::depthMatToCV(const DepthMat& depth) const
 void DiskStreamingSentinel::handleDetection(openni::VideoFrameRef color,
                                             openni::VideoFrameRef depth,
                                             const std::vector<uint8_t>& mask,
-                                            size_t num_fg, double timestamp)
+                                            size_t num_in_mask, double timestamp)
 {
   if(save_timer_.getSeconds() < save_interval_)
     return;
@@ -314,8 +314,17 @@ ROSStreamingSentinel::ROSStreamingSentinel(double update_interval,
 void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
                                            openni::VideoFrameRef depth,
                                            const std::vector<uint8_t>& mask,
-                                           size_t num_fg, double timestamp)
+                                           size_t num_in_mask, double timestamp)
 {
+
+  #if JARVIS_DEBUG
+  size_t num = 0;
+  for(size_t i = 0; i < mask.size(); ++i)
+    if(mask[i] == 255 || mask[i] == 127)
+      ++num;
+  ROS_ASSERT(num == num_in_mask);
+  #endif
+  
   #if JARVIS_DEBUG
   ScopedTimer st("ROSStreamingSentinel::handleDetection - total");
   #endif
@@ -330,9 +339,9 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
   msg_.indices.clear();
   msg_.depth.clear();
   msg_.color.clear();
-  msg_.indices.resize(num_fg);
-  msg_.depth.resize(num_fg);
-  msg_.color.resize(num_fg * 3);  // RGB
+  msg_.indices.resize(num_in_mask);
+  msg_.depth.resize(num_in_mask);
+  msg_.color.resize(num_in_mask * 3);  // RGB    
 
   uint8_t* color_data = (uint8_t*)color.getData();
   uint16_t* depth_data = (uint16_t*)depth.getData();
