@@ -97,6 +97,7 @@ size_t BackgroundModel::predict(openni::VideoFrameRef depth, vector<uint8_t>* ma
   size_t num = 0;
   uint16_t* data = (uint16_t*)depth.getData();
 
+  // -- Fill in foreground.
   for(int y = height_step_ / 2; y < height_; y += height_step_) {
     for(int x = width_step_ / 2; x < width_; x += width_step_, ++idx) {
       uint16_t val = data[y * width_ + x];
@@ -109,15 +110,38 @@ size_t BackgroundModel::predict(openni::VideoFrameRef depth, vector<uint8_t>* ma
         int c = idx - r * blocks_per_row_;
         for(int y2 = r * height_step_; y2 < (r+1) * height_step_; ++y2) {
           for(int x2 = c * width_step_; x2 < (c+1) * width_step_; ++x2) { 
-            if(fabs(val - data[y2 * width_ + x2]) < 200) {
-              (*mask)[y2 * width_ + x2] = 255;
-              ++num;
-            }
+            (*mask)[y2 * width_ + x2] = 255;
+            ++num;
           }
         }
       }
     }
   }
+
+  // -- Fill in background fringe with 127s.
+  idx = 0;
+  for(int y = height_step_ / 2; y < height_; y += height_step_) {
+    for(int x = width_step_ / 2; x < width_; x += width_step_, ++idx) {
+      if((*mask)[y * width_ + x] == 255)
+        continue;
+      
+      if(((y + height_step_ < height_) && ((*mask)[(y + height_step_) * width_ + x] == 255)) ||
+         ((y - height_step_ >= 0)      && ((*mask)[(y - height_step_) * width_ + x] == 255)) ||
+         ((x + width_step_ < width_)   && ((*mask)[y * width_ + x + width_step_] == 255))    ||
+         ((x - width_step_ >= 0)       && ((*mask)[y * width_ + x - width_step_] == 255)))
+      {
+        int r = idx / blocks_per_row_;
+        int c = idx - r * blocks_per_row_;
+        for(int y2 = r * height_step_; y2 < (r+1) * height_step_; ++y2) {
+          for(int x2 = c * width_step_; x2 < (c+1) * width_step_; ++x2) { 
+            (*mask)[y2 * width_ + x2] = 127;
+            ++num;
+          }
+        }
+      }
+    }
+  }
+
   return num;
 }
 

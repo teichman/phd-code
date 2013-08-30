@@ -144,11 +144,14 @@ void Sentinel::process(openni::VideoFrameRef color,
     ROS_ASSERT(vis_.rows * vis_.cols == (int)mask_.size());
     
     oniToCV(color, vis_);
-    for(int y = 0; y < vis_.rows; ++y)
-      for(int x = 0; x < vis_.cols; ++x)
+    for(int y = 0; y < vis_.rows; ++y) {
+      for(int x = 0; x < vis_.cols; ++x) {
         if(mask_[y * vis_.cols + vis_.cols - x - 1] == 255)
           vis_(y, x)[2] = 255;
-          //cv::circle(vis_, cv::Point(x, y), 2, cv::Scalar(0, 0, 255), -1);
+        else if(mask_[y * vis_.cols + vis_.cols - x - 1] == 127)
+          vis_(y, x)[1] = 255;
+      }
+    }
     
     cv::imshow("Sentinel", vis_);
     cv::imshow("Depth", falseColor(oniDepthToEigen(depth)));
@@ -277,11 +280,13 @@ ROSStreamingSentinel::ROSStreamingSentinel(double update_interval,
 {
   pub_ = nh_.advertise<sentinel::Detection>("detections", 1000);
 
-
   msg_.width = model_->width();
   msg_.height = model_->height();
   msg_.width_step = model_->widthStep();
   msg_.height_step = model_->heightStep();
+
+  msg_.fg_indices.reserve(model_->size());
+  msg_.bg_fringe_indices.reserve(model_->size());
   
   if(depth_res == OpenNI2Interface::QVGA) {
     msg_.indices.reserve(320*240);
@@ -322,16 +327,18 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
 
   ROS_ASSERT(color.getHeight() == depth.getHeight());
   
+  msg_.indices.clear();
+  msg_.depth.clear();
+  msg_.color.clear();
   msg_.indices.resize(num_fg);
   msg_.depth.resize(num_fg);
   msg_.color.resize(num_fg * 3);  // RGB
 
   uint8_t* color_data = (uint8_t*)color.getData();
   uint16_t* depth_data = (uint16_t*)depth.getData();
-  
   size_t idx = 0;
   for(size_t i = 0; i < mask.size(); ++i) {
-    if(mask[i]) {
+    if(mask[i] == 255 || mask[i] == 127) {
       msg_.indices[idx] = i;
       msg_.depth[idx] = depth_data[i];
       msg_.color[idx*3+0] = color_data[i*3+0];
@@ -341,6 +348,18 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
     }
   }
 
+  msg_.fg_indices.clear();
+  msg_.bg_fringe_indices.clear();
+  for(int y = msg_.height_step / 2; y < msg_.height; y += msg_.height_step) {
+    for(int x = msg_.width_step / 2; x < msg_.width; x += msg_.width_step) {
+      int idx = y * msg_.width + x;
+      if(mask[idx] == 255)
+        msg_.fg_indices.push_back(idx);
+      else if(mask[idx] == 127)
+        msg_.bg_fringe_indices.push_back(idx);
+    }
+  }
+  
   pub_.publish(msg_);
 }
 
