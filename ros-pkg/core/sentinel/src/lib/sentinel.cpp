@@ -285,8 +285,9 @@ ROSStreamingSentinel::ROSStreamingSentinel(double update_interval,
     msg_.indices.reserve(640*480);
     msg_.depth.reserve(640*480);
   }
-  else
+  else {
     ROS_ASSERT(0);
+  }
 
   if(color_res == OpenNI2Interface::QVGA) {
     msg_.color.reserve(320*240*3);
@@ -294,8 +295,9 @@ ROSStreamingSentinel::ROSStreamingSentinel(double update_interval,
   else if(color_res == OpenNI2Interface::VGA) {
     msg_.color.reserve(640*480*3);
   }
-  else
+  else {
     ROS_ASSERT(0);
+  }
 }
 
 void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
