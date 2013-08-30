@@ -286,6 +286,8 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
   if(!ros::ok())
     oni_.terminate();
 
+  cout << "Publishing detection..." << endl;
+  
   sentinel::Detection msg;
   msg.indices.resize(num_fg);
   msg.depth.resize(num_fg);

@@ -9,20 +9,18 @@ int main(int argc, char** argv)
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
   
-  string color_resolution;
-  string depth_resolution;
-  double threshold;
-  double save_interval;
   double update_interval;
   size_t max_training_imgs;
+  double threshold;
+  string color_resolution;
+  string depth_resolution;
   opts_desc.add_options()
     ("help,h", "produce help message")
-    ("color-res", bpo::value(&color_resolution), "")
-    ("depth-res", bpo::value(&depth_resolution), "")
-    ("threshold,t", bpo::value(&threshold)->default_value(0.03), "")
-    ("save-interval,s", bpo::value(&save_interval)->default_value(1), "How often to save, in seconds")
     ("update-interval,u", bpo::value(&update_interval)->default_value(1), "How often to update, in seconds")
     ("max-training-imgs,m", bpo::value(&max_training_imgs)->default_value(1000), "")
+    ("threshold,t", bpo::value(&threshold)->default_value(0.03), "")
+    ("color-res", bpo::value(&color_resolution), "")
+    ("depth-res", bpo::value(&depth_resolution), "")
     ;
   
   bpo::variables_map opts;
