@@ -2,7 +2,6 @@
 #include <ros/assert.h>
 #include <ros/console.h>
 #include <boost/filesystem.hpp>
-#include <sentinel/Detection.h>
 
 using namespace std;
 namespace bfs = boost::filesystem;
@@ -285,7 +284,7 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
                                            size_t num_fg, double timestamp)
 {
   #if JARVIS_DEBUG
-  ScopedTimer st("ROSStreamingSentinel::handleDetection");
+  ScopedTimer st("ROSStreamingSentinel::handleDetection - total");
   #endif
   
   if(!ros::ok())
@@ -293,27 +292,37 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
 
   cout << "Streaming a detection with " << num_fg << " / " << mask.size() << " points." << endl;
   
-  sentinel::Detection msg;
-  msg.indices.resize(num_fg);
-  msg.depth.resize(num_fg);
-  msg.color.resize(num_fg * 3);  // RGB
+  msg_.indices.resize(num_fg);
+  msg_.depth.resize(num_fg);
+  msg_.color.resize(num_fg * 3);  // RGB
 
   uint8_t* color_data = (uint8_t*)color.getData();
   uint16_t* depth_data = (uint16_t*)depth.getData();
 
-  size_t idx = 0;
-  for(size_t i = 0; i < mask.size(); ++i) {
-    if(mask[i]) {
-      msg.indices[idx] = i;
-      msg.depth[idx] = depth_data[i];
-      msg.color[idx*3+0] = color_data[i*3+0];
-      msg.color[idx*3+1] = color_data[i*3+1];
-      msg.color[idx*3+2] = color_data[i*3+2];
-      ++idx;
+  {
+    #if JARVIS_DEBUG
+    ScopedTimer st("ROSStreamingSentinel::handleDetection - constructing message"); 
+    #endif
+    
+    size_t idx = 0;
+    for(size_t i = 0; i < mask.size(); ++i) {
+      if(mask[i]) {
+        msg_.indices[idx] = i;
+        msg_.depth[idx] = depth_data[i];
+        msg_.color[idx*3+0] = color_data[i*3+0];
+        msg_.color[idx*3+1] = color_data[i*3+1];
+        msg_.color[idx*3+2] = color_data[i*3+2];
+        ++idx;
+      }
     }
   }
 
-  pub_.publish(msg);
+  {
+    #if JARVIS_DEBUG
+    ScopedTimer st("ROSStreamingSentinel::handleDetection - publish"); 
+    #endif
+    pub_.publish(msg_);
+  }
 }
 
 

@@ -10,6 +10,7 @@
 #include <openni2_interface/openni2_interface.h>
 #include <sentinel/background_model.h>
 #include <sentinel/openni_helpers.h>
+#include <sentinel/Detection.h>
 
 class Sentinel : public OpenNI2Handler
 {
@@ -104,6 +105,7 @@ public:
 protected:
   ros::NodeHandle nh_;
   ros::Publisher pub_;
+  sentinel::Detection msg_;
 };
 
 #endif // SENTINEL_H
