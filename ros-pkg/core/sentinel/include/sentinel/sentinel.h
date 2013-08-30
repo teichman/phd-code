@@ -3,6 +3,7 @@
 
 #include <ctime>
 #include <queue>
+#include <ros/ros.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <bag_of_tricks/high_res_timer.h>
@@ -29,7 +30,8 @@ public:
   void rgbdCallback(openni::VideoFrameRef color, openni::VideoFrameRef depth);
   void run();
   virtual void handleDetection(openni::VideoFrameRef color, openni::VideoFrameRef depth,
-                               const std::vector<uint8_t>& mask, double timestamp) = 0;
+                               const std::vector<uint8_t>& mask,
+                               size_t num_fg, double timestamp) = 0;
                                
 
 protected:
@@ -73,7 +75,7 @@ public:
   void handleDetection(openni::VideoFrameRef color,
                        openni::VideoFrameRef depth,
                        const std::vector<uint8_t>& mask,
-                       double timestamp);
+                       size_t num_fg, double timestamp);
 
 protected:
   std::string dir_;
@@ -84,8 +86,24 @@ protected:
   cv::Mat1b depthMatToCV(const DepthMat& depth) const;
 };
 
-// class ROSStreamingSentinel : public Sentinel
-// {
-// };
+class ROSStreamingSentinel : public Sentinel
+{
+public:
+  ROSStreamingSentinel(double update_interval,
+                       int max_training_imgs,
+                       double threshold,
+                       bool visualize,
+                       OpenNI2Interface::Resolution color_res,
+                       OpenNI2Interface::Resolution depth_res);
+
+  void handleDetection(openni::VideoFrameRef color,
+                       openni::VideoFrameRef depth,
+                       const std::vector<uint8_t>& mask,
+                       size_t num_fg, double timestamp);
+
+protected:
+  ros::NodeHandle nh_;
+  ros::Publisher pub_;
+};
 
 #endif // SENTINEL_H

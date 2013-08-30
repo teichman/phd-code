@@ -2,6 +2,7 @@
 #include <ros/assert.h>
 #include <ros/console.h>
 #include <boost/filesystem.hpp>
+#include <sentinel/Detection.h>
 
 using namespace std;
 namespace bfs = boost::filesystem;
@@ -120,7 +121,7 @@ void Sentinel::process(openni::VideoFrameRef color,
   memset(&mask_[0], 0, mask_.size());
 
   // -- Get raw mask.
-  double num_fg = 0;
+  size_t num_fg = 0;
   {
     #if JARVIS_DEBUG
     ScopedTimer st("Getting raw mask");
@@ -130,8 +131,8 @@ void Sentinel::process(openni::VideoFrameRef color,
   }
 
   // -- Process the detection.
-  if(num_fg / model_->size() > threshold_) {
-    handleDetection(color, depth, mask_, ts);
+  if((double)num_fg / model_->size() > threshold_) {
+    handleDetection(color, depth, mask_, num_fg, ts);
   }
   
   // -- Visualize.
@@ -249,7 +250,7 @@ cv::Mat1b DiskStreamingSentinel::depthMatToCV(const DepthMat& depth) const
 void DiskStreamingSentinel::handleDetection(openni::VideoFrameRef color,
                                             openni::VideoFrameRef depth,
                                             const std::vector<uint8_t>& mask,
-                                            double timestamp)
+                                            size_t num_fg, double timestamp)
 {
   if(save_timer_.getSeconds() < save_interval_)
     return;
@@ -265,4 +266,48 @@ void DiskStreamingSentinel::handleDetection(openni::VideoFrameRef color,
   save_timer_.reset();
   save_timer_.start();
 }
+
+ROSStreamingSentinel::ROSStreamingSentinel(double update_interval,
+                                           int max_training_imgs,
+                                           double threshold,
+                                           bool visualize,
+                                           OpenNI2Interface::Resolution color_res,
+                                           OpenNI2Interface::Resolution depth_res) :
+  Sentinel(update_interval, max_training_imgs, threshold, visualize, color_res, depth_res)
+{
+  pub_ = nh_.advertise<sentinel::Detection>("detections", 1000);
+}
+
+void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
+                                           openni::VideoFrameRef depth,
+                                           const std::vector<uint8_t>& mask,
+                                           size_t num_fg, double timestamp)
+{
+  if(!ros::ok())
+    oni_.terminate();
+
+  sentinel::Detection msg;
+  msg.indices.resize(num_fg);
+  msg.depth.resize(num_fg);
+  msg.color.resize(num_fg * 3);  // RGB
+
+  uint8_t* color_data = (uint8_t*)color.getData();
+  uint16_t* depth_data = (uint16_t*)depth.getData();
+
+  size_t idx = 0;
+  for(size_t i = 0; i < mask.size(); ++i) {
+    if(mask[i]) {
+      msg.indices[idx] = i;
+      msg.depth[idx] = depth_data[i];
+      msg.color[idx*3+0] = color_data[i*3+0];
+      msg.color[idx*3+1] = color_data[i*3+1];
+      msg.color[idx*3+2] = color_data[i*3+2];
+      ++idx;
+    }
+  }
+
+  pub_.publish(msg);
+}
+
+
 

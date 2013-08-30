@@ -15,6 +15,7 @@
   <depend package="opencv_bleeding"/>
   <depend package="rosconsole"/>
   <depend package="timer"/>
+  <depend package="roscpp"/>
 
 </package>
 

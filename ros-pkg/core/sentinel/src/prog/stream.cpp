@@ -9,7 +9,6 @@ int main(int argc, char** argv)
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
   
-  string name;
   string color_resolution;
   string depth_resolution;
   double threshold;
@@ -18,8 +17,6 @@ int main(int argc, char** argv)
   size_t max_training_imgs;
   opts_desc.add_options()
     ("help,h", "produce help message")
-    ("name", bpo::value(&name)->required(), "Data will be saved to .sentinel-name")
-    ("visualize", "Whether to show the rgb stream")
     ("color-res", bpo::value(&color_resolution), "")
     ("depth-res", bpo::value(&depth_resolution), "")
     ("threshold,t", bpo::value(&threshold)->default_value(0.03), "")
@@ -27,21 +24,23 @@ int main(int argc, char** argv)
     ("update-interval,u", bpo::value(&update_interval)->default_value(1), "How often to update, in seconds")
     ("max-training-imgs,m", bpo::value(&max_training_imgs)->default_value(1000), "")
     ;
-
-  p.add("name", 1);
-
+  
   bpo::variables_map opts;
   bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
   bool badargs = false;
   try { bpo::notify(opts); }
   catch(...) { badargs = true; }
   if(opts.count("help") || badargs) {
-    cout << "Usage: " << argv[0] << " [OPTS] NAME" << endl;
+    cout << "Usage: " << argv[0] << " [OPTS]" << endl;
     cout << endl;
     cout << opts_desc << endl;
     return 1;
   }
 
+
+  // We need NoSigintHandler so that the OpenNI2Interface will
+  // get SIGINT and shut down properly.
+  ros::init(argc, argv, "sentinel", ros::init_options::NoSigintHandler);
 
   OpenNI2Interface::Resolution color_res = OpenNI2Interface::VGA;
   if(opts.count("color-res")) {
@@ -65,11 +64,10 @@ int main(int argc, char** argv)
       return 1;
     }
   }
-  
-  DiskStreamingSentinel sen("sentinal-" + name, save_interval,
-                            update_interval, max_training_imgs,
-                            threshold, opts.count("visualize"),
-                            color_res, depth_res);
+
+  ROSStreamingSentinel sen(update_interval, max_training_imgs,
+                           threshold, opts.count("visualize"),
+                           color_res, depth_res);
   sen.run();
 
   return 0;

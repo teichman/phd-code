@@ -17,7 +17,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #uncomment if you have defined messages
-#rosbuild_genmsg()
+rosbuild_genmsg()
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
@@ -35,3 +35,7 @@ rosbuild_link_boost(${PROJECT_NAME} filesystem program_options)
 rosbuild_add_executable(watch src/prog/watch.cpp)
 target_link_libraries(watch ${PROJECT_NAME})
 rosbuild_add_compile_flags(watch -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas -DJARVIS_DEBUG)
+
+rosbuild_add_executable(stream src/prog/stream.cpp)
+target_link_libraries(stream ${PROJECT_NAME})
+rosbuild_add_compile_flags(stream -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas -DJARVIS_DEBUG)
