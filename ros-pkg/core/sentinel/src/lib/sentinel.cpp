@@ -286,15 +286,29 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
   #if JARVIS_DEBUG
   ScopedTimer st("ROSStreamingSentinel::handleDetection - total");
   #endif
-  
-  if(!ros::ok())
-    oni_.terminate();
+
+  {
+    #if JARVIS_DEBUG
+    ScopedTimer st("ROSStreamingSentinel::handleDetection - ros check"); 
+    #endif
+
+    if(!ros::ok()) {
+      oni_.terminate();
+      return;
+    }
+  }
 
   cout << "Streaming a detection with " << num_fg << " / " << mask.size() << " points." << endl;
-  
-  msg_.indices.resize(num_fg);
-  msg_.depth.resize(num_fg);
-  msg_.color.resize(num_fg * 3);  // RGB
+
+  {
+    #if JARVIS_DEBUG
+    ScopedTimer st("ROSStreamingSentinel::handleDetection - resize"); 
+    #endif
+
+    msg_.indices.resize(num_fg);
+    msg_.depth.resize(num_fg);
+    msg_.color.resize(num_fg * 3);  // RGB
+  }
 
   uint8_t* color_data = (uint8_t*)color.getData();
   uint16_t* depth_data = (uint16_t*)depth.getData();

@@ -5,7 +5,8 @@ using namespace std;
 DetectionVisualizer::DetectionVisualizer(int width, int height)
 {
   sub_ = nh_.subscribe("detections", 1000, &DetectionVisualizer::callback, this);
-  vis_ = cv::Mat3b(cv::Size(width, height));
+  vis_ = cv::Mat3b(cv::Size(width, height), cv::Vec3b(0, 0, 0));
+  cv::imshow("detection", vis_);
 }
 
 void DetectionVisualizer::callback(const sentinel::Detection& msg)
