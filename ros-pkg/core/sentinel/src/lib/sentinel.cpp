@@ -61,9 +61,9 @@ Sentinel::Sentinel(double update_interval,
 {
   oni_.setHandler(this);
   if(depth_res == OpenNI2Interface::VGA)
-    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(640, 480, 8, 6, 0.3, 7, 0.2));
+    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(640, 480, 16, 12, 0.3, 7, 0.2));
   else if(depth_res == OpenNI2Interface::QVGA)
-    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(320, 240, 4, 3, 0.3, 7, 0.2));
+    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(320, 240, 8, 6, 0.3, 7, 0.2));
   else {
     ROS_ASSERT(0);
   }
