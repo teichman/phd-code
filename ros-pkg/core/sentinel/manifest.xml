@@ -17,6 +17,12 @@
   <depend package="timer"/>
   <depend package="roscpp"/>
 
+  <export>
+    <cpp cflags="-I${prefix}/include -I${prefix}/msg_gen/cpp/include"
+	 lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib" />
+  </export>
+
+  
 </package>
 
 

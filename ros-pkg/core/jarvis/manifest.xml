@@ -1,0 +1,15 @@
+<package>
+  <description brief="jarvis">
+
+     jarvis
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/jarvis</url>
+  <depend package="sentinel"/>
+
+</package>
+
+
