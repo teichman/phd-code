@@ -276,6 +276,26 @@ ROSStreamingSentinel::ROSStreamingSentinel(double update_interval,
   Sentinel(update_interval, max_training_imgs, threshold, visualize, color_res, depth_res)
 {
   pub_ = nh_.advertise<sentinel::Detection>("detections", 1000);
+
+  if(depth_res == OpenNI2Interface::QVGA) {
+    msg_.indices.reserve(320*240);
+    msg_.depth.reserve(320*240);
+  }
+  else if(depth_res == OpenNI2Interface::VGA) {
+    msg_.indices.reserve(640*480);
+    msg_.depth.reserve(640*480);
+  }
+  else
+    ROS_ASSERT(0);
+
+  if(color_res == OpenNI2Interface::QVGA) {
+    msg_.color.reserve(320*240*3);
+  }
+  else if(color_res == OpenNI2Interface::VGA) {
+    msg_.color.reserve(640*480*3);
+  }
+  else
+    ROS_ASSERT(0);
 }
 
 void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
@@ -292,6 +312,8 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
     return;
   }
 
+  ROS_ASSERT(color.getHeight() == depth.getHeight());
+  
   msg_.indices.resize(num_fg);
   msg_.depth.resize(num_fg);
   msg_.color.resize(num_fg * 3);  // RGB
