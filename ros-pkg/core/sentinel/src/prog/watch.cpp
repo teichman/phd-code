@@ -66,7 +66,7 @@ int main(int argc, char** argv)
     }
   }
   
-  DiskStreamingSentinel sen("sentinal-" + name, save_interval,
+  DiskStreamingSentinel sen("sentinel-" + name, save_interval,
                             update_interval, max_training_imgs,
                             threshold, opts.count("visualize"),
                             color_res, depth_res);

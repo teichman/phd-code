@@ -14,7 +14,8 @@ public:
 protected:
   ros::NodeHandle nh_;
   ros::Subscriber sub_;
-  cv::Mat3b vis_;
+  cv::Mat3b color_vis_;
+  cv::Mat3b depth_vis_;
 
   void callback(const sentinel::Detection& msg);
 };

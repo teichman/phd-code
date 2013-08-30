@@ -8,8 +8,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <bag_of_tricks/high_res_timer.h>
 #include <openni2_interface/openni2_interface.h>
+#include <openni2_interface/openni_helpers.h>
 #include <sentinel/background_model.h>
-#include <sentinel/openni_helpers.h>
 #include <sentinel/Detection.h>
 
 class Sentinel : public OpenNI2Handler
@@ -32,7 +32,7 @@ public:
   void run();
   virtual void handleDetection(openni::VideoFrameRef color, openni::VideoFrameRef depth,
                                const std::vector<uint8_t>& mask,
-                               size_t num_fg, double timestamp) = 0;
+                               size_t num_in_mask, double timestamp) = 0;
                                
 
 protected:
@@ -76,7 +76,7 @@ public:
   void handleDetection(openni::VideoFrameRef color,
                        openni::VideoFrameRef depth,
                        const std::vector<uint8_t>& mask,
-                       size_t num_fg, double timestamp);
+                       size_t num_in_mask, double timestamp);
 
 protected:
   std::string dir_;
@@ -100,7 +100,7 @@ public:
   void handleDetection(openni::VideoFrameRef color,
                        openni::VideoFrameRef depth,
                        const std::vector<uint8_t>& mask,
-                       size_t num_fg, double timestamp);
+                       size_t num_in_mask, double timestamp);
 
 protected:
   ros::NodeHandle nh_;

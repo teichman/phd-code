@@ -1,4 +1,4 @@
-#include <sentinel/openni_helpers.h>
+#include <openni2_interface/openni_helpers.h>
 #include <ros/assert.h>
 #include <timer/timer.h>
 

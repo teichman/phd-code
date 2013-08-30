@@ -12,6 +12,8 @@
   <depend package="openni2"/>
   <depend package="rosconsole"/>
   <depend package="opencv_bleeding"/>
+  <depend package="eigen_flags"/>
+  <depend package="timer"/>
 
   <export>
     <cpp cflags="-I${prefix}/include"
