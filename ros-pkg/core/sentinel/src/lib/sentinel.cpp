@@ -60,9 +60,9 @@ Sentinel::Sentinel(double update_interval,
 {
   oni_.setHandler(this);
   if(depth_res == OpenNI2Interface::VGA)
-    model_ = BackgroundModel::Ptr(new BackgroundModel(640, 480, 16, 12, 0.3, 7, 0.2));
+    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(640, 480, 8, 6, 0.3, 7, 0.2));
   else if(depth_res == OpenNI2Interface::QVGA)
-    model_ = BackgroundModel::Ptr(new BackgroundModel(320, 240, 8, 6, 0.3, 7, 0.2));
+    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(320, 240, 4, 3, 0.3, 7, 0.2));
   else {
     ROS_ASSERT(0);
   }
@@ -115,8 +115,9 @@ void Sentinel::process(openni::VideoFrameRef color,
   if((int)training_.size() == 0)
     return;
   
-  if(mask_.rows != depth.getHeight())
-    mask_ = cv::Mat1b(cv::Size(depth.getWidth(), depth.getHeight()));
+  if((int)mask_.size() != depth.getHeight() * depth.getWidth())
+    mask_.resize(depth.getHeight() * depth.getWidth());
+  memset(&mask_[0], 0, mask_.size());
 
   // -- Get raw mask.
   double num_fg = 0;
@@ -125,8 +126,7 @@ void Sentinel::process(openni::VideoFrameRef color,
     ScopedTimer st("Getting raw mask");
     #endif
     
-    mask_ = 0;
-    num_fg = model_->predict(depth, mask_);
+    num_fg = model_->predict(depth, &mask_);
   }
 
   // -- Process the detection.
@@ -138,15 +138,16 @@ void Sentinel::process(openni::VideoFrameRef color,
   if(visualize_) {
     if(vis_.rows != color.getHeight())
       vis_ = cv::Mat3b(cv::Size(color.getWidth(), color.getHeight()));
-      
-    oniToCV(color, vis_);
-    cv::Mat1b mask;
-    cv::resize(mask_, mask, vis_.size(), cv::INTER_NEAREST);
 
+    // For now, you can only use this option if the color
+    // and depth streams are of the same size.
+    ROS_ASSERT(vis_.rows * vis_.cols == (int)mask_.size());
+    
+    oniToCV(color, vis_);
     for(int y = 0; y < vis_.rows; ++y)
       for(int x = 0; x < vis_.cols; ++x)
-        if(mask(y, mask.cols - x - 1) == 255)
-          vis_(y, x)[2] = 255;
+        if(mask_[y * vis_.cols + vis_.cols - x - 1] == 255)
+          cv::circle(vis_, cv::Point(x, y), 2, cv::Scalar(0, 0, 255), -1);
     
     cv::imshow("Sentinel", vis_);
     cv::imshow("Depth", falseColor(oniDepthToEigen(depth)));
@@ -247,7 +248,8 @@ cv::Mat1b DiskStreamingSentinel::depthMatToCV(const DepthMat& depth) const
 
 void DiskStreamingSentinel::handleDetection(openni::VideoFrameRef color,
                                             openni::VideoFrameRef depth,
-                                            cv::Mat1b mask, double timestamp)
+                                            const std::vector<uint8_t>& mask,
+                                            double timestamp)
 {
   if(save_timer_.getSeconds() < save_interval_)
     return;

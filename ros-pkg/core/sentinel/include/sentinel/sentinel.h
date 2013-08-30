@@ -6,8 +6,9 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <bag_of_tricks/high_res_timer.h>
-#include <sentinel/background_model.h>
 #include <openni2_interface/openni2_interface.h>
+#include <sentinel/background_model.h>
+#include <sentinel/openni_helpers.h>
 
 class Sentinel : public OpenNI2Handler
 {
@@ -28,18 +29,18 @@ public:
   void rgbdCallback(openni::VideoFrameRef color, openni::VideoFrameRef depth);
   void run();
   virtual void handleDetection(openni::VideoFrameRef color, openni::VideoFrameRef depth,
-                               cv::Mat1b mask, double timestamp) = 0;
+                               const std::vector<uint8_t>& mask, double timestamp) = 0;
                                
 
 protected:
-  BackgroundModel::Ptr model_;
+  boost::shared_ptr<BackgroundModel> model_;
   std::queue<openni::VideoFrameRef> training_;
   double update_interval_;
   int max_training_imgs_;
   HighResTimer update_timer_;
   cv::Mat3b vis_;
   double threshold_;
-  cv::Mat1b mask_;
+  std::vector<uint8_t> mask_;
   bool visualize_;
   OpenNI2Interface oni_;
   cv::Mat3b color_;
@@ -71,7 +72,8 @@ public:
 
   void handleDetection(openni::VideoFrameRef color,
                        openni::VideoFrameRef depth,
-                       cv::Mat1b mask, double timestamp);
+                       const std::vector<uint8_t>& mask,
+                       double timestamp);
 
 protected:
   std::string dir_;

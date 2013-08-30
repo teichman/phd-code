@@ -4,16 +4,13 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
-#include <sentinel/openni_helpers.h>
+#include <OpenNI.h>
 
 class DepthHistogram;
 
 class BackgroundModel
 {
 public:
-  typedef boost::shared_ptr<BackgroundModel> Ptr;
-  typedef boost::shared_ptr<const BackgroundModel> ConstPtr;
-  
   BackgroundModel(int width, int height,
                   int width_step, int height_step,
                   double min_pct, double max_depth,
@@ -26,7 +23,7 @@ public:
 
   //! Increments bins by num.
   void increment(openni::VideoFrameRef depth, int num = 1);
-  size_t predict(openni::VideoFrameRef depth, cv::Mat1b mask) const;
+  size_t predict(openni::VideoFrameRef depth, std::vector<uint8_t>* mask) const;
   size_t size() const { return histograms_.size(); }
   
 protected:
@@ -45,8 +42,6 @@ protected:
 class DepthHistogram
 {
 public:
-  typedef boost::shared_ptr<DepthHistogram> Ptr;
-
   DepthHistogram(double min_depth, double max_depth, double binwidth);
   void initialize(double min_depth, double max_depth, double binwidth);
   void increment(double z, int num);

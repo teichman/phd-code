@@ -82,21 +82,23 @@ void BackgroundModel::increment(openni::VideoFrameRef depth, int num)
       histograms_[idx].increment(data[y * depth.getWidth() + x] * 0.001, num);
 }
 
-// TODO: mask is mirrored.
-size_t BackgroundModel::predict(openni::VideoFrameRef depth, cv::Mat1b mask) const
+size_t BackgroundModel::predict(openni::VideoFrameRef depth, vector<uint8_t>* mask) const
 {
+  ROS_ASSERT(depth.getWidth() * depth.getHeight() == (int)mask->size());
+  ROS_ASSERT(width_ == depth.getWidth());
+  
   size_t idx = 0;
   size_t num = 0;
   uint16_t* data = (uint16_t*)depth.getData();
   for(int y = height_step_; y < height_; y += height_step_) {
     for(int x = width_step_; x < width_; x += width_step_, ++idx) {
-      uint16_t val = data[y * depth.getWidth() + x];
+      uint16_t val = data[y * width_ + x];
       if(val == 0)
         continue;
       
       double pct = histograms_[idx].getNum(val * .001) / histograms_[idx].total();
       if(pct < min_pct_) {
-        mask(y, x) = 255;
+        (*mask)[y * width_ + x] = 255;
         ++num;
       }
     }
