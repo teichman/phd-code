@@ -277,6 +277,12 @@ ROSStreamingSentinel::ROSStreamingSentinel(double update_interval,
 {
   pub_ = nh_.advertise<sentinel::Detection>("detections", 1000);
 
+
+  msg_.width = model_->width();
+  msg_.height = model_->height();
+  msg_.width_step = model_->widthStep();
+  msg_.height_step = model_->heightStep();
+  
   if(depth_res == OpenNI2Interface::QVGA) {
     msg_.indices.reserve(320*240);
     msg_.depth.reserve(320*240);

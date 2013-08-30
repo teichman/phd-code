@@ -1,4 +1,5 @@
 #include <jarvis/detection_visualizer.h>
+#include <opencv2/imgproc/imgproc.hpp>
 
 using namespace std;
 
@@ -23,7 +24,9 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
     vis_(y, x)[2] = msg.color[i*3+0];
   }
 
-  cv::imshow("detection", vis_);
+  cv::Mat3b scaled;
+  cv::resize(vis_, scaled, cv::Size(640, 480), cv::INTER_NEAREST);
+  cv::imshow("detection", scaled);
   cv::waitKey(2);
 }
 
