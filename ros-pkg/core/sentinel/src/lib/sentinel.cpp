@@ -287,54 +287,31 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
   ScopedTimer st("ROSStreamingSentinel::handleDetection - total");
   #endif
 
-  {
-    #if JARVIS_DEBUG
-    ScopedTimer st("ROSStreamingSentinel::handleDetection - ros check"); 
-    #endif
+  if(!ros::ok()) {
+    oni_.terminate();
+    return;
+  }
 
-    if(!ros::ok()) {
-      oni_.terminate();
-      return;
+  msg_.indices.resize(num_fg);
+  msg_.depth.resize(num_fg);
+  msg_.color.resize(num_fg * 3);  // RGB
+
+  uint8_t* color_data = (uint8_t*)color.getData();
+  uint16_t* depth_data = (uint16_t*)depth.getData();
+  
+  size_t idx = 0;
+  for(size_t i = 0; i < mask.size(); ++i) {
+    if(mask[i]) {
+      msg_.indices[idx] = i;
+      msg_.depth[idx] = depth_data[i];
+      msg_.color[idx*3+0] = color_data[i*3+0];
+      msg_.color[idx*3+1] = color_data[i*3+1];
+      msg_.color[idx*3+2] = color_data[i*3+2];
+      ++idx;
     }
   }
 
-  {
-    #if JARVIS_DEBUG
-    ScopedTimer st("ROSStreamingSentinel::handleDetection - resize"); 
-    #endif
-
-    msg_.indices.resize(num_fg);
-    msg_.depth.resize(num_fg);
-    msg_.color.resize(num_fg * 3);  // RGB
-  }
-
-  {
-    #if JARVIS_DEBUG
-    ScopedTimer st("ROSStreamingSentinel::handleDetection - constructing message"); 
-    #endif
-
-    uint8_t* color_data = (uint8_t*)color.getData();
-    uint16_t* depth_data = (uint16_t*)depth.getData();
-    
-    size_t idx = 0;
-    for(size_t i = 0; i < mask.size(); ++i) {
-      if(mask[i]) {
-        msg_.indices[idx] = i;
-        msg_.depth[idx] = depth_data[i];
-        msg_.color[idx*3+0] = color_data[i*3+0];
-        msg_.color[idx*3+1] = color_data[i*3+1];
-        msg_.color[idx*3+2] = color_data[i*3+2];
-        ++idx;
-      }
-    }
-  }
-
-  {
-    #if JARVIS_DEBUG
-    ScopedTimer st("ROSStreamingSentinel::handleDetection - publish"); 
-    #endif
-    pub_.publish(msg_);
-  }
+  pub_.publish(msg_);
 }
 
 
