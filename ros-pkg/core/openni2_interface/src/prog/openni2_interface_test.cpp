@@ -1,7 +1,9 @@
 #include <signal.h>
 #include <boost/program_options.hpp>
 #include <openni2_interface/openni2_interface.h>
+#include <openni2_interface/openni_helpers.h>
 #include <iostream>
+#include <iomanip>
 #include <opencv2/highgui/highgui.hpp>
 
 using namespace std;
@@ -39,6 +41,10 @@ public:
     ++counter;
     if(counter > 100)
       oni_.terminate();
+
+    ostringstream oss;
+    oss << setw(5) << setfill('0') << counter << ".jpg";
+    cv::imwrite(oss.str(), oniToCV(color));
   }
   
 };
