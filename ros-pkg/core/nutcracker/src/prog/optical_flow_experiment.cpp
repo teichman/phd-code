@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/tracking.hpp>
@@ -37,8 +38,9 @@ int main(int argc, char** argv)
   cv::cvtColor(curr3b, curr, CV_BGR2GRAY);
 
   int ms = 0;
-  
+  int num = 0;
   while(true) {
+    ++num;
     prev = curr.clone();
     prev3b = curr3b.clone();
     
@@ -90,7 +92,18 @@ int main(int argc, char** argv)
     //hrt.stop(); cout << hrt.reportMilliseconds() << endl;
     for(size_t i = 0; i < keypoints.size(); ++i)
       cv::circle(surf_vis, keypoints[i].pt, 2, cv::Scalar(0, 255, 0), -1);
+
+    ostringstream oss;
+    oss << "SURF keypoint count: " << keypoints.size();
+    cv::Mat3b surf_vis_window = surf_vis(cv::Rect(0, surf_vis.rows - 30, 300, 30));
+    surf_vis_window *= 0.2;
+    cv::putText(surf_vis, oss.str(), cv::Point(20, surf_vis.rows - 10),
+                cv::FONT_HERSHEY_COMPLEX_SMALL, 0.8, cvScalar(0, 200, 0), 1, CV_AA);
+    
     cv::imshow("surf", surf_vis);
+    oss.str("");
+    oss << "surf" << setw(5) << setfill('0') << num << ".png";
+    cv::imwrite(oss.str(), surf_vis);
     
     char key;
     key = cv::waitKey(ms);
