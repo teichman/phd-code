@@ -3,6 +3,9 @@
 #include <ros/console.h>
 #include <signal.h>
 
+#include <openni2_interface/openni_helpers.h>
+#include <opencv2/highgui/highgui.hpp>
+
 using namespace std;
 using namespace openni;
 
@@ -51,7 +54,14 @@ void Listener::onNewFrame(VideoStream& stream)
     openni::VideoFrameRef color_frame;
     Status rc = stream.readFrame(&color_frame);
     ROS_ASSERT(rc == STATUS_OK);
-    oni_->sync_.addT0(color_frame, color_frame.getTimestamp() * 1e-6);
+
+    static int counter = 0;
+    ostringstream oss;
+    oss << "onNewFrame-" << setw(5) << setfill('0') << counter << ".jpg";
+    cv::imwrite(oss.str(), oniToCV(color_frame));
+    ++counter;
+    
+    oni_->sync_.addT0(color_frame, color_frame.getTimestamp() * 1e-6);        
   }
   else if(stream.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM) {
     openni::VideoFrameRef depth_frame;
