@@ -16,6 +16,7 @@ git:
 	echo Using ssh fallback.; \
 	git clone git@github.com:teichman/OpenNI2.git $@; \
 	fi
+	cd $@ && git checkout arm-2304
 
 clean:
 	rm -f built
