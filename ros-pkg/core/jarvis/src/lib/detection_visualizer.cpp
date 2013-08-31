@@ -18,7 +18,8 @@ DetectionVisualizer::DetectionVisualizer(int width, int height)
 void DetectionVisualizer::callback(const sentinel::Detection& msg)
 {
   cout << "Got a detection with " << msg.indices.size() << " points." << endl;
-
+  cout << msg.depth.size() << " " << msg.color.size() << endl;
+  
   ROS_ASSERT(msg.indices.size() == msg.depth.size());
   ROS_ASSERT(msg.color.size() == msg.depth.size() * 3);
   ROS_ASSERT((int)msg.height == color_vis_.rows);

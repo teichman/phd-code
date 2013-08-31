@@ -288,6 +288,7 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
 {
 
   #if JARVIS_DEBUG
+  cout << "Entering ROSStreamingSentinel::handleDetection." << endl;
   size_t num = 0;
   for(size_t i = 0; i < mask.size(); ++i)
     if(mask[i] == 255 || mask[i] == 127)
@@ -338,6 +339,10 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
         msg_.bg_fringe_indices.push_back(idx);
     }
   }
+
+  #if JARVIS_DEBUG
+  cout << "Leaving ROSStreamingSentinel::handleDetection." << endl;
+  #endif
   
   pub_.publish(msg_);
 }
