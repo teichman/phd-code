@@ -4,6 +4,7 @@
 #include <iostream>
 #include <OpenNI.h>
 #include <openni2_interface/synchronizer.h>
+#include <bag_of_tricks/lockable.h>
 
 class OpenNI2Handler
 {
@@ -29,7 +30,7 @@ protected:
   void onNewFrame(openni::VideoStream& stream);
 };
 
-class OpenNI2Interface
+class OpenNI2Interface : public SharedLockable
 {
 public:
   enum Resolution { VGA = 0, QVGA = 1 };

@@ -112,6 +112,7 @@ void OpenNI2Interface::processDepth()
 
 void OpenNI2Interface::processSynchronized()
 {
+  scopeLockWrite;
   if(sync_.updated_) {
     //cout << "New sync'd frame is available!  dt: " << sync_.ts0_ - sync_.ts1_ << endl;
     handler_->rgbdCallback(sync_.current0_, sync_.current1_);
