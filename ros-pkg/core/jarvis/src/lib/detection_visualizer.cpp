@@ -1,5 +1,6 @@
 #include <jarvis/detection_visualizer.h>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <openni2_interface/openni_helpers.h>
 
 using namespace std;
 
@@ -27,9 +28,8 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
     uint32_t idx = msg.indices[i];
     int y = idx / depth_vis_.cols;
     int x = depth_vis_.cols - 1 - (idx - y * depth_vis_.cols);
-    depth_vis_(y, x) = min<uint8_t>(255, msg.depth[i] * 0.001 * 0.2 * 255);
+    depth_vis_(y, x) = colorize(msg.depth[i] * 0.001, 0, 10);
   }
-  
   
   color_vis_ = cv::Vec3b(0, 0, 0);
   for(size_t i = 0; i < msg.indices.size(); ++i) {

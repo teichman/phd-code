@@ -5,36 +5,6 @@
 
 using namespace std;
 namespace bfs = boost::filesystem;
-
-cv::Vec3b colorize(double depth, double min_range, double max_range)
-{
-  if(depth == 0)
-    return cv::Vec3b(0, 0, 0);
-    
-  double increment = (max_range - min_range) / 3;
-  double thresh0 = min_range;
-  double thresh1 = thresh0 + increment;
-  double thresh2 = thresh1 + increment;
-  double thresh3 = thresh2 + increment;
-    
-  if(depth < thresh0) {
-    return cv::Vec3b(0, 0, 255);
-  }
-  if(depth >= thresh0 && depth < thresh1) {
-    int val = (depth - thresh0) / (thresh1 - thresh0) * 255.;
-    return cv::Vec3b(val, val, 255 - val);
-  }
-  else if(depth >= thresh1 && depth < thresh2) {
-    int val = (depth - thresh1) / (thresh2 - thresh1) * 255.;
-    return cv::Vec3b(255, 255 - val, 0);
-  }
-  else if(depth >= thresh2 && depth < thresh3) {
-    int val = (depth - thresh2) / (thresh3 - thresh2) * 255.;
-    return cv::Vec3b(255 - val, val, 0);
-  }
-    
-  return cv::Vec3b(0, 255, 0);
-}
   
 cv::Mat3b falseColor(const DepthMat& depth)
 {
