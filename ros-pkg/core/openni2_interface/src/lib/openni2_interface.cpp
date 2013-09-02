@@ -52,14 +52,12 @@ void Listener::onNewFrame(VideoStream& stream)
     Status rc = stream.readFrame(&color_frame);
     ROS_ASSERT(rc == STATUS_OK);
     oni_->sync_.addT0(color_frame, color_frame.getTimestamp() * 1e-6);
-    cout << "Got color frame with timestamp " << color_frame.getTimestamp() * 1e-6 << endl;
   }
   else if(stream.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM) {
     openni::VideoFrameRef depth_frame;
     Status rc = stream.readFrame(&depth_frame);
     ROS_ASSERT(rc == STATUS_OK);
     oni_->sync_.addT1(depth_frame, depth_frame.getTimestamp() * 1e-6);
-    cout << "Got depth frame with timestamp " << depth_frame.getTimestamp() * 1e-6 << endl;
   }
   else {
     ROS_ASSERT(0);

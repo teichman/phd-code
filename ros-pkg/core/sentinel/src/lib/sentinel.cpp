@@ -25,31 +25,23 @@ Sentinel::Sentinel(double update_interval,
   update_interval_(update_interval),
   max_training_imgs_(max_training_imgs),
   threshold_(threshold),
-  visualize_(visualize)
-//  oni_(color_res, depth_res)
+  visualize_(visualize),
+  oni_(color_res, depth_res)
 {
-  // grabber_.getDevice ()->setDepthOutputFormat (mode);
-
-  boost::function<void (const boost::shared_ptr<openni_wrapper::Image>&,
-                        const boost::shared_ptr<openni_wrapper::DepthImage>&,
-                        float constant)> func;
-  func = boost::bind(&Sentinel::imageDepthImageCallback, this, _1, _2, _3);
-  grabber_.registerCallback(func);
-
-
-
+  oni_.setHandler(this);
+  if(depth_res == OpenNI2Interface::VGA)
+    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(640, 480, 16, 12, 0.3, 7, 0.2));
+  else if(depth_res == OpenNI2Interface::QVGA)
+    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(320, 240, 8, 6, 0.3, 7, 0.2));
+  else {
+    ROS_ASSERT(0);
+  }
 }
 
 void Sentinel::run()
 {
   update_timer_.start();
-  grabber_.start();
-
-  while(true) {
-    usleep(1e3);
-  }
-
-  grabber_.stop();
+  oni_.run();
 }
 
 void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameRef oni_depth)
