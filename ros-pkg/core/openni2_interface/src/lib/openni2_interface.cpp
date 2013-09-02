@@ -79,6 +79,9 @@ void OpenNI2Interface::run()
   while(!terminating_ && !g_int) {
     usleep(1e4);
   }
+
+  color_stream_.removeNewFrameListener(&color_listener_);
+  depth_stream_.removeNewFrameListener(&depth_listener_);
   
   //VideoStream* streams[] = { &color_stream_, &depth_stream_ };
   // while(!terminating_ && !g_int) {
