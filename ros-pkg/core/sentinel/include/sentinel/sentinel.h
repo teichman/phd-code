@@ -7,12 +7,13 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <bag_of_tricks/high_res_timer.h>
+#include <pcl/io/openni_grabber.h>
 #include <openni2_interface/openni2_interface.h>
 #include <openni2_interface/openni_helpers.h>
 #include <sentinel/background_model.h>
 #include <sentinel/Detection.h>
 
-class Sentinel : public OpenNI2Handler
+class Sentinel 
 {
 public:
   Sentinel(double update_interval,
@@ -45,7 +46,8 @@ protected:
   double threshold_;
   std::vector<uint8_t> mask_;
   bool visualize_;
-  OpenNI2Interface oni_;
+  pcl::OpenNIGrabber grabber_;
+  //OpenNI2Interface oni_;
   cv::Mat3b color_;
   DepthMatPtr depth_;
   
