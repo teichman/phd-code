@@ -1,4 +1,5 @@
 Header header
+string sensor_id
 uint16 width
 uint16 height
 uint16 width_step
