@@ -13,12 +13,20 @@ DetectionVisualizer::DetectionVisualizer(int width, int height)
   cv::imshow("color", color_vis_);
   cv::imshow("depth", depth_vis_);
   cv::waitKey(2);
+
+  hrt_.start();
 }
 
 void DetectionVisualizer::callback(const sentinel::Detection& msg)
 {
   cout << "Got a detection with " << msg.indices.size() << " points." << endl;
   cout << msg.depth.size() << " " << msg.color.size() << endl;
+
+  timestamps_.push_back(hrt_.getSeconds());
+  if(timestamps_.size() > 100)
+    timestamps_.pop_front();
+  if(timestamps_.size() == 100)
+    cout << "FPS: " << timestamps_.size() / (timestamps_.back() - timestamps_.front()) << endl;
   
   ROS_ASSERT(msg.indices.size() == msg.depth.size());
   ROS_ASSERT(msg.color.size() == msg.depth.size() * 3);

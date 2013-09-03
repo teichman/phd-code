@@ -2,8 +2,10 @@
 #define DETECTION_VISUALIZER_H
 
 #include <iostream>
+#include <deque>
 #include <ros/ros.h>
 #include <opencv2/highgui/highgui.hpp>
+#include <timer/timer.h>
 #include <sentinel/Detection.h>
 
 class DetectionVisualizer
@@ -16,6 +18,8 @@ protected:
   ros::Subscriber sub_;
   cv::Mat3b color_vis_;
   cv::Mat3b depth_vis_;
+  HighResTimer hrt_;
+  std::deque<double> timestamps_;
 
   void callback(const sentinel::Detection& msg);
 };
