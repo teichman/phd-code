@@ -6,6 +6,8 @@
 #include <iostream>
 #include <OpenNI.h>
 
+#define MAX_DEPTH 5
+
 class DepthHistogram;
 
 class BackgroundModel
