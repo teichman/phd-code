@@ -90,7 +90,8 @@ protected:
 class ROSStreamingSentinel : public Sentinel
 {
 public:
-  ROSStreamingSentinel(double update_interval,
+  ROSStreamingSentinel(std::string sensor_id,
+                       double update_interval,
                        int max_training_imgs,
                        double threshold,
                        bool visualize,

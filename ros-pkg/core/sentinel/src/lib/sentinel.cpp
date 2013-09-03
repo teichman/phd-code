@@ -240,7 +240,8 @@ void DiskStreamingSentinel::handleDetection(openni::VideoFrameRef color,
   save_timer_.start();
 }
 
-ROSStreamingSentinel::ROSStreamingSentinel(double update_interval,
+ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
+                                           double update_interval,
                                            int max_training_imgs,
                                            double threshold,
                                            bool visualize,
@@ -250,6 +251,7 @@ ROSStreamingSentinel::ROSStreamingSentinel(double update_interval,
 {
   pub_ = nh_.advertise<sentinel::Detection>("detections", 1000);
 
+  msg_.sensor_id = sensor_id;
   msg_.width = model_->width();
   msg_.height = model_->height();
   msg_.width_step = model_->widthStep();

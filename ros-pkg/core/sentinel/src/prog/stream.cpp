@@ -8,7 +8,8 @@ int main(int argc, char** argv)
   namespace bpo = boost::program_options;
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
-  
+
+  string sensor_id;
   double update_interval;
   size_t max_training_imgs;
   double threshold;
@@ -16,12 +17,15 @@ int main(int argc, char** argv)
   string depth_resolution;
   opts_desc.add_options()
     ("help,h", "produce help message")
+    ("sensor-id", bpo::value(&sensor_id), "e.g. xpl07")
     ("update-interval,u", bpo::value(&update_interval)->default_value(1), "How often to update, in seconds")
     ("max-training-imgs,m", bpo::value(&max_training_imgs)->default_value(1000), "")
     ("threshold,t", bpo::value(&threshold)->default_value(0.03), "")
     ("color-res", bpo::value(&color_resolution), "")
     ("depth-res", bpo::value(&depth_resolution), "")
     ;
+
+  p.add("sensor-id", 1);
   
   bpo::variables_map opts;
   bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
@@ -29,7 +33,7 @@ int main(int argc, char** argv)
   try { bpo::notify(opts); }
   catch(...) { badargs = true; }
   if(opts.count("help") || badargs) {
-    cout << "Usage: " << argv[0] << " [OPTS]" << endl;
+    cout << "Usage: " << argv[0] << " [OPTS] SENSOR_ID" << endl;
     cout << endl;
     cout << opts_desc << endl;
     return 1;
@@ -63,7 +67,7 @@ int main(int argc, char** argv)
     }
   }
 
-  ROSStreamingSentinel sen(update_interval, max_training_imgs,
+  ROSStreamingSentinel sen(sensor_id, update_interval, max_training_imgs,
                            threshold, opts.count("visualize"),
                            color_res, depth_res);
   sen.run();
