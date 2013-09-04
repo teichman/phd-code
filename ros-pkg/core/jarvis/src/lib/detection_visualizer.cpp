@@ -175,10 +175,7 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
     int x = depth_vis_.cols - 1 - (idx - y * depth_vis_.cols);
     indices_mask(y, x) = 255;
   }
-  
-  int blocks_per_row = msg.width / msg.width_step;
-  int blocks_per_col = msg.height / msg.height_step;
-  
+    
   cv::Mat1f values(cv::Size(msg.width, msg.height), 0);
   double sigma_p = 10;
   double sigma_d = 0.2;
@@ -187,8 +184,8 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
     uint32_t idx = msg.fg_indices[i];
     int y = idx / msg.width;
     int x = msg.width - 1 - (idx - y * msg.width);
-    int dx = msg.width_step;
-    int dy = msg.height_step;
+    int dx = msg.width_step / 2 + 1;
+    int dy = msg.height_step / 2 + 1;
     for(int y2 = y - dy; y2 <= y + dy; ++y2) {
       for(int x2 = x - dx; x2 <= x + dx; ++x2) {
         if(y2 < 0 || y2 >= msg.height ||
@@ -206,8 +203,8 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
     uint32_t idx = msg.bg_fringe_indices[i];
     int y = idx / msg.width;
     int x = msg.width - 1 - (idx - y * msg.width);
-    int dx = msg.width_step;
-    int dy = msg.height_step;
+    int dx = msg.width_step / 2 + 1;
+    int dy = msg.height_step / 2 + 1;
     for(int y2 = y - dy; y2 <= y + dy; ++y2) {
       for(int x2 = x - dx; x2 <= x + dx; ++x2) {
         if(y2 < 0 || y2 >= msg.height ||
