@@ -70,8 +70,7 @@ DetectionVisualizer::DetectionVisualizer(int width, int height) :
   asp_.connect("EdgeStructureGenerator.EdgeStructure -> DepthEPG.EdgeStructure");
   asp_.connect("DepthEPG.Edge -> EdgePotentialAggregator.UnweightedEdge");
   gc::Model model = asp_.defaultModel();
-  cout << model << endl;
-  model.nweights_(model.nameMapping("nmap").toId("PriorNPG")) = 0;
+  model.nweights_(model.nameMapping("nmap").toId("PriorNPG")) = 0.001;
   asp_.setModel(model);
   cout << model << endl;
   asp_.writeGraphviz("graphvis");
@@ -96,6 +95,14 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   if(timestamps_.size() == 100)
     cout << "FPS: " << timestamps_.size() / (timestamps_.back() - timestamps_.front()) << endl;
 
+  cv::Mat1b mask(color_vis_.size(), 0);
+  for(size_t i = 0; i < msg.indices.size(); ++i) {
+    uint32_t idx = msg.indices[i];
+    int y = idx / depth_vis_.cols;
+    int x = depth_vis_.cols - 1 - (idx - y * depth_vis_.cols);
+    mask(y, x) = 255;
+  }
+  
   // -- Make depth visualization.
   depth_vis_ = cv::Vec3b(0, 0, 0);
   for(size_t i = 0; i < msg.indices.size(); ++i) {
@@ -145,7 +152,7 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   // -- Compute a more detailed foreground / background mask.
   //    Will be 255 for foreground points.
   asp_.setInput("ImageEntryPoint", color_vis_);
-  asp_.setInput("MaskEntryPoint", cv::Mat1b(color_vis_.size(), 255));
+  asp_.setInput("MaskEntryPoint", mask);
   asp_.setInput("SeedEntryPoint", seed);
   
   // Make depth image for use in segmentation.
@@ -157,7 +164,7 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
     depth(y, x) = msg.depth[i] * 0.001;
   }
   asp_.setInput("DepthEntryPoint", depth);
-  asp_.setDebug(true);
+  //asp_.setDebug(true);
   cv::Mat1b segmentation(cv::Size(msg.width, msg.height), 0);  
   asp_.segment(&segmentation);
   cout << asp_.reportTiming() << endl;
