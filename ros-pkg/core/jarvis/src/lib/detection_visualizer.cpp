@@ -311,6 +311,7 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   cv::imshow("ASP Foreground", foreground);
 
 
+  // -- Try simple floodfilling to get the foreground.
   cv::Mat1i simple_foreground_assignments(cv::Size(msg.width, msg.height), -3);
   for(int y = 0; y < simple_foreground_assignments.rows; ++y)
     for(int x = 0; x < simple_foreground_assignments.cols; ++x)
@@ -330,7 +331,61 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
 
   cv::imshow("Simple Foreground", simple_foreground);
 
+  // -- Try bilateral filtering to get the foreground.
+  hrt.reset("Bilateral"); hrt.start();
+  double sigma_p = 10;
+  double sigma_d = 0.05;
+  cv::Mat1b bilateral_foreground(cv::Size(msg.width, msg.height), 0);
+  vector<cv::Point2i> keypoints;
+  for(int y = msg.height_step / 2; y < bilateral_foreground.rows - msg.height_step / 2; ++y) {
+    for(int x = msg.width_step / 2; x < bilateral_foreground.cols - msg.width_step / 2; ++x) {
+      if(mask(y, x) == 0 || depth(y, x) == 0)
+        continue;
+      // if(depth(y, x) == 0)
+      //   continue;
+      
+      int r = (double)(y - msg.height_step / 2) / msg.height_step + 0.5;
+      int c = (double)(x - msg.width_step / 2) / msg.width_step + 0.5;
 
+      // for all neighboring fg / bg markers
+      // compute image distance and 3d distance, sum up bilateral products
+      double val = 0;
+      for(int r2 = r-1; r2 <= r+1; ++r2) {
+        for(int c2 = c-1; c2 <= c+1; ++c2) {
+          if(r2 < 0 || r2 >= fg_block_img.rows ||
+             c2 < 0 || c2 >= fg_block_img.cols)
+          {
+            continue;
+          }
+
+          cv::Point2i pt;
+          pt.y = r2 * msg.height_step + msg.height_step / 2;
+          pt.x = c2 * msg.width_step + msg.width_step / 2;
+          //cout << pt << endl;
+          
+          double mult = -1;
+          if(fg_block_img(r2, c2) == 255)
+            mult = 1;
+          double img_coef = exp(-sqrt((x - pt.x)*(x - pt.x) + (y - pt.y)*(y - pt.y)) / sigma_p);
+          double depth_coef = exp(-fabs(depth(y, x) - depth(pt)) / sigma_d);
+          double term = mult * img_coef * depth_coef;
+          val += term;
+
+          // cout << "Point " << x << " " << y << " with depth " << depth(y, x) << "; keypoint " << pt
+          //      << " with depth " << depth(pt) << " and label " << (int)fg_block_img(r2, c2)
+          //      <<"; img_coef: " << img_coef << ", depth_coef: " << depth_coef
+          //      << ", term : " << term << endl;
+        }
+      }
+
+      if(val > 0)
+        bilateral_foreground(y, x) = 255;
+    }
+  }
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+  cv::imshow("bilateral_foreground", bilateral_foreground);
+
+  
   // -- Run connected components on the depth data in the foreground.
   for(int y = 0; y < simple_foreground.rows; ++y)
     for(int x = 0; x < simple_foreground.cols; ++x)
