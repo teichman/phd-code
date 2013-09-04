@@ -43,36 +43,28 @@ void flood(cv::Mat1f depth, float thresh, const cv::Point2i& seed, int id, cv::M
 //! assignments will be filled with -1s for no object and with the object id otherwise.
 void cluster(cv::Mat1f depth, float thresh, cv::Mat1i* assignments)
 {
-  ScopedTimer st("detectBlobs");
-  HighResTimer hrt;
-
   // -3    : unset
   // -2    : in queue
   // -1    : bg
   // >= 0    : cluster assignment
-  hrt.reset("Initial assignment"); hrt.start();
   ROS_ASSERT(depth.size() == assignments->size());
   *assignments = -3;
   for(int y = 0; y < assignments->rows; ++y)
     for(int x = 0; x < assignments->cols; ++x)
       if(depth(y, x) == 0)
         (*assignments)(y, x) = -1;
-  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 
-  hrt.reset("Flooding"); hrt.start();
   int id = 0;
   for(int y = 0; y < assignments->rows; ++y) {
     for(int x = 0; x < assignments->cols; ++x) {
       if((*assignments)(y, x) == -3) {
         cv::KeyPoint center;
-        int num_pts;
         cv::Point2i seed(x, y);
         flood(depth, thresh, seed, id, assignments);
         ++id;
       }
     }
   }
-  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 }
 
 class DepthEPG : public EdgePotentialGenerator
@@ -139,7 +131,7 @@ DetectionVisualizer::DetectionVisualizer(int width, int height) :
   asp_.connect("EdgeStructureGenerator.EdgeStructure -> DepthEPG.EdgeStructure");
   asp_.connect("DepthEPG.Edge -> EdgePotentialAggregator.UnweightedEdge");
   gc::Model model = asp_.defaultModel();
-  model.nweights_(model.nameMapping("nmap").toId("PriorNPG")) = 0.00;
+  model.nweights_(model.nameMapping("nmap").toId("PriorNPG")) = 0.0;
   asp_.setModel(model);
   cout << model << endl;
   asp_.writeGraphviz("graphvis");
@@ -149,6 +141,8 @@ DetectionVisualizer::DetectionVisualizer(int width, int height) :
 
 void DetectionVisualizer::callback(const sentinel::Detection& msg)
 {
+  HighResTimer hrt;
+  
   // -- Debugging.
   cout << "Got a detection with " << msg.indices.size() << " points." << endl;
   cout << msg.depth.size() << " " << msg.color.size() << endl;
@@ -156,6 +150,16 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   ROS_ASSERT(msg.indices.size() == msg.depth.size());
   ROS_ASSERT(msg.color.size() == msg.depth.size() * 3);
   ROS_ASSERT((int)msg.height == color_vis_.rows);
+  ROS_ASSERT(msg.width % msg.width_step == 0);
+  ROS_ASSERT(msg.height % msg.height_step == 0);
+
+  cv::Mat1b indices_mask(cv::Size(msg.width, msg.height), 0);
+  for(size_t i = 0; i < msg.indices.size(); ++i) {
+    uint32_t idx = msg.indices[i];
+    int y = idx / depth_vis_.cols;
+    int x = depth_vis_.cols - 1 - (idx - y * depth_vis_.cols);
+    indices_mask(y, x) = 255;
+  }
   
   // -- Output a framerate estimate.
   timestamps_.push_back(hrt_.getSeconds());
@@ -164,13 +168,41 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   if(timestamps_.size() == 100)
     cout << "FPS: " << timestamps_.size() / (timestamps_.back() - timestamps_.front()) << endl;
 
-  cv::Mat1b mask(color_vis_.size(), 0);
-  for(size_t i = 0; i < msg.indices.size(); ++i) {
-    uint32_t idx = msg.indices[i];
-    int y = idx / depth_vis_.cols;
-    int x = depth_vis_.cols - 1 - (idx - y * depth_vis_.cols);
-    mask(y, x) = 255;
+  // -- Get a boundary mask in block space.
+  int blocks_per_row = msg.width / msg.width_step;
+  int blocks_per_col = msg.height / msg.height_step;
+
+  cv::Mat1b rough_fg_mask(color_vis_.size(), 0);
+  for(size_t i = 0; i < msg.fg_indices.size(); ++i) {
+    uint32_t idx = msg.fg_indices[i];
+    int y = idx / msg.width;
+    int x = msg.width - 1 - (idx - y * msg.width);
+    int r = (y - msg.height_step / 2) / msg.height_step;
+    int c = (x - msg.width_step / 2) / msg.width_step;
+    for(int y2 = r * msg.height_step; y2 < (r+1) * msg.height_step; ++y2)
+      for(int x2 = c * msg.width_step; x2 < (c+1) * msg.width_step; ++x2)
+        rough_fg_mask(y2, x2) = 255;
   }
+
+  cv::Mat1b rough_bg_mask(rough_fg_mask.size(), 0);
+  for(int y = 0; y < rough_bg_mask.rows; ++y)
+    for(int x = 0; x < rough_bg_mask.cols; ++x)
+      if(rough_fg_mask(y, x) == 0)
+        rough_bg_mask(y, x) = 255;
+
+  int iters = 10;
+  cv::dilate(rough_fg_mask, rough_fg_mask, cv::Mat(), cv::Point(-1, -1), iters);
+  cv::dilate(rough_bg_mask, rough_bg_mask, cv::Mat(), cv::Point(-1, -1), iters);
+  cv::Mat1b mask(rough_bg_mask.size(), 0);
+  for(int y = 0; y < mask.rows; ++y)
+    for(int x = 0; x < mask.cols; ++x)
+      if(indices_mask(y, x) == 255)
+        if(rough_fg_mask(y, x) == 255 && rough_bg_mask(y, x) == 255)
+          mask(y, x) = 255;
+  
+  cv::imshow("rough_fg_mask", rough_fg_mask);
+  cv::imshow("rough_bg_mask", rough_bg_mask);
+  cv::imshow("mask", mask);
   
   // -- Make depth visualization.
   depth_vis_ = cv::Vec3b(0, 0, 0);
@@ -212,7 +244,15 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
 
   // -- Display.
   cv::Mat3b depth_scaled;
-  cv::resize(depth_vis_, depth_scaled, cv::Size(640, 480), cv::INTER_NEAREST);
+  int scaling = 2;
+  cv::resize(depth_vis_, depth_scaled, depth_vis_.size() * scaling, cv::INTER_NEAREST);
+  for(size_t i = 0; i < msg.fg_indices.size(); ++i) {
+    uint32_t idx = msg.fg_indices[i];
+    int y = idx / msg.width;
+    int x = msg.width - 1 - (idx - y * msg.width);
+    cv::circle(depth_scaled, cv::Point(x, y) * scaling, 1, cv::Scalar(0, 255, 0), -1);
+  }
+
   cv::imshow("depth", depth_scaled);
   cv::Mat3b color_scaled;
   cv::resize(color_vis_, color_scaled, cv::Size(640, 480), cv::INTER_NEAREST);
@@ -234,26 +274,61 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   }
   asp_.setInput("DepthEntryPoint", depth);
   //asp_.setDebug(true);
-  cv::Mat1b foreground(cv::Size(msg.width, msg.height), 0);  
+  cv::Mat1b foreground(cv::Size(msg.width, msg.height), 0);
+  hrt.reset("asp"); hrt.start();
   asp_.segment(&foreground);
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
   cout << asp_.reportTiming() << endl;
 
-  for(int y = 0; y < foreground.rows; ++y) {
-    for(int x = 0; x < foreground.cols; ++x) {
-      if(foreground(y, x) != 255) {
+  
+  for(int y = 0; y < foreground.rows; ++y)
+    for(int x = 0; x < foreground.cols; ++x)
+      if(mask(y, x) != 255 || depth(y, x) == 0)
         foreground(y, x) = 0;
-        depth(y, x) = 0;
-      }
-    }
-  }
 
-  cv::imshow("Segmentation", foreground);
+  
+  // for(int y = 0; y < foreground.rows; ++y) {
+  //   for(int x = 0; x < foreground.cols; ++x) {
+  //     if(mask(y, x) == 0 && rough_fg_mask(y, x) == 255)
+  //       foreground(y, x) = 255;
+  //     if(mask(y, x) == 0 && rough_bg_mask(y, x) == 255)
+  //       foreground(y, x) = 0;
+  //     if(foreground(y, x) != 255) {
+  //       foreground(y, x) = 0;
+  //       depth(y, x) = 0;
+  //     }
+  //   }
+  // }
+
+  cv::imshow("ASP Foreground", foreground);
+
+
+  cv::Mat1i simple_foreground_assignments(cv::Size(msg.width, msg.height), -3);
+  for(int y = 0; y < simple_foreground_assignments.rows; ++y)
+    for(int x = 0; x < simple_foreground_assignments.cols; ++x)
+      if(depth(y, x) == 0)
+        simple_foreground_assignments(y, x) = -1;
+  for(size_t i = 0; i < msg.fg_indices.size(); ++i) {
+    uint32_t idx = msg.fg_indices[i];
+    int y = idx / msg.width;
+    int x = msg.width - 1 - (idx - y * msg.width);
+    flood(depth, 0.2, cv::Point(x, y), 0, &simple_foreground_assignments);
+  }
+  cv::Mat1b simple_foreground(cv::Size(msg.width, msg.height), 0);
+  for(int y = 0; y < simple_foreground_assignments.rows; ++y)
+    for(int x = 0; x < simple_foreground_assignments.cols; ++x)
+      if(simple_foreground_assignments(y, x) == 0)
+        simple_foreground(y, x) = 255;
+
+  cv::imshow("Simple Foreground", simple_foreground);
+
 
   // -- Run connected components on that mask.
   ROS_ASSERT(msg.width % msg.width_step == 0 && msg.height % msg.height_step == 0);
-  //cv::Mat1i blobs(cv::Size(msg.width / msg.width_step, msg.height / msg.height_step), 0);
   cv::Mat1i blobs(cv::Size(msg.width, msg.height), 0);
+  hrt.reset("clustering"); hrt.start();
   cluster(depth, 0.2, &blobs);
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 
   cv::imshow("Clustering", colorAssignments(blobs));
   cv::waitKey(5);
