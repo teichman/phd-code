@@ -115,8 +115,7 @@ void cluster(cv::Mat1b img, cv::Mat1i assignments)
   // -1    : bg
   // >= 0    : cluster assignment
   hrt.reset("Initial assignment"); hrt.start();
-  assignments.create(img.size());
-  //cv::Mat1i assignments(img.size());
+  ROS_ASSERT(img.size() == assignments.size());
   assignments = -3;
   for(int y = 0; y < assignments.rows; ++y)
     for(int x = 0; x < assignments.cols; ++x)
