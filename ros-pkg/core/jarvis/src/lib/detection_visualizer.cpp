@@ -7,6 +7,17 @@
 using namespace std;
 using namespace asp;
 
+int g_scaling = 3;
+int g_y = -1;
+int g_x = -1;
+
+void mouseEvent(int evt, int x, int y, int flags, void* param){
+  if(evt==CV_EVENT_LBUTTONDOWN){
+    g_x = x / g_scaling;
+    g_y = y / g_scaling;
+    cout << "Set debug point to " << g_x << " " << g_y << endl;
+  }
+}
 
 void flood(cv::Mat1f depth, float thresh, const cv::Point2i& seed, int id, cv::Mat1i* ass)
 {
@@ -117,7 +128,9 @@ DetectionVisualizer::DetectionVisualizer(int width, int height) :
   depth_vis_ = cv::Mat3b(cv::Size(width, height), cv::Vec3b(0, 0, 0));
   cv::imshow("color", color_vis_);
   cv::imshow("depth", depth_vis_);
+  cv::imshow("bilateral_foreground", depth_vis_);
   cv::waitKey(2);
+  cv::setMouseCallback("bilateral_foreground", mouseEvent, 0);
 
   asp_.addPod(new EntryPoint<cv::Mat1f>("DepthEntryPoint"));
   asp_.addPod(new EdgeStructureGenerator("EdgeStructureGenerator"));
@@ -146,8 +159,8 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   HighResTimer hrt;
   
   // -- Debugging.
-  cout << "Got a detection with " << msg.indices.size() << " points." << endl;
-  cout << msg.depth.size() << " " << msg.color.size() << endl;
+  // cout << "Got a detection with " << msg.indices.size() << " points." << endl;
+  // cout << msg.depth.size() << " " << msg.color.size() << endl;
 
   ROS_ASSERT(msg.indices.size() == msg.depth.size());
   ROS_ASSERT(msg.color.size() == msg.depth.size() * 3);
@@ -162,13 +175,21 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
     int x = depth_vis_.cols - 1 - (idx - y * depth_vis_.cols);
     indices_mask(y, x) = 255;
   }
+
+  cv::Mat1f depth(color_vis_.size(), 0);
+  for(size_t i = 0; i < msg.indices.size(); ++i) {
+    uint32_t idx = msg.indices[i];
+    int y = idx / depth.cols;
+    int x = depth.cols - 1 - (idx - y * depth.cols);
+    depth(y, x) = msg.depth[i] * 0.001;
+  }
   
   // -- Output a framerate estimate.
   timestamps_.push_back(hrt_.getSeconds());
   if(timestamps_.size() > 100)
     timestamps_.pop_front();
-  if(timestamps_.size() == 100)
-    cout << "FPS: " << timestamps_.size() / (timestamps_.back() - timestamps_.front()) << endl;
+  // if(timestamps_.size() == 100)
+  //   cout << "FPS: " << timestamps_.size() / (timestamps_.back() - timestamps_.front()) << endl;
 
   // -- Get a boundary mask in block space.
   int blocks_per_row = msg.width / msg.width_step;
@@ -179,8 +200,10 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
     uint32_t idx = msg.fg_indices[i];
     int y = idx / msg.width;
     int x = msg.width - 1 - (idx - y * msg.width);
-    int r = (y - msg.height_step / 2) / msg.height_step;
-    int c = (x - msg.width_step / 2) / msg.width_step;
+    int r = (double)(y - msg.height_step / 2) / msg.height_step + 0.5;
+    int c = (double)(x - msg.width_step / 2) / msg.width_step + 0.5;
+    ROS_ASSERT(r >= 0 && r < blocks_per_col);
+    ROS_ASSERT(c >= 0 && c < blocks_per_row);
     fg_block_img(r, c) = 255;
   }
   
@@ -189,6 +212,8 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
     for(int x = 0; x < fg_block_img.cols; ++x)
       if(fg_block_img(y, x) == 0)
         bg_block_img(y, x) = 255;
+
+
 
 
   cv::Mat1b rough_fg_mask = fg_block_img.clone();
@@ -254,20 +279,37 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   }
 
   // -- Display.
+  cv::Mat3b depth_vis_alt = depth_vis_.clone();
+  for(int y = 0; y < fg_block_img.rows; ++y) {
+    for(int x = 0; x < fg_block_img.cols; ++x) {
+      if(fg_block_img(y, x) == 255)
+        cv::circle(depth_vis_alt,
+                   cv::Point(((float)x + 0.5) * msg.width_step, ((float)y + 0.5) * msg.height_step),
+                   1, cv::Scalar(0, 255, 0), -1);
+      else
+        cv::circle(depth_vis_alt,
+                   cv::Point(((float)x + 0.5) * msg.width_step, ((float)y + 0.5) * msg.height_step),
+                   1, cv::Scalar(255, 0, 0), -1);
+    }
+  }
+  cv::Mat3b depth_vis_alt_scaled;
+  cv::resize(depth_vis_alt, depth_vis_alt_scaled, depth_vis_alt.size() * g_scaling, cv::INTER_NEAREST);
+  cv::imshow("depth_vis_alt", depth_vis_alt_scaled);
+  
+  
   cv::Mat3b depth_scaled;
-  int scaling = 2;
-  cv::resize(depth_vis_, depth_scaled, depth_vis_.size() * scaling, cv::INTER_NEAREST);
+  cv::resize(depth_vis_, depth_scaled, depth_vis_.size() * g_scaling, cv::INTER_NEAREST);
   for(size_t i = 0; i < msg.fg_indices.size(); ++i) {
     uint32_t idx = msg.fg_indices[i];
     int y = idx / msg.width;
     int x = msg.width - 1 - (idx - y * msg.width);
-    cv::circle(depth_scaled, cv::Point(x, y) * scaling, 1, cv::Scalar(0, 255, 0), -1);
+    cv::circle(depth_scaled, cv::Point(x, y) * g_scaling, 1, cv::Scalar(0, 255, 0), -1);
   }
   for(size_t i = 0; i < msg.bg_fringe_indices.size(); ++i) {
     uint32_t idx = msg.bg_fringe_indices[i];
     int y = idx / msg.width;
     int x = msg.width - 1 - (idx - y * msg.width);
-    cv::circle(depth_scaled, cv::Point(x, y) * scaling, 1, cv::Scalar(255, 0, 0), -1);
+    cv::circle(depth_scaled, cv::Point(x, y) * g_scaling, 1, cv::Scalar(255, 0, 0), -1);
   }
 
   cv::imshow("depth", depth_scaled);
@@ -277,38 +319,30 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
 
   // -- Compute a more detailed foreground / background mask.
   //    Will be 255 for foreground points.
-  asp_.setInput("ImageEntryPoint", color_vis_);
-  asp_.setInput("MaskEntryPoint", mask);
-  asp_.setInput("SeedEntryPoint", seed);
+  // asp_.setInput("ImageEntryPoint", color_vis_);
+  // asp_.setInput("MaskEntryPoint", mask);
+  // asp_.setInput("SeedEntryPoint", seed);
   
-  // Make depth image for use in segmentation.
-  cv::Mat1f depth(color_vis_.size(), 0);
-  for(size_t i = 0; i < msg.indices.size(); ++i) {
-    uint32_t idx = msg.indices[i];
-    int y = idx / depth.cols;
-    int x = depth.cols - 1 - (idx - y * depth.cols);
-    depth(y, x) = msg.depth[i] * 0.001;
-  }
-  asp_.setInput("DepthEntryPoint", depth);
-  cv::Mat1b foreground(cv::Size(msg.width, msg.height), 0);
-  hrt.reset("asp"); hrt.start();
-  asp_.segment(&foreground);
-  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
-  cout << asp_.reportTiming() << endl;
+  // asp_.setInput("DepthEntryPoint", depth);
+  // cv::Mat1b foreground(cv::Size(msg.width, msg.height), 0);
+  // hrt.reset("asp"); hrt.start();
+  // asp_.segment(&foreground);
+  // hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+  // cout << asp_.reportTiming() << endl;
 
-  for(int y = 0; y < foreground.rows; ++y)
-    for(int x = 0; x < foreground.cols; ++x)
-      if(indices_mask(y, x) != 255 || depth(y, x) == 0)
-        foreground(y, x) = 0;
+  // for(int y = 0; y < foreground.rows; ++y)
+  //   for(int x = 0; x < foreground.cols; ++x)
+  //     if(indices_mask(y, x) != 255 || depth(y, x) == 0)
+  //       foreground(y, x) = 0;
 
-  for(int y = 0; y < foreground.rows; ++y) {
-    for(int x = 0; x < foreground.cols; ++x) {
-      if(mask(y, x) == 0 && fg_block_img(y / msg.height_step, x / msg.width_step) == 255)
-        foreground(y, x) = 255;
-    }
-  }
+  // for(int y = 0; y < foreground.rows; ++y) {
+  //   for(int x = 0; x < foreground.cols; ++x) {
+  //     if(mask(y, x) == 0 && fg_block_img(y / msg.height_step, x / msg.width_step) == 255)
+  //       foreground(y, x) = 255;
+  //   }
+  // }
 
-  cv::imshow("ASP Foreground", foreground);
+  // cv::imshow("ASP Foreground", foreground);
 
 
   // -- Try simple floodfilling to get the foreground.
@@ -339,10 +373,8 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   vector<cv::Point2i> keypoints;
   for(int y = msg.height_step / 2; y < bilateral_foreground.rows - msg.height_step / 2; ++y) {
     for(int x = msg.width_step / 2; x < bilateral_foreground.cols - msg.width_step / 2; ++x) {
-      if(mask(y, x) == 0 || depth(y, x) == 0)
+      if(depth(y, x) == 0)
         continue;
-      // if(depth(y, x) == 0)
-      //   continue;
       
       int r = (double)(y - msg.height_step / 2) / msg.height_step + 0.5;
       int c = (double)(x - msg.width_step / 2) / msg.width_step + 0.5;
@@ -367,14 +399,17 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
           if(fg_block_img(r2, c2) == 255)
             mult = 1;
           double img_coef = exp(-sqrt((x - pt.x)*(x - pt.x) + (y - pt.y)*(y - pt.y)) / sigma_p);
-          double depth_coef = exp(-fabs(depth(y, x) - depth(pt)) / sigma_d);
+          double z = depth(pt);
+          double depth_coef = exp(-fabs(depth(y, x) - z) / sigma_d);
           double term = mult * img_coef * depth_coef;
           val += term;
 
-          // cout << "Point " << x << " " << y << " with depth " << depth(y, x) << "; keypoint " << pt
-          //      << " with depth " << depth(pt) << " and label " << (int)fg_block_img(r2, c2)
-          //      <<"; img_coef: " << img_coef << ", depth_coef: " << depth_coef
-          //      << ", term : " << term << endl;
+          if(y == g_y && x == g_x) {
+            cout << "Point " << x << " " << y << " with depth " << depth(y, x) << "; keypoint " << pt
+                 << " with depth " << depth(pt) << " and label " << (int)fg_block_img(r2, c2)
+                 <<"; img_coef: " << img_coef << ", depth_coef: " << depth_coef
+                 << ", term : " << term << endl;
+          }
         }
       }
 
@@ -382,9 +417,11 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
         bilateral_foreground(y, x) = 255;
     }
   }
-  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
-  cv::imshow("bilateral_foreground", bilateral_foreground);
-
+  //hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+  cv::Mat1b bilateral_foreground_scaled;
+  cv::resize(bilateral_foreground, bilateral_foreground_scaled,
+             bilateral_foreground.size() * g_scaling, cv::INTER_NEAREST);
+  cv::imshow("bilateral_foreground", bilateral_foreground_scaled);
   
   // -- Run connected components on the depth data in the foreground.
   for(int y = 0; y < simple_foreground.rows; ++y)
@@ -396,7 +433,7 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   cv::Mat1i blobs(cv::Size(msg.width, msg.height), 0);
   hrt.reset("clustering"); hrt.start();
   cluster(depth, 0.2, &blobs);
-  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+  //hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 
   cv::imshow("Clustering", colorAssignments(blobs));
   cv::waitKey(5);
