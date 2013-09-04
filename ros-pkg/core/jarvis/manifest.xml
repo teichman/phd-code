@@ -8,7 +8,9 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/jarvis</url>
+
   <depend package="sentinel"/>
+  <depend package="asp"/>
 
 </package>
 

@@ -26,6 +26,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/high_res_timer.cpp
   src/image_region_iterator.cpp
   src/lockable.cpp
+  src/connected_components.cpp
   )
 rosbuild_link_boost(${PROJECT_NAME} thread)
 target_link_libraries(${PROJECT_NAME} rt)

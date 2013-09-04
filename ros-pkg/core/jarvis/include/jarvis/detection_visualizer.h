@@ -6,6 +6,7 @@
 #include <ros/ros.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <timer/timer.h>
+#include <asp/asp.h>
 #include <sentinel/Detection.h>
 
 class DetectionVisualizer
@@ -20,6 +21,7 @@ protected:
   cv::Mat3b depth_vis_;
   HighResTimer hrt_;
   std::deque<double> timestamps_;
+  asp::Asp asp_;
 
   void callback(const sentinel::Detection& msg);
 };
