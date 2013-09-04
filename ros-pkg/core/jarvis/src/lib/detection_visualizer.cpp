@@ -260,6 +260,29 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   cluster(depth, 0.2, 400, &blobs);
   hrt.stop(); cout << hrt.reportMilliseconds() << endl;
   cv::imshow("Clustering", colorAssignments(blobs));
+
+  // -- The foreground should only contain points in large-enough clusters.
+  for(int y = 0; y < blobs.rows; ++y)
+    for(int x = 0; x < blobs.cols; ++x)
+      if(blobs(y, x) < 0)
+        foreground(y, x) = 0;
+
+  // -- Make a visualization using the color image and foreground.
+  color_vis_ = cv::Vec3b(0, 0, 0);
+  for(size_t i = 0; i < msg.indices.size(); ++i) {
+    uint32_t idx = msg.indices[i];
+    int y = idx / color_vis_.cols;
+    int x = color_vis_.cols - 1 - (idx - y * color_vis_.cols);
+    if(foreground(y, x) == 255) {
+      color_vis_(y, x)[0] = msg.color[i*3+2];
+      color_vis_(y, x)[1] = msg.color[i*3+1];
+      color_vis_(y, x)[2] = msg.color[i*3+0];
+    }
+  }
+
+  cv::Mat3b color_vis_scaled;
+  cv::resize(color_vis_, color_vis_scaled, color_vis_.size() * 3, cv::INTER_NEAREST);
+  cv::imshow("color", color_vis_scaled);
   cv::waitKey(2);
 }
 
