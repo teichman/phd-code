@@ -111,7 +111,7 @@ void DepthEPG::compute()
 DetectionVisualizer::DetectionVisualizer(int width, int height) :
   asp_(4)
 {
-  sub_ = nh_.subscribe("detections", 1000, &DetectionVisualizer::callback, this);
+  sub_ = nh_.subscribe("detections", 3, &DetectionVisualizer::callback, this);
                        //ros::TransportHints().unreliable().maxDatagramSize(100).tcpNoDelay());
   color_vis_ = cv::Mat3b(cv::Size(width, height), cv::Vec3b(0, 0, 0));
   depth_vis_ = cv::Mat3b(cv::Size(width, height), cv::Vec3b(0, 0, 0));
@@ -131,10 +131,12 @@ DetectionVisualizer::DetectionVisualizer(int width, int height) :
   asp_.connect("EdgeStructureGenerator.EdgeStructure -> DepthEPG.EdgeStructure");
   asp_.connect("DepthEPG.Edge -> EdgePotentialAggregator.UnweightedEdge");
   gc::Model model = asp_.defaultModel();
-  model.nweights_(model.nameMapping("nmap").toId("PriorNPG")) = 0.0;
+  model.nweights_(model.nameMapping("nmap").toId("PriorNPG")) = 0.01;
+  model.nweights_(model.nameMapping("nmap").toId("SeedNPG")) = 100;
   asp_.setModel(model);
   cout << model << endl;
   asp_.writeGraphviz("graphvis");
+  asp_.setDebug(false);
   
   hrt_.start();
 }
@@ -171,34 +173,46 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   // -- Get a boundary mask in block space.
   int blocks_per_row = msg.width / msg.width_step;
   int blocks_per_col = msg.height / msg.height_step;
-
-  cv::Mat1b rough_fg_mask(color_vis_.size(), 0);
+  
+  cv::Mat1b fg_block_img(cv::Size(blocks_per_row, blocks_per_col), 0);
   for(size_t i = 0; i < msg.fg_indices.size(); ++i) {
     uint32_t idx = msg.fg_indices[i];
     int y = idx / msg.width;
     int x = msg.width - 1 - (idx - y * msg.width);
     int r = (y - msg.height_step / 2) / msg.height_step;
     int c = (x - msg.width_step / 2) / msg.width_step;
-    for(int y2 = r * msg.height_step; y2 < (r+1) * msg.height_step; ++y2)
-      for(int x2 = c * msg.width_step; x2 < (c+1) * msg.width_step; ++x2)
-        rough_fg_mask(y2, x2) = 255;
+    fg_block_img(r, c) = 255;
   }
+  
+  cv::Mat1b bg_block_img(fg_block_img.size(), 0);
+  for(int y = 0; y < fg_block_img.rows; ++y)
+    for(int x = 0; x < fg_block_img.cols; ++x)
+      if(fg_block_img(y, x) == 0)
+        bg_block_img(y, x) = 255;
 
-  cv::Mat1b rough_bg_mask(rough_fg_mask.size(), 0);
-  for(int y = 0; y < rough_bg_mask.rows; ++y)
-    for(int x = 0; x < rough_bg_mask.cols; ++x)
-      if(rough_fg_mask(y, x) == 0)
-        rough_bg_mask(y, x) = 255;
 
-  int iters = 10;
+  cv::Mat1b rough_fg_mask = fg_block_img.clone();
+  cv::Mat1b rough_bg_mask = bg_block_img.clone();
+  int iters = 1;
   cv::dilate(rough_fg_mask, rough_fg_mask, cv::Mat(), cv::Point(-1, -1), iters);
   cv::dilate(rough_bg_mask, rough_bg_mask, cv::Mat(), cv::Point(-1, -1), iters);
-  cv::Mat1b mask(rough_bg_mask.size(), 0);
+  
+  cv::Mat1b block_mask(rough_bg_mask.size(), 0);
+  for(int y = 0; y < block_mask.rows; ++y)
+    for(int x = 0; x < block_mask.cols; ++x)
+      if(rough_fg_mask(y, x) == 255 && rough_bg_mask(y, x) == 255)
+        block_mask(y, x) = 255;
+
+  // Make the full-sized mask.
+  // Only allow points with data in the mask.
+  cv::Mat1b mask(cv::Size(msg.width, msg.height), 0);
   for(int y = 0; y < mask.rows; ++y)
     for(int x = 0; x < mask.cols; ++x)
-      if(indices_mask(y, x) == 255)
-        if(rough_fg_mask(y, x) == 255 && rough_bg_mask(y, x) == 255)
-          mask(y, x) = 255;
+      mask(y, x) = block_mask(y / msg.height_step, x / msg.width_step);
+  for(int y = 0; y < mask.rows; ++y)
+    for(int x = 0; x < mask.cols; ++x)
+      if(indices_mask(y, x) == 0)
+        mask(y, x) = 0;
   
   cv::imshow("rough_fg_mask", rough_fg_mask);
   cv::imshow("rough_bg_mask", rough_bg_mask);
@@ -224,21 +238,18 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
     color_vis_(y, x)[2] = msg.color[i*3+0];
   }
 
-  // -- Add foreground and background markers.
-  //    Construct seed image while at it.
+  // -- Construct seed image.
   cv::Mat1b seed(color_vis_.size(), 127);
   for(size_t i = 0; i < msg.fg_indices.size(); ++i) {
     uint32_t idx = msg.fg_indices[i];
     int y = idx / msg.width;
     int x = msg.width - 1 - (idx - y * msg.width);
-    //cv::circle(color_vis_, cv::Point(x, y), 2, cv::Scalar(0, 255, 0), -1);
     seed(y, x) = 255;
   }
   for(size_t i = 0; i < msg.bg_fringe_indices.size(); ++i) {
     uint32_t idx = msg.bg_fringe_indices[i];
     int y = idx / msg.width;
     int x = msg.width - 1 - (idx - y * msg.width);
-    //cv::circle(color_vis_, cv::Point(x, y), 2, cv::Scalar(0, 0, 255), -1);
     seed(y, x) = 0;
   }
 
@@ -251,6 +262,12 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
     int y = idx / msg.width;
     int x = msg.width - 1 - (idx - y * msg.width);
     cv::circle(depth_scaled, cv::Point(x, y) * scaling, 1, cv::Scalar(0, 255, 0), -1);
+  }
+  for(size_t i = 0; i < msg.bg_fringe_indices.size(); ++i) {
+    uint32_t idx = msg.bg_fringe_indices[i];
+    int y = idx / msg.width;
+    int x = msg.width - 1 - (idx - y * msg.width);
+    cv::circle(depth_scaled, cv::Point(x, y) * scaling, 1, cv::Scalar(255, 0, 0), -1);
   }
 
   cv::imshow("depth", depth_scaled);
@@ -273,32 +290,23 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
     depth(y, x) = msg.depth[i] * 0.001;
   }
   asp_.setInput("DepthEntryPoint", depth);
-  //asp_.setDebug(true);
   cv::Mat1b foreground(cv::Size(msg.width, msg.height), 0);
   hrt.reset("asp"); hrt.start();
   asp_.segment(&foreground);
   hrt.stop(); cout << hrt.reportMilliseconds() << endl;
   cout << asp_.reportTiming() << endl;
 
-  
   for(int y = 0; y < foreground.rows; ++y)
     for(int x = 0; x < foreground.cols; ++x)
-      if(mask(y, x) != 255 || depth(y, x) == 0)
+      if(indices_mask(y, x) != 255 || depth(y, x) == 0)
         foreground(y, x) = 0;
 
-  
-  // for(int y = 0; y < foreground.rows; ++y) {
-  //   for(int x = 0; x < foreground.cols; ++x) {
-  //     if(mask(y, x) == 0 && rough_fg_mask(y, x) == 255)
-  //       foreground(y, x) = 255;
-  //     if(mask(y, x) == 0 && rough_bg_mask(y, x) == 255)
-  //       foreground(y, x) = 0;
-  //     if(foreground(y, x) != 255) {
-  //       foreground(y, x) = 0;
-  //       depth(y, x) = 0;
-  //     }
-  //   }
-  // }
+  for(int y = 0; y < foreground.rows; ++y) {
+    for(int x = 0; x < foreground.cols; ++x) {
+      if(mask(y, x) == 0 && fg_block_img(y / msg.height_step, x / msg.width_step) == 255)
+        foreground(y, x) = 255;
+    }
+  }
 
   cv::imshow("ASP Foreground", foreground);
 
@@ -323,7 +331,12 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   cv::imshow("Simple Foreground", simple_foreground);
 
 
-  // -- Run connected components on that mask.
+  // -- Run connected components on the depth data in the foreground.
+  for(int y = 0; y < simple_foreground.rows; ++y)
+    for(int x = 0; x < simple_foreground.cols; ++x)
+      if(simple_foreground(y, x) == 0)
+        depth(y, x) = 0;
+
   ROS_ASSERT(msg.width % msg.width_step == 0 && msg.height % msg.height_step == 0);
   cv::Mat1i blobs(cv::Size(msg.width, msg.height), 0);
   hrt.reset("clustering"); hrt.start();
