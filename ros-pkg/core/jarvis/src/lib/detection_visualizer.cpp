@@ -7,18 +7,6 @@
 using namespace std;
 using namespace asp;
 
-int g_scaling = 3;
-int g_y = -1;
-int g_x = -1;
-
-void mouseEvent(int evt, int x, int y, int flags, void* param){
-  if(evt==CV_EVENT_LBUTTONDOWN){
-    g_x = x / g_scaling;
-    g_y = y / g_scaling;
-    cout << "Set debug point to " << g_x << " " << g_y << endl;
-  }
-}
-
 void flood(cv::Mat1f depth, float thresh, int min_pts, const cv::Point2i& seed, int id, cv::Mat1i* ass)
 {
   vector<cv::Point2i> pts;
@@ -161,6 +149,9 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   ROS_ASSERT(msg.height % msg.height_step == 0);
   ROS_ASSERT(msg.width == 320 && msg.height == 240);
 
+  hrt.reset("bilateral filter");
+  hrt.start();
+  
   cv::Mat1f depth(color_vis_.size(), 0);
   for(size_t i = 0; i < msg.indices.size(); ++i) {
     uint32_t idx = msg.indices[i];
@@ -237,6 +228,8 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
       if(values(y, x) > 0 && indices_mask(y, x) == 255 && depth(y, x) > 1e-3)
         foreground(y, x) = 255;
 
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+  
   cv::Mat3b vis(foreground.size(), cv::Vec3b(0, 0, 0));
   for(int y = 0; y < vis.rows; ++y)
     for(int x = 0; x < vis.cols; ++x)
@@ -266,7 +259,9 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
       if(foreground(y, x) == 0)
         depth(y, x) = 0;
 
+  hrt.reset("clustering"); hrt.start();
   cluster(depth, 0.2, 400, &blobs);
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
   cv::imshow("Clustering", colorAssignments(blobs));
   cv::waitKey(2);
 }
