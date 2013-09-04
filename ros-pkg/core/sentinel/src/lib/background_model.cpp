@@ -124,12 +124,15 @@ size_t BackgroundModel::predict(openni::VideoFrameRef depth, vector<uint8_t>* ma
     for(int x = width_step_ / 2; x < width_; x += width_step_, ++idx) {
       if((*mask)[y * width_ + x] == 255)
         continue;
-      
-      if(((y + height_step_ < height_) && ((*mask)[(y + height_step_) * width_ + x] == 255)) ||
-         ((y - height_step_ >= 0)      && ((*mask)[(y - height_step_) * width_ + x] == 255)) ||
-         ((x + width_step_ < width_)   && ((*mask)[y * width_ + x + width_step_] == 255))    ||
-         ((x - width_step_ >= 0)       && ((*mask)[y * width_ + x - width_step_] == 255)))
-      {
+
+      bool fringe = false;
+      for(int y2 = y - height_step_; !fringe && y2 <= y + height_step_; y2 += height_step_)
+        for(int x2 = x - width_step_; !fringe && x2 <= x + width_step_; x2 += width_step_)
+          if(y2 >= 0 && y2 < height_ && x2 >= 0 && x2 < width_)
+            if((*mask)[y2 * width_ + x2] == 255)
+              fringe = true;
+
+      if(fringe) {
         int r = idx / blocks_per_row_;
         int c = idx - r * blocks_per_row_;
         for(int y2 = r * height_step_; y2 < (r+1) * height_step_; ++y2) {
