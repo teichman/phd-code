@@ -62,19 +62,6 @@ void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameR
                     << depth_timestamp - image_timestamp);
   }
 
-  // -- Drop everything beyond MAX_DEPTH.
-  {
-#if JARVIS_DEBUG
-    ScopedTimer st("Zeroing out long-range data");
-#endif
-
-    uint16_t* data = (uint16_t*)oni_depth.getData();
-    for(int y = 0; y < oni_depth.getHeight(); ++y)
-      for(int x = 0; x < oni_depth.getWidth(); ++x)
-        if(data[y * oni_depth.getWidth() + x] > MAX_DEPTH * 1000)  // very sporadic segfault here.  Why?
-          data[y * oni_depth.getWidth() + x] = 0;
-  }
-
   process(oni_color, oni_depth, depth_timestamp, timestamp, frame_id);
 }
 
