@@ -152,6 +152,7 @@ int OpenNI2Interface::connect()
   if (device_.getSensorInfo(SENSOR_DEPTH) != NULL)
   {
     rc = depth_stream_.create(device_, SENSOR_DEPTH);
+    depth_stream_.setMirroringEnabled(false);
     if (rc != STATUS_OK)
     {
       printf("Couldn't create depth stream\n%s\n", OpenNI::getExtendedError());
@@ -181,7 +182,7 @@ int OpenNI2Interface::connect()
   rc = color_stream_.create(device_, openni::SENSOR_COLOR);
   if (rc == openni::STATUS_OK)
   {
-    
+    color_stream_.setMirroringEnabled(false);
     const Array<VideoMode>& cmodes = device_.getSensorInfo(SENSOR_COLOR)->getSupportedVideoModes();
     for(int i = 0; i < cmodes.getSize(); ++i) {
       if(color_res_ == VGA &&
