@@ -90,66 +90,6 @@ void BackgroundModel::increment(openni::VideoFrameRef depth, int num)
       histograms_[idx].increment(data[y * depth.getWidth() + x] * 0.001, num);
 }
 
-// size_t BackgroundModel::predict(openni::VideoFrameRef depth, vector<uint8_t>* mask) const
-// {
-//   ROS_ASSERT(depth.getWidth() * depth.getHeight() == (int)mask->size());
-//   ROS_ASSERT(width_ == depth.getWidth());
-  
-//   size_t idx = 0;
-//   size_t num = 0;
-//   uint16_t* data = (uint16_t*)depth.getData();
-
-//   // -- Fill in foreground.
-//   for(int y = height_step_ / 2; y < height_; y += height_step_) {
-//     for(int x = width_step_ / 2; x < width_; x += width_step_, ++idx) {
-//       uint16_t val = data[y * width_ + x];
-//       if(val == 0)
-//         continue;
-      
-//       double pct = histograms_[idx].getNum(val * .001) / histograms_[idx].total();
-//       if(pct < min_pct_) {
-//         int r = idx / blocks_per_row_;
-//         int c = idx - r * blocks_per_row_;
-//         for(int y2 = r * height_step_; y2 < (r+1) * height_step_; ++y2) {
-//           for(int x2 = c * width_step_; x2 < (c+1) * width_step_; ++x2) { 
-//             (*mask)[y2 * width_ + x2] = 255;
-//             ++num;
-//           }
-//         }
-//       }
-//     }
-//   }
-
-//   // -- Fill in background fringe with 127s.
-//   idx = 0;
-//   for(int y = height_step_ / 2; y < height_; y += height_step_) {
-//     for(int x = width_step_ / 2; x < width_; x += width_step_, ++idx) {
-//       if((*mask)[y * width_ + x] == 255)
-//         continue;
-
-//       bool fringe = false;
-//       for(int y2 = y - height_step_; !fringe && y2 <= y + height_step_; y2 += height_step_)
-//         for(int x2 = x - width_step_; !fringe && x2 <= x + width_step_; x2 += width_step_)
-//           if(y2 >= 0 && y2 < height_ && x2 >= 0 && x2 < width_)
-//             if((*mask)[y2 * width_ + x2] == 255)
-//               fringe = true;
-
-//       if(fringe) {
-//         int r = idx / blocks_per_row_;
-//         int c = idx - r * blocks_per_row_;
-//         for(int y2 = r * height_step_; y2 < (r+1) * height_step_; ++y2) {
-//           for(int x2 = c * width_step_; x2 < (c+1) * width_step_; ++x2) { 
-//             (*mask)[y2 * width_ + x2] = 127;
-//             ++num;
-//           }
-//         }
-//       }
-//     }
-//   }
-
-//   return num;
-// }
-
 void BackgroundModel::predict(openni::VideoFrameRef depth,
                               vector<uint32_t>* indices,
                               vector<uint32_t>* fg_markers,
