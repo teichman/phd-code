@@ -56,18 +56,20 @@ void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameR
 {
   #if JARVIS_DEBUG
   cout << "############################################################" << endl;
-  ScopedTimer st("Sentinel::rgbdCallback");
   #endif
+  ScopedTimer st("Sentinel::rgbdCallback");
 
   // -- Check for misaligned data.
   //    TODO: This should probably be in OpenNI2Interface.
-  double image_timestamp = (double)oni_color.getTimestamp() * 1e-6;
   double depth_timestamp = (double)oni_depth.getTimestamp() * 1e-6;
+  #if JARVIS_DEBUG
+  double image_timestamp = (double)oni_color.getTimestamp() * 1e-6;
   double thresh = 1.1 * (1.0 / 60.0);
   if(fabs(depth_timestamp - image_timestamp) > thresh) {
     ROS_WARN_STREAM("rgbdCallback got an rgbd pair with timestamp delta of "
                     << depth_timestamp - image_timestamp);
   }
+  #endif
 
   process(oni_color, oni_depth, depth_timestamp, timestamp, frame_id);
 }
@@ -122,102 +124,6 @@ void Sentinel::updateModel(openni::VideoFrameRef depth)
     training_.pop();
   }
 }
-
-// DiskStreamingSentinel::DiskStreamingSentinel(std::string dir,
-//                                              double save_interval,
-//                                              double update_interval,
-//                                              int max_training_imgs,
-//                                              double threshold,
-//                                              bool visualize,
-//                                              OpenNI2Interface::Resolution color_res,
-//                                              OpenNI2Interface::Resolution depth_res) :
-//   Sentinel(update_interval, max_training_imgs, threshold, visualize, color_res, depth_res),
-//   dir_(dir),
-//   save_interval_(save_interval)
-// {
-//   save_timer_.start();
-// }
-
-// void DiskStreamingSentinel::save(cv::Mat3b color, DepthMatConstPtr depth,
-//                                  cv::Mat3b vis, double ts) const
-// {
-//   time_t rawtime = ts;
-//   struct tm* timeinfo;
-//   char buffer[80];
-//   timeinfo = localtime(&rawtime);
-//   strftime(buffer, 80, "%Y-%m-%d", timeinfo);
-
-//   string datedir = dir_ + "/" + buffer;
-//   string depthdir = datedir + "/depth";
-//   string imagedir = datedir + "/image";
-//   if(!bfs::exists(datedir))
-//     bfs::create_directory(datedir);
-//   if(!bfs::exists(depthdir))
-//     bfs::create_directory(depthdir);
-//   if(!bfs::exists(imagedir))
-//     bfs::create_directory(imagedir);
-
-//   strftime(buffer, 80, "%H:%M:%S", timeinfo);
-//   ostringstream depthpath;
-//   depthpath << depthdir << "/" << buffer << ":";
-//   depthpath << setiosflags(ios::fixed) << setprecision(3) << ts - floor(ts);
-//   depthpath << "-depth.png";
-//   cout << "Saving to " << depthpath.str() << endl;
-//   cv::imwrite(depthpath.str(), falseColor(*depth));
-  
-//   ostringstream imagepath;
-//   imagepath << imagedir << "/" << buffer << ":";
-//   imagepath << setiosflags(ios::fixed) << setprecision(3) << ts - floor(ts);
-//   imagepath << "-image.jpg";
-//   cout << "Saving to " << imagepath.str() << endl;
-//   cv::imwrite(imagepath.str(), color);
-
-//   string color_symlink_path = dir_ + "/recent_color_image.jpg";
-//   if(bfs::exists(color_symlink_path)) {
-//     cout << "exists.  removing." << endl;
-//     bfs::remove(color_symlink_path);
-//   }
-//   ROS_ASSERT(!bfs::exists(color_symlink_path));
-//   bfs::create_symlink(imagepath.str().substr(dir_.size() + 1), color_symlink_path);
-// }
-
-// cv::Mat1b DiskStreamingSentinel::depthMatToCV(const DepthMat& depth) const
-// {
-//   cv::Mat1b vis(cv::Size(depth.cols(), depth.rows()), 0);
-//   double max_dist = 7.5;
-
-//   for(int y = 0; y < vis.rows; ++y) {
-//     for(int x = 0; x < vis.cols; ++x) {
-//       if(depth(y, x) != 0)
-//         vis(y, x) = 255 * (1.0 - fmin(max_dist, depth(y, x) / 1000.0) / max_dist);
-//     }
-//   }
-
-//   return vis;
-// }
-
-// void DiskStreamingSentinel::handleDetection(openni::VideoFrameRef color,
-//                                             openni::VideoFrameRef depth,
-//                                             const std::vector<uint8_t>& mask,
-//                                             size_t num_in_mask,
-//                                             double sensor_timestamp,
-//                                             double wall_timestamp,
-//                                             size_t frame_id)
-// {
-//   if(save_timer_.getSeconds() < save_interval_)
-//     return;
-
-//   #if JARVIS_DEBUG
-//   ScopedTimer st("Saving");
-//   #endif
-  
-//   if(!bfs::exists(dir_))
-//     bfs::create_directory(dir_);
-    
-//   save(oniToCV(color), oniDepthToEigenPtr(depth), vis_, wall_timestamp);
-//   save_timer_.reset();
-//   save_timer_.start();
-// }
 
 ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
                                            double update_interval,
