@@ -167,6 +167,19 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
     int x = depth_vis_.cols - 1 - (idx - y * depth_vis_.cols);
     depth_vis_(y, x) = colorize(msg.depth[i] * 0.001, 0, 5);
   }
+  for(size_t i = 0; i < msg.fg_indices.size(); ++i) {
+    uint32_t idx = msg.fg_indices[i];
+    int y = idx / msg.width;
+    int x = msg.width - 1 - (idx - y * msg.width);
+    cv::circle(depth_vis_, cv::Point(x, y), 2, cv::Scalar(0, 0, 255), -1);
+  }
+  for(size_t i = 0; i < msg.bg_fringe_indices.size(); ++i) {
+    uint32_t idx = msg.bg_fringe_indices[i];
+    int y = idx / msg.width;
+    int x = msg.width - 1 - (idx - y * msg.width);
+    cv::circle(depth_vis_, cv::Point(x, y), 2, cv::Scalar(0, 255, 0), -1);
+  }
+
   
   cv::Mat1b indices_mask(cv::Size(msg.width, msg.height), 0);
   for(size_t i = 0; i < msg.indices.size(); ++i) {
@@ -245,10 +258,18 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
     int x = msg.width - 1 - (idx - y * msg.width);
     cv::circle(vis, cv::Point(x, y), 2, cv::Scalar(0, 255, 0), -1);
   }
-  
-  cv::imshow("foreground visualization", vis);
-  cv::imshow("foreground", foreground);
-  cv::imshow("depth", depth_vis_);
+
+  // cv::Mat3b vis_scaled;
+  // cv::resize(vis, vis_scaled, vis.size() * 2, cv::INTER_NEAREST);
+  // cv::imshow("foreground visualization", vis_scaled);
+
+  // cv::Mat1b foreground_scaled;
+  // cv::resize(foreground, foreground_scaled, foreground.size() * 2, cv::INTER_NEAREST);
+  // cv::imshow("foreground", foreground_scaled);
+
+  cv::Mat3b depth_vis_scaled;
+  cv::resize(depth_vis_, depth_vis_scaled, depth_vis_.size() * 2, cv::INTER_NEAREST);
+  cv::imshow("depth", depth_vis_scaled);
 
   cv::Mat1i blobs(cv::Size(msg.width, msg.height), 0);
   for(int y = 0; y < depth.rows; ++y)
@@ -259,7 +280,9 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   hrt.reset("clustering"); hrt.start();
   cluster(depth, 0.2, 400, &blobs);
   hrt.stop(); cout << hrt.reportMilliseconds() << endl;
-  cv::imshow("Clustering", colorAssignments(blobs));
+  cv::Mat3b clustering_scaled;
+  cv::resize(colorAssignments(blobs), clustering_scaled, blobs.size() * 2, cv::INTER_NEAREST);
+  cv::imshow("Clustering", clustering_scaled);
 
   // -- The foreground should only contain points in large-enough clusters.
   for(int y = 0; y < blobs.rows; ++y)
@@ -281,7 +304,7 @@ void DetectionVisualizer::callback(const sentinel::Detection& msg)
   }
 
   cv::Mat3b color_vis_scaled;
-  cv::resize(color_vis_, color_vis_scaled, color_vis_.size() * 3, cv::INTER_NEAREST);
+  cv::resize(color_vis_, color_vis_scaled, color_vis_.size() * 2, cv::INTER_NEAREST);
   cv::imshow("color", color_vis_scaled);
   cv::waitKey(2);
 }

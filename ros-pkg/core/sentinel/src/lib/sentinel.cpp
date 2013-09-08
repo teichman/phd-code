@@ -66,7 +66,7 @@ void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameR
   uint16_t* data = (uint16_t*)oni_depth.getData();
   for(int y = 0; y < oni_depth.getHeight(); ++y)
     for(int x = 0; x < oni_depth.getWidth(); ++x)
-      if(data[y * oni_depth.getWidth() + x] > MAX_DEPTH * 1000)
+      if(data[y * oni_depth.getWidth() + x] > MAX_DEPTH * 1000)  // very sporadic segfault here.  Why?
         data[y * oni_depth.getWidth() + x] = 0;
   
   process(oni_color, oni_depth, callback_timestamp);

@@ -1,0 +1,9 @@
+Header header
+string sensor_id
+uint16 width
+uint16 height
+uint32[] indices
+uint16[] depth
+uint8[] color
+float32[] reserve_float
+int32[] reserve_int
