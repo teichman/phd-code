@@ -21,7 +21,8 @@ OpenNI2Interface::OpenNI2Interface(Resolution color_res, Resolution depth_res) :
   color_res_(color_res),
   depth_res_(depth_res),
   sync_(0.018),
-  terminating_(false)
+  terminating_(false),
+  frame_id_(0)
 {
   signal(SIGINT, sigint);
 }
@@ -117,8 +118,11 @@ void OpenNI2Interface::processSynchronized()
 {
   scopeLockWrite;
   if(sync_.updated_) {
-    //cout << "New sync'd frame is available!  dt: " << sync_.ts0_ - sync_.ts1_ << endl;
-    handler_->rgbdCallback(sync_.current0_, sync_.current1_);
+    timespec clk;
+    clock_gettime(CLOCK_REALTIME, &clk);
+    double timestamp = clk.tv_sec + clk.tv_nsec * 1e-9;
+    handler_->rgbdCallback(sync_.current0_, sync_.current1_, frame_id_, timestamp);
+    ++frame_id_;
     sync_.updated_ = false;
   }
 }

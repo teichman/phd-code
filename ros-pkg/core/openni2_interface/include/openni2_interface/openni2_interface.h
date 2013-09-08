@@ -15,8 +15,12 @@ public:
     std::cout << __PRETTY_FUNCTION__ << std::endl;
 #endif
   }
+
+  // color and depth contain sensor timestamps.
+  // timestamp contains the wall time, in seconds.
   virtual void rgbdCallback(openni::VideoFrameRef color,
-                            openni::VideoFrameRef depth) = 0;
+                            openni::VideoFrameRef depth,
+                            size_t frame_id, double timestamp) = 0;
 };
 
 class OpenNI2Interface;
@@ -43,6 +47,8 @@ public:
   void setHandler(OpenNI2Handler* handler) { handler_ = handler; }
   void run();
   void terminate() { terminating_ = true; }
+  OpenNI2Interface::Resolution colorRes() const { return color_res_; }
+  OpenNI2Interface::Resolution depthRes() const { return depth_res_; }
   
 private:
   Listener color_listener_;
@@ -56,6 +62,7 @@ private:
   //! color, depth.
   Synchronizer<openni::VideoFrameRef, openni::VideoFrameRef> sync_;
   bool terminating_;
+  size_t frame_id_;
   
   int connect();
   void processColor();
