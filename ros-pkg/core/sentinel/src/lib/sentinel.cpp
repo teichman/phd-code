@@ -452,7 +452,6 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
     }
   }
 
-  fgmsg_.header.stamp = ros::Time::now();
   fg_pub_.publish(fgmsg_);
   
   #if JARVIS_DEBUG
