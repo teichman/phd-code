@@ -48,6 +48,7 @@ void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameR
                             size_t frame_id, double timestamp)
 {
   #if JARVIS_DEBUG
+  cout << "############################################################" << endl;
   ScopedTimer st("Sentinel::rgbdCallback");
   #endif
 
@@ -62,11 +63,17 @@ void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameR
   }
 
   // -- Drop everything beyond MAX_DEPTH.
-  uint16_t* data = (uint16_t*)oni_depth.getData();
-  for(int y = 0; y < oni_depth.getHeight(); ++y)
-    for(int x = 0; x < oni_depth.getWidth(); ++x)
-      if(data[y * oni_depth.getWidth() + x] > MAX_DEPTH * 1000)  // very sporadic segfault here.  Why?
-        data[y * oni_depth.getWidth() + x] = 0;
+  {
+#if JARVIS_DEBUG
+    ScopedTimer st("Zeroing out long-range data");
+#endif
+
+    uint16_t* data = (uint16_t*)oni_depth.getData();
+    for(int y = 0; y < oni_depth.getHeight(); ++y)
+      for(int x = 0; x < oni_depth.getWidth(); ++x)
+        if(data[y * oni_depth.getWidth() + x] > MAX_DEPTH * 1000)  // very sporadic segfault here.  Why?
+          data[y * oni_depth.getWidth() + x] = 0;
+  }
 
   process(oni_color, oni_depth, depth_timestamp, timestamp, frame_id);
 }
@@ -84,24 +91,26 @@ void Sentinel::process(openni::VideoFrameRef color,
     
     updateModel(depth);
   }
-
-  #if JARVIS_DEBUG
-  ScopedTimer st("Sentinel::process after update");
-  #endif
   
   // -- If the model has been trained suffificiently, make predictions.
   if((int)training_.size() == 0)
     return;
-  
-  if((int)mask_.size() != depth.getHeight() * depth.getWidth())
-    mask_.resize(depth.getHeight() * depth.getWidth());
-  memset(&mask_[0], 0, mask_.size());
 
+  {
+    #if JARVIS_DEBUG
+    ScopedTimer st("Initializing mask");
+    #endif
+
+    if((int)mask_.size() != depth.getHeight() * depth.getWidth())
+      mask_.resize(depth.getHeight() * depth.getWidth());
+    memset(&mask_[0], 0, mask_.size());    
+  }
+  
   // -- Get raw mask.
   size_t num_in_mask = 0;
   {
     #if JARVIS_DEBUG
-    ScopedTimer st("Getting raw mask");
+    ScopedTimer st("Making predictions");
     #endif
     
     num_in_mask = model_->predict(depth, &mask_);
@@ -340,7 +349,7 @@ void ROSStreamingSentinel::handleNonDetection(openni::VideoFrameRef color,
                                               size_t frame_id)
 {
   #if JARVIS_DEBUG
-  ScopedTimer st("ROSStreamingSentinel::handleNonDetection - total");
+  ScopedTimer st("ROSStreamingSentinel::handleNonDetection");
   #endif
 
   ROS_ASSERT(color.getHeight() == depth.getHeight());
@@ -394,19 +403,9 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
                                            double sensor_timestamp,
                                            double wall_timestamp,
                                            size_t frame_id)
-{
-
+{  
   #if JARVIS_DEBUG
-  cout << "Entering ROSStreamingSentinel::handleDetection." << endl;
-  size_t num = 0;
-  for(size_t i = 0; i < mask.size(); ++i)
-    if(mask[i] == 255 || mask[i] == 127)
-      ++num;
-  ROS_ASSERT(num == num_in_mask);
-  #endif
-  
-  #if JARVIS_DEBUG
-  ScopedTimer st("ROSStreamingSentinel::handleDetection - total");
+  ScopedTimer st("ROSStreamingSentinel::handleDetection");
   #endif
 
   if(!ros::ok()) {
@@ -453,10 +452,6 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
   }
 
   fg_pub_.publish(fgmsg_);
-  
-  #if JARVIS_DEBUG
-  cout << "Leaving ROSStreamingSentinel::handleDetection." << endl;
-  #endif
 }
 
 
