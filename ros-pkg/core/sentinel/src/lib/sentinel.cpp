@@ -29,13 +29,20 @@ Sentinel::Sentinel(double update_interval,
   oni_(color_res, depth_res)
 {
   oni_.setHandler(this);
-  if(depth_res == OpenNI2Interface::VGA)
+  if(depth_res == OpenNI2Interface::VGA) {
     model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(640, 480, 16, 12, 0.1, MAX_DEPTH, 0.2));
+  }
   else if(depth_res == OpenNI2Interface::QVGA)
     model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(320, 240, 8, 6, 0.1, MAX_DEPTH, 0.2));
   else {
     ROS_ASSERT(0);
   }
+
+  indices_.reserve(model_->width() * model_->height());
+  size_t max_num_markers = (model_->width() / model_->widthStep())
+    * (model_->height() / model_->heightStep());
+  fg_markers_.reserve(max_num_markers);
+  bg_fringe_markers_.reserve(max_num_markers);
 }
 
 void Sentinel::run()
@@ -82,58 +89,22 @@ void Sentinel::process(openni::VideoFrameRef color,
   // -- If the model has been trained suffificiently, make predictions.
   if((int)training_.size() == 0)
     return;
-
-  {
-    #if JARVIS_DEBUG
-    ScopedTimer st("Initializing mask");
-    #endif
-
-    if((int)mask_.size() != depth.getHeight() * depth.getWidth())
-      mask_.resize(depth.getHeight() * depth.getWidth());
-    memset(&mask_[0], 0, mask_.size());    
-  }
   
   // -- Get raw mask.
-  size_t num_in_mask = 0;
   {
     #if JARVIS_DEBUG
     ScopedTimer st("Making predictions");
     #endif
     
-    num_in_mask = model_->predict(depth, &mask_);
+    model_->predict(depth, &indices_, &fg_markers_, &bg_fringe_markers_);
   }
 
   // -- Process the detection.
-  if((double)num_in_mask / mask_.size() > threshold_) {
-    handleDetection(color, depth, mask_, num_in_mask, sensor_timestamp, wall_timestamp, frame_id);
+  if((double)fg_markers_.size() / model_->size() > threshold_) {
+    handleDetection(color, depth, indices_, fg_markers_, bg_fringe_markers_,
+                    sensor_timestamp, wall_timestamp, frame_id);
   }
   handleNonDetection(color, depth, sensor_timestamp, wall_timestamp, frame_id);
-  
-  // -- Visualize.
-  if(visualize_) {
-    if(vis_.rows != color.getHeight())
-      vis_ = cv::Mat3b(cv::Size(color.getWidth(), color.getHeight()));
-
-    // For now, you can only use this option if the color
-    // and depth streams are of the same size.
-    ROS_ASSERT(vis_.rows * vis_.cols == (int)mask_.size());
-    
-    oniToCV(color, vis_);
-    for(int y = 0; y < vis_.rows; ++y) {
-      for(int x = 0; x < vis_.cols; ++x) {
-        if(mask_[y * vis_.cols + vis_.cols - x - 1] == 255)
-          vis_(y, x)[2] = 255;
-        else if(mask_[y * vis_.cols + vis_.cols - x - 1] == 127)
-          vis_(y, x)[1] = 255;
-      }
-    }
-    
-    cv::imshow("Sentinel", vis_);
-    cv::imshow("Depth", falseColor(oniDepthToEigen(depth)));
-    char key = cv::waitKey(2);
-    if(key == 'q')
-      oni_.terminate();
-  }
 }
 
 void Sentinel::updateModel(openni::VideoFrameRef depth)
@@ -152,101 +123,101 @@ void Sentinel::updateModel(openni::VideoFrameRef depth)
   }
 }
 
-DiskStreamingSentinel::DiskStreamingSentinel(std::string dir,
-                                             double save_interval,
-                                             double update_interval,
-                                             int max_training_imgs,
-                                             double threshold,
-                                             bool visualize,
-                                             OpenNI2Interface::Resolution color_res,
-                                             OpenNI2Interface::Resolution depth_res) :
-  Sentinel(update_interval, max_training_imgs, threshold, visualize, color_res, depth_res),
-  dir_(dir),
-  save_interval_(save_interval)
-{
-  save_timer_.start();
-}
+// DiskStreamingSentinel::DiskStreamingSentinel(std::string dir,
+//                                              double save_interval,
+//                                              double update_interval,
+//                                              int max_training_imgs,
+//                                              double threshold,
+//                                              bool visualize,
+//                                              OpenNI2Interface::Resolution color_res,
+//                                              OpenNI2Interface::Resolution depth_res) :
+//   Sentinel(update_interval, max_training_imgs, threshold, visualize, color_res, depth_res),
+//   dir_(dir),
+//   save_interval_(save_interval)
+// {
+//   save_timer_.start();
+// }
 
-void DiskStreamingSentinel::save(cv::Mat3b color, DepthMatConstPtr depth,
-                                 cv::Mat3b vis, double ts) const
-{
-  time_t rawtime = ts;
-  struct tm* timeinfo;
-  char buffer[80];
-  timeinfo = localtime(&rawtime);
-  strftime(buffer, 80, "%Y-%m-%d", timeinfo);
+// void DiskStreamingSentinel::save(cv::Mat3b color, DepthMatConstPtr depth,
+//                                  cv::Mat3b vis, double ts) const
+// {
+//   time_t rawtime = ts;
+//   struct tm* timeinfo;
+//   char buffer[80];
+//   timeinfo = localtime(&rawtime);
+//   strftime(buffer, 80, "%Y-%m-%d", timeinfo);
 
-  string datedir = dir_ + "/" + buffer;
-  string depthdir = datedir + "/depth";
-  string imagedir = datedir + "/image";
-  if(!bfs::exists(datedir))
-    bfs::create_directory(datedir);
-  if(!bfs::exists(depthdir))
-    bfs::create_directory(depthdir);
-  if(!bfs::exists(imagedir))
-    bfs::create_directory(imagedir);
+//   string datedir = dir_ + "/" + buffer;
+//   string depthdir = datedir + "/depth";
+//   string imagedir = datedir + "/image";
+//   if(!bfs::exists(datedir))
+//     bfs::create_directory(datedir);
+//   if(!bfs::exists(depthdir))
+//     bfs::create_directory(depthdir);
+//   if(!bfs::exists(imagedir))
+//     bfs::create_directory(imagedir);
 
-  strftime(buffer, 80, "%H:%M:%S", timeinfo);
-  ostringstream depthpath;
-  depthpath << depthdir << "/" << buffer << ":";
-  depthpath << setiosflags(ios::fixed) << setprecision(3) << ts - floor(ts);
-  depthpath << "-depth.png";
-  cout << "Saving to " << depthpath.str() << endl;
-  cv::imwrite(depthpath.str(), falseColor(*depth));
+//   strftime(buffer, 80, "%H:%M:%S", timeinfo);
+//   ostringstream depthpath;
+//   depthpath << depthdir << "/" << buffer << ":";
+//   depthpath << setiosflags(ios::fixed) << setprecision(3) << ts - floor(ts);
+//   depthpath << "-depth.png";
+//   cout << "Saving to " << depthpath.str() << endl;
+//   cv::imwrite(depthpath.str(), falseColor(*depth));
   
-  ostringstream imagepath;
-  imagepath << imagedir << "/" << buffer << ":";
-  imagepath << setiosflags(ios::fixed) << setprecision(3) << ts - floor(ts);
-  imagepath << "-image.jpg";
-  cout << "Saving to " << imagepath.str() << endl;
-  cv::imwrite(imagepath.str(), color);
+//   ostringstream imagepath;
+//   imagepath << imagedir << "/" << buffer << ":";
+//   imagepath << setiosflags(ios::fixed) << setprecision(3) << ts - floor(ts);
+//   imagepath << "-image.jpg";
+//   cout << "Saving to " << imagepath.str() << endl;
+//   cv::imwrite(imagepath.str(), color);
 
-  string color_symlink_path = dir_ + "/recent_color_image.jpg";
-  if(bfs::exists(color_symlink_path)) {
-    cout << "exists.  removing." << endl;
-    bfs::remove(color_symlink_path);
-  }
-  ROS_ASSERT(!bfs::exists(color_symlink_path));
-  bfs::create_symlink(imagepath.str().substr(dir_.size() + 1), color_symlink_path);
-}
+//   string color_symlink_path = dir_ + "/recent_color_image.jpg";
+//   if(bfs::exists(color_symlink_path)) {
+//     cout << "exists.  removing." << endl;
+//     bfs::remove(color_symlink_path);
+//   }
+//   ROS_ASSERT(!bfs::exists(color_symlink_path));
+//   bfs::create_symlink(imagepath.str().substr(dir_.size() + 1), color_symlink_path);
+// }
 
-cv::Mat1b DiskStreamingSentinel::depthMatToCV(const DepthMat& depth) const
-{
-  cv::Mat1b vis(cv::Size(depth.cols(), depth.rows()), 0);
-  double max_dist = 7.5;
+// cv::Mat1b DiskStreamingSentinel::depthMatToCV(const DepthMat& depth) const
+// {
+//   cv::Mat1b vis(cv::Size(depth.cols(), depth.rows()), 0);
+//   double max_dist = 7.5;
 
-  for(int y = 0; y < vis.rows; ++y) {
-    for(int x = 0; x < vis.cols; ++x) {
-      if(depth(y, x) != 0)
-        vis(y, x) = 255 * (1.0 - fmin(max_dist, depth(y, x) / 1000.0) / max_dist);
-    }
-  }
+//   for(int y = 0; y < vis.rows; ++y) {
+//     for(int x = 0; x < vis.cols; ++x) {
+//       if(depth(y, x) != 0)
+//         vis(y, x) = 255 * (1.0 - fmin(max_dist, depth(y, x) / 1000.0) / max_dist);
+//     }
+//   }
 
-  return vis;
-}
+//   return vis;
+// }
 
-void DiskStreamingSentinel::handleDetection(openni::VideoFrameRef color,
-                                            openni::VideoFrameRef depth,
-                                            const std::vector<uint8_t>& mask,
-                                            size_t num_in_mask,
-                                            double sensor_timestamp,
-                                            double wall_timestamp,
-                                            size_t frame_id)
-{
-  if(save_timer_.getSeconds() < save_interval_)
-    return;
+// void DiskStreamingSentinel::handleDetection(openni::VideoFrameRef color,
+//                                             openni::VideoFrameRef depth,
+//                                             const std::vector<uint8_t>& mask,
+//                                             size_t num_in_mask,
+//                                             double sensor_timestamp,
+//                                             double wall_timestamp,
+//                                             size_t frame_id)
+// {
+//   if(save_timer_.getSeconds() < save_interval_)
+//     return;
 
-  #if JARVIS_DEBUG
-  ScopedTimer st("Saving");
-  #endif
+//   #if JARVIS_DEBUG
+//   ScopedTimer st("Saving");
+//   #endif
   
-  if(!bfs::exists(dir_))
-    bfs::create_directory(dir_);
+//   if(!bfs::exists(dir_))
+//     bfs::create_directory(dir_);
     
-  save(oniToCV(color), oniDepthToEigenPtr(depth), vis_, wall_timestamp);
-  save_timer_.reset();
-  save_timer_.start();
-}
+//   save(oniToCV(color), oniDepthToEigenPtr(depth), vis_, wall_timestamp);
+//   save_timer_.reset();
+//   save_timer_.start();
+// }
 
 ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
                                            double update_interval,
@@ -385,8 +356,9 @@ void ROSStreamingSentinel::handleNonDetection(openni::VideoFrameRef color,
 
 void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
                                            openni::VideoFrameRef depth,
-                                           const std::vector<uint8_t>& mask,
-                                           size_t num_in_mask,
+                                           const std::vector<uint32_t>& indices,
+                                           const std::vector<uint32_t>& fg_markers,
+                                           const std::vector<uint32_t>& bg_fringe_markers,
                                            double sensor_timestamp,
                                            double wall_timestamp,
                                            size_t frame_id)
@@ -405,37 +377,22 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
   fgmsg_.header.stamp.fromSec(wall_timestamp);
   fgmsg_.sensor_timestamp = sensor_timestamp;
   fgmsg_.frame_id = frame_id;
-  fgmsg_.indices.clear();
-  fgmsg_.depth.clear();
-  fgmsg_.color.clear();
-  fgmsg_.indices.resize(num_in_mask);
-  fgmsg_.depth.resize(num_in_mask);
-  fgmsg_.color.resize(num_in_mask * 3);  // RGB    
 
+  fgmsg_.indices = indices;
+  fgmsg_.fg_indices = fg_markers;
+  fgmsg_.bg_fringe_indices = bg_fringe_markers;
+
+  fgmsg_.depth.resize(indices.size());
+  fgmsg_.color.resize(indices.size() * 3);  // RGB    
   uint8_t* color_data = (uint8_t*)color.getData();
   uint16_t* depth_data = (uint16_t*)depth.getData();
   size_t idx = 0;
-  for(size_t i = 0; i < mask.size(); ++i) {
-    if(mask[i] == 255 || mask[i] == 127) {
-      fgmsg_.indices[idx] = i;
-      fgmsg_.depth[idx] = depth_data[i];
-      fgmsg_.color[idx*3+0] = color_data[i*3+0];
-      fgmsg_.color[idx*3+1] = color_data[i*3+1];
-      fgmsg_.color[idx*3+2] = color_data[i*3+2];
-      ++idx;
-    }
-  }
-
-  fgmsg_.fg_indices.clear();
-  fgmsg_.bg_fringe_indices.clear();
-  for(int y = fgmsg_.height_step / 2; y < fgmsg_.height; y += fgmsg_.height_step) {
-    for(int x = fgmsg_.width_step / 2; x < fgmsg_.width; x += fgmsg_.width_step) {
-      int idx = y * fgmsg_.width + x;
-      if(mask[idx] == 255)
-        fgmsg_.fg_indices.push_back(idx);
-      else if(mask[idx] == 127)
-        fgmsg_.bg_fringe_indices.push_back(idx);
-    }
+  for(size_t i = 0; i < indices.size(); ++i) {
+    size_t idx = indices[i];
+    fgmsg_.depth[i] = depth_data[idx];
+    fgmsg_.color[i*3+0] = color_data[idx*3+0];
+    fgmsg_.color[i*3+1] = color_data[idx*3+1];
+    fgmsg_.color[i*3+2] = color_data[idx*3+2];
   }
 
   fg_pub_.publish(fgmsg_);

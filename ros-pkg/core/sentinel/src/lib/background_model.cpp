@@ -65,6 +65,8 @@ BackgroundModel::BackgroundModel(int width, int height,
 
   blocks_per_row_ = width_ / width_step_;
   blocks_per_col_ = height_ / height_step_;
+  block_img_ = cv::Mat1b(cv::Size(blocks_per_col_, blocks_per_row_), 0);
+  dilated_block_img_ = cv::Mat1b(cv::Size(blocks_per_col_, blocks_per_row_), 0);
   
   size_t num = 0;
   for(int y = height_step_ / 2; y < height; y += height_step_)
@@ -88,16 +90,82 @@ void BackgroundModel::increment(openni::VideoFrameRef depth, int num)
       histograms_[idx].increment(data[y * depth.getWidth() + x] * 0.001, num);
 }
 
-size_t BackgroundModel::predict(openni::VideoFrameRef depth, vector<uint8_t>* mask) const
+// size_t BackgroundModel::predict(openni::VideoFrameRef depth, vector<uint8_t>* mask) const
+// {
+//   ROS_ASSERT(depth.getWidth() * depth.getHeight() == (int)mask->size());
+//   ROS_ASSERT(width_ == depth.getWidth());
+  
+//   size_t idx = 0;
+//   size_t num = 0;
+//   uint16_t* data = (uint16_t*)depth.getData();
+
+//   // -- Fill in foreground.
+//   for(int y = height_step_ / 2; y < height_; y += height_step_) {
+//     for(int x = width_step_ / 2; x < width_; x += width_step_, ++idx) {
+//       uint16_t val = data[y * width_ + x];
+//       if(val == 0)
+//         continue;
+      
+//       double pct = histograms_[idx].getNum(val * .001) / histograms_[idx].total();
+//       if(pct < min_pct_) {
+//         int r = idx / blocks_per_row_;
+//         int c = idx - r * blocks_per_row_;
+//         for(int y2 = r * height_step_; y2 < (r+1) * height_step_; ++y2) {
+//           for(int x2 = c * width_step_; x2 < (c+1) * width_step_; ++x2) { 
+//             (*mask)[y2 * width_ + x2] = 255;
+//             ++num;
+//           }
+//         }
+//       }
+//     }
+//   }
+
+//   // -- Fill in background fringe with 127s.
+//   idx = 0;
+//   for(int y = height_step_ / 2; y < height_; y += height_step_) {
+//     for(int x = width_step_ / 2; x < width_; x += width_step_, ++idx) {
+//       if((*mask)[y * width_ + x] == 255)
+//         continue;
+
+//       bool fringe = false;
+//       for(int y2 = y - height_step_; !fringe && y2 <= y + height_step_; y2 += height_step_)
+//         for(int x2 = x - width_step_; !fringe && x2 <= x + width_step_; x2 += width_step_)
+//           if(y2 >= 0 && y2 < height_ && x2 >= 0 && x2 < width_)
+//             if((*mask)[y2 * width_ + x2] == 255)
+//               fringe = true;
+
+//       if(fringe) {
+//         int r = idx / blocks_per_row_;
+//         int c = idx - r * blocks_per_row_;
+//         for(int y2 = r * height_step_; y2 < (r+1) * height_step_; ++y2) {
+//           for(int x2 = c * width_step_; x2 < (c+1) * width_step_; ++x2) { 
+//             (*mask)[y2 * width_ + x2] = 127;
+//             ++num;
+//           }
+//         }
+//       }
+//     }
+//   }
+
+//   return num;
+// }
+
+void BackgroundModel::predict(openni::VideoFrameRef depth,
+                              vector<uint32_t>* indices,
+                              vector<uint32_t>* fg_markers,
+                              vector<uint32_t>* bg_fringe_markers)
 {
-  ROS_ASSERT(depth.getWidth() * depth.getHeight() == (int)mask->size());
   ROS_ASSERT(width_ == depth.getWidth());
+
+  indices->clear();
+  fg_markers->clear();
+  bg_fringe_markers->clear();
   
   size_t idx = 0;
-  size_t num = 0;
   uint16_t* data = (uint16_t*)depth.getData();
 
   // -- Fill in foreground.
+  block_img_ = 0;
   for(int y = height_step_ / 2; y < height_; y += height_step_) {
     for(int x = width_step_ / 2; x < width_; x += width_step_, ++idx) {
       uint16_t val = data[y * width_ + x];
@@ -106,45 +174,31 @@ size_t BackgroundModel::predict(openni::VideoFrameRef depth, vector<uint8_t>* ma
       
       double pct = histograms_[idx].getNum(val * .001) / histograms_[idx].total();
       if(pct < min_pct_) {
+        fg_markers->push_back(y * width_ + x);
         int r = idx / blocks_per_row_;
         int c = idx - r * blocks_per_row_;
-        for(int y2 = r * height_step_; y2 < (r+1) * height_step_; ++y2) {
-          for(int x2 = c * width_step_; x2 < (c+1) * width_step_; ++x2) { 
-            (*mask)[y2 * width_ + x2] = 255;
-            ++num;
-          }
-        }
+        block_img_(r, c) = 255;
+        for(int y2 = r * height_step_; y2 < (r+1) * height_step_; ++y2)
+          for(int x2 = c * width_step_; x2 < (c+1) * width_step_; ++x2)
+            indices->push_back(y2 * width_ + x2);
       }
     }
   }
 
   // -- Fill in background fringe with 127s.
   idx = 0;
-  for(int y = height_step_ / 2; y < height_; y += height_step_) {
-    for(int x = width_step_ / 2; x < width_; x += width_step_, ++idx) {
-      if((*mask)[y * width_ + x] == 255)
-        continue;
-
-      bool fringe = false;
-      for(int y2 = y - height_step_; !fringe && y2 <= y + height_step_; y2 += height_step_)
-        for(int x2 = x - width_step_; !fringe && x2 <= x + width_step_; x2 += width_step_)
-          if(y2 >= 0 && y2 < height_ && x2 >= 0 && x2 < width_)
-            if((*mask)[y2 * width_ + x2] == 255)
-              fringe = true;
-
-      if(fringe) {
-        int r = idx / blocks_per_row_;
-        int c = idx - r * blocks_per_row_;
-        for(int y2 = r * height_step_; y2 < (r+1) * height_step_; ++y2) {
-          for(int x2 = c * width_step_; x2 < (c+1) * width_step_; ++x2) { 
-            (*mask)[y2 * width_ + x2] = 127;
-            ++num;
-          }
-        }
+  cv::dilate(block_img_, dilated_block_img_, cv::Mat(), cv::Point(-1, -1), 1);
+  for(int r = 0; r < block_img_.rows; ++r) {
+    for(int c = 0; c < block_img_.cols; ++c) {
+      if(block_img_(r, c) == 0 && dilated_block_img_(r, c) == 255) {
+        int y = r * height_step_ + height_step_ / 2;
+        int x = c * width_step_ + width_step_ / 2;
+        bg_fringe_markers->push_back(y * width_ + x);
+        for(int y2 = r * height_step_; y2 < (r+1) * height_step_; ++y2)
+          for(int x2 = c * width_step_; x2 < (c+1) * width_step_; ++x2)
+            indices->push_back(y2 * width_ + x2);
       }
     }
   }
-
-  return num;
 }
 

@@ -34,8 +34,9 @@ public:
   void run();
   virtual void handleDetection(openni::VideoFrameRef color,
                                openni::VideoFrameRef depth,
-                               const std::vector<uint8_t>& mask,
-                               size_t num_in_mask,
+                               const std::vector<uint32_t>& indices,
+                               const std::vector<uint32_t>& fg_markers,
+                               const std::vector<uint32_t>& bg_fringe_markers,
                                double sensor_timestamp,
                                double wall_timestamp,
                                size_t frame_id) = 0;
@@ -54,11 +55,13 @@ protected:
   HighResTimer update_timer_;
   cv::Mat3b vis_;
   double threshold_;
-  std::vector<uint8_t> mask_;
   bool visualize_;
   OpenNI2Interface oni_;
   cv::Mat3b color_;
   DepthMatPtr depth_;
+  std::vector<uint32_t> indices_;
+  std::vector<uint32_t> fg_markers_;
+  std::vector<uint32_t> bg_fringe_markers_;
   
   void process(openni::VideoFrameRef color,
                openni::VideoFrameRef depth,
@@ -66,41 +69,6 @@ protected:
                double wall_timestamp,
                size_t frame_id);
   void updateModel(openni::VideoFrameRef depth);
-};
-
-class DiskStreamingSentinel : public Sentinel
-{
-public:
-  DiskStreamingSentinel(std::string dir,
-                        double save_interval,
-                        double update_interval,
-                        int max_training_imgs,
-                        double threshold,
-                        bool visualize,
-                        OpenNI2Interface::Resolution color_res,
-                        OpenNI2Interface::Resolution depth_res);
-  ~DiskStreamingSentinel()
-  {
-    #if JARVIS_DEBUG
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
-    #endif
-  }
-
-  void handleDetection(openni::VideoFrameRef color,
-                       openni::VideoFrameRef depth,
-                       const std::vector<uint8_t>& mask,
-                       size_t num_in_mask,
-                       double sensor_timestamp,
-                       double wall_timestamp,
-                       size_t frame_id);
-
-protected:
-  std::string dir_;
-  double save_interval_;
-  HighResTimer save_timer_;
-  
-  void save(cv::Mat3b color, DepthMatConstPtr depth, cv::Mat3b vis, double ts) const;
-  cv::Mat1b depthMatToCV(const DepthMat& depth) const;
 };
 
 class ROSStreamingSentinel : public Sentinel
@@ -128,16 +96,53 @@ protected:
   void initializeForegroundMessage();
   void handleDetection(openni::VideoFrameRef color,
                        openni::VideoFrameRef depth,
-                       const std::vector<uint8_t>& mask,
-                       size_t num_in_mask,
+                       const std::vector<uint32_t>& indices,
+                       const std::vector<uint32_t>& fg_markers,
+                       const std::vector<uint32_t>& bg_fringe_markers,
                        double sensor_timestamp,
                        double wall_timestamp,
                        size_t frame_id);
+  
   void handleNonDetection(openni::VideoFrameRef color,
                           openni::VideoFrameRef depth,
                           double sensor_timestamp,
                           double wall_timestamp,
                           size_t frame_id);
 };
+
+// class DiskStreamingSentinel : public Sentinel
+// {
+// public:
+//   DiskStreamingSentinel(std::string dir,
+//                         double save_interval,
+//                         double update_interval,
+//                         int max_training_imgs,
+//                         double threshold,
+//                         bool visualize,
+//                         OpenNI2Interface::Resolution color_res,
+//                         OpenNI2Interface::Resolution depth_res);
+//   ~DiskStreamingSentinel()
+//   {
+//     #if JARVIS_DEBUG
+//     std::cout << __PRETTY_FUNCTION__ << std::endl;
+//     #endif
+//   }
+
+//   void handleDetection(openni::VideoFrameRef color,
+//                        openni::VideoFrameRef depth,
+//                        const std::vector<uint8_t>& mask,
+//                        size_t num_in_mask,
+//                        double sensor_timestamp,
+//                        double wall_timestamp,
+//                        size_t frame_id);
+
+// protected:
+//   std::string dir_;
+//   double save_interval_;
+//   HighResTimer save_timer_;
+  
+//   void save(cv::Mat3b color, DepthMatConstPtr depth, cv::Mat3b vis, double ts) const;
+//   cv::Mat1b depthMatToCV(const DepthMat& depth) const;
+// };
 
 #endif // SENTINEL_H

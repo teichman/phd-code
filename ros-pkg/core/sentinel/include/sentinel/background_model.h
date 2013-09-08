@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <iostream>
 #include <OpenNI.h>
+#include <opencv2/imgproc/imgproc.hpp>
 
 #define MAX_DEPTH 5
 
@@ -25,7 +26,10 @@ public:
 
   //! Increments bins by num.
   void increment(openni::VideoFrameRef depth, int num = 1);
-  size_t predict(openni::VideoFrameRef depth, std::vector<uint8_t>* mask) const;
+  void predict(openni::VideoFrameRef depth,
+               std::vector<uint32_t>* indices,
+               std::vector<uint32_t>* fg_markers,
+               std::vector<uint32_t>* bg_fringe_markers);
   size_t size() const { return histograms_.size(); }
   int height() const { return height_; }
   int width() const { return width_; }
@@ -45,6 +49,8 @@ protected:
   double max_depth_;
   //! Bin width in z.
   double bin_width_;
+  cv::Mat1b block_img_;
+  cv::Mat1b dilated_block_img_;
 };
 
 class DepthHistogram
