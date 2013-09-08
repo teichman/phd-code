@@ -1,9 +1,9 @@
 #include <sentinel/sentinel.h>
 #include <boost/program_options.hpp>
 
-#if JARVIS_DEBUG
-#include <gperftools/profiler.h>
-#endif
+// #if JARVIS_DEBUG
+// #include <gperftools/profiler.h>
+// #endif
 
 using namespace std;
 
@@ -75,15 +75,15 @@ int main(int argc, char** argv)
                            threshold, opts.count("visualize"),
                            color_res, depth_res);
 
-  #if JARVIS_DEBUG
-  ProfilerStart("sentinel.prof");
-  #endif
+  // #if JARVIS_DEBUG
+  // ProfilerStart("sentinel.prof");
+  // #endif
   
   sen.run();
 
-  #if JARVIS_DEBUG
-  ProfilerStop();
-  #endif
+  // #if JARVIS_DEBUG
+  // ProfilerStop();
+  // #endif
 
   return 0;
 }

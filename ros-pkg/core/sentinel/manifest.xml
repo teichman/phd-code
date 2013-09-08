@@ -9,7 +9,6 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/sentinel</url>
 
-  <depend package="google-perftools"/>
   <depend package="openni2_interface"/>
   <depend package="eigen_flags"/>
   <depend package="bag_of_tricks"/>
