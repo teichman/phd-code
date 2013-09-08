@@ -5,6 +5,11 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
+  // We need NoSigintHandler so that the OpenNI2Interface will
+  // get SIGINT and shut down properly.
+  ros::init(argc, argv, "sentinel", ros::init_options::NoSigintHandler);
+
+
   namespace bpo = boost::program_options;
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
@@ -38,11 +43,6 @@ int main(int argc, char** argv)
     cout << opts_desc << endl;
     return 1;
   }
-
-
-  // We need NoSigintHandler so that the OpenNI2Interface will
-  // get SIGINT and shut down properly.
-  ros::init(argc, argv, "sentinel", ros::init_options::NoSigintHandler);
 
   OpenNI2Interface::Resolution color_res = OpenNI2Interface::VGA;
   if(opts.count("color-res")) {
