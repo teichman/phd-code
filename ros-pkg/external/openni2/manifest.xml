@@ -10,7 +10,8 @@
       make install
     to install udev rules.
 
-    If it dies complaining about java, you probably don't even need that part.
+    If it dies complaining about java, you probably don't even need that part.  You can avoid the errors with
+      sudo apt-get install openjdk-7-jdk
 
   </description>
   <author>Demo User</author>
