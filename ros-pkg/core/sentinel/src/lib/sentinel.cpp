@@ -137,8 +137,8 @@ ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
   bg_index_x_(0),
   bg_index_y_(0)
 {
-  fg_pub_ = nh_.advertise<sentinel::Foreground>("foreground", 1000);
-  bg_pub_ = nh_.advertise<sentinel::Background>("background", 1000);
+  fg_pub_ = nh_.advertise<sentinel::Foreground>("foreground", 0);
+  bg_pub_ = nh_.advertise<sentinel::Background>("background", 0);
   initializeForegroundMessage();
   initializeBackgroundMessage();
 }
