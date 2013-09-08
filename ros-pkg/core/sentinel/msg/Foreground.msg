@@ -2,6 +2,8 @@ Header header
 string sensor_id
 uint64 frame_id
 float64 sensor_timestamp
+uint16 color_pixel_type
+uint16 depth_pixel_type
 uint16 width
 uint16 height
 uint16 width_step

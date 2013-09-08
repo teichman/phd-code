@@ -222,6 +222,8 @@ void ROSStreamingSentinel::handleNonDetection(openni::VideoFrameRef color,
   bgmsg_.header.stamp.fromSec(wall_timestamp);
   bgmsg_.frame_id = frame_id;
   bgmsg_.sensor_timestamp = sensor_timestamp;
+  bgmsg_.color_pixel_type = color.getVideoMode().getPixelFormat();
+  bgmsg_.depth_pixel_type = depth.getVideoMode().getPixelFormat();
   bgmsg_.indices.clear();
   bgmsg_.depth.clear();
   bgmsg_.color.clear();
@@ -281,8 +283,10 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
   ROS_ASSERT(color.getHeight() == depth.getHeight());
 
   fgmsg_.header.stamp.fromSec(wall_timestamp);
-  fgmsg_.sensor_timestamp = sensor_timestamp;
   fgmsg_.frame_id = frame_id;
+  fgmsg_.sensor_timestamp = sensor_timestamp;
+  fgmsg_.color_pixel_type = color.getVideoMode().getPixelFormat();
+  fgmsg_.depth_pixel_type = depth.getVideoMode().getPixelFormat();
 
   fgmsg_.indices = indices;
   fgmsg_.fg_indices = fg_markers;
