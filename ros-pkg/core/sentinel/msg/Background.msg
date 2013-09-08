@@ -1,9 +1,11 @@
 Header header
 string sensor_id
+uint64 frame_id
+float64 sensor_timestamp
 uint16 width
 uint16 height
 uint32[] indices
 uint16[] depth
 uint8[] color
-float32[] reserve_float
-int32[] reserve_int
+#float32[] reserve_float
+#int32[] reserve_int

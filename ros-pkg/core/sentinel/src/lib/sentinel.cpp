@@ -44,18 +44,17 @@ void Sentinel::run()
   oni_.run();
 }
 
-void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameRef oni_depth)
+void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameRef oni_depth,
+                            size_t frame_id, double timestamp)
 {
   #if JARVIS_DEBUG
   ScopedTimer st("Sentinel::rgbdCallback");
   #endif
 
+  // -- Check for misaligned data.
+  //    TODO: This should probably be in OpenNI2Interface.
   double image_timestamp = (double)oni_color.getTimestamp() * 1e-6;
   double depth_timestamp = (double)oni_depth.getTimestamp() * 1e-6;
-  timespec clk;
-  clock_gettime(CLOCK_REALTIME, &clk);
-  double callback_timestamp = clk.tv_sec + clk.tv_nsec * 1e-9;
-
   double thresh = 1.1 * (1.0 / 60.0);
   if(fabs(depth_timestamp - image_timestamp) > thresh) {
     ROS_WARN_STREAM("rgbdCallback got an rgbd pair with timestamp delta of "
@@ -68,13 +67,15 @@ void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameR
     for(int x = 0; x < oni_depth.getWidth(); ++x)
       if(data[y * oni_depth.getWidth() + x] > MAX_DEPTH * 1000)  // very sporadic segfault here.  Why?
         data[y * oni_depth.getWidth() + x] = 0;
-  
-  process(oni_color, oni_depth, callback_timestamp);
+
+  process(oni_color, oni_depth, depth_timestamp, timestamp, frame_id);
 }
 
 void Sentinel::process(openni::VideoFrameRef color,
                        openni::VideoFrameRef depth,
-                       double ts)
+                       double sensor_timestamp,
+                       double wall_timestamp,
+                       size_t frame_id)
 {
   // -- Update model.
   if(update_timer_.getSeconds() > update_interval_) {
@@ -108,8 +109,9 @@ void Sentinel::process(openni::VideoFrameRef color,
 
   // -- Process the detection.
   if((double)num_in_mask / mask_.size() > threshold_) {
-    handleDetection(color, depth, mask_, num_in_mask, ts);
+    handleDetection(color, depth, mask_, num_in_mask, sensor_timestamp, wall_timestamp, frame_id);
   }
+  handleNonDetection(color, depth, sensor_timestamp, wall_timestamp, frame_id);
   
   // -- Visualize.
   if(visualize_) {
@@ -230,7 +232,10 @@ cv::Mat1b DiskStreamingSentinel::depthMatToCV(const DepthMat& depth) const
 void DiskStreamingSentinel::handleDetection(openni::VideoFrameRef color,
                                             openni::VideoFrameRef depth,
                                             const std::vector<uint8_t>& mask,
-                                            size_t num_in_mask, double timestamp)
+                                            size_t num_in_mask,
+                                            double sensor_timestamp,
+                                            double wall_timestamp,
+                                            size_t frame_id)
 {
   if(save_timer_.getSeconds() < save_interval_)
     return;
@@ -242,7 +247,7 @@ void DiskStreamingSentinel::handleDetection(openni::VideoFrameRef color,
   if(!bfs::exists(dir_))
     bfs::create_directory(dir_);
     
-  save(oniToCV(color), oniDepthToEigenPtr(depth), vis_, timestamp);
+  save(oniToCV(color), oniDepthToEigenPtr(depth), vis_, wall_timestamp);
   save_timer_.reset();
   save_timer_.start();
 }
@@ -254,46 +259,141 @@ ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
                                            bool visualize,
                                            OpenNI2Interface::Resolution color_res,
                                            OpenNI2Interface::Resolution depth_res) :
-  Sentinel(update_interval, max_training_imgs, threshold, visualize, color_res, depth_res)
+  Sentinel(update_interval, max_training_imgs, threshold, visualize, color_res, depth_res),
+  sensor_id_(sensor_id),
+  bg_index_x_(0),
+  bg_index_y_(0)
 {
-  pub_ = nh_.advertise<sentinel::Detection>("detections", 1000);
+  fg_pub_ = nh_.advertise<sentinel::Foreground>("foreground", 1000);
+  bg_pub_ = nh_.advertise<sentinel::Background>("background", 1000);
+  initializeForegroundMessage();
+  initializeBackgroundMessage();
+}
 
-  msg_.sensor_id = sensor_id;
-  msg_.width = model_->width();
-  msg_.height = model_->height();
-  msg_.width_step = model_->widthStep();
-  msg_.height_step = model_->heightStep();
+void ROSStreamingSentinel::initializeForegroundMessage()
+{
+  fgmsg_.sensor_id = sensor_id_;
+  fgmsg_.width = model_->width();
+  fgmsg_.height = model_->height();
+  fgmsg_.width_step = model_->widthStep();
+  fgmsg_.height_step = model_->heightStep();
 
-  msg_.fg_indices.reserve(model_->size());
-  msg_.bg_fringe_indices.reserve(model_->size());
+  fgmsg_.fg_indices.reserve(model_->size());
+  fgmsg_.bg_fringe_indices.reserve(model_->size());
   
-  if(depth_res == OpenNI2Interface::QVGA) {
-    msg_.indices.reserve(320*240);
-    msg_.depth.reserve(320*240);
+  if(oni_.depthRes() == OpenNI2Interface::QVGA) {
+    fgmsg_.indices.reserve(320*240);
+    fgmsg_.depth.reserve(320*240);
   }
-  else if(depth_res == OpenNI2Interface::VGA) {
-    msg_.indices.reserve(640*480);
-    msg_.depth.reserve(640*480);
+  else if(oni_.depthRes() == OpenNI2Interface::VGA) {
+    fgmsg_.indices.reserve(640*480);
+    fgmsg_.depth.reserve(640*480);
   }
   else {
     ROS_ASSERT(0);
   }
 
-  if(color_res == OpenNI2Interface::QVGA) {
-    msg_.color.reserve(320*240*3);
+  if(oni_.colorRes() == OpenNI2Interface::QVGA) {
+    fgmsg_.color.reserve(320*240*3);
   }
-  else if(color_res == OpenNI2Interface::VGA) {
-    msg_.color.reserve(640*480*3);
+  else if(oni_.colorRes() == OpenNI2Interface::VGA) {
+    fgmsg_.color.reserve(640*480*3);
   }
   else {
     ROS_ASSERT(0);
   }
 }
 
+void ROSStreamingSentinel::initializeBackgroundMessage()
+{
+  bgmsg_.sensor_id = sensor_id_;
+  bgmsg_.width = model_->width();
+  bgmsg_.height = model_->height();
+  
+  if(oni_.depthRes() == OpenNI2Interface::QVGA) {
+    bgmsg_.indices.reserve(320*240);
+    bgmsg_.depth.reserve(320*240);
+  }
+  else if(oni_.depthRes() == OpenNI2Interface::VGA) {
+    bgmsg_.indices.reserve(640*480);
+    bgmsg_.depth.reserve(640*480);
+  }
+  else {
+    ROS_ASSERT(0);
+  }
+
+  if(oni_.colorRes() == OpenNI2Interface::QVGA) {
+    bgmsg_.color.reserve(320*240*3);
+  }
+  else if(oni_.colorRes() == OpenNI2Interface::VGA) {
+    bgmsg_.color.reserve(640*480*3);
+  }
+  else {
+    ROS_ASSERT(0);
+  }
+}
+
+void ROSStreamingSentinel::handleNonDetection(openni::VideoFrameRef color,
+                                              openni::VideoFrameRef depth,
+                                              double sensor_timestamp,
+                                              double wall_timestamp,
+                                              size_t frame_id)
+{
+  #if JARVIS_DEBUG
+  ScopedTimer st("ROSStreamingSentinel::handleNonDetection - total");
+  #endif
+
+  ROS_ASSERT(color.getHeight() == depth.getHeight());
+
+  // -- Set up the message.
+  bgmsg_.header.stamp.fromSec(wall_timestamp);
+  bgmsg_.frame_id = frame_id;
+  bgmsg_.sensor_timestamp = sensor_timestamp;
+  bgmsg_.indices.clear();
+  bgmsg_.depth.clear();
+  bgmsg_.color.clear();
+  int num = model_->widthStep() * model_->heightStep();
+  bgmsg_.indices.resize(num);
+  bgmsg_.depth.resize(num);
+  bgmsg_.color.resize(num * 3);  // RGB    
+  
+  // -- Fill the message with data.
+  uint8_t* color_data = (uint8_t*)color.getData();
+  uint16_t* depth_data = (uint16_t*)depth.getData();
+  size_t idx = 0;
+  ROS_ASSERT(bg_index_y_ + fgmsg_.height_step <= bgmsg_.height);
+  ROS_ASSERT(bg_index_x_ + fgmsg_.width_step <= bgmsg_.width);
+  for(int y = bg_index_y_; y < bg_index_y_ + fgmsg_.height_step; ++y) {
+    for(int x = bg_index_x_; x < bg_index_x_ + fgmsg_.width_step; ++x) {
+      int i = y * bgmsg_.width + x;
+      bgmsg_.indices[idx] = i;
+      bgmsg_.depth[idx] = depth_data[i];
+      bgmsg_.color[idx*3+0] = color_data[i*3+0];
+      bgmsg_.color[idx*3+1] = color_data[i*3+1];
+      bgmsg_.color[idx*3+2] = color_data[i*3+2];
+      ++idx;
+    }
+  }
+
+  // -- Advance to the next background index point.
+  bg_index_x_ += fgmsg_.width_step;
+  if(bg_index_x_ >= bgmsg_.width) {
+    bg_index_x_ = 0;
+    bg_index_y_ += fgmsg_.height_step;
+    if(bg_index_y_ >= bgmsg_.height)
+      bg_index_y_ = 0;
+  }
+
+  bg_pub_.publish(bgmsg_);
+}
+
 void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
                                            openni::VideoFrameRef depth,
                                            const std::vector<uint8_t>& mask,
-                                           size_t num_in_mask, double timestamp)
+                                           size_t num_in_mask,
+                                           double sensor_timestamp,
+                                           double wall_timestamp,
+                                           size_t frame_id)
 {
 
   #if JARVIS_DEBUG
@@ -315,45 +415,49 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
   }
 
   ROS_ASSERT(color.getHeight() == depth.getHeight());
-  
-  msg_.indices.clear();
-  msg_.depth.clear();
-  msg_.color.clear();
-  msg_.indices.resize(num_in_mask);
-  msg_.depth.resize(num_in_mask);
-  msg_.color.resize(num_in_mask * 3);  // RGB    
+
+  fgmsg_.header.stamp.fromSec(wall_timestamp);
+  fgmsg_.sensor_timestamp = sensor_timestamp;
+  fgmsg_.frame_id = frame_id;
+  fgmsg_.indices.clear();
+  fgmsg_.depth.clear();
+  fgmsg_.color.clear();
+  fgmsg_.indices.resize(num_in_mask);
+  fgmsg_.depth.resize(num_in_mask);
+  fgmsg_.color.resize(num_in_mask * 3);  // RGB    
 
   uint8_t* color_data = (uint8_t*)color.getData();
   uint16_t* depth_data = (uint16_t*)depth.getData();
   size_t idx = 0;
   for(size_t i = 0; i < mask.size(); ++i) {
     if(mask[i] == 255 || mask[i] == 127) {
-      msg_.indices[idx] = i;
-      msg_.depth[idx] = depth_data[i];
-      msg_.color[idx*3+0] = color_data[i*3+0];
-      msg_.color[idx*3+1] = color_data[i*3+1];
-      msg_.color[idx*3+2] = color_data[i*3+2];
+      fgmsg_.indices[idx] = i;
+      fgmsg_.depth[idx] = depth_data[i];
+      fgmsg_.color[idx*3+0] = color_data[i*3+0];
+      fgmsg_.color[idx*3+1] = color_data[i*3+1];
+      fgmsg_.color[idx*3+2] = color_data[i*3+2];
       ++idx;
     }
   }
 
-  msg_.fg_indices.clear();
-  msg_.bg_fringe_indices.clear();
-  for(int y = msg_.height_step / 2; y < msg_.height; y += msg_.height_step) {
-    for(int x = msg_.width_step / 2; x < msg_.width; x += msg_.width_step) {
-      int idx = y * msg_.width + x;
+  fgmsg_.fg_indices.clear();
+  fgmsg_.bg_fringe_indices.clear();
+  for(int y = fgmsg_.height_step / 2; y < fgmsg_.height; y += fgmsg_.height_step) {
+    for(int x = fgmsg_.width_step / 2; x < fgmsg_.width; x += fgmsg_.width_step) {
+      int idx = y * fgmsg_.width + x;
       if(mask[idx] == 255)
-        msg_.fg_indices.push_back(idx);
+        fgmsg_.fg_indices.push_back(idx);
       else if(mask[idx] == 127)
-        msg_.bg_fringe_indices.push_back(idx);
+        fgmsg_.bg_fringe_indices.push_back(idx);
     }
   }
 
+  fgmsg_.header.stamp = ros::Time::now();
+  fg_pub_.publish(fgmsg_);
+  
   #if JARVIS_DEBUG
   cout << "Leaving ROSStreamingSentinel::handleDetection." << endl;
   #endif
-  
-  pub_.publish(msg_);
 }
 
 

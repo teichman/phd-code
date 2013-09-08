@@ -123,8 +123,9 @@ void DepthEPG::compute()
 DetectionVisualizer::DetectionVisualizer(int width, int height) :
   asp_(4)
 {
-  sub_ = nh_.subscribe("detections", 3, &DetectionVisualizer::callback, this);
-                       //ros::TransportHints().unreliable().maxDatagramSize(100).tcpNoDelay());
+  fg_sub_ = nh_.subscribe("foreground", 3, &DetectionVisualizer::foregroundCallback, this);
+  bg_sub_ = nh_.subscribe("background", 3, &DetectionVisualizer::backgroundCallback, this);
+
   color_vis_ = cv::Mat3b(cv::Size(width, height), cv::Vec3b(0, 0, 0));
   depth_vis_ = cv::Mat3b(cv::Size(width, height), cv::Vec3b(0, 0, 0));
   cv::imshow("color", color_vis_);
@@ -134,7 +135,27 @@ DetectionVisualizer::DetectionVisualizer(int width, int height) :
   hrt_.start();
 }
 
-void DetectionVisualizer::callback(const sentinel::Detection& msg)
+void DetectionVisualizer::backgroundCallback(const sentinel::Background& msg)
+{
+  if(background_.rows != msg.height)
+    background_ = cv::Mat3b(cv::Size(msg.width, msg.height), cv::Vec3b(0, 0, 0));
+
+  for(size_t i = 0; i < msg.indices.size(); ++i) {
+    int idx = msg.indices[i];
+    int y = idx / background_.cols;
+    int x = background_.cols - 1 - (idx - y * background_.cols);
+    ROS_ASSERT(y >= 0 && y < background_.rows);
+    ROS_ASSERT(x >= 0 && x < background_.cols);
+    background_(y, x)[0] = msg.color[i*3+2];
+    background_(y, x)[1] = msg.color[i*3+1];
+    background_(y, x)[2] = msg.color[i*3+0];
+  }
+
+  cv::imshow("background", background_);
+  cv::waitKey(2);
+}
+
+void DetectionVisualizer::foregroundCallback(const sentinel::Foreground& msg)
 {
   HighResTimer hrt;
   

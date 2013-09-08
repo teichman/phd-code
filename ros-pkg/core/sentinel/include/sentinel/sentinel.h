@@ -10,7 +10,8 @@
 #include <openni2_interface/openni2_interface.h>
 #include <openni2_interface/openni_helpers.h>
 #include <sentinel/background_model.h>
-#include <sentinel/Detection.h>
+#include <sentinel/Foreground.h>
+#include <sentinel/Background.h>
 
 class Sentinel : public OpenNI2Handler
 {
@@ -28,11 +29,21 @@ public:
     #endif
   }
   
-  void rgbdCallback(openni::VideoFrameRef color, openni::VideoFrameRef depth);
+  void rgbdCallback(openni::VideoFrameRef color, openni::VideoFrameRef depth,
+                    size_t frame_id, double timestamp);
   void run();
-  virtual void handleDetection(openni::VideoFrameRef color, openni::VideoFrameRef depth,
+  virtual void handleDetection(openni::VideoFrameRef color,
+                               openni::VideoFrameRef depth,
                                const std::vector<uint8_t>& mask,
-                               size_t num_in_mask, double timestamp) = 0;
+                               size_t num_in_mask,
+                               double sensor_timestamp,
+                               double wall_timestamp,
+                               size_t frame_id) = 0;
+  virtual void handleNonDetection(openni::VideoFrameRef color,
+                                  openni::VideoFrameRef depth,
+                                  double sensor_timestamp,
+                                  double wall_timestamp,
+                                  size_t frame_id) {}
                                
 
 protected:
@@ -51,7 +62,9 @@ protected:
   
   void process(openni::VideoFrameRef color,
                openni::VideoFrameRef depth,
-               double ts);
+               double sensor_timestamp,
+               double wall_timestamp,
+               size_t frame_id);
   void updateModel(openni::VideoFrameRef depth);
 };
 
@@ -76,7 +89,10 @@ public:
   void handleDetection(openni::VideoFrameRef color,
                        openni::VideoFrameRef depth,
                        const std::vector<uint8_t>& mask,
-                       size_t num_in_mask, double timestamp);
+                       size_t num_in_mask,
+                       double sensor_timestamp,
+                       double wall_timestamp,
+                       size_t frame_id);
 
 protected:
   std::string dir_;
@@ -98,15 +114,30 @@ public:
                        OpenNI2Interface::Resolution color_res,
                        OpenNI2Interface::Resolution depth_res);
 
+protected:
+  std::string sensor_id_;
+  ros::NodeHandle nh_;
+  ros::Publisher fg_pub_;
+  ros::Publisher bg_pub_;
+  sentinel::Foreground fgmsg_;
+  sentinel::Background bgmsg_;
+  int bg_index_x_;
+  int bg_index_y_;
+
+  void initializeBackgroundMessage();
+  void initializeForegroundMessage();
   void handleDetection(openni::VideoFrameRef color,
                        openni::VideoFrameRef depth,
                        const std::vector<uint8_t>& mask,
-                       size_t num_in_mask, double timestamp);
-
-protected:
-  ros::NodeHandle nh_;
-  ros::Publisher pub_;
-  sentinel::Detection msg_;
+                       size_t num_in_mask,
+                       double sensor_timestamp,
+                       double wall_timestamp,
+                       size_t frame_id);
+  void handleNonDetection(openni::VideoFrameRef color,
+                          openni::VideoFrameRef depth,
+                          double sensor_timestamp,
+                          double wall_timestamp,
+                          size_t frame_id);
 };
 
 #endif // SENTINEL_H

@@ -7,7 +7,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <timer/timer.h>
 #include <asp/asp.h>
-#include <sentinel/Detection.h>
+#include <sentinel/Foreground.h>
+#include <sentinel/Background.h>
 
 class DetectionVisualizer
 {
@@ -16,14 +17,17 @@ public:
 
 protected:
   ros::NodeHandle nh_;
-  ros::Subscriber sub_;
+  ros::Subscriber fg_sub_;
+  ros::Subscriber bg_sub_;
   cv::Mat3b color_vis_;
   cv::Mat3b depth_vis_;
   HighResTimer hrt_;
   std::deque<double> timestamps_;
   asp::Asp asp_;
+  cv::Mat3b background_;
 
-  void callback(const sentinel::Detection& msg);
+  void foregroundCallback(const sentinel::Foreground& msg);
+  void backgroundCallback(const sentinel::Background& msg);
 };
 
 #endif // DETECTION_VISUALIZER_H
