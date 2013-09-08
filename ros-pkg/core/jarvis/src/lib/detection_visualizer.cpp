@@ -143,7 +143,7 @@ void DetectionVisualizer::backgroundCallback(const sentinel::Background& msg)
   for(size_t i = 0; i < msg.indices.size(); ++i) {
     int idx = msg.indices[i];
     int y = idx / background_.cols;
-    int x = background_.cols - 1 - (idx - y * background_.cols);
+    int x = idx - y * background_.cols;
     ROS_ASSERT(y >= 0 && y < background_.rows);
     ROS_ASSERT(x >= 0 && x < background_.cols);
     background_(y, x)[0] = msg.color[i*3+2];
@@ -177,7 +177,7 @@ void DetectionVisualizer::foregroundCallback(const sentinel::Foreground& msg)
   for(size_t i = 0; i < msg.indices.size(); ++i) {
     uint32_t idx = msg.indices[i];
     int y = idx / depth.cols;
-    int x = depth.cols - 1 - (idx - y * depth.cols);
+    int x = idx - y * depth.cols;
     depth(y, x) = msg.depth[i] * 0.001;
   }
 
@@ -185,19 +185,19 @@ void DetectionVisualizer::foregroundCallback(const sentinel::Foreground& msg)
   for(size_t i = 0; i < msg.indices.size(); ++i) {
     uint32_t idx = msg.indices[i];
     int y = idx / depth_vis_.cols;
-    int x = depth_vis_.cols - 1 - (idx - y * depth_vis_.cols);
+    int x = idx - y * depth_vis_.cols;
     depth_vis_(y, x) = colorize(msg.depth[i] * 0.001, 0, 5);
   }
   for(size_t i = 0; i < msg.fg_indices.size(); ++i) {
     uint32_t idx = msg.fg_indices[i];
     int y = idx / msg.width;
-    int x = msg.width - 1 - (idx - y * msg.width);
+    int x = idx - y * msg.width;
     cv::circle(depth_vis_, cv::Point(x, y), 2, cv::Scalar(0, 0, 255), -1);
   }
   for(size_t i = 0; i < msg.bg_fringe_indices.size(); ++i) {
     uint32_t idx = msg.bg_fringe_indices[i];
     int y = idx / msg.width;
-    int x = msg.width - 1 - (idx - y * msg.width);
+    int x = idx - y * msg.width;
     cv::circle(depth_vis_, cv::Point(x, y), 2, cv::Scalar(0, 255, 0), -1);
   }
 
@@ -206,7 +206,7 @@ void DetectionVisualizer::foregroundCallback(const sentinel::Foreground& msg)
   for(size_t i = 0; i < msg.indices.size(); ++i) {
     uint32_t idx = msg.indices[i];
     int y = idx / depth_vis_.cols;
-    int x = depth_vis_.cols - 1 - (idx - y * depth_vis_.cols);
+    int x = idx - y * depth_vis_.cols;
     indices_mask(y, x) = 255;
   }
     
@@ -217,7 +217,7 @@ void DetectionVisualizer::foregroundCallback(const sentinel::Foreground& msg)
   for(size_t i = 0; i < msg.fg_indices.size(); ++i) {
     uint32_t idx = msg.fg_indices[i];
     int y = idx / msg.width;
-    int x = msg.width - 1 - (idx - y * msg.width);
+    int x = idx - y * msg.width;
     int dx = msg.width_step / 2 + 1;
     int dy = msg.height_step / 2 + 1;
     for(int y2 = y - dy; y2 <= y + dy; ++y2) {
@@ -236,7 +236,7 @@ void DetectionVisualizer::foregroundCallback(const sentinel::Foreground& msg)
   for(size_t i = 0; i < msg.bg_fringe_indices.size(); ++i) {
     uint32_t idx = msg.bg_fringe_indices[i];
     int y = idx / msg.width;
-    int x = msg.width - 1 - (idx - y * msg.width);
+    int x = idx - y * msg.width;
     int dx = msg.width_step / 2 + 1;
     int dy = msg.height_step / 2 + 1;
     for(int y2 = y - dy; y2 <= y + dy; ++y2) {
@@ -270,13 +270,13 @@ void DetectionVisualizer::foregroundCallback(const sentinel::Foreground& msg)
   for(size_t i = 0; i < msg.fg_indices.size(); ++i) {
     uint32_t idx = msg.fg_indices[i];
     int y = idx / msg.width;
-    int x = msg.width - 1 - (idx - y * msg.width);
+    int x = idx - y * msg.width;
     cv::circle(vis, cv::Point(x, y), 2, cv::Scalar(0, 0, 255), -1);
   }
   for(size_t i = 0; i < msg.bg_fringe_indices.size(); ++i) {
     uint32_t idx = msg.bg_fringe_indices[i];
     int y = idx / msg.width;
-    int x = msg.width - 1 - (idx - y * msg.width);
+    int x = idx - y * msg.width;
     cv::circle(vis, cv::Point(x, y), 2, cv::Scalar(0, 255, 0), -1);
   }
 
@@ -316,7 +316,7 @@ void DetectionVisualizer::foregroundCallback(const sentinel::Foreground& msg)
   for(size_t i = 0; i < msg.indices.size(); ++i) {
     uint32_t idx = msg.indices[i];
     int y = idx / color_vis_.cols;
-    int x = color_vis_.cols - 1 - (idx - y * color_vis_.cols);
+    int x = idx - y * color_vis_.cols;
     if(foreground(y, x) == 255) {
       color_vis_(y, x)[0] = msg.color[i*3+2];
       color_vis_(y, x)[1] = msg.color[i*3+1];
