@@ -81,3 +81,11 @@ cv::Vec3b colorize(double depth, double min_range, double max_range)
   return cv::Vec3b(0, 255, 0);
 }
 
+cv::Mat3b colorize(DepthMat depth, double min_range, double max_range)
+{
+  cv::Mat3b img(cv::Size(depth.cols(), depth.rows()));
+  for(int y = 0; y < img.rows; ++y)
+    for(int x = 0; x < img.cols; ++x)
+      img(y, x) = colorize(depth(y, x) * 0.001, min_range, max_range);
+  return img;
+}

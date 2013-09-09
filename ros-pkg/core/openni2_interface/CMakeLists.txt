@@ -30,3 +30,6 @@ target_link_libraries(openni2_interface_test openni2_interface)
 
 rosbuild_add_executable(jittery_image_experiment src/prog/jittery_image_experiment.cpp)
 target_link_libraries(jittery_image_experiment openni2_interface)
+
+rosbuild_add_executable(visualize src/prog/visualize.cpp)
+target_link_libraries(visualize openni2_interface)

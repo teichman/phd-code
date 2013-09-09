@@ -38,3 +38,5 @@ rosbuild_link_boost(${PROJECT_NAME} filesystem program_options)
 rosbuild_add_executable(stream src/prog/stream.cpp)
 target_link_libraries(stream ${PROJECT_NAME})
 rosbuild_add_compile_flags(stream -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas -DJARVIS_DEBUG)
+
+rosbuild_add_executable(estimate_noise src/prog/estimate_noise.cpp)

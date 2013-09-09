@@ -15,5 +15,6 @@ cv::Mat3b oniToCV(const openni::VideoFrameRef& oni);
 DepthMat oniDepthToEigen(const openni::VideoFrameRef& depth);
 DepthMatPtr oniDepthToEigenPtr(const openni::VideoFrameRef& depth);
 cv::Vec3b colorize(double depth, double min_range, double max_range);
+cv::Mat3b colorize(DepthMat depth, double min_range, double max_range);
   
 #endif // OPENNI_HELPERS_H

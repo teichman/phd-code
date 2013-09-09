@@ -8,12 +8,12 @@
 
 using namespace std;
 
-class OniHandlerExample : public OpenNI2Handler
+class OniVisualizer : public OpenNI2Handler
 {
 public:
   OpenNI2Interface oni_;
 
-  OniHandlerExample(OpenNI2Interface::Resolution color_res,
+  OniVisualizer(OpenNI2Interface::Resolution color_res,
                     OpenNI2Interface::Resolution depth_res) :
     oni_(color_res, depth_res)
   {
@@ -29,23 +29,8 @@ public:
                     openni::VideoFrameRef depth,
                     size_t frame_id, double timestamp)
   {
-    cout << "In OniHandlerExample::rgbdCallback." << endl;
-    openni::DepthPixel* pDepth = (openni::DepthPixel*)depth.getData();
-    int middleIndex = (depth.getHeight()+1)*depth.getWidth()/2;
-    printf("[%08llu] color %d x %d; depth %d x %d; middle pixel depth:  %8d\n",
-           (long long)depth.getTimestamp(),
-           color.getWidth(), color.getHeight(),
-           depth.getWidth(), depth.getHeight(),
-           pDepth[middleIndex]);
-
-    static int counter = 0;
-    ++counter;
-    if(counter > 100)
-      oni_.terminate();
-
-    ostringstream oss;
-    oss << setw(5) << setfill('0') << counter << ".jpg";
-    cv::imwrite(oss.str(), oniToCV(color));
+    cv::imshow("Depth", colorize(oniDepthToEigen(depth), 0, 7));
+    cv::waitKey(3);
   }
   
 };
@@ -99,8 +84,8 @@ int main(int argc, char** argv)
     }
   }
 
-  OniHandlerExample ex(color_res, depth_res);
-  ex.run();
+  OniVisualizer vis(color_res, depth_res);
+  vis.run();
   
   return 0;
 }
