@@ -312,7 +312,7 @@ void DetectionVisualizer::foregroundCallback(const sentinel::Foreground& msg)
         foreground(y, x) = 0;
 
   // -- Make a visualization using the color image and foreground.
-  color_vis_ = cv::Vec3b(0, 0, 0);
+  color_vis_ = cv::Vec3b(127, 127, 127);
   for(size_t i = 0; i < msg.indices.size(); ++i) {
     uint32_t idx = msg.indices[i];
     int y = idx / color_vis_.cols;

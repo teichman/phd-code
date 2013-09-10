@@ -30,10 +30,6 @@ cv::Mat3b oniToCV(const openni::VideoFrameRef& oni)
 
 DepthMatPtr oniDepthToEigenPtr(const openni::VideoFrameRef& oni)
 {
-  #if JARVIS_DEBUG
-  ScopedTimer st("oniDepthToEigenPtr");
-  #endif
-  
   ROS_ASSERT(oni.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM);
 
   DepthMatPtr depth(new DepthMat(oni.getHeight(), oni.getWidth()));

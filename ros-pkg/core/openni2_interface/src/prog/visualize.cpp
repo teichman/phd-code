@@ -5,6 +5,7 @@
 #include <iostream>
 #include <iomanip>
 #include <opencv2/highgui/highgui.hpp>
+#include <ros/assert.h>
 
 using namespace std;
 
@@ -29,6 +30,7 @@ public:
                     openni::VideoFrameRef depth,
                     size_t frame_id, double timestamp)
   {
+    ROS_ASSERT(depth.getHeight() > 0 && depth.getWidth() > 0);
     cv::imshow("Depth", colorize(oniDepthToEigen(depth), 0, 7));
     cv::waitKey(3);
   }
