@@ -6,6 +6,8 @@
 #include <iostream>
 #include <OpenNI.h>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <Eigen/Eigen>
+#include <Eigen/Core>
 
 #define MAX_DEPTH 5
 #define MIN_DEPTH 0.5
@@ -37,6 +39,7 @@ public:
   int heightStep() const { return height_step_; }
   int widthStep() const { return width_step_; }
   double transform(double input) const;
+  double transformDerivative(double input) const;
   
 protected:
   int width_;
@@ -53,6 +56,7 @@ protected:
   double bin_width_;
   cv::Mat1b block_img_;
   cv::Mat1b dilated_block_img_;
+  Eigen::VectorXd weights_;
 };
 
 class DepthHistogram
@@ -80,7 +84,6 @@ public:
     *upper_weight = (z - lower_limits_[*lower_idx]) * inv_binwidth_;
   }
                
-  
 protected:
   double min_depth_;
   double max_depth_;

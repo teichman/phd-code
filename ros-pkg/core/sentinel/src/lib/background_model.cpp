@@ -3,6 +3,7 @@
 #include <timer/timer.h>
 
 using namespace std;
+using namespace Eigen;
 
 DepthHistogram::DepthHistogram(double min_depth, double max_depth, double binwidth) 
 {
@@ -75,14 +76,34 @@ BackgroundModel::BackgroundModel(int width, int height,
   histograms_.resize(num, DepthHistogram(0, max_depth_, bin_width_));
   cout << "Initialized " << histograms_.size() << " histograms." << endl;
 
+  // f(x) = ax^2 + bx + c
+  // f'(x) = 2ax + b
+  // Constraints:
+  // f(0.5) = 0.5
+  // f(5) = 5
+  // mult * f'(5) = f'(0.5)
+  double mult = 10;
+  MatrixXd A(3, 3);
+  A << 0.25, 0.5, 1,
+    25, 5, 1,
+    mult * 10 - 1, mult - 1, 0;
+  VectorXd b(3);
+  b << 0.5, 5, 0;
+  
+  weights_ = A.colPivHouseholderQr().solve(b);
+
+  ROS_ASSERT(fabs(0.5 - transform(0.5)) < 1e-6);
+  ROS_ASSERT(fabs(5 - transform(5)) < 1e-6);
+  ROS_ASSERT(fabs(mult*transformDerivative(5) - transformDerivative(0.5)) < 1e-6);
+
   // -- Print out bin widths.
-  // const DepthHistogram& hist = histograms_[0];
-  // size_t lower_idx;
-  // double upper_weight;
-  // for(double z = 0; z < MAX_DEPTH; z += 0.01) {
-  //   hist.indices(transform(z), &lower_idx, &upper_weight);
-  //   cout << "z: " << z << ", lower index: " << lower_idx << endl;
-  // }
+  const DepthHistogram& hist = histograms_[0];
+  size_t lower_idx;
+  double upper_weight;
+  for(double z = 0; z < MAX_DEPTH; z += 0.01) {
+    hist.indices(transform(z), &lower_idx, &upper_weight);
+    cout << "z: " << z << ", lower index: " << lower_idx << endl;
+  }
 }
 
 void BackgroundModel::increment(openni::VideoFrameRef depth, int num)
@@ -153,9 +174,10 @@ void BackgroundModel::predict(openni::VideoFrameRef depth,
 
 double BackgroundModel::transform(double x) const
 {
-  // Solved for using python.  See 9/9/2013 notes.
-  double a = -0.14814815;
-  double b = 1.81481481;
-  double c = -0.37037037;
-  return a * x * x + b * x + c;
+  return weights_.coeffRef(0) * x * x + weights_.coeffRef(1) * x + weights_.coeffRef(2);
+}
+
+double BackgroundModel::transformDerivative(double x) const
+{
+  return 2 * weights_.coeffRef(0) * x + weights_.coeffRef(1);
 }
