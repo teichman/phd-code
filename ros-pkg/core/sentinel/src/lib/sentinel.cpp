@@ -5,7 +5,16 @@
 
 using namespace std;
 namespace bfs = boost::filesystem;
+
+void onMouse(int event, int x, int y, int, void* sentinel)
+{
+  if(event != CV_EVENT_LBUTTONDOWN)
+    return;
   
+  ((Sentinel*)sentinel)->debug(x, y);
+}
+
+
 cv::Mat3b falseColor(const DepthMat& depth)
 {
   cv::Mat3b cvimg(depth.rows(), depth.cols());
@@ -43,6 +52,11 @@ Sentinel::Sentinel(double update_interval,
     * (model_->height() / model_->heightStep());
   fg_markers_.reserve(max_num_markers);
   bg_fringe_markers_.reserve(max_num_markers);
+
+  if(visualize_) {
+    cv::namedWindow("Sentinel");
+    cv::setMouseCallback("Sentinel", onMouse, this);
+  }
 }
 
 void Sentinel::run()
@@ -116,7 +130,7 @@ void Sentinel::process(openni::VideoFrameRef color,
       // int x = idx - y * vis_.cols;
       vis_(fg_markers_[i])[2] = 255;
     }
-    cv::imshow("vis", vis_);
+    cv::imshow("Sentinel", vis_);
     cv::waitKey(2);
   }
 }

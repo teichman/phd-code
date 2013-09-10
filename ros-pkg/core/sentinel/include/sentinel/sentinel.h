@@ -45,6 +45,7 @@ public:
                                   double sensor_timestamp,
                                   double wall_timestamp,
                                   size_t frame_id) {}
+  void debug(int x, int y) { model_->debug(x, y); }
                                
 
 protected:

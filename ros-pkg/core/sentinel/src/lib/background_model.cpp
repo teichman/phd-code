@@ -5,7 +5,11 @@
 using namespace std;
 using namespace Eigen;
 
-DepthHistogram::DepthHistogram(double min_depth, double max_depth, double binwidth) 
+DepthHistogram::DepthHistogram(double min_depth, double max_depth, double binwidth,
+                               int x, int y) :
+  debug_(false),
+  x_(x),
+  y_(y)
 {
   initialize(min_depth, max_depth, binwidth);
 }
@@ -74,7 +78,11 @@ BackgroundModel::BackgroundModel(int width, int height,
   for(int y = height_step_ / 2; y < height; y += height_step_)
     for(int x = width_step_ / 2; x < width; x += width_step_)
       ++num;
-  histograms_.resize(num, DepthHistogram(0, max_depth_, bin_width_));
+  histograms_.reserve(num);
+  for(int y = height_step_ / 2; y < height; y += height_step_)
+    for(int x = width_step_ / 2; x < width; x += width_step_)
+      histograms_.push_back(DepthHistogram(0, max_depth_, bin_width_, x, y));
+
   cout << "Initialized " << histograms_.size() << " histograms." << endl;
 
   // f(x) = ax^2 + bx + c
@@ -181,4 +189,14 @@ double BackgroundModel::transform(double x) const
 double BackgroundModel::transformDerivative(double x) const
 {
   return 2 * weights_.coeffRef(0) * x + weights_.coeffRef(1);
+}
+
+void BackgroundModel::debug(int x, int y)
+{
+  for(size_t i = 0; i < histograms_.size(); ++i)
+    histograms_[i].debug_ = false;
+  
+  ROS_ASSERT(width_step_ == 1 && height_step_ == 1);
+  int idx = y * width_ + x;
+  histograms_[idx].debug_ = true;
 }

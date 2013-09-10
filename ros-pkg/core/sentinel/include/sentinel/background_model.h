@@ -40,6 +40,7 @@ public:
   int widthStep() const { return width_step_; }
   double transform(double input) const;
   double transformDerivative(double input) const;
+  void debug(int x, int y);
   
 protected:
   int width_;
@@ -63,7 +64,12 @@ protected:
 class DepthHistogram
 {
 public:
-  DepthHistogram(double min_depth, double max_depth, double binwidth);
+  bool debug_;
+  int x_;
+  int y_;
+  
+  DepthHistogram(double min_depth, double max_depth, double binwidth,
+                 int x, int y);
   void initialize(double min_depth, double max_depth, double binwidth);
   void increment(double z, int num);
   void clear();
