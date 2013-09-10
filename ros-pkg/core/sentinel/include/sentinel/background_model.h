@@ -8,6 +8,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <Eigen/Eigen>
 #include <Eigen/Core>
+#include <ros/assert.h>
 
 #define MAX_DEPTH 5
 #define MIN_DEPTH 0.5
@@ -19,7 +20,8 @@ class BackgroundModel
 public:
   BackgroundModel(int width, int height,
                   int width_step, int height_step,
-                  double min_pct, double max_depth,
+                  double min_pct,
+                  double max_depth, double min_depth,
                   double bin_width);
   ~BackgroundModel() {
     #if JARVIS_DEBUG
@@ -40,6 +42,7 @@ public:
   int widthStep() const { return width_step_; }
   double transform(double input) const;
   double transformDerivative(double input) const;
+  double inverseTransform(double x) const;
   void debug(int x, int y);
   
 protected:
@@ -52,6 +55,7 @@ protected:
   std::vector<DepthHistogram> histograms_; // row major
   //! Percentage of histogram that a bin must contain to count as background.
   double min_pct_;
+  double min_depth_;
   double max_depth_;
   //! Bin width in z.
   double bin_width_;
@@ -74,7 +78,8 @@ public:
   void increment(double z, int num);
   void clear();
   double total() const { return total_; }
-
+  std::string status(const std::string& prefix = "") const;
+  
   // Inline for speed.
   double getNum(double z) const
   {
@@ -87,10 +92,13 @@ public:
   // Inline for speed.
   void indices(double z, size_t* lower_idx, double* upper_weight) const
   {
-    *lower_idx = std::max<size_t>(0, (z - min_depth_) * inv_binwidth_);
+    *lower_idx = std::max<int>(0, (z - min_depth_) * inv_binwidth_);
+    ROS_ASSERT(*lower_idx < lower_limits_.size());
     *upper_weight = (z - lower_limits_[*lower_idx]) * inv_binwidth_;
   }
-               
+
+  friend class BackgroundModel;
+  
 protected:
   double min_depth_;
   double max_depth_;
