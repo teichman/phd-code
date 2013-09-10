@@ -57,6 +57,7 @@ protected:
   cv::Mat1b block_img_;
   cv::Mat1b dilated_block_img_;
   Eigen::VectorXd weights_;
+  cv::Mat3b vis_;
 };
 
 class DepthHistogram

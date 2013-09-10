@@ -61,7 +61,8 @@ BackgroundModel::BackgroundModel(int width, int height,
   max_depth_(max_depth),
   bin_width_(bin_width)
 {
-  ROS_ASSERT(height_step_ % 2 == 0 && width_step_ % 2 == 0);
+  ROS_ASSERT(height_step_ == 1 || height_step_ % 2 == 0);
+  ROS_ASSERT(width_step_ == 1 || width_step_ % 2 == 0);
   ROS_ASSERT(height_ % height_step_ == 0 && width_ % width_step_ == 0);
 
   blocks_per_row_ = width_ / width_step_;

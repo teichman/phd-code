@@ -32,6 +32,7 @@ int main(int argc, char** argv)
     ("threshold,t", bpo::value(&threshold)->default_value(0.0), "")
     ("color-res", bpo::value(&color_resolution), "")
     ("depth-res", bpo::value(&depth_resolution), "")
+    ("visualize", "Show extra visualization")
     ;
 
   p.add("sensor-id", 1);

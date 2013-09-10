@@ -30,7 +30,7 @@ Sentinel::Sentinel(double update_interval,
 {
   oni_.setHandler(this);
   if(depth_res == OpenNI2Interface::VGA) {
-    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(640, 480, 16, 12, 0.1, MAX_DEPTH, 0.05));
+    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(640, 480, 1, 1, 0.1, MAX_DEPTH, 0.05));
   }
   else if(depth_res == OpenNI2Interface::QVGA)
     model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(320, 240, 8, 6, 0.1, MAX_DEPTH, 0.05));
@@ -107,6 +107,18 @@ void Sentinel::process(openni::VideoFrameRef color,
                     sensor_timestamp, wall_timestamp, frame_id);
   }
   handleNonDetection(color, depth, sensor_timestamp, wall_timestamp, frame_id);
+
+  if(visualize_) {
+    vis_ = oniToCV(color);
+    for(size_t i = 0; i < fg_markers_.size(); ++i) {
+      // int idx = fg_markers_[i];
+      // int y = idx / vis_.cols;
+      // int x = idx - y * vis_.cols;
+      vis_(fg_markers_[i])[2] = 255;
+    }
+    cv::imshow("vis", vis_);
+    cv::waitKey(2);
+  }
 }
 
 void Sentinel::updateModel(openni::VideoFrameRef depth)
