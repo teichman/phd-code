@@ -77,10 +77,12 @@ void Collector::writeStats(std::string path) const
     for(int x = 0; x < stdev.cols(); ++x)
       stdev(y, x) = sqrt(var(y, x));
 
+  // stdev greater than 20cm is probably noise from flickering pixels.
   for(int y = 0; y < stdev.rows(); ++y)
     for(int x = 0; x < stdev.cols(); ++x)
       if(count(y, x) > depth_images_.size() / 2)
-        f << mean(y, x) << " " << stdev(y, x) << endl;
+        if(stdev(y, x) < 0.2)
+          f << mean(y, x) << " " << stdev(y, x) << endl;
 
   cv::Mat3b vis(cv::Size(stdev.cols(), stdev.rows()), cv::Vec3b(0, 0, 0));
   for(int y = 0; y < stdev.rows(); ++y)
