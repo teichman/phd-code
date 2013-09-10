@@ -8,6 +8,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #define MAX_DEPTH 5
+#define MIN_DEPTH 0.5
 
 class DepthHistogram;
 
@@ -35,6 +36,7 @@ public:
   int width() const { return width_; }
   int heightStep() const { return height_step_; }
   int widthStep() const { return width_step_; }
+  double transform(double input) const;
   
 protected:
   int width_;

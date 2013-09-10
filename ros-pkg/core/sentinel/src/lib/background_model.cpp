@@ -74,6 +74,15 @@ BackgroundModel::BackgroundModel(int width, int height,
       ++num;
   histograms_.resize(num, DepthHistogram(0, max_depth_, bin_width_));
   cout << "Initialized " << histograms_.size() << " histograms." << endl;
+
+  // -- Print out bin widths.
+  // const DepthHistogram& hist = histograms_[0];
+  // size_t lower_idx;
+  // double upper_weight;
+  // for(double z = 0; z < MAX_DEPTH; z += 0.01) {
+  //   hist.indices(transform(z), &lower_idx, &upper_weight);
+  //   cout << "z: " << z << ", lower index: " << lower_idx << endl;
+  // }
 }
 
 void BackgroundModel::increment(openni::VideoFrameRef depth, int num)
@@ -87,7 +96,7 @@ void BackgroundModel::increment(openni::VideoFrameRef depth, int num)
   size_t idx = 0;
   for(int y = height_step_ / 2; y < height_; y += height_step_)
     for(int x = width_step_ / 2; x < width_; x += width_step_, ++idx)
-      histograms_[idx].increment(data[y * depth.getWidth() + x] * 0.001, num);
+      histograms_[idx].increment(transform(data[y * depth.getWidth() + x] * 0.001), num);
 }
 
 void BackgroundModel::predict(openni::VideoFrameRef depth,
@@ -112,7 +121,7 @@ void BackgroundModel::predict(openni::VideoFrameRef depth,
       if(val == 0)
         continue;
       
-      double pct = histograms_[idx].getNum(val * .001) / histograms_[idx].total();
+      double pct = histograms_[idx].getNum(transform(val * .001)) / histograms_[idx].total();
       if(pct < min_pct_) {
         fg_markers->push_back(y * width_ + x);
         int r = idx / blocks_per_row_;
@@ -142,3 +151,11 @@ void BackgroundModel::predict(openni::VideoFrameRef depth,
   }
 }
 
+double BackgroundModel::transform(double x) const
+{
+  // Solved for using python.  See 9/9/2013 notes.
+  double a = -0.14814815;
+  double b = 1.81481481;
+  double c = -0.37037037;
+  return a * x * x + b * x + c;
+}
