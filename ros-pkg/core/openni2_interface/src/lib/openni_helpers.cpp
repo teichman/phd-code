@@ -13,7 +13,7 @@ void oniToCV(const openni::VideoFrameRef& oni, cv::Mat3b img)
   uchar* data = (uchar*)oni.getData();
   int i = 0;
   for(int y = 0; y < img.rows; ++y) {
-    for(int x = img.cols - 1; x >= 0; --x, i+=3) {
+    for(int x = 0; x < img.cols; ++x, i+=3) {
       img(y, x)[0] = data[i+2];
       img(y, x)[1] = data[i+1];
       img(y, x)[2] = data[i];
@@ -38,10 +38,10 @@ DepthMatPtr oniDepthToEigenPtr(const openni::VideoFrameRef& oni)
 
   DepthMatPtr depth(new DepthMat(oni.getHeight(), oni.getWidth()));
   ushort* data = (ushort*)oni.getData();
-  int i = 0;
+  int idx = 0;
   for(int y = 0; y < depth->rows(); ++y)
-    for(int x = depth->cols() - 1; x >= 0; --x, ++i)
-      depth->coeffRef(y,x) = data[i];
+    for(int x = 0; x < depth->cols(); ++x, ++idx)
+      depth->coeffRef(y,x) = data[idx];
 
   return depth;
 }
