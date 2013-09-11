@@ -127,8 +127,8 @@ BackgroundModel::BackgroundModel(int width, int height,
   ROS_ASSERT(fabs(5 - transform(5)) < 1e-6);
   ROS_ASSERT(fabs(mult*transformDerivative(5) - transformDerivative(0.5)) < 1e-6);
 
-  ROS_ASSERT(height_step_ == 1 || height_step_ % 2 == 0);
-  ROS_ASSERT(width_step_ == 1 || width_step_ % 2 == 0);
+  //ROS_ASSERT(height_step_ == 1 || height_step_ % 2 == 0);
+  //ROS_ASSERT(width_step_ == 1 || width_step_ % 2 == 0);
   ROS_ASSERT(height_ % height_step_ == 0 && width_ % width_step_ == 0);
 
   blocks_per_row_ = width_ / width_step_;
