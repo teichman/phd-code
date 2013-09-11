@@ -35,17 +35,32 @@ void DepthHistogram::initialize(double min_depth, double max_depth, double binwi
 void DepthHistogram::increment(double z, int num)
 { 
   if(z < 1e-6) {
+    double before = dropout_count_;
     dropout_count_ += num;
-    total_ += num;
+    dropout_count_ = max(0.0, dropout_count_);
+    total_ += dropout_count_ - before;
   }
   else if(min_depth_ < z && z < max_depth_) {
     size_t lower_idx;
     double upper_weight;
     indices(z, &lower_idx, &upper_weight);
-    
+
+    double before = bins_[lower_idx] + bins_[lower_idx + 1];
     bins_[lower_idx] += num * (1.0 - upper_weight);
     bins_[lower_idx+1] += num * upper_weight;
-    total_ += num;
+    bins_[lower_idx] = max(0.0, bins_[lower_idx]);
+    bins_[lower_idx+1] = max(0.0, bins_[lower_idx+1]);
+    double after = bins_[lower_idx] + bins_[lower_idx + 1];
+    total_ += after - before;
+  }
+
+  // -- Freespace reasoning.
+  if(num > 0) {
+    for(size_t i = 1; i < bins_.size() && lower_limits_[i] < z; ++i) {
+      ROS_ASSERT(bins_[i-1] >= 0);
+      total_ -= bins_[i-1];
+      bins_[i-1] = 0;
+    }
   }
   
   if(debug_) {

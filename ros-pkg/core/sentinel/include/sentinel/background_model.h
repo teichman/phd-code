@@ -86,7 +86,8 @@ public:
     size_t lower_idx;
     double upper_weight;
     indices(z, &lower_idx, &upper_weight);
-    return bins_[lower_idx] * (1.0 - upper_weight) + bins_[lower_idx + 1] * (upper_weight);
+    //return bins_[lower_idx] * (1.0 - upper_weight) + bins_[lower_idx + 1] * (upper_weight);
+    return bins_[lower_idx] + bins_[lower_idx + 1];
   }
 
   // Inline for speed.
