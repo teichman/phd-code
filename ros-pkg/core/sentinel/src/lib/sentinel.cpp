@@ -70,8 +70,8 @@ void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameR
 {
   #if JARVIS_DEBUG
   cout << "############################################################" << endl;
-  #endif
   ScopedTimer st("Sentinel::rgbdCallback");
+  #endif
 
   // -- Check for misaligned data.
   //    TODO: This should probably be in OpenNI2Interface.
@@ -142,7 +142,6 @@ void Sentinel::updateModel(openni::VideoFrameRef depth)
   ScopedTimer st("Sentinel::updateModel");
   #endif
   
-  cout << "Updating model." << endl;
   training_.push(depth);
   model_->increment(depth);
   
