@@ -39,10 +39,10 @@ Sentinel::Sentinel(double update_interval,
 {
   oni_.setHandler(this);
   if(depth_res == OpenNI2Interface::VGA) {
-    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(640, 480, 1, 1, 0.1, MIN_DEPTH, MAX_DEPTH, 0.05));
+    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(640, 480, 1, 1, 0.1, MIN_DEPTH, MAX_DEPTH, 0.075));
   }
   else if(depth_res == OpenNI2Interface::QVGA)
-    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(320, 240, 8, 6, 0.1, MIN_DEPTH, MAX_DEPTH, 0.05));
+    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(320, 240, 8, 6, 0.1, MIN_DEPTH, MAX_DEPTH, 0.075));
   else {
     ROS_ASSERT(0);
   }
@@ -131,6 +131,7 @@ void Sentinel::process(openni::VideoFrameRef color,
       vis_(fg_markers_[i])[2] = 255;
     }
     cv::imshow("Sentinel", vis_);
+    cv::imshow("depth", colorize(oniDepthToEigen(depth), MIN_DEPTH, MAX_DEPTH));
     cv::waitKey(2);
   }
 }

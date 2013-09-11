@@ -100,7 +100,7 @@ BackgroundModel::BackgroundModel(int width, int height,
   // f(0.5) = 0.5
   // f(5) = 5
   // mult * f'(5) = f'(0.5)
-  double mult = 10;
+  double mult = 5;
   MatrixXd A(3, 3);
   A << 0.25, 0.5, 1,
     25, 5, 1,
