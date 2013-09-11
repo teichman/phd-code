@@ -83,6 +83,7 @@ public:
   // Inline for speed.
   double getNum(double z) const
   {
+    ROS_ASSERT(z >= min_depth_ && z < max_depth_);
     size_t lower_idx;
     double upper_weight;
     indices(z, &lower_idx, &upper_weight);
@@ -92,8 +93,10 @@ public:
   // Inline for speed.
   void indices(double z, size_t* lower_idx, double* upper_weight) const
   {
+    ROS_ASSERT(z >= min_depth_ && z < max_depth_);
     *lower_idx = std::max<int>(0, (z - min_depth_) * inv_binwidth_);
-    ROS_ASSERT(*lower_idx < lower_limits_.size());
+    // Very rare edge case, but I have seen it in practice.
+    *lower_idx = std::min<int>(lower_limits_.size() - 2, *lower_idx);
     *upper_weight = (z - lower_limits_[*lower_idx]) * inv_binwidth_;
   }
 
