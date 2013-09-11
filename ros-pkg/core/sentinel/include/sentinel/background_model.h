@@ -104,9 +104,11 @@ protected:
   double max_depth_;
   double binwidth_;
   double inv_binwidth_;
+  //! A separate, special bin is maintained for depth dropouts.
+  double dropout_count_;
+  double total_;
   std::vector<double> lower_limits_;
   std::vector<double> bins_;
-  double total_;
 };
 
 

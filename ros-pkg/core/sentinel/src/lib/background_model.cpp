@@ -17,13 +17,14 @@ DepthHistogram::DepthHistogram(double min_depth, double max_depth, double binwid
 void DepthHistogram::initialize(double min_depth, double max_depth, double binwidth)
 {
   clear();
-
-  total_ = 0;
+  
   min_depth_ = min_depth;
   max_depth_ = max_depth;
   binwidth_ = binwidth;
   inv_binwidth_ = 1.0 / binwidth_;
-
+  dropout_count_ = 0;
+  total_ = 0;
+  
   int num_bins = ceil((max_depth_ - min_depth_) / binwidth_);
   bins_.resize(num_bins, 0);
   lower_limits_.resize(num_bins);
@@ -32,16 +33,21 @@ void DepthHistogram::initialize(double min_depth, double max_depth, double binwi
 }
 
 void DepthHistogram::increment(double z, int num)
-{
-  ROS_ASSERT(min_depth_ < z && z < max_depth_);
-  size_t lower_idx;
-  double upper_weight;
-  indices(z, &lower_idx, &upper_weight);
+{ 
+  if(z < 1e-6) {
+    dropout_count_ += num;
+    total_ += num;
+  }
+  else if(min_depth_ < z && z < max_depth_) {
+    size_t lower_idx;
+    double upper_weight;
+    indices(z, &lower_idx, &upper_weight);
+    
+    bins_[lower_idx] += num * (1.0 - upper_weight);
+    bins_[lower_idx+1] += num * upper_weight;
+    total_ += num;
+  }
   
-  total_ += num;
-  bins_[lower_idx] += num * (1.0 - upper_weight);
-  bins_[lower_idx+1] += num * upper_weight;
-
   if(debug_) {
     cout << "#################### DepthHistogram::increment" << endl;
     cout << "Incremented by " << num << " at depth " << z << endl;
@@ -53,6 +59,13 @@ void DepthHistogram::increment(double z, int num)
 std::string DepthHistogram::status(const std::string& prefix) const
 {
   ostringstream oss;
+  double total = 0;
+  oss << prefix << "Bins: " << endl;
+  for(size_t i = 0; i < lower_limits_.size(); ++i) {
+    oss << prefix << "  " << lower_limits_[i] << ": " << bins_[i] / total_ << endl;
+    total += bins_[i];
+  }
+  oss << prefix << "Dropouts: " << dropout_count_ / total_ << endl;
   oss << prefix << "x: " << x_ << endl;
   oss << prefix << "y: " << y_ << endl;
   oss << prefix << "min_depth: " << min_depth_ << endl;
@@ -60,10 +73,10 @@ std::string DepthHistogram::status(const std::string& prefix) const
   oss << prefix << "binwidth_: " << binwidth_ << endl;
   oss << prefix << "inv_binwidth_: " << inv_binwidth_ << endl;
   oss << prefix << "total_: " << total_ << endl;
-  oss << prefix << "Bins: " << endl;
-  for(size_t i = 0; i < lower_limits_.size(); ++i)
-    oss << prefix << "  " << lower_limits_[i] << ": " << bins_[i] << endl;
 
+  total += dropout_count_;
+  ROS_ASSERT(fabs(total - total_) < 1e-6);
+  
   return oss.str();
 }
   
@@ -74,9 +87,10 @@ void DepthHistogram::clear()
   max_depth_ = -1;
   binwidth_ = -1;
   inv_binwidth_ = -1;
+  dropout_count_ = 0;
+  total_ = 0;
   lower_limits_.clear();
   bins_.clear();
-  total_ = 0;
 }
 
 BackgroundModel::BackgroundModel(int width, int height,
@@ -154,8 +168,7 @@ void BackgroundModel::increment(openni::VideoFrameRef depth, int num)
       ROS_ASSERT(depth.getDataSize() > 0);
       ROS_ASSERT(y * depth.getWidth() + x < depth.getDataSize());
       double z = data[y * depth.getWidth() + x] * 0.001;
-      if(MIN_DEPTH < z && z < MAX_DEPTH)
-        histograms_[idx].increment(transform(z), num);
+      histograms_[idx].increment(transform(z), num);
     }
   }
 }
