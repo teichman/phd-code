@@ -210,7 +210,7 @@ During inference, the weights $w$ remain fixed.  The solution to this problem ca
 \subsection{Learning}
 \label{sec:learning}
 
-Given a dataset of $(y_i, x_i)$ for $i=1 \dots m$, the goal of CRF learning is to choose the weights $w$ that will result in the lowest test error. While it would be desirable to learn the weights directly using the maximum likelihood approach
+Given a dataset of $(y_m, x_m)$ for $m=1 \dots M$, the goal of CRF learning is to choose the weights $w$ that will result in the lowest test error. While it would be desirable to learn the weights directly using the maximum likelihood approach
 \begin{align}
   \maximize{w} \prod_m \Pr(y_m | x_m),
 \end{align}
@@ -267,7 +267,7 @@ The structural SVM solver is detailed in Algorithm~\ref{alg:ssvm}.  Because the 
 \STATE Find the MAP assignment using graph cuts.
 \STATE $\hat{y}_m \leftarrow \argmin_y E (y, x_m )$
 \ENDFOR
-\STATE $\mathcal{W} \leftarrow \mathcal{W} \cup \{(\hat{y}_1, \dots, \hat{y}_M\}$
+\STATE $\mathcal{W} \leftarrow \mathcal{W} \cup \{(\hat{y}_1, \dots, \hat{y}_M)\}$
 \UNTIL $\quad \frac{1}{M} \sum_{m = 1}^M \Delta(y_m, \hat{y}_m) - E ( \hat{y}_m, x_m) + E ( y_m, x_m ) \leq \xi + \epsilon$
   \end{algorithmic}
 \end{algorithm*}
