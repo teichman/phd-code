@@ -23,18 +23,7 @@ public:
                             size_t frame_id, double timestamp) = 0;
 };
 
-class OpenNI2Interface;
-
-class Listener : public openni::VideoStream::NewFrameListener
-{
-public:
-  Listener(OpenNI2Interface* oni) : oni_(oni) {}
-protected:
-  OpenNI2Interface* oni_;
-  void onNewFrame(openni::VideoStream& stream);
-};
-
-class OpenNI2Interface : public SharedLockable
+class OpenNI2Interface
 {
 public:
   enum Resolution { VGA = 0, QVGA = 1 };
@@ -51,8 +40,6 @@ public:
   OpenNI2Interface::Resolution depthRes() const { return depth_res_; }
   
 private:
-  Listener color_listener_;
-  Listener depth_listener_;
   Resolution color_res_;
   Resolution depth_res_;
   OpenNI2Handler* handler_;
@@ -68,8 +55,6 @@ private:
   void processColor();
   void processDepth();
   void processSynchronized();
-
-  friend class Listener;
 };
 
 #endif // OPENNI2_INTERFACE_H

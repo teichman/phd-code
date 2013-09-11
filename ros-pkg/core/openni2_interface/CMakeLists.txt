@@ -20,7 +20,7 @@ rosbuild_add_library(openni2_interface
   src/lib/openni2_interface.cpp
   src/lib/openni_helpers.cpp
   )
-rosbuild_add_compile_flags(openni2_interface -DJARVIS_DEBUG)
+rosbuild_add_compile_flags(openni2_interface)  # -DJARVIS_DEBUG
 rosbuild_link_boost(openni2_interface filesystem program_options)
 
 rosbuild_add_executable(openni_test src/prog/openni_test.cpp)

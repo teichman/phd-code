@@ -16,8 +16,6 @@ void sigint(int none) {
 }
 
 OpenNI2Interface::OpenNI2Interface(Resolution color_res, Resolution depth_res) :
-  color_listener_(this),
-  depth_listener_(this),
   color_res_(color_res),
   depth_res_(depth_res),
   sync_(0.018),
@@ -46,54 +44,24 @@ OpenNI2Interface::~OpenNI2Interface()
 #endif
 }
 
-void Listener::onNewFrame(VideoStream& stream)
-{
-  if(stream.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_RGB888) {
-    openni::VideoFrameRef color_frame;
-    Status rc = stream.readFrame(&color_frame);
-    ROS_ASSERT(rc == STATUS_OK);
-    oni_->sync_.addT0(color_frame, color_frame.getTimestamp() * 1e-6);
-  }
-  else if(stream.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM) {
-    openni::VideoFrameRef depth_frame;
-    Status rc = stream.readFrame(&depth_frame);
-    ROS_ASSERT(rc == STATUS_OK);
-    oni_->sync_.addT1(depth_frame, depth_frame.getTimestamp() * 1e-6);
-  }
-  else {
-    ROS_ASSERT(0);
-  }
-  oni_->processSynchronized();
-}
-
 void OpenNI2Interface::run()
 {
   ROS_ASSERT(handler_);
   int rv = connect();
   ROS_ASSERT(rv == 0);
 
-  color_stream_.addNewFrameListener(&color_listener_);
-  depth_stream_.addNewFrameListener(&depth_listener_);
-
-  while(!terminating_ && !g_int) {
-    usleep(1e4);
-  }
-
-  color_stream_.removeNewFrameListener(&color_listener_);
-  depth_stream_.removeNewFrameListener(&depth_listener_);
+  VideoStream* streams[] = { &color_stream_, &depth_stream_ };
   
-  //VideoStream* streams[] = { &color_stream_, &depth_stream_ };
-  // while(!terminating_ && !g_int) {
-  //   int idx = -1;
-  //   OpenNI::waitForAnyStream(streams, 2, &idx, SAMPLE_READ_WAIT_TIMEOUT);
-  //   if(idx == 0)
-  //     processColor();
-  //   else if(idx == 1)
-  //     processDepth();
-  //   else
-  //     cout << "Did not get stream data..." << endl;
-  // }
-
+  while(!terminating_ && !g_int) {
+    int idx = -1;
+    OpenNI::waitForAnyStream(streams, 2, &idx, SAMPLE_READ_WAIT_TIMEOUT);
+    if(idx == 0)
+      processColor();
+    else if(idx == 1)
+      processDepth();
+    else
+      cout << "Did not get stream data..." << endl;
+  }
 }
 
 void OpenNI2Interface::processColor()
@@ -116,7 +84,6 @@ void OpenNI2Interface::processDepth()
 
 void OpenNI2Interface::processSynchronized()
 {
-  scopeLockWrite;
   if(sync_.updated_) {
     timespec clk;
     clock_gettime(CLOCK_REALTIME, &clk);
