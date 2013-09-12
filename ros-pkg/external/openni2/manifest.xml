@@ -1,17 +1,12 @@
 <package>
   <description brief="openni2">
 
-    You'll need to install the following:
-      sudo apt-get install libudev-dev
-    ... and probably a few other things of which I'm not aware.
-    'apt-file find' is your friend.
-    
+    You might need to install the following:
+      sudo apt-get install libudev-dev openjdk-7-jdk freeglut3-dev libglu1-mesa-dev libusb-1.0-0-dev
+
     Once this package has been built, you must run
       make install
     to install udev rules.
-
-    If it dies complaining about java, you probably don't even need that part.  You can avoid the errors with
-      sudo apt-get install openjdk-7-jdk
 
   </description>
   <author>Demo User</author>
