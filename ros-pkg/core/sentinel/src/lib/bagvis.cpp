@@ -60,15 +60,25 @@ BagVis::BagVis(std::string path, size_t max_buffer_size) :
   it_ = view_->begin();
 }
 
+void BagVis::handleForegroundMessage(Foreground::ConstPtr msg)
+{
+  reconstructor_.update(msg);    
+}
+
+void BagVis::handleBackgroundMessage(Background::ConstPtr msg)
+{
+  reconstructor_.update(msg);    
+}
+
 void BagVis::handleMessage(const MessageInstance& msg)
 { 
   Foreground::ConstPtr fg = msg.instantiate<Foreground>();
   if(fg) {
-    reconstructor_.update(fg);    
+    handleForegroundMessage(fg);
   }
   Background::ConstPtr bg = msg.instantiate<Background>();
   if(bg) {
-    reconstructor_.update(bg);
+    handleBackgroundMessage(bg);
   }
 
   buffer_.push_back(reconstructor_.img_.clone());
@@ -126,7 +136,7 @@ void BagVis::handleKeypress(char key)
   case -1:
     break;
   default:
-    cout << "Unknown key " << (int)key << endl;
+    //cout << "Unknown key " << (int)key << endl;
     break;
   }
 }

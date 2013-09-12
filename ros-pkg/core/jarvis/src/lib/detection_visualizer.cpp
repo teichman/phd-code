@@ -270,14 +270,6 @@ void DetectionVisualizer::foregroundCallback(sentinel::ForegroundConstPtr msg)
     cv::circle(vis, cv::Point(x, y), 2, cv::Scalar(0, 255, 0), -1);
   }
 
-  // cv::Mat3b vis_scaled;
-  // cv::resize(vis, vis_scaled, vis.size() * 2, cv::INTER_NEAREST);
-  // cv::imshow("foreground visualization", vis_scaled);
-
-  // cv::Mat1b foreground_scaled;
-  // cv::resize(foreground, foreground_scaled, foreground.size() * 2, cv::INTER_NEAREST);
-  // cv::imshow("foreground", foreground_scaled);
-
   cv::Mat3b depth_vis_scaled;
   cv::resize(depth_vis_, depth_vis_scaled, depth_vis_.size() * 2, cv::INTER_NEAREST);
   cv::imshow("depth", depth_vis_scaled);

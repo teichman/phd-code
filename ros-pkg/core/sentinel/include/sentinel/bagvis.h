@@ -58,6 +58,8 @@ protected:
   void read(int num);
   void increment(int num);
   void handleMessage(const rosbag::MessageInstance& msg);
+  void handleForegroundMessage(sentinel::Foreground::ConstPtr msg);
+  void handleBackgroundMessage(sentinel::Background::ConstPtr msg);
 };
 
 #endif // BAGVIS_H

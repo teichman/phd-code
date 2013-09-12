@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  BagVis bv(path, 1000);
+  BagVis bv(path, 3000);
   bv.run();
   
   return 0;
