@@ -26,6 +26,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/sentinel.cpp
   src/lib/background_model.cpp
   src/lib/reconstructor.cpp
+  src/lib/bagvis.cpp
   )
 rosbuild_add_compile_flags(sentinel -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)  # -DJARVIS_DEBUG
 #target_link_libraries(${PROJECT_NAME} another_library)
@@ -41,3 +42,6 @@ target_link_libraries(stream ${PROJECT_NAME})
 rosbuild_add_compile_flags(stream -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)  # -DJARVIS_PROFILE -DJARVIS_DEBUG
 
 rosbuild_add_executable(estimate_noise src/prog/estimate_noise.cpp)
+
+rosbuild_add_executable(bagvis src/prog/bagvis.cpp)
+target_link_libraries(bagvis sentinel)

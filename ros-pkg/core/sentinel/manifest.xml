@@ -16,6 +16,7 @@
   <depend package="rosconsole"/>
   <depend package="timer"/>
   <depend package="roscpp"/>
+  <depend package="rosbag"/>
   <!-- depend package="google-perftools" /-->
 
   <export>
