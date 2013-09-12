@@ -1,4 +1,4 @@
 <launch>
   <node name="sentinel" pkg="sentinel" type="stream" args="--color-res QVGA --depth-res QVGA --sensor-id xpl00" respawn="false" />
-  <node name="rosbag" pkg="rosbag" type="record" args="-a --split=1024 -j" />
+  <node name="rosbag" pkg="rosbag" type="record" args="-a --split=1024 -j -o $(env PWD)/sentinel"/>
 </launch>
