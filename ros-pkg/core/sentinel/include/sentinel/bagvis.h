@@ -38,19 +38,24 @@ protected:
 class BagVis
 {
 public:
-  BagVis(std::string path);
+  BagVis(std::string path, size_t max_buffer_size);
   void run();
   ~BagVis() { delete bag_; }
 
 protected:
-  BufferingBagViewer* bag_;
+  rosbag::Bag* bag_;
+  rosbag::View* view_;
+  rosbag::View::iterator it_;
   Reconstructor reconstructor_;
   bool terminating_;
   bool paused_;
-  size_t idx_;
+  //! Into buffer_.
+  int idx_;
+  size_t max_buffer_size_;
+  std::deque<cv::Mat3b> buffer_;
   
   void handleKeypress(char key);
-  void read(size_t num);
+  void read(int num);
   void increment(int num);
   void handleMessage(const rosbag::MessageInstance& msg);
 };

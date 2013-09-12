@@ -43,35 +43,46 @@ void BufferingBagViewer::read(int num)
   idx_ = buffer_.size() - 1;
 }
 
-BagVis::BagVis(std::string path) :
+
+BagVis::BagVis(std::string path, size_t max_buffer_size) :
   terminating_(false),
   paused_(false),
-  idx_(false)
+  idx_(false),
+  max_buffer_size_(max_buffer_size)
 {
   std::vector<string> topics;
   topics.push_back("/foreground");
   topics.push_back("/background");
 
-  bag_ = new BufferingBagViewer(path, topics, 1000);
+  bag_ = new Bag;
+  bag_->open(path, bagmode::Read);
+  view_ = new View(*bag_, TopicQuery(topics));
+  it_ = view_->begin();
 }
 
 void BagVis::handleMessage(const MessageInstance& msg)
-{
+{ 
   Foreground::ConstPtr fg = msg.instantiate<Foreground>();
   if(fg) {
-    reconstructor_.update(fg);
+    reconstructor_.update(fg);    
   }
   Background::ConstPtr bg = msg.instantiate<Background>();
   if(bg) {
     reconstructor_.update(bg);
   }
+
+  buffer_.push_back(reconstructor_.img_.clone());
+  if(buffer_.size() > max_buffer_size_)
+    buffer_.pop_front();
+
+  idx_ = buffer_.size() - 1;
 }
 
 void BagVis::run()
 {  
   while(true) {
-    if(reconstructor_.img_.cols > 0)
-      cv::imshow("Background", reconstructor_.img_);
+    if(idx_ > 0 && (size_t)idx_ < buffer_.size())
+      cv::imshow("Background", buffer_[idx_]);
     char key = cv::waitKey(1);
     handleKeypress(key);
 
@@ -104,6 +115,14 @@ void BagVis::handleKeypress(char key)
     if(paused_)
       increment(-1);
     break;
+  case '>':
+    if(paused_) 
+      increment(100);
+    break;
+  case '<':
+    if(paused_)
+      increment(-100);
+    break;
   case -1:
     break;
   default:
@@ -114,7 +133,18 @@ void BagVis::handleKeypress(char key)
 
 void BagVis::increment(int num)
 {
-  bag_->increment(num);
-  handleMessage(bag_->msg());
+  idx_ += num;
+  idx_ = max(0, idx_);
+  if(idx_ >= (int)buffer_.size()) { 
+    read(idx_ - buffer_.size() + 1);
+  }
+}
+
+void BagVis::read(int num)
+{
+  for(int i = 0; i < num; ++i) {
+    ++it_;
+    handleMessage(*it_);
+  }
 }
 
