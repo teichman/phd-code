@@ -7,8 +7,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <timer/timer.h>
 #include <asp/asp.h>
-#include <sentinel/Foreground.h>
-#include <sentinel/Background.h>
+#include <sentinel/reconstructor.h>
 
 class DetectionVisualizer
 {
@@ -24,10 +23,10 @@ protected:
   HighResTimer hrt_;
   std::deque<double> timestamps_;
   asp::Asp asp_;
-  cv::Mat3b background_;
+  Reconstructor reconstructor_;
 
-  void foregroundCallback(const sentinel::Foreground& msg);
-  void backgroundCallback(const sentinel::Background& msg);
+  void foregroundCallback(sentinel::ForegroundConstPtr msg);
+  void backgroundCallback(sentinel::BackgroundConstPtr msg);
 };
 
 #endif // DETECTION_VISUALIZER_H

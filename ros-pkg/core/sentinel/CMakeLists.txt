@@ -25,6 +25,7 @@ rosbuild_genmsg()
 rosbuild_add_library(${PROJECT_NAME}
   src/lib/sentinel.cpp
   src/lib/background_model.cpp
+  src/lib/reconstructor.cpp
   )
 rosbuild_add_compile_flags(sentinel -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)  # -DJARVIS_DEBUG
 #target_link_libraries(${PROJECT_NAME} another_library)

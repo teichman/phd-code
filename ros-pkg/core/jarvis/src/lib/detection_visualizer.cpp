@@ -135,95 +135,85 @@ DetectionVisualizer::DetectionVisualizer(int width, int height) :
   hrt_.start();
 }
 
-void DetectionVisualizer::backgroundCallback(const sentinel::Background& msg)
+void DetectionVisualizer::backgroundCallback(sentinel::BackgroundConstPtr msg)
 {
-  if(background_.rows != msg.height)
-    background_ = cv::Mat3b(cv::Size(msg.width, msg.height), cv::Vec3b(0, 0, 0));
-
-  for(size_t i = 0; i < msg.indices.size(); ++i) {
-    int idx = msg.indices[i];
-    int y = idx / background_.cols;
-    int x = idx - y * background_.cols;
-    ROS_ASSERT(y >= 0 && y < background_.rows);
-    ROS_ASSERT(x >= 0 && x < background_.cols);
-    background_(y, x)[0] = msg.color[i*3+2];
-    background_(y, x)[1] = msg.color[i*3+1];
-    background_(y, x)[2] = msg.color[i*3+0];
+  reconstructor_.update(msg);
+  if(reconstructor_.img_.rows > 0) {
+    cv::imshow("background", reconstructor_.img_);
+    cv::waitKey(2);
   }
-
-  cv::imshow("background", background_);
-  cv::waitKey(2);
 }
 
-void DetectionVisualizer::foregroundCallback(const sentinel::Foreground& msg)
+void DetectionVisualizer::foregroundCallback(sentinel::ForegroundConstPtr msg)
 {
+  reconstructor_.update(msg);
   HighResTimer hrt;
   
   // -- Debugging.
-  // cout << "Got a detection with " << msg.indices.size() << " points." << endl;
-  // cout << msg.depth.size() << " " << msg.color.size() << endl;
+  // cout << "Got a detection with " << msg->indices.size() << " points." << endl;
+  // cout << msg->depth.size() << " " << msg->color.size() << endl;
 
-  ROS_ASSERT(msg.indices.size() == msg.depth.size());
-  ROS_ASSERT(msg.color.size() == msg.depth.size() * 3);
-  ROS_ASSERT((int)msg.height == color_vis_.rows);
-  ROS_ASSERT(msg.width % msg.width_step == 0);
-  ROS_ASSERT(msg.height % msg.height_step == 0);
-  ROS_ASSERT(msg.width == 320 && msg.height == 240);
+  ROS_ASSERT(msg->indices.size() == msg->depth.size());
+  ROS_ASSERT(msg->color.size() == msg->depth.size() * 3);
+  ROS_ASSERT((int)msg->height == color_vis_.rows);
+  ROS_ASSERT(msg->width % msg->width_step == 0);
+  ROS_ASSERT(msg->height % msg->height_step == 0);
+  ROS_ASSERT(msg->width == 320 && msg->height == 240);
 
   hrt.reset("bilateral filter");
   hrt.start();
   
   cv::Mat1f depth(color_vis_.size(), 0);
-  for(size_t i = 0; i < msg.indices.size(); ++i) {
-    uint32_t idx = msg.indices[i];
+  for(size_t i = 0; i < msg->indices.size(); ++i) {
+    uint32_t idx = msg->indices[i];
     int y = idx / depth.cols;
     int x = idx - y * depth.cols;
-    depth(y, x) = msg.depth[i] * 0.001;
+    depth(y, x) = msg->depth[i] * 0.001;
   }
 
   depth_vis_ = cv::Vec3b(0, 0, 0);
-  for(size_t i = 0; i < msg.indices.size(); ++i) {
-    uint32_t idx = msg.indices[i];
+  for(size_t i = 0; i < msg->indices.size(); ++i) {
+    uint32_t idx = msg->indices[i];
     int y = idx / depth_vis_.cols;
     int x = idx - y * depth_vis_.cols;
-    depth_vis_(y, x) = colorize(msg.depth[i] * 0.001, 0, 5);
+    depth_vis_(y, x) = colorize(msg->depth[i] * 0.001, 0, 5);
   }
-  for(size_t i = 0; i < msg.fg_indices.size(); ++i) {
-    uint32_t idx = msg.fg_indices[i];
-    int y = idx / msg.width;
-    int x = idx - y * msg.width;
+  for(size_t i = 0; i < msg->fg_indices.size(); ++i) {
+    uint32_t idx = msg->fg_indices[i];
+    int y = idx / msg->width;
+    int x = idx - y * msg->width;
     cv::circle(depth_vis_, cv::Point(x, y), 2, cv::Scalar(0, 0, 255), -1);
   }
-  for(size_t i = 0; i < msg.bg_fringe_indices.size(); ++i) {
-    uint32_t idx = msg.bg_fringe_indices[i];
-    int y = idx / msg.width;
-    int x = idx - y * msg.width;
+  for(size_t i = 0; i < msg->bg_fringe_indices.size(); ++i) {
+    uint32_t idx = msg->bg_fringe_indices[i];
+    int y = idx / msg->width;
+    int x = idx - y * msg->width;
     cv::circle(depth_vis_, cv::Point(x, y), 2, cv::Scalar(0, 255, 0), -1);
   }
 
   
-  cv::Mat1b indices_mask(cv::Size(msg.width, msg.height), 0);
-  for(size_t i = 0; i < msg.indices.size(); ++i) {
-    uint32_t idx = msg.indices[i];
+  cv::Mat1b indices_mask(cv::Size(msg->width, msg->height), 0);
+  for(size_t i = 0; i < msg->indices.size(); ++i) {
+    uint32_t idx = msg->indices[i];
     int y = idx / depth_vis_.cols;
     int x = idx - y * depth_vis_.cols;
     indices_mask(y, x) = 255;
   }
     
-  cv::Mat1f values(cv::Size(msg.width, msg.height), 0);
+  cv::Mat1f values(cv::Size(msg->width, msg->height), 0);
   double sigma_p = 10;
   double sigma_d = 0.2;
 
-  for(size_t i = 0; i < msg.fg_indices.size(); ++i) {
-    uint32_t idx = msg.fg_indices[i];
-    int y = idx / msg.width;
-    int x = idx - y * msg.width;
-    int dx = msg.width_step / 2 + 1;
-    int dy = msg.height_step / 2 + 1;
+  for(size_t i = 0; i < msg->fg_indices.size(); ++i) {
+    uint32_t idx = msg->fg_indices[i];
+    int y = idx / msg->width;
+    int x = idx - y * msg->width;
+    int dx = msg->width_step / 2 + 1;
+    int dy = msg->height_step / 2 + 1;
     for(int y2 = y - dy; y2 <= y + dy; ++y2) {
       for(int x2 = x - dx; x2 <= x + dx; ++x2) {
-        if(y2 < 0 || y2 >= msg.height ||
-           x2 < 0 || x2 >= msg.width)
+        if(y2 < 0 || y2 >= msg->height ||
+           x2 < 0 || x2 >= msg->width)
         {
           continue;
         }
@@ -233,16 +223,16 @@ void DetectionVisualizer::foregroundCallback(const sentinel::Foreground& msg)
       }
     }
   }
-  for(size_t i = 0; i < msg.bg_fringe_indices.size(); ++i) {
-    uint32_t idx = msg.bg_fringe_indices[i];
-    int y = idx / msg.width;
-    int x = idx - y * msg.width;
-    int dx = msg.width_step / 2 + 1;
-    int dy = msg.height_step / 2 + 1;
+  for(size_t i = 0; i < msg->bg_fringe_indices.size(); ++i) {
+    uint32_t idx = msg->bg_fringe_indices[i];
+    int y = idx / msg->width;
+    int x = idx - y * msg->width;
+    int dx = msg->width_step / 2 + 1;
+    int dy = msg->height_step / 2 + 1;
     for(int y2 = y - dy; y2 <= y + dy; ++y2) {
       for(int x2 = x - dx; x2 <= x + dx; ++x2) {
-        if(y2 < 0 || y2 >= msg.height ||
-           x2 < 0 || x2 >= msg.width)
+        if(y2 < 0 || y2 >= msg->height ||
+           x2 < 0 || x2 >= msg->width)
         {
           continue;
         }
@@ -253,7 +243,7 @@ void DetectionVisualizer::foregroundCallback(const sentinel::Foreground& msg)
     }
   }
 
-  cv::Mat1b foreground(cv::Size(msg.width, msg.height), 0);
+  cv::Mat1b foreground(cv::Size(msg->width, msg->height), 0);
   for(int y = 0; y < values.rows; ++y)
     for(int x = 0; x < values.cols; ++x)
       if(values(y, x) > 0 && indices_mask(y, x) == 255 && depth(y, x) > 1e-3)
@@ -267,16 +257,16 @@ void DetectionVisualizer::foregroundCallback(const sentinel::Foreground& msg)
       if(foreground(y, x) == 255)
         vis(y, x) = cv::Vec3b(255, 255, 255);
 
-  for(size_t i = 0; i < msg.fg_indices.size(); ++i) {
-    uint32_t idx = msg.fg_indices[i];
-    int y = idx / msg.width;
-    int x = idx - y * msg.width;
+  for(size_t i = 0; i < msg->fg_indices.size(); ++i) {
+    uint32_t idx = msg->fg_indices[i];
+    int y = idx / msg->width;
+    int x = idx - y * msg->width;
     cv::circle(vis, cv::Point(x, y), 2, cv::Scalar(0, 0, 255), -1);
   }
-  for(size_t i = 0; i < msg.bg_fringe_indices.size(); ++i) {
-    uint32_t idx = msg.bg_fringe_indices[i];
-    int y = idx / msg.width;
-    int x = idx - y * msg.width;
+  for(size_t i = 0; i < msg->bg_fringe_indices.size(); ++i) {
+    uint32_t idx = msg->bg_fringe_indices[i];
+    int y = idx / msg->width;
+    int x = idx - y * msg->width;
     cv::circle(vis, cv::Point(x, y), 2, cv::Scalar(0, 255, 0), -1);
   }
 
@@ -292,7 +282,7 @@ void DetectionVisualizer::foregroundCallback(const sentinel::Foreground& msg)
   cv::resize(depth_vis_, depth_vis_scaled, depth_vis_.size() * 2, cv::INTER_NEAREST);
   cv::imshow("depth", depth_vis_scaled);
 
-  cv::Mat1i blobs(cv::Size(msg.width, msg.height), 0);
+  cv::Mat1i blobs(cv::Size(msg->width, msg->height), 0);
   for(int y = 0; y < depth.rows; ++y)
     for(int x = 0; x < depth.cols; ++x)
       if(foreground(y, x) == 0)
@@ -313,14 +303,14 @@ void DetectionVisualizer::foregroundCallback(const sentinel::Foreground& msg)
 
   // -- Make a visualization using the color image and foreground.
   color_vis_ = cv::Vec3b(127, 127, 127);
-  for(size_t i = 0; i < msg.indices.size(); ++i) {
-    uint32_t idx = msg.indices[i];
+  for(size_t i = 0; i < msg->indices.size(); ++i) {
+    uint32_t idx = msg->indices[i];
     int y = idx / color_vis_.cols;
     int x = idx - y * color_vis_.cols;
     if(foreground(y, x) == 255) {
-      color_vis_(y, x)[0] = msg.color[i*3+2];
-      color_vis_(y, x)[1] = msg.color[i*3+1];
-      color_vis_(y, x)[2] = msg.color[i*3+0];
+      color_vis_(y, x)[0] = msg->color[i*3+2];
+      color_vis_(y, x)[1] = msg->color[i*3+1];
+      color_vis_(y, x)[2] = msg->color[i*3+0];
     }
   }
 
