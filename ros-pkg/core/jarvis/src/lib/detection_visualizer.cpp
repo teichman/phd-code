@@ -281,7 +281,7 @@ void DetectionVisualizer::foregroundCallback(sentinel::ForegroundConstPtr msg)
         depth(y, x) = 0;
 
   hrt.reset("clustering"); hrt.start();
-  cluster(depth, 0.2, 400, &blobs);
+  cluster(depth, 0.2, 100, &blobs);
   hrt.stop(); cout << hrt.reportMilliseconds() << endl;
   cv::Mat3b clustering_scaled;
   cv::resize(colorAssignments(blobs), clustering_scaled, blobs.size() * 2, cv::INTER_NEAREST);

@@ -39,10 +39,10 @@ Sentinel::Sentinel(double update_interval,
 {
   oni_.setHandler(this);
   if(depth_res == OpenNI2Interface::VGA) {
-    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(640, 480, 1, 1, 0.1, MIN_DEPTH, MAX_DEPTH, 0.075));
+    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(640, 480, 1, 1, 0.1, MIN_DEPTH, MAX_DEPTH, 0.05));
   }
   else if(depth_res == OpenNI2Interface::QVGA)
-    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(320, 240, 4, 3, 0.1, MIN_DEPTH, MAX_DEPTH, 0.075));
+    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(320, 240, 4, 3, 0.1, MIN_DEPTH, MAX_DEPTH, 0.05));
   else {
     ROS_ASSERT(0);
   }
