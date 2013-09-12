@@ -218,7 +218,7 @@ void BackgroundModel::predict(openni::VideoFrameRef depth,
 
   // -- Fill in background fringe with 127s.
   idx = 0;
-  cv::dilate(block_img_, dilated_block_img_, cv::Mat(), cv::Point(-1, -1), 1);
+  cv::dilate(block_img_, dilated_block_img_, cv::Mat(), cv::Point(-1, -1), 2);
   for(int r = 0; r < block_img_.rows; ++r) {
     for(int c = 0; c < block_img_.cols; ++c) {
       if(block_img_(r, c) == 0 && dilated_block_img_(r, c) == 255) {
