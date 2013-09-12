@@ -33,12 +33,16 @@ void DepthHistogram::initialize(double min_depth, double max_depth, double binwi
 }
 
 void DepthHistogram::increment(double z, int num)
-{ 
+{
+  // Count anything outside the accepted depth range as being a dropout.
+  if(z < min_depth_ || z > max_depth_)
+    z = 0;
+  
   if(z < 1e-6) {
     dropout_count_ += num;
     total_ += num;
   }
-  else if(min_depth_ < z && z < max_depth_) {
+  else {
     size_t lower_idx;
     double upper_weight;
     indices(z, &lower_idx, &upper_weight);
