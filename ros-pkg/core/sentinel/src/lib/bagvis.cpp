@@ -71,17 +71,27 @@ void BagVis::handleBackgroundMessage(Background::ConstPtr msg)
 }
 
 void BagVis::handleMessage(const MessageInstance& msg)
-{ 
+{
+  int height = 0, width = 0;
   Foreground::ConstPtr fg = msg.instantiate<Foreground>();
   if(fg) {
     handleForegroundMessage(fg);
+    height = fg->height;
+    width = fg->width;
   }
   Background::ConstPtr bg = msg.instantiate<Background>();
   if(bg) {
     handleBackgroundMessage(bg);
+    height = bg->height;
+    width = bg->width;
   }
+  ROS_ASSERT(height != 0);
 
-  buffer_.push_back(reconstructor_.img_.clone());
+  if(reconstructor_.img_.rows == 0)
+    buffer_.push_back(cv::Mat3b(cv::Size(width, height), cv::Vec3b(0, 0, 0)));
+  else
+    buffer_.push_back(reconstructor_.img_.clone());
+  
   if(buffer_.size() > max_buffer_size_)
     buffer_.pop_front();
 
