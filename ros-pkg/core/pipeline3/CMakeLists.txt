@@ -29,7 +29,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/example_pods.cpp
   src/twiddler.cpp
   )
-target_link_libraries(${PROJECT_NAME} yaml-cpp)
+target_link_libraries(${PROJECT_NAME})
 rosbuild_add_boost_directories()
 rosbuild_link_boost(${PROJECT_NAME} filesystem system)
 
