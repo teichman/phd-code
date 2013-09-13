@@ -12,9 +12,6 @@ void Reconstructor::update(sentinel::ForegroundConstPtr fgmsg,
   ROS_ASSERT(fgmsg->height == bgmsg->height);
   ROS_ASSERT(fgmsg->frame_id == bgmsg->frame_id);
   ROS_ASSERT(bgmsg->indices.size() == bgmsg->depth.size());
-
-  if(img_.rows != bgmsg->height || img_.cols != bgmsg->width)
-    img_ = cv::Mat3b(cv::Size(bgmsg->width, bgmsg->height), cv::Vec3b(0, 0, 0));
   
   for(size_t i = 1; i < bgmsg->indices.size(); ++i)
     ROS_ASSERT(bgmsg->indices[i-1] < bgmsg->indices[i]);
@@ -44,19 +41,17 @@ void Reconstructor::update(sentinel::ForegroundConstPtr fgmsg,
 
 void Reconstructor::update(sentinel::ForegroundConstPtr fgmsg)
 {
+  if(img_.rows != fgmsg->height || img_.cols != fgmsg->width)
+    img_ = cv::Mat3b(cv::Size(fgmsg->width, fgmsg->height), cv::Vec3b(0, 0, 0));
+
   sync_.addT0(fgmsg, fgmsg->sensor_timestamp);
   process();
 }
 
 void Reconstructor::update(sentinel::BackgroundConstPtr bgmsg)
 {
-  // for(size_t i = 0; i < bgmsg->indices.size(); ++i) {
-  //   size_t idx = bgmsg->indices[i];
-  //   ROS_ASSERT(idx < (size_t)img_.rows * img_.cols);
-  //   img_(idx)[0] = bgmsg->color[i*3+2];
-  //   img_(idx)[1] = bgmsg->color[i*3+1];
-  //   img_(idx)[2] = bgmsg->color[i*3+0];
-  // }
+  if(img_.rows != bgmsg->height || img_.cols != bgmsg->width)
+    img_ = cv::Mat3b(cv::Size(bgmsg->width, bgmsg->height), cv::Vec3b(0, 0, 0));
 
   sync_.addT1(bgmsg, bgmsg->sensor_timestamp);
   process();
