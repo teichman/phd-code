@@ -1,0 +1,69 @@
+#ifndef ONLINE_INTERFACE2_H
+#define ONLINE_INTERFACE2_H
+
+//#include <track_tools/track_manager.h>
+#include <pcl/common/centroid.h>
+#include <online_learning/track_dataset_visualizer.h>
+
+//! The ViewController.
+class ActiveLearningInterface : public TrackViewControllerBase
+{
+public:
+  typedef pcl::visualization::PCLVisualizer PCLVisualizer;
+        
+  ActiveLearningInterface(OnlineLearner* learner, std::string unlabeled_td_dir);
+  ~ActiveLearningInterface();
+  //! PCLVisualizer can only be used from the thread it was created in.
+  //! This function makes a new thread, then creates the ActiveLearningInterface
+  //! inside of it, then runs it.
+  //static ThreadPtr create(OnlineLearner* learner, std::string unlabeled_td_dir);
+  void _run();
+
+protected:
+  OnlineLearner* learner_;
+  std::string unlabeled_td_dir_;
+
+  // shared data
+  std::string td_path_;
+  std::string next_td_path_;
+  TrackDataset td_;
+  GridClassifier gc_;
+  //! How long it's been since the classifier has been updated.
+  HighResTimer classifier_hrt_;
+  
+  // indexes into td_.
+  std::vector< std::pair<double, size_t> > confidences_;
+  
+  //! Indexes into confidences_.
+  int track_id_;
+  int frame_id_;
+  bool skip_log_;
+  //! Which class to consider when sorting tracks.
+  //! If -2, use all.
+  int sorting_class_;
+  bool paused_;
+  Label current_annotation_;
+
+  void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie);
+  void getNextTrackDatasetPath(std::string* path) const;
+  void loadNextDataset();
+  
+  // void pollingThreadFunction();
+  // void classificationThreadFunction();
+  void visualizationThreadFunction();
+  void labelAs(const Label& annotation);
+  void incrementTrack(int num);
+  void incrementFrame(int num);
+  void clearTracks();
+  void kickOut();
+
+  void reSort();
+  float confidence(const Label& pred);
+  float boostingMinConfidence(const Label& pred);
+
+  int classKeyToIdx(char key) const;
+  char classIdxToKey(int idx) const;
+  void rotateSortClass(int val);
+};
+
+#endif // ONLINE_INTERFACE_H
