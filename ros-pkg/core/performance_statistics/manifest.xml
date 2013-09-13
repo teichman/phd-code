@@ -9,7 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/performance_statistics</url>
   <depend package="matplotlib_interface"/>
-  <depend package="name_mapping2"/>
+  <depend package="name_mapping"/>
   <depend package="bag_of_tricks"/>
   
   <export>

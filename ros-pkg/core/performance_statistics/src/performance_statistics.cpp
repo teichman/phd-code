@@ -15,7 +15,7 @@ PerfStats::PerfStats(bool save_responses) :
 {
 }
 
-PerfStats::PerfStats(const NameMapping2& cmap, bool save_responses) :
+PerfStats::PerfStats(const NameMapping& cmap, bool save_responses) :
   num_bg_test_examples_(0),
   total_test_examples_(0),
   total_correct_(0),
@@ -512,7 +512,7 @@ double PerfStats::getTotalAccuracy() const
   return (double)total_correct_ / (double)total_test_examples_;
 }
 
-void PerfStats::_applyNameTranslator(const std::string& id, const NameTranslator2& translator)
+void PerfStats::_applyNameTranslator(const std::string& id, const NameTranslator& translator)
 {
   ROS_ASSERT(id == "cmap");
 

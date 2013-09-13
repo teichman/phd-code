@@ -4,7 +4,7 @@
 #include <matplotlib_interface/matplotlib_interface.h>  // Must come first because of Python.
 #include <float.h>
 #include <fstream>
-#include <name_mapping2/name_mapping2.h>
+#include <name_mapping/name_mapping.h>
 #include <bag_of_tricks/lockable.h>
 
 //! Safe to call incrementStats from multiple threads at the same time.
@@ -29,7 +29,7 @@ class PerfStats : public NameMappable, public Lockable
   std::vector<int> labels_;
 
   PerfStats(bool save_responses = true);
-  PerfStats(const NameMapping2& cmap, bool save_responses = true);
+  PerfStats(const NameMapping& cmap, bool save_responses = true);
 
   //! @param response log odds for all classes.  (Not 1/2 the log odds, as boosting outputs in its traditional formulation.)
   void incrementStats(int label, const Eigen::VectorXf& response); // label == -1 => BG, otherwise label == c => class == class_map_.toName(c).
@@ -54,7 +54,7 @@ protected:
   bool save_responses_;
   
   void computePrecisionAndRecall(double threshold, int label, double* precision, double* recall) const;
-  void _applyNameTranslator(const std::string& id, const NameTranslator2& translator);
+  void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
 };
 
 //! Plots accuracy vs some other important parameter.

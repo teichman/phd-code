@@ -14,8 +14,8 @@ double sampleFromGaussian(double stdev) {
   return val / 2.0;
 }
 
-NameMapping2 getNameMapping() {
-  NameMapping2 cmap;
+NameMapping getNameMapping() {
+  NameMapping cmap;
   cmap.addName("car");
   cmap.addName("pedestrian");
   cmap.addName("bicyclist");
