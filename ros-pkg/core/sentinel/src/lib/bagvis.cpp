@@ -7,6 +7,7 @@ using namespace std;
 using namespace rosbag;
 using namespace sentinel;
 namespace bpt = boost::posix_time;
+namespace blt = boost::local_time;  // yum
 
 BufferingBagViewer::BufferingBagViewer(std::string path,
                                        vector<std::string> topics,
@@ -92,18 +93,12 @@ void BagVis::handleMessage(const MessageInstance& msg)
   idx_ = buffer_.size() - 1;
 }
 
-void BagVis::addTimestamp(cv::Mat3b img, boost::posix_time::ptime ptime) const
+void BagVis::addTimestamp(cv::Mat3b img, bpt::ptime ptime) const
 {
-  // Create a time_zone_ptr for the desired time zone and use it to create a local_date_time
-  boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("PST"));
-  boost::local_time::local_date_time dt_with_zone(ptime_, zone);
-
   ostringstream oss;
-
-  // Set the formatting facet on the stringstream and print the local_date_time to it.
-  // Ownership of the boost::local_time::local_time_facet object goes to the created std::locale object.
-  oss.imbue(locale(cout.getloc(), new boost::local_time::local_time_facet("%Y-%m-%d %H:%M:%S UTC%Q")));
-  oss << dt_with_zone;
+  const bpt::time_facet* f = new bpt::time_facet("%Y-%m-%d %H:%M:%S UTC%Q");
+  oss.imbue(locale(oss.getloc(), f));
+  oss << ptime;
   
   float thickness = 1.5;
   float scale = 0.5;
