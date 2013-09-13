@@ -1,10 +1,12 @@
 #include <sentinel/bagvis.h>
 #include <boost/foreach.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <boost/date_time.hpp>
 
 using namespace std;
 using namespace rosbag;
 using namespace sentinel;
+namespace bpt = boost::posix_time;
 
 BufferingBagViewer::BufferingBagViewer(std::string path,
                                        vector<std::string> topics,
@@ -62,12 +64,14 @@ BagVis::BagVis(std::string path, size_t max_buffer_size) :
 
 void BagVis::handleForegroundMessage(Foreground::ConstPtr msg)
 {
-  reconstructor_.update(msg);    
+  reconstructor_.update(msg);
+  ptime_ = msg->header.stamp.toBoost();
 }
 
 void BagVis::handleBackgroundMessage(Background::ConstPtr msg)
 {
-  reconstructor_.update(msg);    
+  reconstructor_.update(msg);
+  ptime_ = msg->header.stamp.toBoost();
 }
 
 void BagVis::handleMessage(const MessageInstance& msg)
@@ -81,10 +85,31 @@ void BagVis::handleMessage(const MessageInstance& msg)
     handleBackgroundMessage(bg);
 
   buffer_.push_back(reconstructor_.img_.clone());
+  addTimestamp(buffer_.back(), ptime_);
   if(buffer_.size() > max_buffer_size_)
     buffer_.pop_front();
 
   idx_ = buffer_.size() - 1;
+}
+
+void BagVis::addTimestamp(cv::Mat3b img, boost::posix_time::ptime ptime) const
+{
+  // Create a time_zone_ptr for the desired time zone and use it to create a local_date_time
+  boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("PST"));
+  boost::local_time::local_date_time dt_with_zone(ptime_, zone);
+
+  ostringstream oss;
+
+  // Set the formatting facet on the stringstream and print the local_date_time to it.
+  // Ownership of the boost::local_time::local_time_facet object goes to the created std::locale object.
+  oss.imbue(locale(cout.getloc(), new boost::local_time::local_time_facet("%Y-%m-%d %H:%M:%S UTC%Q")));
+  oss << dt_with_zone;
+  
+  float thickness = 1.5;
+  float scale = 0.5;
+  cv::putText(img, oss.str(), cv::Point(10, img.rows - 10),
+              cv::FONT_HERSHEY_SIMPLEX, scale,
+              cv::Scalar(0, 255, 0), thickness, CV_AA);
 }
 
 void BagVis::run()

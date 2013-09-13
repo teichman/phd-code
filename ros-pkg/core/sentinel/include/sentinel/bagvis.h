@@ -53,6 +53,7 @@ protected:
   int idx_;
   size_t max_buffer_size_;
   std::deque<cv::Mat3b> buffer_;
+  boost::posix_time::ptime ptime_;
   
   void handleKeypress(char key);
   void read(int num);
@@ -60,6 +61,7 @@ protected:
   void handleMessage(const rosbag::MessageInstance& msg);
   void handleForegroundMessage(sentinel::Foreground::ConstPtr msg);
   void handleBackgroundMessage(sentinel::Background::ConstPtr msg);
+  void addTimestamp(cv::Mat3b img, boost::posix_time::ptime ptime) const;
 };
 
 #endif // BAGVIS_H
