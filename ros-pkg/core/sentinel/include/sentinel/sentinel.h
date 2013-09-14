@@ -52,6 +52,7 @@ protected:
   boost::shared_ptr<BackgroundModel> model_;
   std::queue<openni::VideoFrameRef> training_;
   double update_interval_;
+  double occupancy_threshold_;
   HighResTimer update_timer_;
   cv::Mat3b vis_;
   bool visualize_;

@@ -32,6 +32,7 @@ Sentinel::Sentinel(double update_interval,
                    OpenNI2Interface::Resolution color_res,
                    OpenNI2Interface::Resolution depth_res) :
   update_interval_(update_interval),
+  occupancy_threshold_(occupancy_threshold),
   visualize_(visualize),
   oni_(color_res, depth_res)
 {
@@ -101,7 +102,7 @@ void Sentinel::process(openni::VideoFrameRef color,
   }
   
   // -- If the model has been trained suffificiently, make predictions.
-  if(model_->numUpdates() < 2)
+  if(model_->numUpdates() < occupancy_threshold_)
     return;
   
   // -- Get raw mask.
