@@ -6,7 +6,7 @@
 #include <ros/ros.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <bag_of_tricks/high_res_timer.h>
+#include <timer/timer.h>
 #include <openni2_interface/openni2_interface.h>
 #include <openni2_interface/openni_helpers.h>
 #include <sentinel/background_model.h>

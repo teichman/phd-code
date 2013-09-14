@@ -8,6 +8,7 @@
 #include <timer/timer.h>
 #include <asp/asp.h>
 #include <sentinel/reconstructor.h>
+#include <jarvis/tracker.h>
 
 class DetectionVisualizer
 {
@@ -24,6 +25,7 @@ protected:
   std::deque<double> timestamps_;
   asp::Asp asp_;
   Reconstructor reconstructor_;
+  //Tracker tracker_;
 
   void foregroundCallback(sentinel::ForegroundConstPtr msg);
   void backgroundCallback(sentinel::BackgroundConstPtr msg);

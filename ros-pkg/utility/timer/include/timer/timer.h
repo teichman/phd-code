@@ -7,9 +7,23 @@
 #include <cstddef>
 #include <iostream>
 
+/// /brief Time units to control reporting
+struct TimeUnit
+{
+  enum Unit {
+    AUTO,
+    US,
+    MS,
+    SEC,
+    MIN,
+    HR
+  };
+};
+
 //! CLOCK_MONOTONIC_RAW will not be adjusted by NTP.
 //! See man clock_gettime.
-class HighResTimer {
+class HighResTimer
+{
 public:
   std::string description_;
 
@@ -25,6 +39,7 @@ public:
   double getHours() const;
 
   std::string report() const;
+  std::string report(TimeUnit::Unit unit) const;
   std::string reportMicroseconds() const;
   std::string reportMilliseconds() const;
   std::string reportSeconds() const;
@@ -42,8 +57,11 @@ class ScopedTimer
 {
 public:
   HighResTimer hrt_;
-  ScopedTimer(const std::string& description = "ScopedTimer");
+  ScopedTimer(const std::string& description = "ScopedTimer", TimeUnit::Unit unit=TimeUnit::AUTO);
   ~ScopedTimer();
+
+private:
+  TimeUnit::Unit unit_;
 };
 
 #endif // HIGH_RES_TIMER_H
