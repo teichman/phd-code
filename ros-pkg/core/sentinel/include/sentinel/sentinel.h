@@ -17,8 +17,8 @@ class Sentinel : public OpenNI2Handler
 {
 public:
   Sentinel(double update_interval,
-           int max_training_imgs,
-           double threshold,
+           double occupancy_threshold,
+           int raytracing_threshold,
            bool visualize,
            OpenNI2Interface::Resolution color_res,
            OpenNI2Interface::Resolution depth_res);
@@ -52,10 +52,8 @@ protected:
   boost::shared_ptr<BackgroundModel> model_;
   std::queue<openni::VideoFrameRef> training_;
   double update_interval_;
-  int max_training_imgs_;
   HighResTimer update_timer_;
   cv::Mat3b vis_;
-  double threshold_;
   bool visualize_;
   OpenNI2Interface oni_;
   cv::Mat3b color_;
@@ -77,8 +75,8 @@ class ROSStreamingSentinel : public Sentinel
 public:
   ROSStreamingSentinel(std::string sensor_id,
                        double update_interval,
-                       int max_training_imgs,
-                       double threshold,
+                       double occupancy_threshold,
+                       int raytracing_threshold,
                        bool visualize,
                        OpenNI2Interface::Resolution color_res,
                        OpenNI2Interface::Resolution depth_res);
@@ -118,7 +116,6 @@ protected:
 //                         double save_interval,
 //                         double update_interval,
 //                         int max_training_imgs,
-//                         double threshold,
 //                         bool visualize,
 //                         OpenNI2Interface::Resolution color_res,
 //                         OpenNI2Interface::Resolution depth_res);

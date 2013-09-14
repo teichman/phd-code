@@ -23,7 +23,9 @@ public:
                   int width_step, int height_step,
                   double min_pct,
                   double max_depth, double min_depth,
-                  double bin_width);
+                  double bin_width,
+                  double occupancy_threshold,
+                  int raytracing_threshold);
   ~BackgroundModel() {
     #if JARVIS_DEBUG
     std::cout << __PRETTY_FUNCTION__ << std::endl;
@@ -45,6 +47,7 @@ public:
   double transformDerivative(double input) const;
   double inverseTransform(double x) const;
   void debug(int x, int y);
+  size_t numUpdates() const { return num_updates_; }
   
 protected:
   int width_;
@@ -60,6 +63,9 @@ protected:
   double max_depth_;
   //! Bin width in z.
   double bin_width_;
+  double occupancy_threshold_;
+  int raytracing_threshold_;
+  size_t num_updates_;
   cv::Mat1b block_img_;
   cv::Mat1b dilated_block_img_;
   Eigen::VectorXd weights_;
@@ -124,7 +130,7 @@ public:
   int y_;
   
   OccupancyLine(double min_depth, double max_depth, double binwidth,
-                int x, int y);
+                int x, int y, int raytracing_threshold);
   void initialize(double min_depth, double max_depth, double binwidth);
   void increment(double z, int num);
   void clear();
@@ -161,7 +167,8 @@ protected:
   std::vector<double> lower_limits_;
   std::vector<double> bins_;
   size_t recent_bin_idx_;
-  size_t recent_bin_count_;
+  int recent_bin_count_;
+  int raytracing_threshold_;
 
   void raytrace(size_t lower_idx, double upper_weight);
 };

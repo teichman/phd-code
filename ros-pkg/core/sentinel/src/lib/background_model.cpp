@@ -98,12 +98,13 @@ void DepthHistogram::clear()
 }
 
 OccupancyLine::OccupancyLine(double min_depth, double max_depth, double binwidth,
-                             int x, int y) :
+                             int x, int y, int raytracing_threshold) :
   debug_(false),
   x_(x),
   y_(y),
   recent_bin_idx_(0),
-  recent_bin_count_(0)
+  recent_bin_count_(0),
+  raytracing_threshold_(raytracing_threshold)
 {
   initialize(min_depth, max_depth, binwidth);
 }
@@ -148,7 +149,7 @@ void OccupancyLine::increment(double z, int num)
     recent_bin_idx_ = lower_idx;
   }
   
-  if(recent_bin_count_ == 30) {
+  if(recent_bin_count_ == raytracing_threshold_) {
     raytrace(lower_idx, upper_weight);
     recent_bin_count_ = 0;
   }
@@ -210,7 +211,9 @@ BackgroundModel::BackgroundModel(int width, int height,
                                  int width_step, int height_step,
                                  double min_pct,
                                  double min_depth, double max_depth,
-                                 double bin_width) :
+                                 double bin_width,
+                                 double occupancy_threshold,
+                                 int raytracing_threshold) :
   width_(width),
   height_(height),
   width_step_(width_step),
@@ -218,7 +221,10 @@ BackgroundModel::BackgroundModel(int width, int height,
   min_pct_(min_pct),
   min_depth_(min_depth),
   max_depth_(max_depth),
-  bin_width_(bin_width)
+  bin_width_(bin_width),
+  occupancy_threshold_(occupancy_threshold),
+  raytracing_threshold_(raytracing_threshold),
+  num_updates_(0)
 {
   // -- Set up the space transform.
   // f(x) = ax^2 + bx + c
@@ -256,7 +262,7 @@ BackgroundModel::BackgroundModel(int width, int height,
   histograms_.reserve(num);
   for(int y = height_step_ / 2; y < height; y += height_step_)
     for(int x = width_step_ / 2; x < width; x += width_step_)
-      histograms_.push_back(OccupancyLine(min_depth_, max_depth_, bin_width_, x, y));
+      histograms_.push_back(OccupancyLine(min_depth_, max_depth_, bin_width_, x, y, raytracing_threshold_));
 
   cout << "Initialized " << histograms_.size() << " histograms." << endl;
 
@@ -284,6 +290,8 @@ void BackgroundModel::increment(openni::VideoFrameRef depth, int num)
       histograms_[idx].increment(transform(z), num);
     }
   }
+
+  ++num_updates_;
 }
 
 void BackgroundModel::predict(openni::VideoFrameRef depth,
@@ -312,7 +320,7 @@ void BackgroundModel::predict(openni::VideoFrameRef depth,
       if(MIN_DEPTH > z || z > MAX_DEPTH)
         continue;
       
-      if(histograms_[idx].getNum(transform(z)) < 30 * 60 * 0.1) {
+      if(histograms_[idx].getNum(transform(z)) < occupancy_threshold_) {
         fg_markers->push_back(y * width_ + x);
         int r = idx / blocks_per_row_;
         int c = idx - r * blocks_per_row_;
