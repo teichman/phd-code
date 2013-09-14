@@ -101,24 +101,21 @@ void DetectionVisualizer::foregroundCallback(sentinel::ForegroundConstPtr msg)
 
   // -- Make a visualization using the color image and foreground.
   // TODO: Make this use the tracking info.
-  // if(visualize_) {
-  //   color_vis_ = cv::Vec3b(127, 127, 127);
-  //   for(size_t i = 0; i < msg->indices.size(); ++i) {
-  //     uint32_t idx = msg->indices[i];
-  //     int y = idx / color_vis_.cols;
-  //     int x = idx - y * color_vis_.cols;
-  //     if(foreground(y, x) == 255) {
-  //       color_vis_(y, x)[0] = msg->color[i*3+2];
-  //       color_vis_(y, x)[1] = msg->color[i*3+1];
-  //       color_vis_(y, x)[2] = msg->color[i*3+0];
-  //     }
-  //   }
+  color_vis_ = cv::Vec3b(127, 127, 127);
+  for(size_t i = 0; i < msg->indices.size(); ++i) {
+    uint32_t idx = msg->indices[i];
+    int y = idx / color_vis_.cols;
+    int x = idx - y * color_vis_.cols;
+    if(tracker_.foreground_(y, x) == 255) {
+      color_vis_(y, x)[0] = msg->color[i*3+2];
+      color_vis_(y, x)[1] = msg->color[i*3+1];
+      color_vis_(y, x)[2] = msg->color[i*3+0];
+    }
+  }
 
-  //   cv::Mat3b color_vis_scaled;
-  //   cv::resize(color_vis_, color_vis_scaled, color_vis_.size() * 2, cv::INTER_NEAREST);
-  //   cv::imshow("color", color_vis_scaled);
-  //   cv::waitKey(2);
-  // }
-
+  cv::Mat3b color_vis_scaled;
+  cv::resize(color_vis_, color_vis_scaled, color_vis_.size() * 2, cv::INTER_NEAREST);
+  cv::imshow("color", color_vis_scaled);
+  cv::waitKey(2);
 }
 
