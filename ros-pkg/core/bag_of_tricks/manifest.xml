@@ -9,7 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/bag_of_tricks</url>
   <depend package="roscpp"/>
-  <depend package="opencv2"/>
+  <depend package="opencv_bleeding"/>
   <depend package="serializable"/>
   <depend package="timer"/>
 
