@@ -11,6 +11,7 @@ source:
 
 clean:
 	-cd source/OpenCV-2.4.0/release && make clean
+	-rm built
 
-wipe: 
+wipe:  clean
 	-rm -rf source
