@@ -14,6 +14,7 @@
 #define MIN_DEPTH 0.5
 
 class DepthHistogram;
+class OccupancyLine;
 
 class BackgroundModel
 {
@@ -52,7 +53,7 @@ protected:
   int height_step_;
   int blocks_per_row_;
   int blocks_per_col_;
-  std::vector<DepthHistogram> histograms_; // row major
+  std::vector<OccupancyLine> histograms_; // row major
   //! Percentage of histogram that a bin must contain to count as background.
   double min_pct_;
   double min_depth_;
@@ -112,6 +113,57 @@ protected:
   double total_;
   std::vector<double> lower_limits_;
   std::vector<double> bins_;
+};
+
+
+class OccupancyLine
+{
+public:
+  bool debug_;
+  int x_;
+  int y_;
+  
+  OccupancyLine(double min_depth, double max_depth, double binwidth,
+                int x, int y);
+  void initialize(double min_depth, double max_depth, double binwidth);
+  void increment(double z, int num);
+  void clear();
+  std::string status(const std::string& prefix = "") const;
+  
+  // Inline for speed.
+  double getNum(double z) const
+  {
+    ROS_ASSERT(z >= min_depth_ && z < max_depth_);
+    size_t lower_idx;
+    double upper_weight;
+    indices(z, &lower_idx, &upper_weight);
+    //return bins_[lower_idx] * (1.0 - upper_weight) + bins_[lower_idx + 1] * (upper_weight);
+    return bins_[lower_idx] + bins_[lower_idx + 1];
+  }
+
+  // Inline for speed.
+  void indices(double z, size_t* lower_idx, double* upper_weight) const
+  {
+    ROS_ASSERT(z >= min_depth_ && z < max_depth_);
+    *lower_idx = std::max<int>(0, (z - min_depth_) * inv_binwidth_);
+    // Very rare edge case, but I have seen it in practice.
+    *lower_idx = std::min<int>(lower_limits_.size() - 2, *lower_idx);
+    *upper_weight = (z - lower_limits_[*lower_idx]) * inv_binwidth_;
+  }
+
+  friend class BackgroundModel;
+  
+protected:
+  double min_depth_;
+  double max_depth_;
+  double binwidth_;
+  double inv_binwidth_;
+  std::vector<double> lower_limits_;
+  std::vector<double> bins_;
+  size_t recent_bin_idx_;
+  size_t recent_bin_count_;
+
+  void raytrace(size_t lower_idx, double upper_weight);
 };
 
 

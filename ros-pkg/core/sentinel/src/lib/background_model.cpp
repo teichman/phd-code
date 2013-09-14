@@ -97,6 +97,115 @@ void DepthHistogram::clear()
   bins_.clear();
 }
 
+OccupancyLine::OccupancyLine(double min_depth, double max_depth, double binwidth,
+                             int x, int y) :
+  debug_(false),
+  x_(x),
+  y_(y),
+  recent_bin_idx_(0),
+  recent_bin_count_(0)
+{
+  initialize(min_depth, max_depth, binwidth);
+}
+
+void OccupancyLine::initialize(double min_depth, double max_depth, double binwidth)
+{
+  clear();
+  
+  min_depth_ = min_depth;
+  max_depth_ = max_depth;
+  binwidth_ = binwidth;
+  inv_binwidth_ = 1.0 / binwidth_;
+  
+  int num_bins = ceil((max_depth_ - min_depth_) / binwidth_);
+  bins_.resize(num_bins, 0);
+  lower_limits_.resize(num_bins);
+  for(int i = 0; i < num_bins; ++i)
+    lower_limits_[i] = min_depth_ + i * binwidth_;
+}
+
+void OccupancyLine::increment(double z, int num)
+{
+  if(z < 1e-3)
+    return;
+  
+  z = max(z, min_depth_);
+  z = min(z, max_depth_ - 1e-6);
+  
+  size_t lower_idx;
+  double upper_weight;
+  indices(z, &lower_idx, &upper_weight);
+  
+  bins_[lower_idx] += num * (1.0 - upper_weight);
+  bins_[lower_idx+1] += num * upper_weight;
+  
+  if(fabs((int)lower_idx - (int)recent_bin_idx_) < 2) {
+    ++recent_bin_count_;
+    recent_bin_idx_ = lower_idx;
+  }
+  else {
+    recent_bin_count_ = 0;
+    recent_bin_idx_ = lower_idx;
+  }
+  
+  if(recent_bin_count_ == 30) {
+    raytrace(lower_idx, upper_weight);
+    recent_bin_count_ = 0;
+  }
+  
+  if(debug_) {
+    cout << "#################### OccupancyLine::increment" << endl;
+    cout << "Incremented by " << num << " at depth " << z << endl;
+    cout << status() << endl;
+    cout << "#################### aoeuaoeuaoeu" << endl;
+  }
+}
+
+void OccupancyLine::raytrace(size_t lower_idx, double upper_weight)
+{
+  double mx = 0;
+  for(int i = 0; i < (int)lower_idx - 2; ++i) {
+    mx = max(mx, bins_[i]);
+    bins_[i] = 0;
+  }
+
+  bins_[lower_idx] = max(bins_[lower_idx], mx * (1.0 - upper_weight));
+  bins_[lower_idx+1] = max(bins_[lower_idx+1], mx * upper_weight);
+}
+
+std::string OccupancyLine::status(const std::string& prefix) const
+{
+  ostringstream oss;
+  oss << prefix << "Bins: " << endl;
+  for(size_t i = 0; i < lower_limits_.size(); ++i) {
+    if(bins_[i] > 0)
+      oss << prefix << "  " << lower_limits_[i] << ": " << bins_[i] << endl;
+  }
+  oss << prefix << "x: " << x_ << endl;
+  oss << prefix << "y: " << y_ << endl;
+  oss << prefix << "min_depth: " << min_depth_ << endl;
+  oss << prefix << "max_depth_: " << max_depth_ << endl;
+  oss << prefix << "binwidth_: " << binwidth_ << endl;
+  oss << prefix << "inv_binwidth_: " << inv_binwidth_ << endl;
+  oss << prefix << "recent_bin_idx_: " << recent_bin_idx_ << endl;
+  oss << prefix << "recent_bin_count_: " << recent_bin_count_ << endl;
+
+  return oss.str();
+}
+  
+
+void OccupancyLine::clear()
+{
+  min_depth_ = -1;
+  max_depth_ = -1;
+  binwidth_ = -1;
+  inv_binwidth_ = -1;
+  recent_bin_count_ = 0;
+  lower_limits_.clear();
+  bins_.clear();
+}
+
+
 BackgroundModel::BackgroundModel(int width, int height,
                                  int width_step, int height_step,
                                  double min_pct,
@@ -147,12 +256,12 @@ BackgroundModel::BackgroundModel(int width, int height,
   histograms_.reserve(num);
   for(int y = height_step_ / 2; y < height; y += height_step_)
     for(int x = width_step_ / 2; x < width; x += width_step_)
-      histograms_.push_back(DepthHistogram(min_depth_, max_depth_, bin_width_, x, y));
+      histograms_.push_back(OccupancyLine(min_depth_, max_depth_, bin_width_, x, y));
 
   cout << "Initialized " << histograms_.size() << " histograms." << endl;
 
   // -- Print out bin widths.
-  const DepthHistogram& hist = histograms_[0];
+  const OccupancyLine& hist = histograms_[0];
   for(size_t i = 0; i < hist.lower_limits_.size(); ++i)
     cout << "Bin " << i << ": " << inverseTransform(hist.lower_limits_[i]) << endl;
 }
@@ -203,8 +312,7 @@ void BackgroundModel::predict(openni::VideoFrameRef depth,
       if(MIN_DEPTH > z || z > MAX_DEPTH)
         continue;
       
-      double pct = histograms_[idx].getNum(transform(z)) / histograms_[idx].total();
-      if(pct < min_pct_) {
+      if(histograms_[idx].getNum(transform(z)) < 30 * 60 * 0.1) {
         fg_markers->push_back(y * width_ + x);
         int r = idx / blocks_per_row_;
         int c = idx - r * blocks_per_row_;

@@ -146,7 +146,7 @@ void Sentinel::updateModel(openni::VideoFrameRef depth)
   model_->increment(depth);
   
   if((int)training_.size() > max_training_imgs_) { 
-    model_->increment(training_.front(), -1);
+    //model_->increment(training_.front(), -1);
     training_.pop();
   }
 }
