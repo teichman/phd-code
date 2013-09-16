@@ -55,7 +55,7 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
 
   // Run the clustering.
   hrt.reset("clustering"); hrt.start();
-  cluster(depth_, 0.2, 100, &blobs_);
+  cluster(depth_, 0.2, 1, &blobs_);
   hrt.stop(); cout << hrt.reportMilliseconds() << endl;
   if(visualize_) { 
     cv::Mat3b clustering_scaled;

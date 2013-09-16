@@ -19,6 +19,7 @@ public:
   Sentinel(double update_interval,
            double occupancy_threshold,
            int raytracing_threshold,
+           double detection_threshold,
            bool visualize,
            OpenNI2Interface::Resolution color_res,
            OpenNI2Interface::Resolution depth_res);
@@ -53,6 +54,7 @@ protected:
   std::queue<openni::VideoFrameRef> training_;
   double update_interval_;
   double occupancy_threshold_;
+  double detection_threshold_;
   HighResTimer update_timer_;
   cv::Mat3b vis_;
   bool visualize_;
@@ -78,6 +80,7 @@ public:
                        double update_interval,
                        double occupancy_threshold,
                        int raytracing_threshold,
+                       double detection_threshold,
                        bool visualize,
                        OpenNI2Interface::Resolution color_res,
                        OpenNI2Interface::Resolution depth_res);

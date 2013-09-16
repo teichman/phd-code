@@ -419,14 +419,10 @@ void BackgroundModel::predict(openni::VideoFrameRef depth,
   }
   cv::Mat1i ass(block_depth.size());
   cluster(block_depth, 0.5, 10, &ass);
-  for(int r = 0; r < block_img_.rows; ++r) {
-    for(int c = 0; c < block_img_.cols; ++c) {
-      if(ass(r, c) == -1) {
-        ROS_ASSERT(block_img_(r, c) == 255);
+  for(int r = 0; r < block_img_.rows; ++r)
+    for(int c = 0; c < block_img_.cols; ++c)
+      if(ass(r, c) == -1)
         block_img_(r, c) = 0;
-      }
-    }
-  }
 
   // if(visualize_) {
   //   cv::Mat3b clustering_scaled;
@@ -499,10 +495,14 @@ double BackgroundModel::inverseTransform(double x) const
 
 void BackgroundModel::debug(int x, int y)
 {
+  if(width_step_ != 1 || height_step_ != 1) {
+    ROS_WARN("Cannot do BackgroundModel::debug unless width_step_ and height_step_ are both 1.");
+    return;
+  }
+  
   for(size_t i = 0; i < histograms_.size(); ++i)
     histograms_[i].debug_ = false;
   
-  ROS_ASSERT(width_step_ == 1 && height_step_ == 1);
   int idx = y * width_ + x;
   histograms_[idx].debug_ = true;
 }

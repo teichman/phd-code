@@ -22,6 +22,7 @@ int main(int argc, char** argv)
   double update_interval;
   double occupancy_threshold;
   int raytracing_threshold;
+  double detection_threshold;
   size_t max_training_imgs;
   string color_resolution;
   string depth_resolution;
@@ -31,6 +32,7 @@ int main(int argc, char** argv)
     ("update-interval,u", bpo::value(&update_interval)->default_value(1), "How often to update, in seconds")
     ("occupancy-threshold,o", bpo::value(&occupancy_threshold)->default_value(120), "")
     ("raytracing-threshold,r", bpo::value(&raytracing_threshold)->default_value(1), "")
+    ("detection-threshold,r", bpo::value(&detection_threshold)->default_value(0), "")
     ("color-res", bpo::value(&color_resolution), "")
     ("depth-res", bpo::value(&depth_resolution), "")
     ("visualize", "Show extra visualization")
@@ -75,7 +77,7 @@ int main(int argc, char** argv)
 
   ROSStreamingSentinel sen(sensor_id, update_interval,
                            occupancy_threshold, raytracing_threshold,
-                           opts.count("visualize"),
+                           detection_threshold, opts.count("visualize"),
                            color_res, depth_res);
 
   #if JARVIS_PROFILE

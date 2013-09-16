@@ -28,11 +28,13 @@ cv::Mat3b falseColor(const DepthMat& depth)
 Sentinel::Sentinel(double update_interval,
                    double occupancy_threshold,
                    int raytracing_threshold,
+                   double detection_threshold,
                    bool visualize,
                    OpenNI2Interface::Resolution color_res,
                    OpenNI2Interface::Resolution depth_res) :
   update_interval_(update_interval),
   occupancy_threshold_(occupancy_threshold),
+  detection_threshold_(detection_threshold),
   visualize_(visualize),
   oni_(color_res, depth_res)
 {
@@ -115,9 +117,10 @@ void Sentinel::process(openni::VideoFrameRef color,
   }
 
   // -- Process the detection.
-  //if((double)fg_markers_.size() / model_->size() > threshold_)
-  handleDetection(color, depth, indices_, fg_markers_, bg_fringe_markers_,
-                  sensor_timestamp, wall_timestamp, frame_id);
+  if((double)fg_markers_.size() / model_->size() > detection_threshold_) {
+    handleDetection(color, depth, indices_, fg_markers_, bg_fringe_markers_,
+                    sensor_timestamp, wall_timestamp, frame_id);
+  }
   handleNonDetection(color, depth, sensor_timestamp, wall_timestamp, frame_id);
 
   if(visualize_) {
@@ -143,10 +146,12 @@ ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
                                            double update_interval,
                                            double occupancy_threshold,
                                            int raytracing_threshold,
+                                           double detection_threshold,
                                            bool visualize,
                                            OpenNI2Interface::Resolution color_res,
                                            OpenNI2Interface::Resolution depth_res) :
-  Sentinel(update_interval, occupancy_threshold, raytracing_threshold, visualize, color_res, depth_res),
+  Sentinel(update_interval, occupancy_threshold, raytracing_threshold,
+           detection_threshold, visualize, color_res, depth_res),
   sensor_id_(sensor_id),
   bg_index_x_(0),
   bg_index_y_(0)
