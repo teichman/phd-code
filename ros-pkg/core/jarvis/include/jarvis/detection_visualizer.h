@@ -6,8 +6,8 @@
 #include <ros/ros.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <timer/timer.h>
-#include <asp/asp.h>
 #include <sentinel/reconstructor.h>
+#include <jarvis/tracker.h>
 
 class DetectionVisualizer
 {
@@ -20,10 +20,8 @@ protected:
   ros::Subscriber bg_sub_;
   cv::Mat3b color_vis_;
   cv::Mat3b depth_vis_;
-  HighResTimer hrt_;
-  std::deque<double> timestamps_;
-  asp::Asp asp_;
   Reconstructor reconstructor_;
+  Tracker tracker_;
 
   void foregroundCallback(sentinel::ForegroundConstPtr msg);
   void backgroundCallback(sentinel::BackgroundConstPtr msg);

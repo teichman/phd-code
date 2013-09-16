@@ -1,9 +1,87 @@
 #include <sentinel/background_model.h>
+#include <queue>
 #include <ros/assert.h>
 #include <timer/timer.h>
+#include <opencv2/video/tracking.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/nonfree/features2d.hpp>
+#include <bag_of_tricks/connected_components.h>
 
 using namespace std;
 using namespace Eigen;
+
+void flood(cv::Mat1f depth, float thresh, int min_pts, const cv::Point2i& seed, int id, cv::Mat1i* ass)
+{
+  // This should probably be a class rather than a free function so that it can
+  // reuse the allocated memory.
+  vector<cv::Point2i> pts;
+  pts.reserve(min_pts);
+  pts.push_back(seed);
+  
+  std::queue<cv::Point2i> que;
+  int num_pts = 1;
+  que.push(seed);
+  (*ass)(seed) = -2;
+  while(!que.empty()) {
+    cv::Point2i pt = que.front();
+    que.pop();
+
+    ROS_ASSERT((*ass)(pt) == -2);
+    (*ass)(pt) = id;
+    float d0 = depth(pt);
+    
+    cv::Point2i dpt;
+    for(dpt.y = -1; dpt.y <= 1; ++dpt.y) {
+      for(dpt.x = -1; dpt.x <= 1; ++dpt.x) {
+        cv::Point2i pt2 = pt + dpt;
+        if(pt2.x < 0 || pt2.x >= ass->cols ||
+           pt2.y < 0 || pt2.y >= ass->rows)
+          continue;
+        float d2 = depth(pt2);
+
+        if(fabs(d0 - d2) < thresh && (*ass)(pt2) == -3) {
+          que.push(pt2);
+          (*ass)(pt2) = -2;
+          ++num_pts;
+          if(num_pts < min_pts)
+            pts.push_back(pt2);
+        }
+      }
+    }
+  }
+
+  // If we didn't get enough points in this cluster, backtrack and remove them.
+  if(num_pts < min_pts)
+    for(size_t i = 0; i < pts.size(); ++i)
+      (*ass)(pts[i]) = -1;
+}
+
+void cluster(cv::Mat1f depth, float thresh, int min_pts, cv::Mat1i* assignments)
+{
+  // -3    : unset
+  // -2    : in queue
+  // -1    : bg
+  // >= 0    : cluster assignment
+  ROS_ASSERT(depth.size() == assignments->size());
+  *assignments = -3;
+  for(int y = 0; y < assignments->rows; ++y)
+    for(int x = 0; x < assignments->cols; ++x)
+      if(depth(y, x) == 0)
+        (*assignments)(y, x) = -1;
+
+  int id = 0;
+  for(int y = 0; y < assignments->rows; ++y) {
+    for(int x = 0; x < assignments->cols; ++x) {
+      if((*assignments)(y, x) == -3) {
+        cv::KeyPoint center;
+        cv::Point2i seed(x, y);
+        flood(depth, thresh, min_pts, seed, id, assignments);
+        ++id;
+      }
+    }
+  }
+}
+
 
 DepthHistogram::DepthHistogram(double min_depth, double max_depth, double binwidth,
                                int x, int y) :
@@ -97,11 +175,123 @@ void DepthHistogram::clear()
   bins_.clear();
 }
 
+OccupancyLine::OccupancyLine(double min_depth, double max_depth, double binwidth,
+                             int x, int y, int raytracing_threshold) :
+  debug_(false),
+  x_(x),
+  y_(y),
+  recent_bin_idx_(0),
+  recent_bin_count_(0),
+  raytracing_threshold_(raytracing_threshold)
+{
+  initialize(min_depth, max_depth, binwidth);
+}
+
+void OccupancyLine::initialize(double min_depth, double max_depth, double binwidth)
+{
+  clear();
+  
+  min_depth_ = min_depth;
+  max_depth_ = max_depth;
+  binwidth_ = binwidth;
+  inv_binwidth_ = 1.0 / binwidth_;
+  
+  int num_bins = ceil((max_depth_ - min_depth_) / binwidth_);
+  bins_.resize(num_bins, 0);
+  lower_limits_.resize(num_bins);
+  for(int i = 0; i < num_bins; ++i)
+    lower_limits_[i] = min_depth_ + i * binwidth_;
+}
+
+void OccupancyLine::increment(double z, int num)
+{
+  if(z < 1e-3)
+    return;
+  
+  z = max(z, min_depth_);
+  z = min(z, max_depth_ - 1e-6);
+  
+  size_t lower_idx;
+  double upper_weight;
+  indices(z, &lower_idx, &upper_weight);
+  
+  bins_[lower_idx] += num * (1.0 - upper_weight);
+  bins_[lower_idx+1] += num * upper_weight;
+  
+  if(fabs((int)lower_idx - (int)recent_bin_idx_) < 2) {
+    ++recent_bin_count_;
+    recent_bin_idx_ = lower_idx;
+  }
+  else {
+    recent_bin_count_ = 0;
+    recent_bin_idx_ = lower_idx;
+  }
+  
+  if(recent_bin_count_ == raytracing_threshold_) {
+    raytrace(lower_idx, upper_weight);
+    recent_bin_count_ = 0;
+  }
+  
+  if(debug_) {
+    cout << "#################### OccupancyLine::increment" << endl;
+    cout << "Incremented by " << num << " at depth " << z << endl;
+    cout << status() << endl;
+    cout << "#################### aoeuaoeuaoeu" << endl;
+  }
+}
+
+void OccupancyLine::raytrace(size_t lower_idx, double upper_weight)
+{
+  double mx = 0;
+  for(int i = 0; i < (int)lower_idx - 2; ++i) {
+    mx = max(mx, bins_[i]);
+    bins_[i] = 0;
+  }
+
+  bins_[lower_idx] = max(bins_[lower_idx], mx * (1.0 - upper_weight));
+  bins_[lower_idx+1] = max(bins_[lower_idx+1], mx * upper_weight);
+}
+
+std::string OccupancyLine::status(const std::string& prefix) const
+{
+  ostringstream oss;
+  oss << prefix << "Bins: " << endl;
+  for(size_t i = 0; i < lower_limits_.size(); ++i) {
+    if(bins_[i] > 0)
+      oss << prefix << "  " << lower_limits_[i] << ": " << bins_[i] << endl;
+  }
+  oss << prefix << "x: " << x_ << endl;
+  oss << prefix << "y: " << y_ << endl;
+  oss << prefix << "min_depth: " << min_depth_ << endl;
+  oss << prefix << "max_depth_: " << max_depth_ << endl;
+  oss << prefix << "binwidth_: " << binwidth_ << endl;
+  oss << prefix << "inv_binwidth_: " << inv_binwidth_ << endl;
+  oss << prefix << "recent_bin_idx_: " << recent_bin_idx_ << endl;
+  oss << prefix << "recent_bin_count_: " << recent_bin_count_ << endl;
+
+  return oss.str();
+}
+  
+
+void OccupancyLine::clear()
+{
+  min_depth_ = -1;
+  max_depth_ = -1;
+  binwidth_ = -1;
+  inv_binwidth_ = -1;
+  recent_bin_count_ = 0;
+  lower_limits_.clear();
+  bins_.clear();
+}
+
+
 BackgroundModel::BackgroundModel(int width, int height,
                                  int width_step, int height_step,
                                  double min_pct,
                                  double min_depth, double max_depth,
-                                 double bin_width) :
+                                 double bin_width,
+                                 double occupancy_threshold,
+                                 int raytracing_threshold) :
   width_(width),
   height_(height),
   width_step_(width_step),
@@ -109,7 +299,10 @@ BackgroundModel::BackgroundModel(int width, int height,
   min_pct_(min_pct),
   min_depth_(min_depth),
   max_depth_(max_depth),
-  bin_width_(bin_width)
+  bin_width_(bin_width),
+  occupancy_threshold_(occupancy_threshold),
+  raytracing_threshold_(raytracing_threshold),
+  num_updates_(0)
 {
   // -- Set up the space transform.
   // f(x) = ax^2 + bx + c
@@ -147,12 +340,12 @@ BackgroundModel::BackgroundModel(int width, int height,
   histograms_.reserve(num);
   for(int y = height_step_ / 2; y < height; y += height_step_)
     for(int x = width_step_ / 2; x < width; x += width_step_)
-      histograms_.push_back(DepthHistogram(min_depth_, max_depth_, bin_width_, x, y));
+      histograms_.push_back(OccupancyLine(min_depth_, max_depth_, bin_width_, x, y, raytracing_threshold_));
 
   cout << "Initialized " << histograms_.size() << " histograms." << endl;
 
   // -- Print out bin widths.
-  const DepthHistogram& hist = histograms_[0];
+  const OccupancyLine& hist = histograms_[0];
   for(size_t i = 0; i < hist.lower_limits_.size(); ++i)
     cout << "Bin " << i << ": " << inverseTransform(hist.lower_limits_[i]) << endl;
 }
@@ -175,6 +368,8 @@ void BackgroundModel::increment(openni::VideoFrameRef depth, int num)
       histograms_[idx].increment(transform(z), num);
     }
   }
+
+  ++num_updates_;
 }
 
 void BackgroundModel::predict(openni::VideoFrameRef depth,
@@ -191,7 +386,7 @@ void BackgroundModel::predict(openni::VideoFrameRef depth,
   size_t idx = 0;
   uint16_t* data = (uint16_t*)depth.getData();
 
-  // -- Fill in foreground.
+  // -- Fill in block_img_ with foreground points.
   block_img_ = 0;
   for(int y = height_step_ / 2; y < height_; y += height_step_) {
     for(int x = width_step_ / 2; x < width_; x += width_step_, ++idx) {
@@ -203,19 +398,52 @@ void BackgroundModel::predict(openni::VideoFrameRef depth,
       if(MIN_DEPTH > z || z > MAX_DEPTH)
         continue;
       
-      double pct = histograms_[idx].getNum(transform(z)) / histograms_[idx].total();
-      if(pct < min_pct_) {
-        fg_markers->push_back(y * width_ + x);
+      if(histograms_[idx].getNum(transform(z)) < occupancy_threshold_) {
         int r = idx / blocks_per_row_;
         int c = idx - r * blocks_per_row_;
         block_img_(r, c) = 255;
+      }
+    }
+  }
+
+  // -- Run clustering on FG markers.  Eliminate those that are
+  //    too small.
+  cv::Mat1f block_depth(block_img_.size(), 0);
+  for(int r = 0; r < block_img_.rows; ++r) {
+    for(int c = 0; c < block_img_.cols; ++c) {
+      int y = r * height_step_ + height_step_ / 2;
+      int x = c * width_step_ + width_step_ / 2;
+      if(block_img_(r, c) == 255) 
+        block_depth(r, c) = data[y * width_ + x] * 0.001;
+    }
+  }
+  cv::Mat1i ass(block_depth.size());
+  cluster(block_depth, 0.5, 10, &ass);
+  for(int r = 0; r < block_img_.rows; ++r)
+    for(int c = 0; c < block_img_.cols; ++c)
+      if(ass(r, c) == -1)
+        block_img_(r, c) = 0;
+
+  // if(visualize_) {
+  //   cv::Mat3b clustering_scaled;
+  //   cv::resize(colorAssignments(ass), clustering_scaled, ass.size(), cv::INTER_NEAREST);
+  //   cv::imshow("Clustering", clustering_scaled);
+  // }
+  
+  // -- Fill fg_markers and indices with the remaining.
+  for(int r = 0; r < block_img_.rows; ++r) {
+    for(int c = 0; c < block_img_.cols; ++c) {
+      if(block_img_(r, c) == 255) {
+        int y = r * height_step_ + height_step_ / 2;
+        int x = c * width_step_ + width_step_ / 2;
+        fg_markers->push_back(y * width_ + x);
         for(int y2 = r * height_step_; y2 < (r+1) * height_step_; ++y2)
           for(int x2 = c * width_step_; x2 < (c+1) * width_step_; ++x2)
             indices->push_back(y2 * width_ + x2);
       }
     }
   }
-
+  
   // -- Fill in background fringe with 127s.
   idx = 0;
   cv::dilate(block_img_, dilated_block_img_, cv::Mat(), cv::Point(-1, -1), 2);
@@ -267,10 +495,14 @@ double BackgroundModel::inverseTransform(double x) const
 
 void BackgroundModel::debug(int x, int y)
 {
+  if(width_step_ != 1 || height_step_ != 1) {
+    ROS_WARN("Cannot do BackgroundModel::debug unless width_step_ and height_step_ are both 1.");
+    return;
+  }
+  
   for(size_t i = 0; i < histograms_.size(); ++i)
     histograms_[i].debug_ = false;
   
-  ROS_ASSERT(width_step_ == 1 && height_step_ == 1);
   int idx = y * width_ + x;
   histograms_[idx].debug_ = true;
 }

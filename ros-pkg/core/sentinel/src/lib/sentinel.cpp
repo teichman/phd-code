@@ -26,23 +26,24 @@ cv::Mat3b falseColor(const DepthMat& depth)
 }
 
 Sentinel::Sentinel(double update_interval,
-                   int max_training_imgs,
-                   double threshold,
+                   double occupancy_threshold,
+                   int raytracing_threshold,
+                   double detection_threshold,
                    bool visualize,
                    OpenNI2Interface::Resolution color_res,
                    OpenNI2Interface::Resolution depth_res) :
   update_interval_(update_interval),
-  max_training_imgs_(max_training_imgs),
-  threshold_(threshold),
+  occupancy_threshold_(occupancy_threshold),
+  detection_threshold_(detection_threshold),
   visualize_(visualize),
   oni_(color_res, depth_res)
 {
   oni_.setHandler(this);
   if(depth_res == OpenNI2Interface::VGA) {
-    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(640, 480, 1, 1, 0.1, MIN_DEPTH, MAX_DEPTH, 0.05));
+    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(640, 480, 1, 1, 0.1, MIN_DEPTH, MAX_DEPTH, 0.05, occupancy_threshold, raytracing_threshold));
   }
   else if(depth_res == OpenNI2Interface::QVGA)
-    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(320, 240, 4, 3, 0.1, MIN_DEPTH, MAX_DEPTH, 0.05));
+    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(320, 240, 4, 3, 0.1, MIN_DEPTH, MAX_DEPTH, 0.05, occupancy_threshold, raytracing_threshold));
   else {
     ROS_ASSERT(0);
   }
@@ -103,7 +104,7 @@ void Sentinel::process(openni::VideoFrameRef color,
   }
   
   // -- If the model has been trained suffificiently, make predictions.
-  if((int)training_.size() == 0)
+  if(model_->numUpdates() < occupancy_threshold_ * 2)
     return;
   
   // -- Get raw mask.
@@ -116,7 +117,7 @@ void Sentinel::process(openni::VideoFrameRef color,
   }
 
   // -- Process the detection.
-  if((double)fg_markers_.size() / model_->size() > threshold_) {
+  if((double)fg_markers_.size() / model_->size() > detection_threshold_) {
     handleDetection(color, depth, indices_, fg_markers_, bg_fringe_markers_,
                     sensor_timestamp, wall_timestamp, frame_id);
   }
@@ -124,12 +125,8 @@ void Sentinel::process(openni::VideoFrameRef color,
 
   if(visualize_) {
     vis_ = oniToCV(color);
-    for(size_t i = 0; i < fg_markers_.size(); ++i) {
-      // int idx = fg_markers_[i];
-      // int y = idx / vis_.cols;
-      // int x = idx - y * vis_.cols;
+    for(size_t i = 0; i < fg_markers_.size(); ++i)
       vis_(fg_markers_[i])[2] = 255;
-    }
     cv::imshow("Sentinel", vis_);
     cv::imshow("depth", colorize(oniDepthToEigen(depth), MIN_DEPTH, MAX_DEPTH));
     cv::waitKey(2);
@@ -142,23 +139,19 @@ void Sentinel::updateModel(openni::VideoFrameRef depth)
   ScopedTimer st("Sentinel::updateModel");
   #endif
   
-  training_.push(depth);
   model_->increment(depth);
-  
-  if((int)training_.size() > max_training_imgs_) { 
-    model_->increment(training_.front(), -1);
-    training_.pop();
-  }
 }
 
 ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
                                            double update_interval,
-                                           int max_training_imgs,
-                                           double threshold,
+                                           double occupancy_threshold,
+                                           int raytracing_threshold,
+                                           double detection_threshold,
                                            bool visualize,
                                            OpenNI2Interface::Resolution color_res,
                                            OpenNI2Interface::Resolution depth_res) :
-  Sentinel(update_interval, max_training_imgs, threshold, visualize, color_res, depth_res),
+  Sentinel(update_interval, occupancy_threshold, raytracing_threshold,
+           detection_threshold, visualize, color_res, depth_res),
   sensor_id_(sensor_id),
   bg_index_x_(0),
   bg_index_y_(0)

@@ -1,3 +1,4 @@
+#include <ros/ros.h>
 #include <timer/timer.h>
 
 #define HRTCLOCK CLOCK_MONOTONIC_RAW
@@ -118,8 +119,24 @@ std::string HighResTimer::report() const
   return reportHours();
 }
 
-ScopedTimer::ScopedTimer(const std::string& description) :
-  hrt_(description)
+std::string HighResTimer::report(TimeUnit::Unit unit) const
+{
+  switch(unit)
+  {
+  case TimeUnit::AUTO: return report();
+  case TimeUnit::US: return reportMicroseconds();
+  case TimeUnit::MS: return reportMilliseconds();
+  case TimeUnit::SEC: return reportSeconds();
+  case TimeUnit::MIN: return reportMinutes();
+  case TimeUnit::HR: return reportHours();
+  }
+  ROS_BREAK();
+  return "";
+}
+
+ScopedTimer::ScopedTimer(const std::string& description, TimeUnit::Unit unit)
+: hrt_(description)
+, unit_(unit)
 {
   hrt_.start();
 }
@@ -127,7 +144,7 @@ ScopedTimer::ScopedTimer(const std::string& description) :
 ScopedTimer::~ScopedTimer()
 {
   hrt_.stop();
-  std::cout << hrt_.report() << std::endl;
+  std::cout << hrt_.report(unit_) << std::endl;
 }
 
 
