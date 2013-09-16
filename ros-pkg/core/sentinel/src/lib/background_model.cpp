@@ -386,6 +386,11 @@ void BackgroundModel::predict(openni::VideoFrameRef depth,
   size_t idx = 0;
   uint16_t* data = (uint16_t*)depth.getData();
 
+  double thresh = min(occupancy_threshold_, (double)numUpdates() / 2);
+  if(thresh == occupancy_threshold_) {
+    ROS_DEBUG_ONCE("Burn-in complete.");
+  }
+  
   // -- Fill in block_img_ with foreground points.
   block_img_ = 0;
   for(int y = height_step_ / 2; y < height_; y += height_step_) {
@@ -398,7 +403,7 @@ void BackgroundModel::predict(openni::VideoFrameRef depth,
       if(MIN_DEPTH > z || z > MAX_DEPTH)
         continue;
       
-      if(histograms_[idx].getNum(transform(z)) < occupancy_threshold_) {
+      if(histograms_[idx].getNum(transform(z)) < thresh) {
         int r = idx / blocks_per_row_;
         int c = idx - r * blocks_per_row_;
         block_img_(r, c) = 255;

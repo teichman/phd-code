@@ -104,8 +104,8 @@ void Sentinel::process(openni::VideoFrameRef color,
   }
   
   // -- If the model has been trained suffificiently, make predictions.
-  if(model_->numUpdates() < occupancy_threshold_ * 2)
-    return;
+  // if(model_->numUpdates() < occupancy_threshold_ * 2)
+  //   return;
   
   // -- Get raw mask.
   {
