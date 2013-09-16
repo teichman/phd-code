@@ -1,9 +1,87 @@
 #include <sentinel/background_model.h>
+#include <queue>
 #include <ros/assert.h>
 #include <timer/timer.h>
+#include <opencv2/video/tracking.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/nonfree/features2d.hpp>
+#include <bag_of_tricks/connected_components.h>
 
 using namespace std;
 using namespace Eigen;
+
+void flood(cv::Mat1f depth, float thresh, int min_pts, const cv::Point2i& seed, int id, cv::Mat1i* ass)
+{
+  // This should probably be a class rather than a free function so that it can
+  // reuse the allocated memory.
+  vector<cv::Point2i> pts;
+  pts.reserve(min_pts);
+  pts.push_back(seed);
+  
+  std::queue<cv::Point2i> que;
+  int num_pts = 1;
+  que.push(seed);
+  (*ass)(seed) = -2;
+  while(!que.empty()) {
+    cv::Point2i pt = que.front();
+    que.pop();
+
+    ROS_ASSERT((*ass)(pt) == -2);
+    (*ass)(pt) = id;
+    float d0 = depth(pt);
+    
+    cv::Point2i dpt;
+    for(dpt.y = -1; dpt.y <= 1; ++dpt.y) {
+      for(dpt.x = -1; dpt.x <= 1; ++dpt.x) {
+        cv::Point2i pt2 = pt + dpt;
+        if(pt2.x < 0 || pt2.x >= ass->cols ||
+           pt2.y < 0 || pt2.y >= ass->rows)
+          continue;
+        float d2 = depth(pt2);
+
+        if(fabs(d0 - d2) < thresh && (*ass)(pt2) == -3) {
+          que.push(pt2);
+          (*ass)(pt2) = -2;
+          ++num_pts;
+          if(num_pts < min_pts)
+            pts.push_back(pt2);
+        }
+      }
+    }
+  }
+
+  // If we didn't get enough points in this cluster, backtrack and remove them.
+  if(num_pts < min_pts)
+    for(size_t i = 0; i < pts.size(); ++i)
+      (*ass)(pts[i]) = -1;
+}
+
+void cluster(cv::Mat1f depth, float thresh, int min_pts, cv::Mat1i* assignments)
+{
+  // -3    : unset
+  // -2    : in queue
+  // -1    : bg
+  // >= 0    : cluster assignment
+  ROS_ASSERT(depth.size() == assignments->size());
+  *assignments = -3;
+  for(int y = 0; y < assignments->rows; ++y)
+    for(int x = 0; x < assignments->cols; ++x)
+      if(depth(y, x) == 0)
+        (*assignments)(y, x) = -1;
+
+  int id = 0;
+  for(int y = 0; y < assignments->rows; ++y) {
+    for(int x = 0; x < assignments->cols; ++x) {
+      if((*assignments)(y, x) == -3) {
+        cv::KeyPoint center;
+        cv::Point2i seed(x, y);
+        flood(depth, thresh, min_pts, seed, id, assignments);
+        ++id;
+      }
+    }
+  }
+}
+
 
 DepthHistogram::DepthHistogram(double min_depth, double max_depth, double binwidth,
                                int x, int y) :
@@ -308,7 +386,7 @@ void BackgroundModel::predict(openni::VideoFrameRef depth,
   size_t idx = 0;
   uint16_t* data = (uint16_t*)depth.getData();
 
-  // -- Fill in foreground.
+  // -- Fill in block_img_ with foreground points.
   block_img_ = 0;
   for(int y = height_step_ / 2; y < height_; y += height_step_) {
     for(int x = width_step_ / 2; x < width_; x += width_step_, ++idx) {
@@ -321,17 +399,55 @@ void BackgroundModel::predict(openni::VideoFrameRef depth,
         continue;
       
       if(histograms_[idx].getNum(transform(z)) < occupancy_threshold_) {
-        fg_markers->push_back(y * width_ + x);
         int r = idx / blocks_per_row_;
         int c = idx - r * blocks_per_row_;
         block_img_(r, c) = 255;
+      }
+    }
+  }
+
+  // -- Run clustering on FG markers.  Eliminate those that are
+  //    too small.
+  cv::Mat1f block_depth(block_img_.size(), 0);
+  for(int r = 0; r < block_img_.rows; ++r) {
+    for(int c = 0; c < block_img_.cols; ++c) {
+      int y = r * height_step_ + height_step_ / 2;
+      int x = c * width_step_ + width_step_ / 2;
+      if(block_img_(r, c) == 255) 
+        block_depth(r, c) = data[y * width_ + x] * 0.001;
+    }
+  }
+  cv::Mat1i ass(block_depth.size());
+  cluster(block_depth, 0.5, 10, &ass);
+  for(int r = 0; r < block_img_.rows; ++r) {
+    for(int c = 0; c < block_img_.cols; ++c) {
+      if(ass(r, c) == -1) {
+        ROS_ASSERT(block_img_(r, c) == 255);
+        block_img_(r, c) = 0;
+      }
+    }
+  }
+
+  // if(visualize_) {
+  //   cv::Mat3b clustering_scaled;
+  //   cv::resize(colorAssignments(ass), clustering_scaled, ass.size(), cv::INTER_NEAREST);
+  //   cv::imshow("Clustering", clustering_scaled);
+  // }
+  
+  // -- Fill fg_markers and indices with the remaining.
+  for(int r = 0; r < block_img_.rows; ++r) {
+    for(int c = 0; c < block_img_.cols; ++c) {
+      if(block_img_(r, c) == 255) {
+        int y = r * height_step_ + height_step_ / 2;
+        int x = c * width_step_ + width_step_ / 2;
+        fg_markers->push_back(y * width_ + x);
         for(int y2 = r * height_step_; y2 < (r+1) * height_step_; ++y2)
           for(int x2 = c * width_step_; x2 < (c+1) * width_step_; ++x2)
             indices->push_back(y2 * width_ + x2);
       }
     }
   }
-
+  
   // -- Fill in background fringe with 127s.
   idx = 0;
   cv::dilate(block_img_, dilated_block_img_, cv::Mat(), cv::Point(-1, -1), 2);

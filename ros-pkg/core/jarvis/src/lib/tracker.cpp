@@ -1,81 +1,9 @@
 #include <jarvis/tracker.h>
-#include <queue>
 #include <bag_of_tricks/connected_components.h>
+#include <sentinel/background_model.h>
+
 
 using namespace std;
-
-void flood(cv::Mat1f depth, float thresh, int min_pts, const cv::Point2i& seed, int id, cv::Mat1i* ass)
-{
-  vector<cv::Point2i> pts;
-  pts.reserve(min_pts);
-  pts.push_back(seed);
-  
-  std::queue<cv::Point2i> que;
-  int num_pts = 1;
-  que.push(seed);
-  (*ass)(seed) = -2;
-  while(!que.empty()) {
-    cv::Point2i pt = que.front();
-    que.pop();
-
-    ROS_ASSERT((*ass)(pt) == -2);
-    (*ass)(pt) = id;
-    float d0 = depth(pt);
-    
-    cv::Point2i dpt;
-    for(dpt.y = -1; dpt.y <= 1; ++dpt.y) {
-      for(dpt.x = -1; dpt.x <= 1; ++dpt.x) {
-        cv::Point2i pt2 = pt + dpt;
-        if(pt2.x < 0 || pt2.x >= ass->cols ||
-           pt2.y < 0 || pt2.y >= ass->rows)
-          continue;
-        float d2 = depth(pt2);
-
-        if(fabs(d0 - d2) < thresh && (*ass)(pt2) == -3) {
-          que.push(pt2);
-          (*ass)(pt2) = -2;
-          ++num_pts;
-          if(num_pts < min_pts)
-            pts.push_back(pt2);
-        }
-      }
-    }
-  }
-
-  // If we didn't get enough points in this cluster, backtrack and remove them.
-  if(num_pts < min_pts)
-    for(size_t i = 0; i < pts.size(); ++i)
-      (*ass)(pts[i]) = -1;
-}
-
-//! depth has 0 wherever there is nothing and a depth value where there is something to be clustered.
-//! assignments will be filled with -1s for no object and with the object id otherwise.
-void cluster(cv::Mat1f depth, float thresh, int min_pts, cv::Mat1i* assignments)
-{
-  // -3    : unset
-  // -2    : in queue
-  // -1    : bg
-  // >= 0    : cluster assignment
-  ROS_ASSERT(depth.size() == assignments->size());
-  *assignments = -3;
-  for(int y = 0; y < assignments->rows; ++y)
-    for(int x = 0; x < assignments->cols; ++x)
-      if(depth(y, x) == 0)
-        (*assignments)(y, x) = -1;
-
-  int id = 0;
-  for(int y = 0; y < assignments->rows; ++y) {
-    for(int x = 0; x < assignments->cols; ++x) {
-      if((*assignments)(y, x) == -3) {
-        cv::KeyPoint center;
-        cv::Point2i seed(x, y);
-        flood(depth, thresh, min_pts, seed, id, assignments);
-        ++id;
-      }
-    }
-  }
-}
-
 
 
 Tracker::Tracker(size_t max_track_length) :

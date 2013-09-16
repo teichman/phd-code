@@ -102,7 +102,7 @@ void Sentinel::process(openni::VideoFrameRef color,
   }
   
   // -- If the model has been trained suffificiently, make predictions.
-  if(model_->numUpdates() < occupancy_threshold_)
+  if(model_->numUpdates() < occupancy_threshold_ * 2)
     return;
   
   // -- Get raw mask.
@@ -122,12 +122,8 @@ void Sentinel::process(openni::VideoFrameRef color,
 
   if(visualize_) {
     vis_ = oniToCV(color);
-    for(size_t i = 0; i < fg_markers_.size(); ++i) {
-      // int idx = fg_markers_[i];
-      // int y = idx / vis_.cols;
-      // int x = idx - y * vis_.cols;
+    for(size_t i = 0; i < fg_markers_.size(); ++i)
       vis_(fg_markers_[i])[2] = 255;
-    }
     cv::imshow("Sentinel", vis_);
     cv::imshow("depth", colorize(oniDepthToEigen(depth), MIN_DEPTH, MAX_DEPTH));
     cv::waitKey(2);
