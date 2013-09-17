@@ -64,11 +64,11 @@ namespace dst
     bfs::recursive_directory_iterator it(dir), eod;
     BOOST_FOREACH(bfs::path const & p, make_pair(it, eod)) {
       ROS_ASSERT(is_regular_file(p));
-      if(p.leaf().substr(0, 4).compare("seed") == 0 &&  bfs::extension(p).compare(".png") == 0)
+      if(p.leaf().string().substr(0, 4).compare("seed") == 0 &&  bfs::extension(p).compare(".png") == 0)
         seed_names.push_back(p.string());
-      else if(p.leaf().substr(0, 4).compare("segm") == 0 &&  bfs::extension(p).compare(".png") == 0)
+      else if(p.leaf().string().substr(0, 4).compare("segm") == 0 &&  bfs::extension(p).compare(".png") == 0)
         segmentation_names.push_back(p.string());
-      else if(p.leaf().substr(0, 3).compare("img") == 0 &&  bfs::extension(p).compare(".png") == 0)
+      else if(p.leaf().string().substr(0, 3).compare("img") == 0 &&  bfs::extension(p).compare(".png") == 0)
         img_names.push_back(p.string());
       else if(bfs::extension(p).compare(".pcd") == 0)
         pcd_names.push_back(p.string());

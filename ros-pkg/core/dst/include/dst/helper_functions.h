@@ -1,7 +1,6 @@
 #ifndef HELPER_FUNCTIONS_H
 #define HELPER_FUNCTIONS_H
 
-#define BOOST_FILESYSTEM_VERSION 2
 #include <boost/filesystem.hpp>
 #include <ros/assert.h>
 #include <opencv2/core/core.hpp>
