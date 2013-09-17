@@ -104,8 +104,14 @@ void Sentinel::process(openni::VideoFrameRef color,
   }
   
   // -- If the model has been trained suffificiently, make predictions.
-  if(model_->numUpdates() < occupancy_threshold_ * 2)
+  //    occupancy_threshold_ * 3 is used because of flickering depth pixels.
+  //    They accumulate confidence slower than other points.
+  //    If it weren't for these pixels, we could set this to exactly
+  //    occupancy_threshold_ and things would work as expected.
+  ROS_DEBUG_ONCE("Learning background model...");
+  if(model_->numUpdates() < occupancy_threshold_ * 3)
     return;
+  ROS_DEBUG_ONCE("Burn-in complete.");
   
   // -- Get raw mask.
   {
