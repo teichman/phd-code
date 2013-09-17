@@ -287,7 +287,6 @@ void Tracker::draw(cv::Mat3b img) const
     size_t track_id = it->first;
     const Blob& blob = *it->second;
     ROS_ASSERT(blob.height_ == img.rows);
-    
     // Don't show old tracks.
     if(blob.frame_id_ != frame_id_)
       continue;
@@ -313,6 +312,10 @@ void Tracker::draw(cv::Mat3b img) const
   for(it = tracks_.begin(); it != tracks_.end(); ++it) {
     size_t track_id = it->first;
     const Blob& blob = *it->second;
+    ROS_ASSERT(blob.height_ == img.rows);
+    // Don't show old tracks.
+    if(blob.frame_id_ != frame_id_)
+      continue;
     
     // Make mask for this object.
     mask = 0;
@@ -320,7 +323,7 @@ void Tracker::draw(cv::Mat3b img) const
       mask(blob.indices_[i]) = 255;
 
     // Get a dilated mask.
-    cv::dilate(mask, dilated_mask, cv::Mat(), cv::Point(-1, -1), 2);
+    cv::dilate(mask, dilated_mask, cv::Mat(), cv::Point(-1, -1), 3);
 
     // Color all points that are in the dilated mask but not the actual mask.
     if(colormap.find(track_id) == colormap.end())
