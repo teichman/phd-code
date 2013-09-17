@@ -30,8 +30,10 @@ void Blob::project()
     //cout << "Added point at " << pt << endl;
   }
 
-  pcl::compute3DCentroid(*cloud_, centroid_);
-  //cout << "centroid_: " << centroid_.transpose() << endl;
+  Eigen::Vector4f centroid;
+  pcl::compute3DCentroid(*cloud_, centroid);
+  centroid_.setZero();
+  centroid_ = centroid.head(3);
 
   kdtree_ = KdTree::Ptr(new KdTree(false));  // Don't sort the points.
   kdtree_->setInputCloud(cloud_);
@@ -251,7 +253,7 @@ double Tracker::distance(const Blob& prev, const Blob& curr) const
   ROS_ASSERT(prev.kdtree_ && curr.kdtree_);
   
   // -- If the centroids are quite far apart, don't bother doing anything else.
-  if((prev.centroid_ - curr.centroid_).head(3).norm() > 2)
+  if((prev.centroid_ - curr.centroid_).norm() > 2)
     return 2;
 
   // -- Choose some random points in one object and compute distance to the other.

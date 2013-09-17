@@ -14,8 +14,8 @@
 
 typedef pcl::PointXYZRGB Point;
 typedef pcl::PointCloud<Point> Cloud;
-//typedef pcl::search::KdTree<pcl::PointXYZRGB> KdTree;
-typedef pcl::KdTreeFLANN<pcl::PointXYZRGB> KdTree;
+typedef pcl::search::KdTree<pcl::PointXYZRGB> KdTree;
+//typedef pcl::KdTreeFLANN<pcl::PointXYZRGB> KdTree;
 
 struct Blob
 {
@@ -34,7 +34,7 @@ struct Blob
 
   Cloud::Ptr cloud_;
   KdTree::Ptr kdtree_;
-  Eigen::Vector4f centroid_;
+  Eigen::Vector3f centroid_;
 
   //! Fills cloud_, centroid_, and kdtree_ from the indices_, color_, and depth_ data.
   void project();

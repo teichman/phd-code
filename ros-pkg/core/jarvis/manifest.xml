@@ -9,8 +9,10 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/jarvis</url>
 
-  <depend package="sentinel"/>
+  <!-- pcl_1_7 MUST come first because the ROS people boned things horribly. /-->
   <depend package="pcl_1_7"/>
+  <depend package="sentinel"/>
+
 
 </package>
 
