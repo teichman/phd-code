@@ -29,10 +29,12 @@ void DetectionVisualizer::foregroundCallback(sentinel::ForegroundConstPtr msg)
   
   // -- Initialize data.
   if(color_vis_.rows != msg->height) {
-    color_vis_ = cv::Mat3b(cv::Size(msg->width, msg->height), cv::Vec3b(0, 0, 0));
-    depth_vis_ = cv::Mat3b(cv::Size(msg->width, msg->height), cv::Vec3b(0, 0, 0));
+    color_vis_ = cv::Mat3b(cv::Size(msg->width, msg->height));
+    depth_vis_ = cv::Mat3b(cv::Size(msg->width, msg->height));
   }
-
+  color_vis_ = cv::Vec3b(127, 127, 127);
+  depth_vis_ = cv::Vec3b(0, 0, 0);
+  
   // -- Draw tracks.
   tracker_.draw(color_vis_);
   cv::Mat3b color_vis_scaled;
