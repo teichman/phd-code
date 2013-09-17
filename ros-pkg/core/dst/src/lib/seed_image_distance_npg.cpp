@@ -1,4 +1,5 @@
 #include <dst/seed_image_distance_npg.h>
+#include <pcl/common/distances.h>
 
 using namespace std;
 using namespace Eigen;

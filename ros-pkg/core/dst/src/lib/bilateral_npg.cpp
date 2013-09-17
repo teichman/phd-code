@@ -1,4 +1,5 @@
 #include <dst/bilateral_npg.h>
+#include <pcl/common/distances.h>
 
 using namespace Eigen;
 

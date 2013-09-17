@@ -1,5 +1,6 @@
 #include <dst/organized_surface_normal_node.h>
 #include <timer/timer.h>
+#include <pcl/common/distances.h>
 
 using namespace std;
 using namespace Eigen;
