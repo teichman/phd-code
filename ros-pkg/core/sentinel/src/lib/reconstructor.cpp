@@ -78,6 +78,8 @@ cv::Mat3b Reconstructor::stylizedImage(int scale) const
 {
   // -- Get a black and white copy.
   cv::Mat3b vis;
+  if(img_.rows == 0)
+    return vis;
   cv::resize(img_, vis, img_.size() * scale, cv::INTER_NEAREST);
   for(int i = 0; i < vis.rows * vis.cols; ++i) {
     uint8_t val = ((float)vis(i)[0] + (float)vis(i)[1] + (float)vis(i)[2]) / 3.0;

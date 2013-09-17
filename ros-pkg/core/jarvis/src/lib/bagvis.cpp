@@ -99,15 +99,16 @@ void BagVis::handleMessage(const MessageInstance& msg)
     handleBackgroundMessage(bg);
 
   cv::Mat3b vis = reconstructor_.stylizedImage();
-  tracker_.draw(vis);
-  cv::Mat3b vis_scaled;
-  cv::resize(vis, vis_scaled, vis.size() * 2, cv::INTER_NEAREST);
-  buffer_.push_back(vis_scaled);
-  overlayTimestamp(ptime_, buffer_.back());
-  if(buffer_.size() > max_buffer_size_)
-    buffer_.pop_front();
-
-  idx_ = buffer_.size() - 1;
+  if(vis.rows > 0) {
+    tracker_.draw(vis);
+    cv::Mat3b vis_scaled;
+    cv::resize(vis, vis_scaled, vis.size() * 2, cv::INTER_NEAREST);
+    buffer_.push_back(vis_scaled);
+    overlayTimestamp(ptime_, buffer_.back());
+    if(buffer_.size() > max_buffer_size_)
+      buffer_.pop_front();
+    idx_ = buffer_.size() - 1;
+  }
 }
 
 void BagVis::overlayTracks(cv::Mat3b track_img, cv::Mat3b img) const
