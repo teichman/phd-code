@@ -1,4 +1,4 @@
-#include <sentinel/bagvis.h>
+#include <jarvis/bagvis.h>
 #include <boost/program_options.hpp>
 
 using namespace std;

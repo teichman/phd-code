@@ -3,9 +3,9 @@
 
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
-#include <sentinel/reconstructor.h>
-#include <sentinel/tracker.h>
 #include <bag_of_tricks/lockable.h>
+#include <sentinel/reconstructor.h>
+#include <jarvis/tracker.h>
 
 //! Only a reverse buffer for now, so you can rewind.
 class BufferingBagViewer : public SharedLockable

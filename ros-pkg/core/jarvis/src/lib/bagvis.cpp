@@ -1,4 +1,4 @@
-#include <sentinel/bagvis.h>
+#include <jarvis/bagvis.h>
 #include <boost/foreach.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <boost/date_time.hpp>
@@ -54,6 +54,8 @@ BagVis::BagVis(std::string path, size_t max_buffer_size) :
   idx_(false),
   max_buffer_size_(max_buffer_size)
 {
+  tracker_.visualize_ = true;
+  
   std::vector<string> topics;
   topics.push_back("/foreground");
   topics.push_back("/background");

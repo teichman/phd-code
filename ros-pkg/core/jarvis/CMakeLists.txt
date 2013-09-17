@@ -25,6 +25,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 rosbuild_add_library(jarvis
   src/lib/detection_visualizer.cpp
   src/lib/tracker.cpp
+  src/lib/bagvis.cpp
   )
 
 #target_link_libraries(${PROJECT_NAME} another_library)
@@ -33,3 +34,7 @@ rosbuild_add_library(jarvis
 
 rosbuild_add_executable(visualize_detections src/prog/visualize_detections.cpp)
 target_link_libraries(visualize_detections jarvis)
+
+rosbuild_add_executable(bagvis src/prog/bagvis.cpp)
+target_link_libraries(bagvis jarvis)
+rosbuild_link_boost(bagvis program_options)
