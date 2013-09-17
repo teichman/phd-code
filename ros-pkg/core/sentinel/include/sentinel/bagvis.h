@@ -4,6 +4,7 @@
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 #include <sentinel/reconstructor.h>
+#include <sentinel/tracker.h>
 #include <bag_of_tricks/lockable.h>
 
 //! Only a reverse buffer for now, so you can rewind.
@@ -40,13 +41,14 @@ class BagVis
 public:
   BagVis(std::string path, size_t max_buffer_size);
   void run();
-  ~BagVis() { delete bag_; }
+  ~BagVis() { if(bag_) delete bag_; if(view_) delete view_; }
 
 protected:
   rosbag::Bag* bag_;
   rosbag::View* view_;
   rosbag::View::iterator it_;
   Reconstructor reconstructor_;
+  Tracker tracker_;
   bool terminating_;
   bool paused_;
   //! Into buffer_.

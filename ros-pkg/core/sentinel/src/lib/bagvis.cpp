@@ -48,6 +48,7 @@ void BufferingBagViewer::read(int num)
 
 
 BagVis::BagVis(std::string path, size_t max_buffer_size) :
+  tracker_(100),
   terminating_(false),
   paused_(false),
   idx_(false),
@@ -65,8 +66,9 @@ BagVis::BagVis(std::string path, size_t max_buffer_size) :
 
 void BagVis::handleForegroundMessage(Foreground::ConstPtr msg)
 {
-  reconstructor_.update(msg);
   ptime_ = msg->header.stamp.toBoost();
+  //reconstructor_.update(msg);
+  tracker_.update(msg);
 }
 
 void BagVis::handleBackgroundMessage(Background::ConstPtr msg)
