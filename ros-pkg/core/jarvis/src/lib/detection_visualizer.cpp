@@ -5,47 +5,6 @@
 
 using namespace std;
 
-// class DepthEPG : public EdgePotentialGenerator
-// {
-// public:
-//   DECLARE_POD(DepthEPG);
-  
-//   DepthEPG(std::string name) :
-//     EdgePotentialGenerator(name)
-//   {
-//     declareInput<cv::Mat1f>("Depth");  // meters
-//     declareParam<double>("Sigma", 0.3);
-//   }
-
-// protected:
-//   void compute();
-//   void debug() const { writeEdgePotentialVisualization(); }
-// };
-
-// void DepthEPG::compute()
-// {
-//   cv::Mat1f depth = pull<cv::Mat1f>("Depth");
-//   const SparseMat& structure = *pull<const SparseMat*>("EdgeStructure");
-//   double sigma = param<double>("Sigma");
-//   initializeStorage();
-
-//   int idx = 0;
-//   for(int y = 0; y < depth.rows; ++y) {
-//     for(int x = 0; x < depth.cols; ++x, ++idx) {
-//       float d0 = depth(y, x);
-//       SparseMat::InnerIterator it(structure, idx);
-//       for(; it; ++it) {
-//         int y1, x1;
-//         pixel(it.col(), depth.cols, &y1, &x1);
-//         float d1 = depth(y1, x1);
-//         edge_.insert(it.row(), it.col()) = exp(-fabs(d0 - d1) / sigma);
-//       }
-//     }
-//   }
-
-//   push<const SparseMat*>("Edge", &edge_);
-// }
-
 DetectionVisualizer::DetectionVisualizer(int width, int height) :
   tracker_(100)
 {
