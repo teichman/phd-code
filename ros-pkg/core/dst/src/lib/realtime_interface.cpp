@@ -1,5 +1,5 @@
 #include <dst/realtime_interface.h>
-#include <bag_of_tricks/high_res_timer.h>
+#include <timer/timer.h>
 #include <std_msgs/Header.h>
 
 #define SHOW_IR (getenv("SHOW_IR"))

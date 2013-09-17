@@ -13,6 +13,7 @@
   <depend package="sensor_msgs"/>
   <depend package="eigen_extensions"/>
   <depend package="bag_of_tricks"/>
+  <depend package="timer"/>
   <depend package="pipeline2"/>
   <depend package="optimization"/>
   <depend package="maxflow"/>

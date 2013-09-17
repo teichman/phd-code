@@ -1,7 +1,7 @@
 #ifndef SEQUENCE_SEGMENTATION_SOLVER_H
 #define SEQUENCE_SEGMENTATION_SOLVER_H
 
-#include <bag_of_tricks/high_res_timer.h>
+#include <timer/timer.h>
 #include <maxflow/graph.h>
 #include <dst/sequence_segmentation_model.h>
 

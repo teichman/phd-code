@@ -5,7 +5,7 @@
 #include <opencv2/core/core.hpp>
 #include <pcl/filters/filter.h>
 #include <pipeline2/pipeline2.h>
-#include <bag_of_tricks/high_res_timer.h>
+#include <timer/timer.h>
 #include <dst/compute_nodes.h>
 #include <dst/potentials_cache.h>
 #include <dst/kinect_sequence.h>
