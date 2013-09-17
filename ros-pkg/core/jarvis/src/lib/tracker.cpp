@@ -334,11 +334,8 @@ void Tracker::draw(cv::Mat3b img) const
       mask(blob.indices_[i]) = 255;
 
     // Get a dilated mask.
-    //cv::dilate(mask, dilated_mask, cv::Mat(), cv::Point(-1, -1), 1);
+    //cv::dilate(mask, dilated_mask, cv::Mat(), cv::Point(-1, -1), 2);
     cv::GaussianBlur(mask, dilated_mask, cv::Size(21, 21), 10);
-    cv::imshow("mask", mask);
-    cv::imshow("dilated_mask", dilated_mask);
-    cv::waitKey(2);
 
     // Color all points that are in the dilated mask but not the actual mask.
     if(colormap.find(track_id) == colormap.end())
