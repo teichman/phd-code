@@ -48,6 +48,7 @@ Tracker::Tracker(size_t max_track_length) :
 void Tracker::update(sentinel::ForegroundConstPtr msg)
 {
   HighResTimer hrt;
+  frame_id_ = msg->frame_id;
 
   // -- Debugging.
   // cout << "Got a detection with " << msg->indices.size() << " points." << endl;
@@ -151,6 +152,8 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
     double min_dist = numeric_limits<double>::max();
     int min_idx = -1;
     for(size_t i = 0; i < current_blobs.size(); ++i) {
+      if(current_blobs[i]->wall_timestamp_.toSec() - it->second->wall_timestamp_.toSec() > 1.0)
+        continue;
       double dist = distance(*it->second, *current_blobs[i]);
       if(dist < min_dist && dist < 1) {
         min_idx = i;
@@ -164,7 +167,7 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
       current_blobs.erase(current_blobs.begin() + min_idx);
     }
     // Otherwise, see if it's time to delete this track.
-    else if(it->second->wall_timestamp_.toSec() < msg->header.stamp.toSec() + 1) {
+    else if(msg->header.stamp.toSec() - it->second->wall_timestamp_.toSec() > 1.0) {
       to_erase.push_back(track_id);
     }
   }
@@ -272,4 +275,59 @@ double Tracker::distance(const Blob& prev, const Blob& curr) const
   mean_distance /= num_samples;
 
   return mean_distance;
+}
+
+void Tracker::draw(cv::Mat3b img) const
+{
+  img = cv::Vec3b(127, 127, 127);
+  
+  // -- Draw the points.
+  map<size_t, Blob::Ptr>::const_iterator it;
+  for(it = tracks_.begin(); it != tracks_.end(); ++it) {
+    size_t track_id = it->first;
+    const Blob& blob = *it->second;
+    ROS_ASSERT(blob.height_ == img.rows);
+    
+    // Don't show old tracks.
+    if(blob.frame_id_ != frame_id_)
+      continue;
+
+    for(size_t i = 0; i < blob.indices_.size(); ++i) {
+      size_t idx = blob.indices_[i];
+      ROS_ASSERT(idx < (size_t)img.rows * img.cols);
+      img(idx)[2] = blob.color_[i*3+0];
+      img(idx)[1] = blob.color_[i*3+1];
+      img(idx)[0] = blob.color_[i*3+2];
+    }
+  }
+
+  // -- Set up coloring.
+  cv::Vec3b color0(255, 0, 0);
+  cv::Vec3b color1(0, 255, 0);
+  cv::Vec3b color2(0, 0, 255);
+  static map<size_t, cv::Vec3b> colormap;
+  
+  // -- Draw the halos.
+  cv::Mat1b mask(img.size(), 0);
+  cv::Mat1b dilated_mask(img.size(), 0);
+  for(it = tracks_.begin(); it != tracks_.end(); ++it) {
+    size_t track_id = it->first;
+    const Blob& blob = *it->second;
+    
+    // Make mask for this object.
+    mask = 0;
+    for(size_t i = 0; i < blob.indices_.size(); ++i)
+      mask(blob.indices_[i]) = 255;
+
+    // Get a dilated mask.
+    cv::dilate(mask, dilated_mask, cv::Mat(), cv::Point(-1, -1), 2);
+
+    // Color all points that are in the dilated mask but not the actual mask.
+    if(colormap.find(track_id) == colormap.end())
+      colormap[track_id] = mix(color0, color1, color2, 0.2);
+    cv::Vec3b color = colormap[track_id];
+    for(int i = 0; i < mask.rows * mask.cols; ++i)
+      if(mask(i) == 0 && dilated_mask(i) == 255)
+        img(i) = 0.2 * img(i) + 0.8 * color;
+  }
 }

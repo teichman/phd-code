@@ -26,12 +26,18 @@ void DetectionVisualizer::foregroundCallback(sentinel::ForegroundConstPtr msg)
 {
   reconstructor_.update(msg);
   tracker_.update(msg);
-
+  
   // -- Initialize data.
   if(color_vis_.rows != msg->height) {
     color_vis_ = cv::Mat3b(cv::Size(msg->width, msg->height), cv::Vec3b(0, 0, 0));
     depth_vis_ = cv::Mat3b(cv::Size(msg->width, msg->height), cv::Vec3b(0, 0, 0));
   }
+
+  // -- Draw tracks.
+  tracker_.draw(color_vis_);
+  cv::Mat3b color_vis_scaled;
+  cv::resize(color_vis_, color_vis_scaled, color_vis_.size() * 2, cv::INTER_NEAREST);
+  cv::imshow("tracks", color_vis_scaled);
   
   // -- Draw a depth visualization.
   depth_vis_ = cv::Vec3b(0, 0, 0);
@@ -57,24 +63,6 @@ void DetectionVisualizer::foregroundCallback(sentinel::ForegroundConstPtr msg)
   cv::Mat3b depth_vis_scaled;
   cv::resize(depth_vis_, depth_vis_scaled, depth_vis_.size() * 2, cv::INTER_NEAREST);
   cv::imshow("depth", depth_vis_scaled);
-
-  // -- Make a visualization using the color image and foreground.
-  color_vis_ = cv::Vec3b(127, 127, 127);
-  map<size_t, Blob::Ptr>::iterator it;
-  for(it = tracker_.tracks_.begin(); it != tracker_.tracks_.end(); ++it) {
-    size_t track_id = it->first;
-    const Blob& blob = *it->second;
-    for(size_t i = 0; i < blob.indices_.size(); ++i) {
-      size_t idx = blob.indices_[i];
-      color_vis_(idx)[2] = blob.color_[i*3+0];
-      color_vis_(idx)[1] = blob.color_[i*3+1];
-      color_vis_(idx)[0] = blob.color_[i*3+2];
-    }
-  }
-
-  cv::Mat3b color_vis_scaled;
-  cv::resize(color_vis_, color_vis_scaled, color_vis_.size() * 2, cv::INTER_NEAREST);
-  cv::imshow("color", color_vis_scaled);
   cv::waitKey(2);
 }
 

@@ -51,7 +51,7 @@ void flood(cv::Mat1f depth, float thresh, int min_pts,
 
   // If we didn't get enough points in this cluster, backtrack and remove them.
   // Otherwise, add the indices to the cluster.
-  if(pts.size() < min_pts) {
+  if((int)pts.size() < min_pts) {
     for(size_t i = 0; i < pts.size(); ++i)
       (*ass)(pts[i]) = -1;
   }

@@ -51,12 +51,15 @@ public:
   cv::Mat1b foreground_;
   cv::Mat1i assignments_;
   std::vector< std::vector<int> > indices_;
+  uint64_t frame_id_;
   //! track ID, most recent Blob.
   std::map<size_t, Blob::Ptr> tracks_;
 
   Tracker(size_t max_track_length);
   void update(sentinel::ForegroundConstPtr msg);
-
+  //! Fills img with a representation of the current state of the tracks.
+  void draw(cv::Mat3b img) const;
+  
 protected:
   size_t max_track_length_;
   size_t next_track_id_;
