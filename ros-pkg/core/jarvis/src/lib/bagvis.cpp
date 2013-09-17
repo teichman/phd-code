@@ -77,10 +77,15 @@ void BagVis::handleForegroundMessage(Foreground::ConstPtr msg)
   map<size_t, Blob::Ptr>::iterator it;
   cout << "Displaying " << tracker_.tracks_.size() << " tracks." << endl;
   for(it = tracker_.tracks_.begin(); it != tracker_.tracks_.end(); ++it) {
-    //size_t track_id = it->first;
+    size_t track_id = it->first;
     const Blob& blob = *it->second;
+    if(blob.frame_id_ != msg->frame_id)
+      continue;
+    
+    cout << "  Track " << track_id << ":" << blob.indices_.size() << " points." << endl;
     for(size_t i = 0; i < blob.indices_.size(); ++i) {
       size_t idx = blob.indices_[i];
+      ROS_ASSERT(idx < (size_t)img.rows * img.cols);
       img(idx)[2] = blob.color_[i*3+0];
       img(idx)[1] = blob.color_[i*3+1];
       img(idx)[0] = blob.color_[i*3+2];
@@ -197,6 +202,10 @@ void BagVis::read(int num)
 {
   for(int i = 0; i < num; ++i) {
     ++it_;
+    if(it_ == view_->end()) {
+      terminating_ = true;
+      break;
+    }
     handleMessage(*it_);
   }
 }

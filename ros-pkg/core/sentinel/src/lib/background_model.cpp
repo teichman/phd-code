@@ -21,7 +21,6 @@ void flood(cv::Mat1f depth, float thresh, int min_pts,
   pts.push_back(seed);
   
   std::queue<cv::Point2i> que;
-  int num_pts = 1;
   que.push(seed);
   (*ass)(seed) = -2;
   while(!que.empty()) {
@@ -44,9 +43,7 @@ void flood(cv::Mat1f depth, float thresh, int min_pts,
         if(fabs(d0 - d2) < thresh && (*ass)(pt2) == -3) {
           que.push(pt2);
           (*ass)(pt2) = -2;
-          ++num_pts;
-          if(num_pts < min_pts)
-            pts.push_back(pt2);
+          pts.push_back(pt2);
         }
       }
     }
@@ -54,9 +51,10 @@ void flood(cv::Mat1f depth, float thresh, int min_pts,
 
   // If we didn't get enough points in this cluster, backtrack and remove them.
   // Otherwise, add the indices to the cluster.
-  if(num_pts < min_pts)
+  if(pts.size() < min_pts) {
     for(size_t i = 0; i < pts.size(); ++i)
       (*ass)(pts[i]) = -1;
+  }
   else if(indices) {
     indices->push_back(vector<int>());
     indices->back().reserve(pts.size());

@@ -27,7 +27,6 @@ void Blob::project()
     pt.g = color_[i*3+1];
     pt.b = color_[i*3+2];
     cloud_->push_back(pt);
-    //cout << "Added point at " << pt << endl;
   }
 
   Eigen::Vector4f centroid;
@@ -97,7 +96,9 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
 
   // Run the clustering.
   hrt.reset("clustering"); hrt.start();
-  cluster(depth_, 0.2, 1, &assignments_, &indices_);
+  // The min points argument here shouldn't matter, because size filtering
+  // is done in Sentinel now.  It's currently a workaround for a bug in cluster().
+  cluster(depth_, 0.2, 50, &assignments_, &indices_);  
   //hrt.stop(); cout << hrt.reportMilliseconds() << endl;
   if(visualize_) { 
     cv::Mat3b clustering_scaled;
@@ -136,9 +137,10 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
       ROS_ASSERT(depth_(idx) > 0);
       ROS_ASSERT(blob->depth_[j] > 0);
     }
-    
+
     blob->project();
     current_blobs.push_back(blob);
+    ROS_ASSERT(blob->indices_.size() > 10);
   }
   
   // -- Simple correspondence.
@@ -150,7 +152,6 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
     int min_idx = -1;
     for(size_t i = 0; i < current_blobs.size(); ++i) {
       double dist = distance(*it->second, *current_blobs[i]);
-      cout << "dist: " << dist << endl;
       if(dist < min_dist && dist < 1) {
         min_idx = i;
         min_dist = dist;
@@ -170,7 +171,6 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
 
   // -- Erase old tracks.
   for(size_t i = 0; i < to_erase.size(); ++i) {
-    cout << "Erasing track " << to_erase[i] << endl;
     ROS_ASSERT(tracks_.find(to_erase[i]) != tracks_.end());
     tracks_.erase(to_erase[i]);
   }
