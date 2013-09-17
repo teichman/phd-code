@@ -71,6 +71,26 @@ void BagVis::handleForegroundMessage(Foreground::ConstPtr msg)
   ptime_ = msg->header.stamp.toBoost();
   //reconstructor_.update(msg);
   tracker_.update(msg);
+
+  // -- Make a visualization using the color image and foreground.
+  cv::Mat3b img = cv::Mat3b(cv::Size(320, 240), cv::Vec3b(127, 127, 127));
+  map<size_t, Blob::Ptr>::iterator it;
+  cout << "Displaying " << tracker_.tracks_.size() << " tracks." << endl;
+  for(it = tracker_.tracks_.begin(); it != tracker_.tracks_.end(); ++it) {
+    //size_t track_id = it->first;
+    const Blob& blob = *it->second;
+    for(size_t i = 0; i < blob.indices_.size(); ++i) {
+      size_t idx = blob.indices_[i];
+      img(idx)[2] = blob.color_[i*3+0];
+      img(idx)[1] = blob.color_[i*3+1];
+      img(idx)[0] = blob.color_[i*3+2];
+    }
+  }
+
+  cv::Mat3b img_scaled;
+  cv::resize(img, img_scaled, img.size() * 2, cv::INTER_NEAREST);
+  cv::imshow("tracks", img_scaled);
+  cv::waitKey(2);
 }
 
 void BagVis::handleBackgroundMessage(Background::ConstPtr msg)

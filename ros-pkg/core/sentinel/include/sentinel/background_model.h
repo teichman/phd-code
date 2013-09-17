@@ -173,7 +173,12 @@ protected:
   void raytrace(size_t lower_idx, double upper_weight);
 };
 
-void cluster(cv::Mat1f depth, float thresh, int min_pts, cv::Mat1i* assignments);
-void flood(cv::Mat1f depth, float thresh, int min_pts, const cv::Point2i& seed, int id, cv::Mat1i* ass);
+void cluster(cv::Mat1f depth, float thresh,
+             int min_pts, cv::Mat1i* assignments,
+             std::vector< std::vector<int> >* indices = NULL);
+void flood(cv::Mat1f depth, float thresh,
+           int min_pts, const cv::Point2i& seed,
+           int id, cv::Mat1i* ass,
+           std::vector< std::vector<int> >* indices = NULL);
 
 #endif // BACKGROUND_MODEL_H

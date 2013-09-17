@@ -10,8 +10,10 @@
 using namespace std;
 using namespace Eigen;
 
-void flood(cv::Mat1f depth, float thresh, int min_pts, const cv::Point2i& seed, int id, cv::Mat1i* ass)
-{
+void flood(cv::Mat1f depth, float thresh, int min_pts,
+           const cv::Point2i& seed, int id, cv::Mat1i* ass,
+           std::vector< std::vector<int> >* indices)
+{  
   // This should probably be a class rather than a free function so that it can
   // reuse the allocated memory.
   vector<cv::Point2i> pts;
@@ -51,13 +53,24 @@ void flood(cv::Mat1f depth, float thresh, int min_pts, const cv::Point2i& seed, 
   }
 
   // If we didn't get enough points in this cluster, backtrack and remove them.
+  // Otherwise, add the indices to the cluster.
   if(num_pts < min_pts)
     for(size_t i = 0; i < pts.size(); ++i)
       (*ass)(pts[i]) = -1;
+  else if(indices) {
+    indices->push_back(vector<int>());
+    indices->back().reserve(pts.size());
+    for(size_t i = 0; i < pts.size(); ++i)
+      indices->back().push_back(pts[i].y * ass->cols + pts[i].x);
+  }
 }
 
-void cluster(cv::Mat1f depth, float thresh, int min_pts, cv::Mat1i* assignments)
+void cluster(cv::Mat1f depth, float thresh, int min_pts, cv::Mat1i* assignments,
+             std::vector< std::vector<int> >* indices)
 {
+  if(indices)
+    indices->clear();
+  
   // -3    : unset
   // -2    : in queue
   // -1    : bg
@@ -75,7 +88,7 @@ void cluster(cv::Mat1f depth, float thresh, int min_pts, cv::Mat1i* assignments)
       if((*assignments)(y, x) == -3) {
         cv::KeyPoint center;
         cv::Point2i seed(x, y);
-        flood(depth, thresh, min_pts, seed, id, assignments);
+        flood(depth, thresh, min_pts, seed, id, assignments, indices);
         ++id;
       }
     }

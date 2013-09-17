@@ -59,16 +59,16 @@ void DetectionVisualizer::foregroundCallback(sentinel::ForegroundConstPtr msg)
   cv::imshow("depth", depth_vis_scaled);
 
   // -- Make a visualization using the color image and foreground.
-  // TODO: Make this use the tracking info.
   color_vis_ = cv::Vec3b(127, 127, 127);
-  for(size_t i = 0; i < msg->indices.size(); ++i) {
-    uint32_t idx = msg->indices[i];
-    int y = idx / color_vis_.cols;
-    int x = idx - y * color_vis_.cols;
-    if(tracker_.foreground_(y, x) == 255) {
-      color_vis_(y, x)[0] = msg->color[i*3+2];
-      color_vis_(y, x)[1] = msg->color[i*3+1];
-      color_vis_(y, x)[2] = msg->color[i*3+0];
+  map<size_t, Blob::Ptr>::iterator it;
+  for(it = tracker_.tracks_.begin(); it != tracker_.tracks_.end(); ++it) {
+    size_t track_id = it->first;
+    const Blob& blob = *it->second;
+    for(size_t i = 0; i < blob.indices_.size(); ++i) {
+      size_t idx = blob.indices_[i];
+      color_vis_(idx)[2] = blob.color_[i*3+0];
+      color_vis_(idx)[1] = blob.color_[i*3+1];
+      color_vis_(idx)[0] = blob.color_[i*3+2];
     }
   }
 
