@@ -63,7 +63,8 @@ protected:
   void handleMessage(const rosbag::MessageInstance& msg);
   void handleForegroundMessage(sentinel::Foreground::ConstPtr msg);
   void handleBackgroundMessage(sentinel::Background::ConstPtr msg);
-  void addTimestamp(cv::Mat3b img, boost::posix_time::ptime ptime) const;
+  void overlayTimestamp(boost::posix_time::ptime ptime, cv::Mat3b img) const;
+  void overlayTracks(cv::Mat3b track_img, cv::Mat3b img) const;
 };
 
 #endif // BAGVIS_H

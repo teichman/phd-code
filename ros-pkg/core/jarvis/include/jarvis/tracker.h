@@ -59,6 +59,7 @@ public:
   void update(sentinel::ForegroundConstPtr msg);
   //! Fills img with a representation of the current state of the tracks.
   void draw(cv::Mat3b img) const;
+  cv::Mat3b draw() const;
   
 protected:
   size_t max_track_length_;

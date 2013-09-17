@@ -277,10 +277,21 @@ double Tracker::distance(const Blob& prev, const Blob& curr) const
   return mean_distance;
 }
 
+cv::Mat3b Tracker::draw() const
+{
+  if(tracks_.empty())
+    return cv::Mat3b();
+
+  int width = tracks_.begin()->second->width_;
+  int height = tracks_.begin()->second->height_;
+
+  cv::Mat3b img(cv::Size(width, height));
+  draw(img);
+  return img;
+}
+
 void Tracker::draw(cv::Mat3b img) const
 {
-  img = cv::Vec3b(127, 127, 127);
-  
   // -- Draw the points.
   map<size_t, Blob::Ptr>::const_iterator it;
   for(it = tracks_.begin(); it != tracks_.end(); ++it) {
@@ -323,14 +334,21 @@ void Tracker::draw(cv::Mat3b img) const
       mask(blob.indices_[i]) = 255;
 
     // Get a dilated mask.
-    cv::dilate(mask, dilated_mask, cv::Mat(), cv::Point(-1, -1), 3);
+    //cv::dilate(mask, dilated_mask, cv::Mat(), cv::Point(-1, -1), 1);
+    cv::GaussianBlur(mask, dilated_mask, cv::Size(21, 21), 10);
+    cv::imshow("mask", mask);
+    cv::imshow("dilated_mask", dilated_mask);
+    cv::waitKey(2);
 
     // Color all points that are in the dilated mask but not the actual mask.
     if(colormap.find(track_id) == colormap.end())
       colormap[track_id] = mix(color0, color1, color2, 0.2);
     cv::Vec3b color = colormap[track_id];
-    for(int i = 0; i < mask.rows * mask.cols; ++i)
-      if(mask(i) == 0 && dilated_mask(i) == 255)
-        img(i) = 0.2 * img(i) + 0.8 * color;
+    for(int i = 0; i < mask.rows * mask.cols; ++i) {
+      if(mask(i) == 0 && dilated_mask(i) != 0) {
+        double coef = min(1.0, 2.0 * dilated_mask(i) / 255.0);
+        img(i) = (1.0 - coef) * img(i) + coef * color;
+      }
+    }
   }
 }

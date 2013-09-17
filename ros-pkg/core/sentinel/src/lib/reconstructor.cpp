@@ -1,4 +1,5 @@
 #include <sentinel/reconstructor.h>
+#include <opencv2/imgproc/imgproc.hpp>
 
 using namespace std;
 
@@ -71,6 +72,22 @@ void Reconstructor::process()
     update(sync_.current0_, sync_.current1_);
     sync_.updated_ = false;
   }
+}
+
+cv::Mat3b Reconstructor::stylizedImage(int scale) const
+{
+  // -- Get a black and white copy.
+  cv::Mat3b vis;
+  cv::resize(img_, vis, img_.size() * scale, cv::INTER_NEAREST);
+  for(int i = 0; i < vis.rows * vis.cols; ++i) {
+    uint8_t val = ((float)vis(i)[0] + (float)vis(i)[1] + (float)vis(i)[2]) / 3.0;
+    vis(i) = cv::Vec3b(val, val, val);
+  }
+
+  // -- Blur it out a bit.
+  cv::GaussianBlur(vis, vis, cv::Size(11, 11), 1);
+
+  return vis;
 }
 
 

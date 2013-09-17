@@ -54,7 +54,7 @@ BagVis::BagVis(std::string path, size_t max_buffer_size) :
   idx_(false),
   max_buffer_size_(max_buffer_size)
 {
-  tracker_.visualize_ = true;
+  //tracker_.visualize_ = true;
   
   std::vector<string> topics;
   topics.push_back("/foreground");
@@ -64,6 +64,8 @@ BagVis::BagVis(std::string path, size_t max_buffer_size) :
   bag_->open(path, bagmode::Read);
   view_ = new View(*bag_, TopicQuery(topics));
   it_ = view_->begin();
+
+  //cv::namedWindow("Visualization", CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED);
 }
 
 void BagVis::handleForegroundMessage(Foreground::ConstPtr msg)
@@ -72,12 +74,12 @@ void BagVis::handleForegroundMessage(Foreground::ConstPtr msg)
   //reconstructor_.update(msg);
   tracker_.update(msg);
 
-  cv::Mat3b img = cv::Mat3b(cv::Size(320, 240), cv::Vec3b(127, 127, 127));
-  tracker_.draw(img);
-  cv::Mat3b img_scaled;
-  cv::resize(img, img_scaled, img.size() * 2, cv::INTER_NEAREST);
-  cv::imshow("tracks", img_scaled);
-  cv::waitKey(2);
+  // cv::Mat3b img = cv::Mat3b(cv::Size(320, 240), cv::Vec3b(127, 127, 127));
+  // tracker_.draw(img);
+  // cv::Mat3b img_scaled;
+  // cv::resize(img, img_scaled, img.size() * 2, cv::INTER_NEAREST);
+  // cv::imshow("tracks", img_scaled);
+  // cv::waitKey(2);
 }
 
 void BagVis::handleBackgroundMessage(Background::ConstPtr msg)
@@ -96,15 +98,27 @@ void BagVis::handleMessage(const MessageInstance& msg)
   if(bg)
     handleBackgroundMessage(bg);
 
-  buffer_.push_back(reconstructor_.img_.clone());
-  addTimestamp(buffer_.back(), ptime_);
+  cv::Mat3b vis = reconstructor_.stylizedImage();
+  tracker_.draw(vis);
+  cv::Mat3b vis_scaled;
+  cv::resize(vis, vis_scaled, vis.size() * 2, cv::INTER_NEAREST);
+  buffer_.push_back(vis_scaled);
+  overlayTimestamp(ptime_, buffer_.back());
   if(buffer_.size() > max_buffer_size_)
     buffer_.pop_front();
 
   idx_ = buffer_.size() - 1;
 }
 
-void BagVis::addTimestamp(cv::Mat3b img, bpt::ptime ptime) const
+void BagVis::overlayTracks(cv::Mat3b track_img, cv::Mat3b img) const
+{
+  ROS_ASSERT(track_img.rows == img.rows);
+  for(int i = 0; i < img.rows * img.cols; ++i)
+    if(track_img(i) != cv::Vec3b(127, 127, 127))
+      img(i) = track_img(i);
+}
+
+void BagVis::overlayTimestamp(bpt::ptime ptime, cv::Mat3b img) const
 {
   ostringstream oss;
   const bpt::time_facet* f = new bpt::time_facet("%Y-%m-%d %H:%M:%S UTC%Q");
@@ -122,7 +136,7 @@ void BagVis::run()
 {  
   while(true) {
     if(idx_ > 0 && (size_t)idx_ < buffer_.size())
-      cv::imshow("Background", buffer_[idx_]);
+      cv::imshow("Visualization", buffer_[idx_]);
     char key = cv::waitKey(1);
     handleKeypress(key);
 
