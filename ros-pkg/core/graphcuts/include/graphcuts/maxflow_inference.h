@@ -14,9 +14,10 @@ namespace gc
     Model model_;
     
     MaxflowInference(const Model& model);
-    //! seg is resized if necessary.
-    //! Output is in {-1, 0, +1}^n.
-    void segment(PotentialsCache::ConstPtr potentials, Eigen::VectorXi* seg) const;
+    //! seg is resized if necessary, and contains elements in {-1, 0, +1}^n.
+    //! Returns the max flow in the graph, equivalent to the cost of the min cut (i.e. segmentation).
+    //! If the max flow is large, it was hard to do the segmentation.
+    double segment(PotentialsCache::ConstPtr potentials, Eigen::VectorXi* seg) const;
   };
   
 }
