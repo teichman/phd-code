@@ -148,52 +148,63 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
   }
 
   // -- Simple correspondence method.
-  vector<bool> matched(current_blobs.size(), false);
+  vector<bool> matched_blobs(current_blobs.size(), false);
+  vector<bool> matched_tracks(tracks_.size(), false);
+  vector<size_t> track_indices(tracks_.size());
   if(!tracks_.empty() && !current_blobs.empty()) {
     // Compute pairwise distances.
     MatrixXd distances = MatrixXd::Zero(tracks_.size(), current_blobs.size());
     map<size_t, Blob::Ptr>::iterator it;
-    vector<size_t> indices(tracks_.size());
     size_t r = 0;
     for(it = tracks_.begin(); it != tracks_.end(); ++it, ++r) {
-      indices[r] = it->first;
+      track_indices[r] = it->first;
       for(size_t c = 0; c < current_blobs.size(); ++c)
-        distances(r, c) = distance(*it->second, *current_blobs[c]);
+        distances(r, c) = (distance(*it->second, *current_blobs[c]) + distance(*current_blobs[c], *it->second)) / 2.0;
     }
 
+    // cout << endl;
+    // cout << "Distances: " << endl;
+    // cout << distances << endl;
+    
     // Greedy assignment.
     while(distances.minCoeff() < numeric_limits<double>::max()) {
       int r, c;
       double dist = distances.minCoeff(&r, &c);
       if(dist < 2) {
-        ROS_ASSERT(tracks_.find(indices[r]) != tracks_.end());
-        tracks_[indices[r]] = current_blobs[c];
-        matched[c] = true;
+        ROS_ASSERT(tracks_.find(track_indices[r]) != tracks_.end());
+        tracks_[track_indices[r]] = current_blobs[c];
+        matched_blobs[c] = true;
+        matched_tracks[r] = true;
       }
       distances.row(r).setConstant(numeric_limits<double>::max());
       distances.col(c).setConstant(numeric_limits<double>::max());
     }
   }
+
+  // -- Delete any unmatched tracks.
+  for(size_t i = 0; i < matched_tracks.size(); ++i)
+    if(!matched_tracks[i])
+      tracks_.erase(track_indices[i]);
   
   // -- Delete old and unmatched tracks.
-  vector<size_t> to_erase;
-  to_erase.reserve(tracks_.size());
-  map<size_t, Blob::Ptr>::iterator it;
-  for(it = tracks_.begin(); it != tracks_.end(); ++it)
-    if(msg->header.stamp.toSec() - it->second->wall_timestamp_.toSec() > 1.0)
-      to_erase.push_back(it->first);
-
-  for(size_t i = 0; i < to_erase.size(); ++i) {
-    ROS_ASSERT(tracks_.find(to_erase[i]) != tracks_.end());
-    tracks_.erase(to_erase[i]);
-  }
+  // vector<size_t> to_erase;
+  // to_erase.reserve(tracks_.size());
+  // map<size_t, Blob::Ptr>::iterator it;
+  // for(it = tracks_.begin(); it != tracks_.end(); ++it)
+  //   if(msg->header.stamp.toSec() - it->second->wall_timestamp_.toSec() > 1.0)
+  //     to_erase.push_back(it->first);
+  // for(size_t i = 0; i < to_erase.size(); ++i) {
+  //   ROS_ASSERT(tracks_.find(to_erase[i]) != tracks_.end());
+  //   tracks_.erase(to_erase[i]);
+  // }
 
   // -- Generate tracks for each unmatched blob.
   for(size_t i = 0; i < current_blobs.size(); ++i) {
-    if(!matched[i]) {
+    if(!matched_blobs[i]) {
       ROS_ASSERT(tracks_.find(next_track_id_) == tracks_.end());
       tracks_[next_track_id_] = current_blobs[i];
       ++next_track_id_;
+      //cout << "Creating new track." << endl;
     }
   }
 }
