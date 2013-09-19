@@ -1,6 +1,10 @@
-TARBALL = build/gperftools-2.0.tar.gz
-TARBALL_URL = http://gperftools.googlecode.com/files/gperftools-2.0.tar.gz
-SOURCE_DIR = build/gperftools-2.0
+TARBALL = build/gperftools-2.1.tar.gz
+TARBALL_URL = http://gperftools.googlecode.com/files/gperftools-2.1.tar.gz
+SOURCE_DIR = build/gperftools-2.1
+
+# TARBALL = build/gperftools-2.0.tar.gz 
+# TARBALL_URL = http://gperftools.googlecode.com/files/gperftools-2.0.tar.gz
+# SOURCE_DIR = build/gperftools-2.0
 
 all: installed
 
