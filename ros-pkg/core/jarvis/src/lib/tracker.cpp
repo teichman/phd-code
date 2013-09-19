@@ -5,6 +5,7 @@
 
 using namespace std;
 namespace bpt = boost::posix_time;
+using namespace Eigen;
 
 void Blob::project()
 {
@@ -145,36 +146,43 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
     current_blobs.push_back(blob);
     ROS_ASSERT(blob->indices_.size() > 10);
   }
-  
-  // -- Simple correspondence.
-  map<size_t, Blob::Ptr>::iterator it;
-  vector<size_t> to_erase;
-  for(it = tracks_.begin(); it != tracks_.end(); ++it) {
-    size_t track_id = it->first;
-    double min_dist = numeric_limits<double>::max();
-    int min_idx = -1;
-    for(size_t i = 0; i < current_blobs.size(); ++i) {
-      if(current_blobs[i]->wall_timestamp_.toSec() - it->second->wall_timestamp_.toSec() > 1.0)
-        continue;
-      double dist = distance(*it->second, *current_blobs[i]);
-      if(dist < min_dist && dist < 1) {
-        min_idx = i;
-        min_dist = dist;
-      }
+
+  // -- Simple correspondence method.
+  vector<bool> matched(current_blobs.size(), false);
+  if(!tracks_.empty() && !current_blobs.empty()) {
+    // Compute pairwise distances.
+    MatrixXd distances = MatrixXd::Zero(tracks_.size(), current_blobs.size());
+    map<size_t, Blob::Ptr>::iterator it;
+    vector<size_t> indices(tracks_.size());
+    size_t r = 0;
+    for(it = tracks_.begin(); it != tracks_.end(); ++it, ++r) {
+      indices[r] = it->first;
+      for(size_t c = 0; c < current_blobs.size(); ++c)
+        distances(r, c) = distance(*it->second, *current_blobs[c]);
     }
 
-    // If we found a match, update the current track blob.
-    if(min_idx >= 0) {
-      it->second = current_blobs[min_idx];
-      current_blobs.erase(current_blobs.begin() + min_idx);
-    }
-    // Otherwise, see if it's time to delete this track.
-    else if(msg->header.stamp.toSec() - it->second->wall_timestamp_.toSec() > 1.0) {
-      to_erase.push_back(track_id);
+    // Greedy assignment.
+    while(distances.minCoeff() < numeric_limits<double>::max()) {
+      int r, c;
+      double dist = distances.minCoeff(&r, &c);
+      if(dist < 2) {
+        ROS_ASSERT(tracks_.find(indices[r]) != tracks_.end());
+        tracks_[indices[r]] = current_blobs[c];
+        matched[c] = true;
+      }
+      distances.row(r).setConstant(numeric_limits<double>::max());
+      distances.col(c).setConstant(numeric_limits<double>::max());
     }
   }
+  
+  // -- Delete old and unmatched tracks.
+  vector<size_t> to_erase;
+  to_erase.reserve(tracks_.size());
+  map<size_t, Blob::Ptr>::iterator it;
+  for(it = tracks_.begin(); it != tracks_.end(); ++it)
+    if(msg->header.stamp.toSec() - it->second->wall_timestamp_.toSec() > 1.0)
+      to_erase.push_back(it->first);
 
-  // -- Erase old tracks.
   for(size_t i = 0; i < to_erase.size(); ++i) {
     ROS_ASSERT(tracks_.find(to_erase[i]) != tracks_.end());
     tracks_.erase(to_erase[i]);
@@ -182,9 +190,11 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
 
   // -- Generate tracks for each unmatched blob.
   for(size_t i = 0; i < current_blobs.size(); ++i) {
-    ROS_ASSERT(tracks_.find(next_track_id_) == tracks_.end());
-    tracks_[next_track_id_] = current_blobs[i];
-    ++next_track_id_;
+    if(!matched[i]) {
+      ROS_ASSERT(tracks_.find(next_track_id_) == tracks_.end());
+      tracks_[next_track_id_] = current_blobs[i];
+      ++next_track_id_;
+    }
   }
 }
 
@@ -256,10 +266,14 @@ double Tracker::distance(const Blob& prev, const Blob& curr) const
 {
   ROS_ASSERT(prev.cloud_ && curr.cloud_);
   ROS_ASSERT(prev.kdtree_ && curr.kdtree_);
+
+  // -- If the timestamps are too far apart, this isn't a match.
+  if(curr.wall_timestamp_.toSec() - prev.wall_timestamp_.toSec() > 1.0)
+    return numeric_limits<double>::max();
   
   // -- If the centroids are quite far apart, don't bother doing anything else.
   if((prev.centroid_ - curr.centroid_).norm() > 2)
-    return 2;
+    return numeric_limits<double>::max();
 
   // -- Choose some random points in one object and compute distance to the other.
   int num_samples = 20;
