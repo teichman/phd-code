@@ -13,8 +13,8 @@ namespace gc
     //   ROS_ASSERT(model_.weights_(i) > 0);
   }
   
-  void MaxflowInference::segment(PotentialsCache::ConstPtr pc,
-                                 Eigen::VectorXi* seg) const
+  double MaxflowInference::segment(PotentialsCache::ConstPtr pc,
+                                   Eigen::VectorXi* seg) const
   {
     // -- Check for monkey business and allocate.
     ROS_ASSERT(pc->numEdgePotentials() == model_.eweights_.rows());
@@ -60,7 +60,7 @@ namespace gc
     // -- Run graph cuts.
     HighResTimer hrt("maxflow");
     hrt.start();
-    graph.maxflow();
+    double mf = graph.maxflow();
     hrt.stop();
     //cout << hrt.reportMilliseconds() << endl;
 
@@ -71,6 +71,8 @@ namespace gc
       else
         seg->coeffRef(i) = 1;
     }
+
+    return mf;
   }
   
 }

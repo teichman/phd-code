@@ -1,4 +1,5 @@
 #include <dst/depth_epg.h>
+#include <pcl/common/distances.h>
 
 using namespace std;
 using namespace Eigen;

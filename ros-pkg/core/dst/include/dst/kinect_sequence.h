@@ -8,7 +8,6 @@
 #include <serializable/serializable.h>
 #include <dst/typedefs.h>
 
-#define BOOST_FILESYSTEM_VERSION 2
 #include <boost/filesystem.hpp>
 #include <boost/shared_ptr.hpp>
 

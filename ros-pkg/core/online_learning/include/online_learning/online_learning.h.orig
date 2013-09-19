@@ -1,0 +1,116 @@
+#ifndef ONLINE_LEARNING_H
+#define ONLINE_LEARNING_H
+
+#include <float.h>
+#include <boost/shared_ptr.hpp>
+#include <vector>
+#include <Eigen/Eigen>
+#include <ros/console.h>
+#include <ros/assert.h>
+
+namespace odontomachus
+{
+  class Classification
+  {
+  public:
+    typedef boost::shared_ptr<Classification> Ptr;
+    typedef boost::shared_ptr<const Classification> ConstPtr;
+
+    Eigen::VectorXf response_;
+
+    int getClassId() const;
+    Classification();
+    Classification(const Classification& other);
+    Classification& operator=(const Classification& rhs);
+    Classification& operator+=(const Classification& rhs);
+    Classification& operator*=(const float& val);
+    Classification operator+(const Classification& other);
+    Classification operator*(const float& val);
+    void serialize(std::ostream& out) const;
+  };
+  
+  class Instance
+  {
+  public:
+    typedef boost::shared_ptr<Instance> Ptr;
+    typedef boost::shared_ptr<const Instance> ConstPtr;
+      
+    Eigen::VectorXd descriptors_;
+    int class_id_;
+    void serialize(std::ostream& out) const;
+  };
+
+  class Cell
+  {
+  public:
+    typedef boost::shared_ptr<Cell> Ptr;
+    typedef boost::shared_ptr<const Cell> ConstPtr;
+
+    //! counts_(i) is the number of times class i has been seen in this cell.
+    Eigen::VectorXf counts_;
+    float total_;
+    Eigen::VectorXf response_;
+    
+    Cell(int num_classes, int smoothing);
+    //! Adds a training example of class_id to this cell.
+    void train(int class_id);
+
+  private:
+    void updateResponses();
+  };
+  
+  class WeakClassifier
+  {
+  public:
+    typedef boost::shared_ptr<WeakClassifier> Ptr;
+    typedef boost::shared_ptr<const WeakClassifier> ConstPtr;
+    
+    WeakClassifier();
+    //! Sets the bounds and allocateds bins based on a sample of data.
+    void initialize(int id, int num_classes, const std::vector<Instance::ConstPtr>& data);
+    void train(Instance::ConstPtr inst);
+    const Eigen::VectorXf& classify(Instance::ConstPtr inst) const;
+
+  private:
+    //! Indicates which descriptor to look at in an Instance.
+    int id_;
+    double min_;
+    double max_;
+    double width_;
+    int num_classes_;
+    std::vector<Cell::Ptr> cells_;
+    Eigen::VectorXf fallback_response_;
+
+    //! This feels wrong.
+    Cell::Ptr getCell(Instance::ConstPtr inst) const;
+  };
+  
+  class Odontomachus
+  {
+  public:
+    typedef boost::shared_ptr<Odontomachus> Ptr;
+    typedef boost::shared_ptr<const Odontomachus> ConstPtr;
+
+    std::vector<WeakClassifier::Ptr> wcs_;
+    int num_classes_;
+    Eigen::VectorXf prior_;
+    float total_training_instances_;
+    //! counts_(i) is the number of training instances of class i that have been seen.
+    Eigen::VectorXf counts_;
+    
+    
+    Odontomachus();
+    //! Initializes all weak classifiers.  Doesn't need to be labeled.
+    void initialize(int num_classes, const std::vector<Instance::ConstPtr>& data);
+    void train(Instance::ConstPtr inst);
+    //! Faster than training individually because it can leave the response updates until the very end.
+    void batchTrain(const std::vector<Instance::ConstPtr>& data);
+    Classification classify(Instance::ConstPtr inst) const;
+
+  private:
+    void updatePrior();
+  };
+
+}
+
+#endif // ONLINE_LEARNING_H

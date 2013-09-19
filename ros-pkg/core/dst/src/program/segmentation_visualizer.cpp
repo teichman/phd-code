@@ -18,9 +18,10 @@ void loadClouds(const string& dir, const string& basename,
                 vector<KinectCloud::Ptr>* clouds)
 {
   vector< pair<string, KinectCloud::Ptr> > index;
-  bfs::directory_iterator end_itr; // default construction yields past-the-end
-  for(bfs::directory_iterator itr(dir); itr != end_itr; ++itr) {
-    string filename = itr->leaf();
+
+  bfs::directory_iterator it(dir), eod;
+  BOOST_FOREACH(const bfs::path& p, make_pair(it, eod)) {
+    string filename = p.leaf().string();
     if(filename.substr(5).compare(basename) == 0) {
       KinectCloud::Ptr cloud(new KinectCloud());
       pcl::io::loadPCDFile<pcl::PointXYZRGB>(dir + "/" + filename, *cloud);

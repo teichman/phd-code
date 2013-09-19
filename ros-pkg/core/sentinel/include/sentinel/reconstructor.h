@@ -15,6 +15,7 @@ public:
   Reconstructor() : sync_(0.01) {}
   void update(sentinel::ForegroundConstPtr fgmsg);
   void update(sentinel::BackgroundConstPtr bgmsg);
+  cv::Mat3b stylizedImage(int scale = 1) const;
   
 protected:
   Synchronizer<sentinel::ForegroundConstPtr, sentinel::BackgroundConstPtr> sync_;

@@ -25,4 +25,4 @@ wipe: clean
 	rm -rf git
 
 install: built
-	sudo ./git/Packaging/Linux/install.sh
+	./git/Packaging/Linux/install.sh

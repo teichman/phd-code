@@ -1,0 +1,210 @@
+#ifndef GRID_CLASSIFIER_H
+#define GRID_CLASSIFIER_H
+
+#include <bag_of_tricks/lockable.h>
+#include <eigen_extensions/random.h>
+#include <online_learning/classifier.h>
+
+class Grid;
+
+class GridClassifier : public Classifier, public SharedLockable
+{
+public:
+  typedef boost::shared_ptr<GridClassifier> Ptr;
+  typedef boost::shared_ptr<const GridClassifier> ConstPtr;
+
+  //! grids_[ridx][didx][eidx].cells_.col(cidx_) are the response values for a cell.
+  struct CellIndex
+  {
+    //! Resolution index.
+    int ridx_;
+    //! Descriptor index.
+    int didx_;
+    //! Element index.
+    int eidx_;
+    //! Cell index.
+    int cidx_;
+  };
+
+  class StochasticLogisticTrainer;
+  class BoostingTrainer;
+  class BisectionBoostingTrainer;
+
+  Label prior_;
+  //! grids_[resolution_idx][descriptor][element].
+  std::vector< std::vector< std::vector<Grid*> > > grids_;
+
+  GridClassifier();
+  ~GridClassifier();
+  GridClassifier& operator=(const GridClassifier& other);
+  //! Exact float equality.  Basically only for test cases.
+  bool operator==(const GridClassifier& other);
+  bool operator!=(const GridClassifier& other) { return !(*this == other); }
+  GridClassifier(const GridClassifier& other);
+
+  //! Sets the grid bounds.  Does not need to be labeled data.
+  void initialize(const TrackDataset& dataset, size_t num_cells);
+  //! Adds one grid per num_cells for each dimension.
+  void initialize(const TrackDataset& dataset, std::vector<size_t> num_cells);
+  //! Creates and initializes grids for any grids that do not yet exist.
+  //! If, after re-name-mapping, descriptors have been added, you'll have to run this to ensure that good bounds get set.
+  //! Doesn't do anything if there are no descriptors that don't yet have corresponding grids.
+  void reinitialize(const TrackDataset& dataset);
+  //! Sets all response values to zero.
+  void setZero();
+  //! Sets all response values for class c to zero.
+  void setZero(int c);
+
+  Label classify(const Instance& instance) const;
+  Label classify(const std::vector<const Eigen::VectorXf*>& descriptors) const;
+  Label prior() const { return prior_; }
+  void serialize(std::ostream& out) const;
+  void deserialize(std::istream& in);
+  std::string status(const std::string& prefix = "", bool show_namemappings = false) const;
+  //! Returns a string saying which descriptor space predicts what.
+  std::string debug(const std::vector<const Eigen::VectorXf*>& descriptors) const;
+
+protected:
+  std::vector<size_t> num_cells_;
+
+  void classify(const Eigen::VectorXf& descriptor, size_t id, Label* prediction) const;
+  void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
+
+  friend class StochasticLogisticTrainer;
+};
+
+class GridClassifier::BoostingTrainer : public Trainer, public SharedLockable
+{
+public:
+  typedef boost::shared_ptr<GridClassifier::BoostingTrainer> Ptr;  
+  typedef boost::shared_ptr<const GridClassifier::BoostingTrainer> ConstPtr;
+
+  double obj_thresh_;
+  size_t convergence_check_period_;
+  int max_iter_;
+  bool verbose_;
+  //! Regularization term.  This ends up being just soft thresholding with every
+  //! weak classifier addition.
+  //! Must be >= 0.
+  double gamma_;
+    
+  BoostingTrainer(GridClassifier::Ptr classifier);
+  virtual ~BoostingTrainer();
+
+  using Trainer::train;
+  void train(const std::vector<TrackDataset::ConstPtr>& datasets,
+             const std::vector<Indices>& indices);
+  void train(const Instance& instance);
+  void train(const Instance& instance, const Label& prediction);
+  void serialize(std::ostream& out) const;
+  void deserialize(std::istream& in);
+  std::string status(const std::string& prefix = "") const;
+  bool operator==(const GridClassifier::BoostingTrainer& other);
+  bool operator!=(const GridClassifier::BoostingTrainer& other) { return !(*this == other); }
+    
+protected:
+  GridClassifier::Ptr gc_;
+  void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
+
+  virtual Eigen::ArrayXd computeUpdate(const std::vector<bool>& inliers,
+                                       const Eigen::ArrayXXd& weights,
+				       const Eigen::ArrayXXd& labels) const;
+  void evaluateWC(int num_tr_ex, const std::vector<TrackDataset::ConstPtr>& datasets,
+                  std::vector<size_t> ds, std::vector<size_t> ts, std::vector<size_t> fs,
+                  const Eigen::ArrayXXd& weights, const Eigen::ArrayXXd& labels,
+                  const CellIndex& c,
+                  double* improvement, Eigen::ArrayXd* update, std::vector<bool>* inliers) const;
+  
+};
+
+// class GridClassifier::BisectionBoostingTrainer : public GridClassifier::BoostingTrainer
+// {
+// public:
+//   BisectionBoostingTrainer(GridClassifier::Ptr classifier);
+//   ~BisectionBoostingTrainer() {}
+
+//   Eigen::ArrayXd computeUpdate(const std::vector<bool>& inside,
+//                                const Eigen::ArrayXXd& weights,
+//                                const Eigen::ArrayXXd& labels) const;
+//   std::string status(const std::string& prefix = "") const;
+// };
+  
+class GridClassifier::StochasticLogisticTrainer : public Trainer, public SharedLockable
+{
+public:
+  typedef boost::shared_ptr<GridClassifier::StochasticLogisticTrainer> Ptr;  // TODO: Not providing these typedefs can result in confusion.
+  typedef boost::shared_ptr<const GridClassifier::StochasticLogisticTrainer> ConstPtr;
+
+  StochasticLogisticTrainer(GridClassifier::Ptr classifier);
+  ~StochasticLogisticTrainer();
+
+  using Trainer::train;
+  void train(const Instance& instance);
+  void train(const Instance& instance, const Label& prediction);
+  void train(const std::vector<TrackDataset::ConstPtr>& datasets,
+	     const std::vector<Indices>& indices);
+  void serialize(std::ostream& out) const;
+  void deserialize(std::istream& in);
+  std::string status(const std::string& prefix = "") const;
+  bool operator==(const GridClassifier::StochasticLogisticTrainer& other);
+  void resetSchedulers();
+  
+protected:
+  GridClassifier::Ptr gc_;
+  //! One per class problem.
+  std::vector<SqrtScheduler*> schedulers_;
+
+  void deallocateSchedulers();
+  void step(const Instance& instance, const Label& prediction, int cid);
+  void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
+};
+
+class Grid : public Serializable, public NameTranslatable, public SharedLockable
+{
+public:
+  //! cells_(i, j) is the response for class i, cell j.
+  Eigen::MatrixXf cells_;
+
+  Grid();
+  //! Copy everything but the locks, which are created anew.
+  Grid(const Grid& other);
+  //! Sets the bounds and allocates bins based on a sample of data.
+  void initialize(size_t num_cells, size_t descriptor_id, size_t element_id, const TrackDataset& dataset);
+  //Eigen::VectorXf classify(float val) const;
+  int getCellIdx(float val) const;
+  void serialize(std::ostream& out) const;
+  void deserialize(std::istream& in);
+  void reset();
+  //! Exact float equality.  Basically only for test cases.
+  bool operator==(const Grid& other);
+  bool operator!=(const Grid& other) { return !(*this == other); }
+  //! Returns the left value of all bins;
+  Eigen::VectorXf bins() const;
+  float width() const { return width_; }
+  
+protected:
+  //! TODO: Remove.
+  size_t num_cells_;
+  int descriptor_id_;
+  int element_id_;
+  double min_;
+  double max_;
+  double width_;
+  double inv_width_;
+
+  void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
+  friend class GridClassifier;
+};
+
+
+// http://www.smipple.net/snippet/Martin%20Ankerl/A%20Fast,%20Compact%20Approximation%20of%20the%20Exponential%20Function
+// +/- 4% in the -100 to +100 range.
+inline double fastexp(double y)
+{
+  double d;
+  *((int*)(&d) + 0) = 0;
+  *((int*)(&d) + 1) = (int)(1512775 * y + 1072632447);
+  return d;
+}
+
+#endif // GRID_CLASSIFIER_H

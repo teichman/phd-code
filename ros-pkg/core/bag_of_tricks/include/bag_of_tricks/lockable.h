@@ -35,7 +35,7 @@ public:
 protected:
   //! For the first time ever, I'm tempted to make this mutable.
   //! It'd make user methods still be able to be const even if they are locking.
-  boost::shared_mutex shared_mutex_;
+  mutable boost::shared_mutex shared_mutex_;
 };
 
 class Lockable

@@ -1,0 +1,31 @@
+
+<package>
+  <description brief="online_learning">
+
+     online_learning
+
+  </description>
+  <author>Alex Teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/online_learning</url>
+  <depend package="eigen_extensions"/>
+  <depend package="rosconsole"/>
+  <depend package="serializable"/>
+  <depend package="bag_of_tricks"/>
+  <depend package="optimization"/>
+  <depend package="matplotlib_interface"/>
+  <depend package="performance_statistics"/>
+  <depend package="logistic"/>
+  <depend package="pipeline3"/>
+  <depend package="google-perftools"/>
+  <depend package="pcl_1_7"/>
+  <depend package="opencv_bleeding"/>
+  
+  <export>
+    <cpp cflags="-I${prefix}/include -I/usr/include/vtk-5.8" lflags="`rosboost-cfg --lflags filesystem,program_options` -L${prefix}/lib -Wl,-rpath ${prefix}/lib -lonline_learning -lonline_learning_visualization"/>
+  </export>
+
+</package>
+
+

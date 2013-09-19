@@ -3,8 +3,9 @@
 
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
-#include <sentinel/reconstructor.h>
 #include <bag_of_tricks/lockable.h>
+#include <sentinel/reconstructor.h>
+#include <jarvis/tracker.h>
 
 //! Only a reverse buffer for now, so you can rewind.
 class BufferingBagViewer : public SharedLockable
@@ -38,21 +39,28 @@ protected:
 class BagVis
 {
 public:
+  int max_num_bg_;
+  
   BagVis(std::string path, size_t max_buffer_size);
   void run();
-  ~BagVis() { delete bag_; }
+  ~BagVis() { if(bag_) delete bag_; if(view_) delete view_; }
 
 protected:
   rosbag::Bag* bag_;
   rosbag::View* view_;
   rosbag::View::iterator it_;
   Reconstructor reconstructor_;
+  Tracker tracker_;
   bool terminating_;
   bool paused_;
   //! Into buffer_.
   int idx_;
   size_t max_buffer_size_;
   std::deque<cv::Mat3b> buffer_;
+  boost::posix_time::ptime ptime_;
+  int num_bg_received_;
+  cv::Mat3b bg_img_;
+  cv::Mat3b vis_;
   
   void handleKeypress(char key);
   void read(int num);
@@ -60,6 +68,8 @@ protected:
   void handleMessage(const rosbag::MessageInstance& msg);
   void handleForegroundMessage(sentinel::Foreground::ConstPtr msg);
   void handleBackgroundMessage(sentinel::Background::ConstPtr msg);
+  void overlayTimestamp(boost::posix_time::ptime ptime, cv::Mat3b img) const;
+  void overlayTracks(cv::Mat3b track_img, cv::Mat3b img) const;
 };
 
 #endif // BAGVIS_H

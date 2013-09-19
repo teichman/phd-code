@@ -1,4 +1,5 @@
 #include <dst/boundary_mask_node.h>
+#include <pcl/common/distances.h>
 
 #define MASK (getenv("MASK") ? atoi(getenv("MASK")) : 0)
 

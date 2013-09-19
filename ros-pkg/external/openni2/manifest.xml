@@ -5,7 +5,7 @@
       sudo apt-get install libudev-dev openjdk-7-jdk freeglut3-dev libglu1-mesa-dev libusb-1.0-0-dev
 
     Once this package has been built, you must run
-      make install
+      sudo make install
     to install udev rules.
 
   </description>

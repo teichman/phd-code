@@ -6,7 +6,7 @@
 #include <ros/ros.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include <bag_of_tricks/high_res_timer.h>
+#include <timer/timer.h>
 #include <openni2_interface/openni2_interface.h>
 #include <openni2_interface/openni_helpers.h>
 #include <sentinel/background_model.h>
@@ -17,8 +17,9 @@ class Sentinel : public OpenNI2Handler
 {
 public:
   Sentinel(double update_interval,
-           int max_training_imgs,
-           double threshold,
+           double occupancy_threshold,
+           int raytracing_threshold,
+           double detection_threshold,
            bool visualize,
            OpenNI2Interface::Resolution color_res,
            OpenNI2Interface::Resolution depth_res);
@@ -52,10 +53,10 @@ protected:
   boost::shared_ptr<BackgroundModel> model_;
   std::queue<openni::VideoFrameRef> training_;
   double update_interval_;
-  int max_training_imgs_;
+  double occupancy_threshold_;
+  double detection_threshold_;
   HighResTimer update_timer_;
   cv::Mat3b vis_;
-  double threshold_;
   bool visualize_;
   OpenNI2Interface oni_;
   cv::Mat3b color_;
@@ -77,8 +78,9 @@ class ROSStreamingSentinel : public Sentinel
 public:
   ROSStreamingSentinel(std::string sensor_id,
                        double update_interval,
-                       int max_training_imgs,
-                       double threshold,
+                       double occupancy_threshold,
+                       int raytracing_threshold,
+                       double detection_threshold,
                        bool visualize,
                        OpenNI2Interface::Resolution color_res,
                        OpenNI2Interface::Resolution depth_res);
@@ -118,7 +120,6 @@ protected:
 //                         double save_interval,
 //                         double update_interval,
 //                         int max_training_imgs,
-//                         double threshold,
 //                         bool visualize,
 //                         OpenNI2Interface::Resolution color_res,
 //                         OpenNI2Interface::Resolution depth_res);

@@ -20,18 +20,21 @@ int main(int argc, char** argv)
 
   string sensor_id;
   double update_interval;
+  double occupancy_threshold;
+  int raytracing_threshold;
+  double detection_threshold;
   size_t max_training_imgs;
-  double threshold;
   string color_resolution;
   string depth_resolution;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("sensor-id", bpo::value(&sensor_id), "e.g. xpl07")
-    ("update-interval,u", bpo::value(&update_interval)->default_value(1), "How often to update, in seconds")
-    ("max-training-imgs,m", bpo::value(&max_training_imgs)->default_value(1000), "")
-    ("threshold,t", bpo::value(&threshold)->default_value(0.0), "")
-    ("color-res", bpo::value(&color_resolution), "")
-    ("depth-res", bpo::value(&depth_resolution), "")
+    ("update-interval,u", bpo::value(&update_interval)->default_value(0.1), "How often to update, in seconds")
+    ("occupancy-threshold,o", bpo::value(&occupancy_threshold)->default_value(600), "")
+    ("raytracing-threshold,r", bpo::value(&raytracing_threshold)->default_value(10), "")
+    ("detection-threshold,r", bpo::value(&detection_threshold)->default_value(0), "Foreground must be greater than this percent of the image to send a Foreground message.")
+    ("color-res", bpo::value(&color_resolution), "QVGA or VGA")
+    ("depth-res", bpo::value(&depth_resolution), "QVGA or VGA")
     ("visualize", "Show extra visualization")
     ;
 
@@ -72,8 +75,9 @@ int main(int argc, char** argv)
     }
   }
 
-  ROSStreamingSentinel sen(sensor_id, update_interval, max_training_imgs,
-                           threshold, opts.count("visualize"),
+  ROSStreamingSentinel sen(sensor_id, update_interval,
+                           occupancy_threshold, raytracing_threshold,
+                           detection_threshold, opts.count("visualize"),
                            color_res, depth_res);
 
   #if JARVIS_PROFILE

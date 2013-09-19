@@ -32,22 +32,23 @@ namespace dst
     vis_.setPointCloudRenderingProperties(PCL_VISUALIZER_POINT_SIZE, 4, "segmented");
     
     // -- Hardcode the camera for the Kinect.
-    vis_.camera_.clip[0] = 0.00387244;
-    vis_.camera_.clip[1] = 3.87244;
-    vis_.camera_.focal[0] = -0.160878;
-    vis_.camera_.focal[1] = -0.0444743;
-    vis_.camera_.focal[2] = 1.281;
-    vis_.camera_.pos[0] = 0.0402195;
-    vis_.camera_.pos[1] = 0.0111186;
-    vis_.camera_.pos[2] = -1.7;
-    vis_.camera_.view[0] = 0;
-    vis_.camera_.view[1] = -1;
-    vis_.camera_.view[2] = 0;
-    vis_.camera_.window_size[0] = 1678;
-    vis_.camera_.window_size[1] = 525;
-    vis_.camera_.window_pos[0] = 2;
-    vis_.camera_.window_pos[1] = 82;
-    vis_.updateCamera();
+    ROS_WARN("[SegmentationVisualizer] PCLVisualizer's camera param has been removed.  Initial camera pose needs to be set somehow...");
+    // vis_.camera_.clip[0] = 0.00387244;
+    // vis_.camera_.clip[1] = 3.87244;
+    // vis_.camera_.focal[0] = -0.160878;
+    // vis_.camera_.focal[1] = -0.0444743;
+    // vis_.camera_.focal[2] = 1.281;
+    // vis_.camera_.pos[0] = 0.0402195;
+    // vis_.camera_.pos[1] = 0.0111186;
+    // vis_.camera_.pos[2] = -1.7;
+    // vis_.camera_.view[0] = 0;
+    // vis_.camera_.view[1] = -1;
+    // vis_.camera_.view[2] = 0;
+    // vis_.camera_.window_size[0] = 1678;
+    // vis_.camera_.window_size[1] = 525;
+    // vis_.camera_.window_pos[0] = 2;
+    // vis_.camera_.window_pos[1] = 82;
+    // vis_.updateCamera();
 
     draw();
   }

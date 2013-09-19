@@ -9,10 +9,11 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/dst</url>
   <!-- pcl_bleeding has to come before anything that causes inclusion of /opt/ros/fuerte/include.  Not sure if this applies to trunk. -->
-  <depend package="pcl_trunk"/>
+  <depend package="pcl_1_7"/>
   <depend package="sensor_msgs"/>
   <depend package="eigen_extensions"/>
   <depend package="bag_of_tricks"/>
+  <depend package="timer"/>
   <depend package="pipeline2"/>
   <depend package="optimization"/>
   <depend package="maxflow"/>

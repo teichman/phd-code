@@ -1,4 +1,5 @@
 #include <dst/helper_functions.h>
+#include <boost/foreach.hpp>
 
 using namespace std;
 namespace bfs = boost::filesystem;
@@ -28,11 +29,11 @@ namespace dst
 
     // -- Find the next number.
     int num = 0;
-    bfs::directory_iterator end_itr; // default construction yields past-the-end
-    for(bfs::directory_iterator itr(dir); itr != end_itr; ++itr) { 
-      if(itr->leaf().substr(width+1).compare(basename) == 0)
+    bfs::directory_iterator it(dir), eod;
+    BOOST_FOREACH(const bfs::path& p, make_pair(it, eod))
+      if(p.leaf().string().substr(width+1).compare(basename) == 0)
         ++num;
-    }
+
     
     ostringstream filename;
     filename << setw(width) << setfill('0') << num << "-" << basename;
