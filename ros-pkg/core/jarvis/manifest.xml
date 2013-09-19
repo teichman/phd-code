@@ -12,6 +12,7 @@
   <!-- pcl_1_7 MUST come first because the ROS people boned things horribly. /-->
   <depend package="pcl_1_7"/>
   <depend package="sentinel"/>
+  <depend package="google-perftools"/>
 
 
 </package>

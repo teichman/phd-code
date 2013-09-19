@@ -48,11 +48,13 @@ void BufferingBagViewer::read(int num)
 
 
 BagVis::BagVis(std::string path, size_t max_buffer_size) :
+  max_num_bg_(320*240),
   tracker_(100),
   terminating_(false),
   paused_(false),
   idx_(false),
-  max_buffer_size_(max_buffer_size)
+  max_buffer_size_(max_buffer_size),
+  num_bg_received_(0)
 {
   //tracker_.visualize_ = true;
   
@@ -65,7 +67,7 @@ BagVis::BagVis(std::string path, size_t max_buffer_size) :
   view_ = new View(*bag_, TopicQuery(topics));
   it_ = view_->begin();
 
-  //cv::namedWindow("Visualization", CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED);
+  cv::namedWindow("Visualization", CV_WINDOW_NORMAL | CV_WINDOW_KEEPRATIO | CV_GUI_EXPANDED);
 }
 
 void BagVis::handleForegroundMessage(Foreground::ConstPtr msg)
@@ -73,19 +75,16 @@ void BagVis::handleForegroundMessage(Foreground::ConstPtr msg)
   ptime_ = msg->header.stamp.toBoost();
   //reconstructor_.update(msg);
   tracker_.update(msg);
-
-  // cv::Mat3b img = cv::Mat3b(cv::Size(320, 240), cv::Vec3b(127, 127, 127));
-  // tracker_.draw(img);
-  // cv::Mat3b img_scaled;
-  // cv::resize(img, img_scaled, img.size() * 2, cv::INTER_NEAREST);
-  // cv::imshow("tracks", img_scaled);
-  // cv::waitKey(2);
 }
 
 void BagVis::handleBackgroundMessage(Background::ConstPtr msg)
 {
   reconstructor_.update(msg);
   ptime_ = msg->header.stamp.toBoost();
+  ++num_bg_received_;
+  bg_img_ = reconstructor_.stylizedImage();
+  if(vis_.rows != bg_img_.rows)
+    vis_ = cv::Mat3b(bg_img_.size());
 }
 
 void BagVis::handleMessage(const MessageInstance& msg)
@@ -94,15 +93,17 @@ void BagVis::handleMessage(const MessageInstance& msg)
   if(fg)
     handleForegroundMessage(fg);
 
-  Background::ConstPtr bg = msg.instantiate<Background>();
-  if(bg)
-    handleBackgroundMessage(bg);
+  if(num_bg_received_ < max_num_bg_) {
+    Background::ConstPtr bg = msg.instantiate<Background>();
+    if(bg)
+      handleBackgroundMessage(bg);
+  }
 
-  cv::Mat3b vis = reconstructor_.stylizedImage();
-  if(vis.rows > 0) {
-    tracker_.draw(vis);
+  if(bg_img_.rows > 0) {
+    bg_img_.copyTo(vis_);
+    tracker_.draw(vis_);
     cv::Mat3b vis_scaled;
-    cv::resize(vis, vis_scaled, vis.size() * 2, cv::INTER_NEAREST);
+    cv::resize(vis_, vis_scaled, vis_.size(), cv::INTER_NEAREST);
     buffer_.push_back(vis_scaled);
     overlayTimestamp(ptime_, buffer_.back());
     if(buffer_.size() > max_buffer_size_)

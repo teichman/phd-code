@@ -22,19 +22,24 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
-rosbuild_add_library(jarvis
-  src/lib/detection_visualizer.cpp
+rosbuild_add_library(jarvis_core
+  src/lib/jarvis.cpp
   src/lib/tracker.cpp
-  src/lib/bagvis.cpp
+#  src/lib/detection_visualizer.cpp
+#  src/lib/bagvis.cpp
   )
 
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 
-rosbuild_add_executable(visualize_detections src/prog/visualize_detections.cpp)
-target_link_libraries(visualize_detections jarvis)
+#rosbuild_add_executable(visualize_detections src/prog/visualize_detections.cpp)
+#target_link_libraries(visualize_detections jarvis)
 
-rosbuild_add_executable(bagvis src/prog/bagvis.cpp)
-target_link_libraries(bagvis jarvis)
-rosbuild_link_boost(bagvis program_options)
+rosbuild_add_executable(jarvis src/prog/jarvis.cpp)
+target_link_libraries(jarvis jarvis_core)
+rosbuild_link_boost(jarvis program_options)
+
+#rosbuild_add_executable(bagvis src/prog/bagvis.cpp)
+#target_link_libraries(bagvis jarvis)
+#rosbuild_link_boost(bagvis program_options)

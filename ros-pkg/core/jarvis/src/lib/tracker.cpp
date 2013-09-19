@@ -4,6 +4,7 @@
 #include <pcl/common/centroid.h>
 
 using namespace std;
+namespace bpt = boost::posix_time;
 
 void Blob::project()
 {
@@ -49,6 +50,7 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
 {
   HighResTimer hrt;
   frame_id_ = msg->frame_id;
+  ptime_ = msg->header.stamp.toBoost();
 
   // -- Debugging.
   // cout << "Got a detection with " << msg->indices.size() << " points." << endl;
@@ -318,8 +320,11 @@ void Tracker::draw(cv::Mat3b img) const
   static map<size_t, cv::Vec3b> colormap;
   
   // -- Draw the halos.
+  ROS_ASSERT(img.rows % 4 == 0 && img.cols % 4 == 0);
   cv::Mat1b mask(img.size(), 0);
-  cv::Mat1b dilated_mask(img.size(), 0);
+  cv::Mat1b mask_small(cv::Size(img.cols / 4, img.rows / 4), 0);
+  cv::Mat1b dilated_mask(mask.size(), 0);
+  cv::Mat1b dilated_mask_small(mask_small.size(), 0); 
   for(it = tracks_.begin(); it != tracks_.end(); ++it) {
     size_t track_id = it->first;
     const Blob& blob = *it->second;
@@ -332,10 +337,12 @@ void Tracker::draw(cv::Mat3b img) const
     mask = 0;
     for(size_t i = 0; i < blob.indices_.size(); ++i)
       mask(blob.indices_[i]) = 255;
+    cv::resize(mask, mask_small, mask_small.size(), cv::INTER_NEAREST);
 
     // Get a dilated mask.
     //cv::dilate(mask, dilated_mask, cv::Mat(), cv::Point(-1, -1), 2);
-    cv::GaussianBlur(mask, dilated_mask, cv::Size(21, 21), 10);
+    cv::GaussianBlur(mask_small, dilated_mask_small, cv::Size(9, 9), 5);
+    cv::resize(dilated_mask_small, dilated_mask, mask.size(), cv::INTER_NEAREST);
 
     // Color all points that are in the dilated mask but not the actual mask.
     if(colormap.find(track_id) == colormap.end())
@@ -348,4 +355,18 @@ void Tracker::draw(cv::Mat3b img) const
       }
     }
   }
+
+  // -- Overlay the timestamp.
+  ostringstream oss;
+  const bpt::time_facet* f = new bpt::time_facet("%Y-%m-%d %H:%M:%S UTC%Q");
+  oss.imbue(locale(oss.getloc(), f));
+  oss << ptime_;
+  
+  float thickness = 1.5;
+  float scale = 0.5;
+  cv::putText(img, oss.str(), cv::Point(10, img.rows - 10),
+              cv::FONT_HERSHEY_SIMPLEX, scale,
+              cv::Scalar(0, 255, 0), thickness, CV_AA);
 }
+
+

@@ -1,6 +1,7 @@
 #ifndef TRACKER_H
 #define TRACKER_H
 
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -64,6 +65,7 @@ public:
 protected:
   size_t max_track_length_;
   size_t next_track_id_;
+  boost::posix_time::ptime ptime_;
 
   void reconstructForeground(sentinel::Foreground::ConstPtr msg,
                              cv::Mat1f depth, cv::Mat1b foreground) const;

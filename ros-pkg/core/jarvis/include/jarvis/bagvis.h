@@ -39,6 +39,8 @@ protected:
 class BagVis
 {
 public:
+  int max_num_bg_;
+  
   BagVis(std::string path, size_t max_buffer_size);
   void run();
   ~BagVis() { if(bag_) delete bag_; if(view_) delete view_; }
@@ -56,6 +58,9 @@ protected:
   size_t max_buffer_size_;
   std::deque<cv::Mat3b> buffer_;
   boost::posix_time::ptime ptime_;
+  int num_bg_received_;
+  cv::Mat3b bg_img_;
+  cv::Mat3b vis_;
   
   void handleKeypress(char key);
   void read(int num);
