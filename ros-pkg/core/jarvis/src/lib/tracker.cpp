@@ -287,7 +287,7 @@ double Tracker::distance(const Blob& prev, const Blob& curr) const
     return numeric_limits<double>::max();
 
   // -- Choose some random points in one object and compute distance to the other.
-  int num_samples = 20;
+  int num_samples = 100;
   vector<int> indices;
   vector<float> squared_distances;
   double mean_distance = 0;
