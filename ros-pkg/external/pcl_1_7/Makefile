@@ -44,6 +44,7 @@ git:
 
 clean:
 	cd release && make clean
+	-rm release/built
 
 wipe:
 	rm -rf release git

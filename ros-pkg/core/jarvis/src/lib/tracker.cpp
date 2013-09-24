@@ -399,6 +399,11 @@ void addTimestamp(const bpt::ptime& ptime, cv::Mat3b img)
 void orient(int rotation, cv::Mat3b* img)
 {
   ROS_ASSERT(rotation == 0 || rotation == 90 || rotation == 180 || rotation == 270);
+  // Somehow this assertion isn't triggering on Rg despite the following cout
+  // showing that it clearly should.
+  // It works properly on Al.  What the hell.
+  // assert(rotation == 0 || rotation == 90 || rotation == 180 || rotation == 270);
+  // cout << "rotation: " << rotation << endl;
   
   if(rotation == 90) {    
     cv::transpose(*img, *img);
