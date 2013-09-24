@@ -10,9 +10,11 @@ int main(int argc, char** argv)
   bpo::positional_options_description p;
 
   int vis_level;
+  int rotation;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("vis-level,v", bpo::value(&vis_level)->default_value(0), "")
+    ("rotation,r", bpo::value(&rotation)->default_value(0), "")
     ;
 
   bpo::variables_map opts;
@@ -26,9 +28,11 @@ int main(int argc, char** argv)
     cout << opts_desc << endl;
     return 1;
   }
+
+  cout << "Using vis_level " << vis_level << " and rotation " << rotation << endl;
   
   ros::init(argc, argv, "Jarvis");
-  Jarvis jarvis(vis_level);
+  Jarvis jarvis(vis_level, rotation);
   ros::spin();
   
   return 0;

@@ -5,14 +5,34 @@
 
 using namespace std;
 
-Jarvis::Jarvis(int vis_level) :
+Jarvis::Jarvis(int vis_level, int rotation) :
   tracker_(100),
-  vis_level_(vis_level)
+  vis_level_(vis_level),
+  rotation_(rotation)
 {
   fg_sub_ = nh_.subscribe("foreground", 3, &Jarvis::foregroundCallback, this);
   bg_sub_ = nh_.subscribe("background", 3, &Jarvis::backgroundCallback, this);
   if(vis_level_ > 1)
     tracker_.visualize_ = true;
+}
+
+void Jarvis::orient(int rotation, cv::Mat3b img) const
+{
+  ROS_ASSERT(rotation == 0 || rotation == 90 || rotation == 180 || rotation == 270);
+  cout << "Orienting to " << rotation << endl;
+  assert(rotation == 0);
+  
+  if(rotation == 90) {
+    cv::transpose(img, img);
+    cv::flip(img, img, 0);  // Flip x.
+  }
+  else if(rotation == 180) {
+    cv::flip(img, img, -1); // Flip both x and y.
+  }
+  else if(rotation == 270) {
+    cv::transpose(img, img);
+    cv::flip(img, img, 1);  // Flip y.
+  }
 }
 
 void Jarvis::backgroundCallback(sentinel::BackgroundConstPtr msg)
@@ -42,6 +62,7 @@ void Jarvis::foregroundCallback(sentinel::ForegroundConstPtr msg)
     tracker_.draw(color_vis_);
     cv::Mat3b color_vis_scaled;
     cv::resize(color_vis_, color_vis_scaled, color_vis_.size() * 2, cv::INTER_NEAREST);
+    orient(rotation_, color_vis_);
     cv::imshow("tracks", color_vis_scaled);
   }
 
@@ -69,6 +90,7 @@ void Jarvis::foregroundCallback(sentinel::ForegroundConstPtr msg)
 
     cv::Mat3b depth_vis_scaled;
     cv::resize(depth_vis_, depth_vis_scaled, depth_vis_.size() * 2, cv::INTER_NEAREST);
+    orient(rotation_, depth_vis_scaled);
     cv::imshow("depth", depth_vis_scaled);
   }
 
