@@ -59,7 +59,7 @@ public:
   Tracker(size_t max_track_length);
   void update(sentinel::ForegroundConstPtr msg);
   //! Fills img with a representation of the current state of the tracks.
-  void draw(cv::Mat3b img, int rotation = 0) const;
+  void draw(cv::Mat3b img) const;
   cv::Mat3b draw() const;
   
 protected:
@@ -74,6 +74,7 @@ protected:
 
 void displayBlobs(const std::vector<Blob::ConstPtr>& blobs, cv::Mat3b img);
 //! rotation must be one of 0, 90, 180, or 270.
-void orient(int rotation, cv::Mat3b img);
+void orient(int rotation, cv::Mat3b* img);
+void addTimestamp(const boost::posix_time::ptime& ptime, cv::Mat3b img);
 
 #endif // TRACKER_H

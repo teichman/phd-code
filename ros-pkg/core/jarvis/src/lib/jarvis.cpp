@@ -40,9 +40,11 @@ void Jarvis::foregroundCallback(sentinel::ForegroundConstPtr msg)
     depth_vis_ = cv::Vec3b(0, 0, 0);
     
     // -- Draw tracks.
-    tracker_.draw(color_vis_, rotation_);
+    tracker_.draw(color_vis_);
     cv::Mat3b color_vis_scaled;
     cv::resize(color_vis_, color_vis_scaled, color_vis_.size() * 2, cv::INTER_NEAREST);
+    orient(rotation_, &color_vis_scaled);
+    addTimestamp(msg->header.stamp.toBoost(), color_vis_scaled);
     cv::imshow("tracks", color_vis_scaled);
   }
 
@@ -70,7 +72,7 @@ void Jarvis::foregroundCallback(sentinel::ForegroundConstPtr msg)
 
     cv::Mat3b depth_vis_scaled;
     cv::resize(depth_vis_, depth_vis_scaled, depth_vis_.size() * 2, cv::INTER_NEAREST);
-    orient(rotation_, depth_vis_scaled);
+    orient(rotation_, &depth_vis_scaled);
     cv::imshow("depth", depth_vis_scaled);
   }
 
