@@ -28,7 +28,6 @@ protected:
 
   void foregroundCallback(sentinel::ForegroundConstPtr msg);
   void backgroundCallback(sentinel::BackgroundConstPtr msg);
-  void orient(int rotation, cv::Mat3b img) const;
 };
 
 #endif // JARVIS_H

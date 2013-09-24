@@ -16,25 +16,6 @@ Jarvis::Jarvis(int vis_level, int rotation) :
     tracker_.visualize_ = true;
 }
 
-void Jarvis::orient(int rotation, cv::Mat3b img) const
-{
-  ROS_ASSERT(rotation == 0 || rotation == 90 || rotation == 180 || rotation == 270);
-  cout << "Orienting to " << rotation << endl;
-  assert(rotation == 0);
-  
-  if(rotation == 90) {
-    cv::transpose(img, img);
-    cv::flip(img, img, 0);  // Flip x.
-  }
-  else if(rotation == 180) {
-    cv::flip(img, img, -1); // Flip both x and y.
-  }
-  else if(rotation == 270) {
-    cv::transpose(img, img);
-    cv::flip(img, img, 1);  // Flip y.
-  }
-}
-
 void Jarvis::backgroundCallback(sentinel::BackgroundConstPtr msg)
 {
   // reconstructor_.update(msg);
@@ -59,10 +40,9 @@ void Jarvis::foregroundCallback(sentinel::ForegroundConstPtr msg)
     depth_vis_ = cv::Vec3b(0, 0, 0);
     
     // -- Draw tracks.
-    tracker_.draw(color_vis_);
+    tracker_.draw(color_vis_, rotation_);
     cv::Mat3b color_vis_scaled;
     cv::resize(color_vis_, color_vis_scaled, color_vis_.size() * 2, cv::INTER_NEAREST);
-    orient(rotation_, color_vis_);
     cv::imshow("tracks", color_vis_scaled);
   }
 

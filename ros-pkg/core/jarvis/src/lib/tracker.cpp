@@ -317,7 +317,7 @@ cv::Mat3b Tracker::draw() const
   return img;
 }
 
-void Tracker::draw(cv::Mat3b img) const
+void Tracker::draw(cv::Mat3b img, int rotation) const
 {
   // -- Draw the points.
   map<size_t, Blob::Ptr>::const_iterator it;
@@ -381,6 +381,9 @@ void Tracker::draw(cv::Mat3b img) const
     }
   }
 
+  // -- Apply orientation.
+  orient(rotation, img);
+  
   // -- Overlay the timestamp.
   ostringstream oss;
   const bpt::time_facet* f = new bpt::time_facet("%Y-%m-%d %H:%M:%S UTC%Q");
@@ -394,4 +397,19 @@ void Tracker::draw(cv::Mat3b img) const
               cv::Scalar(0, 255, 0), thickness, CV_AA);
 }
 
-
+void orient(int rotation, cv::Mat3b img)
+{
+  ROS_ASSERT(rotation == 0 || rotation == 90 || rotation == 180 || rotation == 270);
+  
+  if(rotation == 90) {
+    cv::transpose(img, img);
+    cv::flip(img, img, 0);  // Flip x.
+  }
+  else if(rotation == 180) {
+    cv::flip(img, img, -1); // Flip both x and y.
+  }
+  else if(rotation == 270) {
+    cv::transpose(img, img);
+    cv::flip(img, img, 1);  // Flip y.
+  }
+}
