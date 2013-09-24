@@ -49,6 +49,9 @@ Tracker::Tracker(size_t max_track_length) :
 
 void Tracker::update(sentinel::ForegroundConstPtr msg)
 {
+  cout << "------------------------------------------------------------" << endl;
+  ScopedTimer st("Tracker::update", TimeUnit::MS);
+  
   HighResTimer hrt;
   frame_id_ = msg->frame_id;
   ptime_ = msg->header.stamp.toBoost();
@@ -103,7 +106,7 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
   // The min points argument here shouldn't matter, because size filtering
   // is done in Sentinel now.  It's currently a workaround for a bug in cluster().
   cluster(depth_, 0.2, 50, &assignments_, &indices_);  
-  //hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
   if(visualize_) { 
     cv::Mat3b clustering_scaled;
     cv::resize(colorAssignments(assignments_), clustering_scaled, assignments_.size() * 2, cv::INTER_NEAREST);
@@ -117,6 +120,7 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
         foreground_(y, x) = 0;
 
   // -- Construct blobs.
+  hrt.reset("Blob construction"); hrt.start();
   vector<Blob::Ptr> current_blobs;
   for(size_t i = 0; i < indices_.size(); ++i) {
     Blob::Ptr blob(new Blob);
@@ -146,8 +150,10 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
     current_blobs.push_back(blob);
     ROS_ASSERT(blob->indices_.size() > 10);
   }
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 
   // -- Simple correspondence method.
+  hrt.reset("Correspondence"); hrt.start();
   vector<bool> matched_blobs(current_blobs.size(), false);
   vector<bool> matched_tracks(tracks_.size(), false);
   vector<size_t> track_indices(tracks_.size());
@@ -207,12 +213,13 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
       //cout << "Creating new track." << endl;
     }
   }
+  hrt.stop(); cout << hrt.reportMilliseconds() << endl;
 }
 
 void Tracker::reconstructForeground(sentinel::Foreground::ConstPtr msg,
                                     cv::Mat1f depth, cv::Mat1b foreground) const
 {
-  //ScopedTimer st("Tracker::reconstructForeground", TimeUnit::MS);
+  ScopedTimer st("Tracker::reconstructForeground", TimeUnit::MS);
   
   cv::Mat1b indices_mask(cv::Size(msg->width, msg->height), 0);
   for(size_t i = 0; i < msg->indices.size(); ++i) {
