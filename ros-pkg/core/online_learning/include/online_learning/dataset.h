@@ -172,6 +172,7 @@ public:
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);
   std::string status(const std::string& prefix = "") const;
+  //! This does not include the size of the raw_ data.
   size_t numBytes() const;
   
 protected:
@@ -216,6 +217,7 @@ public:
   void deserialize(std::istream& in);
   std::string status(const std::string& prefix = "", bool show_name_mappings = true) const;
   void deleteDescriptors();
+  //! This does not include the size of the raw_ data.
   size_t numBytes() const;
   size_t size() const { return instances_.size(); }
   bool empty() const { return instances_.empty(); }
@@ -286,6 +288,7 @@ public:
   
   const Label& label(size_t i) const;
   std::string status(const std::string& prefix = "", bool show_name_mappings = false) const;
+  //! This does not include the size of the raw_ data.
   size_t numBytes() const;
   size_t size() const { return tracks_.size(); }
   bool empty() const { return tracks_.empty(); }
