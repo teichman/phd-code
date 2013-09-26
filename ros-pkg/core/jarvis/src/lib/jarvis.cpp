@@ -7,6 +7,7 @@ using namespace std;
 
 Jarvis::Jarvis(int vis_level, int rotation) :
   tracker_(100),
+  tda_("jarvis_tds", 10, 100, 100),
   vis_level_(vis_level),
   rotation_(rotation)
 {
@@ -29,6 +30,7 @@ void Jarvis::foregroundCallback(sentinel::ForegroundConstPtr msg)
 {
   //reconstructor_.update(msg);
   tracker_.update(msg);
+  tda_.update(tracker_.tracks_);
 
   if(vis_level_ > 0) {
     // -- Allocate memory if necessary.

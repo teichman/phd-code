@@ -7,7 +7,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <timer/timer.h>
 #include <sentinel/reconstructor.h>
-#include <jarvis/tracker.h>
+#include <jarvis/track_dataset_assembler.h>
 
 class Jarvis
 {
@@ -23,6 +23,7 @@ protected:
   cv::Mat3b depth_vis_;
   Reconstructor reconstructor_;
   Tracker tracker_;
+  TrackDatasetAssembler tda_;
   int vis_level_;
   int rotation_;
 

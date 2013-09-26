@@ -1,7 +1,9 @@
 #include <jarvis/track_dataset_assembler.h>
 #include <bag_of_tricks/next_path.h>
+#include <boost/filesystem.hpp>
 
 using namespace std;
+namespace bfs = boost::filesystem;
 
 TrackDatasetAssembler::TrackDatasetAssembler(std::string output_directory, size_t min_track_length,
                                              size_t max_track_length, size_t max_num_instances) :
@@ -13,10 +15,15 @@ TrackDatasetAssembler::TrackDatasetAssembler(std::string output_directory, size_
   // Give it an empty cmap and dmap.
   td_.applyNameMapping("cmap", NameMapping());
   td_.applyNameMapping("dmap", NameMapping());
+  if(!bfs::exists(output_directory_))
+    bfs::create_directory(output_directory_);
 }
 
 void TrackDatasetAssembler::update(const std::map<size_t, Blob::Ptr>& tracked_blobs)
 {
+  ScopedTimer st(__PRETTY_FUNCTION__);
+  cout << "Got " << tracked_blobs.size() << " new blobs.  Have " << tracks_.size() << " in TDA." << endl;
+  cout << "Total instances in td_: " << td_.totalInstances() << endl;
   set<size_t> updated;
 
   // -- Update tracks_ with tracked_blobs contents.
