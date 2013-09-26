@@ -4,8 +4,6 @@ using namespace std;
 using namespace Eigen;
 namespace bfs = boost::filesystem;
 
-CustomSerializer::Ptr Instance::custom_serializer_ = CustomSerializer::Ptr(new PCDSerializer);
-
 /************************************************************
  * TrackViewControllerBase
  ************************************************************/

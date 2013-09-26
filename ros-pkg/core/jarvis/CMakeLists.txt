@@ -27,6 +27,7 @@ rosbuild_add_library(jarvis_core
   src/lib/tracker.cpp
   src/lib/track_dataset_assembler.cpp
   src/lib/blob_serializer.cpp
+  src/lib/blob_view.cpp
 #  src/lib/detection_visualizer.cpp
 #  src/lib/bagvis.cpp
   )
@@ -41,6 +42,10 @@ rosbuild_add_library(jarvis_core
 rosbuild_add_executable(jarvis src/prog/jarvis.cpp)
 target_link_libraries(jarvis jarvis_core)
 rosbuild_link_boost(jarvis program_options)
+
+rosbuild_add_executable(visualize_augmented_td src/prog/visualize_augmented_td.cpp)
+target_link_libraries(visualize_augmented_td jarvis_core)
+rosbuild_link_boost(visualize_augmented_td program_options)
 
 #rosbuild_add_executable(bagvis src/prog/bagvis.cpp)
 #target_link_libraries(bagvis jarvis)

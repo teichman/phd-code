@@ -13,7 +13,9 @@ TrackDatasetAssembler::TrackDatasetAssembler(std::string output_directory, size_
   max_num_instances_(max_num_instances)
 {
   // Give it an empty cmap and dmap.
-  td_.applyNameMapping("cmap", NameMapping());
+  NameMapping cmap;
+  cmap.addName("kitten");
+  td_.applyNameMapping("cmap", cmap);
   td_.applyNameMapping("dmap", NameMapping());
   if(!bfs::exists(output_directory_))
     bfs::create_directory(output_directory_);
@@ -78,12 +80,15 @@ void TrackDatasetAssembler::update(const std::map<size_t, Blob::Ptr>& tracked_bl
 void TrackDatasetAssembler::append(const std::vector<Blob::Ptr>& track)
 {
   Dataset::Ptr dataset(new Dataset);
-  dataset->applyNameMapping("cmap", NameMapping());
-  dataset->applyNameMapping("dmap", NameMapping());
-
+  
   dataset->instances_.resize(track.size());
   for(size_t i = 0; i < track.size(); ++i)
     dataset->instances_[i].raw_ = track[i];
+
+  NameMapping cmap;
+  cmap.addName("kitten");
+  dataset->applyNameMapping("cmap", cmap);
+  dataset->applyNameMapping("dmap", NameMapping());
 
   td_.tracks_.push_back(dataset);
 }

@@ -33,6 +33,7 @@ rosbuild_add_library(online_learning
   src/lib/training_buffer.cpp
   src/lib/tbssl.cpp
   src/lib/collage_generator.cpp
+  src/lib/track_dataset_visualizer.cpp
   )
 rosbuild_add_compile_flags(online_learning -Wno-deprecated-declarations)
 target_link_libraries(online_learning tcmalloc)
@@ -52,11 +53,9 @@ rosbuild_add_library(online_learning_pcs
   )
 rosbuild_add_compile_flags(online_learning_pcs -Wno-deprecated-declarations)
 
-# This library uses PCDSerializer.  It should maybe be moved to another package.
-rosbuild_add_library(online_learning_visualization
-  src/lib/track_dataset_visualizer.cpp
+rosbuild_add_library(online_learning_pcd_serializer
+  src/lib/use_pcd_serializer.cpp
   )
-rosbuild_add_compile_flags(online_learning_visualization -Wno-deprecated-declarations)
 
 ########################################
 # GTests
@@ -158,13 +157,13 @@ target_link_libraries(sample_random_tracks online_learning online_learning_pcs)
 #    This content should maybe be moved out to another package.
 
 rosbuild_add_executable(start_grind src/program/start_grind.cpp)
-target_link_libraries(start_grind online_learning online_learning_visualization)
+target_link_libraries(start_grind online_learning online_learning_pcd_serializer)
 
 rosbuild_add_executable(resume_grind src/program/resume_grind.cpp)
-target_link_libraries(resume_grind online_learning online_learning_visualization)
+target_link_libraries(resume_grind online_learning online_learning_pcd_serializer)
 
 rosbuild_add_executable(visualize_augmented_td src/program/visualize_augmented_td.cpp)
-target_link_libraries(visualize_augmented_td online_learning online_learning_visualization)
+target_link_libraries(visualize_augmented_td online_learning online_learning_pcd_serializer)
 
 rosbuild_add_executable(generate_group_induction_video src/program/generate_group_induction_video.cpp)
-target_link_libraries(generate_group_induction_video online_learning online_learning_visualization vtkCommon vtkRendering vtkFiltering)
+target_link_libraries(generate_group_induction_video online_learning online_learning_pcd_serializer vtkCommon vtkRendering vtkFiltering)
