@@ -13,6 +13,7 @@
   <depend package="pcl_1_7"/>
   <depend package="sentinel"/>
   <depend package="google-perftools"/>
+  <depend package="online_learning"/>
 
 
 </package>
