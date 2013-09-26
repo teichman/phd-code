@@ -25,6 +25,8 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 rosbuild_add_library(jarvis_core
   src/lib/jarvis.cpp
   src/lib/tracker.cpp
+  src/lib/track_dataset_assembler.cpp
+  src/lib/blob_serializer.cpp
 #  src/lib/detection_visualizer.cpp
 #  src/lib/bagvis.cpp
   )

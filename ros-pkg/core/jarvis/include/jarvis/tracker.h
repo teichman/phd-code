@@ -9,7 +9,9 @@
 #include <opencv2/nonfree/features2d.hpp>
 #include <pcl/search/kdtree.h>
 #include <pcl/kdtree/kdtree_flann.h>
+#include <serializable/serializable.h>
 #include <timer/timer.h>
+#include <eigen_extensions/eigen_extensions.h>
 #include <sentinel/Foreground.h>
 #include <sentinel/Background.h>
 
@@ -18,7 +20,7 @@ typedef pcl::PointCloud<Point> Cloud;
 typedef pcl::search::KdTree<pcl::PointXYZRGB> KdTree;
 //typedef pcl::KdTreeFLANN<pcl::PointXYZRGB> KdTree;
 
-struct Blob
+struct Blob : public Serializable
 {
   typedef boost::shared_ptr<Blob> Ptr;
   typedef boost::shared_ptr<const Blob> ConstPtr;
@@ -38,7 +40,11 @@ struct Blob
   Eigen::Vector3f centroid_;
 
   //! Fills cloud_, centroid_, and kdtree_ from the indices_, color_, and depth_ data.
+  //! You'll have to redo this if you save and then load.
   void project();
+
+  void serialize(std::ostream& out) const;
+  void deserialize(std::istream& in);
 };
 
 //! Takes FG messages, outputs Blobs with track ids.

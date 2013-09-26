@@ -22,7 +22,7 @@ protected:
   std::string output_directory_;
   size_t min_track_length_;
   size_t max_track_length_;
-  size_t max_td_size_;
+  size_t max_num_instances_;
 
   void append(const std::vector<Blob::Ptr>& track);
 };

@@ -1,14 +1,18 @@
 #include <jarvis/track_dataset_assembler.h>
+#include <bag_of_tricks/next_path.h>
 
 using namespace std;
 
 TrackDatasetAssembler::TrackDatasetAssembler(std::string output_directory, size_t min_track_length,
-                                             size_t max_track_length, size_t max_td_size) :
+                                             size_t max_track_length, size_t max_num_instances) :
   output_directory_(output_directory),
   min_track_length_(min_track_length),
   max_track_length_(max_track_length),
-  max_td_size_(max_td_size)
+  max_num_instances_(max_num_instances)
 {
+  // Give it an empty cmap and dmap.
+  td_.applyNameMapping("cmap", NameMapping());
+  td_.applyNameMapping("dmap", NameMapping());
 }
 
 void TrackDatasetAssembler::update(const std::map<size_t, Blob::Ptr>& tracked_blobs)
@@ -16,7 +20,7 @@ void TrackDatasetAssembler::update(const std::map<size_t, Blob::Ptr>& tracked_bl
   set<size_t> updated;
 
   // -- Update tracks_ with tracked_blobs contents.
-  map<size_t, Blob::Ptr>::iterator bit;
+  map<size_t, Blob::Ptr>::const_iterator bit;
   for(bit = tracked_blobs.begin(); bit != tracked_blobs.end(); ++bit) {
     // If we have a track with this id, add the blob to that track.
     // Otherwise create a new track with this id and initialize it with just this blob.
@@ -36,14 +40,13 @@ void TrackDatasetAssembler::update(const std::map<size_t, Blob::Ptr>& tracked_bl
     
     // Tracks that didn't get updated should either be added to td_ or forgotten.
     if(!updated.count(id)) {
-      if(track.size() > min_track_length) {
+      to_delete.push_back(id);
+      if(track.size() > min_track_length_)
         append(track);
-        to_delete.push_back(id);
-      }
     }
 
     // Tracks that are too long should be added to td_.
-    else if(track.size() == max_track_length) {
+    else if(track.size() == max_track_length_) {
       append(track);
       to_delete.push_back(id);
     }
@@ -57,22 +60,24 @@ void TrackDatasetAssembler::update(const std::map<size_t, Blob::Ptr>& tracked_bl
   to_delete.clear();
   
   // -- If td_ is too big, save it and start a new one.
-  if(td_.totalInstances() >= max_num_instances) {
-    saveAndClear();
+  if(td_.totalInstances() >= max_num_instances_) {
+    string path = nextPath(output_directory_, "jarvis-", ".td", 4);
+    td_.save(path);
+    td_.tracks_.clear();
   }
 }
 
 
 void TrackDatasetAssembler::append(const std::vector<Blob::Ptr>& track)
 {
-  
+  Dataset::Ptr dataset(new Dataset);
+  dataset->applyNameMapping("cmap", NameMapping());
+  dataset->applyNameMapping("dmap", NameMapping());
+
+  dataset->instances_.resize(track.size());
+  for(size_t i = 0; i < track.size(); ++i)
+    dataset->instances_[i].raw_ = track[i];
+
+  td_.tracks_.push_back(dataset);
 }
 
-void TrackDatasetAssembler::saveAndClear()
-{
-  // -- Get next path name.
-  
-  
-  // -- Save.
-  td_.save(output_directory
-}

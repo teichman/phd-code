@@ -40,6 +40,56 @@ void Blob::project()
   kdtree_->setInputCloud(cloud_);
 }
 
+void Blob::serialize(std::ostream& out) const
+{
+  eigen_extensions::serializeScalar(frame_id_, out);
+  eigen_extensions::serializeScalar(sensor_timestamp_, out);
+  eigen_extensions::serializeScalar(wall_timestamp_.toNSec(), out);
+  eigen_extensions::serializeScalar(width_, out);
+  eigen_extensions::serializeScalar(height_, out);
+
+  eigen_extensions::serializeScalar(indices_.size(), out);
+  for(size_t i = 0; i < indices_.size(); ++i)
+    eigen_extensions::serializeScalar(indices_[i], out);
+
+  eigen_extensions::serializeScalar(color_.size(), out);
+  for(size_t i = 0; i < color_.size(); ++i)
+    eigen_extensions::serializeScalar(color_[i], out);
+
+  eigen_extensions::serializeScalar(depth_.size(), out);
+  for(size_t i = 0; i < depth_.size(); ++i)
+    eigen_extensions::serializeScalar(depth_[i], out);
+}
+
+void Blob::deserialize(std::istream& in)
+{
+  eigen_extensions::deserializeScalar(in, &frame_id_);
+  eigen_extensions::deserializeScalar(in, &sensor_timestamp_);
+  uint64_t nsec;
+  eigen_extensions::deserializeScalar(in, &nsec);
+  wall_timestamp_.fromNSec(nsec);
+  eigen_extensions::deserializeScalar(in, &width_);
+  eigen_extensions::deserializeScalar(in, &height_);
+
+  size_t buffer;
+  
+  eigen_extensions::deserializeScalar(in, &buffer);
+  indices_.resize(buffer);
+  for(size_t i = 0; i < indices_.size(); ++i)
+    eigen_extensions::deserializeScalar(in, &indices_[i]);
+
+  eigen_extensions::deserializeScalar(in, &buffer);
+  color_.resize(buffer);
+  for(size_t i = 0; i < color_.size(); ++i)
+    eigen_extensions::deserializeScalar(in, &color_[i]);
+
+  eigen_extensions::deserializeScalar(in, &buffer);
+  depth_.resize(buffer);
+  for(size_t i = 0; i < depth_.size(); ++i)
+    eigen_extensions::deserializeScalar(in, &depth_[i]);
+}
+
+
 Tracker::Tracker(size_t max_track_length) :
   visualize_(false),
   max_track_length_(max_track_length),
