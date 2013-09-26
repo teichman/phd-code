@@ -13,10 +13,12 @@ int main(int argc, char** argv)
 
   int vis_level;
   int rotation;
+  string output_directory;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("vis-level,v", bpo::value(&vis_level)->default_value(0), "")
     ("rotation,r", bpo::value(&rotation)->default_value(0), "")
+    ("output-directory,o", bpo::value(&output_directory)->default_value("jarvis_tds"), "Where to save TD files")
     ;
 
   bpo::variables_map opts;
@@ -32,9 +34,13 @@ int main(int argc, char** argv)
   }
 
   cout << "Using vis_level " << vis_level << " and rotation " << rotation << endl;
+  cout << "Saving TD files to \"" << output_directory << "\"" << endl;
   
-  Jarvis jarvis(vis_level, rotation);
+  Jarvis jarvis(vis_level, rotation, output_directory);
   ros::spin();
+
+  // -- Save any remaining tracks.
+  jarvis.flush();
   
   return 0;
 }

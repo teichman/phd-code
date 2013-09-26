@@ -13,8 +13,10 @@ class Jarvis
 {
 public:
   //! rotation is the angle in degrees and must be one of 0, 90, 180, or 270.
-  Jarvis(int vis_level, int rotation = 0);
-
+  Jarvis(int vis_level, int rotation, std::string output_directory);
+  //! Saves any unsaved tracks in the TrackDatasetAssembler and clears the current contents.
+  void flush() { tda_.flush(); }
+  
 protected:
   ros::NodeHandle nh_;
   ros::Subscriber fg_sub_;

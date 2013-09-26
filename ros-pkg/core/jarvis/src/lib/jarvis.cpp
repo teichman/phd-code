@@ -5,9 +5,9 @@
 
 using namespace std;
 
-Jarvis::Jarvis(int vis_level, int rotation) :
+Jarvis::Jarvis(int vis_level, int rotation, string output_directory) :
   tracker_(100),
-  tda_("jarvis_tds", 10, 100, 100),
+  tda_(output_directory, 10, 100, 10000),
   vis_level_(vis_level),
   rotation_(rotation)
 {

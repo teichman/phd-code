@@ -17,6 +17,8 @@ public:
   TrackDatasetAssembler(std::string output_directory, size_t min_track_length,
                         size_t max_track_length, size_t max_num_instances);
   void update(const std::map<size_t, Blob::Ptr>& tracked_blobs);
+  //! Saves any unsaved tracks in the TrackDatasetAssembler and clears the current contents.
+  void flush();
 
 protected:
   std::string output_directory_;

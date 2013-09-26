@@ -2,6 +2,6 @@
 <launch>
   <arg name="bagfile" />
   <arg name="rotation" default="0" />
-  <node name="jarvis" pkg="jarvis" type="jarvis" args="-v1 -r$(arg rotation)" required="true" />
+  <node name="jarvis" pkg="jarvis" type="jarvis" args="-v1 -r$(arg rotation) -o $(env PWD)/jarvis_tds" required="true" />
   <node name="rosbag" pkg="rosbag" type="play" args="$(env PWD)/$(arg bagfile) --topics /foreground --skip-empty 0.001" required="true" />
 </launch>

@@ -93,3 +93,21 @@ void TrackDatasetAssembler::append(const std::vector<Blob::Ptr>& track)
   td_.tracks_.push_back(dataset);
 }
 
+void TrackDatasetAssembler::flush()
+{
+  // -- Move any valid tracks to td_, then clear tracks_.
+  map<size_t, vector<Blob::Ptr> >::iterator it;
+  for(it = tracks_.begin(); it != tracks_.end(); ++it) {
+    size_t id = it->first;
+    const vector<Blob::Ptr>& track = it->second;
+    ROS_ASSERT(track.size() <= max_track_length_);
+    if(track.size() > min_track_length_)
+      append(track);
+  }
+  tracks_.clear();
+  
+  // -- Save and clear td_.
+  string path = nextPath(output_directory_, "jarvis-", ".td", 4);
+  td_.save(path);
+  td_.tracks_.clear();
+}
