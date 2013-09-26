@@ -5,6 +5,8 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
+  ros::init(argc, argv, "Jarvis");
+  
   namespace bpo = boost::program_options;
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
@@ -31,7 +33,6 @@ int main(int argc, char** argv)
 
   cout << "Using vis_level " << vis_level << " and rotation " << rotation << endl;
   
-  ros::init(argc, argv, "Jarvis");
   Jarvis jarvis(vis_level, rotation);
   ros::spin();
   
