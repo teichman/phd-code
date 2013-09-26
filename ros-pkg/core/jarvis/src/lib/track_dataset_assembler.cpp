@@ -45,7 +45,7 @@ void TrackDatasetAssembler::update(const std::map<size_t, Blob::Ptr>& tracked_bl
   for(it = tracks_.begin(); it != tracks_.end(); ++it) {
     size_t id = it->first;
     const vector<Blob::Ptr>& track = it->second;
-    ROS_ASSERT(track.size() <= max_track_length);
+    ROS_ASSERT(track.size() <= max_track_length_);
     
     // Tracks that didn't get updated should either be added to td_ or forgotten.
     if(!updated.count(id)) {
