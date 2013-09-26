@@ -296,7 +296,6 @@ public:
   //! Sets the magnitude of the label values, interpreted as importance by all Trainer objects.
   void setImportance(float importance);
   //! Tries to determine the DescriptorDimensionality object.
-  //! If it can, it will set it for all tracks_.
   DescriptorDimensionality inferDescriptorDimensionality() const;
   
 protected:

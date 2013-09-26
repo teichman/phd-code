@@ -1,6 +1,6 @@
 #include <serializable/serializable.h>
 #include <eigen_extensions/eigen_extensions.h>
-#include <bag_of_tricks/high_res_timer.h>
+#include <timer/timer.h>
 
 using namespace std;
 using namespace Eigen;

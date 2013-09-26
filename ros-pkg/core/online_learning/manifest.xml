@@ -14,6 +14,7 @@
   <depend package="serializable"/>
   <depend package="bag_of_tricks"/>
   <depend package="optimization"/>
+  <depend package="timer"/>
   <depend package="matplotlib_interface"/>
   <depend package="performance_statistics"/>
   <depend package="logistic"/>

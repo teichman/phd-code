@@ -2,7 +2,7 @@
 #include <online_learning/dataset.h>
 #include <online_learning/synthetic_data_generator.h>
 #include <online_learning/training_buffer.h>
-#include <bag_of_tricks/high_res_timer.h>
+#include <timer/timer.h>
 
 using namespace std;
 using namespace Eigen;

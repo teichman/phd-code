@@ -1,7 +1,7 @@
 #include <set>
 #include <boost/foreach.hpp>
 #include <performance_statistics/performance_statistics.h>
-#include <bag_of_tricks/high_res_timer.h>
+#include <timer/timer.h>
 #include <online_learning/projection_slicer.h>
 #include <online_learning/schedulers.h>
 
