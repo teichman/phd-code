@@ -6,7 +6,7 @@
 #include <optimization/common_functions.h>
 #include <serializable/serializable.h>
 #include <eigen_extensions/eigen_extensions.h>
-#include <bag_of_tricks/high_res_timer.h>
+#include <timer/timer.h>
 
 /** \brief @b Logistic represents a two-class logistic regression classifier.
  *  Public fields can be set to vary the optimization process.

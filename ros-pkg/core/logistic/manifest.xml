@@ -11,6 +11,7 @@
   <depend package="eigen_extensions"/>
   <depend package="serializable"/>
   <depend package="bag_of_tricks"/>
+  <depend package="timer"/>
   <depend package="optimization"/>
   <depend package="rosconsole"/>
 
