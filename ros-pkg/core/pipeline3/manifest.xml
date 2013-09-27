@@ -11,8 +11,8 @@
   <depend package="bag_of_tricks"/>
   <depend package="serializable"/>
   <depend package="rosconsole"/>
+  <depend package="eigen_extensions"/>
   <depend package="yaml_cpp"/>
-  <depend package="timer"/>
 
   <export>
     <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath ${prefix}/lib -lpipeline3 `rosboost-cfg --lflags filesystem`"/>
