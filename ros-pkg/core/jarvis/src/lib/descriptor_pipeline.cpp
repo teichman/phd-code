@@ -1,6 +1,7 @@
 #include <map>
 #include <vector>
 #include <pipeline/outlet.h>
+#include <pipeline/common_pods.h>
 #include <ros/package.h>
 #include <pcl/common/common.h>
 #include <jarvis/descriptor_pipeline.h>
@@ -16,7 +17,7 @@ DescriptorPipeline::DescriptorPipeline() :
 
 void DescriptorPipeline::registerPodTypes()
 {
-  REGISTER_POD_TEMPLATE(EntryPoint, Blob::ConstPtr);
+  REGISTER_POD_TEMPLATE(pl::EntryPoint, Blob::ConstPtr);
   REGISTER_POD(BlobProjector);
   REGISTER_POD(BoundingBoxSize);
   REGISTER_POD(DescriptorAggregator);
@@ -97,7 +98,7 @@ NameMapping DescriptorAggregator::dmap() const
   NameMapping dmap;
   map<string, vector<const pl::Outlet*> >::const_iterator it;
   for(it = inputPipes().begin(); it != inputPipes().end(); ++it) {
-    const vector<const Outlet*>& outlets = it->second;
+    const vector<const pl::Outlet*>& outlets = it->second;
     for(size_t i = 0; i < outlets.size(); ++i) {
       Pod* upstream = outlets[i]->pod();
       string output_name = outlets[i]->name();

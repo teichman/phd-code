@@ -98,7 +98,6 @@ void TrackDatasetAssembler::flush()
   // -- Move any valid tracks to td_, then clear tracks_.
   map<size_t, vector<Blob::Ptr> >::iterator it;
   for(it = tracks_.begin(); it != tracks_.end(); ++it) {
-    size_t id = it->first;
     const vector<Blob::Ptr>& track = it->second;
     ROS_ASSERT(track.size() <= max_track_length_);
     if(track.size() > min_track_length_)

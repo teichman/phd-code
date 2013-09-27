@@ -14,6 +14,7 @@
   <depend package="sentinel"/>
   <depend package="google-perftools"/>
   <depend package="online_learning"/>
+  <depend package="roslib"/>
 
 
 </package>
