@@ -38,6 +38,8 @@ public:
   virtual void loadYAML(const std::string& path);
 };
 
+//! Really, this doesn't exist in yaml-cpp?  Seriously?
+void saveYAML(const YAML::Node& doc, const std::string& path);
 
 /* Class for making it easy to use stream constructors.
  * For example, assume OnlineLearner doesn't have a default constructor,

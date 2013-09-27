@@ -1,7 +1,9 @@
 #include <serializable/serializable.h>
 #include <gtest/gtest.h>
+#include <boost/filesystem.hpp>
 
 using namespace std;
+namespace bfs = boost::filesystem;
 
 // NDC = NoDefaultConstructor
 //
@@ -39,6 +41,20 @@ public:
   }
 };
 
+TEST(Serializable, ParentPath)
+{
+  bfs::path p("foo/bar/baz.txt");
+  EXPECT_TRUE(p.has_parent_path());
+  EXPECT_EQ(p.parent_path().string(), "foo/bar");
+  EXPECT_TRUE(p.has_filename());
+  EXPECT_EQ(p.filename().string(), "baz.txt");
+
+  cout << "Parent path: " << p.parent_path().string() << endl;
+
+  bfs::path p2("baz.txt");
+  EXPECT_TRUE(!p2.has_parent_path());
+}
+
 TEST(Serializable, Serializable)
 {
   int val = 13;
@@ -52,6 +68,14 @@ TEST(Serializable, Serializable)
   NDC ndc3("ndc");
   cout << ndc3.val_ << endl;
   EXPECT_TRUE(ndc3.val_ == val);
+
+  if(!bfs::exists("tmp_directory"))
+    bfs::create_directory("tmp_directory");
+  ndc.save("tmp_directory/ndc");
+
+  NDC ndc4((IfstreamWrapper("tmp_directory/ndc")));
+  cout << ndc4.val_ << endl;
+  EXPECT_TRUE(ndc4.val_ == val);
 }
 
 int main(int argc, char** argv) {
