@@ -28,6 +28,7 @@ rosbuild_add_library(jarvis_core
   src/lib/track_dataset_assembler.cpp
   src/lib/blob_serializer.cpp
   src/lib/blob_view.cpp
+  src/lib/descriptor_pipeline.cpp
 #  src/lib/detection_visualizer.cpp
 #  src/lib/bagvis.cpp
   )
