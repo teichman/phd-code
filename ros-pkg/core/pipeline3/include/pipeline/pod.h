@@ -16,7 +16,7 @@
 #include <boost/regex.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/filesystem.hpp>
-#include <bag_of_tricks/high_res_timer.h>
+#include <timer/timer.h>
 #include <pipeline/params.h>
 #include <pipeline/outlet.h>
 

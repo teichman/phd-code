@@ -9,6 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/pipeline3</url>
   <depend package="bag_of_tricks"/>
+  <depend package="timer"/>
   <depend package="serializable"/>
   <depend package="rosconsole"/>
   <depend package="eigen_extensions"/>

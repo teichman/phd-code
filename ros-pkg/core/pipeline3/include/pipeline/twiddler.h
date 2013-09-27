@@ -9,7 +9,7 @@
 #include <ros/assert.h>
 #include <ros/console.h>
 #include <bag_of_tricks/bag_of_tricks.h>
-#include <bag_of_tricks/high_res_timer.h>
+#include <timer/timer.h>
 #include <eigen_extensions/random.h>
 #include <pipeline/pipeline.h>
 
