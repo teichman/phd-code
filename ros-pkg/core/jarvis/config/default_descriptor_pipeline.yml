@@ -1,0 +1,27 @@
+Pipeline:
+  Pods:
+    - Name: BlobEntryPoint
+      Type: EntryPoint<Blob::Ptr>
+      Params: ~
+      Inputs: ~
+    - Name: BlobProjector
+      Type: BlobProjector
+      Params: ~
+      Inputs:
+        Blob: BlobEntryPoint.Output
+    - Name: RawBoundingBoxSize
+      Type: BoundingBoxSize
+      Params: ~
+      Inputs:
+        ProjectedBlob: BlobProjector.ProjectedBlob
+    - Name: DescriptorAggregator
+      Type: DescriptorAggregator
+      Params: ~
+      Inputs:
+        Descriptors: >
+          RawBoundingBoxSize.BoundingBoxSize
+          
+
+          
+        
+  

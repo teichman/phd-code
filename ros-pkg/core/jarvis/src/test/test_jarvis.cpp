@@ -1,4 +1,4 @@
-#include <jarvis/tracker.h>
+#include <jarvis/descriptor_pipeline.h>
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -55,6 +55,12 @@ TEST(Blob, Serialization)
   EXPECT_TRUE(blob.depth_.size() == blob2.depth_.size());
   for(size_t i = 0; i < blob2.depth_.size(); ++i)
     EXPECT_TRUE(blob.depth_[i] == blob2.depth_[i]);
+}
+
+TEST(DescriptorPipeline, GraphViz)
+{
+  DescriptorPipeline dp;
+  dp.pl_.writeGraphviz("graphviz");
 }
 
 int main(int argc, char** argv) {

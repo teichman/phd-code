@@ -8,13 +8,12 @@
 class DescriptorPipeline
 {
 public:
+  pl::Pipeline pl_;
+
   DescriptorPipeline();
   void initializeWithDefault();
   static YAML::Node defaultSpecification();
   static void registerPodTypes();
-  
-protected:
-  pl::Pipeline pl_;
 };
 
 class BlobProjector : public pl::Pod

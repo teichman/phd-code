@@ -8,16 +8,18 @@
 
 using namespace std;
 using namespace Eigen;
+using namespace pl;
 
 DescriptorPipeline::DescriptorPipeline() :
   pl_(1)
 {
   registerPodTypes();
+  initializeWithDefault();
 }
 
 void DescriptorPipeline::registerPodTypes()
 {
-  REGISTER_POD_TEMPLATE(pl::EntryPoint, Blob::ConstPtr);
+  REGISTER_POD_TEMPLATE(EntryPoint, Blob::Ptr);
   REGISTER_POD(BlobProjector);
   REGISTER_POD(BoundingBoxSize);
   REGISTER_POD(DescriptorAggregator);
