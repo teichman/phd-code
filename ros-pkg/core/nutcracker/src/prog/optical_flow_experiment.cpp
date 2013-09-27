@@ -104,6 +104,9 @@ int main(int argc, char** argv)
     oss.str("");
     oss << "surf" << setw(5) << setfill('0') << num << ".png";
     cv::imwrite(oss.str(), surf_vis);
+    oss.str("");
+    oss << "raw" << setw(5) << setfill('0') << num << ".png";
+    cv::imwrite(oss.str(), prev3b);
     
     char key;
     key = cv::waitKey(ms);
