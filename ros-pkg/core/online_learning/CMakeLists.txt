@@ -135,6 +135,9 @@ target_link_libraries(train_post_classifier online_learning online_learning_ecs)
 rosbuild_add_executable(label src/program/label.cpp)
 target_link_libraries(label online_learning online_learning_pcs)
 
+rosbuild_add_executable(apply_cmap src/program/apply_cmap.cpp)
+target_link_libraries(apply_cmap online_learning online_learning_pcs)
+
 rosbuild_add_executable(filter_errors src/program/filter_errors.cpp)
 target_link_libraries(filter_errors online_learning online_learning_pcs)
 
