@@ -33,8 +33,9 @@ debug:
 	@echo KITCHEN_NAMES: $(KITCHEN_NAMES)
 	@echo KITCHEN_TD_DIRS: $(KITCHEN_TD_DIRS)
 
+
 # -- Extract TD files from bagfiles.
 kitchen_tds: $(KITCHEN_TD_DIRS)
 kitchen/tds/%: $(KITCHEN_DIR)/%.bag
 	mkdir -p $@
-	roslaunch jarvis extract_tds bagfile:=$< output-directory:=$@
+	roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$@
