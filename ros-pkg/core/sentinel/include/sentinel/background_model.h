@@ -21,7 +21,6 @@ class BackgroundModel
 public:
   BackgroundModel(int width, int height,
                   int width_step, int height_step,
-                  double min_pct,
                   double max_depth, double min_depth,
                   double bin_width,
                   double occupancy_threshold,
@@ -57,8 +56,6 @@ protected:
   int blocks_per_row_;
   int blocks_per_col_;
   std::vector<OccupancyLine> histograms_; // row major
-  //! Percentage of histogram that a bin must contain to count as background.
-  double min_pct_;
   double min_depth_;
   double max_depth_;
   //! Bin width in z.
