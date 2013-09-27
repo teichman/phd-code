@@ -2,6 +2,7 @@
 #define PIPELINE_COMMON_H
 
 #include <iostream>
+#include <algorithm>
 
 // ROS console and assert seem good, but they pollute the valgrind output.
 // Maybe this will be resolved with a newer version of log4cxx:
