@@ -1,6 +1,7 @@
 #ifndef OUTLET_H
 #define OUTLET_H
 
+#include <boost/any.hpp>
 #include <pipeline/common.h>
 
 namespace pl
