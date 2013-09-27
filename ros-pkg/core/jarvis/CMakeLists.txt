@@ -50,3 +50,6 @@ rosbuild_link_boost(visualize_augmented_td program_options)
 #rosbuild_add_executable(bagvis src/prog/bagvis.cpp)
 #target_link_libraries(bagvis jarvis)
 #rosbuild_link_boost(bagvis program_options)
+
+rosbuild_add_gtest(test_jarvis src/test/test_jarvis.cpp)
+target_link_libraries(test_jarvis jarvis_core)
