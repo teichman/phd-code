@@ -20,7 +20,7 @@ void BlobView::_run()
   
   visualizer_->registerKeyboardCallback(&BlobView::keyboardCallback, *this);
   visualizer_->addCoordinateSystem(0.2);
-  visualizer_->setBackgroundColor(0, 0, 0);
+  visualizer_->setBackgroundColor(0.5, 0.5, 0.5);
   visualizer_->addPointCloud(Cloud::Ptr(new Cloud), "default");
   visualizer_->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 4, "default");
 

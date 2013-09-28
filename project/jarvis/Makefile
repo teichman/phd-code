@@ -19,11 +19,14 @@ all:
 # -- Data setup.
 ############################################################
 
-# You should symlink this in your own repo.
+# You should symlink these in your own repo.
 LOG_DIR := $(MAKE_ROOT)/logs
+LABELED_TD_DIR := $(MAKE_ROOT)/labeled
+
 KITCHEN_DIR := $(LOG_DIR)/kitchen-new_bg_subtr
 KITCHEN_NAMES := $(shell ls $(KITCHEN_DIR) | sed 's/\.bag//')
 KITCHEN_TD_DIRS := $(addprefix kitchen/tds/, $(KITCHEN_NAMES))
+KITCHEN_LABELS_DIR := $(LABELED_TD_DIR)/kitchen
 
 debug:
 	@echo REPO_ROOT: $(REPO_ROOT)
@@ -41,8 +44,29 @@ kitchen/tds/%/extracted: $(KITCHEN_DIR)/%.bag
 	roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
 	touch $@
 
-# -- Compute descriptors.
+# -- Compute descriptors and add the name mapping.
 kitchen_descriptors: $(addsuffix /descriptors_computed, $(KITCHEN_TD_DIRS))
 kitchen/tds/%/descriptors_computed: kitchen/tds/%/extracted
 	rosrun jarvis update_descriptors --config `rospack find jarvis`/config/default_descriptor_pipeline.yml --tds $(@D)/*.td
+	rosrun online_learning apply_cmap -n alex cindy cat --tds $(@D)/*.td
 	touch $@
+
+kitchen/induction: kitchen_descriptors
+	rosrun jarvis inductor \
+	--emax 0 \
+	--buffer-size 1000 \
+	--max-track-length 10 \
+	--gamma 0 \
+	--snapshot-every 50 \
+	--evaluate-every 5 \
+	--output-dir $@ \
+	--unlabeled-td-dir kitchen/tds/ \
+	--init \
+	./kitchen/tds/sentinel_2013-09-19-01-15-19_2/jarvis-0002.td \
+	./kitchen/tds/sentinel_2013-09-20-01-22-17_1/jarvis-0002.td \
+	./kitchen/tds/sentinel_2013-09-19-19-29-07_0/jarvis-0002.td \
+	--test \
+	$(KITCHEN_LABELS_DIR)/*.td \
+	--num-cells 10 100 \
+	| tee $@-log.txt
+	mv $@-log.txt $@/

@@ -1,8 +1,8 @@
-#include <online_learning/track_dataset_visualizer.h>
-
 #include <boost/program_options.hpp>
 #include <bag_of_tricks/bag_of_tricks.h>
+#include <online_learning/track_dataset_visualizer.h>
 #include <online_learning/tbssl.h>
+#include <jarvis/blob_view.h>
 
 using namespace std;
 using namespace Eigen;

@@ -40,7 +40,7 @@ int main(int argc, char** argv)
   }
 
   BlobView view;
-  TrackViewControllerBase tvc(&view);
+  TrackViewControllerBase tvc(&view, 10);
   if(opts.count("output"))
     tvc.write_path_ = opts["output"].as<string>();
   else
