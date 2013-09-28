@@ -60,6 +60,7 @@ TEST(Blob, Serialization)
 TEST(DescriptorPipeline, GraphViz)
 {
   DescriptorPipeline dp;
+  dp.initializeWithDefault();
   dp.pl_.writeGraphviz("graphviz");
 }
 
