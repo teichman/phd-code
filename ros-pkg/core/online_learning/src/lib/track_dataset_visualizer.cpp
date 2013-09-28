@@ -8,12 +8,13 @@ namespace bfs = boost::filesystem;
  * TrackViewControllerBase
  ************************************************************/
 
-TrackViewControllerBase::TrackViewControllerBase(TrackView* view) :
+TrackViewControllerBase::TrackViewControllerBase(TrackView* view, int delay) :
   view_(view),
   td_(new TrackDataset),
   tidx_(0),
   fidx_(0),
-  sort_class_(0)
+  sort_class_(0),
+  delay_(delay)
 {
   ROS_ASSERT(view_);
 }
@@ -160,7 +161,7 @@ void TrackViewControllerBase::_run()
       handleKeypress(event);
     
     updateDisplay();
-    usleep(5e4);
+    usleep(delay_ * 1e3);
   }
 }
 

@@ -25,8 +25,9 @@ class TrackViewControllerBase : public Agent
 public:
   //! Set this if a user is to be able to use 'S' to save the TrackDataset to disk.
   std::string write_path_;
-  
-  TrackViewControllerBase(TrackView* view);
+
+  //! delay is in ms.
+  TrackViewControllerBase(TrackView* view, int delay = 30);
   virtual ~TrackViewControllerBase() {}
   //! TODO: Make this only usable when not running.
   virtual void setTrackDataset(TrackDataset::Ptr td) { td_ = td; updateIndex(); }
@@ -43,6 +44,7 @@ protected:
   std::vector<int> index_;
   int sort_class_;
   Label to_apply_;
+  int delay_;
 
   virtual bool handleKeypress(const pcl::visualization::KeyboardEvent& event);
   virtual void incrementTrack(int val);
