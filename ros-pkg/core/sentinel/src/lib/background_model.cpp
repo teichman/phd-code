@@ -339,8 +339,8 @@ BackgroundModel::BackgroundModel(int width, int height,
 
   blocks_per_row_ = width_ / width_step_;
   blocks_per_col_ = height_ / height_step_;
-  block_img_ = cv::Mat1b(cv::Size(blocks_per_col_, blocks_per_row_), 0);
-  dilated_block_img_ = cv::Mat1b(cv::Size(blocks_per_col_, blocks_per_row_), 0);
+  block_img_ = cv::Mat1b(cv::Size(blocks_per_row_, blocks_per_col_), 0);
+  dilated_block_img_ = cv::Mat1b(cv::Size(blocks_per_row_, blocks_per_col_), 0);
   
   size_t num = 0;
   for(int y = height_step_ / 2; y < height; y += height_step_)
