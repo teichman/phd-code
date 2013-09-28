@@ -85,7 +85,7 @@ double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td)
 
         // -- Run the pipeline.
         const vector<const VectorXf*>* descriptors = dp.computeDescriptors(blob);
-        cout << dp.reportTiming() << endl;
+        //cout << dp.reportTiming() << endl;
 
         // -- Fill the Instance with the new descriptors.
         ROS_ASSERT(inst.descriptors_.size() == descriptors->size());

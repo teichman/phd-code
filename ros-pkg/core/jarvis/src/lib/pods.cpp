@@ -13,7 +13,7 @@ void BlobProjector::compute()
   Blob::Ptr blob = pull<Blob::Ptr>("Blob");
   if(!blob->cloud_)
     blob->project();
-  push("ProjectedBlob", blob);
+  push<Blob::ConstPtr>("ProjectedBlob", blob);
 }
 
 void BoundingBoxSize::compute()
@@ -25,7 +25,7 @@ void BoundingBoxSize::compute()
   pcl::getMinMax3D(cloud, minpt, maxpt);
   size_ = (maxpt - minpt).head(3);
 
-  push("BoundingBoxSize", &size_);
+  push<const VectorXf*>("BoundingBoxSize", &size_);
 }
 
 
