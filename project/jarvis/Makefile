@@ -35,8 +35,14 @@ debug:
 
 
 # -- Extract TD files from bagfiles.
-kitchen_tds: $(addsuffix /done, $(KITCHEN_TD_DIRS))
-kitchen/tds/%/done: $(KITCHEN_DIR)/%.bag
+kitchen_tds: $(addsuffix /extracted, $(KITCHEN_TD_DIRS))
+kitchen/tds/%/extracted: $(KITCHEN_DIR)/%.bag
 	mkdir -p $(@D)
 	roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
+	touch $@
+
+# -- Compute descriptors.
+kitchen_descriptors: $(addsuffix /descriptors_computed, $(KITCHEN_TD_DIRS))
+kitchen/tds/%/descriptors_computed: kitchen/tds/%/extracted
+	rosrun jarvis update_descriptors --config `rospack find jarvis`/config/default_descriptor_pipeline.yml --tds $(@D)/*.td
 	touch $@
