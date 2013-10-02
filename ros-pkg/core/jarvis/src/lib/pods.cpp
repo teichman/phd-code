@@ -2,6 +2,8 @@
 #include <vector>
 #include <string>
 #include <pcl/common/common.h>
+#include <pcl/common/pca.h>
+#include <pcl/io/pcd_io.h>
 #include <jarvis/pods.h>
 
 using namespace std;
@@ -81,5 +83,29 @@ NameMapping DescriptorAggregator::dmap() const
   }
 
   return dmap;
+}
+
+
+/************************************************************
+ * CloudOrienter
+ ************************************************************/
+
+void CloudOrienter::compute()
+{
+  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
+  Cloud::ConstPtr cloud = blob.cloud_;
+
+  pcl::PCA<Point> pca;
+  pca.setInputCloud(cloud);
+  pca.project(*cloud, *oriented_);
+
+  push<Cloud::ConstPtr>("OrientedCloud", oriented_);
+}
+
+void CloudOrienter::debug() const
+{
+  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
+  pcl::io::savePCDFileBinary(debugBasePath() + "-original.pcd", *blob.cloud_);
+  pcl::io::savePCDFileBinary(debugBasePath() + "-oriented.pcd", *oriented_);
 }
 

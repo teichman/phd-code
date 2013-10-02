@@ -9,6 +9,11 @@ Pipeline:
       Params: ~
       Inputs:
         Blob: BlobEntryPoint.Output
+    - Name: CloudOrienter
+      Type: CloudOrienter
+      Params: ~
+      Inputs:
+        ProjectedBlob: BlobProjector.ProjectedBlob
     - Name: RawBoundingBoxSize
       Type: BoundingBoxSize
       Params: ~
@@ -20,6 +25,7 @@ Pipeline:
       Inputs:
         Descriptors: >
           RawBoundingBoxSize.BoundingBoxSize
+          
           
 
           

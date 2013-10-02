@@ -18,8 +18,9 @@ public:
   const std::vector<const Eigen::VectorXf*>* computeDescriptors(Blob::Ptr blob);
   std::string reportTiming() const { return pl_.reportTiming(); }
   NameMapping dmap() const { return pl_.pod<DescriptorAggregator>()->dmap(); }
+  void setDebug(bool debug) { pl_.setDebug(debug); }
 };
 
-double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td);
+double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, bool debug = false);
 
 #endif // DESCRIPTOR_PIPELINE_H

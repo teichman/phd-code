@@ -54,8 +54,8 @@ kitchen/tds/%/descriptors_computed: kitchen/tds/%/extracted
 kitchen/induction: kitchen_descriptors
 	rosrun jarvis inductor \
 	--emax 0 \
-	--buffer-size 1000 \
-	--max-track-length 10 \
+	--buffer-size 5000 \
+	--max-track-length 30 \
 	--gamma 0 \
 	--snapshot-every 50 \
 	--evaluate-every 5 \

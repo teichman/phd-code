@@ -19,6 +19,7 @@ void DescriptorPipeline::registerPodTypes()
   REGISTER_POD(BlobProjector);
   REGISTER_POD(BoundingBoxSize);
   REGISTER_POD(DescriptorAggregator);
+  REGISTER_POD(CloudOrienter);
 }
 
 std::string DescriptorPipeline::defaultSpecificationPath()
@@ -55,7 +56,7 @@ const vector<const VectorXf*>* DescriptorPipeline::computeDescriptors(Blob::Ptr 
  * Helper functions
  ************************************************************/
 
-double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td)
+double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, bool debug)
 {
   HighResTimer hrt;
   hrt.start();
@@ -76,6 +77,8 @@ double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td)
   for(int tidx = 0; tidx < num_threads; ++tidx) {
     DescriptorPipeline dp;
     dp.initialize(plspec);
+    if(debug)
+      dp.setDebug(debug);
     
     for(size_t i = tidx; i < td->tracks_.size(); i += num_threads) {
       Dataset& track = (*td)[i];

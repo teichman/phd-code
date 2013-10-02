@@ -20,6 +20,7 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("config", bpo::value<string>(&config_path)->required(), "")
     ("tds", bpo::value< vector<string> >(&td_paths)->required()->multitoken(), "")
+    ("debug", "")
     ;
 
   p.add("config", 1);
@@ -45,7 +46,7 @@ int main(int argc, char** argv)
     cout << "Working on " << td_paths[i] << endl;
     TrackDataset td;
     td.load(td_paths[i]);
-    updateDescriptors(config["Pipeline"], NUM_THREADS, &td);
+    updateDescriptors(config["Pipeline"], NUM_THREADS, &td, opts.count("debug"));
 
     // Serializable writes to a temporary file and then does a move,
     // so if you control-c you are guaranteed that at least one of

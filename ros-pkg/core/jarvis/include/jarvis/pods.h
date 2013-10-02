@@ -59,4 +59,23 @@ protected:
   void debug() const;
 };
 
+class CloudOrienter : public pl::Pod
+{
+public:
+  DECLARE_POD(CloudOrienter);
+  CloudOrienter(std::string name) :
+    Pod(name),
+    oriented_(new Cloud)
+  {
+    declareInput<Blob::ConstPtr>("ProjectedBlob");
+    declareOutput<Cloud::ConstPtr>("OrientedCloud");
+  }
+
+  void compute();
+  void debug() const;
+
+protected:
+  Cloud::Ptr oriented_;
+};
+
 #endif // JARVIS_PODS_H
