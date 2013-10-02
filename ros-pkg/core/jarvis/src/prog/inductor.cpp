@@ -35,7 +35,6 @@ int main(int argc, char** argv)
   vector<string> init_paths;
   vector<size_t> num_cells;
   num_cells.push_back(10);
-  num_cells.push_back(100);
 
   opts_desc.add_options()
     ("help,h", "produce help message")
@@ -54,7 +53,7 @@ int main(int argc, char** argv)
     ("autobg", bpo::value< vector<string> >(&autobg_paths)->multitoken(), ".td files to use as automatically-annotated bg data.")
 
     ("init", bpo::value< vector<string> >(&init_paths)->required()->multitoken(), ".td files to initialize the classifier grids with.")
-    ("num-cells", bpo::value< vector<size_t> >(&num_cells)->multitoken(), "Default is --num-cells 10 100.")
+    ("num-cells", bpo::value< vector<size_t> >(&num_cells)->multitoken(), "Default is --num-cells 10.")
     ;
 
   bpo::variables_map opts;
