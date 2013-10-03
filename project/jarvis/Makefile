@@ -51,6 +51,10 @@ kitchen/tds/%/descriptors_computed: kitchen/tds/%/extracted
 	rosrun online_learning apply_cmap -n alex cindy cat --tds $(@D)/*.td
 	touch $@
 
+kitchen-update-descriptors:
+	rosrun jarvis update_descriptors --config `rospack find jarvis`/config/default_descriptor_pipeline.yml --tds `find kitchen/tds/ -name '*.td' | sort`
+	rosrun jarvis update_descriptors --config `rospack find jarvis`/config/default_descriptor_pipeline.yml --tds `find $(KITCHEN_LABELS_DIR)/ -name '*.td' | sort`
+
 kitchen/induction: kitchen_descriptors
 	rosrun jarvis inductor \
 	--emax 0 \
