@@ -14,6 +14,7 @@ public:
   {
     declareInput<Blob::Ptr>("Blob");
     declareOutput<Blob::ConstPtr>("ProjectedBlob");
+    declareOutput<Cloud::ConstPtr>("Cloud");
   }
 
   void compute();
@@ -27,7 +28,7 @@ public:
     Pod(name),
     size_(Eigen::VectorXf::Zero(3))
   {
-    declareInput<Blob::ConstPtr>("ProjectedBlob");
+    declareInput<Cloud::ConstPtr>("Cloud");
     declareOutput<const Eigen::VectorXf*>("BoundingBoxSize");
   }
 
@@ -76,6 +77,42 @@ public:
 
 protected:
   Cloud::Ptr oriented_;
+};
+
+class CloudSelector : public pl::Pod
+{
+public:
+  DECLARE_POD(CloudSelector);
+  CloudSelector(std::string name) :
+    Pod(name)
+  {
+    declareInput<Blob::ConstPtr>("ProjectedBlob");
+    declareOutput<Cloud::ConstPtr>("Cloud");
+  }
+
+  void compute() {
+    Cloud::ConstPtr cloud = pull<Blob::ConstPtr>("ProjectedBlob")->cloud_;
+    push("Cloud", cloud);
+  }
+};
+
+class CentroidFinder : public pl::Pod
+{
+public:
+  DECLARE_POD(CentroidFinder);
+  CentroidFinder(std::string name) :
+    Pod(name)
+  {
+    declareInput<Cloud::ConstPtr>("Cloud");
+    declareOutput<const Eigen::VectorXf*>("Centroid");
+  }
+
+  void compute();
+  void debug() const;
+
+protected:
+  Eigen::Vector4f centroid_;
+  Eigen::VectorXf descriptor_;
 };
 
 #endif // JARVIS_PODS_H

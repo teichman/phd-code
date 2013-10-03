@@ -18,13 +18,25 @@ Pipeline:
       Type: BoundingBoxSize
       Params: ~
       Inputs:
-        ProjectedBlob: BlobProjector.ProjectedBlob
+        Cloud: BlobProjector.Cloud
+    - Name: OrientedBoundingBoxSize
+      Type: BoundingBoxSize
+      Params: ~
+      Inputs:
+        Cloud: CloudOrienter.OrientedCloud
+    - Name: CentroidFinder
+      Type: CentroidFinder
+      Params: ~
+      Inputs:
+        Cloud: BlobProjector.Cloud
     - Name: DescriptorAggregator
       Type: DescriptorAggregator
       Params: ~
       Inputs:
         Descriptors: >
           RawBoundingBoxSize.BoundingBoxSize
+          OrientedBoundingBoxSize.BoundingBoxSize
+          CentroidFinder.Centroid
           
           
 

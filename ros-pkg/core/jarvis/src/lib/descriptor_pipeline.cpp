@@ -20,6 +20,8 @@ void DescriptorPipeline::registerPodTypes()
   REGISTER_POD(BoundingBoxSize);
   REGISTER_POD(DescriptorAggregator);
   REGISTER_POD(CloudOrienter);
+  REGISTER_POD(CloudSelector);
+  REGISTER_POD(CentroidFinder);
 }
 
 std::string DescriptorPipeline::defaultSpecificationPath()

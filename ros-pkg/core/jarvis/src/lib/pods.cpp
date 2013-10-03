@@ -10,18 +10,24 @@ using namespace std;
 using namespace Eigen;
 using namespace pl;
 
+
+/************************************************************
+ * BlobProjector
+ ************************************************************/
+
 void BlobProjector::compute()
 {
   Blob::Ptr blob = pull<Blob::Ptr>("Blob");
   if(!blob->cloud_)
     blob->project();
+
   push<Blob::ConstPtr>("ProjectedBlob", blob);
+  push<Cloud::ConstPtr>("Cloud", blob->cloud_);
 }
 
 void BoundingBoxSize::compute()
 {
-  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
-  const Cloud& cloud = *blob.cloud_;
+  const Cloud& cloud = *pull<Cloud::ConstPtr>("Cloud");
 
   Vector4f minpt, maxpt;
   pcl::getMinMax3D(cloud, minpt, maxpt);
@@ -107,5 +113,26 @@ void CloudOrienter::debug() const
   const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
   pcl::io::savePCDFileBinary(debugBasePath() + "-original.pcd", *blob.cloud_);
   pcl::io::savePCDFileBinary(debugBasePath() + "-oriented.pcd", *oriented_);
+}
+
+
+/************************************************************
+ * CentroidFinder
+ ************************************************************/
+
+void CentroidFinder::compute()
+{
+  const Cloud& cloud = *pull<Cloud::ConstPtr>("Cloud");
+  pcl::compute3DCentroid(cloud, centroid_);
+  descriptor_ = centroid_.head(3);
+  push<const VectorXf*>("Centroid", &descriptor_);
+}
+
+void CentroidFinder::debug() const
+{
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "centroid_: " << centroid_.transpose() << endl;
+  f << "descriptor_: " << descriptor_.transpose() << endl;
+  f.close();
 }
 
