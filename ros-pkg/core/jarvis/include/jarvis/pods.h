@@ -115,4 +115,35 @@ protected:
   Eigen::VectorXf descriptor_;
 };
 
+class NormalizedDensityHistogram : public pl::Pod
+{
+public:
+  DECLARE_POD(NormalizedDensityHistogram);
+  NormalizedDensityHistogram(std::string name) :
+    Pod(name),
+    lower_limits_(3),
+    bins_(3)
+  {
+    names_.push_back("X");
+    names_.push_back("Y");
+    names_.push_back("Z");
+
+    declareInput<Cloud::ConstPtr>("Cloud");
+    declareParam<double>("NumBins", 10);
+    declareOutput<const Eigen::VectorXf*>("X");
+    declareOutput<const Eigen::VectorXf*>("Y");
+    declareOutput<const Eigen::VectorXf*>("Z");
+  }
+
+  void compute();
+  void debug() const;
+  
+protected:
+  std::vector<Eigen::VectorXf> lower_limits_;
+  std::vector<Eigen::VectorXf> bins_;
+  std::vector<std::string> names_;
+};
+
+
+
 #endif // JARVIS_PODS_H

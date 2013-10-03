@@ -22,6 +22,7 @@ void DescriptorPipeline::registerPodTypes()
   REGISTER_POD(CloudOrienter);
   REGISTER_POD(CloudSelector);
   REGISTER_POD(CentroidFinder);
+  REGISTER_POD(NormalizedDensityHistogram);
 }
 
 std::string DescriptorPipeline::defaultSpecificationPath()
@@ -90,7 +91,8 @@ double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, b
 
         // -- Run the pipeline.
         const vector<const VectorXf*>* descriptors = dp.computeDescriptors(blob);
-        //cout << dp.reportTiming() << endl;
+        if(debug)
+          cout << dp.reportTiming() << endl;
 
         // -- Fill the Instance with the new descriptors.
         ROS_ASSERT(inst.descriptors_.size() == descriptors->size());

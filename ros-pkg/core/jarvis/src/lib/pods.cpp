@@ -136,3 +136,61 @@ void CentroidFinder::debug() const
   f.close();
 }
 
+
+/************************************************************
+ * NormalizedDensityHistogram
+ ************************************************************/
+
+void NormalizedDensityHistogram::compute()
+{
+  const Cloud& cloud = *pull<Cloud::ConstPtr>("Cloud");
+  
+  // -- Initialize bins if necessary.
+  ROS_ASSERT(lower_limits_.size() == 3 && bins_.size() == 3);
+  int num_bins = param<double>("NumBins");
+  if(lower_limits_[0].rows() != num_bins) {
+    for(size_t i = 0; i < lower_limits_.size(); ++i) {
+      lower_limits_[i] = VectorXf::Zero(num_bins);
+      bins_[i] = VectorXf::Zero(num_bins);
+    }
+  }
+
+  // -- Compute min and max.
+  Vector4f minpt, maxpt;
+  pcl::getMinMax3D(cloud, minpt, maxpt);
+
+  
+  for(int i = 0; i < 3; ++i) {
+    // Set lower limits of the bins.
+    VectorXf& lower_limits = lower_limits_[i];
+    VectorXf& bins = bins_[i];
+    float minval = minpt(i);
+    float maxval = maxpt(i);
+    float binwidth = (maxval - minval) / num_bins;
+    for(int j = 0; j < lower_limits.rows(); ++j)
+      lower_limits(j) = minval + binwidth * j;
+    
+    // Fill bins with counts.
+    for(size_t j = 0; j < cloud.size(); ++j) {
+      float val = cloud[j].getVector3fMap().coeffRef(i);
+      int idx = max<int>(0, min<int>(num_bins - 1, (val - minval) / binwidth));
+      ++bins.coeffRef(idx);
+    }
+
+    // Normalize to sum to one.
+    bins /= bins.sum();
+    push<const VectorXf*>(names_[i], &bins);
+  }
+}
+
+void NormalizedDensityHistogram::debug() const
+{
+  ofstream f((debugBasePath() + ".txt").c_str());
+  for(size_t i = 0; i < lower_limits_.size(); ++i) {
+    f << names_[i] << endl;
+    f << "  lower_limits_: " << lower_limits_[i].transpose() << endl;
+    f << "  bins_: " << bins_[i].transpose() << endl;
+  }
+  f.close();
+}
+
