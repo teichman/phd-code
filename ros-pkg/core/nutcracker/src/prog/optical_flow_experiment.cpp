@@ -27,13 +27,16 @@ int main(int argc, char** argv)
   cv::Mat3b prev3b;
   cv::Mat3b flow_vis;
   cv::Mat3b features_vis;
-  cv::Rect roi(390, 219, 1074, 343);
+  cv::Rect roi(390, 219, 1074, 343);  // On Bankout
+  //cv::Rect roi(243, 70, 800, 418);  // Sutter
   cv::Mat1b delta;
   cv::Mat3b surf_vis;
   
-  for(int i = 0; i < 100; ++i) cap >> orig;
+  for(int i = 0; i < 500; ++i) cap >> orig;
 
   cap >> orig;
+  cout << orig.rows << " " << orig.cols << endl;
+  cout << roi.x << " " << roi.y << " " << roi.width << " " << roi.height << endl;
   cv::Mat(orig, roi).copyTo(curr3b);
   cv::cvtColor(curr3b, curr, CV_BGR2GRAY);
 
@@ -107,6 +110,9 @@ int main(int argc, char** argv)
     oss.str("");
     oss << "raw" << setw(5) << setfill('0') << num << ".png";
     cv::imwrite(oss.str(), prev3b);
+    oss.str("");
+    oss << "difference" << setw(5) << setfill('0') << num << ".png";
+    cv::imwrite(oss.str(), delta);
     
     char key;
     key = cv::waitKey(ms);
