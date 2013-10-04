@@ -122,7 +122,7 @@ void OnlineLearner::annotateUnsupervised(double hash, const Label& label)
     if(hash == uns[i].hash()) {
       uns[i].setLabel(label);
       // Make a deep copy of the track.  This is essential.
-      // Otherwise, handleAnnotatedData calls inductDatasetSingleInduction,
+      // Otherwise, handleAnnotatedData calls inductDataset,
       // which in turn changes the labels on tracks in incoming_annotated_.
       // Total disaster.
       ann->tracks_.push_back(uns.copy(i));
@@ -195,7 +195,7 @@ void OnlineLearner::handleAnnotatedData()
   vector<Label> predictions(new_annotations.size());
   lockRead();
   ROS_ASSERT(classifier_->nameMappingsAreEqual(new_annotations));
-  #pragma omp parallel for
+#pragma omp parallel for
   for(size_t i = 0; i < new_annotations.size(); ++i)
     predictions[i] = classifier_->classifyTrack(new_annotations[i]);
   unlockRead();
@@ -218,8 +218,8 @@ void OnlineLearner::handleAnnotatedData()
   cout << "Estimated emin: " << emin.transpose() << endl;
   cout << "Estimated emax: " << emax.transpose() << endl;
   vector< vector<Label> > frame_logodds;
-  inductDatasetSingleInduction(emin, emax, unsupervised_.get(), &index,
-                               &unsupervised_logodds_, &frame_logodds);
+  inductDataset(emin, emax, unsupervised_.get(), &index,
+                &unsupervised_logodds_, &frame_logodds);
   saveInductionAccuracy("retrospection");
 
   // -- Reset classes for which de-induction (may have) occurred.
@@ -321,7 +321,7 @@ void OnlineLearner::removePerfectAndNonInducted(TrackDataset* unlabeled_chunk,
   ObjectiveIndex throwaway_index;
   vector<Label> track_logodds;
   vector< vector<Label> > frame_logodds;
-  inductDatasetSingleInduction(emin, emax, unlabeled_chunk, &throwaway_index, &track_logodds, &frame_logodds);
+  inductDataset(emin, emax, unlabeled_chunk, &throwaway_index, &track_logodds, &frame_logodds);
 
   // In the experiments on Junior, tracks almost never contained only frames
   // that were classified perfectly.  I thought maybe this part of the code
@@ -414,82 +414,69 @@ void OnlineLearner::inductionStep(TrackDataset* unlabeled_chunk, const std::vect
   cout << "Using emax = " << emax.transpose() << endl;
   ObjectiveIndex index;  // The double is \sum_f \sum_c loss.
   vector< vector<Label> > frame_logodds;
-  inductDatasetSingleInduction(emin, emax, unsupervised_.get(), &index, &unsupervised_logodds_, &frame_logodds);
+  inductDataset(emin, emax, unsupervised_.get(), &index, &unsupervised_logodds_, &frame_logodds);
 
-  // -- Keep only the tracks that contribute the most to training.
-  //    For each class:
-  //      If we haven't reached the limit, just keep everything.
-  //      Otherwise, take the top buffer_size_ / num_classes
+
+  // -- Pruning step.  Keep only the most useful tracks in unsupervised_.
+  //    This version assumes dual induction and not mutual induction.
   {
-    ScopedTimer st0("Pruning unsupervised buffer (total)");
-      
-    sort(index.begin(), index.end(), greater< pair<double, size_t> >());  // descending
-    for(size_t i = 1; i < index.size(); ++i) 
-      ROS_ASSERT(index[i].first <= index[i-1].first);
-
-    // -- For each class, de-induct the least useful examples until below threshold.
-    int num_classes = nameMapping("cmap").size();
-    for(int c = 0; c < num_classes; ++c) {
-      int count = 0;
-      for(size_t i = 0; i < index.size(); ++i) {
-        Label pred = unsupervised_->label(index[i].second);
-        if(pred(c) > 0)
-          ++count;
-      }
-
-      vector<bool> to_deinduct(index.size(), false);
-      for(int i = index.size() - 1; i >= 0 && count > (int)buffer_size_ / num_classes; --i) {
-        Label pred = unsupervised_->label(index[i].second);
-        if(pred(c) > 0) {
-          to_deinduct[i] = true;
-          --count;
-        }
-      }
-
-      for(size_t i = 0; i < index.size(); ++i) {
-        if(to_deinduct[i]) {
-          index[i].first = 0;
-          // I'm not write locking for this one.
-          // The only one that might be affected is InductionViewController,
-          // and it doesn't really matter if it shows the wrong label for a split
-          // second.
-          (*unsupervised_)[index[i].second].setLabel(VectorXf::Zero(num_classes));
-        }
-      }
-
-      sort(index.begin(), index.end(), greater< pair<double, size_t> >());
-    }
-
-    // -- Confirm that we're doing the right thing.
-    {
-      VectorXi counts = VectorXi::Zero(num_classes);
-      for(size_t i = 0; i < index.size(); ++i) {
-        Label pred = unsupervised_->label(index[i].second);
-        for(int c = 0; c < num_classes; ++c)
-          if(pred(c) > 0)
-            ++counts(c);
-      }
-      cout << "max: " << (int)buffer_size_ / num_classes << ".  Counts: " << counts.transpose() << endl;
-      for(int c = 0; c < num_classes; ++c)
-        ROS_ASSERT(counts(c) <= (int)buffer_size_ / num_classes);
-    }
-
-    // -- Throw out the least useful tracks.
-    // index is sorted in descended order.
-    ScopedTimer st1("Copying tracks around while pruning");
-            
-    size_t num_kept = 0;
+    // -- Initialize things.
     vector<Dataset::Ptr> tracks;
     vector<Label> diagann;
     tracks.reserve(buffer_size_);
     diagann.reserve(buffer_size_);
-    for(size_t i = 0; i < min(index.size(), buffer_size_); ++i) {
-      if(index[i].second < orig_num_unsupervised)
-        ++num_kept;
-      tracks.push_back(unsupervised_->tracks_[index[i].second]);
-      diagann.push_back(diagnostic_annotations_[index[i].second]);
+
+    int num_classes = nameMapping("cmap").size();
+    ArrayXi pos_counts = ArrayXi::Zero(num_classes);
+    ArrayXi neg_counts = ArrayXi::Zero(num_classes);
+    int num_desired = buffer_size_ / (num_classes * 2);
+    int num_kept = 0;
+
+    // -- Sort the unsupervised data according to utility.
+    sort(index.begin(), index.end(), greater< pair<double, size_t> >());  // descending
+    for(size_t i = 1; i < index.size(); ++i) 
+      ROS_ASSERT(index[i].first <= index[i-1].first && index[i].first >= 0);
+
+    // -- Keep the most useful inducted tracks.
+    for(size_t i = 0; i < index.size(); ++i) {
+      Label pred = unsupervised_->label(index[i].second);
+
+      // Determine what class problem this instance belongs to.
+      // Make sure we're not using mutual exclusion.
+      int c;
+      pred.array().abs().maxCoeff(&c);
+      for(int j = 0; j < pred.rows(); ++j)
+        ROS_ASSERT(j == c || pred(j) == 0);
+
+      if(pred(c) > 0 && pos_counts(c) < num_desired) {
+        ++pos_counts(c);
+        tracks.push_back(unsupervised_->tracks_[index[i].second]);
+        diagann.push_back(diagnostic_annotations_[index[i].second]);
+        if(index[i].second < orig_num_unsupervised) ++num_kept;
+      }
+      else if(pred(c) < 0 && neg_counts(c) < num_desired) { 
+        ++neg_counts(c);
+        tracks.push_back(unsupervised_->tracks_[index[i].second]);
+        diagann.push_back(diagnostic_annotations_[index[i].second]);
+        if(index[i].second < orig_num_unsupervised) ++num_kept;
+      }
+      // Also, if there are no more useful inducted tracks and there
+      // is space left in the buffer, fill that space with unlabeled tracks.
+      else if(pred(c) == 0 && tracks.size() < buffer_size_) {
+        tracks.push_back(unsupervised_->tracks_[index[i].second]);
+        diagann.push_back(diagnostic_annotations_[index[i].second]);
+        if(index[i].second < orig_num_unsupervised) ++num_kept;
+      }
     }
 
+    ROS_ASSERT(pos_counts.maxCoeff() <= num_desired);
+    ROS_ASSERT(neg_counts.maxCoeff() <= num_desired);
+    ROS_ASSERT(tracks.size() <= (size_t)num_desired);
+    cout << "pos_counts: " << pos_counts.transpose() << endl;
+    cout << "neg_counts: " << neg_counts.transpose() << endl;
+    cout << "tracks.size(): " << tracks.size() << endl;
+
+    // Deallocate the dropped tracks.
     unsupervised_->tracks_ = tracks;
     diagnostic_annotations_ = diagann;
     ROS_ASSERT(diagnostic_annotations_.size() == unsupervised_->size());
@@ -498,8 +485,92 @@ void OnlineLearner::inductionStep(TrackDataset* unlabeled_chunk, const std::vect
     cout << "Buffer size: " << unsupervised_->size() << endl;
     cout << "New tracks in buffer: " << unsupervised_->size() - num_kept << " / " << unsupervised_->size() << endl;
     cout << "Percent new tracks in buffer: " << (double)(unsupervised_->size() - num_kept) / unsupervised_->size() << endl;
-  }    
+  }
+  
+  
+  // // -- Keep only the tracks that contribute the most to training.
+  // //    For each class:
+  // //      If we haven't reached the limit, just keep everything.
+  // //      Otherwise, take the top buffer_size_ / num_classes
+  // {
+  //   ScopedTimer st0("Pruning unsupervised buffer (total)");
+      
+  //   sort(index.begin(), index.end(), greater< pair<double, size_t> >());  // descending
+  //   for(size_t i = 1; i < index.size(); ++i) 
+  //     ROS_ASSERT(index[i].first <= index[i-1].first);
 
+  //   // -- For each class, de-induct the least useful examples until below threshold.
+  //   int num_classes = nameMapping("cmap").size();
+  //   for(int c = 0; c < num_classes; ++c) {
+  //     int count = 0;
+  //     for(size_t i = 0; i < index.size(); ++i) {
+  //       Label pred = unsupervised_->label(index[i].second);
+  //       if(pred(c) > 0)
+  //         ++count;
+  //     }
+
+  //     vector<bool> to_deinduct(index.size(), false);
+  //     for(int i = index.size() - 1; i >= 0 && count > (int)buffer_size_ / num_classes; --i) {
+  //       Label pred = unsupervised_->label(index[i].second);
+  //       if(pred(c) > 0) {
+  //         to_deinduct[i] = true;
+  //         --count;
+  //       }
+  //     }
+
+  //     for(size_t i = 0; i < index.size(); ++i) {
+  //       if(to_deinduct[i]) {
+  //         index[i].first = 0;
+  //         // I'm not write locking for this one.
+  //         // The only one that might be affected is InductionViewController,
+  //         // and it doesn't really matter if it shows the wrong label for a split
+  //         // second.
+  //         (*unsupervised_)[index[i].second].setLabel(VectorXf::Zero(num_classes));
+  //       }
+  //     }
+
+  //     sort(index.begin(), index.end(), greater< pair<double, size_t> >());
+  //   }
+
+  //   // -- Confirm that we're doing the right thing.
+  //   {
+  //     VectorXi counts = VectorXi::Zero(num_classes);
+  //     for(size_t i = 0; i < index.size(); ++i) {
+  //       Label pred = unsupervised_->label(index[i].second);
+  //       for(int c = 0; c < num_classes; ++c)
+  //         if(pred(c) > 0)
+  //           ++counts(c);
+  //     }
+  //     cout << "max: " << (int)buffer_size_ / num_classes << ".  Counts: " << counts.transpose() << endl;
+  //     for(int c = 0; c < num_classes; ++c)
+  //       ROS_ASSERT(counts(c) <= (int)buffer_size_ / num_classes);
+  //   }
+
+  //   // -- Throw out the least useful tracks.
+  //   // index is sorted in descended order.
+  //   ScopedTimer st1("Copying tracks around while pruning");
+            
+  //   size_t num_kept = 0;
+  //   vector<Dataset::Ptr> tracks;
+  //   vector<Label> diagann;
+  //   tracks.reserve(buffer_size_);
+  //   diagann.reserve(buffer_size_);
+  //   for(size_t i = 0; i < min(index.size(), buffer_size_); ++i) {
+  //     if(index[i].second < orig_num_unsupervised)
+  //       ++num_kept;
+  //     tracks.push_back(unsupervised_->tracks_[index[i].second]);
+  //     diagann.push_back(diagnostic_annotations_[index[i].second]);
+  //   }
+
+  //   unsupervised_->tracks_ = tracks;
+  //   diagnostic_annotations_ = diagann;
+  //   ROS_ASSERT(diagnostic_annotations_.size() == unsupervised_->size());
+
+  //   cout << "Chunk size: " << chunk_size << endl;
+  //   cout << "Buffer size: " << unsupervised_->size() << endl;
+  //   cout << "New tracks in buffer: " << unsupervised_->size() - num_kept << " / " << unsupervised_->size() << endl;
+  //   cout << "Percent new tracks in buffer: " << (double)(unsupervised_->size() - num_kept) / unsupervised_->size() << endl;
+  // }
 }
 
 void OnlineLearner::_run()
@@ -553,7 +624,7 @@ void OnlineLearner::_run()
       VectorXf emin = -VectorXf::Ones(nameMapping("cmap").size()) * emax_;
       VectorXf emax = VectorXf::Ones(nameMapping("cmap").size()) * emax_;
       vector< vector<Label> > frame_logodds;
-      inductDatasetSingleInduction(emin, emax, unsupervised_.get(), &throwaway_index, &unsupervised_logodds_, &frame_logodds);
+      inductDataset(emin, emax, unsupervised_.get(), &throwaway_index, &unsupervised_logodds_, &frame_logodds);
     }
 
     // Update the data that is publicly viewable.
@@ -615,7 +686,7 @@ void OnlineLearner::_run()
     // -- Save things and evaluate if it's time.
     if(evaluate_every_ > 0 && iter_ % evaluate_every_ == 0) {
       evaluate();
-      saveInductionExamples();
+      //saveInductionExamples();
       classifier_->save(iter_dir_ + "/classifier.gc");      
     }
     saveInductionAccuracy("induction");
@@ -690,6 +761,9 @@ void OnlineLearner::removeDuplicates(TrackDataset* td) const
 
 void OnlineLearner::saveInductionExamples() const
 {
+  ROS_FATAL("This function assumes single induction.");
+  abort();
+  
   TrackDataset uns = *unsupervised_;  // Copy the shared_ptrs.
   random_shuffle(uns.tracks_.begin(), uns.tracks_.end());  // Randomize the order.
 
@@ -912,10 +986,10 @@ void OnlineLearner::snapshot()
   bfs::create_symlink(learner_filename, output_dir_ + "/learner.ol");
 }
 
-void OnlineLearner::inductDatasetSingleInduction(const Eigen::VectorXf& emin, const Eigen::VectorXf& emax,
-                                                 TrackDataset* td, ObjectiveIndex* aggregate_index,
-                                                 std::vector<Label>* logodds,
-                                                 std::vector< std::vector<Label> >* frame_logodds) const
+void OnlineLearner::inductDataset(const Eigen::VectorXf& emin, const Eigen::VectorXf& emax,
+                                  TrackDataset* td, ObjectiveIndex* aggregate_index,
+                                  std::vector<Label>* logodds,
+                                  std::vector< std::vector<Label> >* frame_logodds) const
 {
   ROS_ASSERT(frame_logodds);
   ROS_ASSERT(classifier_->nameMappingsAreEqual(*td));
@@ -924,7 +998,7 @@ void OnlineLearner::inductDatasetSingleInduction(const Eigen::VectorXf& emin, co
   ROS_ASSERT(emax.minCoeff() >= 0 && emin.maxCoeff() <= 0);
   int num_classes = nameMapping("cmap").size();
   
-  ScopedTimer st("OnlineLearner::inductDatasetSingleInduction");
+  ScopedTimer st("OnlineLearner::inductDataset");
   scopeLockRead;  // We'll be using the classifier.
   
   // -- Set up the aggregate index.  This will contain the objective function for each track
@@ -947,7 +1021,7 @@ void OnlineLearner::inductDatasetSingleInduction(const Eigen::VectorXf& emin, co
   frame_logodds->clear();
   frame_logodds->resize(index.size());
                    
-  #pragma omp parallel for
+#pragma omp parallel for
   for(size_t i = 0; i < index.size(); ++i) {
     size_t track_idx = index[i];
     
@@ -981,9 +1055,16 @@ void OnlineLearner::inductDatasetSingleInduction(const Eigen::VectorXf& emin, co
     vector<ArrayXd> possible_labels;  // "Unknown" is handled specially.  All other possibilities will go here.
     //possible_labels.push_back(ArrayXd::Ones(num_classes) * -1);  // Dual induction, I think.
     for(int c = 0; c < num_classes; ++c) {
-      ArrayXd lab = ArrayXd::Ones(num_classes) * -1;  // For mutual exclusion.
-      //ArrayXd lab = ArrayXd::Zero(num_classes);  // No mutual exclusion.  Induct for each class separately.
+      // Single induction with mutual exclusion.
+      //ArrayXd lab = ArrayXd::Ones(num_classes) * -1;
+      //lab(c) = 1;
+      //possible_labels.push_back(lab);
+
+      // Dual induction without mutual exclusion.
+      ArrayXd lab = ArrayXd::Zero(num_classes);
       lab(c) = 1;
+      possible_labels.push_back(lab);
+      lab(c) = -1;
       possible_labels.push_back(lab);
     }
 

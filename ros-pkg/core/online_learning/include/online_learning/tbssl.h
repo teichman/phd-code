@@ -203,10 +203,10 @@ protected:
   void loadInputTDFiles();
   //! dataset will have its track labels set to the post-induction status.
   //! logodds will be filled with track predictions for use later.
-  void inductDatasetSingleInduction(const Eigen::VectorXf& emin, const Eigen::VectorXf& emax,
-                                    TrackDataset* dataset, ObjectiveIndex* aggregate_index,
-                                    std::vector<Label>* logodds,
-                                    std::vector< std::vector<Label> >* frame_logodds) const;
+  void inductDataset(const Eigen::VectorXf& emin, const Eigen::VectorXf& emax,
+                     TrackDataset* dataset, ObjectiveIndex* aggregate_index,
+                     std::vector<Label>* logodds,
+                     std::vector< std::vector<Label> >* frame_logodds) const;
   void handleAnnotatedData();
   void removePerfectAndNonInducted(TrackDataset* unlabeled_chunk,
                                    std::vector<Label>* chunk_diagnostic_annotations) const;
