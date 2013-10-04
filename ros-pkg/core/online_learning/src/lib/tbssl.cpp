@@ -222,11 +222,11 @@ void OnlineLearner::handleAnnotatedData()
                                &unsupervised_logodds_, &frame_logodds);
   saveInductionAccuracy("retrospection");
 
-  // -- Reset classes for which de-induction occurred.
+  // -- Reset classes for which de-induction (may have) occurred.
   scopeLockWrite;
   ROS_ASSERT(nameMappingsAreEqual(*classifier_));
   for(size_t c = 0; c < nameMapping("cmap").size(); ++c) {
-    if(emin(c) < -emax_ - 1e-3) {
+    if(emin(c) < -emax_ - 1e-3 || emax(c) > emax_ + 1e-3) {
       classifier_->setZero(c);
       cout << "Reset " << nameMapping("cmap").toName(c) << " classifier (index " << c << ")." << endl;
     }
@@ -323,13 +323,10 @@ void OnlineLearner::removePerfectAndNonInducted(TrackDataset* unlabeled_chunk,
   vector< vector<Label> > frame_logodds;
   inductDatasetSingleInduction(emin, emax, unlabeled_chunk, &throwaway_index, &track_logodds, &frame_logodds);
 
-  // TODO: As it turns out, tracks almost never contain only frames
-  // that were classified correctly.  In practice this code does very
-  // little and I should probably remove it.
-  //
-  // Removing the non-inductable tracks, however, probably makes a big
-  // difference in recovering from retrospection, so that part of this
-  // function should probably stay.
+  // In the experiments on Junior, tracks almost never contained only frames
+  // that were classified perfectly.  I thought maybe this part of the code
+  // should be removed, but in the kitchen experiments it turns out we have
+  // a significant number of perfectly-classified tracks.
   
   // -- Only accept tracks with errors we can learn from.
   int num_with_errors = 0;
@@ -366,7 +363,7 @@ void OnlineLearner::removePerfectAndNonInducted(TrackDataset* unlabeled_chunk,
   cout << "[OnlineLearner::deinductPerfect] num_with_errors: " << num_with_errors << endl;
   cout << "[OnlineLearner::deinductPerfect] num_perfect: " << num_perfect << endl;
 
-  // -- Remove anything that is currently unlabeled.  These won't be useful to us later,
+  // -- Remove anything that could not be inducted.  These won't be useful to us later,
   //    so removing them now will just speed things up.  Also, we don't want unlabeled tracks
   //    in unsupervised_ to be replaced by non-inductable unlabeled tracks in unlabeled_chunk.
   //    This is because the former are often tracks de-inducted by retrospection which are
@@ -982,6 +979,7 @@ void OnlineLearner::inductDatasetSingleInduction(const Eigen::VectorXf& emin, co
     // We're going to evaluate \sum_c \sum_f exp(-y^c H^c(x_f)) for all possible labelings.
     // Construct possible labelings here.
     vector<ArrayXd> possible_labels;  // "Unknown" is handled specially.  All other possibilities will go here.
+    //possible_labels.push_back(ArrayXd::Ones(num_classes) * -1);  // Dual induction, I think.
     for(int c = 0; c < num_classes; ++c) {
       ArrayXd lab = ArrayXd::Ones(num_classes) * -1;  // For mutual exclusion.
       //ArrayXd lab = ArrayXd::Zero(num_classes);  // No mutual exclusion.  Induct for each class separately.
