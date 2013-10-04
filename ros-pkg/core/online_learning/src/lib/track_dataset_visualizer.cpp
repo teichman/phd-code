@@ -428,6 +428,11 @@ void ActiveLearningViewController::getNextUnlabeledDatasetPath()
 
 void ActiveLearningViewController::loadNextUnlabeledDataset()
 {
+  if(next_path_ == "") {
+    cout << "[ActiveLearningViewController]  You must select a new TD file with 'n' first." << endl;
+    return;
+  }
+  
   // -- Load the next track manager.
   current_path_ = next_path_;
 
