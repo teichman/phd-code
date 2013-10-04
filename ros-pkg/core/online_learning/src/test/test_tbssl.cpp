@@ -45,7 +45,7 @@ TEST(TBSSL, Resumption)
     seed = sdg.sampleTrackDataset(6, 5000);
   }
   else 
-    seed = sdg.sampleTrackDataset(6, 5);
+    seed = sdg.sampleTrackDataset(6, 3);
   TrackDataset::Ptr bg = bgg.sampleTrackDataset(2000, 1);  
   for(size_t i = 0; i < bg->size(); ++i) {
     Label label = bg->label(i);
@@ -70,11 +70,11 @@ TEST(TBSSL, Resumption)
   gc->initialize(*init, num_cells);
 
   // -- Initialize and run the first iteration.
-  OnlineLearner learner(0.5, 2000, 5, 0.1, gc, 1, 1, 1, output_path, unlabeled_dir);
+  OnlineLearner learner(0, 5000, 5, 0, gc, 1, 1, 1, output_path, unlabeled_dir);
   learner.setTestData(test);
   //seed->setImportance(1e30);
   learner.pushHandLabeledDataset(seed->clone());
-  learner.pushAutoLabeledDataset(bg);
+  //learner.pushAutoLabeledDataset(bg);
   learner.run();
 
   // -- Evaluate.
@@ -97,11 +97,14 @@ TEST(TBSSL, Resumption)
     cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << endl;
     
     OnlineLearner learner((IfstreamWrapper(output_path + "/learner.ol")));
-    if(i == 2)
-      learner.pushHandLabeledDataset(seed->clone());
+    if(i == 2) {
+      learner.pushHandLabeledDataset(sdg.sampleTrackDataset(6, 3));
+    }
     if(i == 4) {
-      bg->save(output_path + "/input_auto_annotations/bg.td");
-      bg->save(output_path + "/input_hand_annotations/bg.td");
+      // bg->save(output_path + "/input_auto_annotations/bg.td");
+      // bg->save(output_path + "/input_hand_annotations/bg.td");
+      TrackDataset::Ptr seed3 = sdg.sampleTrackDataset(6, 3);
+      seed3->save(output_path + "/input_hand_annotations/seed.td");
     }
     
     learner.setTestData(test);

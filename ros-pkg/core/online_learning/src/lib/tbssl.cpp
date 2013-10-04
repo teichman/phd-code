@@ -471,7 +471,7 @@ void OnlineLearner::inductionStep(TrackDataset* unlabeled_chunk, const std::vect
 
     ROS_ASSERT(pos_counts.maxCoeff() <= num_desired);
     ROS_ASSERT(neg_counts.maxCoeff() <= num_desired);
-    ROS_ASSERT(tracks.size() <= (size_t)num_desired);
+    ROS_ASSERT(tracks.size() <= (size_t)buffer_size_);
     cout << "pos_counts: " << pos_counts.transpose() << endl;
     cout << "neg_counts: " << neg_counts.transpose() << endl;
     cout << "tracks.size(): " << tracks.size() << endl;
