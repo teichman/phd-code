@@ -9,6 +9,8 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/online_learning</url>
+
+  <depend package="pcl_1_7"/>
   <depend package="eigen_extensions"/>
   <depend package="rosconsole"/>
   <depend package="serializable"/>
@@ -20,7 +22,6 @@
   <depend package="logistic"/>
   <depend package="pipeline3"/>
   <depend package="google-perftools"/>
-  <depend package="pcl_1_7"/>
   <depend package="opencv_bleeding"/>
   
   <export>
