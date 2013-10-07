@@ -71,6 +71,6 @@ kitchen/induction: kitchen_descriptors
 	./kitchen/tds/sentinel_2013-09-19-19-29-07_0/jarvis-0002.td \
 	--test \
 	$(KITCHEN_LABELS_DIR)/*.td \
-	--num-cells 10 100 \
+	--num-cells 10 \
 	| tee $@-log.txt
 	mv $@-log.txt $@/
