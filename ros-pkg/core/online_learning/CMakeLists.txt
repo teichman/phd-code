@@ -126,6 +126,9 @@ target_link_libraries(learner_status online_learning online_learning_ecs)
 rosbuild_add_executable(train_post_classifier src/program/train_post_classifier.cpp)
 target_link_libraries(train_post_classifier online_learning online_learning_ecs)
 
+rosbuild_add_executable(evaluate_loo src/program/evaluate_loo.cpp)
+target_link_libraries(evaluate_loo online_learning online_learning_ecs)
+
 # -- These programs use PassthroughCustomSerializer so that custom data will be
 #    read and then saved again without knowing what it is.
 
