@@ -286,22 +286,23 @@ int main(int argc, char** argv)
   }
 
   // -- Plot.
-  mpliBegin();
-  mpli("import matplotlib.pyplot as plt");
-  mpli("import numpy as np");
-  mpliPrintSize();
-  for(size_t i = 0; i < accs.size(); ++i) {
-    mpliNamedExport("acc", accs[i]);
-    mpliNamedExport("num", nums[i]);
-    mpli("plt.plot(num, acc, 'r-')");
-  }
-  mpli("plt.xlabel('Number of tracks')");
-  mpli("plt.ylabel('Accuracy')");
-  mpli("plt.ylim(0, 1)");
+  // TODO: This is hanging on capek.  Why?
+  // mpliBegin();
+  // mpli("import matplotlib.pyplot as plt");
+  // mpli("import numpy as np");
+  // mpliPrintSize();
+  // for(size_t i = 0; i < accs.size(); ++i) {
+  //   mpliNamedExport("acc", accs[i]);
+  //   mpliNamedExport("num", nums[i]);
+  //   mpli("plt.plot(num, acc, 'r-')");
+  // }
+  // mpli("plt.xlabel('Number of tracks')");
+  // mpli("plt.ylabel('Accuracy')");
+  // mpli("plt.ylim(0, 1)");
 
-  mpliExport(output_path);
-  mpli("plt.savefig(output_path + '/plot.png')");
-  mpli("plt.savefig(output_path + '/plot.pdf')");
+  // mpliExport(output_path);
+  // mpli("plt.savefig(output_path + '/plot.png')");
+  // mpli("plt.savefig(output_path + '/plot.pdf')");
   
   return 0;
 }
