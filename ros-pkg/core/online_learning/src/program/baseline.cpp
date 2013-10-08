@@ -22,11 +22,8 @@ void run(string runpath,
   for(size_t i = 0; i < train.size(); ++i)
     ROS_ASSERT(train[i]->nameMappingsAreEqual(test));
   
-  // -- Randomize the ordering.
+  // -- Randomize the ordering of the TDs (but not the tracks within the TDs).
   random_shuffle(train.begin(), train.end());
-  size_t total_tracks = 0;
-  for(size_t i = 0; i < train.size(); ++i)
-    total_tracks += train[i]->size();
 
   // -- Get the proportions of each class in the training set.
   //    This is only valid if all classes are mutually exclusive.
@@ -62,7 +59,7 @@ void run(string runpath,
   vector<double> pcts = opts["pcts"].as< vector<double> >();
   for(size_t p = 0; p < pcts.size(); ++p) {
     double sz = pcts[p];
-    size_t num = sz * total_tracks;
+    size_t num = sz * total_annotated;
     ostringstream oss;
     oss << runpath << "/" << setw(7) << setfill('0') << num << "tracks";
     string part_path = oss.str();
@@ -105,7 +102,7 @@ void run(string runpath,
     cout << "Generated dataset " << sz << endl;
     cout << td->status("  ") << endl;
     ofstream file;
-    file.open((runpath + "/dataset_status.txt").c_str());
+    file.open((part_path + "/dataset_status.txt").c_str());
     file << td->status() << endl;
     file.close();
 	
@@ -241,7 +238,7 @@ int main(int argc, char** argv)
       }
     }
   }
-  ROS_ASSERT(!bg.empty());
+  //ROS_ASSERT(!bg.empty());
   
   // -- Load all training data.
   vector<TrackDataset::Ptr> train;
