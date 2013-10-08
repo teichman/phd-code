@@ -61,6 +61,10 @@ int main(int argc, char** argv)
     bfs::create_directory(output_dir);
   
   // -- For each dataset, train on all the others and evaluate.
+  GridClassifier::Ptr placeholder(new GridClassifier);
+  placeholder->applyNameMappings(*tds[0]);
+  Evaluator ev_overall(placeholder);
+  ev_overall.plot_ = false;
   for(size_t i = 0; i < tds.size(); ++i) {
     // -- Set up training and test sets.
     TrackDataset::ConstPtr test_dataset = tds[i];
@@ -95,7 +99,11 @@ int main(int argc, char** argv)
     oss << output_dir << "/" << dataset_names[i];
     bfs::create_directory(oss.str());
     ev.saveResults(oss.str());
+
+    ev_overall.classifier_ = gc;
+    ev_overall.evaluateParallel(*test_dataset);
   }
 
+  ev_overall.saveResults(output_dir);
   return 0;
 }
