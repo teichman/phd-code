@@ -24,8 +24,6 @@ int main(int argc, char** argv)
     ("num-cells", bpo::value< vector<size_t> >(&num_cells)->multitoken(), "Default is --num-cells 10.")
     ;
 
-  p.add("tds", -1);  // -1 means unlimited
-
   bpo::variables_map opts;
   bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
   bool badargs = false;
