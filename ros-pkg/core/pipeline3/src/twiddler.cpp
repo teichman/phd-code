@@ -433,8 +433,9 @@ namespace pl
 
   void PipelineTwiddler::deleteRandomPod(YAML::Node config, GenericPodTest isImmune) const
   {
+    ROS_ASSERT(config["Pipeline"]);
     Pipeline pl(1);
-    pl.deYAMLize(config);
+    pl.deYAMLize(config["Pipeline"]);
     ROS_ASSERT(!pl.pods().empty());
     
     Pod* pod = pl.pods()[rand() % pl.pods().size()];
@@ -443,7 +444,7 @@ namespace pl
       pl.prune(isImmune);
     }
     
-    config = pl.YAMLize();
+    config["Pipeline"] = pl.YAMLize();
   }
 
   

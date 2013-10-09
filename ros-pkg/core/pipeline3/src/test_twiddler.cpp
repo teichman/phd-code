@@ -184,12 +184,20 @@ public:
     registerAction("addAggregatorBranch",
                    boost::bind(&ExamplePipelineTwiddler::addAggregatorBranch, *this, _1),
                    init, init);
+    registerAction("twiddleHistogramBinWidths",
+                   boost::bind(&PipelineTwiddler::twiddlePodParamsLockstep<HistogramGenerator, double>, *this, _1,
+                               "BinWidth", vector<double>{0.13, 0.42}));
+    registerAction("twiddleRandomHistogramBinWidth",
+                   boost::bind(&PipelineTwiddler::twiddleRandomPodParam<HistogramGenerator, double>, *this, _1,
+                               "BinWidth", vector<double>{0.13, 0.42}));
+
   }
 
   void deleteRandomAndAddSummarizer(YAML::Node config, GenericPodTest isImmune) const
   {
+    ROS_ASSERT(config["Pipeline"]);
     Pipeline pl(1);
-    pl.deYAMLize(config);
+    pl.deYAMLize(config["Pipeline"]);
 
     // -- Delete a random non-immune pod and prune anything that
     //    is useless now.
@@ -226,13 +234,14 @@ public:
     if(num > 1)
       pl.connect("DescriptorAssembler.Elements <- " + pod->name() + ".MeanNeighborSeparation");
     
-    config = pl.YAMLize();
+    config["Pipeline"] = pl.YAMLize();
   }
 
   void addAggregatorBranch(YAML::Node config) const
   {
+    ROS_ASSERT(config["Pipeline"]);
     Pipeline pl(1);
-    pl.deYAMLize(config);
+    pl.deYAMLize(config["Pipeline"]);
 
     vector<Sorter*> sorters = pl.filterPods<Sorter>();
     if(sorters.empty())
@@ -266,13 +275,14 @@ public:
         pl.connect("DescriptorAssembler.Elements <- " + sum->name() + ".MeanNeighborSeparation");
     }
 
-    config = pl.YAMLize();
+    config["Pipeline"] = pl.YAMLize();
   }
 
   void twiddleHistogramParam(YAML::Node config) const
   {
+    ROS_ASSERT(config["Pipeline"]);
     Pipeline pl(1);
-    pl.deYAMLize(config);
+    pl.deYAMLize(config["Pipeline"]);
 
     vector<HistogramGenerator*> hgs = pl.filterPods<HistogramGenerator>();
     if(!hgs.empty()) {
@@ -296,13 +306,14 @@ public:
         hg->setParam("Max", hg->param<double>("Min") + hg->param<double>("BinWidth") * 5);
     }
 
-    config = pl.YAMLize();
+    config["Pipeline"] = pl.YAMLize();
   }
   
   void appendSummarizer(YAML::Node config) const
   {
+    ROS_ASSERT(config["Pipeline"]);
     Pipeline pl(1);
-    pl.deYAMLize(config);
+    pl.deYAMLize(config["Pipeline"]);
 
     vector<Sorter*> sorters = pl.filterPods<Sorter>();
     if(!sorters.empty()) {
@@ -318,7 +329,7 @@ public:
         pl.connect("DescriptorAssembler.Elements <- " + sum->name() + ".MeanNeighborSeparation");
     }
 
-    config = pl.YAMLize();
+    config["Pipeline"] = pl.YAMLize();
   }
 
   void backtrack(YAML::Node config) const
@@ -341,10 +352,11 @@ public:
   
   YAML::Node evaluate(const YAML::Node& config, std::string evalpath)
   {
+    ROS_ASSERT(config["Pipeline"]);
     YAML::Node results;
 
     Pipeline pl(1);
-    pl.deYAMLize(config);
+    pl.deYAMLize(config["Pipeline"]);
     pl.writeGraphviz(evalpath + "/pipeline.gv");
 
     Vec::Ptr vec = generateVec(100);
@@ -366,9 +378,10 @@ public:
 
   void improvementHook(const YAML::Node& config, const YAML::Node& results, std::string evalpath) const
   {
+    ROS_ASSERT(config["Pipeline"]);
     Twiddler::improvementHook(config, results, evalpath);
     Pipeline pl(1);
-    pl.deYAMLize(config);
+    pl.deYAMLize(config["Pipeline"]);
     pl.writeGraphviz(root_dir_ + "/best_pipeline.gv");
   }
 };
@@ -388,10 +401,14 @@ TEST(Twiddler, PipelineTwiddling)
   ept.k_ = K;
   string root_dir = "example_pipeline_twiddling-013";
   int retval = system(("rm -rf " + root_dir).c_str()); retval--;
-  ept.initialize(pl.YAMLize(), root_dir);
-  saveYAML(pl.YAMLize(), "example_pipeline_twiddling-013/hints/dupe_hint.yml");
+  YAML::Node init;
+  init["Pipeline"] = pl.YAMLize();
+  ROS_ASSERT(init["Pipeline"]);
+  ept.initialize(init, root_dir);
+  saveYAML(init, "example_pipeline_twiddling-013/hints/dupe_hint.yml");
   pl.pod("HistogramGenerator0")->setParam("BinWidth", (double)1);
-  saveYAML(pl.YAMLize(), "example_pipeline_twiddling-013/hints/test_hint.yml");
+  init["Pipeline"] = pl.YAMLize();
+  saveYAML(init, "example_pipeline_twiddling-013/hints/test_hint.yml");
   ept.twiddle();
   EXPECT_TRUE(!bfs::exists("example_pipeline_twiddling-013/hint_evaluations/dupe_hint"));
   EXPECT_TRUE(bfs::exists("example_pipeline_twiddling-013/hint_evaluations/test_hint"));
@@ -407,7 +424,8 @@ TEST(Twiddler, PipelineTwiddling)
   cout << "============================================================" << endl;
   cout << YAML::Dump(results) << endl;
 
-  pl.deYAMLize(config);
+  ROS_ASSERT(config["Pipeline"]);
+  pl.deYAMLize(config["Pipeline"]);
   Vec::Ptr vec = generateVec(100);
   pl.push<Vec::ConstPtr>("View0", vec);
   pl.push<Vec::ConstPtr>("View1", vec);
@@ -431,12 +449,15 @@ TEST(Twiddler, PipelineTwiddling)
     int retval = system(("rm -rf " + root_dir).c_str()); retval--;
     Pipeline pl(1);
     generateDefaultPipeline(&pl);
-    ept.initialize(pl.YAMLize(), root_dir);
+    YAML::Node init;
+    init["Pipeline"] = pl.YAMLize();
+    ept.initialize(init, root_dir);
     ept.twiddle();
 
     YAML::Node config, results;
     ept.getBest(&config, &results);
-    pl.deYAMLize(config);
+    ROS_ASSERT(config["Pipeline"]);
+    pl.deYAMLize(config["Pipeline"]);
     Vec::Ptr vec = generateVec(100);
     pl.push<Vec::ConstPtr>("View0", vec);
     pl.push<Vec::ConstPtr>("View1", vec);

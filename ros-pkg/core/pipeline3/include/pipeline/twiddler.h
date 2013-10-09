@@ -173,9 +173,47 @@ namespace pl
     PipelineTwiddler();
     virtual ~PipelineTwiddler();
     
-    //! 
     void deleteRandomPod(YAML::Node config, GenericPodTest isImmune) const;
+
+
+    template<typename PodType, typename ParamType>
+    void twiddleRandomPodParam(YAML::Node config,
+                               const std::string& param_name,
+                               const std::vector<ParamType>& vals) const;
+
+    template<typename PodType, typename ParamType>
+    void twiddlePodParamsLockstep(YAML::Node config,
+                                  const std::string& param_name,
+                                  const std::vector<ParamType>& vals) const;
   };
+
+  template<typename PodType, typename ParamType>
+  void PipelineTwiddler::twiddleRandomPodParam(YAML::Node config,
+                                               const std::string& param_name,
+                                               const std::vector<ParamType>& vals) const
+  {
+    Pipeline pl(1);
+    pl.deYAMLize(config["Pipeline"]);
+    Pod* pod = pl.randomPod<PodType>();
+    if(pod)
+      pod->setParam(param_name, vals[rand() % vals.size()]);
+    config["Pipeline"] = pl.YAMLize();
+  }
+
+  template<typename PodType, typename ParamType>
+  void PipelineTwiddler::twiddlePodParamsLockstep(YAML::Node config,
+                                                  const std::string& param_name,
+                                                  const std::vector<ParamType>& vals) const
+  {
+    Pipeline pl(1);
+    pl.deYAMLize(config["Pipeline"]);
+    std::vector<PodType*> pods = pl.filterPods<PodType>();
+    ParamType val = vals[rand() % vals.size()];
+    for(size_t i = 0; i < pods.size(); ++i)
+      pods[i]->setParam(param_name, val);
+
+    config["Pipeline"] = pl.YAMLize();
+  }
 
 }
 
