@@ -29,12 +29,18 @@ Pipeline:
       Params: ~
       Inputs:
         Cloud: BlobProjector.Cloud
-    - Name: NormalizedDensityHistogram
+    - Name: OrientedNormalizedDensityHistogram
       Type: NormalizedDensityHistogram
       Params:
         NumBins: 10
       Inputs:
         Cloud: CloudOrienter.OrientedCloud
+    - Name: RawNormalizedDensityHistogram
+      Type: NormalizedDensityHistogram
+      Params:
+        NumBins: 10
+      Inputs:
+        Cloud: BlobProjector.Cloud
     - Name: DescriptorAggregator
       Type: DescriptorAggregator
       Params: ~
@@ -42,11 +48,13 @@ Pipeline:
         Descriptors: >
           RawBoundingBoxSize.BoundingBoxSize
           OrientedBoundingBoxSize.BoundingBoxSize
-          CentroidFinder.Centroid
-          NormalizedDensityHistogram.X
-          NormalizedDensityHistogram.Y
-          NormalizedDensityHistogram.Z
-          
+          OrientedNormalizedDensityHistogram.X
+          OrientedNormalizedDensityHistogram.Y
+          OrientedNormalizedDensityHistogram.Z
+          RawNormalizedDensityHistogram.X
+          RawNormalizedDensityHistogram.Y
+          RawNormalizedDensityHistogram.Z
+          CentroidFinder.Centroid          
           
 
           
