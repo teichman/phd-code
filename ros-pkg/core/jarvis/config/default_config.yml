@@ -1,3 +1,6 @@
+GlobalParams:
+  NumCells: 10
+  ObjThresh: 50
 Pipeline:
   Pods:
     - Name: BlobEntryPoint
@@ -48,15 +51,10 @@ Pipeline:
         Descriptors: >
           RawBoundingBoxSize.BoundingBoxSize
           OrientedBoundingBoxSize.BoundingBoxSize
+          CentroidFinder.Centroid
           OrientedNormalizedDensityHistogram.X
           OrientedNormalizedDensityHistogram.Y
           OrientedNormalizedDensityHistogram.Z
           RawNormalizedDensityHistogram.X
           RawNormalizedDensityHistogram.Y
           RawNormalizedDensityHistogram.Z
-          CentroidFinder.Centroid          
-          
-
-          
-        
-  

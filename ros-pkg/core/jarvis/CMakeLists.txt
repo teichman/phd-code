@@ -30,8 +30,7 @@ rosbuild_add_library(jarvis_core
   src/lib/blob_view.cpp
   src/lib/descriptor_pipeline.cpp
   src/lib/pods.cpp
-#  src/lib/detection_visualizer.cpp
-#  src/lib/bagvis.cpp
+  src/lib/twiddler.cpp
   )
 
 #target_link_libraries(${PROJECT_NAME} another_library)
@@ -56,6 +55,10 @@ rosbuild_link_boost(update_descriptors program_options)
 rosbuild_add_executable(inductor src/prog/inductor.cpp)
 target_link_libraries(inductor jarvis_core)
 rosbuild_link_boost(inductor program_options)
+
+rosbuild_add_executable(twiddle src/prog/twiddle.cpp)
+target_link_libraries(twiddle jarvis_core)
+rosbuild_link_boost(twiddle program_options)
 
 rosbuild_add_executable(pcd_viewer src/prog/pcd_viewer.cpp)
 target_link_libraries(pcd_viewer vtkCommon vtkIO vtkFiltering vtkHybrid vtkRendering)
