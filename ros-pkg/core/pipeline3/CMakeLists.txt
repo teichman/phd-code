@@ -39,7 +39,7 @@ rosbuild_add_gtest_build_flags(test_pipeline)
 target_link_libraries(test_pipeline pipeline3)
 
 rosbuild_add_gtest(test_twiddler src/test_twiddler.cpp)
-rosbuild_add_gtest_build_flags(test_twiddler)
+rosbuild_add_compile_flags(test_twiddler -std=c++0x)
 target_link_libraries(test_twiddler pipeline3)
 
 rosbuild_add_executable(yaml_experiment src/yaml_experiment.cpp)

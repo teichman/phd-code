@@ -111,8 +111,9 @@ namespace pl
      ************************************************************/
 
     void multiAction(YAML::Node config, int num_actions) const;
-    
-    
+    //! Set config[id[0]][id[1]]... to a random element of vals.
+    template<typename T> void twiddleParam(YAML::Node config, const std::string& id, const std::vector<T>& vals) const;
+        
   protected:
     std::string root_dir_;
     std::string eval_dir_;
@@ -154,6 +155,13 @@ namespace pl
     //! Returns index of the action that was taken.
     size_t generateVariation(YAML::Node config) const;
   };
+
+  template<typename T> void Twiddler::twiddleParam(YAML::Node config,
+                                                   const std::string& key,
+                                                   const std::vector<T>& vals) const
+  {
+    config[key] = vals[rand() % vals.size()];
+  }
 
   //! A Twiddler that includes functions that are commonly used for
   //! pipeline learning.  They aren't registered by default; you can

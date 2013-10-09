@@ -20,6 +20,8 @@ public:
     REGISTER_ACTION(TestTwiddler::twiddleW0);
     REGISTER_ACTION(TestTwiddler::twiddleW2);
     REGISTER_ACTION(TestTwiddler::twiddleX);
+    registerAction("TwiddleTypeGeneric", boost::bind(&Twiddler::twiddleParam<string>, *this, _1,
+                                                     "Type", vector<string>{"constant", "quadratic"}));
   }
   
   YAML::Node evaluate(const YAML::Node& config, std::string evalpath)
