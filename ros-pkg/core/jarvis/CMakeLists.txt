@@ -32,7 +32,7 @@ rosbuild_add_library(jarvis_core
   src/lib/pods.cpp
   src/lib/twiddler.cpp
   )
-
+rosbuild_add_compile_flags(jarvis_core -std=c++0x)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
@@ -58,6 +58,7 @@ rosbuild_link_boost(inductor program_options)
 
 rosbuild_add_executable(twiddle src/prog/twiddle.cpp)
 target_link_libraries(twiddle jarvis_core)
+rosbuild_add_compile_flags(twiddle -std=c++0x)
 rosbuild_link_boost(twiddle program_options)
 
 rosbuild_add_executable(pcd_viewer src/prog/pcd_viewer.cpp)

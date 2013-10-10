@@ -40,6 +40,10 @@ JarvisTwiddler::JarvisTwiddler(TrackDataset::Ptr train,
   REGISTER_ACTION(JarvisTwiddler::deleteRandomPod);
   REGISTER_ACTION(JarvisTwiddler::addRawNormalizedHistogramBranch);
   REGISTER_ACTION(JarvisTwiddler::addOrientedNormalizedHistogramBranch);
+  registerAction("twiddleRandomHistogramNumBins",
+                 boost::bind(&PipelineTwiddler::twiddlePodParamsLockstep<NormalizedDensityHistogram, double>, *this, _1,
+                             "NumBins", vector<double>{5, 10, 20}));
+  
 }
 
 bool JarvisTwiddler::isRequired(Pod* pod)
@@ -54,6 +58,7 @@ void JarvisTwiddler::improvementHook(const YAML::Node& config,
                                      const YAML::Node& results,
                                      std::string evalpath) const
 {
+  ROS_ASSERT(config["Pipeline"]);
   Twiddler::improvementHook(config, results, evalpath);
   Pipeline pl(1);
   pl.deYAMLize(config["Pipeline"]);
@@ -68,6 +73,7 @@ YAML::Node JarvisTwiddler::evaluate(const YAML::Node& config, std::string evalpa
   
   // -- Save the pipeline we are evaluating in graphviz format.
   Pipeline pl(1);
+  ROS_ASSERT(config["Pipeline"]);
   pl.deYAMLize(config["Pipeline"]);
   pl.writeGraphviz(evalpath + "/pipeline.gv");
   if(pl.pod<DescriptorAggregator>()->dmap().size() == 0) {
@@ -81,7 +87,7 @@ YAML::Node JarvisTwiddler::evaluate(const YAML::Node& config, std::string evalpa
   // -- Compute descriptors on training set.  If too slow, don't proceed.
   double ms_per_obj = updateDescriptors(config["Pipeline"], num_threads_, train_.get());
   results["MsPerObj"] = ms_per_obj;
-  if(ms_per_obj > MAX_MS_PER_OBJ) {
+  if(ms_per_obj > (double)MAX_MS_PER_OBJ) {
     results["DescriptorComputationTooSlow"] = true;
     return results;
   }
@@ -135,6 +141,7 @@ double JarvisTwiddler::objective(const YAML::Node& results) const
 
 void JarvisTwiddler::twiddleNumCells(YAML::Node config) const
 {
+  ROS_ASSERT(config["GlobalParams"]);
   YAML::Node gp = config["GlobalParams"];
 
   vector<string> ncs;
@@ -161,12 +168,14 @@ void JarvisTwiddler::twiddleTrainerThreshold(YAML::Node config) const
 
 void JarvisTwiddler::deleteRandomPod(YAML::Node config) const
 {
-  PipelineTwiddler::deleteRandomPod(config["Pipeline"], JarvisTwiddler::isRequired);
+  ROS_ASSERT(config["Pipeline"]);
+  PipelineTwiddler::deleteRandomPod(config, JarvisTwiddler::isRequired);
 }
 
 void JarvisTwiddler::addRawNormalizedHistogramBranch(YAML::Node config) const
 {
   Pipeline pl(1);
+  ROS_ASSERT(config["Pipeline"]);
   pl.deYAMLize(config["Pipeline"]);
 
   // -- If we don't have a BlobProjector, add one.
@@ -193,6 +202,7 @@ void JarvisTwiddler::addRawNormalizedHistogramBranch(YAML::Node config) const
 
 void JarvisTwiddler::addOrientedNormalizedHistogramBranch(YAML::Node config) const
 {
+  ROS_ASSERT(config["Pipeline"]);
   Pipeline pl(1);
   pl.deYAMLize(config["Pipeline"]);
 

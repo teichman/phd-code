@@ -7,7 +7,7 @@
 class JarvisTwiddler : public pl::PipelineTwiddler
 {
 public:
-  static const double MAX_MS_PER_OBJ = 1.0;
+  static const int MAX_MS_PER_OBJ = 1;
   
   JarvisTwiddler(TrackDataset::Ptr train,
                  TrackDataset::Ptr test,
