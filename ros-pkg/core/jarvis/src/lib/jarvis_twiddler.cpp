@@ -1,5 +1,5 @@
 #include <online_learning/evaluator.h>
-#include <jarvis/twiddler.h>
+#include <jarvis/jarvis_twiddler.h>
 #include <jarvis/descriptor_pipeline.h>
 
 using namespace std;
