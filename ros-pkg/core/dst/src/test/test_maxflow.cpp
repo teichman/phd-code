@@ -45,9 +45,10 @@ TEST(ImageRegionIterator, ImageRegionIterator)
   cv::Mat1b vis(sz, 0);
   int radius = 10;
   cv::Point2i pt(98, 195);
-  for(ImageRegionIterator it(sz, pt, radius); !it.done(); ++it) {
-    cout << *it << endl;
-    vis(*it) = 255;
+  ImageRegionIterator iri(sz, radius);
+  for(iri.setCenter(pt); !iri.done(); ++iri) {
+    cout << *iri << endl;
+    vis(*iri) = 255;
   }
   cv::imshow("ImageRegionIterator", vis);
   //cv::waitKey(0);
