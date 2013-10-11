@@ -47,3 +47,7 @@ target_link_libraries(yaml_experiment ${PROJECT_NAME})
 
 rosbuild_add_executable(yaml_clone src/yaml_clone.cpp)
 target_link_libraries(yaml_clone ${PROJECT_NAME})
+
+rosbuild_add_executable(write_graphviz src/prog/write_graphviz.cpp)
+target_link_libraries(write_graphviz ${PROJECT_NAME})
+rosbuild_link_boost(write_graphviz filesystem program_options)
