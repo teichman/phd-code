@@ -57,7 +57,7 @@ kitchen-update-descriptors:
 	rosrun jarvis update_descriptors --config $(CONFIG) --tds `find $(KITCHEN_LABELS_DIR)/ -name '*.td' | sort`
 
 kitchen/induction: kitchen_descriptors
-	rosrun jarvis inductor \
+	rosgdb jarvis induct \
 	--config $(CONFIG) \
 	--emax 0 \
 	--buffer-size 5000 \

@@ -53,9 +53,9 @@ rosbuild_add_executable(update_descriptors src/prog/update_descriptors.cpp)
 target_link_libraries(update_descriptors jarvis_core)
 rosbuild_link_boost(update_descriptors program_options)
 
-rosbuild_add_executable(inductor src/prog/inductor.cpp)
-target_link_libraries(inductor jarvis_core)
-rosbuild_link_boost(inductor program_options)
+rosbuild_add_executable(induct src/prog/induct.cpp)
+target_link_libraries(induct jarvis_core)
+rosbuild_link_boost(induct program_options)
 
 rosbuild_add_executable(evaluate src/prog/evaluate.cpp)
 target_link_libraries(evaluate jarvis_core)
