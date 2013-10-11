@@ -1,0 +1,17 @@
+<package>
+  <description brief="vcropper">
+
+     vcropper
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/vcropper</url>
+
+  <depend package="opencv_bleeding"/>
+  <depend package="rosconsole"/>
+
+</package>
+
+
