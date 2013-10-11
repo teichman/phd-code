@@ -23,11 +23,14 @@ void DescriptorPipeline::registerPodTypes()
   REGISTER_POD(CloudSelector);
   REGISTER_POD(CentroidFinder);
   REGISTER_POD(NormalizedDensityHistogram);
+  REGISTER_POD(CloudProjector);
+  REGISTER_POD(DynamicImageWindow);
+  REGISTER_POD(HogArray);
 }
 
 std::string DescriptorPipeline::defaultSpecificationPath()
 {
-  return ros::package::getPath("jarvis") + "/config/default_descriptor_pipeline.yml";
+  return ros::package::getPath("jarvis") + "/config/default_config.yml";
 }
 
 YAML::Node DescriptorPipeline::defaultSpecification()

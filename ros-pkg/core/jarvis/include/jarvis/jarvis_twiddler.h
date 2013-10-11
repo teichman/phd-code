@@ -33,6 +33,8 @@ protected:
   void deleteRandomPod(YAML::Node config) const;
   void addRawNormalizedHistogramBranch(YAML::Node config) const;
   void addOrientedNormalizedHistogramBranch(YAML::Node config) const;
+  void addHog(YAML::Node config) const;
+  void replaceHogPod(YAML::Node config) const;
 };
 
 

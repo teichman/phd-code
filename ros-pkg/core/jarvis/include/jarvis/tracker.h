@@ -17,6 +17,7 @@
 
 typedef pcl::PointXYZRGB Point;
 typedef pcl::PointCloud<Point> Cloud;
+typedef pcl::PointCloud<pcl::Normal> NormalsCloud;
 typedef pcl::search::KdTree<pcl::PointXYZRGB> KdTree;
 //typedef pcl::KdTreeFLANN<pcl::PointXYZRGB> KdTree;
 

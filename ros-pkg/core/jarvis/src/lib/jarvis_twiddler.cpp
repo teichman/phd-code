@@ -40,10 +40,23 @@ JarvisTwiddler::JarvisTwiddler(TrackDataset::Ptr train,
   REGISTER_ACTION(JarvisTwiddler::deleteRandomPod);
   REGISTER_ACTION(JarvisTwiddler::addRawNormalizedHistogramBranch);
   REGISTER_ACTION(JarvisTwiddler::addOrientedNormalizedHistogramBranch);
-  registerAction("twiddleRandomHistogramNumBins",
-                 boost::bind(&PipelineTwiddler::twiddlePodParamsLockstep<NormalizedDensityHistogram, double>, *this, _1,
-                             "NumBins", vector<double>{5, 10, 20}));
-  
+  REGISTER_ACTION(JarvisTwiddler::addHog);
+  REGISTER_ACTION(JarvisTwiddler::replaceHogPod);
+  // registerAction("twiddleRandomHistogramNumBins",
+  //                boost::bind(&PipelineTwiddler::twiddlePodParamsLockstep<NormalizedDensityHistogram, double>, *this, _1,
+  //                            "NumBins", vector<double>{5, 10, 20}));
+  // registerAction("twiddleRandomDynamicImageWindowHeightPercent",
+  //                boost::bind(&PipelineTwiddler::twiddlePodParam<DynamicImageWindow, double>, *this, _1,
+  //                            "HeightPercent", vector<double>{0.2, 0.5, 1.0}));
+  // registerAction("twiddleRandomDynamicImageWindowWidthPercent",
+  //                boost::bind(&PipelineTwiddler::twiddlePodParam<DynamicImageWindow, double>, *this, _1,
+  //                            "WidthPercent", vector<double>{0.2, 0.5, 1.0}));
+  // registerAction("twiddleRandomDynamicImageWindowVerticalAlignment",
+  //                boost::bind(&PipelineTwiddler::twiddlePodParam<DynamicImageWindow, double>, *this, _1,
+  //                            "VerticalAlignment", vector<string>{"Top", "Center", "Bottom"}));
+  // registerAction("twiddleRandomDynamicImageWindowHorizontalAlignment",
+  //                boost::bind(&PipelineTwiddler::twiddlePodParam<DynamicImageWindow, double>, *this, _1,
+  //                            "HorizontalAlignment", vector<string>{"Left", "Center", "Right"}));
 }
 
 bool JarvisTwiddler::isRequired(Pod* pod)
@@ -170,6 +183,119 @@ void JarvisTwiddler::deleteRandomPod(YAML::Node config) const
 {
   ROS_ASSERT(config["Pipeline"]);
   PipelineTwiddler::deleteRandomPod(config, JarvisTwiddler::isRequired);
+}
+
+void JarvisTwiddler::replaceHogPod(YAML::Node config) const
+{
+  ROS_ASSERT(config["Pipeline"]);
+  Pipeline pl(1);
+  pl.deYAMLize(config["Pipeline"]);
+  ROS_ASSERT(!pl.pods().empty());
+
+  // -- Delete random Hog.
+  vector<HogArray*> has = pl.filterPods<HogArray>();
+  if(has.empty())
+    return;
+
+  HogArray* ha = has[rand() % has.size()];
+  pl.deletePod(ha->name());
+  pl.prune(JarvisTwiddler::isRequired);
+  config["Pipeline"] = pl.YAMLize();
+
+  // -- Add new Hog.
+  addHog(config);
+}
+
+void JarvisTwiddler::addHog(YAML::Node config) const
+{
+  ROS_ASSERT(config["Pipeline"]);
+  Pipeline pl(1);
+  pl.deYAMLize(config["Pipeline"]);
+
+  // -- Choose a CloudProjector plane.
+  vector<string> views {"XY", "XZ", "YZ"};
+  string view = views[rand() % views.size()];
+  Pod* cp = NULL;
+  vector<CloudProjector*> cps = pl.filterPods<CloudProjector>();
+  for(size_t i = 0; i < cps.size(); ++i)
+    if(cps[i]->param<string>("View") == view)
+      cp = cps[i];
+
+  // -- If we don't have the chosen one, add it.
+  if(!cp) {
+    cp = pl.createPod("CloudProjector");
+    cp->setParam<string>("View", view);
+    vector<double> ppms {10, 20, 40};
+    cp->setParam("PixelsPerMeter", ppms[rand() % ppms.size()]);
+    vector<double> nrs {10, 20, 40};
+    cp->setParam("NumRows", nrs[rand() % nrs.size()]);
+    cp->setParam("NumCols", nrs[rand() % nrs.size()]);
+    cp->setParam<double>("MinIntensity", 1);
+    cp->setParam<double>("KernelSize", 1);
+
+    // -- If we don't have a CloudOrienter, add one.
+    if(!pl.hasPod<CloudOrienter>()) {
+      Pod* co = pl.createPod("CloudOrienter");
+      pl.connect(co->name() + ".ProjectedBlob <- BlobProjector.ProjectedBlob");
+    }
+    Pod* co = pl.pod<CloudOrienter>();
+    
+    pl.connect(cp->name() + ".Cloud <- " + co->name() + ".OrientedCloud");
+  }
+
+  // -- Add a DynamicImageWindow for this HogArray.
+  vector<string> vas;
+  vas.push_back("Top");
+  vas.push_back("Center");
+  vas.push_back("Bottom");
+  vector<string> has;
+  has.push_back("Left");
+  has.push_back("Center");
+  has.push_back("Right");
+  vector<double> pcts;
+  pcts.push_back(0.2);
+  pcts.push_back(0.5);
+  pcts.push_back(1.0);
+    
+  Pod* dw = pl.createPod("DynamicImageWindow");
+  dw->setParam<double>("Scaling", 1);
+  dw->setParam<double>("HeightPercent", pcts[rand() % pcts.size()]);
+  dw->setParam<double>("WidthPercent", pcts[rand() % pcts.size()]);
+  dw->setParam<string>("HorizontalAlignment", has[rand() % has.size()]);
+  dw->setParam<string>("VerticalAlignment", vas[rand() % vas.size()]);
+  pl.connect(dw->name() + ".Image <- " + cp->name() + ".Image");
+
+  // -- Add a HOGArray.
+  vector<double> nbs;
+  nbs.push_back(8);
+  nbs.push_back(6);
+  nbs.push_back(4);
+  vector<double> wszs;
+  wszs.push_back(20);
+  wszs.push_back(10);
+  double sz = wszs[rand() % wszs.size()];
+  if(sz > dw->param<double>("HeightPercent") * cp->param<double>("NumRows"))
+    return;
+  if(sz > dw->param<double>("WidthPercent") * cp->param<double>("NumCols"))
+    return;
+  
+  vector<double> cszs;
+  cszs.push_back(5);
+  cszs.push_back(10);
+  
+  Pod* hog = pl.createPod("HogArray");
+  hog->setParam<string>("UVPattern", "Center");
+  hog->setParam<double>("WindowWidth", sz);
+  hog->setParam<double>("WindowHeight", sz);
+  hog->setParam<double>("BlockWidth", sz);
+  hog->setParam<double>("BlockHeight", sz);
+  hog->setParam<double>("BlockStride", 10);
+  hog->setParam<double>("CellSize", cszs[rand() % cszs.size()]);
+  hog->setParam<double>("NumBins", nbs[rand() % nbs.size()]);
+  pl.connect(hog->name() + ".Image <- " + dw->name() + ".Image");
+  pl.connect("DescriptorAggregator.Descriptors <- " + hog->name() + ".ConcatenatedDescriptors");
+  
+  config["Pipeline"] = pl.YAMLize();
 }
 
 void JarvisTwiddler::addRawNormalizedHistogramBranch(YAML::Node config) const

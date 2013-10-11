@@ -44,6 +44,62 @@ Pipeline:
         NumBins: 10
       Inputs:
         Cloud: BlobProjector.Cloud
+    - Name: CloudProjectorXY
+      Type: CloudProjector
+      Params:
+        View: XY
+        PixelsPerMeter: 50
+        NumRows: 50
+        NumCols: 50
+        MinIntensity: 1
+        KernelSize: 1
+      Inputs:
+        Cloud: CloudOrienter.OrientedCloud
+    - Name: CloudProjectorYZ
+      Type: CloudProjector
+      Params:
+        View: YZ
+        PixelsPerMeter: 50
+        NumRows: 50
+        NumCols: 50
+        MinIntensity: 1
+        KernelSize: 1
+      Inputs:
+        Cloud: CloudOrienter.OrientedCloud
+    - Name: CloudProjectorXZ
+      Type: CloudProjector
+      Params:
+        View: XZ
+        PixelsPerMeter: 50
+        NumRows: 50
+        NumCols: 50
+        MinIntensity: 1
+        KernelSize: 1
+      Inputs:
+        Cloud: CloudOrienter.OrientedCloud
+    - Name: DynamicImageWindow
+      Type: DynamicImageWindow
+      Params:
+        VerticalAlignment: Center
+        HorizontalAlignment: Center
+        HeightPercent: 1
+        WidthPercent: 1
+        Scaling: 1
+      Inputs:
+        Image: CloudProjectorXY.Image
+    - Name: HogArray
+      Type: HogArray
+      Params:
+        WindowWidth: 25
+        WindowHeight: 25
+        BlockWidth: 25
+        BlockHeight: 25
+        BlockStride: 25
+        CellSize: 5
+        NumBins: 6
+        UVPattern: Dense
+      Inputs:
+        Image: DynamicImageWindow.Image
     - Name: DescriptorAggregator
       Type: DescriptorAggregator
       Params: ~
@@ -58,3 +114,4 @@ Pipeline:
           RawNormalizedDensityHistogram.X
           RawNormalizedDensityHistogram.Y
           RawNormalizedDensityHistogram.Z
+          HogArray.ConcatenatedDescriptors
