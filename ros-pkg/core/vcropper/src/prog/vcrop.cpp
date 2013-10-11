@@ -35,9 +35,10 @@ bool isVideoPath(const string& str)
   return (find_if(str.begin(), str.end(), isAlpha) != str.end());
 }
 
-
-void process(const bpo::variables_map& opts, const std::string& video_path,
-             const std::vector<double>& crop_times)
+void extractClips(const bpo::variables_map& opts,
+                  const std::string& video_path,
+                  const std::vector<double>& crop_times,
+                  std::vector< std::vector<cv::Mat3b> >* clips)
 {
   cv::VideoCapture cap(video_path);
   if(!cap.isOpened()) {
@@ -45,16 +46,14 @@ void process(const bpo::variables_map& opts, const std::string& video_path,
     return;
   }
 
-
   // -- Get all the images we want for the clips in this video.
   double fps = cap.get(CV_CAP_PROP_FPS);
   cv::Mat3b orig;
   int num = 0;
   double time = 0;
-  vector< vector<cv::Mat3b> > clips;
-  clips.resize(crop_times.size() / 2);
-  vector<double> timestamps;
-
+  int orig_num_clips = clips->size();
+  clips->resize(clips->size() + crop_times.size() / 2);
+  
   while(true) {
     cap >> orig;
     time = num / fps;
@@ -66,15 +65,18 @@ void process(const bpo::variables_map& opts, const std::string& video_path,
     int clipnum = -1;
     for(size_t i = 1; i < crop_times.size(); i+=2)
       if(time >= crop_times[i-1] && time < crop_times[i])
-        clipnum = i / 2;
+        clipnum = orig_num_clips + i / 2;
 
     if(clipnum != -1) {
       cout << time << endl;
-      clips[clipnum].push_back(orig.clone());
-      timestamps.push_back(time);
+      (*clips)[clipnum].push_back(orig.clone());
     }
   }
+}
 
+void mergeClips(const bpo::variables_map& opts,
+                const std::vector< std::vector<cv::Mat3b> >& clips)
+{
   // -- Blend frames.
   vector<cv::Mat3b> imgs;
   size_t overlap = opts["overlap"].as<size_t>();
@@ -121,13 +123,8 @@ void process(const bpo::variables_map& opts, const std::string& video_path,
     oss << output_dir << "/frame" << setw(6) << setfill('0') << i << ".png";
     cv::imwrite(oss.str(), imgs[i]);
   }
-
-  // cv::Mat3b vis;
-  // cv::Mat3b orig;
-  // double fade_time = opts["fade-time"].as<double>();
 }
 
-  
 int main(int argc, char** argv)
 {
   bpo::options_description opts_desc("Allowed options");
@@ -179,12 +176,16 @@ int main(int argc, char** argv)
   }
 
   // -- Dump the frames.
+  vector< vector<cv::Mat3b> > clips;
   for(size_t i = 0; i < video_paths.size(); ++i) {
     cout << "Working on " << video_paths[i] << endl;
-    process(opts, video_paths[i], crop_times[i]);
+    extractClips(opts, video_paths[i], crop_times[i], &clips);
   }
 
-  // -- Compile the video.
+  // -- Blend the imagery in RAM.
+  mergeClips(opts, clips);
+  
+  // -- Compile the video and save to disk.
   ostringstream oss;
   oss << "mencoder mf://" << output_dir
       << "/*.png -mf fps=30 -ovc x264 -x264encopts crf=13 -o "
