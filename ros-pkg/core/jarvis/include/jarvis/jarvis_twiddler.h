@@ -7,7 +7,7 @@
 class JarvisTwiddler : public pl::PipelineTwiddler
 {
 public:
-  static const int MAX_MS_PER_OBJ = 1;
+  static const int MAX_MS_PER_OBJ = 5;
   
   JarvisTwiddler(TrackDataset::Ptr train,
                  TrackDataset::Ptr test,
@@ -33,8 +33,8 @@ protected:
   void deleteRandomPod(YAML::Node config) const;
   void addRawNormalizedHistogramBranch(YAML::Node config) const;
   void addOrientedNormalizedHistogramBranch(YAML::Node config) const;
-  void addHog(YAML::Node config) const;
-  void replaceHogPod(YAML::Node config) const;
+  void addHogBranch(YAML::Node config) const;
+  void replaceHogBranch(YAML::Node config) const;
 };
 
 

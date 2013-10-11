@@ -40,8 +40,8 @@ JarvisTwiddler::JarvisTwiddler(TrackDataset::Ptr train,
   REGISTER_ACTION(JarvisTwiddler::deleteRandomPod);
   REGISTER_ACTION(JarvisTwiddler::addRawNormalizedHistogramBranch);
   REGISTER_ACTION(JarvisTwiddler::addOrientedNormalizedHistogramBranch);
-  REGISTER_ACTION(JarvisTwiddler::addHog);
-  REGISTER_ACTION(JarvisTwiddler::replaceHogPod);
+  REGISTER_ACTION(JarvisTwiddler::addHogBranch);
+  REGISTER_ACTION(JarvisTwiddler::replaceHogBranch);
   // registerAction("twiddleRandomHistogramNumBins",
   //                boost::bind(&PipelineTwiddler::twiddlePodParamsLockstep<NormalizedDensityHistogram, double>, *this, _1,
   //                            "NumBins", vector<double>{5, 10, 20}));
@@ -185,7 +185,7 @@ void JarvisTwiddler::deleteRandomPod(YAML::Node config) const
   PipelineTwiddler::deleteRandomPod(config, JarvisTwiddler::isRequired);
 }
 
-void JarvisTwiddler::replaceHogPod(YAML::Node config) const
+void JarvisTwiddler::replaceHogBranch(YAML::Node config) const
 {
   ROS_ASSERT(config["Pipeline"]);
   Pipeline pl(1);
@@ -203,10 +203,10 @@ void JarvisTwiddler::replaceHogPod(YAML::Node config) const
   config["Pipeline"] = pl.YAMLize();
 
   // -- Add new Hog.
-  addHog(config);
+  addHogBranch(config);
 }
 
-void JarvisTwiddler::addHog(YAML::Node config) const
+void JarvisTwiddler::addHogBranch(YAML::Node config) const
 {
   ROS_ASSERT(config["Pipeline"]);
   Pipeline pl(1);
