@@ -1,3 +1,4 @@
+#include <jarvis/jarvis_twiddler.h>
 #include <boost/program_options.hpp>
 #include <ros/package.h>
 #include <online_learning/evaluator.h>
@@ -26,7 +27,7 @@ int main(int argc, char** argv)
     ("train", bpo::value< vector<string> >(&train_paths)->required()->multitoken(), "training data")
     ("test", bpo::value< vector<string> >(&test_paths)->required()->multitoken(), "testing data")
     ("output-dir,o", bpo::value<string>(&output_dir)->required(), "Where to save results")
-    ("nt", bpo::value(&num_threads)->default_value(1))
+    ("num-threads,j", bpo::value(&num_threads)->default_value(1))
     ;
 
   bpo::variables_map opts;
@@ -56,44 +57,16 @@ int main(int argc, char** argv)
   cout << "Loading data." << endl;
   TrackDataset::Ptr train = loadDatasets(train_paths);
   TrackDataset::Ptr test = loadDatasets(test_paths);
-  
-  // -- Update descriptors on the datasets.
-  cout << "Updating descriptors." << endl;
-  updateDescriptors(config["Pipeline"], num_threads, train.get());
-  updateDescriptors(config["Pipeline"], num_threads, test.get());
-  cout << "Training set: " << endl;
-  cout << train->status("  ", true) << endl;
-  cout << "Testing set: " << endl;
-  cout << test->status("  ", true) << endl;
 
-  // -- Initialize the classifier
-  cout << "Initializing classifier." << endl;
-  srand(time(NULL));
-  GridClassifier::Ptr gc(new GridClassifier);
-  string ncstr = config["GlobalParams"]["NumCells"].as<string>();
-  istringstream iss(ncstr);
-  vector<size_t> nc;
-  while(!iss.eof()) {
-    size_t buf;
-    iss >> buf;
-    nc.push_back(buf);
-    cout << "NC: " << buf << endl;
-  }
-  gc->initialize(*train, nc);
+  // -- Run the evaluation.
+  GridClassifier::Ptr gc;
+  Evaluator::Ptr ev;
+  evaluateConfig(config, num_threads, train, test, &gc, &ev);
 
-  // -- Train.
-  cout << "Training." << endl;
-  GridClassifier::BoostingTrainer::Ptr trainer(new GridClassifier::BoostingTrainer(gc));
-  trainer->obj_thresh_ = config["GlobalParams"]["ObjThresh"].as<double>();
-  trainer->train(train);
+  // -- Save the results.
+  ev->plot_ = false;
+  ev->saveResults(output_dir);
   gc->save(output_dir + "/classifier.gc");
-
-  // -- Evaluate.
-  cout << "Evaluating." << endl;
-  Evaluator ev(gc);
-  ev.evaluateParallel(*test);
-  ev.plot_ = false;
-  ev.saveResults(output_dir);
   
   return 0;
 }

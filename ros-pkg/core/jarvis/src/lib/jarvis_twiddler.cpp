@@ -361,3 +361,38 @@ void JarvisTwiddler::addOrientedNormalizedHistogramBranch(YAML::Node config) con
   config["Pipeline"] = pl.YAMLize();
 }
 
+
+void evaluateConfig(YAML::Node config, int num_threads,
+                    TrackDataset::Ptr train, TrackDataset::Ptr test,
+                    GridClassifier::Ptr* gcp,
+                    Evaluator::Ptr* evp)
+{
+  // -- Update descriptors on the datasets.
+  updateDescriptors(config["Pipeline"], num_threads, train.get());
+  updateDescriptors(config["Pipeline"], num_threads, test.get());
+
+  // -- Initialize the classifier
+  srand(time(NULL));
+  GridClassifier::Ptr gc(new GridClassifier);
+  string ncstr = config["GlobalParams"]["NumCells"].as<string>();
+  istringstream iss(ncstr);
+  vector<size_t> nc;
+  while(!iss.eof()) {
+    size_t buf;
+    iss >> buf;
+    nc.push_back(buf);
+  }
+  gc->initialize(*train, nc);
+
+  // -- Train.
+  GridClassifier::BoostingTrainer::Ptr trainer(new GridClassifier::BoostingTrainer(gc));
+  trainer->obj_thresh_ = config["GlobalParams"]["ObjThresh"].as<double>();
+  trainer->train(train);
+  
+  // -- Evaluate.
+  Evaluator::Ptr ev(new Evaluator(gc));
+  ev->evaluateParallel(*test);
+
+  *gcp = gc;
+  *evp = ev;
+}

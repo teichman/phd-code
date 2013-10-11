@@ -1,6 +1,7 @@
 #ifndef JARVIS_TWIDDLER_H
 #define JARVIS_TWIDDLER_H
 
+#include <online_learning/evaluator.h>
 #include <pipeline/twiddler.h>
 #include <online_learning/grid_classifier.h>
 
@@ -36,6 +37,13 @@ protected:
   void addHogBranch(YAML::Node config) const;
   void replaceHogBranch(YAML::Node config) const;
 };
+
+//! Assumes that config has a Pipeline node and a GlobalParams node at the root level.
+//! GlobalParams should have NumCells and ObjThresh as members.
+void evaluateConfig(YAML::Node config, int num_threads,
+                    TrackDataset::Ptr train, TrackDataset::Ptr test,
+                    GridClassifier::Ptr* gcp,
+                    Evaluator::Ptr* evp);
 
 
 #endif // JARVIS_TWIDDLER_H

@@ -8,6 +8,9 @@
 class Evaluator
 {
 public:
+  typedef boost::shared_ptr<Evaluator> Ptr;
+  typedef boost::shared_ptr<const Evaluator> ConstPtr;
+  
   Classifier::ConstPtr classifier_;
   PerfStats frame_stats_;
   PerfStats track_stats_;
