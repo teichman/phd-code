@@ -105,6 +105,11 @@ void run(string runpath,
     ofstream file;
     file.open((part_path + "/dataset_status.txt").c_str());
     file << td->status() << endl;
+    file << endl;
+    file << "Status of the dataset ordering: " << endl;
+    for(size_t i = 0; i < train.size(); ++i) {
+      file << train[i]->status() << endl;
+    }
     file.close();
 	
     // -- Train on it until performance stops increasing.
