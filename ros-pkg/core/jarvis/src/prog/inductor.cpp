@@ -1,7 +1,7 @@
 #include <boost/program_options.hpp>
 #include <bag_of_tricks/bag_of_tricks.h>
 #include <online_learning/track_dataset_visualizer.h>
-#include <online_learning/tbssl.h>
+#include <jarvis/inductor.h>
 #include <jarvis/blob_view.h>
 
 using namespace std;
@@ -15,11 +15,11 @@ int main(int argc, char** argv)
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
 
-  // OnlineLearner object params.
+  // Inductor object params.
+  string config_path;
   double emax;
   size_t buffer_size;
   size_t max_track_length;
-  double gamma;
   int snapshot_every;
   int evaluate_every;
   string output_dir;
@@ -38,10 +38,10 @@ int main(int argc, char** argv)
 
   opts_desc.add_options()
     ("help,h", "produce help message")
+    ("config", bpo::value(&config_path)->required(), "")
     ("emax", bpo::value<double>(&emax)->required())
     ("buffer-size", bpo::value<size_t>(&buffer_size)->required())
     ("max-track-length", bpo::value<size_t>(&max_track_length)->required())
-    ("gamma", bpo::value<double>(&gamma)->required())
     ("snapshot-every", bpo::value<int>(&snapshot_every)->required())
     ("evaluate-every", bpo::value<int>(&evaluate_every)->required())
     ("output-dir", bpo::value<string>(&output_dir)->required(), "Directory to put output.")
@@ -53,7 +53,6 @@ int main(int argc, char** argv)
     ("autobg", bpo::value< vector<string> >(&autobg_paths)->multitoken(), ".td files to use as automatically-annotated bg data.")
 
     ("init", bpo::value< vector<string> >(&init_paths)->required()->multitoken(), ".td files to initialize the classifier grids with.")
-    ("num-cells", bpo::value< vector<size_t> >(&num_cells)->multitoken(), "Default is --num-cells 10.")
     ;
 
   bpo::variables_map opts;
@@ -67,22 +66,43 @@ int main(int argc, char** argv)
     cout << opts_desc << endl;
     return 1;
   }
-  
-  // -- Initialize classifier.
+
+  // -- Load the config.
+  YAML::Node config = YAML::LoadFile(config_path);
+  ROS_ASSERT(config["Pipeline"]);
+  ROS_ASSERT(config["GlobalParams"]);
+  string ncstr = config["GlobalParams"]["NumCells"].as<string>();
+  istringstream iss(ncstr);
+  vector<size_t> nc;
+  cout << "Num cells: ";
+  while(!iss.eof()) {
+    size_t buf;
+    iss >> buf;
+    nc.push_back(buf);
+    cout << buf << " ";
+  }
+  cout << endl;
+
+  // -- Initialize classifier and trainer.
   cout << "Loading initialization datasets..." << endl;
   TrackDataset::Ptr init = loadDatasets(init_paths);
   cout << "Initializing classifier..." << endl;
   GridClassifier::Ptr classifier(new GridClassifier);
-  classifier->initialize(*init, num_cells);
+  classifier->initialize(*init, nc);
   init.reset();
-
-  // -- Initialize OnlineLearner.
-  cout << "Initializing OnlineLearner..." << endl;
+  
+  GridClassifier::BoostingTrainer::Ptr trainer(new GridClassifier::BoostingTrainer(classifier));
+  trainer->verbose_ = true;
+  trainer->gamma_ = 0;
+  trainer->obj_thresh_ = config["GlobalParams"]["ObjThresh"].as<double>();
+    
+  // -- Initialize Inductor.
+  cout << "Initializing Inductor..." << endl;
   int max_iters = 0;
-  OnlineLearner learner(emax, buffer_size, max_track_length, gamma,
-                        classifier, max_iters, snapshot_every,
-                        evaluate_every, output_dir, unlabeled_td_dir,
-                        saved_annotations_dir);
+  Inductor inductor(config, emax, buffer_size, max_track_length,
+                    classifier, trainer, max_iters, snapshot_every,
+                    evaluate_every, output_dir, unlabeled_td_dir,
+                    saved_annotations_dir);
 
   if(!seed_paths.empty()) {
     TrackDataset::Ptr seed = loadDatasets(seed_paths);
@@ -94,7 +114,7 @@ int main(int argc, char** argv)
     }
     cout << "Using seed dataset: " << endl;
     cout << seed->status("  ");
-    learner.pushHandLabeledDataset(seed);
+    inductor.pushHandLabeledDataset(seed);
   }
   if(!autobg_paths.empty()) {
     TrackDataset::Ptr autobg = loadDatasets(autobg_paths);
@@ -106,23 +126,23 @@ int main(int argc, char** argv)
     }
     cout << "Using autobg dataset: " << endl;
     cout << autobg->status("  ");
-    learner.pushAutoLabeledDataset(autobg);
+    inductor.pushAutoLabeledDataset(autobg);
   }
 
   if(!test_paths.empty()) {
     TrackDataset::Ptr test = loadDatasets(test_paths);
-    learner.setTestData(test);
+    inductor.setTestData(test);
     cout << "Using test dataset: " << endl;
     cout << test->status("  ");
   }
 
   // -- Go.
-  ThreadPtr learning_thread = learner.launch();
+  ThreadPtr learning_thread = inductor.launch();
 
   BlobView view;
   VCMultiplexor multiplexor(&view);
-  ActiveLearningViewController alvc(&multiplexor, &learner, unlabeled_td_dir);
-  InductionViewController ivc(&learner, &multiplexor);
+  ActiveLearningViewController alvc(&multiplexor, &inductor, unlabeled_td_dir);
+  InductionViewController ivc(&inductor, &multiplexor);
   multiplexor.addVC(&alvc);
   multiplexor.addVC(&ivc);
 

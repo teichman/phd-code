@@ -31,6 +31,7 @@ rosbuild_add_library(jarvis_core
   src/lib/descriptor_pipeline.cpp
   src/lib/pods.cpp
   src/lib/jarvis_twiddler.cpp
+  src/lib/inductor.cpp
   )
 rosbuild_add_compile_flags(jarvis_core -std=c++0x)
 #target_link_libraries(${PROJECT_NAME} another_library)
