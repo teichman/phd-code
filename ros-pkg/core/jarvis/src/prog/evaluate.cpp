@@ -37,7 +37,12 @@ int main(int argc, char** argv)
   }
   bpo::notify(opts);
 
-  // -- Set up the initial config.
+  // -- Create output directory.
+  cout << "Saving results to " << output_dir << endl;
+  if(!bfs::exists(output_dir))
+    bfs::create_directory(output_dir);
+
+  // -- Set up the initial config and save to the output dir.
   string config_path;
   if(opts.count("config"))
     config_path = opts["config"].as<string>();
@@ -45,17 +50,13 @@ int main(int argc, char** argv)
     config_path = ros::package::getPath("jarvis") + "/config/default_config.yml";
   cout << "Using config: " << config_path << endl;
   YAML::Node config = YAML::LoadFile(config_path);
-
-  // -- Create output directory.
-  cout << "Saving results to " << output_dir << endl;
-  if(!bfs::exists(output_dir))
-    bfs::create_directory(output_dir);
-
+  saveYAML(config, output_dir + "/config.yml");
+  
   // -- Load data.
   cout << "Loading data." << endl;
   TrackDataset::Ptr train = loadDatasets(train_paths);
   TrackDataset::Ptr test = loadDatasets(test_paths);
-
+  
   // -- Update descriptors on the datasets.
   cout << "Updating descriptors." << endl;
   updateDescriptors(config["Pipeline"], num_threads, train.get());
