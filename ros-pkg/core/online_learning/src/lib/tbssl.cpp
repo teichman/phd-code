@@ -8,8 +8,8 @@ namespace bfs = boost::filesystem;
 OnlineLearner::OnlineLearner(double emax,
                              size_t buffer_size,
                              size_t max_track_length,
-                             double gamma,
                              GridClassifier::Ptr classifier,
+                             GridClassifier::BoostingTrainer::Ptr trainer,
                              int max_iters,
                              int snapshot_every,
                              int evaluate_every,
@@ -20,7 +20,7 @@ OnlineLearner::OnlineLearner(double emax,
   buffer_size_(buffer_size),
   max_track_length_(max_track_length),
   classifier_(classifier),
-  trainer_(new GridClassifier::BoostingTrainer(classifier_)),
+  trainer_(trainer),
   annotated_(new TrackDataset),
   autobg_(new TrackDataset),
   unsupervised_(new TrackDataset),
@@ -36,8 +36,6 @@ OnlineLearner::OnlineLearner(double emax,
   iter_(0),
   paused_(false)
 {
-  trainer_->gamma_ = gamma;
-  trainer_->verbose_ = true;
   applyNameMappings(*classifier);
 }
 
@@ -150,9 +148,7 @@ void OnlineLearner::loadSavedAnnotations()
     for(size_t i = 0; i < paths.size(); ++i) {
       cout << "  " << paths[i] << endl;
           
-      TrackDataset::Ptr td(new TrackDataset);
-      td->load(paths[i]);
-
+      TrackDataset::Ptr td = loadTrackDataset(paths[i]);
       ROS_ASSERT(annotated_->nameMappingsAreEqual(*td));
       pushHandLabeledDataset(td);
     }
@@ -251,9 +247,7 @@ TrackDataset::Ptr OnlineLearner::getNextUnlabeledChunk(std::vector<Label>* chunk
 {
   // -- Load the next unlabeled td.
   getNextPath(unlabeled_dir_, ".td", &td_path_);
-  TrackDataset::Ptr unlabeled_chunk(new TrackDataset);
-  unlabeled_chunk->load(td_path_);
-  //datasetEntryHook(unlabeled_chunk.get());
+  TrackDataset::Ptr unlabeled_chunk = loadTrackDataset(td_path_);
   // Split long tracks into many smaller tracks.
   // This helps keep the training sets balanced and makes it easier to induct tracks.
   splitTracksFixedLength(max_track_length_, unlabeled_chunk.get());
@@ -284,8 +278,7 @@ void OnlineLearner::loadInputTDFiles()
       cout << "Found new .td files: " << endl;
       for(size_t i = 0; i < paths.size(); ++i) {
         cout << "  " << paths[i] << endl;
-        TrackDataset::Ptr td(new TrackDataset);
-        td->load(paths[i]);
+        TrackDataset::Ptr td = loadTrackDataset(paths[i]);
         ROS_ASSERT(annotated_->nameMappingsAreEqual(*td));
         pushHandLabeledDataset(td);
         bfs::remove(paths[i]);
@@ -298,8 +291,7 @@ void OnlineLearner::loadInputTDFiles()
       cout << "Found new .td files: " << endl;
       for(size_t i = 0; i < paths.size(); ++i) {
         cout << "  " << paths[i] << endl;
-        TrackDataset::Ptr td(new TrackDataset);
-        td->load(paths[i]);
+        TrackDataset::Ptr td = loadTrackDataset(paths[i]);
         ROS_ASSERT(autobg_->nameMappingsAreEqual(*td));
         pushAutoLabeledDataset(td);
         bfs::remove(paths[i]);
@@ -1287,6 +1279,12 @@ void OnlineLearner::deserialize(std::istream& in)
   paused_ = false;
 }
 
+TrackDataset::Ptr OnlineLearner::loadTrackDataset(const std::string& path) const
+{
+  TrackDataset::Ptr td(new TrackDataset);
+  td->load(path);
+  return td;
+}
 
 /************************************************************
  * Stats

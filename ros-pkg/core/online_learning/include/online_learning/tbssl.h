@@ -72,11 +72,12 @@ public:
   };
   
   OnlineLearner(std::istream& in) { deserialize(in); }
+  //! Classifier must be pre-initialized.
   OnlineLearner(double emax,
                 size_t buffer_size,
                 size_t max_track_length,
-                double gamma,
                 GridClassifier::Ptr classifier,
+                GridClassifier::BoostingTrainer::Ptr trainer,
                 int max_iters,
                 int snapshot_every,
                 int evaluate_every,
@@ -218,12 +219,16 @@ protected:
   //! If any exist, they are removed from the inducted set, labeled with label,
   //! and added to incoming_annotated.
   //! Assumes that hand_mutex_ is locked when you call this.
-  void annotateUnsupervised(double hash, const Label& label);
-  
+  void annotateUnsupervised(double hash, const Label& label);  
   
   void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);
+
+  //! Loads TrackDataset at the given path.  Subclasses can do things like
+  //! update the descriptors at this point.
+  //! This function is used everywhere a TrackDataset is loaded from disk by OnlineLearner.
+  virtual TrackDataset::Ptr loadTrackDataset(const std::string& path) const;
 
 private:
   OnlineLearner(const OnlineLearner& other);

@@ -70,7 +70,10 @@ TEST(TBSSL, Resumption)
   gc->initialize(*init, num_cells);
 
   // -- Initialize and run the first iteration.
-  OnlineLearner learner(0, 5000, 5, 0, gc, 1, 1, 1, output_path, unlabeled_dir);
+  GridClassifier::BoostingTrainer::Ptr trainer(new GridClassifier::BoostingTrainer(gc));
+  trainer->verbose_ = true;
+  trainer->gamma_ = 0;
+  OnlineLearner learner(0, 5000, 5, gc, trainer, 1, 1, 1, output_path, unlabeled_dir);
   learner.setTestData(test);
   //seed->setImportance(1e30);
   learner.pushHandLabeledDataset(seed->clone());

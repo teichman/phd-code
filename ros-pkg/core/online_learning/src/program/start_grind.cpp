@@ -80,8 +80,11 @@ int main(int argc, char** argv)
   // -- Initialize OnlineLearner.
   cout << "Initializing OnlineLearner..." << endl;
   int max_iters = 0;
-  OnlineLearner learner(emax, buffer_size, max_track_length, gamma,
-                        classifier, max_iters, snapshot_every,
+  GridClassifier::BoostingTrainer::Ptr trainer(new GridClassifier::BoostingTrainer(classifier));
+  trainer->verbose_ = true;
+  trainer->gamma_ = gamma;
+  OnlineLearner learner(emax, buffer_size, max_track_length,
+                        classifier, trainer, max_iters, snapshot_every,
                         evaluate_every, output_dir, unlabeled_td_dir,
                         saved_annotations_dir);
 
