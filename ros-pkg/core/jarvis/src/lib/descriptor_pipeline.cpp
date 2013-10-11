@@ -67,16 +67,21 @@ double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, b
   HighResTimer hrt;
   hrt.start();
 
+  DescriptorPipeline dp;
+  dp.initialize(plspec);
+  if(td->nameMapping("dmap") == dp.dmap()) {
+    cout << "updateDescriptors: nothing to do" << endl;
+    return 0;
+  }
+  
   // -- Delete all the existing descriptors.
   //    Testing the hypothesis that this will fix memory fragmentation issues.
   td->deleteDescriptors();
-  
+
   // -- Apply the new dmap.
   //    This will de-allocate any descriptors that are no longer needed,
   //    move those that need to be moved,
   //    and make a new NULL descriptor for spaces that should be filled.
-  DescriptorPipeline dp;
-  dp.initialize(plspec);
   td->applyNameMapping("dmap", dp.dmap());
   
   #pragma omp parallel for

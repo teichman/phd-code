@@ -6,8 +6,6 @@ using namespace Eigen;
 namespace bfs = boost::filesystem;
 using namespace pl;
 
-#define NUM_THREADS (getenv("NUM_THREADS") ? atoi(getenv("NUM_THREADS")) : 1)
-
 int main(int argc, char** argv)
 {
   namespace bpo = boost::program_options;
@@ -16,11 +14,13 @@ int main(int argc, char** argv)
 
   string config_path;
   vector<string> td_paths;
+  int num_threads;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("config", bpo::value<string>(&config_path)->required(), "")
     ("tds", bpo::value< vector<string> >(&td_paths)->required()->multitoken(), "")
     ("debug", "")
+    ("num-threads,j", bpo::value(&num_threads)->default_value(1))
     ;
 
   p.add("config", 1);
@@ -39,14 +39,14 @@ int main(int argc, char** argv)
   }
 
   YAML::Node config = YAML::LoadFile(config_path);
-  cout << "Using " << NUM_THREADS << " threads to update descriptors." << endl;
+  cout << "Using " << num_threads << " threads to update descriptors." << endl;
   cout << "Using pipeline defined at " << config_path << "." << endl;
 
   for(size_t i = 0; i < td_paths.size(); ++i) {
     cout << "Working on " << td_paths[i] << endl;
     TrackDataset td;
     td.load(td_paths[i]);
-    updateDescriptors(config["Pipeline"], NUM_THREADS, &td, opts.count("debug"));
+    updateDescriptors(config["Pipeline"], num_threads, &td, opts.count("debug"));
 
     // Serializable writes to a temporary file and then does a move,
     // so if you control-c you are guaranteed that at least one of
