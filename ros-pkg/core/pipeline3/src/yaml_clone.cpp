@@ -9,6 +9,9 @@ int main(int argc, char** argv)
     YAML::Node one;
     YAML::Node two;
 
+    assert(!one["thisdoesnotexist"]);
+    cout << "thisdoesnotexist: " << one["thisdoesnotexist"] << endl;
+    
     // -- clone.  Changing two should not affect one.
     one["Foo"] = "Bar";
     two = YAML::Clone(one);
