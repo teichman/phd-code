@@ -70,7 +70,8 @@ public:
   protected:
     void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
   };
-  
+
+  virtual ~OnlineLearner() {}
   OnlineLearner(std::istream& in) { deserialize(in); }
   //! Classifier must be pre-initialized.
   OnlineLearner(double emax,
@@ -89,15 +90,15 @@ public:
   //! TODO: Make this only callable if OL has not started running.
   void setUnlabeledDir(std::string dir) { unlabeled_dir_ = dir; }
   void setMaxIters(int max_iters) { scopeLockWrite; max_iters_ = max_iters; }
-  void setTestData(TrackDataset::Ptr test) { scopeLockWrite; test_ = test; test_->applyNameMappings(*this); }
+  void setTestData(TrackDataset::Ptr test) { scopeLockWrite; entryHook(test.get()); test_ = test; test_->applyNameMappings(*this); }
   void setPaused(bool val) { boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); paused_ = val; }
   void togglePaused() { boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); paused_ = !paused_; }
   bool paused() const { boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); return paused_; }
-  void pushHandLabeledDataset(TrackDataset::Ptr dataset) { boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); incoming_annotated_.push_back(dataset); }
+  void pushHandLabeledDataset(TrackDataset::Ptr dataset) { entryHook(dataset.get()); boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); incoming_annotated_.push_back(dataset); }
   //! This is separate from pushHandLabeledDataset just so we know how many hand-labeled tracks have
   //! been provided.  We don't need to run this through the usual steps of retrospection, etc,
   //! so we can just add the data directly to the dataset.
-  void pushAutoLabeledDataset(TrackDataset::Ptr dataset) { boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); *autobg_ += *dataset; }
+  void pushAutoLabeledDataset(TrackDataset::Ptr dataset) { entryHook(dataset.get()); boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); *autobg_ += *dataset; }
   void copyClassifier(GridClassifier* classifier);
   void _run();
   std::string status(const std::string& prefix = "") const;
@@ -225,10 +226,13 @@ protected:
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);
 
-  //! Loads TrackDataset at the given path.  Subclasses can do things like
-  //! update the descriptors at this point.
-  //! This function is used everywhere a TrackDataset is loaded from disk by OnlineLearner.
-  virtual TrackDataset::Ptr loadTrackDataset(const std::string& path) const;
+  //! This function is called any time a new TD enters the OnlineLearner from any source.
+  //! This includes the disk and things like pushHandLabeledDataset and pushAutoLabeledDataset.
+  //! Subclasses can use this to do things like update descriptors whenever a new TD arrives.
+  //! Path is "" if this TD did not come from disk.
+  virtual void entryHook(TrackDataset* td, const std::string& path = "") const;
+  //! This function calls entryHook and is used everywhere a new TD is loaded from disk.
+  TrackDataset::Ptr loadTrackDataset(const std::string& path) const;
 
 private:
   OnlineLearner(const OnlineLearner& other);

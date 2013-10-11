@@ -1279,10 +1279,16 @@ void OnlineLearner::deserialize(std::istream& in)
   paused_ = false;
 }
 
+void OnlineLearner::entryHook(TrackDataset* td, const std::string& path) const
+{
+  
+}
+
 TrackDataset::Ptr OnlineLearner::loadTrackDataset(const std::string& path) const
 {
   TrackDataset::Ptr td(new TrackDataset);
   td->load(path);
+  entryHook(td.get(), path);
   return td;
 }
 
