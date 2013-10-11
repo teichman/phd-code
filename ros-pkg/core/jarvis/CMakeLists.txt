@@ -56,6 +56,10 @@ rosbuild_add_executable(inductor src/prog/inductor.cpp)
 target_link_libraries(inductor jarvis_core)
 rosbuild_link_boost(inductor program_options)
 
+rosbuild_add_executable(evaluate src/prog/evaluate.cpp)
+target_link_libraries(evaluate jarvis_core)
+rosbuild_link_boost(evaluate program_options)
+
 rosbuild_add_executable(twiddle src/prog/twiddle.cpp)
 target_link_libraries(twiddle jarvis_core)
 rosbuild_add_compile_flags(twiddle -std=c++0x)
