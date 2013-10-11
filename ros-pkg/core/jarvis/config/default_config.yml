@@ -77,7 +77,7 @@ Pipeline:
         KernelSize: 1
       Inputs:
         Cloud: CloudOrienter.OrientedCloud
-    - Name: DynamicImageWindow
+    - Name: DynamicImageWindowXY
       Type: DynamicImageWindow
       Params:
         VerticalAlignment: Center
@@ -87,7 +87,7 @@ Pipeline:
         Scaling: 1
       Inputs:
         Image: CloudProjectorXY.Image
-    - Name: HogArray
+    - Name: HogArrayXY
       Type: HogArray
       Params:
         WindowWidth: 25
@@ -99,7 +99,53 @@ Pipeline:
         NumBins: 6
         UVPattern: Dense
       Inputs:
-        Image: DynamicImageWindow.Image
+        Image: DynamicImageWindowXY.Image
+    - Name: DynamicImageWindowYZ
+      Type: DynamicImageWindow
+      Params:
+        VerticalAlignment: Center
+        HorizontalAlignment: Center
+        HeightPercent: 1
+        WidthPercent: 1
+        Scaling: 1
+      Inputs:
+        Image: CloudProjectorYZ.Image
+    - Name: HogArrayYZ
+      Type: HogArray
+      Params:
+        WindowWidth: 25
+        WindowHeight: 25
+        BlockWidth: 25
+        BlockHeight: 25
+        BlockStride: 25
+        CellSize: 5
+        NumBins: 6
+        UVPattern: Dense
+      Inputs:
+        Image: DynamicImageWindowYZ.Image
+    - Name: DynamicImageWindowXZ
+      Type: DynamicImageWindow
+      Params:
+        VerticalAlignment: Center
+        HorizontalAlignment: Center
+        HeightPercent: 1
+        WidthPercent: 1
+        Scaling: 1
+      Inputs:
+        Image: CloudProjectorXZ.Image
+    - Name: HogArrayXZ
+      Type: HogArray
+      Params:
+        WindowWidth: 25
+        WindowHeight: 25
+        BlockWidth: 25
+        BlockHeight: 25
+        BlockStride: 25
+        CellSize: 5
+        NumBins: 6
+        UVPattern: Dense
+      Inputs:
+        Image: DynamicImageWindowXZ.Image
     - Name: DescriptorAggregator
       Type: DescriptorAggregator
       Params: ~
@@ -114,4 +160,6 @@ Pipeline:
           RawNormalizedDensityHistogram.X
           RawNormalizedDensityHistogram.Y
           RawNormalizedDensityHistogram.Z
-          HogArray.ConcatenatedDescriptors
+          HogArrayXY.ConcatenatedDescriptors
+          HogArrayYZ.ConcatenatedDescriptors
+          HogArrayXZ.ConcatenatedDescriptors

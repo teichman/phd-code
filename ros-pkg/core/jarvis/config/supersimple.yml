@@ -1,0 +1,42 @@
+GlobalParams:
+  NumCells: 10
+  ObjThresh: 50
+Pipeline:
+  Pods:
+    - Name: BlobEntryPoint
+      Type: EntryPoint<Blob::Ptr>
+      Params: ~
+      Inputs: ~
+    - Name: BlobProjector
+      Type: BlobProjector
+      Params: ~
+      Inputs:
+        Blob: BlobEntryPoint.Output
+    - Name: CloudOrienter
+      Type: CloudOrienter
+      Params: ~
+      Inputs:
+        ProjectedBlob: BlobProjector.ProjectedBlob
+    - Name: RawBoundingBoxSize
+      Type: BoundingBoxSize
+      Params: ~
+      Inputs:
+        Cloud: BlobProjector.Cloud
+    - Name: OrientedBoundingBoxSize
+      Type: BoundingBoxSize
+      Params: ~
+      Inputs:
+        Cloud: CloudOrienter.OrientedCloud
+    - Name: CentroidFinder
+      Type: CentroidFinder
+      Params: ~
+      Inputs:
+        Cloud: BlobProjector.Cloud
+    - Name: DescriptorAggregator
+      Type: DescriptorAggregator
+      Params: ~
+      Inputs:
+        Descriptors: >
+          RawBoundingBoxSize.BoundingBoxSize
+          OrientedBoundingBoxSize.BoundingBoxSize
+          CentroidFinder.Centroid
