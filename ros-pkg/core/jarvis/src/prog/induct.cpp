@@ -95,6 +95,7 @@ int main(int argc, char** argv)
   trainer->verbose_ = true;
   trainer->gamma_ = 0;
   trainer->obj_thresh_ = config["GlobalParams"]["ObjThresh"].as<double>();
+  cout << "trainer->obj_thresh_: " << trainer->obj_thresh_ << endl;
     
   // -- Initialize Inductor.
   cout << "Initializing Inductor..." << endl;
