@@ -30,7 +30,7 @@ void DescriptorPipeline::registerPodTypes()
 
 std::string DescriptorPipeline::defaultSpecificationPath()
 {
-  return ros::package::getPath("jarvis") + "/config/default_config.yml";
+  return ros::package::getPath("jarvis") + "/config/config.yml";
 }
 
 YAML::Node DescriptorPipeline::defaultSpecification()

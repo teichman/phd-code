@@ -47,7 +47,7 @@ int main(int argc, char** argv)
   if(opts.count("initial-config"))
     config_path = opts["initial-config"].as<string>();
   else
-    config_path = ros::package::getPath("jarvis") + "/config/default_config.yml";
+    config_path = ros::package::getPath("jarvis") + "/config/config.yml";
   cout << "Using config: " << config_path << endl;
   YAML::Node config = YAML::LoadFile(config_path);
 

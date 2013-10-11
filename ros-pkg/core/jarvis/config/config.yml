@@ -1,0 +1,218 @@
+GlobalParams:
+  NumCells: 5 100
+  ObjThresh: 200
+Pipeline:
+  Pods:
+    - Name: BlobEntryPoint
+      Type: EntryPoint<Blob::Ptr>
+      Params: ~
+      Inputs: ~
+    - Name: BlobProjector
+      Type: BlobProjector
+      Params: ~
+      Inputs:
+        Blob: BlobEntryPoint.Output
+    - Name: CloudOrienter
+      Type: CloudOrienter
+      Params: ~
+      Inputs:
+        ProjectedBlob: BlobProjector.ProjectedBlob
+    - Name: RawBoundingBoxSize
+      Type: BoundingBoxSize
+      Params: ~
+      Inputs:
+        Cloud: BlobProjector.Cloud
+    - Name: OrientedBoundingBoxSize
+      Type: BoundingBoxSize
+      Params: ~
+      Inputs:
+        Cloud: CloudOrienter.OrientedCloud
+    - Name: CentroidFinder
+      Type: CentroidFinder
+      Params: ~
+      Inputs:
+        Cloud: BlobProjector.Cloud
+    - Name: OrientedNormalizedDensityHistogram
+      Type: NormalizedDensityHistogram
+      Params:
+        NumBins: 10
+      Inputs:
+        Cloud: CloudOrienter.OrientedCloud
+    - Name: RawNormalizedDensityHistogram
+      Type: NormalizedDensityHistogram
+      Params:
+        NumBins: 10
+      Inputs:
+        Cloud: BlobProjector.Cloud
+    - Name: CloudProjectorXY
+      Type: CloudProjector
+      Params:
+        KernelSize: 1
+        MinIntensity: 1
+        NumCols: 50
+        NumRows: 50
+        PixelsPerMeter: 50
+        View: XY
+      Inputs:
+        Cloud: CloudOrienter.OrientedCloud
+    - Name: DescriptorAggregator
+      Type: DescriptorAggregator
+      Params: ~
+      Inputs:
+        Descriptors: RawBoundingBoxSize.BoundingBoxSize OrientedBoundingBoxSize.BoundingBoxSize CentroidFinder.Centroid OrientedNormalizedDensityHistogram.X OrientedNormalizedDensityHistogram.Y OrientedNormalizedDensityHistogram.Z RawNormalizedDensityHistogram.X RawNormalizedDensityHistogram.Y RawNormalizedDensityHistogram.Z NormalizedDensityHistogram00.X NormalizedDensityHistogram00.Y NormalizedDensityHistogram00.Z NormalizedDensityHistogram01.X NormalizedDensityHistogram01.Y NormalizedDensityHistogram01.Z HogArray01.ConcatenatedDescriptors NormalizedDensityHistogram03.X NormalizedDensityHistogram03.Y NormalizedDensityHistogram03.Z NormalizedDensityHistogram02.X NormalizedDensityHistogram02.Y NormalizedDensityHistogram02.Z NormalizedDensityHistogram04.X NormalizedDensityHistogram04.Y NormalizedDensityHistogram04.Z HogArray00.ConcatenatedDescriptors HogArray02.ConcatenatedDescriptors HogArray03.ConcatenatedDescriptors HogArray04.ConcatenatedDescriptors
+    - Name: NormalizedDensityHistogram00
+      Type: NormalizedDensityHistogram
+      Params:
+        NumBins: 10
+      Inputs:
+        Cloud: BlobProjector.Cloud
+    - Name: NormalizedDensityHistogram01
+      Type: NormalizedDensityHistogram
+      Params:
+        NumBins: 20
+      Inputs:
+        Cloud: BlobProjector.Cloud
+    - Name: DynamicImageWindow01
+      Type: DynamicImageWindow
+      Params:
+        HeightPercent: 0.5
+        HorizontalAlignment: Right
+        Scaling: 1
+        VerticalAlignment: Center
+        WidthPercent: 0.5
+      Inputs:
+        Image: CloudProjectorXY.Image
+    - Name: HogArray01
+      Type: HogArray
+      Params:
+        BlockHeight: 10
+        BlockStride: 10
+        BlockWidth: 10
+        CellSize: 5
+        NumBins: 6
+        UVPattern: Center
+        WindowHeight: 10
+        WindowWidth: 10
+      Inputs:
+        Image: DynamicImageWindow01.Image
+    - Name: NormalizedDensityHistogram03
+      Type: NormalizedDensityHistogram
+      Params:
+        NumBins: 5
+      Inputs:
+        Cloud: BlobProjector.Cloud
+    - Name: NormalizedDensityHistogram02
+      Type: NormalizedDensityHistogram
+      Params:
+        NumBins: 10
+      Inputs:
+        Cloud: BlobProjector.Cloud
+    - Name: NormalizedDensityHistogram04
+      Type: NormalizedDensityHistogram
+      Params:
+        NumBins: 20
+      Inputs:
+        Cloud: BlobProjector.Cloud
+    - Name: CloudProjector00
+      Type: CloudProjector
+      Params:
+        KernelSize: 1
+        MinIntensity: 1
+        NumCols: 40
+        NumRows: 40
+        PixelsPerMeter: 20
+        View: XZ
+      Inputs:
+        Cloud: CloudOrienter.OrientedCloud
+    - Name: DynamicImageWindow00
+      Type: DynamicImageWindow
+      Params:
+        HeightPercent: 1
+        HorizontalAlignment: Right
+        Scaling: 1
+        VerticalAlignment: Center
+        WidthPercent: 1
+      Inputs:
+        Image: CloudProjector00.Image
+    - Name: HogArray00
+      Type: HogArray
+      Params:
+        BlockHeight: 10
+        BlockStride: 10
+        BlockWidth: 10
+        CellSize: 10
+        NumBins: 4
+        UVPattern: Center
+        WindowHeight: 10
+        WindowWidth: 10
+      Inputs:
+        Image: DynamicImageWindow00.Image
+    - Name: DynamicImageWindow02
+      Type: DynamicImageWindow
+      Params:
+        HeightPercent: 1
+        HorizontalAlignment: Center
+        Scaling: 1
+        VerticalAlignment: Bottom
+        WidthPercent: 1
+      Inputs:
+        Image: CloudProjector00.Image
+    - Name: HogArray02
+      Type: HogArray
+      Params:
+        BlockHeight: 20
+        BlockStride: 10
+        BlockWidth: 20
+        CellSize: 10
+        NumBins: 8
+        UVPattern: Center
+        WindowHeight: 20
+        WindowWidth: 20
+      Inputs:
+        Image: DynamicImageWindow02.Image
+    - Name: DynamicImageWindow03
+      Type: DynamicImageWindow
+      Params:
+        HeightPercent: 0.5
+        HorizontalAlignment: Center
+        Scaling: 1
+        VerticalAlignment: Center
+        WidthPercent: 1
+      Inputs:
+        Image: CloudProjectorXY.Image
+    - Name: HogArray03
+      Type: HogArray
+      Params:
+        BlockHeight: 10
+        BlockStride: 10
+        BlockWidth: 10
+        CellSize: 5
+        NumBins: 6
+        UVPattern: Center
+        WindowHeight: 10
+        WindowWidth: 10
+      Inputs:
+        Image: DynamicImageWindow03.Image
+    - Name: DynamicImageWindow04
+      Type: DynamicImageWindow
+      Params:
+        HeightPercent: 0.2
+        HorizontalAlignment: Left
+        Scaling: 1
+        VerticalAlignment: Center
+        WidthPercent: 1
+      Inputs:
+        Image: CloudProjectorXY.Image
+    - Name: HogArray04
+      Type: HogArray
+      Params:
+        BlockHeight: 10
+        BlockStride: 10
+        BlockWidth: 10
+        CellSize: 5
+        NumBins: 6
+        UVPattern: Center
+        WindowHeight: 10
+        WindowWidth: 10
+      Inputs:
+        Image: DynamicImageWindow04.Image

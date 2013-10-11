@@ -22,6 +22,7 @@ all:
 # You should symlink these in your own repo.
 LOG_DIR := $(MAKE_ROOT)/logs
 LABELED_TD_DIR := $(MAKE_ROOT)/labeled
+CONFIG := `rospack find jarvis`/config/config.yml
 
 KITCHEN_DIR := $(LOG_DIR)/kitchen-new_bg_subtr
 KITCHEN_NAMES := $(shell ls $(KITCHEN_DIR) | sed 's/\.bag//')
@@ -47,20 +48,20 @@ kitchen/tds/%/extracted: $(KITCHEN_DIR)/%.bag
 # -- Compute descriptors and add the name mapping.
 kitchen_descriptors: $(addsuffix /descriptors_computed, $(KITCHEN_TD_DIRS))
 kitchen/tds/%/descriptors_computed: kitchen/tds/%/extracted
-	rosrun jarvis update_descriptors --config `rospack find jarvis`/config/default_descriptor_pipeline.yml --tds $(@D)/*.td
+	rosrun jarvis update_descriptors --config $(CONFIG) --tds $(@D)/*.td
 	rosrun online_learning apply_cmap -n alex cindy cat --tds $(@D)/*.td
 	touch $@
 
 kitchen-update-descriptors:
-	rosrun jarvis update_descriptors --config `rospack find jarvis`/config/default_descriptor_pipeline.yml --tds `find kitchen/tds/ -name '*.td' | sort`
-	rosrun jarvis update_descriptors --config `rospack find jarvis`/config/default_descriptor_pipeline.yml --tds `find $(KITCHEN_LABELS_DIR)/ -name '*.td' | sort`
+	rosrun jarvis update_descriptors --config $(CONFIG) --tds `find kitchen/tds/ -name '*.td' | sort`
+	rosrun jarvis update_descriptors --config $(CONFIG) --tds `find $(KITCHEN_LABELS_DIR)/ -name '*.td' | sort`
 
 kitchen/induction: kitchen_descriptors
 	rosrun jarvis inductor \
+	--config $(CONFIG) \
 	--emax 0 \
 	--buffer-size 5000 \
 	--max-track-length 30 \
-	--gamma 0 \
 	--snapshot-every 50 \
 	--evaluate-every 5 \
 	--output-dir $@ \
