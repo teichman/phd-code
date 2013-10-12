@@ -607,8 +607,11 @@ void GCSLT::train(const std::vector<TrackDataset::ConstPtr>& datasets,
   int batch_size = 100;
   ROS_ASSERT(classifier_);
   ROS_ASSERT(indices.size() == datasets.size());
-  for(size_t i = 0; i < datasets.size(); ++i)
+  for(size_t i = 0; i < datasets.size(); ++i) {
     ROS_ASSERT(datasets[i]);
+    if(i > 0)
+      ROS_ASSERT(datasets[i]->nameMappingsAreEqual(*datasets[i-1]));
+  }
   
   // TODO: Check that classifier has the same name mappings as the trainer.
   
@@ -752,6 +755,15 @@ void GCBT::evaluateWC(int num_tr_ex, const std::vector<TrackDataset::ConstPtr>& 
 void GCBT::train(const std::vector<TrackDataset::ConstPtr>& datasets,
 		 const std::vector<Indices>& indices)
 {
+  for(size_t i = 0; i < datasets.size(); ++i) {
+    ROS_ASSERT(datasets[i]);
+    ROS_ASSERT(nameMappingsAreEqual(*datasets[i]));
+    if(i > 0)
+      ROS_ASSERT(datasets[i]->nameMappingsAreEqual(*datasets[i-1]));
+    for(size_t j = 0; j < datasets[i]->size(); ++j)
+      ROS_ASSERT((*datasets[i])[j].nameMappingsAreEqual(*datasets[i]));
+  }
+  
   // -- Build the index.
   size_t num_tr_ex = 0;
   for(size_t i = 0; i < indices.size(); ++i) {

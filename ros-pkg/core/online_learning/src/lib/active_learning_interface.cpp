@@ -484,9 +484,9 @@ void ActiveLearningInterface::kickOut()
 void ActiveLearningInterface::labelAs(const Label& annotation)
 {
   TrackDataset::Ptr td(new TrackDataset);
-  td->applyNameMappings(gc_);
   td->tracks_.push_back(td_->copy(confidences_[track_id_].second));
   td->tracks_[0].setLabel(annotation);
+  td->applyNameMappings(gc_);
 
   double imp = 1;
   cout << "[ActiveLearningInterface]  using importance of " << imp << endl;

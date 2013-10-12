@@ -127,6 +127,7 @@ void OnlineLearner::annotateUnsupervised(double hash, const Label& label)
       ++num;
     }
   }
+  entryHook(ann.get());
   incoming_annotated_.push_back(ann);
 
   if(num == 0)

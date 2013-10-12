@@ -113,6 +113,11 @@ public:
   TrackDataset::ConstPtr autobg() const { return autobg_; }
   TrackDataset::ConstPtr unsupervised() const { return unsupervised_; }
   TrackDataset::ConstPtr annotated() const { return annotated_; }
+
+  //! This function calls entryHook and is used everywhere a new TD is loaded from disk.
+  //! Public so that classes like the ActiveLearningViewController can make use of the
+  //! same entryHook that OnlineLearner uses.
+  TrackDataset::Ptr loadTrackDataset(const std::string& path) const;
   
 protected:
   typedef std::vector< std::pair<double, size_t> > ObjectiveIndex;
@@ -231,8 +236,6 @@ protected:
   //! Subclasses can use this to do things like update descriptors whenever a new TD arrives.
   //! Path is "" if this TD did not come from disk.
   virtual void entryHook(TrackDataset* td, const std::string& path = "") const;
-  //! This function calls entryHook and is used everywhere a new TD is loaded from disk.
-  TrackDataset::Ptr loadTrackDataset(const std::string& path) const;
 
 private:
   OnlineLearner(const OnlineLearner& other);

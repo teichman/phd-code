@@ -437,8 +437,7 @@ void ActiveLearningViewController::loadNextUnlabeledDataset()
   current_path_ = next_path_;
 
   cout << "[ActiveLearningViewController]  Loading " << datasetPathToName(current_path_) << "." << endl;
-  TrackDataset::Ptr td(new TrackDataset);
-  td->load(current_path_);
+  TrackDataset::Ptr td = learner_->loadTrackDataset(current_path_);
 
   // If this dataset is labeled, throw away the labels.
   for(size_t i = 0; i < td->size(); ++i)
@@ -536,6 +535,7 @@ void ActiveLearningViewController::applyLabel()
   td->applyNameMappings(gc_);
   td->tracks_.push_back(td_->copy(index_[tidx_]));
   td->tracks_[0]->setLabel(to_apply_);
+  ROS_ASSERT(td->nameMappingsAreEqual(*td->tracks_[0]));
   learner_->pushHandLabeledDataset(td);
   
   // Don't show this track anymore.
