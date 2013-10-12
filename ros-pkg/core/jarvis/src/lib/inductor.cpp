@@ -22,7 +22,9 @@ Inductor::Inductor(YAML::Node config,
 
 void Inductor::entryHook(TrackDataset* td, const std::string& path) const
 {
+  cout << "Updating descriptors for data at path: \"" << path << "\"" << endl;
   double ms_per_obj = updateDescriptors(config_["Pipeline"], 24, td);
+  cout << "Done.  ms_per_obj: " << ms_per_obj << endl;
   if(ms_per_obj > 0 && path != "") {
     cout << "[Inductor] Caching updated descriptors at \"" << path << "\"" << endl;
     td->save(path);

@@ -1,8 +1,9 @@
+#include <online_learning/track_dataset_visualizer.h>
 #include <boost/program_options.hpp>
 #include <bag_of_tricks/bag_of_tricks.h>
-#include <online_learning/track_dataset_visualizer.h>
 #include <jarvis/inductor.h>
 #include <jarvis/blob_view.h>
+#include <jarvis/descriptor_pipeline.h>
 
 using namespace std;
 using namespace Eigen;
@@ -85,16 +86,19 @@ int main(int argc, char** argv)
 
   // -- Initialize classifier and trainer.
   cout << "Loading initialization datasets..." << endl;
-  TrackDataset::Ptr init = loadDatasets(init_paths);
+  TrackDataset::Ptr init = loadDatasets(config, init_paths);
   cout << "Initializing classifier..." << endl;
   GridClassifier::Ptr classifier(new GridClassifier);
   classifier->initialize(*init, nc);
+  ROS_ASSERT(classifier->nameMappingsAreEqual(*init));
+  cout << "dmap: " << classifier->nameMapping("dmap") << endl;
   init.reset();
   
   GridClassifier::BoostingTrainer::Ptr trainer(new GridClassifier::BoostingTrainer(classifier));
   trainer->verbose_ = true;
   trainer->gamma_ = 0;
   trainer->obj_thresh_ = config["GlobalParams"]["ObjThresh"].as<double>();
+  trainer->applyNameMappings(*classifier);
   cout << "trainer->obj_thresh_: " << trainer->obj_thresh_ << endl;
     
   // -- Initialize Inductor.

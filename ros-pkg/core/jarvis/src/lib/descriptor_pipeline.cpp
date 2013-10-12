@@ -115,3 +115,26 @@ double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, b
   cout << "updateDescriptors: " << ms_per_obj << " ms / obj." << endl;
   return ms_per_obj;
 }
+
+TrackDataset::Ptr loadDatasets(YAML::Node config, const std::vector<std::string> paths)
+{
+  ROS_ASSERT(!paths.empty());
+
+  ROS_DEBUG_STREAM("loadDatasets called with Instance::custom_serializer_ of "
+                   << Instance::custom_serializer_->name());
+      
+  TrackDataset::Ptr data(new TrackDataset());
+  data->load(paths[0]);
+  updateDescriptors(config["Pipeline"], 24, data.get());
+  
+  for(size_t i = 1; i < paths.size(); ++i) {
+    TrackDataset tmp;
+    tmp.load(paths[i]);
+    updateDescriptors(config["Pipeline"], 24, &tmp);
+    ROS_ASSERT(data->nameMappingsAreEqual(tmp));
+    *data += tmp;
+  }
+
+  return data;
+}
+

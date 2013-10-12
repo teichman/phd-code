@@ -22,5 +22,6 @@ public:
 };
 
 double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, bool debug = false);
-
+TrackDataset::Ptr loadDatasets(YAML::Node config, const std::vector<std::string> paths);
+  
 #endif // DESCRIPTOR_PIPELINE_H

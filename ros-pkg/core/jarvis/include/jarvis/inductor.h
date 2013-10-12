@@ -1,8 +1,8 @@
 #ifndef INDUCTOR_H
 #define INDUCTOR_H
 
-#include <yaml-cpp/yaml.h>
 #include <online_learning/tbssl.h>
+#include <yaml-cpp/yaml.h>
 
 class Inductor : public OnlineLearner
 {
@@ -27,7 +27,7 @@ protected:
   YAML::Node config_;
   
   //! Updates descriptors and saves them to disk if necessary.
-  void entryHook(TrackDataset* td, const std::string& path) const;
+  void entryHook(TrackDataset* td, const std::string& path = "") const;
 };
 
 #endif // INDUCTOR_H
