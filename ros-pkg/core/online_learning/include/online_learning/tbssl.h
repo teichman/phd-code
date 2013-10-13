@@ -72,6 +72,13 @@ public:
   };
 
   virtual ~OnlineLearner() {}
+  //! This is problematic.  If I make serialize and deserialize virtual functions,
+  //! then this constructor is totally broken.  Yet I need a way to construct an OL
+  //! object from a stream.  Hm.
+  //! Leaving serialize and deserialize as non-virtual functions is bad because if you
+  //! don't provide them yourself in your subclasses, you'll get the base class one
+  //! automatically and this is not necessarily what you want.  This is the least bad
+  //! option I can think of at the moment, though.
   OnlineLearner(std::istream& in) { deserialize(in); }
   //! Classifier must be pre-initialized.
   OnlineLearner(double emax,

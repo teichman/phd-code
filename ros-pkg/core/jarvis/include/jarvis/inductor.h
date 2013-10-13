@@ -28,6 +28,9 @@ protected:
   
   //! Updates descriptors and saves them to disk if necessary.
   void entryHook(TrackDataset* td, const std::string& path = "") const;
+  
+  void serialize(std::ostream& out) const { ROS_ASSERT(0); }
+  void deserialize(std::istream& in) { ROS_ASSERT(0); }
 };
 
 #endif // INDUCTOR_H
