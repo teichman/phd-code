@@ -59,9 +59,9 @@ kitchen-update-descriptors:
 kitchen/induction: kitchen_descriptors
 	. ~/.bashrc && rosgdb jarvis induct \
 	--config $(CONFIG) \
-	--emax 0 \
+	--emax 3 \
 	--buffer-size 5000 \
-	--max-track-length 30 \
+	--max-track-length 50 \
 	--snapshot-every 50 \
 	--evaluate-every 5 \
 	--output-dir $@ \

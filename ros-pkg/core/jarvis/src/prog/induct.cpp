@@ -110,7 +110,7 @@ int main(int argc, char** argv)
                     saved_annotations_dir);
 
   if(!seed_paths.empty()) {
-    TrackDataset::Ptr seed = loadDatasets(seed_paths);
+    TrackDataset::Ptr seed = loadDatasets(config, seed_paths);
     for(size_t i = 0; i < seed->size(); ++i) {
       const Dataset& track = *seed->tracks_[i];
       for(size_t j = 0; j < track.size(); ++j) {
@@ -122,7 +122,7 @@ int main(int argc, char** argv)
     inductor.pushHandLabeledDataset(seed);
   }
   if(!autobg_paths.empty()) {
-    TrackDataset::Ptr autobg = loadDatasets(autobg_paths);
+    TrackDataset::Ptr autobg = loadDatasets(config, autobg_paths);
     for(size_t i = 0; i < autobg->size(); ++i) {
       const Dataset& track = *autobg->tracks_[i];
       for(size_t j = 0; j < track.size(); ++j) {
@@ -135,7 +135,7 @@ int main(int argc, char** argv)
   }
 
   if(!test_paths.empty()) {
-    TrackDataset::Ptr test = loadDatasets(test_paths);
+    TrackDataset::Ptr test = loadDatasets(config, test_paths);
     inductor.setTestData(test);
     cout << "Using test dataset: " << endl;
     cout << test->status("  ");
