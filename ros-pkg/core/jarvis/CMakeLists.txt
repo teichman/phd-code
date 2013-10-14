@@ -85,3 +85,4 @@ rosbuild_link_boost(pcd_viewer program_options)
 
 rosbuild_add_gtest(test_jarvis src/test/test_jarvis.cpp)
 target_link_libraries(test_jarvis jarvis_core)
+
