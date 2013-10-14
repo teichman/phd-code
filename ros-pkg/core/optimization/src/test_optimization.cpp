@@ -419,6 +419,22 @@ TEST(GridSearch, Coupling)
 //   cout << x.transpose() << endl;
 // }
 
+TEST(Bisection, Easy)
+{
+  MatrixXd A = MatrixXd::Identity(1, 1) * 13;
+  VectorXd b = VectorXd::Ones(1) * 42;
+  QuadraticFunction obj(A, b, 0);
+  QuadraticGradient grad(A, b);
+  
+  double tol = 1e-12;
+  double min = -1e12;
+  double max = 1e12;
+  int max_num_iters = 100000;
+  bool debug = true;
+  BisectionSolver bs(&obj, &grad, tol, min, max, max_num_iters, debug);
+  double xstar = bs.solve();
+  EXPECT_NEAR(xstar, -42./13., 1e-6);
+}
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);

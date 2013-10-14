@@ -30,6 +30,14 @@ double BisectionSolver::solve()
     double grad_max = gradient_->eval(tmp)(0);
     cout << "Right boundary: " << max_ << endl;
     cout << "Gradient at right boundary: " << grad_max << endl;
+
+    // TODO: Automatically determine reasonable bounds.
+    // You can do this by expanding the bounds until the
+    // gradients both point inwards.  You need to worry
+    // about functions that are monotonically increasing
+    // or decreasing, though. This includes functions that are
+    // unbounded below, like f(x) = x, or functions like
+    // exp(x) for which all points have a positive gradient.
     assert(grad_min < 0);
     assert(grad_max > 0);
   }

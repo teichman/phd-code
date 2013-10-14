@@ -33,6 +33,8 @@ typedef Function<Eigen::VectorXd, Eigen::MatrixXd> MatrixFunction;
  * Unconstrained solvers
  ************************************************************/
 
+//! Bisection only makes sense for 1D problems. 
+//! objective_ and gradient_ must both take a VectorXd of size 1.
 class BisectionSolver
 {
 public:
