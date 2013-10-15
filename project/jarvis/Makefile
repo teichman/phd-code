@@ -29,6 +29,11 @@ KITCHEN_NAMES := $(shell ls $(KITCHEN_DIR) | sed 's/\.bag//')
 KITCHEN_TD_DIRS := $(addprefix kitchen/tds/, $(KITCHEN_NAMES))
 KITCHEN_LABELS_DIR := $(LABELED_TD_DIR)/kitchen
 
+OFFICE_DIR := $(LOG_DIR)/office
+OFFICE_NAMES := $(shell ls $(OFFICE_DIR) | sed 's/\.bag//')
+OFFICE_TD_DIRS := $(addprefix office/tds/, $(OFFICE_NAMES))
+OFFICE_LABELS_DIR := $(LABELED_TD_DIR)/office
+
 debug:
 	@echo REPO_ROOT: $(REPO_ROOT)
 	@echo MAKE_ROOT: $(MAKE_ROOT)
@@ -39,8 +44,14 @@ debug:
 
 
 # -- Extract TD files from bagfiles.
-kitchen_tds: $(addsuffix /extracted, $(KITCHEN_TD_DIRS))
+kitchen-tds: $(addsuffix /extracted, $(KITCHEN_TD_DIRS))
 kitchen/tds/%/extracted: $(KITCHEN_DIR)/%.bag
+	mkdir -p $(@D)
+	roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
+	touch $@
+
+office-tds: $(addsuffix /extracted, $(OFFICE_TD_DIRS))
+office/tds/%/extracted: $(OFFICE_DIR)/%.bag
 	mkdir -p $(@D)
 	roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
 	touch $@
