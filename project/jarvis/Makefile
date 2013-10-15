@@ -69,16 +69,23 @@ kitchen-update-descriptors:
 
 kitchen/induction: kitchen_descriptors
 	. ~/.bashrc && rosgdb jarvis induct \
+	--class-names cat \
 	--config $(CONFIG) \
 	--emax 0 \
 	--buffer-size 5000 \
-	--max-track-length 10 \
+	--max-track-length 30 \
 	--snapshot-every 0 \
 	--evaluate-every 5 \
 	--output-dir $@ \
 	--unlabeled-td-dir kitchen/tds/ \
-	--init $(KITCHEN_LABELS_DIR)/cat_only/bg/*.td \
-	--autobg $(KITCHEN_LABELS_DIR)/cat_only/bg/*.td \
-	--test $(KITCHEN_LABELS_DIR)/cat_only/*.td \
+	--init \
+        $(KITCHEN_LABELS_DIR)/cat_only/bg/*.td \
+	kitchen/tds/sentinel_2013-09-20-18-34-44_0/jarvis-0000.td \
+	kitchen/tds/sentinel_2013-09-19-01-15-19_2/jarvis-0000.td \
+	kitchen/tds/sentinel_2013-09-20-21-00-29_0/jarvis-0003.td \
+	kitchen/tds/sentinel_2013-09-18-23-31-20_1/jarvis-0003.td \
+	kitchen/tds/sentinel_2013-09-20-21-00-29_0/jarvis-0001.td \
+	--autobg $(KITCHEN_LABELS_DIR)/cat_only/bg/office_noncat_frames.td \
+	--test $(KITCHEN_LABELS_DIR)/cat_only/test/*.td \
 	| tee $@-log.txt
 	mv $@-log.txt $@/
