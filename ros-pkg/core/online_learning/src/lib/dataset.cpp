@@ -959,7 +959,9 @@ void splitTracksFixedLength(size_t length, TrackDataset* dataset)
     ROS_ASSERT(d[i].size() == length);
 }
 
-TrackDataset::Ptr loadDatasets(const std::vector<std::string> paths, bool verbose)
+TrackDataset::Ptr loadDatasets(const std::vector<std::string> paths,
+                               const NameMapping& cmap,
+                               bool verbose)
 {
   ROS_ASSERT(!paths.empty());
 
@@ -968,11 +970,15 @@ TrackDataset::Ptr loadDatasets(const std::vector<std::string> paths, bool verbos
       
   TrackDataset::Ptr data(new TrackDataset());
   data->load(paths[0]);
+  if(!cmap.empty())
+    data->applyNameMapping("cmap", cmap);
   for(size_t i = 1; i < paths.size(); ++i) {
     if(verbose)
       cout << "Loading \"" << paths[i] << "\"" << endl;
     TrackDataset tmp;
     tmp.load(paths[i]);
+    if(!cmap.empty())
+      tmp.applyNameMapping("cmap", cmap);
     ROS_ASSERT(data->nameMappingsAreEqual(tmp));
     *data += tmp;
   }

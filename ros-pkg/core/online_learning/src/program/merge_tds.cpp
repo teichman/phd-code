@@ -13,10 +13,12 @@ int main(int argc, char** argv)
 
   vector<string> td_paths;
   string output_path;
+  vector<string> class_names;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("tds", bpo::value< vector<string> >(&td_paths)->required()->multitoken())
     ("output,o", bpo::value<string>(&output_path)->required())
+    ("class-names", bpo::value(&class_names)->multitoken(), "Apply a new name map, if desired.")
     ;
   
   bpo::variables_map opts;
@@ -31,7 +33,13 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  TrackDataset::Ptr td = loadDatasets(td_paths, true);
+  NameMapping cmap;
+  if(opts.count("class-names")) {
+    cmap.addNames(class_names);
+    cout << "Using cmap: " << endl;
+    cout << cmap.status("  ") << endl;
+  }
+  TrackDataset::Ptr td = loadDatasets(td_paths, cmap, true);  // If cmap is empty, this will assume that all TDs have the same cmap.
   td->save(output_path);
   
   return 0;
