@@ -1282,7 +1282,7 @@ void OnlineLearner::deserialize(std::istream& in)
 
 void OnlineLearner::entryHook(TrackDataset* td, const std::string& path) const
 {
-  
+  ROS_ASSERT(nameMappingsAreEqual(*td));
 }
 
 TrackDataset::Ptr OnlineLearner::loadTrackDataset(const std::string& path) const
