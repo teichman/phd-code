@@ -116,7 +116,10 @@ double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, b
   return ms_per_obj;
 }
 
-TrackDataset::Ptr loadDatasets(YAML::Node config, const std::vector<std::string> paths)
+TrackDataset::Ptr loadDatasets(const std::vector<std::string> paths,
+                               YAML::Node config,
+                               const NameMapping& cmap,
+                               bool verbose)
 {
   ROS_ASSERT(!paths.empty());
 
@@ -126,11 +129,17 @@ TrackDataset::Ptr loadDatasets(YAML::Node config, const std::vector<std::string>
   TrackDataset::Ptr data(new TrackDataset());
   data->load(paths[0]);
   updateDescriptors(config["Pipeline"], 24, data.get());
+  if(!cmap.empty())
+    data->applyNameMapping("cmap", cmap);
   
   for(size_t i = 1; i < paths.size(); ++i) {
+    if(verbose)
+      cout << "Loading " << paths[i] << endl;
     TrackDataset tmp;
     tmp.load(paths[i]);
     updateDescriptors(config["Pipeline"], 24, &tmp);
+    if(!cmap.empty())
+      tmp.applyNameMapping("cmap", cmap);
     ROS_ASSERT(data->nameMappingsAreEqual(tmp));
     *data += tmp;
   }
