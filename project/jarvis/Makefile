@@ -85,7 +85,7 @@ kitchen/induction: kitchen_descriptors
 	kitchen/tds/sentinel_2013-09-20-21-00-29_0/jarvis-0003.td \
 	kitchen/tds/sentinel_2013-09-18-23-31-20_1/jarvis-0003.td \
 	kitchen/tds/sentinel_2013-09-20-21-00-29_0/jarvis-0001.td \
-	--autobg $(KITCHEN_LABELS_DIR)/cat_only/bg/office_noncat_frames.td \
+	--autobg $(KITCHEN_LABELS_DIR)/cat_only/bg/kitchen_training_bg.td \
 	--test $(KITCHEN_LABELS_DIR)/cat_only/test/*.td \
 	| tee $@-log.txt
 	mv $@-log.txt $@/
