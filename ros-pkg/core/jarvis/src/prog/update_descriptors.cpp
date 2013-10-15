@@ -17,13 +17,12 @@ int main(int argc, char** argv)
   int num_threads;
   opts_desc.add_options()
     ("help,h", "produce help message")
-    ("config", bpo::value<string>(&config_path)->required(), "")
+    ("config", bpo::value<string>(&config_path)->default_value(DescriptorPipeline::defaultSpecificationPath()), "")
     ("tds", bpo::value< vector<string> >(&td_paths)->required()->multitoken(), "")
     ("debug", "")
     ("num-threads,j", bpo::value(&num_threads)->default_value(1))
     ;
 
-  p.add("config", 1);
   p.add("tds", -1);
 
   bpo::variables_map opts;
@@ -32,7 +31,7 @@ int main(int argc, char** argv)
   try { bpo::notify(opts); }
   catch(...) { badargs = true; }
   if(opts.count("help") || badargs) {
-    cout << "Usage: " << argv[0] << " [OPTS] CONFIG TDS" << endl;
+    cout << "Usage: " << argv[0] << " [OPTS] TDS" << endl;
     cout << endl;
     cout << opts_desc << endl;
     return 1;

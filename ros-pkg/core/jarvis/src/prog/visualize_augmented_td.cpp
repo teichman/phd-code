@@ -1,5 +1,5 @@
-#include <boost/program_options.hpp>
 #include <jarvis/blob_view.h>
+#include <boost/program_options.hpp>
 
 using namespace std;
 using namespace Eigen;
