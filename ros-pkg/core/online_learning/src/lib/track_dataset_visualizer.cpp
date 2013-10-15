@@ -30,6 +30,11 @@ void TrackViewControllerBase::handleClassKeypress(int c, bool alt)
   to_apply_(c) += 1;
   if(to_apply_(c) > 1 + 1e-6)
     to_apply_(c) = -1;
+
+  if(alt) {
+    to_apply_.setConstant(-1);
+    to_apply_(c) = 1;
+  }
   
   // if(alt)
   //   to_apply_(c) = -1;
