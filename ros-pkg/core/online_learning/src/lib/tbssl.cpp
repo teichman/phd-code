@@ -1053,12 +1053,17 @@ void OnlineLearner::inductDataset(const Eigen::VectorXf& emin, const Eigen::Vect
       //lab(c) = 1;
       //possible_labels.push_back(lab);
 
-      // Dual induction without mutual exclusion.
+      // Single induction without mutual exclusion.
       ArrayXd lab = ArrayXd::Zero(num_classes);
       lab(c) = 1;
       possible_labels.push_back(lab);
-      lab(c) = -1;
-      possible_labels.push_back(lab);
+
+      // Dual induction without mutual exclusion.
+      // ArrayXd lab = ArrayXd::Zero(num_classes);
+      // lab(c) = 1;
+      // possible_labels.push_back(lab);
+      // lab(c) = -1;
+      // possible_labels.push_back(lab);
     }
 
     ArrayXd objectives = ArrayXd::Zero(possible_labels.size());  // The objective function term for each possible labeling will go here.
