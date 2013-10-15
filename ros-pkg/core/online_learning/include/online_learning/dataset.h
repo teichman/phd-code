@@ -308,7 +308,7 @@ protected:
   Dataset& track(size_t i) { return *tracks_[i]; }
 };
 
-TrackDataset::Ptr loadDatasets(const std::vector<std::string> paths);
+TrackDataset::Ptr loadDatasets(const std::vector<std::string> paths, bool verbose = false);
 //! Any tracks longer than max_length get cut to the max length.
 void cropTracks(size_t max_length, TrackDataset* dataset);
 //! Any tracks longer than max_length get broken into smaller tracks.

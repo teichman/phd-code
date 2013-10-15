@@ -31,7 +31,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  TrackDataset::Ptr td = loadDatasets(td_paths);
+  TrackDataset::Ptr td = loadDatasets(td_paths, true);
   td->save(output_path);
   
   return 0;
