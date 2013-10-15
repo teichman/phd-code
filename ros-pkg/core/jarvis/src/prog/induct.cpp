@@ -37,6 +37,8 @@ int main(int argc, char** argv)
   vector<size_t> num_cells;
   num_cells.push_back(10);
 
+
+  vector<string> class_names;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("config", bpo::value(&config_path)->required(), "")
@@ -54,6 +56,7 @@ int main(int argc, char** argv)
     ("autobg", bpo::value< vector<string> >(&autobg_paths)->multitoken(), ".td files to use as automatically-annotated bg data.")
 
     ("init", bpo::value< vector<string> >(&init_paths)->required()->multitoken(), ".td files to initialize the classifier grids with.")
+    ("class-names", bpo::value(&class_names)->required()->multitoken(), "")
     ;
 
   bpo::variables_map opts;
@@ -84,9 +87,16 @@ int main(int argc, char** argv)
   }
   cout << endl;
 
+  // -- Set up the class map to use. 
+  NameMapping cmap;
+  cmap.addNames(class_names);
+  cout << "Using cmap: " << endl;
+  cout << cmap.status("  ") << endl;
+  
   // -- Initialize classifier and trainer.
   cout << "Loading initialization datasets..." << endl;
   TrackDataset::Ptr init = loadDatasets(config, init_paths);
+  init->applyNameMapping("cmap", cmap);
   cout << "Initializing classifier..." << endl;
   GridClassifier::Ptr classifier(new GridClassifier);
   classifier->initialize(*init, nc);
