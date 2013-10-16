@@ -1,5 +1,6 @@
 #include <online_learning/tbssl.h>
 #include <jarvis/descriptor_pipeline.h>
+#include <bag_of_tricks/glob.h>
 #include <boost/program_options.hpp>
 #include <boost/foreach.hpp>
 
@@ -8,16 +9,20 @@ using namespace Eigen;
 namespace bpo = boost::program_options;
 namespace bfs = boost::filesystem;
 
-
-void appendAnnotations(std::string path, const bpo::variables_map& opts, vector<string>* ann_paths)
+void appendAnnotations(std::string dir, const bpo::variables_map& opts, vector<string>* ann_paths)
 {
-  cout << "Checking " << path << endl;
-  bfs::directory_iterator it(path), eod;
+  cout << "Checking " << dir << endl;
+  bfs::directory_iterator it(dir), eod;
   BOOST_FOREACH(const bfs::path& p, make_pair(it, eod)) {
-    if(bfs::exists(p) && bfs::extension(p).compare(".td") == 0 && p.filename().string().substr(0, string("annotated").size()).compare("annotated") == 0) {
-      cout << "Adding " << p.string() << endl;
-      ann_paths->push_back(p.string());
-    }
+    if(!bfs::exists(p))
+      continue;
+    if(bfs::extension(p).compare(".td") != 0)
+      continue;
+    if(p.filename().string().substr(0, string("annotated").size()).compare("annotated") != 0)
+      continue;
+    
+    cout << "Adding " << p.string() << endl;
+    ann_paths->push_back(p.string());
   }
 }
 
@@ -94,8 +99,10 @@ int main(int argc, char** argv)
   // -- Load annotations data.
   vector<string> ann_paths;
   for(size_t i = 0; i < iter_paths.size(); ++i) {
-    string path = iter_paths[i];
-    appendAnnotations(path, opts, &ann_paths);
+    //appendAnnotations(path, opts, &ann_paths);
+    ROS_WARN_ONCE("Only using ann*pos.td annotations files.  This assumes mutual exclusion.");
+    vector<string> paths = glob(iter_paths[i] + "/ann*pos.td");
+    ann_paths.insert(ann_paths.end(), paths.begin(), paths.end());
   }
   ROS_ASSERT(!ann_paths.empty());
   TrackDataset::Ptr annotations = loadDatasets(ann_paths, config, cmap);
@@ -104,7 +111,7 @@ int main(int argc, char** argv)
   
   // -- Load test data.
   ROS_ASSERT(!test_paths.empty());
-  TrackDataset::Ptr test = loadDatasets(test_paths, config, cmap);
+  TrackDataset::Ptr test = loadDatasets(test_paths, config, cmap, true);
   cout << "Test data: " << endl;
   cout << test->status("  ") << endl;
 
