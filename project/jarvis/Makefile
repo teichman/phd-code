@@ -69,11 +69,11 @@ kitchen-update-descriptors:
 
 kitchen/induction: kitchen_descriptors
 	. ~/.bashrc && rosgdb jarvis induct \
-	--class-names cat noncat \
+	--class-names cat alex cindy crud wall \
 	--config $(CONFIG) \
-	--emax 0 \
-	--buffer-size 5000 \
-	--max-track-length 30 \
+	--emax 1 \
+	--buffer-size 1000 \
+	--max-track-length 60 \
 	--snapshot-every 0 \
 	--evaluate-every 5 \
 	--output-dir $@ \
@@ -88,3 +88,12 @@ kitchen/induction: kitchen_descriptors
 	--test $(KITCHEN_LABELS_DIR)/cat_only/test/*.td \
 	| tee $@-log.txt
 	mv $@-log.txt $@/
+
+kitchen/induction/baseline_unfair:
+	rosrun jarvis baseline_unfair \
+	--class-names cat alex cindy crud wall \
+	--config $(CONFIG) \
+	--root $(@D) \
+	--test $(KITCHEN_LABELS_DIR)/cat_only/test/*.td \
+	--num-iters 15 \
+	--o $@

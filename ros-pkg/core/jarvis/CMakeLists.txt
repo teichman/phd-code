@@ -65,6 +65,10 @@ rosbuild_add_executable(bias_variance src/prog/bias_variance.cpp)
 target_link_libraries(bias_variance jarvis_core)
 rosbuild_link_boost(bias_variance program_options)
 
+rosbuild_add_executable(baseline_unfair src/prog/baseline_unfair.cpp)
+target_link_libraries(baseline_unfair jarvis_core)
+rosbuild_link_boost(baseline_unfair program_options)
+
 rosbuild_add_executable(twiddle src/prog/twiddle.cpp)
 target_link_libraries(twiddle jarvis_core)
 rosbuild_add_compile_flags(twiddle -std=c++0x)
