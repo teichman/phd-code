@@ -86,15 +86,15 @@ kitchen/induction: kitchen_descriptors
 	kitchen/tds/sentinel_2013-09-20-21-00-29_0/jarvis-0003.td \
 	kitchen/tds/sentinel_2013-09-18-23-31-20_1/jarvis-0003.td \
 	kitchen/tds/sentinel_2013-09-20-21-00-29_0/jarvis-0001.td \
-	--test $(KITCHEN_LABELS_DIR)/cat_only/test/*.td \
+	--test $(KITCHEN_LABELS_DIR)/*.td \
 	| tee $@-log.txt
 	mv $@-log.txt $@/
 
-kitchen/induction/baseline_unfair:
+kitchen/baseline_unfair: kitchen/induction
 	rosrun jarvis baseline_unfair \
 	--class-names cat alex cindy crud wall \
 	--config $(CONFIG) \
-	--root $(@D) \
-	--test $(KITCHEN_LABELS_DIR)/cat_only/test/*.td \
+	--root $< \
+	--test $(KITCHEN_LABELS_DIR)/*.td \
 	--num-iters 15 \
 	--o $@
