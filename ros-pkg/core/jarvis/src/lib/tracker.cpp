@@ -7,7 +7,7 @@ using namespace std;
 namespace bpt = boost::posix_time;
 using namespace Eigen;
 
-void Blob::project()
+void Blob::project(bool compute_kdtree)
 {
   cloud_ = Cloud::Ptr(new Cloud);
   cloud_->reserve(indices_.size());
@@ -36,8 +36,10 @@ void Blob::project()
   centroid_.setZero();
   centroid_ = centroid.head(3);
 
-  kdtree_ = KdTree::Ptr(new KdTree(false));  // Don't sort the points.
-  kdtree_->setInputCloud(cloud_);
+  if(compute_kdtree) {
+    kdtree_ = KdTree::Ptr(new KdTree(false));  // Don't sort the points.
+    kdtree_->setInputCloud(cloud_);
+  }
 }
 
 void Blob::serialize(std::ostream& out) const

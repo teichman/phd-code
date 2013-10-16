@@ -36,3 +36,35 @@ void Inductor::entryHook(TrackDataset* td, const std::string& path) const
 }
 
 
+void Inductor::chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_annotations) const
+{
+  ROS_ASSERT(td->size() == chunk_diagnostic_annotations->size());
+  vector<Dataset::Ptr> tracks;
+  vector<Label> cda;
+  tracks.reserve(td->size());
+  cda.reserve(chunk_diagnostic_annotations->size());
+  
+  for(size_t i = 0; i < td->size(); ++i) {
+    Dataset::Ptr track = td->tracks_[i];
+    if(track->empty())
+      continue;
+    Blob::Ptr first_blob = boost::any_cast<Blob::Ptr>((*track)[0].raw_);
+    Blob::Ptr last_blob = boost::any_cast<Blob::Ptr>((*track)[track->size() - 1].raw_);
+    if(!first_blob->cloud_)
+      first_blob->project(false);
+    if(!last_blob->cloud_)
+      last_blob->project(false);
+
+    double dist = (last_blob->centroid_ - first_blob->centroid_).norm();
+    if(dist > 0.03) {
+      tracks.push_back(track);
+      cda.push_back(chunk_diagnostic_annotations->at(i));
+    }
+  }
+
+  cout << "[Inductor::chunkHook]  Removing " << td->tracks_.size() - tracks.size() << " tracks because they did not move enough.  "
+       << tracks.size() << " tracks remain." << endl;
+  
+  td->tracks_ = tracks;
+  *chunk_diagnostic_annotations = cda;
+}

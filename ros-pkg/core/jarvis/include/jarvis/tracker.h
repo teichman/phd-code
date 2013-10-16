@@ -39,7 +39,7 @@ public:
 
   //! Fills cloud_, centroid_, and kdtree_ from the indices_, color_, and depth_ data.
   //! You'll have to redo this if you save and then load.
-  void project();
+  void project(bool compute_kdtree = true);
 
   Cloud::Ptr cloud_;
   KdTree::Ptr kdtree_;

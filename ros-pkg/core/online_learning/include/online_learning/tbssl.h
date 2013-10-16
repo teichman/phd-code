@@ -243,6 +243,10 @@ protected:
   //! Subclasses can use this to do things like update descriptors whenever a new TD arrives.
   //! Path is "" if this TD did not come from disk.
   virtual void entryHook(TrackDataset* td, const std::string& path = "") const;
+  //! This function is called on the unlabeled chunk just before induction occurs.
+  //! You can use it to, for example, remove tracks that don't include enough motion
+  //! to be valuable for group induction.
+  virtual void chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_annotations) const {}
 
 private:
   OnlineLearner(const OnlineLearner& other);

@@ -673,6 +673,7 @@ void OnlineLearner::_run()
     vector<Label> chunk_diagnostic_annotations;
     TrackDataset::Ptr unlabeled_chunk = getNextUnlabeledChunk(&chunk_diagnostic_annotations);
     removePerfectAndNonInducted(unlabeled_chunk.get(), &chunk_diagnostic_annotations);
+    chunkHook(unlabeled_chunk.get(), &chunk_diagnostic_annotations);
     inductionStep(unlabeled_chunk.get(), chunk_diagnostic_annotations);
 
     /************************************************************
