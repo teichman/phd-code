@@ -17,33 +17,17 @@ Pipeline:
       Params: ~
       Inputs:
         ProjectedBlob: BlobProjector.ProjectedBlob
-    - Name: RawBoundingBoxSize
-      Type: BoundingBoxSize
-      Params: ~
-      Inputs:
-        Cloud: BlobProjector.Cloud
     - Name: OrientedBoundingBoxSize
       Type: BoundingBoxSize
       Params: ~
       Inputs:
         Cloud: CloudOrienter.OrientedCloud
-    - Name: CentroidFinder
-      Type: CentroidFinder
-      Params: ~
-      Inputs:
-        Cloud: BlobProjector.Cloud
     - Name: OrientedNormalizedDensityHistogram
       Type: NormalizedDensityHistogram
       Params:
         NumBins: 10
       Inputs:
         Cloud: CloudOrienter.OrientedCloud
-    - Name: RawNormalizedDensityHistogram
-      Type: NormalizedDensityHistogram
-      Params:
-        NumBins: 10
-      Inputs:
-        Cloud: BlobProjector.Cloud
     - Name: CloudProjectorXY
       Type: CloudProjector
       Params:
@@ -151,15 +135,10 @@ Pipeline:
       Params: ~
       Inputs:
         Descriptors: >
-          RawBoundingBoxSize.BoundingBoxSize
           OrientedBoundingBoxSize.BoundingBoxSize
-          CentroidFinder.Centroid
           OrientedNormalizedDensityHistogram.X
           OrientedNormalizedDensityHistogram.Y
           OrientedNormalizedDensityHistogram.Z
-          RawNormalizedDensityHistogram.X
-          RawNormalizedDensityHistogram.Y
-          RawNormalizedDensityHistogram.Z
           HogArrayXY.ConcatenatedDescriptors
           HogArrayYZ.ConcatenatedDescriptors
           HogArrayXZ.ConcatenatedDescriptors
