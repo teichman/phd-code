@@ -2,6 +2,7 @@
 #include <jarvis/descriptor_pipeline.h>
 
 using namespace std;
+using namespace Eigen;
 
 Inductor::Inductor(YAML::Node config,
                    double emax,
@@ -35,7 +36,6 @@ void Inductor::entryHook(TrackDataset* td, const std::string& path) const
   }
 }
 
-
 void Inductor::chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_annotations) const
 {
   ROS_ASSERT(td->size() == chunk_diagnostic_annotations->size());
@@ -68,4 +68,72 @@ void Inductor::chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_
   
   td->tracks_ = tracks;
   *chunk_diagnostic_annotations = cda;
+}
+
+bool similar(const Dataset& annotation, const Dataset& inducted)
+{
+  const NameMapping& dmap = annotation.nameMapping("dmap");
+  string name = "OrientedBoundingBoxSize.BoundingBoxSize:15595929600647926249";
+  ROS_ASSERT(dmap.hasName(name));
+  size_t id = dmap.toId(name);
+
+  int num = 0;
+  double mean_dist = 0;
+  int num_samples = 3;
+  for(int i = 0; i < num_samples; ++i) {
+    VectorXf* ann = annotation[rand() % annotation.size()].descriptors_[id];
+    ROS_ASSERT(ann);
+    for(int j = 0; j < num_samples; ++j) {
+      VectorXf* ind = inducted[rand() % inducted.size()].descriptors_[id];
+      ROS_ASSERT(ind);
+      mean_dist += ((*ind) - (*ann)).norm();
+      ++num;
+    }
+  }
+  mean_dist /= num;
+
+  return (mean_dist < 0.2);
+}
+
+void Inductor::retrospection(const TrackDataset& new_annotations, const std::vector<Label>& predictions)
+{
+  // -- De-induct all inducted examples that look similar to things we got wrong.
+  Label unknown = VectorXf::Zero(nameMapping("cmap").size());
+  vector<bool> deinduction_occurred(nameMapping("cmap").size(), false);
+  for(size_t c = 0; c < nameMapping("cmap").size(); ++c) {
+    int num_possible = 0;
+    int num_deinducted = 0;
+    // For each annotated example that we got wrong
+    for(size_t i = 0; i < new_annotations.size(); ++i) {
+      Label annotation = new_annotations.label(i);
+      if((predictions[i](c) > 0 && annotation(c) < 0) ||
+         (predictions[i](c) < 0 && annotation(c) > 0))
+      {
+        // For each inducted example that has the same {-1, +1} label as the prediction,
+        // de-induct if they look similar.
+        int sign = predictions[i].sign()(c);
+        for(size_t j = 0; j < unsupervised_->size(); ++j) {
+          Label pred = unsupervised_->label(j);
+          ++num_possible;
+          if(pred.sign()(c) == sign && pred(c) <= predictions[i](c) && similar(new_annotations[i], (*unsupervised_)[j])) {
+            (*unsupervised_)[j].setLabel(unknown);
+            deinduction_occurred[c] = true;
+            ++num_deinducted;
+          }
+        }
+      }
+    }
+
+    cout << "[Inductor::retrospection]  De-inducted " << num_deinducted << " / " << num_possible << " objects of class " << nameMapping("cmap").toName(c) << endl;
+  }
+
+  // -- Reset classes for which de-induction occurred.
+  scopeLockWrite;
+  ROS_ASSERT(nameMappingsAreEqual(*classifier_));
+  for(size_t c = 0; c < deinduction_occurred.size(); ++c) {
+    if(deinduction_occurred[c]) {
+      classifier_->setZero(c);
+      cout << "[Inductor::retrospection]  Reset " << nameMapping("cmap").toName(c) << " classifier (index " << c << ")." << endl;
+    }
+  }
 }

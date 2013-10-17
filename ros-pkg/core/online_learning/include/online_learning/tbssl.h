@@ -247,6 +247,11 @@ protected:
   //! You can use it to, for example, remove tracks that don't include enough motion
   //! to be valuable for group induction.
   virtual void chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_annotations) const {}
+  //! De-induct tracks that the new annotations indicate should not have been inducted.
+  //! i.e. "In retrospect, that was wrong..."
+  //! By default this uses the worst-case classifier noise method.
+  //! To override, de-induct as appropriate in unsupervised_.
+  virtual void retrospection(const TrackDataset& new_annotations, const std::vector<Label>& predictions);
 
 private:
   OnlineLearner(const OnlineLearner& other);

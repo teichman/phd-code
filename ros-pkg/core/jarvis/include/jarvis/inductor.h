@@ -30,6 +30,7 @@ protected:
   void entryHook(TrackDataset* td, const std::string& path = "") const;
   //! Removes tracks that don't include enough motion.
   void chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_annotations) const;
+  void retrospection(const TrackDataset& new_annotations, const std::vector<Label>& predictions);
   
   void serialize(std::ostream& out) const { ROS_ASSERT(0); }
   void deserialize(std::istream& in) { ROS_ASSERT(0); }

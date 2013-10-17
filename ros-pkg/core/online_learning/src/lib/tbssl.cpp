@@ -187,7 +187,7 @@ void OnlineLearner::handleAnnotatedData()
     new_annotations += *incoming_annotated_[i];
   incoming_annotated_.clear();
   saveByClassAndLabel(new_annotations, iter_dir_ + "/annotated");
-  
+
   // -- Classify them all.
   vector<Label> predictions(new_annotations.size());
   lockRead();
@@ -196,7 +196,14 @@ void OnlineLearner::handleAnnotatedData()
   for(size_t i = 0; i < new_annotations.size(); ++i)
     predictions[i] = classifier_->classifyTrack(new_annotations[i]);
   unlockRead();
-  
+
+  // -- De-induct tracks that the new annotations indicate 
+  //    should not have been inducted.
+  retrospection(new_annotations, predictions);
+}
+
+void OnlineLearner::retrospection(const TrackDataset& new_annotations, const std::vector<Label>& predictions)
+{
   // -- Estimate emin and emax.
   VectorXf emin = -VectorXf::Ones(nameMapping("cmap").size()) * emax_;
   VectorXf emax = VectorXf::Ones(nameMapping("cmap").size()) * emax_;
