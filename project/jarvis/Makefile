@@ -70,7 +70,7 @@ kitchen-update-descriptors:
 
 kitchen/induction: kitchen_descriptors
 	. ~/.bashrc && rosgdb jarvis induct \
-	--class-names cat alex cindy crud wall \
+	--class-names cat \
 	--config $(CONFIG) \
 	--emax 5 \
 	--buffer-size 1000 \
