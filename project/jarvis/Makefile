@@ -72,11 +72,11 @@ kitchen/induction: kitchen_descriptors
 	. ~/.bashrc && rosgdb jarvis induct \
 	--class-names cat alex cindy crud wall \
 	--config $(CONFIG) \
-	--emax 1 \
+	--emax 5 \
 	--buffer-size 1000 \
 	--max-track-length 60 \
 	--snapshot-every 0 \
-	--evaluate-every 5 \
+	--evaluate-every 1 \
 	--output-dir $@ \
 	--unlabeled-td-dir kitchen/tds/ \
 	--init \
