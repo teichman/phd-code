@@ -22,8 +22,8 @@ all:
 # You should symlink these in your own repo.
 LOG_DIR := $(MAKE_ROOT)/logs
 LABELED_TD_DIR := $(MAKE_ROOT)/labeled
-#CONFIG := `rospack find jarvis`/config/hand_specified.yml
-CONFIG := `rospack find jarvis`/config/config.yml
+CONFIG := `rospack find jarvis`/config/hand_specified.yml
+#CONFIG := `rospack find jarvis`/config/config.yml
 
 KITCHEN_DIR := $(LOG_DIR)/kitchen-new_bg_subtr
 KITCHEN_NAMES := $(shell ls $(KITCHEN_DIR) | sed 's/\.bag//')
