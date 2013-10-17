@@ -102,6 +102,7 @@ int main(int argc, char** argv)
   for(size_t i = 0; i < iter_paths.size(); ++i) {
     //appendAnnotations(path, opts, &ann_paths);
     //ROS_WARN_ONCE("Only using ann*pos.td annotations files.  This assumes mutual exclusion.");
+    ROS_WARN_ONCE("Only ann*.td annotations files.  This assumes no mutual exclusion.");
     vector<string> paths = glob(iter_paths[i] + "/ann*.td");
     ann_paths.insert(ann_paths.end(), paths.begin(), paths.end());
   }
