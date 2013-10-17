@@ -56,7 +56,8 @@ void Inductor::chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_
       last_blob->project(false);
 
     double dist = (last_blob->centroid_ - first_blob->centroid_).norm();
-    if(dist > 0.03) {
+    double dt = last_blob->sensor_timestamp_ - first_blob->sensor_timestamp_;
+    if(dist / dt > 0.05) {
       tracks.push_back(track);
       cda.push_back(chunk_diagnostic_annotations->at(i));
     }

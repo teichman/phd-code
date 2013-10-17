@@ -68,9 +68,11 @@ kitchen-update-descriptors:
 	rosrun jarvis update_descriptors --config $(CONFIG) --tds `find kitchen/tds/ -name '*.td' | sort`
 	rosrun jarvis update_descriptors --config $(CONFIG) --tds `find $(KITCHEN_LABELS_DIR)/ -name '*.td' | sort`
 
+KITCHEN_CLASS_NAMES := cat
+
 kitchen/induction: kitchen_descriptors
 	. ~/.bashrc && rosgdb jarvis induct \
-	--class-names cat \
+	--class-names $(KITCHEN_CLASS_NAMES) \
 	--config $(CONFIG) \
 	--emax 1 \
 	--buffer-size 300 \
@@ -92,7 +94,7 @@ kitchen/induction: kitchen_descriptors
 
 kitchen/baseline_unfair: kitchen/induction
 	rosrun jarvis baseline_unfair \
-	--class-names cat alex cindy crud wall \
+	--class-names $(KITCHEN_CLASS_NAMES) \
 	--config $(CONFIG) \
 	--root $< \
 	--test $(KITCHEN_LABELS_DIR)/*.td \

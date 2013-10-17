@@ -95,13 +95,14 @@ int main(int argc, char** argv)
   string gc_path = iter_paths.back() + "/classifier.gc";
   gc->load(gc_path);
   gc->setZero();
+  gc->applyNameMapping("cmap", cmap);
   
   // -- Load annotations data.
   vector<string> ann_paths;
   for(size_t i = 0; i < iter_paths.size(); ++i) {
     //appendAnnotations(path, opts, &ann_paths);
-    ROS_WARN_ONCE("Only using ann*pos.td annotations files.  This assumes mutual exclusion.");
-    vector<string> paths = glob(iter_paths[i] + "/ann*pos.td");
+    //ROS_WARN_ONCE("Only using ann*pos.td annotations files.  This assumes mutual exclusion.");
+    vector<string> paths = glob(iter_paths[i] + "/ann*.td");
     ann_paths.insert(ann_paths.end(), paths.begin(), paths.end());
   }
   ROS_ASSERT(!ann_paths.empty());

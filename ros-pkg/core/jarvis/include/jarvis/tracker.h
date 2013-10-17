@@ -28,6 +28,7 @@ public:
   typedef boost::shared_ptr<const Blob> ConstPtr;
   
   uint64_t frame_id_;
+  //! In seconds.
   double sensor_timestamp_;
   ros::Time wall_timestamp_;
   int width_;
