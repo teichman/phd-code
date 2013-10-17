@@ -7,7 +7,7 @@ class CrossEvaluator
 public:
   CrossEvaluator() {}
   void addTrackDataset(TrackDataset::ConstPtr td, std::string name);
-  void evaluate(std::string dir, const std::vector<size_t>& num_cells) const;
+  void evaluate(std::string dir, const std::vector<size_t>& num_cells, double thresh = 50) const;
   
 protected:
   std::vector<TrackDataset::ConstPtr> tds_;

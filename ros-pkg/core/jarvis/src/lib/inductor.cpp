@@ -124,7 +124,8 @@ void Inductor::retrospection(const TrackDataset& new_annotations, const std::vec
       }
     }
 
-    cout << "[Inductor::retrospection]  De-inducted " << num_deinducted << " / " << num_possible << " objects of class " << nameMapping("cmap").toName(c) << endl;
+    
+    //buggy cout << "[Inductor::retrospection]  De-inducted " << num_deinducted << " / " << num_possible << " objects of class " << nameMapping("cmap").toName(c) << endl;
   }
 
   // -- Reset classes for which de-induction occurred.

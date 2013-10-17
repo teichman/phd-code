@@ -9,7 +9,7 @@ void CrossEvaluator::addTrackDataset(TrackDataset::ConstPtr td, std::string name
   names_.push_back(name);
 }
 
-void CrossEvaluator::evaluate(std::string dir, const std::vector<size_t>& num_cells) const
+void CrossEvaluator::evaluate(std::string dir, const std::vector<size_t>& num_cells, double thresh) const
 {
   if(!bfs::exists(dir))
     bfs::create_directory(dir);
@@ -36,6 +36,7 @@ void CrossEvaluator::evaluate(std::string dir, const std::vector<size_t>& num_ce
     
     // -- Set up trainer.
     GridClassifier::BoostingTrainer trainer(gc);
+    trainer.obj_thresh_ = thresh;
     trainer.gamma_ = 0;
     trainer.verbose_ = true;
 

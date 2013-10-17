@@ -101,3 +101,11 @@ kitchen/baseline_unfair: kitchen/induction
 	--num-iters 15 \
 	--o $@ | tee $@-log.txt
 	mv $@-log.txt $@/
+
+kitchen/cross_evaluation:
+	. ~/.bashrc && rosgdb jarvis cross_evaluate \
+	--config $(CONFIG) \
+	--class-names $(KITCHEN_CLASS_NAMES) \
+	--tds $(KITCHEN_LABELS_DIR)/*.td \
+	-o $@ | tee $@-log.txt
+	mv $@-log.txt $@/

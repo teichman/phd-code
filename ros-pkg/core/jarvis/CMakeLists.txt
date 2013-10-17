@@ -69,6 +69,10 @@ rosbuild_add_executable(baseline_unfair src/prog/baseline_unfair.cpp)
 target_link_libraries(baseline_unfair jarvis_core)
 rosbuild_link_boost(baseline_unfair program_options)
 
+rosbuild_add_executable(cross_evaluate src/prog/cross_evaluate.cpp)
+target_link_libraries(cross_evaluate jarvis_core)
+rosbuild_link_boost(cross_evaluate program_options)
+
 rosbuild_add_executable(twiddle src/prog/twiddle.cpp)
 target_link_libraries(twiddle jarvis_core)
 rosbuild_add_compile_flags(twiddle -std=c++0x)
