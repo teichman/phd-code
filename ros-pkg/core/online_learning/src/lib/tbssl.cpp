@@ -517,15 +517,18 @@ void OnlineLearner::inductionStep(TrackDataset* unlabeled_chunk, const std::vect
         diagann.push_back(diagnostic_annotations_[index[i].second]);
         if(index[i].second < orig_num_unsupervised) ++num_kept;
       }
-      // Also, if there are no more useful inducted tracks and there
-      // is space left in the buffer, fill that space with unlabeled tracks.
-      else if(pred(c) == 0 && tracks.size() < buffer_size_) {
+    }
+
+    // -- If there is space left over in the buffer, fill it with unlabeled tracks.
+    for(size_t i = 0; i < index.size() && tracks.size() < buffer_size_; ++i) {
+      Label pred = unsupervised_->label(index[i].second);
+      if((pred.sign().array() == 0).all()) {
         tracks.push_back(unsupervised_->tracks_[index[i].second]);
         diagann.push_back(diagnostic_annotations_[index[i].second]);
         if(index[i].second < orig_num_unsupervised) ++num_kept;
       }
     }
-
+      
     ROS_ASSERT(pos_counts.maxCoeff() <= num_desired);
     ROS_ASSERT(neg_counts.maxCoeff() <= num_desired);
     ROS_ASSERT(tracks.size() <= (size_t)buffer_size_);
