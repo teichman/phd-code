@@ -417,6 +417,60 @@ void OnlineLearner::inductionStep(TrackDataset* unlabeled_chunk, const std::vect
   inductDataset(emin, emax, unsupervised_.get(), &index, &unsupervised_logodds_, &frame_logodds);
 
   /************************************************************
+   * Balancing.
+   ************************************************************/
+
+  for(size_t c = 0; c < nameMapping("cmap").size(); ++c) {
+    ArrayXf ann_counts = VectorXf::Zero(2);
+    for(size_t i = 0; i < annotated_->size(); ++i) {
+      if(annotated_->label(i).sign()(c) > 0)
+        ++ann_counts(0);
+      else if(annotated_->label(i).sign()(c) < 0)
+        ++ann_counts(1);
+    }
+    if((ann_counts == 0).all())
+      continue;
+
+    ArrayXf ind_counts = VectorXf::Zero(2);
+    for(size_t i = 0; i < unsupervised_->size(); ++i) {
+      if(unsupervised_->label(i).sign()(c) > 0)
+        ++ind_counts(0);
+      else if(unsupervised_->label(i).sign()(c) < 0)
+        ++ind_counts(1);
+    }
+
+    double mult = (ind_counts / ann_counts).minCoeff();
+    ROS_ASSERT(!isnan(mult));
+    ArrayXi desired = (mult * ann_counts).cast<int>();
+    ROS_ASSERT((desired <= ind_counts.cast<int>()).all());
+
+    // De-induct the least useful tracks so that we get back to a balanced inducted set.
+    ArrayXi num = ArrayXi::Zero(2);
+    for(size_t i = 0; i < index.size(); ++i) {
+      Label pred = unsupervised_->label(index[i].second);
+      if(pred(c) > 0) {
+        if(num(0) < desired(0))
+          ++num(0);
+        else {
+          Label label = unsupervised_->tracks_[index[i].second]->label();
+          label(c) = 0;
+          unsupervised_->tracks_[index[i].second]->setLabel(label);
+        }
+      }
+      else if(pred(c) < 0) {
+        if(num(1) < desired(1))
+          ++num(1);
+        else {
+          Label label = unsupervised_->tracks_[index[i].second]->label();
+          label(c) = 0;
+          unsupervised_->tracks_[index[i].second]->setLabel(label);
+        }
+      }
+    }
+  }
+  
+  
+  /************************************************************
    * Pruning.
    ************************************************************/
 

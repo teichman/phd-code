@@ -7,6 +7,16 @@ using namespace std;
 using namespace Eigen;
 namespace bfs = boost::filesystem;
 
+TEST(TBSSL, minCoeff)
+{
+  ArrayXf numerator(2);
+  numerator << 13, 1;
+  ArrayXf denominator(2);
+  denominator << 0, 13;
+
+  EXPECT_NEAR((numerator / denominator).minCoeff(), 1/13., 1e-6);
+}
+
 TEST(TBSSL, Resumption)
 {
   srand(0);
