@@ -39,6 +39,26 @@ protected:
   Eigen::VectorXf size_;
 };
 
+class IntensityHistogram : public pl::Pod
+{
+public:
+  DECLARE_POD(IntensityHistogram);
+  IntensityHistogram(std::string name) :
+    Pod(name)
+  {
+    declareInput<Blob::ConstPtr>("Blob");
+    declareParam<double>("NumBins", 10);
+    declareOutput<const Eigen::VectorXf*>("Histogram");
+  }
+
+  void compute();
+  void debug() const;
+
+protected:
+  Eigen::VectorXf hist_;
+};
+
+
 class DescriptorAggregator : public pl::Pod
 {
 public:

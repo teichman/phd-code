@@ -138,6 +138,41 @@ void CentroidFinder::debug() const
 
 
 /************************************************************
+ * IntensityHistogram
+ ************************************************************/
+
+void IntensityHistogram::compute()
+{
+  const Blob& blob = *pull<Blob::ConstPtr>("Blob");
+  ROS_ASSERT(blob.color_.size() % 3 == 0);
+
+  // -- Initialize bins.
+  int num_bins = param<double>("NumBins");
+  if(hist_.rows() != num_bins)
+    hist_ = VectorXf(num_bins);
+  hist_.setZero();
+
+  // -- Accumulate counts.  Normalize for number of points.
+  float bin_width = 255.0 / num_bins;
+  for(size_t i = 0; i < blob.color_.size(); i+=3) {
+    float intensity = ((float)blob.color_[i] + blob.color_[i+1] + blob.color_[i+2]) / 3.0;
+    int idx = max<int>(0, min<int>(255, intensity / bin_width));
+    ++hist_(idx);
+  }
+  hist_ /= hist_.sum();
+  
+  push<const VectorXf*>("Histogram", &hist_);
+}
+
+void IntensityHistogram::debug() const
+{
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "hist_: " << hist_.transpose() << endl;
+  f.close();
+}
+
+
+/************************************************************
  * NormalizedDensityHistogram
  ************************************************************/
 
