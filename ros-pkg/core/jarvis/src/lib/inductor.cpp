@@ -101,7 +101,6 @@ void Inductor::retrospection(const TrackDataset& new_annotations, const std::vec
   Label unknown = VectorXf::Zero(nameMapping("cmap").size());
   vector<bool> deinduction_occurred(nameMapping("cmap").size(), false);
   for(size_t c = 0; c < nameMapping("cmap").size(); ++c) {
-    int num_possible = 0;
     int num_deinducted = 0;
     // For each annotated example that we got wrong
     for(size_t i = 0; i < new_annotations.size(); ++i) {
@@ -114,18 +113,17 @@ void Inductor::retrospection(const TrackDataset& new_annotations, const std::vec
         int sign = predictions[i].sign()(c);
         for(size_t j = 0; j < unsupervised_->size(); ++j) {
           Label pred = unsupervised_->label(j);
-          ++num_possible;
           if(pred.sign()(c) == sign && pred(c) <= predictions[i](c) && similar(new_annotations[i], (*unsupervised_)[j])) {
             (*unsupervised_)[j].setLabel(unknown);
+            if(deinduction_occurred[c] = false)
+              ++num_deinducted;              
             deinduction_occurred[c] = true;
-            ++num_deinducted;
           }
         }
       }
     }
 
-    
-    //buggy cout << "[Inductor::retrospection]  De-inducted " << num_deinducted << " / " << num_possible << " objects of class " << nameMapping("cmap").toName(c) << endl;
+    cout << "[Inductor::retrospection]  De-inducted " << num_deinducted << " objects of class " << nameMapping("cmap").toName(c) << endl;
   }
 
   // -- Reset classes for which de-induction occurred.
