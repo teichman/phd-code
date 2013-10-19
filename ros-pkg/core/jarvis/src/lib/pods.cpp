@@ -156,7 +156,7 @@ void IntensityHistogram::compute()
   float bin_width = 255.0 / num_bins;
   for(size_t i = 0; i < blob.color_.size(); i+=3) {
     float intensity = ((float)blob.color_[i] + blob.color_[i+1] + blob.color_[i+2]) / 3.0;
-    int idx = max<int>(0, min<int>(255, intensity / bin_width));
+    int idx = max<int>(0, min<int>(num_bins - 1, intensity / bin_width));
     ++hist_(idx);
   }
   hist_ /= hist_.sum();

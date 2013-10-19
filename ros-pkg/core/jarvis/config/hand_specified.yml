@@ -130,6 +130,12 @@ Pipeline:
         UVPattern: Dense
       Inputs:
         Image: DynamicImageWindowXZ.Image
+    - Name: IntensityHistogram
+      Type: IntensityHistogram
+      Params:
+        NumBins: 10
+      Inputs:
+        Blob: BlobProjector.ProjectedBlob  # Can't use the EntryPoint because of const-correctness.
     - Name: DescriptorAggregator
       Type: DescriptorAggregator
       Params: ~
@@ -142,3 +148,5 @@ Pipeline:
           HogArrayXY.ConcatenatedDescriptors
           HogArrayYZ.ConcatenatedDescriptors
           HogArrayXZ.ConcatenatedDescriptors
+          IntensityHistogram.Histogram
+          

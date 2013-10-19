@@ -26,6 +26,7 @@ void DescriptorPipeline::registerPodTypes()
   REGISTER_POD(CloudProjector);
   REGISTER_POD(DynamicImageWindow);
   REGISTER_POD(HogArray);
+  REGISTER_POD(IntensityHistogram);
 }
 
 std::string DescriptorPipeline::defaultSpecificationPath()
