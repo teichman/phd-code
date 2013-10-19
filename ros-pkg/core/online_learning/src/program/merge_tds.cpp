@@ -16,9 +16,10 @@ int main(int argc, char** argv)
   vector<string> class_names;
   opts_desc.add_options()
     ("help,h", "produce help message")
-    ("tds", bpo::value< vector<string> >(&td_paths)->required()->multitoken())
+    ("tds,d", bpo::value< vector<string> >(&td_paths)->required()->multitoken())
     ("output,o", bpo::value<string>(&output_path)->required())
     ("class-names", bpo::value(&class_names)->multitoken(), "Apply a new name map, if desired.")
+    ("remove-duplicates", "")
     ;
   
   bpo::variables_map opts;
@@ -40,6 +41,14 @@ int main(int argc, char** argv)
     cout << cmap.status("  ") << endl;
   }
   TrackDataset::Ptr td = loadDatasets(td_paths, cmap, true);  // If cmap is empty, this will assume that all TDs have the same cmap.
+
+  if(opts.count("remove-duplicates")) {
+    size_t before = td->size();
+    cout << "Before: " << td->size() << endl;
+    removeDuplicates(td.get());
+    cout << "After: " << td->size() << endl;
+    cout << "Removed " << before - td->size() << " duplicates." << endl;
+  }
   td->save(output_path);
   
   return 0;

@@ -1011,3 +1011,16 @@ void saveByClassAndLabel(const TrackDataset& td, const std::string& basepath)
   }
 }
 
+void removeDuplicates(TrackDataset* td)
+{
+  vector<Dataset::Ptr> tracks;
+  set<double> hashes;
+  for(size_t i = 0; i < td->size(); ++i) {
+    double hash = (*td)[i].hash();
+    if(!hashes.count(hash)) {
+      hashes.insert(hash);
+      tracks.push_back(td->tracks_[i]);
+    }
+  }
+  td->tracks_ = tracks;
+}

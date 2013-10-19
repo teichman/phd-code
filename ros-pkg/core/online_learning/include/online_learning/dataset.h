@@ -323,6 +323,8 @@ float sign(float val);
 //! Saves datasets to basepath-CLASS-{pos,neg}.td.
 void saveByClassAndLabel(const TrackDataset& td, const std::string& basepath);
 NameMapping getStubDescriptorMap(int num_descriptors);
-
+//! Depends on the hash functionality.  Could be brittle depending on your case.
+//! This will fail if you don't have descriptors, for example.
+void removeDuplicates(TrackDataset* td);
 
 #endif // DATASET_H
