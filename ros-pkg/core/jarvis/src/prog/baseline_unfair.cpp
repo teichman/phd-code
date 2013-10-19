@@ -92,8 +92,17 @@ int main(int argc, char** argv)
   // -- Load the most recent classifier and set its responses to zero.
   //    This ensures that the initialization & num cells are identical.
   GridClassifier::Ptr gc(new GridClassifier);
-  string gc_path = iter_paths.back() + "/classifier.gc";
-  gc->load(gc_path);
+  bool loaded = false;
+  for(int i = iter_paths.size() - 1; i >= 0; --i) {
+    string gc_path = iter_paths[i] + "/classifier.gc";
+    if(!bfs::exists(gc_path))
+      continue;
+    loaded = true;
+    cout << "Loading " << gc_path << endl;
+    gc->load(gc_path);
+    break;
+  }
+  ROS_ASSERT(loaded);
   gc->setZero();
   gc->applyNameMapping("cmap", cmap);
   
