@@ -115,7 +115,7 @@ void Inductor::retrospection(const TrackDataset& new_annotations, const std::vec
           Label pred = unsupervised_->label(j);
           if(pred.sign()(c) == sign && pred(c) <= predictions[i](c) && similar(new_annotations[i], (*unsupervised_)[j])) {
             (*unsupervised_)[j].setLabel(unknown);
-            if(deinduction_occurred[c] = false)
+            if(deinduction_occurred[c] == false)
               ++num_deinducted;              
             deinduction_occurred[c] = true;
           }
