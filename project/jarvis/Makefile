@@ -64,9 +64,16 @@ kitchen/tds/%/descriptors_computed: kitchen/tds/%/extracted
 	rosrun online_learning apply_cmap -n alex cindy cat --tds $(@D)/*.td
 	touch $@
 
-kitchen-update-descriptors:
+kitchen-update-all-descriptors: kitchen-update-unlabeled-descriptors kitchen-update-test-descriptors
+
+kitchen-update-unlabeled-descriptors:
 	rosrun jarvis update_descriptors --config $(CONFIG) --tds `find kitchen/tds/ -name '*.td' | sort`
-	rosrun jarvis update_descriptors --config $(CONFIG) --tds `find $(KITCHEN_LABELS_DIR)/ -name '*.td' | sort`
+
+kitchen-update-test-descriptors:
+	rosrun jarvis update_descriptors \
+	--config $(CONFIG) \
+	--tds $(KITCHEN_LABELS_DIR)/*.td \
+	-j 24
 
 KITCHEN_CLASS_NAMES := cat
 
@@ -109,3 +116,10 @@ kitchen/cross_evaluation:
 	--tds $(KITCHEN_LABELS_DIR)/*.td \
 	-o $@ | tee $@-log.txt
 	mv $@-log.txt $@/
+
+kitchen/group_induction_errors: kitchen/induction
+	rosrun online_learning filter_errors \
+	-c `find kitchen/induction/ -name classifier.gc | sort | tail -n1` \
+	-d $(KITCHEN_LABELS_DIR)/*.td \
+	--class-names $(KITCHEN_CLASS_NAMES) \
+	-o $@

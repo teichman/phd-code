@@ -84,6 +84,7 @@ int main(int argc, char** argv)
   string classifier_path;
   string output_dir;
   vector<string> dataset_paths;
+  vector<string> class_names;
   
   opts_desc.add_options()
     ("help,h", "produce help message")
@@ -91,6 +92,7 @@ int main(int argc, char** argv)
     ("output,o", bpo::value<string>(&output_dir), "")
     ("datasets,d", bpo::value< vector<string> >(&dataset_paths)->required()->multitoken(), "")
     ("all-frames,f", "Filter out all frame classification errors rather than just track classification errors.")
+    ("class-names", bpo::value(&class_names)->required()->multitoken(), "")
     ;
 
   bpo::variables_map opts;
@@ -113,10 +115,16 @@ int main(int argc, char** argv)
   cout << "Loading classifier " << classifier_path << "." << endl;
   gc.load(classifier_path);
 
+  // -- Set up the class map to use. 
+  NameMapping cmap;
+  cmap.addNames(class_names);
+  cout << "Using cmap: " << endl;
+  cout << cmap.status("  ") << endl;
+  gc.applyNameMapping("cmap", cmap);
+  
   // -- Set up storage for FPs and FNs of each class.
   map<string, TrackDataset::Ptr> fps;
   map<string, TrackDataset::Ptr> fns;
-  NameMapping cmap = gc.nameMapping("cmap");
   for(size_t c = 0; c < cmap.size(); ++c) {
     fps[cmap.toName(c)] = TrackDataset::Ptr(new TrackDataset);
     fps[cmap.toName(c)]->applyNameMappings(gc);
@@ -129,6 +137,7 @@ int main(int argc, char** argv)
     TrackDataset td;
     cout << "Loading dataset " << dataset_paths[i] << "." << endl;
     td.load(dataset_paths[i]);
+    td.applyNameMapping("cmap", cmap);
     ROS_ASSERT(gc.nameMappingsAreEqual(td));
     if(opts.count("all-frames"))
       explode(&td);
