@@ -7,6 +7,7 @@ using namespace std;
 using namespace Eigen;
 
 Jarvis::Jarvis(int vis_level, int rotation, string output_directory) :
+  record_(false),
   min_predictions_(30),
   min_confidence_(1),
   tracker_(100),
@@ -33,14 +34,14 @@ void Jarvis::backgroundCallback(sentinel::BackgroundConstPtr msg)
 
 void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
 {
-  if(!gc_ || !dp_)
-    return;
+  ROS_ASSERT(gc_ && dp_);
 
   // -- Classify all blobs and add to cumulative predictions.
   map<size_t, Blob::Ptr>::const_iterator it;
   for(it = tracker_.tracks_.begin(); it != tracker_.tracks_.end(); ++it) {
     size_t id = it->first;
     Blob::Ptr blob = it->second;
+    ROS_ASSERT(blob);
     // Ignore tracks that don't have an update for this frame.
     if(blob->sensor_timestamp_ != fgmsg->sensor_timestamp)
       continue;
@@ -52,14 +53,19 @@ void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
   map<size_t, vector<Label> >::const_iterator pit;
   for(pit = predictions_.begin(); pit != predictions_.end(); ++pit) {
     size_t id = pit->first;
+    // Ignore tracks that don't have an update for this frame.
+    if(!tracker_.tracks_.count(id) || !tracker_.tracks_[id] || tracker_.tracks_[id]->sensor_timestamp_ != fgmsg->sensor_timestamp)
+      continue;
+
+    // Ignore tracks that haven't been seen for long enough.
     const vector<Label>& predictions = pit->second;
-    cout << "Track " << id << " #predictions " << predictions.size();
+    cout << "Track " << id << " #predictions: " << predictions.size();
     if(predictions.size() < min_predictions_) {
       cout << endl;
       continue;
     }
 
-    // Get the track prediction using a discrete Bayes filter.
+    // Get the overall track prediction using a simple discrete Bayes filter.
     Label track_prediction = VectorXf::Zero(gc_->nameMapping("cmap").size());
     for(size_t i = 0; i < predictions.size(); ++i)
       track_prediction += predictions[i];
@@ -88,10 +94,12 @@ void Jarvis::foregroundCallback(sentinel::ForegroundConstPtr msg)
 
   // -- Classify blobs, accumulate predictions for each track, and send Detection messages.
   //    Assumes tracker_ has been updated.
-  detect(msg);
+  if(gc_ && dp_)
+    detect(msg);
 
   // -- Accumulate TrackDatasets.
-  tda_.update(tracker_.tracks_);
+  if(record_)
+    tda_.update(tracker_.tracks_);
 
 
   if(vis_level_ > 0) {

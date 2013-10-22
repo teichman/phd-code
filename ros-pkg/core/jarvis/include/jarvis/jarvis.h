@@ -15,6 +15,8 @@
 class Jarvis
 {
 public:
+  bool record_;
+  
   //! If gc_ and dp_ are provided, they will be used to classify Blobs and publish Detection messages.
   GridClassifier::Ptr gc_;
   DescriptorPipeline::Ptr dp_;

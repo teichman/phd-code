@@ -23,6 +23,7 @@ int main(int argc, char** argv)
     ("output-directory,o", bpo::value(&output_directory)->default_value("jarvis_tds"), "Where to save TD files")
     ("config", bpo::value(&config_path)->default_value(""), "")
     ("classifier,c", bpo::value(&gc_path)->default_value(""), "")
+    ("record", "")
     ;
 
   bpo::variables_map opts;
@@ -42,6 +43,9 @@ int main(int argc, char** argv)
   
   Jarvis jarvis(vis_level, rotation, output_directory);
 
+  jarvis.record_ = opts.count("record");
+  cout << "Recording: " << jarvis.record_ << endl;
+  
   // -- If we're going to classify things...
   if(gc_path != "") {
     // Load the DescriptorPipeline.
