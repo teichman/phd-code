@@ -1,0 +1,106 @@
+Pods:
+  - Name: View0
+    Type: EntryPoint<Vec::ConstPtr>
+    Params: ~
+    Inputs: ~
+  - Name: Sorter0
+    Type: Sorter
+    Params: ~
+    Inputs:
+      Points: View0.Output
+  - Name: Sorter1
+    Type: Sorter
+    Params: ~
+    Inputs:
+      Points: View1.Output
+  - Name: Sorter2
+    Type: Sorter
+    Params: ~
+    Inputs:
+      Points: View2.Output
+  - Name: Summarizer0
+    Type: Summarizer
+    Params: ~
+    Inputs:
+      Points: Sorter0.Sorted
+  - Name: Summarizer1
+    Type: Summarizer
+    Params: ~
+    Inputs:
+      Points: Sorter1.Sorted
+  - Name: Summarizer2
+    Type: Summarizer
+    Params: ~
+    Inputs:
+      Points: Sorter2.Sorted
+  - Name: Aggregator
+    Type: Aggregator
+    Params: ~
+    Inputs:
+      PointSets: Sorter0.Sorted Sorter1.Sorted Sorter2.Sorted
+  - Name: Summarizer3
+    Type: Summarizer
+    Params: ~
+    Inputs:
+      Points: Aggregator.Aggregated
+  - Name: View1
+    Type: EntryPoint<Vec::ConstPtr>
+    Params: ~
+    Inputs: ~
+  - Name: View2
+    Type: EntryPoint<Vec::ConstPtr>
+    Params: ~
+    Inputs: ~
+  - Name: Histogram0
+    Type: HistogramGenerator
+    Params:
+      BinWidth: 0.5
+      Max: 2
+      Min: -2
+      Normalize: False
+    Inputs:
+      Points: Sorter0.Sorted
+  - Name: Histogram1
+    Type: HistogramGenerator
+    Params:
+      BinWidth: 0.5
+      Max: 2
+      Min: -2
+      Normalize: False
+    Inputs:
+      Points: Sorter1.Sorted
+  - Name: DescriptorAssembler
+    Type: DescriptorAssembler
+    Params: ~
+    Inputs:
+      Elements: Summarizer0.Mean Summarizer0.Stdev Summarizer0.MeanNeighborSeparation Summarizer1.Mean Summarizer1.Stdev Summarizer1.MeanNeighborSeparation Summarizer2.Mean Summarizer2.Stdev Summarizer2.MeanNeighborSeparation Summarizer3.Mean Summarizer3.Stdev Summarizer3.MeanNeighborSeparation
+      SubVectors: Histogram0.Histogram Histogram1.Histogram Histogram2.Histogram Histogram3.Histogram
+  - Name: Histogram2
+    Type: HistogramGenerator
+    Params:
+      BinWidth: 0.5
+      Max: 2
+      Min: -2
+      Normalize: False
+    Inputs:
+      Points: Sorter2.Sorted
+  - Name: Histogram3
+    Type: HistogramGenerator
+    Params:
+      BinWidth: 0.25
+      Max: 3
+      Min: 0
+      Normalize: True
+    Inputs:
+      Points: Aggregator.Aggregated
+  - Name: ConcretePodA
+    Type: ConcretePodA
+    Params: ~
+    Inputs:
+      Vals: DescriptorAssembler.Descriptor
+  - Name: ConcretePodB
+    Type: ConcretePodB
+    Params:
+      Something: True
+    Inputs:
+      Vals: DescriptorAssembler.Descriptor
