@@ -17,7 +17,7 @@ Jarvis::Jarvis(int vis_level, int rotation, string output_directory) :
 {
   fg_sub_ = nh_.subscribe("foreground", 3, &Jarvis::foregroundCallback, this);
   bg_sub_ = nh_.subscribe("background", 3, &Jarvis::backgroundCallback, this);
-  det_pub_ = nh_.advertise<jarvis::Detection>("detection", 0);
+  det_pub_ = nh_.advertise<jarvis::Detection>("detections", 0);
   
   if(vis_level_ > 1)
     tracker_.visualize_ = true;

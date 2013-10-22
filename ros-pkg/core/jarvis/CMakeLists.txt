@@ -32,6 +32,8 @@ rosbuild_add_library(jarvis_core
   src/lib/pods.cpp
   src/lib/jarvis_twiddler.cpp
   src/lib/inductor.cpp
+  src/lib/reactor.cpp
+  src/lib/cannon_reactor.cpp
   )
 rosbuild_add_compile_flags(jarvis_core -std=c++0x)
 target_link_libraries(jarvis_core tcmalloc)
@@ -73,6 +75,10 @@ rosbuild_link_boost(baseline_unfair program_options)
 rosbuild_add_executable(cross_evaluate src/prog/cross_evaluate.cpp)
 target_link_libraries(cross_evaluate jarvis_core)
 rosbuild_link_boost(cross_evaluate program_options)
+
+rosbuild_add_executable(cannon_reactor src/prog/cannon_reactor.cpp)
+target_link_libraries(cannon_reactor jarvis_core)
+rosbuild_link_boost(cannon_reactor program_options)
 
 rosbuild_add_executable(twiddle src/prog/twiddle.cpp)
 target_link_libraries(twiddle jarvis_core)

@@ -42,6 +42,7 @@ public:
   //! Default constructor: empty NameMapping.
   NameMapping();
   NameMapping(const NameMapping& other);
+  NameMapping(const std::vector<std::string>& names) { addNames(names); }
   
   /************************************************************
    * Modify

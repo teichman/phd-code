@@ -97,6 +97,7 @@ public:
   Label() {}
   Label(const EigTemp& other) { Eigen::VectorXf::operator=(other); }
   Label(const Eigen::VectorXf& other) { Eigen::VectorXf::operator=(other); }
+  Label(const std::vector<float>& other) { *this = Eigen::VectorXf(other.size()); for(int i = 0; i < rows(); ++i) coeffRef(i) = other[i]; }
   Label& operator=(const Eigen::VectorXf& other) { Eigen::VectorXf::operator=(other); return *this; }
   Label& operator=(const EigTemp other) { Eigen::VectorXf::operator=(other); return *this; }
   Label& operator+=(const Eigen::VectorXf& other) { Eigen::VectorXf::operator+=(other); return *this; }
