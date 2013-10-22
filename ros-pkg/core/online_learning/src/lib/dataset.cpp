@@ -210,6 +210,14 @@ Label& Label::threshold(const Eigen::VectorXf& upper_thresholds,
   return *this;
 }
 
+std::vector<float> Label::vector() const
+{
+  std::vector<float> vec(rows());
+  for(int i = 0; i < rows(); ++i)
+    vec[i] = coeffRef(i);
+  return vec;
+}
+
 
 /************************************************************
  * Instance

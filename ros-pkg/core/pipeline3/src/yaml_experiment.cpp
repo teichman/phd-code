@@ -12,6 +12,9 @@ int main(int argc, char** argv)
   YAML::Node one;
   YAML::Node two;
 
+  ROS_ASSERT(!one["aoeu"]);
+
+  
   one["Foo"] = "Bar";
   two = one;
   two["Foo"] = "Baz";

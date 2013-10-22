@@ -4,8 +4,11 @@
 #include <bag_of_tricks/connected_components.h>
 
 using namespace std;
+using namespace Eigen;
 
 Jarvis::Jarvis(int vis_level, int rotation, string output_directory) :
+  min_predictions_(30),
+  min_confidence_(1),
   tracker_(100),
   tda_(output_directory, 10, 100, 10000),
   vis_level_(vis_level),
@@ -13,6 +16,8 @@ Jarvis::Jarvis(int vis_level, int rotation, string output_directory) :
 {
   fg_sub_ = nh_.subscribe("foreground", 3, &Jarvis::foregroundCallback, this);
   bg_sub_ = nh_.subscribe("background", 3, &Jarvis::backgroundCallback, this);
+  det_pub_ = nh_.advertise<jarvis::Detection>("detection", 0);
+  
   if(vis_level_ > 1)
     tracker_.visualize_ = true;
 }
@@ -26,11 +31,68 @@ void Jarvis::backgroundCallback(sentinel::BackgroundConstPtr msg)
   // }
 }
 
+void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
+{
+  if(!gc_ || !dp_)
+    return;
+
+  // -- Classify all blobs and add to cumulative predictions.
+  map<size_t, Blob::Ptr>::const_iterator it;
+  for(it = tracker_.tracks_.begin(); it != tracker_.tracks_.end(); ++it) {
+    size_t id = it->first;
+    Blob::Ptr blob = it->second;
+    // Ignore tracks that don't have an update for this frame.
+    if(blob->sensor_timestamp_ != fgmsg->sensor_timestamp)
+      continue;
+    predictions_[id].push_back(gc_->classify(*dp_->computeDescriptors(blob)));
+  }
+  
+  // -- If any current blobs have passed threshold, send messages indicating their detection.
+  cout << "============================================================" << endl;
+  map<size_t, vector<Label> >::const_iterator pit;
+  for(pit = predictions_.begin(); pit != predictions_.end(); ++pit) {
+    size_t id = pit->first;
+    const vector<Label>& predictions = pit->second;
+    cout << "Track " << id << " #predictions " << predictions.size();
+    if(predictions.size() < min_predictions_) {
+      cout << endl;
+      continue;
+    }
+
+    // Get the track prediction using a discrete Bayes filter.
+    Label track_prediction = VectorXf::Zero(gc_->nameMapping("cmap").size());
+    for(size_t i = 0; i < predictions.size(); ++i)
+      track_prediction += predictions[i];
+    track_prediction /= (float)predictions.size();
+    track_prediction += gc_->prior();
+    cout << " track_prediction: " << track_prediction.transpose() << endl;
+
+    // If we have a positive detection of any of the classes, send a message.
+    if((track_prediction.array() > min_confidence_).any()) {
+      cout << "Publishing..." << endl;
+      jarvis::Detection msg;
+      msg.sensor_timestamp = fgmsg->sensor_timestamp;
+      msg.cmap = gc_->nameMapping("cmap").names();
+      msg.label = track_prediction.vector();
+      det_pub_.publish(msg);
+    }
+  }
+}
+
 void Jarvis::foregroundCallback(sentinel::ForegroundConstPtr msg)
 {
   //reconstructor_.update(msg);
+
+  // -- Run the tracker.
   tracker_.update(msg);
+
+  // -- Classify blobs, accumulate predictions for each track, and send Detection messages.
+  //    Assumes tracker_ has been updated.
+  detect(msg);
+
+  // -- Accumulate TrackDatasets.
   tda_.update(tracker_.tracks_);
+
 
   if(vis_level_ > 0) {
     // -- Allocate memory if necessary.

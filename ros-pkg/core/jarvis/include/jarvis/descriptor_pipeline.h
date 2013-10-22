@@ -7,6 +7,8 @@
 class DescriptorPipeline
 {
 public:
+  typedef boost::shared_ptr<DescriptorPipeline> Ptr;
+  
   pl::Pipeline pl_;
 
   DescriptorPipeline();

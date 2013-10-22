@@ -111,6 +111,8 @@ public:
   //! Changes the contents of this object.
   Label& threshold(const Eigen::VectorXf& upper_thresholds,
 		   const Eigen::VectorXf& lower_thresholds);
+  //! Handy for assigning a Label to a field of a ROS message.
+  std::vector<float> vector() const;
   
 protected:
   //! "cmap" only.
