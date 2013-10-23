@@ -6,10 +6,46 @@
 using namespace std;
 using namespace Eigen;
 
+DiscreteBayesFilter::DiscreteBayesFilter(float cap, double weight, Label prior) :
+  cap_(cap),
+  weight_(weight),
+  prior_(prior)
+{
+}
+
+void DiscreteBayesFilter::addObservation(Label frame_prediction,
+                                         const Eigen::VectorXf& centroid,
+                                         double timestamp)
+{
+  frame_predictions_.push_back(frame_prediction);
+  
+  if(frame_predictions_.size() == 1)
+    cumulative_ = frame_prediction;
+  else
+    cumulative_ += frame_prediction * (centroid - prev_centroid_).norm() * weight_;
+
+  for(int i = 0; i < cumulative_.rows(); ++i)
+    cumulative_[i] = max(-cap_, min(cap_, cumulative_[i]));
+
+  prev_centroid_ = centroid;
+  prev_sensor_timestamp_ = timestamp;
+
+  if(prior_.rows() == 0)
+    prior_ = VectorXf::Zero(cumulative_.rows());
+}
+
+Label DiscreteBayesFilter::trackPrediction() const
+{
+  // TODO: Label needs to be fixed so that this can be one line.
+  Label track_prediction = cumulative_;
+  track_prediction += prior_;
+  return track_prediction;
+}
+
 Jarvis::Jarvis(int vis_level, int rotation, string output_directory) :
   record_(false),
-  min_predictions_(30),
-  min_confidence_(1),
+  min_predictions_(1),
+  min_confidence_(0),
   tracker_(100),
   vis_level_(vis_level),
   rotation_(rotation)
@@ -39,7 +75,7 @@ void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
 {
   ROS_ASSERT(gc_ && dp_);
 
-  // -- Classify all blobs and add to cumulative predictions.
+  // -- Classify all blobs, add to cumulative predictions, and send messages for each.
   map<size_t, Blob::Ptr>::const_iterator it;
   for(it = tracker_.tracks_.begin(); it != tracker_.tracks_.end(); ++it) {
     size_t id = it->first;
@@ -48,60 +84,32 @@ void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
     // Ignore tracks that don't have an update for this frame.
     if(blob->sensor_timestamp_ != fgmsg->sensor_timestamp)
       continue;
-    predictions_[id].push_back(gc_->classify(*dp_->computeDescriptors(blob)));
+
+    // Make frame prediction and add to the DBF.
+    if(!blob->cloud_)
+      blob->project(false);
+    Label fpred = gc_->classify(*dp_->computeDescriptors(blob));
+    filters_[id].addObservation(fpred, blob->centroid_, blob->sensor_timestamp_);
+
+    // Send message for this track.
+    jarvis::Detection msg;
+    msg.sensor_timestamp = fgmsg->sensor_timestamp;
+    msg.track_id = id;
+    msg.centroid = eigen_extensions::eigToVec(blob->centroid_);
+    msg.cmap = gc_->nameMapping("cmap").names();
+    msg.frame_prediction = fpred.vector();
+    msg.track_prediction = filters_[id].trackPrediction().vector();
+    msg.num_frames = filters_[id].numObservations();
+    det_pub_.publish(msg);
   }
 
-  // -- Wipe out predictions for any tracks that no longer exist.
-  map<size_t, vector<Label> >::iterator pit = predictions_.begin();
-  while(pit != predictions_.end()) {
-    if(!tracker_.tracks_.count(pit->first))
-      predictions_.erase(pit++);
+  // -- Wipe out DBFs for any tracks that no longer exist.
+  auto fit = filters_.begin();
+  while(fit != filters_.end()) {
+    if(!tracker_.tracks_.count(fit->first))
+      filters_.erase(fit++);
     else
-      pit++;
-  }
-    
-  // -- If any current blobs have passed threshold, send messages indicating their detection.
-  cout << "============================================================" << endl;
-  for(pit = predictions_.begin(); pit != predictions_.end(); ++pit) {
-    size_t id = pit->first;
-    ROS_ASSERT(tracker_.tracks_.count(id));
-    Blob::Ptr blob = tracker_.tracks_[id];
-    
-    // Ignore tracks that don't have an update for this frame.
-    if(!tracker_.tracks_.count(id) || !tracker_.tracks_[id] || tracker_.tracks_[id]->sensor_timestamp_ != fgmsg->sensor_timestamp)
-      continue;
-
-    // Ignore tracks that haven't been seen for long enough.
-    const vector<Label>& predictions = pit->second;
-    cout << "Track " << id << " #predictions: " << predictions.size();
-    if(predictions.size() < min_predictions_) {
-      cout << endl;
-      continue;
-    }
-
-    // Get the overall track prediction using a simple discrete Bayes filter.
-    Label track_prediction = VectorXf::Zero(gc_->nameMapping("cmap").size());
-    for(size_t i = 0; i < predictions.size(); ++i)
-      track_prediction += predictions[i];
-    track_prediction /= (float)predictions.size();
-    track_prediction += gc_->prior();
-    cout << " track_prediction: " << track_prediction.transpose() << endl;
-
-    // If we have a positive detection of any of the classes, send a message.
-    if((track_prediction.array() > min_confidence_).any()) {
-      cout << "Publishing..." << endl;
-      jarvis::Detection msg;
-      msg.sensor_timestamp = fgmsg->sensor_timestamp;
-      msg.track_id = id;
-      if(!blob->cloud_)
-        blob->project(false);
-      msg.centroid = eigen_extensions::eigToVec(blob->centroid_);
-      msg.cmap = gc_->nameMapping("cmap").names();
-      msg.frame_prediction = predictions.back().vector();
-      msg.track_prediction = track_prediction.vector();
-      msg.num_frames = predictions.size();
-      det_pub_.publish(msg);
-    }
+      fit++;
   }
 }
 

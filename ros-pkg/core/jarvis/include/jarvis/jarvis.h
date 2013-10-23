@@ -12,6 +12,27 @@
 #include <jarvis/track_dataset_assembler.h>
 #include <jarvis/descriptor_pipeline.h>
 
+class DiscreteBayesFilter
+{
+public:
+  DiscreteBayesFilter(float cap = 30, double weight = 10, Label prior = Label());
+  void addObservation(Label frame_prediction, const Eigen::VectorXf& centroid, double timestamp);
+  Label trackPrediction() const;
+  double timestamp() const { return prev_sensor_timestamp_; }
+  size_t numObservations() const { return frame_predictions_.size(); }
+
+protected:
+  float cap_;
+  //! Each log odds vector is weighted by dcentroid * weight.
+  //! i.e. if the thing isn't moving, assume that we're not getting new information.
+  double weight_;
+  Label prior_;
+  std::vector<Label> frame_predictions_;
+  Label cumulative_;
+  Eigen::VectorXf prev_centroid_;
+  double prev_sensor_timestamp_;
+};
+
 class Jarvis
 {
 public:
@@ -40,8 +61,8 @@ protected:
   TrackDatasetAssembler::Ptr tda_;
   int vis_level_;
   int rotation_;
-  //! track id, class predictions.  Matches tracker_.tracks_.
-  std::map<size_t, std::vector<Label> > predictions_;
+  //! track id, track predictions.
+  std::map<size_t, DiscreteBayesFilter> filters_;
   
   void foregroundCallback(sentinel::ForegroundConstPtr msg);
   void backgroundCallback(sentinel::BackgroundConstPtr msg);

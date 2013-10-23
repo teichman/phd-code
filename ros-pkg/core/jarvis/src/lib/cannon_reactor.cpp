@@ -6,40 +6,6 @@
 using namespace std;
 using namespace Eigen;
 
-DiscreteBayesFilter::DiscreteBayesFilter(float cap, double weight, Label prior) :
-  cap_(cap),
-  weight_(weight),
-  prior_(prior)
-{
-}
-
-void DiscreteBayesFilter::addObservation(jarvis::DetectionConstPtr msg)
-{
-  frame_predictions_.push_back(Label(msg->frame_prediction));
-  
-  if(frame_predictions_.size() == 1)
-    cumulative_ = msg->frame_prediction;
-  else
-    cumulative_ += Label(msg->frame_prediction) * (eigen_extensions::vecToEig(msg->centroid) - prev_centroid_).norm() * weight_;
-
-  for(int i = 0; i < cumulative_.rows(); ++i)
-    cumulative_[i] = max(-cap_, min(cap_, cumulative_[i]));
-
-  prev_centroid_ = eigen_extensions::vecToEig(msg->centroid);
-  prev_sensor_timestamp_ = msg->sensor_timestamp;
-
-  if(prior_.rows() == 0)
-    prior_ = VectorXf::Zero(cumulative_.rows());
-}
-
-Label DiscreteBayesFilter::trackPrediction() const
-{
-  // TODO: Label needs to be fixed so that this can be one line.
-  Label track_prediction = cumulative_;
-  track_prediction += prior_;
-  return track_prediction;
-}
-
 CannonReactor::CannonReactor(double threshold) :
   threshold_(threshold)
 {
@@ -61,31 +27,23 @@ void CannonReactor::detectionCallback(jarvis::DetectionConstPtr msg)
     return;
   }
 
-  filters_[msg->track_id].addObservation(msg);
-
-  // -- If the updated track warrants shooting, do so.
-  Label pred = filters_[msg->track_id].trackPrediction();
-  cout << "[CannonReactor]  Track " << msg->track_id << ": " << pred.transpose() << std::flush;
-  if(pred(cmap.toId("cat")) > threshold_) {
-    cout << "  *** " << std::flush;
-    if(!cannon_driver_.firing()) {
-      cout << " FIRING" << std::flush;
-      cannon_driver_.fire();
-      hrt_.reset();
-      hrt_.start();
+  // -- If we're sure it's a cat, fire the cannon.
+  Label tpred(msg->track_prediction);
+  if(tpred(cmap.toId("cat")) > 0) { 
+    cout << "[CannonReactor]  Track " << msg->track_id << ": " << tpred.transpose() << std::flush;
+    if(tpred(cmap.toId("cat")) > threshold_) {
+      cout << "  *** " << std::flush;
+      if(cannon_driver_.ammo() == 0)
+        cout << " Out of ammo." << std::flush;
+      else if(!cannon_driver_.firing()) {
+        cout << " FIRE!" << std::flush;
+        cannon_driver_.fire();
+        hrt_.reset();
+        hrt_.start();
+      }
     }
   }
   cout << endl;
-
-  // -- Prune out any old DiscreteBayesFilters.
-  auto it = filters_.begin();
-  while(it != filters_.end()) {
-    const DiscreteBayesFilter& dbf = it->second;
-    if(msg->sensor_timestamp > dbf.timestamp() + 10.0)
-      filters_.erase(it++);
-    else
-      it++;
-  }
 }
 
 CannonDriver::CannonDriver() :
