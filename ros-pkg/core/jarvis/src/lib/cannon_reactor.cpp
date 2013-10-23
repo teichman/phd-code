@@ -1,10 +1,95 @@
 #include <jarvis/cannon_reactor.h>
+#include <eigen_extensions/eigen_extensions.h>
 #include <online_learning/dataset.h>
-#include <X11/Xlib.h>
+#include <X11/Xlib.h>  // This header causes all kinds of shit if you put it at the top.
 
 using namespace std;
+using namespace Eigen;
 
-CannonReactor::CannonReactor() :
+DiscreteBayesFilter::DiscreteBayesFilter(float cap, double weight, Label prior) :
+  cap_(cap),
+  weight_(weight),
+  prior_(prior)
+{
+}
+
+void DiscreteBayesFilter::addObservation(jarvis::DetectionConstPtr msg)
+{
+  frame_predictions_.push_back(Label(msg->frame_prediction));
+  
+  if(frame_predictions_.size() == 1)
+    cumulative_ = msg->frame_prediction;
+  else
+    cumulative_ += Label(msg->frame_prediction) * (eigen_extensions::vecToEig(msg->centroid) - prev_centroid_).norm() * weight_;
+
+  for(int i = 0; i < cumulative_.rows(); ++i)
+    cumulative_[i] = max(-cap_, min(cap_, cumulative_[i]));
+
+  prev_centroid_ = eigen_extensions::vecToEig(msg->centroid);
+  prev_sensor_timestamp_ = msg->sensor_timestamp;
+
+  if(prior_.rows() == 0)
+    prior_ = VectorXf::Zero(cumulative_.rows());
+}
+
+Label DiscreteBayesFilter::trackPrediction() const
+{
+  // TODO: Label needs to be fixed so that this can be one line.
+  Label track_prediction = cumulative_;
+  track_prediction += prior_;
+  return track_prediction;
+}
+
+CannonReactor::CannonReactor(double threshold) :
+  threshold_(threshold)
+{
+  cannon_driver_.detach();  // Run this in its own thread.    
+  hrt_.start();
+}
+
+CannonReactor::~CannonReactor()
+{
+  int ret = system("killall pyrocket");
+  ROS_ASSERT(ret == 0);
+}
+
+void CannonReactor::detectionCallback(jarvis::DetectionConstPtr msg)
+{
+  NameMapping cmap(msg->cmap);
+  if(!cmap.hasName("cat")) {
+    ROS_WARN_ONCE("CannonReactor expects detections messages that make predictions about cats.");
+    return;
+  }
+
+  filters_[msg->track_id].addObservation(msg);
+
+  // -- If the updated track warrants shooting, do so.
+  Label pred = filters_[msg->track_id].trackPrediction();
+  cout << "[CannonReactor]  Track " << msg->track_id << ": " << pred.transpose() << std::flush;
+  if(pred(cmap.toId("cat")) > threshold_) {
+    cout << "  *** " << std::flush;
+    if(!cannon_driver_.firing()) {
+      cout << " FIRING" << std::flush;
+      cannon_driver_.fire();
+      hrt_.reset();
+      hrt_.start();
+    }
+  }
+  cout << endl;
+
+  // -- Prune out any old DiscreteBayesFilters.
+  auto it = filters_.begin();
+  while(it != filters_.end()) {
+    const DiscreteBayesFilter& dbf = it->second;
+    if(msg->sensor_timestamp > dbf.timestamp() + 10.0)
+      filters_.erase(it++);
+    else
+      it++;
+  }
+}
+
+CannonDriver::CannonDriver() :
+  firing_(false),
   num_darts_(4)
 {
   // -- Start up pyrocket.
@@ -22,8 +107,6 @@ CannonReactor::CannonReactor() :
   int col = 650;  // jarvis display window + 10
   XWarpPointer(display, 0, root, 0, 0, 0, 0, col, row);
   XCloseDisplay(display);
-    
-  hrt_.start();
 
   // -- Put the cannon in an initial known position at far left and pointed down.
   usleep(1e6);
@@ -33,40 +116,25 @@ CannonReactor::CannonReactor() :
   ROS_ASSERT(ret == 0);
 }
 
-CannonReactor::~CannonReactor()
+void CannonDriver::_run()
 {
-  int ret = system("killall pyrocket");
-  ROS_ASSERT(ret == 0);
-}
-
-void CannonReactor::detectionCallback(jarvis::DetectionConstPtr msg)
-{
-  NameMapping cmap(msg->cmap);
-  Label pred(msg->track_prediction);
-  // cout << "Detection: " << endl;
-  // cout << "  " << pred.status(cmap) << endl;
-
-  if(!cmap.hasName("cat")) {
-    ROS_WARN_ONCE("CannonReactor expects detections messages that make predictions about cats.");
-    return;
-  }
-  
-  if(pred(cmap.toId("cat")) > 1.0 && hrt_.getSeconds() > 7.0) {
-    fire();
-    hrt_.reset();
-    hrt_.start();
+  while(true) {
+    usleep(1e5);
+    if(firing_) {
+      sendFireMessage();
+      firing_ = false;
+    }
   }
 }
 
-void CannonReactor::fire()
+void CannonDriver::sendFireMessage()
 {
   if(num_darts_ == 0) {
-    cout << "[CannonReactor]  Out of ammo..." << endl;
+    cout << "[CannonDriver]  Out of ammo..." << endl;
     return;
   }
   --num_darts_;
   
-  cout << "[CannonReactor]  Fire!" << endl;
   int ret;
 
   // -- Rotate the cannon into firing position.

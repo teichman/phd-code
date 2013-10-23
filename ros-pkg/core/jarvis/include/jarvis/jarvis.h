@@ -48,4 +48,5 @@ protected:
   void detect(sentinel::ForegroundConstPtr msg);
 };
 
+
 #endif // JARVIS_H

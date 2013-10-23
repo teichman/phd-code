@@ -35,15 +35,6 @@ void Jarvis::backgroundCallback(sentinel::BackgroundConstPtr msg)
   // }
 }
 
-// TODO: Put a generic one of these in eigen_extensions.
-std::vector<float> eigToVec(const Eigen::VectorXf& eig)
-{
-  vector<float> vec(eig.rows());
-  for(int i = 0; i < eig.rows(); ++i)
-    vec[i] = eig.coeffRef(i);
-  return vec;
-}
-
 void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
 {
   ROS_ASSERT(gc_ && dp_);
@@ -104,7 +95,7 @@ void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
       msg.track_id = id;
       if(!blob->cloud_)
         blob->project(false);
-      msg.centroid = eigToVec(blob->centroid_);
+      msg.centroid = eigen_extensions::eigToVec(blob->centroid_);
       msg.cmap = gc_->nameMapping("cmap").names();
       msg.frame_prediction = predictions.back().vector();
       msg.track_prediction = track_prediction.vector();

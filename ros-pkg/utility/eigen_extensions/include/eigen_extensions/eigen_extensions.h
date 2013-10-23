@@ -303,6 +303,23 @@ namespace eigen_extensions {
   {
     strm.read((char*)val, sizeof(T));
   }
+
+  // TODO: Make these generic.
+  inline std::vector<float> eigToVec(const Eigen::VectorXf& eig)
+  {
+    std::vector<float> vec(eig.rows());
+    for(int i = 0; i < eig.rows(); ++i)
+      vec[i] = eig.coeffRef(i);
+    return vec;
+  }
+
+  inline Eigen::VectorXf vecToEig(const std::vector<float>& vec)
+  {
+    Eigen::VectorXf eig(vec.size());
+    for(int i = 0; i < eig.rows(); ++i)
+      eig.coeffRef(i) = vec[i];
+    return eig;
+  }
   
 }
 

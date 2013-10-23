@@ -20,6 +20,7 @@ public:
   void run() { running_ = true; _run(); running_ = false; }
   virtual void _run() = 0;
   ThreadPtr launch() { return ThreadPtr(new boost::thread(boost::bind(&Agent::run, this))); }
+  void detach() { boost::thread thread(boost::bind(&Agent::run, this)); thread.detach(); }
   
 protected:
   bool quitting_;
