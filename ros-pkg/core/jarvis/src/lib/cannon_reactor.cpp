@@ -42,8 +42,8 @@ void CannonReactor::detectionCallback(jarvis::DetectionConstPtr msg)
         hrt_.start();
       }
     }
+    cout << endl;
   }
-  cout << endl;
 }
 
 CannonDriver::CannonDriver() :

@@ -26,7 +26,7 @@ protected:
 class CannonReactor : public Reactor
 {
 public:
-  CannonReactor(double threshold = 20.0);
+  CannonReactor(double threshold = 10.0);
   ~CannonReactor();
   
 protected:
