@@ -7,8 +7,8 @@ using namespace std;
 CannonReactor::CannonReactor()
 {
   // -- Start up pyrocket.
-  int ret = system("killall pyrocket");
-  ROS_ASSERT(ret == 0);
+  int ret = system("killall -9 pyrocket");
+  usleep(1e4);
   ret = system("~/pyrocket/src/pyrocket &");
   ROS_ASSERT(ret == 0);
 
@@ -34,10 +34,15 @@ void CannonReactor::detectionCallback(jarvis::DetectionConstPtr msg)
 {
   NameMapping cmap(msg->cmap);
   Label pred(msg->label);
-  cout << "Detection: " << endl;
-  cout << "  " << pred.status(cmap) << endl;
+  // cout << "Detection: " << endl;
+  // cout << "  " << pred.status(cmap) << endl;
 
-  if(hrt_.getSeconds() > 5.0) {
+  if(!cmap.hasName("cat")) {
+    ROS_WARN_ONCE("CannonReactor expects detections messages that make predictions about cats.");
+    return;
+  }
+  
+  if(pred(cmap.toId("cat")) > 1.0 && hrt_.getSeconds() > 7.0) {
     fire();
     hrt_.reset();
     hrt_.start();
