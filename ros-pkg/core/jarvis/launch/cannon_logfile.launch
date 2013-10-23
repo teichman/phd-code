@@ -1,0 +1,12 @@
+
+<launch>
+  <arg name="rotation" default="0" />
+  <!-- bagfile must be an absolute path! -->
+  <arg name="bagfile" />
+  <!-- output-directory must be an absolute path! -->
+  <arg name="output-directory" default=" $(env PWD)/jarvis_tds" />
+  
+  <node name="jarvis" pkg="jarvis" type="jarvis" args="-v1 -r$(arg rotation) -c /home/teichman/classifier.gc --config $(find jarvis)/config/hand_specified.yml" required="true" />
+  <node name="rosbag" pkg="rosbag" type="play" args="$(arg bagfile) --topics /foreground --skip-empty 0.5" required="true" />
+  <node name="cannon" pkg="jarvis" type="cannon_reactor" args="" required="true" output="screen" />
+</launch>
