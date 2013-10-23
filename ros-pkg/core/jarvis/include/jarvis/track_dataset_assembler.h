@@ -8,6 +8,8 @@
 class TrackDatasetAssembler
 {
 public:
+  typedef boost::shared_ptr<TrackDatasetAssembler> Ptr;
+  
   //! Temporary storage while tracks accumulate.
   std::map<size_t, std::vector<Blob::Ptr> > tracks_;
   //! Tracks that meet the relevant criteria get put in here.

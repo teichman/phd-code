@@ -12,9 +12,10 @@ public:
   
 protected:
   HighResTimer hrt_;
+  int num_darts_;
   
   void detectionCallback(jarvis::DetectionConstPtr msg);
-  void fire() const;
+  void fire();
 };
 
 #endif // REACTOR_CANNON_H

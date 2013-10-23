@@ -4,7 +4,8 @@ using namespace std;
 
 Reactor::Reactor()
 {
-  det_sub_ = nh_.subscribe("detections", 3, &Reactor::detectionCallback, this);
+  // Keep an infinite queue of detection messages if necessary.
+  det_sub_ = nh_.subscribe("detections", 0, &Reactor::detectionCallback, this);
 }
 
 void Reactor::_run()

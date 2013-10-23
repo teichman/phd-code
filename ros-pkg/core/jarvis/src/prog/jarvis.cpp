@@ -20,10 +20,9 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("vis-level,v", bpo::value(&vis_level)->default_value(0), "")
     ("rotation,r", bpo::value(&rotation)->default_value(0), "")
-    ("output-directory,o", bpo::value(&output_directory)->default_value("jarvis_tds"), "Where to save TD files")
+    ("record", bpo::value(&output_directory)->default_value(""), "Where to save TD files")
     ("config", bpo::value(&config_path)->default_value(""), "")
     ("classifier,c", bpo::value(&gc_path)->default_value(""), "")
-    ("record", "")
     ;
 
   bpo::variables_map opts;
@@ -39,12 +38,10 @@ int main(int argc, char** argv)
   }
 
   cout << "Using vis_level " << vis_level << " and rotation " << rotation << endl;
-  cout << "Saving TD files to \"" << output_directory << "\"" << endl;
-  
+ 
   Jarvis jarvis(vis_level, rotation, output_directory);
-
-  jarvis.record_ = opts.count("record");
-  cout << "Recording: " << jarvis.record_ << endl;
+  if(output_directory != "")
+    cout << "Saving TD files to \"" << output_directory << "\"" << endl;
   
   // -- If we're going to classify things...
   if(gc_path != "") {

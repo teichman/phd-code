@@ -12,8 +12,10 @@ int main(int argc, char** argv)
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
 
+  double delay;
   opts_desc.add_options()
     ("help,h", "produce help message")
+    ("delay,d", bpo::value(&delay)->default_value(3), "")
     ;
 
   bpo::variables_map opts;
@@ -28,6 +30,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  usleep(delay * 1e6);
   CannonReactor cr;
   cr.run();
 

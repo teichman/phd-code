@@ -11,10 +11,13 @@ Jarvis::Jarvis(int vis_level, int rotation, string output_directory) :
   min_predictions_(30),
   min_confidence_(1),
   tracker_(100),
-  tda_(output_directory, 10, 100, 10000),
   vis_level_(vis_level),
   rotation_(rotation)
 {
+  if(output_directory != "") {
+    tda_ = TrackDatasetAssembler::Ptr(new TrackDatasetAssembler(output_directory, 10, 100, 10000));
+  }
+  
   fg_sub_ = nh_.subscribe("foreground", 3, &Jarvis::foregroundCallback, this);
   bg_sub_ = nh_.subscribe("background", 3, &Jarvis::backgroundCallback, this);
   det_pub_ = nh_.advertise<jarvis::Detection>("detections", 0);
@@ -32,6 +35,15 @@ void Jarvis::backgroundCallback(sentinel::BackgroundConstPtr msg)
   // }
 }
 
+// TODO: Put a generic one of these in eigen_extensions.
+std::vector<float> eigToVec(const Eigen::VectorXf& eig)
+{
+  vector<float> vec(eig.rows());
+  for(int i = 0; i < eig.rows(); ++i)
+    vec[i] = eig.coeffRef(i);
+  return vec;
+}
+
 void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
 {
   ROS_ASSERT(gc_ && dp_);
@@ -47,12 +59,23 @@ void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
       continue;
     predictions_[id].push_back(gc_->classify(*dp_->computeDescriptors(blob)));
   }
-  
+
+  // -- Wipe out predictions for any tracks that no longer exist.
+  map<size_t, vector<Label> >::iterator pit = predictions_.begin();
+  while(pit != predictions_.end()) {
+    if(!tracker_.tracks_.count(pit->first))
+      predictions_.erase(pit++);
+    else
+      pit++;
+  }
+    
   // -- If any current blobs have passed threshold, send messages indicating their detection.
   cout << "============================================================" << endl;
-  map<size_t, vector<Label> >::const_iterator pit;
   for(pit = predictions_.begin(); pit != predictions_.end(); ++pit) {
     size_t id = pit->first;
+    ROS_ASSERT(tracker_.tracks_.count(id));
+    Blob::Ptr blob = tracker_.tracks_[id];
+    
     // Ignore tracks that don't have an update for this frame.
     if(!tracker_.tracks_.count(id) || !tracker_.tracks_[id] || tracker_.tracks_[id]->sensor_timestamp_ != fgmsg->sensor_timestamp)
       continue;
@@ -78,8 +101,14 @@ void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
       cout << "Publishing..." << endl;
       jarvis::Detection msg;
       msg.sensor_timestamp = fgmsg->sensor_timestamp;
+      msg.track_id = id;
+      if(!blob->cloud_)
+        blob->project(false);
+      msg.centroid = eigToVec(blob->centroid_);
       msg.cmap = gc_->nameMapping("cmap").names();
-      msg.label = track_prediction.vector();
+      msg.frame_prediction = predictions.back().vector();
+      msg.track_prediction = track_prediction.vector();
+      msg.num_frames = predictions.size();
       det_pub_.publish(msg);
     }
   }
@@ -98,8 +127,8 @@ void Jarvis::foregroundCallback(sentinel::ForegroundConstPtr msg)
     detect(msg);
 
   // -- Accumulate TrackDatasets.
-  if(record_)
-    tda_.update(tracker_.tracks_);
+  if(tda_)
+    tda_->update(tracker_.tracks_);
 
 
   if(vis_level_ > 0) {
