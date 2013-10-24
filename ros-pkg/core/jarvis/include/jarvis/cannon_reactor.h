@@ -30,6 +30,8 @@ public:
   ~CannonReactor();
   
 protected:
+  ros::NodeHandle nh_;
+  ros::Publisher pub_;
   double threshold_;
   HighResTimer hrt_;
   CannonDriver cannon_driver_;

@@ -10,6 +10,7 @@ using namespace Eigen;
 CannonReactor::CannonReactor(double threshold) :
   threshold_(threshold)
 {
+  pub_ = nh_.advertise<sentinel::RecordingRequest>("recording_requests", 0);
   cannon_driver_.detach();  // Run this in its own thread.    
   hrt_.start();
 }
@@ -41,14 +42,18 @@ void CannonReactor::detectionCallback(jarvis::DetectionConstPtr msg)
         cannon_driver_.fire();
         hrt_.reset();
         hrt_.start();
-
-        // -- Send a message to Sentinel telling it to record.
-        sentinel::RecordingRequest msg;
-        msg.timeout = ros::Time::now() + ros::Duration(15);
-        msg.tag = "firing";
       }
     }
     cout << endl;
+  }
+  
+  // -- If we're firing, send a message telling Sentinel to record.
+  //    Record the entire time we're firing, plus 3 seconds afterwards.
+  if(cannon_driver_.firing()) {
+    sentinel::RecordingRequest msg;
+    msg.timeout = ros::Time::now() + ros::Duration(3);
+    msg.tag = "firing";
+    pub_.publish(msg);
   }
 }
 
