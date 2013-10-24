@@ -130,38 +130,4 @@ protected:
   void recordingRequestCallback(const sentinel::RecordingRequest& rr);
 };
 
-// class DiskStreamingSentinel : public Sentinel
-// {
-// public:
-//   DiskStreamingSentinel(std::string dir,
-//                         double save_interval,
-//                         double update_interval,
-//                         int max_training_imgs,
-//                         bool visualize,
-//                         OpenNI2Interface::Resolution color_res,
-//                         OpenNI2Interface::Resolution depth_res);
-//   ~DiskStreamingSentinel()
-//   {
-//     #if JARVIS_DEBUG
-//     std::cout << __PRETTY_FUNCTION__ << std::endl;
-//     #endif
-//   }
-
-//   void handleDetection(openni::VideoFrameRef color,
-//                        openni::VideoFrameRef depth,
-//                        const std::vector<uint8_t>& mask,
-//                        size_t num_in_mask,
-//                        double sensor_timestamp,
-//                        double wall_timestamp,
-//                        size_t frame_id);
-
-// protected:
-//   std::string dir_;
-//   double save_interval_;
-//   HighResTimer save_timer_;
-  
-//   void save(cv::Mat3b color, DepthMatConstPtr depth, cv::Mat3b vis, double ts) const;
-//   cv::Mat1b depthMatToCV(const DepthMat& depth) const;
-// };
-
 #endif // SENTINEL_H
