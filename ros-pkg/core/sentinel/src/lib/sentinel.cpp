@@ -357,7 +357,6 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
 void ROSStreamingSentinel::recordingRequestCallback(const sentinel::RecordingRequest& rr)
 {
   recording_tags_[rr.tag] = rr.timeout;
-  cout << "Got RecordingRequest.  Recording " << rr.tag << " until " << rr.timeout << endl;
 }
 
 void ROSStreamingSentinel::processHook(openni::VideoFrameRef color)
@@ -381,7 +380,7 @@ void ROSStreamingSentinel::processHook(openni::VideoFrameRef color)
 
   // -- Otherwise save this frame...
   ostringstream oss;
-  oss << "image" << setw(16) << setfill('0') << now.toSec() << ".png";
+  oss << "image" << fixed << setprecision(16) << setw(16) << setfill('0') << now.toSec() << ".png";
   string filename = oss.str();
   cv::imwrite(frames_dir_ + "/" + filename, oniToCV(color));
   

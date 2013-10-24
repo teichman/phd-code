@@ -16,6 +16,7 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("tag", bpo::value(&tag)->required(), "")
     ("secs", bpo::value(&secs)->required(), "")
+    ("continuous,c", "")
     ;
 
   p.add("tag", 1);
@@ -39,9 +40,22 @@ int main(int argc, char** argv)
   sentinel::RecordingRequest msg;
   msg.timeout = ros::Time::now() + ros::Duration(secs);
   msg.tag = tag;
-  usleep(1e5);  // Without a delay, the receiver sometimes doesn't get anything.  Weird.
-  pub.publish(msg);
+
+
+  // ROS messages are unreliable.  I should probably be using a service for this...
+  for(int i = 0; i < 10; ++i) { 
+    usleep(1e5);  
+    pub.publish(msg);
+  }
   cout << "Published." << endl;
+
+  if(opts.count("continuous")) {
+    while(ros::ok()) {
+      pub.publish(msg);
+      cout << "Publishing continuously..." << endl;
+      usleep(1e5);
+    }
+  }
 
   return 0;
 }
