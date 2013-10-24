@@ -357,6 +357,7 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
 void ROSStreamingSentinel::recordingRequestCallback(const sentinel::RecordingRequest& rr)
 {
   recording_tags_[rr.tag] = rr.timeout;
+  cout << "[ROSStreamingSentinel]  Got RecordingRequest.  Recording " << rr.tag << " until " << rr.timeout << endl;
 }
 
 void ROSStreamingSentinel::processHook(openni::VideoFrameRef color)

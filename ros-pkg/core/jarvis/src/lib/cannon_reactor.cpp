@@ -1,6 +1,7 @@
 #include <jarvis/cannon_reactor.h>
 #include <eigen_extensions/eigen_extensions.h>
 #include <online_learning/dataset.h>
+#include <sentinel/RecordingRequest.h>
 #include <X11/Xlib.h>  // This header causes all kinds of shit if you put it at the top.
 
 using namespace std;
@@ -40,6 +41,11 @@ void CannonReactor::detectionCallback(jarvis::DetectionConstPtr msg)
         cannon_driver_.fire();
         hrt_.reset();
         hrt_.start();
+
+        // -- Send a message to Sentinel telling it to record.
+        sentinel::RecordingRequest msg;
+        msg.timeout = ros::Time::now() + ros::Duration(15);
+        msg.tag = "firing";
       }
     }
     cout << endl;

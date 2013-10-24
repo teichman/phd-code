@@ -36,19 +36,21 @@ int main(int argc, char** argv)
 
   ros::init(argc, argv, "request_recording");
   ros::NodeHandle nh;
-  ros::Publisher pub = nh.advertise<sentinel::RecordingRequest>("recording_requests", 0);
+  bool latch = true;
+  ros::Publisher pub = nh.advertise<sentinel::RecordingRequest>("recording_requests", 0, latch);
   sentinel::RecordingRequest msg;
   msg.timeout = ros::Time::now() + ros::Duration(secs);
   msg.tag = tag;
 
-
-  // ROS messages are unreliable.  I should probably be using a service for this...
-  for(int i = 0; i < 10; ++i) { 
-    usleep(1e5);  
-    pub.publish(msg);
+  usleep(5e5);  // 1e5 does not work on a test machine, even with latching.  How could this be?
+  while(pub.getNumSubscribers() == 0) {
+    usleep(5e5);
+    cout << "Waiting for subscribers..." << endl;
   }
-  cout << "Published." << endl;
 
+  pub.publish(msg);
+  cout << "Published." << endl;
+  
   if(opts.count("continuous")) {
     while(ros::ok()) {
       pub.publish(msg);
