@@ -1,8 +1,6 @@
 
 <launch>
-  <include file="$(find sentinel)/launch/record.launch" />
-  
   <arg name="rotation" default="0" />
-  <node name="jarvis" pkg="jarvis" type="jarvis" args="-v1 -r$(arg rotation) -c /home/teichman/classifier.gc --config $(find jarvis)/config/hand_specified.yml" required="true" />
+  <node name="jarvis" pkg="jarvis" type="jarvis" args="-v1 -r$(arg rotation) -c $(find jarvis)/data/classifier.gc --config $(find jarvis)/config/hand_specified.yml" required="true" />
   <node name="cannon" pkg="jarvis" type="cannon_reactor" args="" required="true" output="screen" />
 </launch>
