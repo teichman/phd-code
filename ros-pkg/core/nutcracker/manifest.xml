@@ -10,6 +10,9 @@
   <url>http://ros.org/wiki/nutcracker</url>
   <depend package="opencv_bleeding"/>
   <depend package="timer"/>
+  <depend package="bag_of_tricks"/>
+  <depend package="eigen_flags"/>
+  <depend package="matplotlib_interface"/>
 
 </package>
 

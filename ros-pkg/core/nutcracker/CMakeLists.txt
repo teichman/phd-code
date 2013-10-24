@@ -21,12 +21,15 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
+rosbuild_add_boost_directories()
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
 #target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
+
 rosbuild_add_executable(optical_flow_experiment src/prog/optical_flow_experiment.cpp)
 rosbuild_add_executable(dump src/prog/dump.cpp)
 rosbuild_add_executable(lkdemo src/prog/lkdemo.cpp)
+rosbuild_add_executable(cross_evaluate src/prog/cross_evaluate.cpp)
+rosbuild_link_boost(cross_evaluate program_options filesystem)
+
 #target_link_libraries(example ${PROJECT_NAME})
