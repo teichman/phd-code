@@ -12,6 +12,7 @@
 #include <sentinel/background_model.h>
 #include <sentinel/Foreground.h>
 #include <sentinel/Background.h>
+#include <sentinel/RecordingRequest.h>
 
 class Sentinel : public OpenNI2Handler
 {
@@ -33,6 +34,9 @@ public:
   void rgbdCallback(openni::VideoFrameRef color, openni::VideoFrameRef depth,
                     size_t frame_id, double timestamp);
   void run();
+
+  //! Called before running processBackgroundSubtraction.
+  virtual void processHook(openni::VideoFrameRef color) {}
   virtual void handleDetection(openni::VideoFrameRef color,
                                openni::VideoFrameRef depth,
                                const std::vector<uint32_t>& indices,
@@ -47,6 +51,7 @@ public:
                                   double wall_timestamp,
                                   size_t frame_id) {}
   void debug(int x, int y) { model_->debug(x, y); }
+
                                
 
 protected:
@@ -64,12 +69,13 @@ protected:
   std::vector<uint32_t> indices_;
   std::vector<uint32_t> fg_markers_;
   std::vector<uint32_t> bg_fringe_markers_;
-  
-  void process(openni::VideoFrameRef color,
-               openni::VideoFrameRef depth,
-               double sensor_timestamp,
-               double wall_timestamp,
-               size_t frame_id);
+
+  void processRecording(openni::VideoFrameRef color);
+  void processBackgroundSubtraction(openni::VideoFrameRef color,
+                                    openni::VideoFrameRef depth,
+                                    double sensor_timestamp,
+                                    double wall_timestamp,
+                                    size_t frame_id);
   void updateModel(openni::VideoFrameRef depth);
 };
 
@@ -77,6 +83,7 @@ class ROSStreamingSentinel : public Sentinel
 {
 public:
   ROSStreamingSentinel(std::string sensor_id,
+                       std::string recording_dir,
                        double update_interval,
                        double occupancy_threshold,
                        int raytracing_threshold,
@@ -87,9 +94,16 @@ public:
 
 protected:
   std::string sensor_id_;
+  //! Where to save recordings.  If "", don't save recordings.
+  std::string recording_dir_;
+  std::string frames_dir_;
+  std::string tags_dir_;
+  //! tag, time to stop recording at.
+  std::map<std::string, ros::Time> recording_tags_;
   ros::NodeHandle nh_;
   ros::Publisher fg_pub_;
   ros::Publisher bg_pub_;
+  ros::Subscriber rr_sub_;
   sentinel::Foreground fgmsg_;
   sentinel::Background bgmsg_;
   int bg_index_x_;
@@ -111,6 +125,9 @@ protected:
                           double sensor_timestamp,
                           double wall_timestamp,
                           size_t frame_id);
+  //! Used for processing recordings.
+  void processHook(openni::VideoFrameRef color);
+  void recordingRequestCallback(const sentinel::RecordingRequest& rr);
 };
 
 // class DiskStreamingSentinel : public Sentinel

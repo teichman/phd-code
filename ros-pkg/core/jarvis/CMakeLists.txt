@@ -35,7 +35,7 @@ rosbuild_add_library(jarvis_core
   src/lib/reactor.cpp
   src/lib/cannon_reactor.cpp
   )
-rosbuild_add_compile_flags(jarvis_core -std=c++0x)
+rosbuild_add_compile_flags(jarvis_core -std=c++0)
 target_link_libraries(jarvis_core tcmalloc)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()

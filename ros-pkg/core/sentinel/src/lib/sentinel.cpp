@@ -86,14 +86,15 @@ void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameR
   }
   #endif
 
-  process(oni_color, oni_depth, depth_timestamp, timestamp, frame_id);
+  processHook(oni_color);
+  processBackgroundSubtraction(oni_color, oni_depth, depth_timestamp, timestamp, frame_id);
 }
 
-void Sentinel::process(openni::VideoFrameRef color,
-                       openni::VideoFrameRef depth,
-                       double sensor_timestamp,
-                       double wall_timestamp,
-                       size_t frame_id)
+void Sentinel::processBackgroundSubtraction(openni::VideoFrameRef color,
+                                            openni::VideoFrameRef depth,
+                                            double sensor_timestamp,
+                                            double wall_timestamp,
+                                            size_t frame_id)
 {
   // -- Update model.
   if(update_timer_.getSeconds() > update_interval_) {
@@ -149,6 +150,7 @@ void Sentinel::updateModel(openni::VideoFrameRef depth)
 }
 
 ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
+                                           string recording_dir,
                                            double update_interval,
                                            double occupancy_threshold,
                                            int raytracing_threshold,
@@ -159,13 +161,32 @@ ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
   Sentinel(update_interval, occupancy_threshold, raytracing_threshold,
            detection_threshold, visualize, color_res, depth_res),
   sensor_id_(sensor_id),
+  recording_dir_(recording_dir),
   bg_index_x_(0),
   bg_index_y_(0)
 {
   fg_pub_ = nh_.advertise<sentinel::Foreground>("foreground", 0);
   bg_pub_ = nh_.advertise<sentinel::Background>("background", 0);
+  rr_sub_ = nh_.subscribe("recording_requests", 0, &ROSStreamingSentinel::recordingRequestCallback, this);
   initializeForegroundMessage();
   initializeBackgroundMessage();
+
+  // -- Create directory structure for recordings.
+  if(recording_dir_ != "") {
+    if(!bfs::exists(recording_dir_))
+      bfs::create_directory(recording_dir_);    
+    ROS_ASSERT(bfs::is_directory(recording_dir_));
+    
+    frames_dir_ = recording_dir_ + "/all";
+    if(!bfs::exists(frames_dir_))
+      bfs::create_directory(frames_dir_);
+    ROS_ASSERT(bfs::is_directory(frames_dir_));
+
+    tags_dir_ = recording_dir_ + "/tags";
+    if(!bfs::exists(tags_dir_))
+      bfs::create_directory(tags_dir_);
+    ROS_ASSERT(bfs::is_directory(tags_dir_));
+  }
 }
 
 void ROSStreamingSentinel::initializeForegroundMessage()
@@ -333,5 +354,42 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
   fg_pub_.publish(fgmsg_);
 }
 
+void ROSStreamingSentinel::recordingRequestCallback(const sentinel::RecordingRequest& rr)
+{
+  recording_tags_[rr.tag] = rr.timeout;
+  cout << "Got RecordingRequest.  Recording " << rr.tag << " until " << rr.timeout << endl;
+}
 
+void ROSStreamingSentinel::processHook(openni::VideoFrameRef color)
+{
+  // -- Handle any RecordingRequest messages we have waiting in the queue.
+  ros::spinOnce();
+  
+  // -- Prune away any recording tags that are now out of date.
+  ros::Time now = ros::Time::now();
+  map<string, ros::Time>::iterator it = recording_tags_.begin();
+  while(it != recording_tags_.end()) {
+    if(now > it->second)
+      recording_tags_.erase(it++);
+    else
+      it++;
+  }
 
+  // -- If no one has said to record, don't.
+  if(recording_tags_.empty())
+    return;
+
+  // -- Otherwise save this frame...
+  ostringstream oss;
+  oss << "image" << setw(16) << setfill('0') << now.toSec() << ".png";
+  string filename = oss.str();
+  cv::imwrite(frames_dir_ + "/" + filename, oniToCV(color));
+  
+  // ... and make symlinks for the active tags.
+  for(it = recording_tags_.begin(); it != recording_tags_.end(); ++it) {
+    string tag_dir = tags_dir_ + "/" + it->first;
+    if(!bfs::exists(tag_dir))
+      bfs::create_directory(tag_dir);
+    bfs::create_symlink("../../all/" + filename, tag_dir + "/" + filename);
+  }
+}

@@ -26,6 +26,7 @@ int main(int argc, char** argv)
   size_t max_training_imgs;
   string color_resolution;
   string depth_resolution;
+  string recording_dir;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("sensor-id", bpo::value(&sensor_id), "e.g. xpl07")
@@ -36,6 +37,7 @@ int main(int argc, char** argv)
     ("color-res", bpo::value(&color_resolution), "QVGA or VGA")
     ("depth-res", bpo::value(&depth_resolution), "QVGA or VGA")
     ("visualize", "Show extra visualization")
+    ("recording-dir", bpo::value(&recording_dir)->required(), "Directory to save recordings to")
     ;
 
   p.add("sensor-id", 1);
@@ -75,7 +77,7 @@ int main(int argc, char** argv)
     }
   }
 
-  ROSStreamingSentinel sen(sensor_id, update_interval,
+  ROSStreamingSentinel sen(sensor_id, recording_dir, update_interval,
                            occupancy_threshold, raytracing_threshold,
                            detection_threshold, opts.count("visualize"),
                            color_res, depth_res);
