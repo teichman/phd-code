@@ -84,14 +84,55 @@ TEST(ThreadedSerializer, SerializableObject)
   ser.verbose_ = true;
   ThreadPtr thread = ser.launch();  // Run in a different thread.
 
-  if(!bfs::exists("tmp_directory"))
-    bfs::create_directory("tmp_directory");
+  string dir = "threaded_serializer_test";
+  if(!bfs::exists(dir))
+    bfs::create_directory(dir);
 
   int num = 100;
   for(int i = 0; i < num; ++i) {
     ostringstream oss;
-    oss << "tmp_directory/ndc" << setw(3) << setfill('0') << i;
+    oss << dir << "/ndc" << setw(3) << setfill('0') << i;
     ser.push(NDC(i), oss.str());
+  }
+
+  ser.quit(); // Finish serializing everything in your queue and shut down your thread.
+  thread->join();
+  cout << "Done." << endl;
+}
+
+struct CustomSerializationFunction
+{
+  void operator()(std::string str, const std::string& path) {
+    ofstream f;
+    f.open(path.c_str());
+    if(!f.is_open()) {
+      cerr << "Failed to open " << path << endl;
+      assert(f.is_open());
+    }
+    f << str << endl;
+    f.close();
+  }
+};
+
+TEST(ThreadedSerializer, CustomSerializationFunction)
+{
+  ThreadedSerializer<std::string, CustomSerializationFunction> ser;
+  ser.verbose_ = true;
+  ThreadPtr thread = ser.launch();  // Run in a different thread.
+
+  string dir = "custom_threaded_serializer_test";
+  if(!bfs::exists(dir))
+    bfs::create_directory(dir);
+
+  int num = 100;
+  for(int i = 0; i < num; ++i) {
+    ostringstream oss;
+    oss << dir << "/string" << setw(3) << setfill('0') << i;
+    string path = oss.str();
+    oss.str("");
+    oss << "The number is " << i << endl;
+    string str = oss.str();
+    ser.push(str, path);
   }
 
   ser.quit(); // Finish serializing everything in your queue and shut down your thread.
