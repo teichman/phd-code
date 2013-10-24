@@ -8,6 +8,7 @@
 
 typedef boost::shared_ptr<boost::thread> ThreadPtr;
 
+//! All of this is highly experimental.
 class Agent : public SharedLockable
 {
 public:
@@ -19,10 +20,19 @@ public:
   bool running() { scopeLockRead; return running_; }
   void run() { running_ = true; _run(); running_ = false; }
   virtual void _run() = 0;
-  ThreadPtr launch() { return ThreadPtr(new boost::thread(boost::bind(&Agent::run, this))); }
+  //! This should be a void function.
+  ThreadPtr launch()
+  {
+    thread_ = ThreadPtr(new boost::thread(boost::bind(&Agent::run, this)));
+    return thread_;
+  }
+  ThreadPtr thread() const { return thread_; }
+
+  //! This should maybe not exist at all.
   void detach() { boost::thread thread(boost::bind(&Agent::run, this)); thread.detach(); }
   
 protected:
+  ThreadPtr thread_;
   bool quitting_;
   bool running_;
 };
