@@ -3,7 +3,7 @@
 
 #include <ros/ros.h>
 #include <jarvis/Detection.h>
-#include <bag_of_tricks/agent.h>
+#include <agent/agent.h>
 
 class Reactor : public Agent
 {

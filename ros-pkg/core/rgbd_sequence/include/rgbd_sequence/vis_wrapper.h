@@ -2,7 +2,7 @@
 #define VIS_WRAPPER_H
 
 #include <pcl/visualization/pcl_visualizer.h>
-#include <bag_of_tricks/lockable.h>
+#include <agent/lockable.h>
 #include <rgbd_sequence/rgbd_sequence.h>
 
 namespace rgbd

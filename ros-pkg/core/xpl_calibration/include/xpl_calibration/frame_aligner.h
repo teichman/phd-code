@@ -2,7 +2,7 @@
 #define FRAME_ALIGNER_H
 
 #include <ros/package.h>
-#include <bag_of_tricks/agent.h>
+#include <agent/agent.h>
 #include <pipeline/params.h>
 #include <xpl_calibration/mean_depth_error.h>
 

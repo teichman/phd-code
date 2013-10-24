@@ -2,7 +2,7 @@
 #define PRIMESENSE_SLAM_H
 
 #include <pcl/filters/voxel_grid.h>
-#include <bag_of_tricks/agent.h>
+#include <agent/agent.h>
 #include <pose_graph_slam/pose_graph_slam.h>
 #include <rgbd_sequence/stream_sequence_base.h>
 #include <xpl_calibration/trajectory.h>

@@ -6,7 +6,7 @@
 #include <pcl/common/transforms.h>
 #include <rgbd_sequence/primesense_model.h>
 #include <optimization/optimization.h>
-#include <bag_of_tricks/lockable.h>
+#include <agent/lockable.h>
 #include <xpl_calibration/mean_depth_error.h>
 #include <rgbd_sequence/discrete_depth_distortion_model.h>
 

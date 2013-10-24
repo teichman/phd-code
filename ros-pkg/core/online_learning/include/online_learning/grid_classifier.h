@@ -1,7 +1,7 @@
 #ifndef GRID_CLASSIFIER_H
 #define GRID_CLASSIFIER_H
 
-#include <bag_of_tricks/lockable.h>
+#include <agent/lockable.h>
 #include <eigen_extensions/random.h>
 #include <online_learning/classifier.h>
 

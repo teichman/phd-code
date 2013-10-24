@@ -4,7 +4,7 @@
 #include <iostream>
 #include <OpenNI.h>
 #include <openni2_interface/synchronizer.h>
-#include <bag_of_tricks/lockable.h>
+#include <agent/lockable.h>
 
 class OpenNI2Handler
 {

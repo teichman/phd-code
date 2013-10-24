@@ -3,7 +3,7 @@
 
 #include <opencv2/imgproc/imgproc.hpp>
 #include <rgbd_sequence/primesense_model.h>
-#include <bag_of_tricks/lockable.h>
+#include <agent/lockable.h>
 #include <ros/assert.h>
 #include <ros/console.h>
 #include <boost/shared_ptr.hpp>

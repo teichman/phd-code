@@ -2,7 +2,7 @@
 #include <pcl/io/openni_grabber.h>
 #include <pcl/visualization/cloud_viewer.h>
 #include <image_labeler/opencv_view.h>
-#include <bag_of_tricks/lockable.h>
+#include <agent/lockable.h>
 #include <rgbd_sequence/discrete_depth_distortion_model.h>
 
 using namespace std;

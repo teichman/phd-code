@@ -6,7 +6,7 @@
 #include <gperftools/profiler.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/filters/voxel_grid.h>
-#include <bag_of_tricks/lockable.h>
+#include <agent/lockable.h>
 #include <pose_graph_slam/pose_graph_slam.h>
 #include <rgbd_sequence/stream_sequence_base.h>
 #include <xpl_calibration/frame_aligner.h>

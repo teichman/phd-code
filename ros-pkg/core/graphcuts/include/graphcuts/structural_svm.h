@@ -5,7 +5,7 @@
 #include <optimization/nips.h>
 #include <optimization/common_functions.h>
 #include <eigen_extensions/eigen_extensions.h>
-#include <bag_of_tricks/agent.h>
+#include <agent/agent.h>
 #include <graphcuts/maxflow_inference.h>
 
 namespace gc

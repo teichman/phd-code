@@ -5,7 +5,7 @@
 #include <float.h>
 #include <fstream>
 #include <name_mapping/name_mapping.h>
-#include <bag_of_tricks/lockable.h>
+#include <agent/lockable.h>
 
 //! Safe to call incrementStats from multiple threads at the same time.
 //! Everything else should be done single-threaded.

@@ -1,7 +1,7 @@
 #ifndef BOX_SELECTION_VISUALIZER_H
 #define BOX_SELECTION_VISUALIZER_H
 
-#include <bag_of_tricks/agent.h>
+#include <agent/agent.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <xpl_calibration/slam_calibrator.h>
 

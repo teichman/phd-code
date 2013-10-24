@@ -3,7 +3,7 @@
 
 #include <GL/gl.h>
 #include <GL/glut.h>
-#include <bag_of_tricks/agent.h>
+#include <agent/agent.h>
 #include <timer/timer.h>
 #include <rgbd_sequence/primesense_model.h>
 

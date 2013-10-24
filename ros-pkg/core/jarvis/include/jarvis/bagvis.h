@@ -3,7 +3,7 @@
 
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
-#include <bag_of_tricks/lockable.h>
+#include <agent/lockable.h>
 #include <sentinel/reconstructor.h>
 #include <jarvis/tracker.h>
 

@@ -1,7 +1,7 @@
 #include <pcl/visualization/pcl_visualizer.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <rgbd_sequence/stream_sequence_base.h>
-#include <bag_of_tricks/agent.h>
+#include <agent/agent.h>
 
 namespace rgbd
 {

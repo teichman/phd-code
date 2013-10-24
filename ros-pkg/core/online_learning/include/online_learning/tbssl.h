@@ -7,26 +7,10 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/thread.hpp>
+#include <agent/agent.h>
 #include <online_learning/grid_classifier.h>
 #include <online_learning/training_buffer.h>
 #include <online_learning/common.h>
-
-class Agent : public SharedLockable
-{
-public:
-  Agent() : quitting_(false), running_(false) {}
-  virtual ~Agent() {}
-  
-  void quit() { scopeLockWrite; quitting_ = true; }
-  bool running() { scopeLockRead; return running_; }
-  void run() { running_ = true; _run(); running_ = false; }
-  virtual void _run() = 0;
-  ThreadPtr launch() { return ThreadPtr(new boost::thread(boost::bind(&Agent::run, this))); }
-  
-protected:
-  bool quitting_;
-  bool running_;
-};
 
 //! ====
 //! == Locking strategy:

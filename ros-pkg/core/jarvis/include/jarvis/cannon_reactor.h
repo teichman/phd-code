@@ -2,7 +2,7 @@
 #define CANNON_REACTOR_H
 
 #include <timer/timer.h>
-#include <bag_of_tricks/agent.h>
+#include <agent/agent.h>
 #include <online_learning/dataset.h>
 #include <jarvis/reactor.h>
 #include <jarvis/jarvis.h>

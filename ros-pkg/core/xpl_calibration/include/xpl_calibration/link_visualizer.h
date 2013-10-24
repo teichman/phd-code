@@ -3,7 +3,7 @@
 
 #include <boost/thread.hpp>
 #include <pcl/visualization/pcl_visualizer.h>
-#include <bag_of_tricks/lockable.h>
+#include <agent/lockable.h>
 #include <rgbd_sequence/stream_sequence_base.h>
 #include <xpl_calibration/trajectory.h>
 #include <xpl_calibration/utility_functions.h>

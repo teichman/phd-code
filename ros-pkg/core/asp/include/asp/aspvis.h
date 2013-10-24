@@ -5,7 +5,7 @@
 #include <ctime>
 #include <boost/filesystem.hpp>
 #include <image_labeler/opencv_view.h>
-#include <bag_of_tricks/agent.h>
+#include <agent/agent.h>
 #include <asp/asp.h>
 
 namespace asp

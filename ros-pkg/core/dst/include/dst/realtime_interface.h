@@ -5,7 +5,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <image_labeler/opencv_view.h>
 #include <eigen_extensions/eigen_extensions.h> 
-#include <bag_of_tricks/lockable.h>
+#include <agent/lockable.h>
 #include <dst/segmentation_pipeline.h>
 
 namespace dst
