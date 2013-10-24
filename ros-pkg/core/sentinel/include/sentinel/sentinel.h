@@ -13,6 +13,7 @@
 #include <sentinel/Foreground.h>
 #include <sentinel/Background.h>
 #include <sentinel/RecordingRequest.h>
+#include <serializable/serializable.h>
 
 class Sentinel : public OpenNI2Handler
 {
@@ -79,6 +80,11 @@ protected:
   void updateModel(openni::VideoFrameRef depth);
 };
 
+struct ImageSerializer
+{
+  void operator()(cv::Mat3b img, std::string path) { cv::imwrite(path, img); }
+};
+
 class ROSStreamingSentinel : public Sentinel
 {
 public:
@@ -92,6 +98,8 @@ public:
                        OpenNI2Interface::Resolution color_res,
                        OpenNI2Interface::Resolution depth_res);
 
+  ~ROSStreamingSentinel();
+  
 protected:
   std::string sensor_id_;
   //! Where to save recordings.  If "", don't save recordings.
@@ -100,6 +108,7 @@ protected:
   std::string tags_dir_;
   //! tag, time to stop recording at.
   std::map<std::string, ros::Time> recording_tags_;
+  ThreadedSerializer<cv::Mat3b, ImageSerializer> serializer_;
   ros::NodeHandle nh_;
   ros::Publisher fg_pub_;
   ros::Publisher bg_pub_;

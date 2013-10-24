@@ -187,6 +187,15 @@ ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
       bfs::create_directory(tags_dir_);
     ROS_ASSERT(bfs::is_directory(tags_dir_));
   }
+
+  serializer_.launch();
+}
+
+ROSStreamingSentinel::~ROSStreamingSentinel()
+{
+  // Wait for the serializer to finish.
+  serializer_.quit();
+  serializer_.thread()->join();
 }
 
 void ROSStreamingSentinel::initializeForegroundMessage()
@@ -383,7 +392,8 @@ void ROSStreamingSentinel::processHook(openni::VideoFrameRef color)
   ostringstream oss;
   oss << "image" << fixed << setprecision(16) << setw(16) << setfill('0') << now.toSec() << ".png";
   string filename = oss.str();
-  cv::imwrite(frames_dir_ + "/" + filename, oniToCV(color));
+  serializer_.push(oniToCV(color), frames_dir_ + "/" + filename);
+  //cv::imwrite(frames_dir_ + "/" + filename, oniToCV(color));
   
   // ... and make symlinks for the active tags.
   for(it = recording_tags_.begin(); it != recording_tags_.end(); ++it) {
