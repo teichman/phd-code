@@ -1,0 +1,16 @@
+<package>
+  <description brief="agent">
+
+     agent
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/agent</url>
+
+  <depend package="roscpp"/>
+  
+</package>
+
+

@@ -1,4 +1,4 @@
-#include <bag_of_tricks/lockable.h>
+#include <agent/lockable.h>
 
 Lockable::Lockable() :
   mutex_(pthread_mutex_t())

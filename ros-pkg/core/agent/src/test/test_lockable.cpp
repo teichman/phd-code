@@ -1,4 +1,4 @@
-#include <bag_of_tricks/lockable.h>
+#include <agent/lockable.h>
 #include <gtest/gtest.h>
 
 using namespace std;
