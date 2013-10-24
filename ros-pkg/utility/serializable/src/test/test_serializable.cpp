@@ -78,6 +78,27 @@ TEST(Serializable, Serializable)
   EXPECT_TRUE(ndc4.val_ == val);
 }
 
+TEST(ThreadedSerializer, SerializableObject)
+{
+  ThreadedSerializer<NDC> ser;
+  ser.verbose_ = true;
+  ThreadPtr thread = ser.launch();  // Run in a different thread.
+
+  if(!bfs::exists("tmp_directory"))
+    bfs::create_directory("tmp_directory");
+
+  int num = 100;
+  for(int i = 0; i < num; ++i) {
+    ostringstream oss;
+    oss << "tmp_directory/ndc" << setw(3) << setfill('0') << i;
+    ser.push(NDC(i), oss.str());
+  }
+
+  ser.quit(); // Finish serializing everything in your queue and shut down your thread.
+  thread->join();
+  cout << "Done." << endl;
+}
+
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

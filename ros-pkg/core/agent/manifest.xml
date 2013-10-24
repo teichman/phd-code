@@ -10,6 +10,10 @@
   <url>http://ros.org/wiki/agent</url>
 
   <depend package="roscpp"/>
+
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib `rosboost-cfg --lflags thread` -lagent" />
+  </export>
   
 </package>
 

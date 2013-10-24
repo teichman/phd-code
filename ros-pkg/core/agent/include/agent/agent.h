@@ -4,7 +4,7 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/thread.hpp>
-#include <bag_of_tricks/lockable.h>
+#include <agent/lockable.h>
 
 typedef boost::shared_ptr<boost::thread> ThreadPtr;
 
