@@ -78,11 +78,11 @@ CannonDriver::CannonDriver() :
   XCloseDisplay(display);
 
   // -- Put the cannon in an initial known position at far left and pointed down.
-  usleep(1e6);
-  ret = system("xdotool keydown Alt; xdotool keydown Down; sleep 3; xdotool keyup Down; xdotool keyup Alt");
-  ROS_ASSERT(ret == 0);
-  ret = system("xdotool keydown Alt; xdotool keydown Left; sleep 5; xdotool keyup Left; xdotool keyup Alt");
-  ROS_ASSERT(ret == 0);
+  // usleep(1e6);
+  // ret = system("xdotool keydown Alt; xdotool keydown Down; sleep 3; xdotool keyup Down; xdotool keyup Alt");
+  // ROS_ASSERT(ret == 0);
+  // ret = system("xdotool keydown Alt; xdotool keydown Left; sleep 5; xdotool keyup Left; xdotool keyup Alt");
+  // ROS_ASSERT(ret == 0);
 }
 
 void CannonDriver::_run()
@@ -113,7 +113,7 @@ void CannonDriver::sendFireMessage()
   ROS_ASSERT(ret == 0);
 
   // -- Fire.
-  ret = system("sleep 3; xdotool mousedown 1; sleep 0.2; xdotool mouseup 1; sleep 5");
+  ret = system("sleep 1; xdotool mousedown 1; sleep 0.2; xdotool mouseup 1; sleep 4");
   ROS_ASSERT(ret == 0);
 
   // -- Return to original position at far left.
