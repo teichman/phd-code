@@ -96,6 +96,13 @@ void CannonDriver::_run()
   }
 }
 
+void sys(std::string str)
+{
+  int ret = system(str.c_str());
+  ROS_ASSERT(ret == 0);
+  usleep(5e4);
+}
+
 void CannonDriver::sendFireMessage()
 {
   if(num_darts_ == 0) {
@@ -104,21 +111,35 @@ void CannonDriver::sendFireMessage()
   }
   --num_darts_;
   
-  int ret;
-
   // -- Rotate the cannon into firing position.
-  ret = system("xdotool keydown Alt; xdotool keydown Right; sleep 2.5; xdotool keyup Right; xdotool keyup Alt");
-  ROS_ASSERT(ret == 0);
-  ret = system("xdotool keydown Alt; xdotool keydown Up; sleep 1; xdotool keyup Up; xdotool keyup Alt");
-  ROS_ASSERT(ret == 0);
+  sys("xdotool keydown Alt");
+  sys("xdotool keydown Right");
+  usleep(2.5e6);
+  sys("xdotool keyup Right");
+  sys("xdotool keyup Alt");
+  
+  sys("xdotool keydown Alt");
+  sys("xdotool keydown Up");
+  usleep(1e6);
+  sys("xdotool keyup Up");
+  sys("xdotool keyup Alt");
 
   // -- Fire.
-  ret = system("sleep 1; xdotool mousedown 1; sleep 0.2; xdotool mouseup 1; sleep 4");
-  ROS_ASSERT(ret == 0);
+  usleep(1e6);
+  sys("xdotool mousedown 1");
+  usleep(2e5);
+  sys("xdotool mouseup 1");
+  usleep(4e6);
 
   // -- Return to original position at far left.
-  ret = system("xdotool keydown Alt; xdotool keydown Down; sleep 2; xdotool keyup Down; xdotool keyup Alt");
-  ROS_ASSERT(ret == 0);
-  ret = system("xdotool keydown Alt; xdotool keydown Left; sleep 3; xdotool keyup Left; xdotool keyup Alt");
-  ROS_ASSERT(ret == 0);
+  sys("xdotool keydown Alt");
+  sys("xdotool keydown Down");
+  usleep(2e6);
+  sys("xdotool keyup Down");
+  sys("xdotool keyup Alt");
+  sys("xdotool keydown Alt");
+  sys("xdotool keydown Left");
+  usleep(3e6);
+  sys("xdotool keyup Left");
+  sys("xdotool keyup Alt");
 }
