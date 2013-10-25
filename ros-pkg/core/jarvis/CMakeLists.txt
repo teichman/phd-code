@@ -89,6 +89,10 @@ rosbuild_add_executable(pcd_viewer src/prog/pcd_viewer.cpp)
 target_link_libraries(pcd_viewer vtkCommon vtkIO vtkFiltering vtkHybrid vtkRendering)
 rosbuild_link_boost(pcd_viewer program_options)
 
+rosbuild_add_executable(request_detection_recording src/prog/request_detection_recording.cpp)
+#target_link_libraries(request_detection_recording jarvis_core)
+rosbuild_link_boost(request_detection_recording program_options)
+
 rosbuild_add_gtest(test_jarvis src/test/test_jarvis.cpp)
 target_link_libraries(test_jarvis jarvis_core)
 
