@@ -5,6 +5,7 @@
 #include <iostream>
 #include <iomanip>
 #include <opencv2/highgui/highgui.hpp>
+#include <ros/console.h>
 
 using namespace std;
 
@@ -29,23 +30,29 @@ public:
                     openni::VideoFrameRef depth,
                     size_t frame_id, double timestamp)
   {
-    cout << "In OniHandlerExample::rgbdCallback." << endl;
+    //cout << "In OniHandlerExample::rgbdCallback." << endl;
     openni::DepthPixel* pDepth = (openni::DepthPixel*)depth.getData();
     int middleIndex = (depth.getHeight()+1)*depth.getWidth()/2;
-    printf("[%08llu] color %d x %d; depth %d x %d; middle pixel depth:  %8d\n",
+    static long long prev_timestamp = 0;
+    printf("[%08llu] dt: %f; color %d x %d; depth %d x %d; middle pixel depth:  %8d\n",
            (long long)depth.getTimestamp(),
+           (double)(depth.getTimestamp() - prev_timestamp) * 1e-3,
            color.getWidth(), color.getHeight(),
            depth.getWidth(), depth.getHeight(),
            pDepth[middleIndex]);
-
+    
     static int counter = 0;
     ++counter;
     if(counter > 100)
       oni_.terminate();
 
-    ostringstream oss;
-    oss << setw(5) << setfill('0') << counter << ".jpg";
-    cv::imwrite(oss.str(), oniToCV(color));
+    if(counter > 1 && depth.getTimestamp() - prev_timestamp > 40000)
+      ROS_WARN("Dropping frames...");
+    prev_timestamp = depth.getTimestamp();
+
+    // ostringstream oss;
+    // oss << setw(5) << setfill('0') << counter << ".jpg";
+    // cv::imwrite(oss.str(), oniToCV(color));
   }
   
 };
