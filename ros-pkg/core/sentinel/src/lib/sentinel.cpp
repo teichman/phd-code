@@ -188,6 +188,7 @@ ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
     ROS_ASSERT(bfs::is_directory(tags_dir_));
   }
 
+  serializer_.delay_ = 30;
   serializer_.launch();
 }
 
@@ -384,22 +385,37 @@ void ROSStreamingSentinel::processHook(openni::VideoFrameRef color)
       it++;
   }
 
-  // -- If no one has said to record, don't.
-  if(recording_tags_.empty())
-    return;
-
-  // -- Otherwise save this frame...
-  ostringstream oss;
-  oss << "image" << fixed << setprecision(16) << setw(16) << setfill('0') << now.toSec() << ".png";
-  string filename = oss.str();
-  serializer_.push(oniToCV(color), frames_dir_ + "/" + filename);
-  //cv::imwrite(frames_dir_ + "/" + filename, oniToCV(color));
+  // -- Put the new image into the video buffer.
+  //    Re-use memory if we can.
+  size_t max_video_buffer_size = 150;
+  if(video_buffer_.size() < max_video_buffer_size)
+    video_buffer_.push_back(pair<double, cv::Mat3b>(now.toSec(), oniToCV(color)));
+  else {
+    pair<double, cv::Mat3b> front = video_buffer_.front();
+    video_buffer_.pop_front();
+    front.first = now.toSec();
+    oniToCV(color, front.second);
+    video_buffer_.push_back(front);
+  }
   
-  // ... and make symlinks for the active tags.
-  for(it = recording_tags_.begin(); it != recording_tags_.end(); ++it) {
-    string tag_dir = tags_dir_ + "/" + it->first;
-    if(!bfs::exists(tag_dir))
-      bfs::create_directory(tag_dir);
-    bfs::create_symlink("../../all/" + filename, tag_dir + "/" + filename);
+  // -- If we've been told to save, queue the video buffer for saving.
+  if(!recording_tags_.empty()) {
+    for(size_t i = 0; i < video_buffer_.size(); ++i) {
+      double ts = video_buffer_[i].first;
+      cv::Mat3b img = video_buffer_[i].second;
+      ostringstream oss;
+      oss << "image" << fixed << setprecision(16) << setw(16) << setfill('0') << ts << ".png";
+      string filename = oss.str();
+      serializer_.push(img, frames_dir_ + "/" + filename);
+
+      // ... and make symlinks for the active tags.
+      for(it = recording_tags_.begin(); it != recording_tags_.end(); ++it) {
+        string tag_dir = tags_dir_ + "/" + it->first;
+        if(!bfs::exists(tag_dir))
+          bfs::create_directory(tag_dir);
+        bfs::create_symlink("../../all/" + filename, tag_dir + "/" + filename);
+      }
+    }
+    video_buffer_.clear();
   }
 }

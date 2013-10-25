@@ -109,6 +109,8 @@ protected:
   //! tag, time to stop recording at.
   std::map<std::string, ros::Time> recording_tags_;
   ThreadedSerializer<cv::Mat3b, ImageSerializer> serializer_;
+  //! timestamp, img.
+  std::deque< std::pair<double, cv::Mat3b> > video_buffer_;
   ros::NodeHandle nh_;
   ros::Publisher fg_pub_;
   ros::Publisher bg_pub_;
