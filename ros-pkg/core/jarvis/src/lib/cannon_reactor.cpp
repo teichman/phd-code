@@ -1,3 +1,4 @@
+#include <matplotlib_interface/matplotlib_interface.h>
 #include <jarvis/cannon_reactor.h>
 #include <eigen_extensions/eigen_extensions.h>
 #include <online_learning/dataset.h>
@@ -57,7 +58,7 @@ void CannonReactor::detectionCallback(jarvis::DetectionConstPtr msg)
   }
 }
 
-CannonDriver::CannonDriver() :
+GUICannonDriver::GUICannonDriver() :
   firing_(false),
   num_darts_(4)
 {
@@ -85,7 +86,7 @@ CannonDriver::CannonDriver() :
   // ROS_ASSERT(ret == 0);
 }
 
-void CannonDriver::_run()
+void GUICannonDriver::_run()
 {
   while(true) {
     usleep(1e5);
@@ -103,10 +104,10 @@ void sys(std::string str)
   usleep(5e4);
 }
 
-void CannonDriver::sendFireMessage()
+void GUICannonDriver::sendFireMessage()
 {
   if(num_darts_ == 0) {
-    cout << "[CannonDriver]  Out of ammo..." << endl;
+    cout << "[GUICannonDriver]  Out of ammo..." << endl;
     return;
   }
   --num_darts_;
@@ -142,4 +143,48 @@ void CannonDriver::sendFireMessage()
   usleep(3e6);
   sys("xdotool keyup Left");
   sys("xdotool keyup Alt");
+}
+
+
+PythonCannonDriver::PythonCannonDriver() :
+  firing_(false),
+  num_darts_(4)
+{
+  mpliBegin();
+  mpli("import roslib; roslib.load_manifest('jarvis')");
+  mpli("from rosrocket import *");
+  mpli("rd = RocketDriver()");
+}
+
+void PythonCannonDriver::_run()
+{
+  while(true) {
+    usleep(1e5);
+    if(firing_) {
+      _fire();
+      firing_ = false;
+    }
+  }
+}
+
+void PythonCannonDriver::_fire()
+{
+  cout << "[PythonCannonDriver] _fire()" << endl;
+  if(num_darts_ == 0) {
+    cout << "[PythonCannonDriver]  Out of ammo..." << endl;
+    return;
+  }
+  --num_darts_;
+
+  usleep(2e5);
+  mpli("rd.right(2.75)");
+  usleep(2e5);
+  mpli("rd.up(1)");
+  usleep(2e5);
+  mpli("rd.fire()");
+  usleep(2e5);
+  mpli("rd.down(1.5)");
+  usleep(2e5);
+  mpli("rd.left(3)");
+  usleep(2e5);
 }

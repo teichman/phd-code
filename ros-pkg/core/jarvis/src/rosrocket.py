@@ -33,10 +33,17 @@ class RocketDriver:
 
     def fire(self):
         self.launcher_.start_movement(4)
+        time.sleep(4)
 
 
 if __name__ == "__main__":
     rd = RocketDriver()
     rd.left(0.3)
+    time.sleep(0.2)
     rd.right(0.3)
+    time.sleep(0.2)
+    rd.up(0.3)
+    time.sleep(0.2)
+    rd.down(0.3)
+    time.sleep(0.2)
     rd.fire()

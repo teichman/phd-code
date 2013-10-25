@@ -30,9 +30,16 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  usleep(delay * 1e6);
-  CannonReactor cr;
-  cr.run();
+  // usleep(delay * 1e6);
+  // CannonReactor cr;
+  // cr.run();
 
+  PythonCannonDriver cd;
+  cd.launch();
+  cd.fire();
+
+  while(true)
+    usleep(1e6);
+  
   return 0;
 }

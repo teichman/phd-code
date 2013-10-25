@@ -7,10 +7,10 @@
 #include <jarvis/reactor.h>
 #include <jarvis/jarvis.h>
 
-class CannonDriver : public Agent
+class GUICannonDriver : public Agent
 {
 public:
-  CannonDriver();
+  GUICannonDriver();
   void fire() { firing_ = true; }
   bool firing() const { return firing_; }
   void _run();
@@ -21,6 +21,22 @@ protected:
   int num_darts_;
 
   void sendFireMessage();
+};
+
+class PythonCannonDriver : public Agent
+{
+public:
+  PythonCannonDriver();
+  void fire() { firing_ = true; }
+  bool firing() const { return firing_; }
+  int ammo() const { return num_darts_; }
+
+protected:
+  bool firing_;
+  int num_darts_;
+
+  void _run();
+  void _fire();
 };
 
 class CannonReactor : public Reactor
@@ -34,7 +50,7 @@ protected:
   ros::Publisher pub_;
   double threshold_;
   HighResTimer hrt_;
-  CannonDriver cannon_driver_;
+  PythonCannonDriver cannon_driver_;
   std::map<size_t, DiscreteBayesFilter> filters_;
   
   void detectionCallback(jarvis::DetectionConstPtr msg);
