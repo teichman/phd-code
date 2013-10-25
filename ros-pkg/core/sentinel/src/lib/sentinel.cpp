@@ -87,6 +87,7 @@ void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameR
 
   static double prev_depth_timestamp = 0;
   double dt = depth_timestamp - prev_depth_timestamp;
+  cout << "[Sentinel] dt: " << dt << endl;
   if(prev_depth_timestamp != 0 && dt > 0.04)
     ROS_WARN_STREAM("[Sentinel] Dropping frames!  dt: " << dt);
   prev_depth_timestamp = depth_timestamp;
