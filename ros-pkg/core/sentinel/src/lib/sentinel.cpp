@@ -84,6 +84,12 @@ void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameR
     ROS_WARN_STREAM("rgbdCallback got an rgbd pair with timestamp delta of "
                     << depth_timestamp - image_timestamp);
   }
+
+  static double prev_depth_timestamp = 0;
+  double dt = depth_timestamp - prev_depth_timestamp;
+  if(prev_depth_timestamp != 0 && dt > 0.04)
+    ROS_WARN_STREAM("[Sentinel] Dropping frames!  dt: " << dt);
+  prev_depth_timestamp = depth_timestamp;
   #endif
 
   processHook(oni_color);
