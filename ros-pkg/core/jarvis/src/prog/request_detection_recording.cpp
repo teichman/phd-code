@@ -39,19 +39,25 @@ void RecordingRequester::detectionCallback(const jarvis::Detection& det)
   
   if(!cmap.hasName(class_name_))
     return;
+  
   size_t id = cmap.toId(class_name_);
-  if(tpred(id) > threshold_) {
-    sentinel::RecordingRequest rr;
-    rr.timeout = ros::Time::now() + ros::Duration(seconds_);
-    rr.tag = class_name_;
-    pub_.publish(rr);
-    cout << "Published recording request for class " << class_name_ << ".  " << rr.timeout << endl;
-    
+  if(tpred(id) > 0) {
+    cout << "[RecordingRequester] " << class_name_ << " " << tpred(id) << ".";
+    if(tpred(id) > threshold_) {
+      sentinel::RecordingRequest rr;
+      rr.timeout = ros::Time::now() + ros::Duration(seconds_);
+      rr.tag = class_name_;
+      pub_.publish(rr);
+      cout << "   Published.  " << rr.timeout;
+    }
+    cout << endl;
   }
 }
 
 int main(int argc, char** argv)
 {
+  ros::init(argc, argv, "request_detection_recording");
+  
   namespace bpo = boost::program_options;
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
@@ -82,8 +88,6 @@ int main(int argc, char** argv)
     cout << opts_desc << endl;
     return 1;
   }
-
-  ros::init(argc, argv, "request_detection_recording");
 
   RecordingRequester rr(class_name, threshold, seconds);
   ros::spin();
