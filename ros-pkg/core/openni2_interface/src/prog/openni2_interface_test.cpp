@@ -12,10 +12,13 @@ using namespace std;
 class OniHandlerExample : public OpenNI2Handler
 {
 public:
+  int num_frames_;
   OpenNI2Interface oni_;
 
   OniHandlerExample(OpenNI2Interface::Resolution color_res,
-                    OpenNI2Interface::Resolution depth_res) :
+                    OpenNI2Interface::Resolution depth_res,
+                    int num_frames) :
+    num_frames_(num_frames),
     oni_(color_res, depth_res)
   {
   }
@@ -43,7 +46,7 @@ public:
     
     static int counter = 0;
     ++counter;
-    if(counter > 100)
+    if(num_frames_ > 0 && counter > num_frames_)
       oni_.terminate();
 
     if(counter > 1 && depth.getTimestamp() - prev_timestamp > 40000)
@@ -65,10 +68,12 @@ int main(int argc, char** argv)
 
   string color_resolution;
   string depth_resolution;
+  int num_frames;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("color-res", bpo::value(&color_resolution), "")
     ("depth-res", bpo::value(&depth_resolution), "")
+    ("num-frames,n", bpo::value(&num_frames)->default_value(0), "")
     ;
 
   bpo::variables_map opts;
@@ -106,7 +111,7 @@ int main(int argc, char** argv)
     }
   }
 
-  OniHandlerExample ex(color_res, depth_res);
+  OniHandlerExample ex(color_res, depth_res, num_frames);
   ex.run();
   
   return 0;
