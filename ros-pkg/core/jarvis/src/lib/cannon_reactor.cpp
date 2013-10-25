@@ -18,8 +18,6 @@ CannonReactor::CannonReactor(double threshold) :
 
 CannonReactor::~CannonReactor()
 {
-  int ret = system("killall pyrocket");
-  ROS_ASSERT(ret == 0);
 }
 
 void CannonReactor::detectionCallback(jarvis::DetectionConstPtr msg)
