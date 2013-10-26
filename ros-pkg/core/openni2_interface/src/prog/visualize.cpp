@@ -33,6 +33,7 @@ public:
     ROS_ASSERT(depth.getHeight() > 0 && depth.getWidth() > 0);
     cv::imshow("Depth", colorize(oniDepthToEigen(depth), 0, 10));
     cv::imshow("Color", oniToCV(color));
+    cv::imshow("Visualization", visualize(color, depth));
     cv::waitKey(3);
   }
   

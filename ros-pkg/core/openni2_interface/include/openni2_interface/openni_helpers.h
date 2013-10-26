@@ -16,5 +16,15 @@ DepthMat oniDepthToEigen(const openni::VideoFrameRef& depth);
 DepthMatPtr oniDepthToEigenPtr(const openni::VideoFrameRef& depth);
 cv::Vec3b colorize(double depth, double min_range, double max_range);
 cv::Mat3b colorize(DepthMat depth, double min_range, double max_range);
-  
+
+//! Returns the color image if bright enough.
+//! Otherwise produces a false-color version of the depth image.
+//! intensity_threshold is [0,255].
+//! min_range and max_range are [0,10]m.
+cv::Mat3b visualize(const openni::VideoFrameRef& color,
+                    const openni::VideoFrameRef& depth,
+                    double intensity_threshold = 10,
+                    double min_range = 0.5, double max_range = 7);
+
+
 #endif // OPENNI_HELPERS_H

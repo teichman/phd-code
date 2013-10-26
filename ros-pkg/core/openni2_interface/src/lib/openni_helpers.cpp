@@ -2,6 +2,8 @@
 #include <ros/assert.h>
 #include <timer/timer.h>
 
+using namespace std;
+
 void oniToCV(const openni::VideoFrameRef& oni, cv::Mat3b img)
 {
   #if JARVIS_DEBUG
@@ -83,5 +85,34 @@ cv::Mat3b colorize(DepthMat depth, double min_range, double max_range)
   for(int y = 0; y < img.rows; ++y)
     for(int x = 0; x < img.cols; ++x)
       img(y, x) = colorize(depth(y, x) * 0.001, min_range, max_range);
+  return img;
+}
+
+cv::Mat3b visualize(const openni::VideoFrameRef& color,
+                    const openni::VideoFrameRef& depth,
+                    double intensity_threshold,
+                    double min_range, double max_range)
+{
+  ROS_ASSERT(color.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_RGB888);
+  ROS_ASSERT(depth.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM);
+  
+  uchar* data = (uchar*)color.getData();
+  double total = 0;
+  for(int i = 0; i < color.getWidth() * color.getHeight(); i+=3)
+    total += (double)(data[i] + data[i+1] + data[i+2]);
+  double mean = total / (3 * color.getWidth() * color.getHeight());
+  cout << "Mean: " << mean << endl;
+  cv::Mat3b img;
+  if(mean > intensity_threshold) {
+    img = oniToCV(color);
+  }
+  else {
+    ushort* data = (ushort*)depth.getData();
+    img = cv::Mat3b(cv::Size(depth.getWidth(), depth.getHeight()));
+    int idx = 0;
+    for(int y = 0; y < depth.getHeight(); ++y)
+      for(int x = 0; x < depth.getWidth(); ++x, ++idx)
+        img(y, x) = colorize(data[idx] * 0.001, min_range, max_range);
+  }
   return img;
 }

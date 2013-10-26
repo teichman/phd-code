@@ -93,7 +93,7 @@ void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameR
   prev_depth_timestamp = depth_timestamp;
   #endif
 
-  processHook(oni_color);
+  processHook(oni_color, oni_depth);
   processBackgroundSubtraction(oni_color, oni_depth, depth_timestamp, timestamp, frame_id);
 }
 
@@ -377,7 +377,8 @@ void ROSStreamingSentinel::recordingRequestCallback(const sentinel::RecordingReq
   cout << "[ROSStreamingSentinel]  Got RecordingRequest.  Recording " << rr.tag << " until " << rr.timeout << endl;
 }
 
-void ROSStreamingSentinel::processHook(openni::VideoFrameRef color)
+void ROSStreamingSentinel::processHook(openni::VideoFrameRef color,
+                                       openni::VideoFrameRef depth)
 {
   // -- Handle any RecordingRequest messages we have waiting in the queue.
   ros::spinOnce();
@@ -392,18 +393,14 @@ void ROSStreamingSentinel::processHook(openni::VideoFrameRef color)
       it++;
   }
 
+  // -- Get image to use.  If it's too dark, use a colorized depth image.
+  cv::Mat3b img = visualize(color, depth);
+  
   // -- Put the new image into the video buffer.
-  //    Re-use memory if we can.
   size_t max_video_buffer_size = 150;
-  if(video_buffer_.size() < max_video_buffer_size)
-    video_buffer_.push_back(pair<double, cv::Mat3b>(now.toSec(), oniToCV(color)));
-  else {
-    pair<double, cv::Mat3b> front = video_buffer_.front();
+  video_buffer_.push_back(pair<double, cv::Mat3b>(now.toSec(), img));
+  if(video_buffer_.size() == max_video_buffer_size)
     video_buffer_.pop_front();
-    front.first = now.toSec();
-    oniToCV(color, front.second);
-    video_buffer_.push_back(front);
-  }
   
   // -- If we've been told to save, queue the video buffer for saving.
   if(!recording_tags_.empty()) {

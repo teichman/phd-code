@@ -37,7 +37,8 @@ public:
   void run();
 
   //! Called before running processBackgroundSubtraction.
-  virtual void processHook(openni::VideoFrameRef color) {}
+  virtual void processHook(openni::VideoFrameRef color,
+                           openni::VideoFrameRef depth) {}
   virtual void handleDetection(openni::VideoFrameRef color,
                                openni::VideoFrameRef depth,
                                const std::vector<uint32_t>& indices,
@@ -137,7 +138,7 @@ protected:
                           double wall_timestamp,
                           size_t frame_id);
   //! Used for processing recordings.
-  void processHook(openni::VideoFrameRef color);
+  void processHook(openni::VideoFrameRef color, openni::VideoFrameRef depth);
   void recordingRequestCallback(const sentinel::RecordingRequest& rr);
 };
 
