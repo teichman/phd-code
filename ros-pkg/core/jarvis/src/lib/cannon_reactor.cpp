@@ -8,7 +8,8 @@
 using namespace std;
 using namespace Eigen;
 
-CannonReactor::CannonReactor(double threshold) :
+CannonReactor::CannonReactor(size_t min_num_frames, double threshold) :
+  min_num_frames_(min_num_frames),
   threshold_(threshold)
 {
   pub_ = nh_.advertise<sentinel::RecordingRequest>("recording_requests", 0);
@@ -22,16 +23,21 @@ CannonReactor::~CannonReactor()
 
 void CannonReactor::detectionCallback(jarvis::DetectionConstPtr msg)
 {
+  // -- Only consider detections that have been seen for at least some number of frames.
+  if(msg->num_frames < min_num_frames_)
+    return;
+
+  // -- We're only shooting cats for now.
   NameMapping cmap(msg->cmap);
   if(!cmap.hasName("cat")) {
     ROS_WARN_ONCE("CannonReactor expects detections messages that make predictions about cats.");
     return;
   }
-
+  
   // -- If we're sure it's a cat, fire the cannon.
   Label tpred(msg->track_prediction);
   if(tpred(cmap.toId("cat")) > 0) { 
-    cout << "[CannonReactor]  Track " << msg->track_id << ": " << tpred.transpose() << std::flush;
+    cout << "[CannonReactor]  Track " << msg->track_id << ", " << msg->num_frames << " frames.  Track prediction: " << tpred.transpose() << std::flush;
     if(tpred(cmap.toId("cat")) > threshold_) {
       cout << "  *** " << std::flush;
       if(cannon_driver_.ammo() == 0)

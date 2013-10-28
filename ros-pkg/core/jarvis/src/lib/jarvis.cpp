@@ -21,8 +21,10 @@ void DiscreteBayesFilter::addObservation(Label frame_prediction,
   
   if(frame_predictions_.size() == 1)
     cumulative_ = frame_prediction;
-  else
-    cumulative_ += frame_prediction * (centroid - prev_centroid_).norm() * weight_;
+  else {
+    double velocity = (centroid - prev_centroid_).norm() / (timestamp - prev_sensor_timestamp_);
+    cumulative_ += frame_prediction * velocity * weight_;
+  }
 
   for(int i = 0; i < cumulative_.rows(); ++i)
     cumulative_[i] = max(-cap_, min(cap_, cumulative_[i]));

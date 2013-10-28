@@ -42,12 +42,13 @@ protected:
 class CannonReactor : public Reactor
 {
 public:
-  CannonReactor(double threshold = 10.0);
+  CannonReactor(size_t min_num_frames = 15, double threshold = 10.0);
   ~CannonReactor();
   
 protected:
   ros::NodeHandle nh_;
   ros::Publisher pub_;
+  size_t min_num_frames_;
   double threshold_;
   HighResTimer hrt_;
   PythonCannonDriver cannon_driver_;
