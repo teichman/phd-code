@@ -5,14 +5,18 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <image_labeler/opencv_view.h>
 #include <stream_sequence/frame_projector.h>
+#include <pcl/sample_consensus/sac_model_plane.h>
+#include <pcl/sample_consensus/ransac.h>
+
 
 using namespace std;
 using namespace Eigen;
+using namespace clams;
 
 class UpSelector : public OpenNI2Handler, public OpenCVViewDelegate, public Agent
 {
 public:
-  UpSelector();
+  UpSelector(std::string output_path);
   ~UpSelector();
   void rgbdCallback(openni::VideoFrameRef color, openni::VideoFrameRef depth,
                     size_t frame_id, double timestamp);
@@ -21,6 +25,7 @@ public:
 protected:
   OpenNI2Interface oni_;
   OpenCVView view_;
+  std::string output_path_;
   int radius_;
   cv::Mat1b selection_;
   openni::VideoFrameRef depth_;
@@ -35,9 +40,10 @@ UpSelector::~UpSelector()
 {
 }
 
-UpSelector::UpSelector() :
+UpSelector::UpSelector(std::string output_path) :
   oni_(OpenNI2Interface::VGA, OpenNI2Interface::VGA),
   view_("PlaneSelector"),
+  output_path_(output_path),
   radius_(10)
 {
   view_.setDelegate(this);
@@ -117,17 +123,27 @@ void UpSelector::selectPlane()
   ROS_ASSERT(selection_.cols = 640);
   proj.fx_ = 525;
   proj.fy_ = 525;
-    
-  Cloud::Ptr pcd;
+
+  // This is really nasty.  I should not be mixing clams code and this stuff.
+  Frame frame;
+  frame.img_ = cv::Mat3b(selection_.size(), cv::Vec3b(0, 0, 0));
+  ROS_ASSERT(depth_.getVideoMode().getPixelFormat() == openni::PIXEL_FORMAT_DEPTH_1_MM);
+  frame.depth_ = clams::DepthMatPtr(new clams::DepthMat(depth_.getHeight(), depth_.getWidth()));
+  ushort* data = (ushort*)depth_.getData();
+  int idx = 0;
+  for(int y = 0; y < frame.depth_->rows(); ++y)
+    for(int x = 0; x < frame.depth_->cols(); ++x, ++idx)
+      frame.depth_->coeffRef(y,x) = data[idx];
+
+  Cloud::Ptr pcd(new Cloud);
   pcd->reserve(selection_.rows * selection_.cols);
-  DepthMat depth = oniDepthToEigen(depth_);
   for(int y = 0; y < selection_.rows; ++y) {
     for(int x = 0; x < selection_.cols; ++x) {
       if(selection_(y, x) > 0) {
         ProjectivePoint ppt;
         ppt.u_ = x;
         ppt.v_ = y;
-        ppt.z_ = depth(y, x);
+        ppt.z_ = frame.depth_->coeffRef(y, x);
         Point pt;
         proj.project(ppt, &pt);
         pcd->push_back(pt);
@@ -135,11 +151,10 @@ void UpSelector::selectPlane()
     }
   }
           
-
   // -- Fit the best plane.
   double tol = 0.01;
-  SampleConsensusModelPlane<Point>::Ptr plane(new SampleConsensusModelPlane<Point>(pcd));
-  RandomSampleConsensus<Point> ransac(plane);
+  pcl::SampleConsensusModelPlane<Point>::Ptr plane(new pcl::SampleConsensusModelPlane<Point>(pcd));
+  pcl::RandomSampleConsensus<Point> ransac(plane);
   ransac.setDistanceThreshold(tol);
   ransac.computeModel();
   std::vector<int> inliers;
@@ -151,13 +166,24 @@ void UpSelector::selectPlane()
 
   cout << "Plane fit coefficients: " << coefs.transpose() << endl;
   cout << "Num inliers among pcd points: " << inliers.size() << endl;
-  for(size_t i = 0; i < inliers.size(); ++i)
-    cout << "Pt: " << (*pcd)[inliers[i]].getVector4fMap().transpose() << ", a^T pt: " << coefs.dot((*pcd)[inliers[i]].getVector4fMap()) << endl;
+  // for(size_t i = 0; i < inliers.size(); ++i)
+  //   cout << "Pt: " << (*pcd)[inliers[i]].getVector4fMap().transpose() << ", a^T pt: " << coefs.dot((*pcd)[inliers[i]].getVector4fMap()) << endl;
 
   // -- Update the selection.
   selection_ = 0;
-  for(size_t i = 0; i < inliers.size(); ++i)
-    selection_(inliers[i]) = 255;
+  proj.frameToCloud(frame, pcd.get());
+  
+  for(size_t i = 0; i < pcd->size(); ++i) {
+    const Point& pt = pcd->at(i);
+    if(coefs.dot(pt.getVector4fMap()) < tol) {
+      ProjectivePoint ppt;
+      proj.project(pt, &ppt);
+      selection_(ppt.v_, ppt.u_) = 255;
+    }
+  }
+
+  // -- Save.
+  eigen_extensions::saveASCII(coefs, output_path_);
 }
 
 void UpSelector::clear()
@@ -193,7 +219,7 @@ int main(int argc, char** argv)
 
   cout << "Saving to " << output_path << endl;
 
-  UpSelector ups;
+  UpSelector ups(output_path);
   ups.run();
   
   return 0;
