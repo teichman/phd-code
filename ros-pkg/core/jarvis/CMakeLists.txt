@@ -93,6 +93,9 @@ rosbuild_add_executable(request_detection_recording src/prog/request_detection_r
 #target_link_libraries(request_detection_recording jarvis_core)
 rosbuild_link_boost(request_detection_recording program_options)
 
+rosbuild_add_executable(select_up_vector src/prog/select_up_vector.cpp)
+rosbuild_link_boost(select_up_vector program_options)
+
 rosbuild_add_gtest(test_jarvis src/test/test_jarvis.cpp)
 target_link_libraries(test_jarvis jarvis_core)
 
