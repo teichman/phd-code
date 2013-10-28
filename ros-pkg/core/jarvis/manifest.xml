@@ -15,6 +15,8 @@
   <depend package="google-perftools"/>
   <depend package="online_learning"/>
   <depend package="roslib"/>
+  <depend package="image_labeler"/>
+  <depend package="stream_sequence"/>
 
 
 </package>

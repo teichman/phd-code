@@ -30,7 +30,7 @@ public:
   {
     depth_images_.push_back(oniDepthToEigenPtr(depth));
     if(depth_images_.size() == num_)
-      oni_.terminate();
+      oni_.stop();
   }
 
   void writeStats(std::string path) const;

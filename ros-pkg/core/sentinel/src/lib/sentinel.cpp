@@ -339,7 +339,7 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
   #endif
 
   if(!ros::ok()) {
-    oni_.terminate();
+    oni_.stop();
     return;
   }
 

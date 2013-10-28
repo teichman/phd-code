@@ -51,7 +51,7 @@ protected:
   rosbag::View::iterator it_;
   Reconstructor reconstructor_;
   Tracker tracker_;
-  bool terminating_;
+  bool stopping_;
   bool paused_;
   //! Into buffer_.
   int idx_;

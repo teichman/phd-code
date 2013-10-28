@@ -19,7 +19,7 @@ OpenNI2Interface::OpenNI2Interface(Resolution color_res, Resolution depth_res) :
   color_res_(color_res),
   depth_res_(depth_res),
   sync_(0.018),
-  terminating_(false),
+  stopping_(false),
   frame_id_(0)
 {
   signal(SIGINT, sigint);
@@ -52,7 +52,7 @@ void OpenNI2Interface::run()
 
   VideoStream* streams[] = { &color_stream_, &depth_stream_ };
   
-  while(!terminating_ && !g_int) {
+  while(!stopping_ && !g_int) {
     int idx = -1;
     OpenNI::waitForAnyStream(streams, 2, &idx, SAMPLE_READ_WAIT_TIMEOUT);
     if(idx == 0)

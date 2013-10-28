@@ -35,7 +35,7 @@ public:
   ~OpenNI2Interface();
   void setHandler(OpenNI2Handler* handler) { handler_ = handler; }
   void run();
-  void terminate() { terminating_ = true; }
+  void stop() { stopping_ = true; }
   OpenNI2Interface::Resolution colorRes() const { return color_res_; }
   OpenNI2Interface::Resolution depthRes() const { return depth_res_; }
   
@@ -48,7 +48,7 @@ private:
   openni::VideoStream depth_stream_;
   //! color, depth.
   Synchronizer<openni::VideoFrameRef, openni::VideoFrameRef> sync_;
-  bool terminating_;
+  bool stopping_;
   size_t frame_id_;
   
   int connect();

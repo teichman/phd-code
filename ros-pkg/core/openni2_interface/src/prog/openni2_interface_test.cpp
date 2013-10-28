@@ -47,7 +47,7 @@ public:
     static int counter = 0;
     ++counter;
     if(num_frames_ > 0 && counter > num_frames_)
-      oni_.terminate();
+      oni_.stop();
 
     if(counter > 1 && depth.getTimestamp() - prev_timestamp > 40000)
       ROS_WARN("Dropping frames...");

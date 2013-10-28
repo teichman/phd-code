@@ -50,7 +50,7 @@ void BufferingBagViewer::read(int num)
 BagVis::BagVis(std::string path, size_t max_buffer_size) :
   max_num_bg_(320*240),
   tracker_(100),
-  terminating_(false),
+  stopping_(false),
   paused_(false),
   idx_(false),
   max_buffer_size_(max_buffer_size),
@@ -142,7 +142,7 @@ void BagVis::run()
     char key = cv::waitKey(1);
     handleKeypress(key);
 
-    if(terminating_)
+    if(stopping_)
       break;
 
     if(paused_) {
@@ -158,7 +158,7 @@ void BagVis::handleKeypress(char key)
 {
   switch(key) {
   case 'q':
-    terminating_ = true;
+    stopping_ = true;
     break;
   case ' ':
     paused_ = !paused_;
@@ -201,7 +201,7 @@ void BagVis::read(int num)
   for(int i = 0; i < num; ++i) {
     ++it_;
     if(it_ == view_->end()) {
-      terminating_ = true;
+      stopping_ = true;
       break;
     }
     handleMessage(*it_);
