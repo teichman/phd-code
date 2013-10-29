@@ -175,7 +175,7 @@ void UpSelector::selectPlane()
   
   for(size_t i = 0; i < pcd->size(); ++i) {
     const Point& pt = pcd->at(i);
-    if(coefs.dot(pt.getVector4fMap()) < tol) {
+    if(fabs(coefs.dot(pt.getVector4fMap())) < tol) {
       ProjectivePoint ppt;
       proj.project(pt, &ppt);
       selection_(ppt.v_, ppt.u_) = 255;
