@@ -81,22 +81,20 @@ bool similar(const Dataset& annotation, const Dataset& inducted)
   }
   size_t id = dmap.toId(name);
 
-  int num = 0;
-  double mean_dist = 0;
-  int num_samples = 3;
+  double min_dist = numeric_limits<double>::max();
+  int num_samples = 10;
   for(int i = 0; i < num_samples; ++i) {
     VectorXf* ann = annotation[rand() % annotation.size()].descriptors_[id];
     ROS_ASSERT(ann);
     for(int j = 0; j < num_samples; ++j) {
       VectorXf* ind = inducted[rand() % inducted.size()].descriptors_[id];
       ROS_ASSERT(ind);
-      mean_dist += ((*ind) - (*ann)).norm();
-      ++num;
+      double dist = ((*ind) - (*ann)).norm();
+      min_dist = min(min_dist, dist);
     }
   }
-  mean_dist /= num;
 
-  return (mean_dist < 0.2);
+  return (min_dist < 0.2);
 }
 
 void Inductor::retrospection(const TrackDataset& new_annotations, const std::vector<Label>& predictions)

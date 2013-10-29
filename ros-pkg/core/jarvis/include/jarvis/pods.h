@@ -34,6 +34,7 @@ public:
   }
 
   void compute();
+  void debug() const;
 
 protected:
   Eigen::VectorXf size_;

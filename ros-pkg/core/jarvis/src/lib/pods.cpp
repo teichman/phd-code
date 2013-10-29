@@ -37,6 +37,13 @@ void BoundingBoxSize::compute()
   push<const VectorXf*>("BoundingBoxSize", &size_);
 }
 
+void BoundingBoxSize::debug() const
+{
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "size: " << size_.transpose() << endl;
+  f.close();
+}
+
 
 
 /************************************************************

@@ -133,6 +133,7 @@ int main(int argc, char** argv)
   // -- Load test data.
   ROS_ASSERT(!test_paths.empty());
   TrackDataset::Ptr test = loadDatasets(test_paths, config, cmap, up);
+  // TODO: Clear the raw data.  We won't be needing it, and it takes up a lot of RAM.
   cout << "Test data: " << endl;
   cout << test->status("  ") << endl;
 

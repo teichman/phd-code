@@ -73,6 +73,7 @@ kitchen-update-unlabeled-descriptors:
 kitchen-update-test-descriptors:
 	rosrun jarvis update_descriptors \
 	--config $(CONFIG) \
+	-u $(KITCHEN_UP_VECTOR) \
 	--tds $(KITCHEN_LABELS_DIR)/*.td \
 	-j 24
 
@@ -104,6 +105,7 @@ kitchen/baseline_unfair: kitchen/induction
 	rosrun jarvis baseline_unfair \
 	--class-names $(KITCHEN_CLASS_NAMES) \
 	--config $(CONFIG) \
+	-u $(KITCHEN_UP_VECTOR) \
 	--root $< \
 	--test $(KITCHEN_LABELS_DIR)/*.td \
 	--num-iters 15 \

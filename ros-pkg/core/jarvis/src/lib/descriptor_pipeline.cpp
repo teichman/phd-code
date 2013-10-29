@@ -81,7 +81,7 @@ double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, E
   if(up.rows() == 3)
     dp.setUpVector(up);
   
-  if(td->nameMapping("dmap") == dp.dmap()) {
+  if(!debug && td->nameMapping("dmap") == dp.dmap()) {
     cout << "updateDescriptors: nothing to do" << endl;
     return 0;
   }
