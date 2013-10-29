@@ -86,15 +86,26 @@ bool similar(const Dataset& annotation, const Dataset& inducted)
   for(int i = 0; i < num_samples; ++i) {
     VectorXf* ann = annotation[rand() % annotation.size()].descriptors_[id];
     ROS_ASSERT(ann);
+    ROS_ASSERT(ann->rows() == 3);
     for(int j = 0; j < num_samples; ++j) {
       VectorXf* ind = inducted[rand() % inducted.size()].descriptors_[id];
       ROS_ASSERT(ind);
-      double dist = ((*ind) - (*ann)).norm();
-      min_dist = min(min_dist, dist);
+      ROS_ASSERT(ind->rows() == 3);
+
+      double max_pct_change = 0;
+      for(int k = 0; k < ind->rows(); ++k) {
+        // double pct_change = max(fabs(ann->coeffRef(k) - ind->coeffRef(k)) / ann->coeffRef(k),
+        //                         fabs(ann->coeffRef(k) - ind->coeffRef(k)) / ind->coeffRef(k));
+        if(ind->coeffRef(k) == 0)
+          continue;
+        double pct_change = fabs(ann->coeffRef(k) - ind->coeffRef(k)) / ind->coeffRef(k);
+        max_pct_change = max(max_pct_change, pct_change);
+      }
+      
+      min_dist = min(min_dist, max_pct_change);
     }
   }
-
-  return (min_dist < 0.2);
+  return (min_dist < 0.1);
 }
 
 void Inductor::retrospection(const TrackDataset& new_annotations, const std::vector<Label>& predictions)
@@ -115,10 +126,10 @@ void Inductor::retrospection(const TrackDataset& new_annotations, const std::vec
         int sign = predictions[i].sign()(c);
         for(size_t j = 0; j < unsupervised_->size(); ++j) {
           Label pred = unsupervised_->label(j);
-          if(pred.sign()(c) == sign && pred(c) <= predictions[i](c) && similar(new_annotations[i], (*unsupervised_)[j])) {
+          if(pred.sign()(c) == sign && fabs(pred(c)) <= fabs(predictions[i](c)) && similar(new_annotations[i], (*unsupervised_)[j])) {
+            if(pred.squaredNorm() > 1e-6)
+              ++num_deinducted;
             (*unsupervised_)[j].setLabel(unknown);
-            if(deinduction_occurred[c] == false)
-              ++num_deinducted;              
             deinduction_occurred[c] = true;
           }
         }
