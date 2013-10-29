@@ -7,6 +7,9 @@
 class Inductor : public OnlineLearner
 {
 public:
+  //! This needs to be set if you are using a config with a GravitationalCloudOrienter.
+  Eigen::VectorXf up_;
+  
   //! config["Pipeline"] is the descriptor pipeline.
   //! The other values are ignored.  classifier and trainer
   //! should be initialized with their own parameters manually.

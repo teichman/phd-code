@@ -17,6 +17,7 @@ int main(int argc, char** argv)
   bpo::positional_options_description p;
 
   // Inductor object params.
+  string up_path;
   string config_path;
   double emax;
   size_t buffer_size;
@@ -41,6 +42,7 @@ int main(int argc, char** argv)
   vector<string> class_names;
   opts_desc.add_options()
     ("help,h", "produce help message")
+    ("up,u", bpo::value(&up_path), "")
     ("config", bpo::value(&config_path)->required(), "")
     ("emax", bpo::value<double>(&emax)->required())
     ("buffer-size", bpo::value<size_t>(&buffer_size)->required())
@@ -70,7 +72,7 @@ int main(int argc, char** argv)
     cout << opts_desc << endl;
     return 1;
   }
-
+  
   // -- Load the config.
   YAML::Node config = YAML::LoadFile(config_path);
   ROS_ASSERT(config["Pipeline"]);
@@ -92,10 +94,18 @@ int main(int argc, char** argv)
   cmap.addNames(class_names);
   cout << "Using cmap: " << endl;
   cout << cmap.status("  ") << endl;
+
+  // -- Get the up vector.
+  VectorXf up;
+  if(opts.count("up")) {
+    cout << "Setting up vector to that found at " << up_path << endl;
+    eigen_extensions::loadASCII(up_path, &up);
+    cout << "Up: " << up.transpose() << endl;
+  }
   
   // -- Initialize classifier and trainer.
   cout << "Loading initialization datasets..." << endl;
-  TrackDataset::Ptr init = loadDatasets(init_paths, config, cmap, true);
+  TrackDataset::Ptr init = loadDatasets(init_paths, config, cmap, up, true);
   cout << "Initializing classifier..." << endl;
   GridClassifier::Ptr classifier(new GridClassifier);
   classifier->initialize(*init, nc);
@@ -117,9 +127,10 @@ int main(int argc, char** argv)
                     classifier, trainer, max_iters, snapshot_every,
                     evaluate_every, output_dir, unlabeled_td_dir,
                     saved_annotations_dir);
+  inductor.up_ = up;
 
   if(!seed_paths.empty()) {
-    TrackDataset::Ptr seed = loadDatasets(seed_paths, config, cmap, true);
+    TrackDataset::Ptr seed = loadDatasets(seed_paths, config, cmap, up, true);
     for(size_t i = 0; i < seed->size(); ++i) {
       const Dataset& track = *seed->tracks_[i];
       for(size_t j = 0; j < track.size(); ++j) {
@@ -131,7 +142,7 @@ int main(int argc, char** argv)
     inductor.pushHandLabeledDataset(seed);
   }
   if(!autobg_paths.empty()) {
-    TrackDataset::Ptr autobg = loadDatasets(autobg_paths, config, cmap, true);
+    TrackDataset::Ptr autobg = loadDatasets(autobg_paths, config, cmap, up, true);
     for(size_t i = 0; i < autobg->size(); ++i) {
       const Dataset& track = *autobg->tracks_[i];
       for(size_t j = 0; j < track.size(); ++j) {
@@ -144,7 +155,7 @@ int main(int argc, char** argv)
   }
 
   if(!test_paths.empty()) {
-    TrackDataset::Ptr test = loadDatasets(test_paths, config, cmap, true);
+    TrackDataset::Ptr test = loadDatasets(test_paths, config, cmap, up, true);
     inductor.setTestData(test);
     cout << "Using test dataset: " << endl;
     cout << test->status("  ");

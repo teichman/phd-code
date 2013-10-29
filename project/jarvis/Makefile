@@ -82,6 +82,7 @@ kitchen/induction: kitchen_descriptors
 	. ~/.bashrc && rosgdb jarvis induct \
 	--class-names $(KITCHEN_CLASS_NAMES) \
 	--config $(CONFIG) \
+	-u $(KITCHEN_UP_VECTOR) \
 	--emax 0 \
 	--buffer-size 1000 \
 	--max-track-length 30 \

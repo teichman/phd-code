@@ -24,8 +24,13 @@ public:
   void setUpVector(const Eigen::VectorXf up);
 };
 
-double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, bool debug = false,
-                         Eigen::VectorXf up = Eigen::VectorXf());
+double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td,
+                         Eigen::VectorXf up = Eigen::VectorXf(), bool debug = false);
+TrackDataset::Ptr loadDatasets(const std::vector<std::string> paths,
+                               YAML::Node config,
+                               const NameMapping& cmap = NameMapping(),
+                               const Eigen::VectorXf& up = Eigen::VectorXf(),
+                               bool verbose = false);
 TrackDataset::Ptr loadDatasets(const std::vector<std::string> paths,
                                YAML::Node config,
                                const NameMapping& cmap = NameMapping(),

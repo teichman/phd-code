@@ -31,12 +31,14 @@ int main(int argc, char** argv)
   // -- Parse args.
   bpo::options_description opts_desc("Allowed options");
 
+  string up_path;
   string config_path;
   vector<string> test_paths;
   int num_iters;
   vector<string> class_names;
   opts_desc.add_options()
     ("help,h", "produce help message")
+    ("up,u", bpo::value(&up_path), "")
     ("config", bpo::value(&config_path)->required(), "")
     ("root", bpo::value<string>()->default_value("."), "TBSSL root path")
     ("test", bpo::value< vector<string> >(&test_paths)->required()->multitoken(), "Test data paths.")
@@ -105,6 +107,14 @@ int main(int argc, char** argv)
   ROS_ASSERT(loaded);
   gc->setZero();
   gc->applyNameMapping("cmap", cmap);
+
+  // -- Get the up vector.
+  VectorXf up;
+  if(opts.count("up")) {
+    cout << "Setting up vector to that found at " << up_path << endl;
+    eigen_extensions::loadASCII(up_path, &up);
+    cout << "Up: " << up.transpose() << endl;
+  }
   
   // -- Load annotations data.
   vector<string> ann_paths;
@@ -116,13 +126,13 @@ int main(int argc, char** argv)
     ann_paths.insert(ann_paths.end(), paths.begin(), paths.end());
   }
   ROS_ASSERT(!ann_paths.empty());
-  TrackDataset::Ptr annotations = loadDatasets(ann_paths, config, cmap);
+  TrackDataset::Ptr annotations = loadDatasets(ann_paths, config, cmap, up);
   cout << "Annotations data: " << endl;
   cout << annotations->status("  ") << endl;
   
   // -- Load test data.
   ROS_ASSERT(!test_paths.empty());
-  TrackDataset::Ptr test = loadDatasets(test_paths, config, cmap, true);
+  TrackDataset::Ptr test = loadDatasets(test_paths, config, cmap, up);
   cout << "Test data: " << endl;
   cout << test->status("  ") << endl;
 

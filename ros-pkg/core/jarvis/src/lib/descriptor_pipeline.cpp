@@ -71,7 +71,7 @@ void DescriptorPipeline::setUpVector(const Eigen::VectorXf up)
  * Helper functions
  ************************************************************/
 
-double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, bool debug, Eigen::VectorXf up)
+double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, Eigen::VectorXf up, bool debug)
 {
   HighResTimer hrt;
   hrt.start();
@@ -129,6 +129,38 @@ double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, b
   double ms_per_obj = hrt.getMilliseconds() / td->totalInstances();
   cout << "updateDescriptors: " << ms_per_obj << " ms / obj." << endl;
   return ms_per_obj;
+}
+
+TrackDataset::Ptr loadDatasets(const std::vector<std::string> paths,
+                               YAML::Node config,
+                               const NameMapping& cmap,
+                               const Eigen::VectorXf& up,
+                               bool verbose)
+{
+  ROS_ASSERT(!paths.empty());
+
+  ROS_DEBUG_STREAM("loadDatasets called with Instance::custom_serializer_ of "
+                   << Instance::custom_serializer_->name());
+      
+  TrackDataset::Ptr data(new TrackDataset());
+  data->load(paths[0]);
+  updateDescriptors(config["Pipeline"], 24, data.get(), up);
+  if(!cmap.empty())
+    data->applyNameMapping("cmap", cmap);
+  
+  for(size_t i = 1; i < paths.size(); ++i) {
+    if(verbose)
+      cout << "Loading " << paths[i] << endl;
+    TrackDataset tmp;
+    tmp.load(paths[i]);
+    updateDescriptors(config["Pipeline"], 24, &tmp, up);
+    if(!cmap.empty())
+      tmp.applyNameMapping("cmap", cmap);
+    ROS_ASSERT(data->nameMappingsAreEqual(tmp));
+    *data += tmp;
+  }
+
+  return data;
 }
 
 TrackDataset::Ptr loadDatasets(const std::vector<std::string> paths,

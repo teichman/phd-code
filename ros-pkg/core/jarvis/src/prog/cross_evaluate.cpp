@@ -86,7 +86,7 @@ int main(int argc, char** argv)
     TrackDataset::Ptr td(new TrackDataset);
     td->load(dataset_paths[i]);
     td->applyNameMapping("cmap", cmap);
-    updateDescriptors(config["Pipeline"], 24, td.get(), false, up);
+    updateDescriptors(config["Pipeline"], 24, td.get(), up);
     tds.push_back(td);
   }
 

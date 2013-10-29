@@ -24,7 +24,7 @@ Inductor::Inductor(YAML::Node config,
 void Inductor::entryHook(TrackDataset* td, const std::string& path) const
 {
   cout << "Updating descriptors for data at path: \"" << path << "\"" << endl;
-  double ms_per_obj = updateDescriptors(config_["Pipeline"], 24, td);
+  double ms_per_obj = updateDescriptors(config_["Pipeline"], 24, td, up_);
   cout << "Done.  ms_per_obj: " << ms_per_obj << endl;
 
   ROS_ASSERT(nameMapping("dmap") == td->nameMapping("dmap"));
@@ -73,8 +73,12 @@ void Inductor::chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_
 bool similar(const Dataset& annotation, const Dataset& inducted)
 {
   const NameMapping& dmap = annotation.nameMapping("dmap");
-  string name = "OrientedBoundingBoxSize.BoundingBoxSize:15595929600647926249";
-  ROS_ASSERT(dmap.hasName(name));
+  //string name = "OrientedBoundingBoxSize.BoundingBoxSize:15595929600647926249";  // BoundingBoxSize from CloudOrienter.
+  string name = "OrientedBoundingBoxSize.BoundingBoxSize:9048624352072648104";  // BoundingBoxSize from GravitationalCloudOrienter.
+  if(!dmap.hasName(name)) {
+    cout << dmap << endl;
+    ROS_ASSERT(dmap.hasName(name));
+  }
   size_t id = dmap.toId(name);
 
   int num = 0;

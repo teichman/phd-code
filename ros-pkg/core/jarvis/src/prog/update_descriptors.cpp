@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     cout << "Working on " << td_paths[i] << endl;
     TrackDataset td;
     td.load(td_paths[i]);
-    double ms_per_obj = updateDescriptors(config["Pipeline"], num_threads, &td, opts.count("debug"), up);
+    double ms_per_obj = updateDescriptors(config["Pipeline"], num_threads, &td, up, opts.count("debug"));
     // Only save if something changed.
     if(ms_per_obj != 0) {
       // Serializable writes to a temporary file and then does a move,
