@@ -18,12 +18,14 @@ int main(int argc, char** argv)
   vector<string> class_names;
   vector<string> dataset_paths;
   string output_dir;
+  string up_path;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("config", bpo::value(&config_path)->required(), "")
     ("class-names", bpo::value(&class_names)->required()->multitoken(), "")
     ("tds", bpo::value(&dataset_paths)->required()->multitoken(), "Labeled data")
     ("output,o", bpo::value(&output_dir)->required(), "Output directory")
+    ("up,u", bpo::value(&up_path), "")
     ;
 
   bpo::variables_map opts;
@@ -54,7 +56,7 @@ int main(int argc, char** argv)
     cout << buf << " ";
   }
   cout << endl;
-
+  
   // -- Set up the class map to use. 
   NameMapping cmap;
   cmap.addNames(class_names);
@@ -68,7 +70,15 @@ int main(int argc, char** argv)
     dataset_names[i] = path.stem().string();
     cout << "Name: " << dataset_names[i] << endl;
   }
-      
+
+  // -- Get the up vector.
+  VectorXf up;
+  if(opts.count("up")) {
+    cout << "Setting up vector to that found at " << up_path << endl;
+    eigen_extensions::loadASCII(up_path, &up);
+    cout << "Up: " << up.transpose() << endl;
+  }
+  
   // -- Load all datasets.
   vector<TrackDataset::ConstPtr> tds;
   for(size_t i = 0; i < dataset_paths.size(); ++i) {
@@ -76,7 +86,7 @@ int main(int argc, char** argv)
     TrackDataset::Ptr td(new TrackDataset);
     td->load(dataset_paths[i]);
     td->applyNameMapping("cmap", cmap);
-    updateDescriptors(config["Pipeline"], 24, td.get());
+    updateDescriptors(config["Pipeline"], 24, td.get(), false, up);
     tds.push_back(td);
   }
 

@@ -22,13 +22,14 @@ all:
 # You should symlink these in your own repo.
 LOG_DIR := $(MAKE_ROOT)/logs
 LABELED_TD_DIR := $(MAKE_ROOT)/labeled
-CONFIG := `rospack find jarvis`/config/hand_specified.yml
+CONFIG := `rospack find jarvis`/config/hand_specified-up.yml
 #CONFIG := `rospack find jarvis`/config/config.yml
 
 KITCHEN_DIR := $(LOG_DIR)/kitchen-new_bg_subtr
 KITCHEN_NAMES := $(shell ls $(KITCHEN_DIR) | sed 's/\.bag//')
 KITCHEN_TD_DIRS := $(addprefix kitchen/tds/, $(KITCHEN_NAMES))
 KITCHEN_LABELS_DIR := $(LABELED_TD_DIR)/kitchen
+KITCHEN_UP_VECTOR := `rospack find jarvis`/config/up-kitchen.eig.txt
 
 OFFICE_DIR := $(LOG_DIR)/office
 OFFICE_NAMES := $(shell ls $(OFFICE_DIR) | sed 's/\.bag//')
@@ -109,10 +110,11 @@ kitchen/baseline_unfair: kitchen/induction
 	mv $@-log.txt $@/
 
 kitchen/cross_evaluation:
-	. ~/.bashrc && rosgdb jarvis cross_evaluate \
+	rosrun jarvis cross_evaluate \
 	--config $(CONFIG) \
 	--class-names $(KITCHEN_CLASS_NAMES) \
 	--tds $(KITCHEN_LABELS_DIR)/*.td \
+	-u $(KITCHEN_UP_VECTOR) \
 	-o $@ | tee $@-log.txt
 	mv $@-log.txt $@/
 
