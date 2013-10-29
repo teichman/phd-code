@@ -101,6 +101,41 @@ protected:
   Cloud::Ptr oriented_;
 };
 
+class GravitationalCloudOrienter : public pl::Pod
+{
+public:
+  DECLARE_POD(GravitationalCloudOrienter);
+  GravitationalCloudOrienter(std::string name) :
+    Pod(name),
+    demeaned_(new Cloud),
+    upped_(new Cloud),
+    projected_(new Cloud),
+    oriented_(new Cloud),
+    height_(1),
+    highest_point_(1)
+  {
+    declareInput<Blob::ConstPtr>("ProjectedBlob");
+    declareOutput<Cloud::ConstPtr>("OrientedCloud");
+    declareOutput<const Eigen::VectorXf*>("Height");
+    declareOutput<const Eigen::VectorXf*>("HighestPoint");
+  }
+
+  //! This must be called before compute().
+  void setUpVector(const Eigen::Vector3f& up);
+  void compute();
+  void debug() const;
+
+protected:
+  Eigen::VectorXf up_;
+  Eigen::Affine3f raw_to_up_;
+  Cloud::Ptr demeaned_;
+  Cloud::Ptr upped_;
+  Cloud::Ptr projected_;
+  Cloud::Ptr oriented_;
+  Eigen::VectorXf height_;
+  Eigen::VectorXf highest_point_;
+};
+
 class CloudSelector : public pl::Pod
 {
 public:

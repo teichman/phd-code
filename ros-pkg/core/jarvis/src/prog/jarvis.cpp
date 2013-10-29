@@ -2,6 +2,7 @@
 #include <boost/program_options.hpp>
 
 using namespace std;
+using namespace Eigen;
 
 int main(int argc, char** argv)
 {
@@ -16,6 +17,7 @@ int main(int argc, char** argv)
   string output_directory;
   string config_path;
   string gc_path;
+  string up_path;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("vis-level,v", bpo::value(&vis_level)->default_value(0), "")
@@ -23,6 +25,7 @@ int main(int argc, char** argv)
     ("record", bpo::value(&output_directory)->default_value(""), "Where to save TD files")
     ("config", bpo::value(&config_path)->default_value(""), "")
     ("classifier,c", bpo::value(&gc_path)->default_value(""), "")
+    ("up,u", bpo::value(&up_path), "")
     ;
 
   bpo::variables_map opts;
@@ -42,6 +45,14 @@ int main(int argc, char** argv)
   Jarvis jarvis(vis_level, rotation, output_directory);
   if(output_directory != "")
     cout << "Saving TD files to \"" << output_directory << "\"" << endl;
+
+  if(opts.count("up")) {
+    VectorXf up;
+    cout << "Setting up vector to that found at " << up_path << endl;
+    eigen_extensions::loadASCII(up_path, &up);
+    jarvis.dp_->setUpVector(up);
+  }
+  
   
   // -- If we're going to classify things...
   if(gc_path != "") {

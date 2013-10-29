@@ -21,9 +21,11 @@ public:
   std::string reportTiming() const { return pl_.reportTiming(); }
   NameMapping dmap() const { return pl_.pod<DescriptorAggregator>()->dmap(); }
   void setDebug(bool debug) { pl_.setDebug(debug); }
+  void setUpVector(const Eigen::VectorXf up);
 };
 
-double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, bool debug = false);
+double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, bool debug = false,
+                         Eigen::VectorXf up = Eigen::VectorXf());
 TrackDataset::Ptr loadDatasets(const std::vector<std::string> paths,
                                YAML::Node config,
                                const NameMapping& cmap = NameMapping(),

@@ -20,6 +20,7 @@ void DescriptorPipeline::registerPodTypes()
   REGISTER_POD(BoundingBoxSize);
   REGISTER_POD(DescriptorAggregator);
   REGISTER_POD(CloudOrienter);
+  REGISTER_POD(GravitationalCloudOrienter);
   REGISTER_POD(CloudSelector);
   REGISTER_POD(CentroidFinder);
   REGISTER_POD(NormalizedDensityHistogram);
@@ -58,18 +59,28 @@ const vector<const VectorXf*>* DescriptorPipeline::computeDescriptors(Blob::Ptr 
   return descriptors;
 }
 
+void DescriptorPipeline::setUpVector(const Eigen::VectorXf up)
+{
+  vector<GravitationalCloudOrienter*> gcos = pl_.filterPods<GravitationalCloudOrienter>();
+  for(size_t i = 0; i < gcos.size(); ++i)
+    gcos[i]->setUpVector(up);
+}
+
 
 /************************************************************
  * Helper functions
  ************************************************************/
 
-double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, bool debug)
+double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, bool debug, Eigen::VectorXf up)
 {
   HighResTimer hrt;
   hrt.start();
 
   DescriptorPipeline dp;
   dp.initialize(plspec);
+  if(up.rows() == 3)
+    dp.setUpVector(up);
+  
   if(td->nameMapping("dmap") == dp.dmap()) {
     cout << "updateDescriptors: nothing to do" << endl;
     return 0;
@@ -91,6 +102,9 @@ double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, b
     dp.initialize(plspec);
     if(debug)
       dp.setDebug(debug);
+    if(up.rows() == 3)
+      dp.setUpVector(up);
+
     
     for(size_t i = tidx; i < td->tracks_.size(); i += num_threads) {
       Dataset& track = (*td)[i];

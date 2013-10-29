@@ -152,7 +152,7 @@ void UpSelector::selectPlane()
   }
           
   // -- Fit the best plane.
-  double tol = 0.01;
+  double tol = 0.03;
   pcl::SampleConsensusModelPlane<Point>::Ptr plane(new pcl::SampleConsensusModelPlane<Point>(pcd));
   pcl::RandomSampleConsensus<Point> ransac(plane);
   ransac.setDistanceThreshold(tol);
@@ -183,7 +183,8 @@ void UpSelector::selectPlane()
   }
 
   // -- Save.
-  eigen_extensions::saveASCII(coefs, output_path_);
+  VectorXf save = coefs.head(3);
+  eigen_extensions::saveASCII(save, output_path_);
 }
 
 void UpSelector::clear()

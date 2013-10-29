@@ -4,6 +4,7 @@
 #include <pcl/common/common.h>
 #include <pcl/common/pca.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/common/transformation_from_correspondences.h>
 #include <jarvis/pods.h>
 
 using namespace std;
@@ -104,7 +105,7 @@ void CloudOrienter::compute()
   pcl::PCA<Point> pca;
   pca.setInputCloud(cloud);
   pca.project(*cloud, *oriented_);
-
+ 
   push<Cloud::ConstPtr>("OrientedCloud", oriented_);
 }
 
@@ -115,6 +116,93 @@ void CloudOrienter::debug() const
   pcl::io::savePCDFileBinary(debugBasePath() + "-oriented.pcd", *oriented_);
 }
 
+
+/************************************************************
+ * GravitationalCloudOrienter
+ ************************************************************/
+
+void GravitationalCloudOrienter::setUpVector(const Eigen::Vector3f& up)
+{
+  up_ = up;
+  up_.normalize();
+  
+  // Get the transform by generating three points that correspond and using SVD.
+  pcl::TransformationFromCorrespondences tfc;
+  tfc.add(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
+  tfc.add(up_, Vector3f(0, 0, 1));
+  Vector3f xrefpt(1.0 / up_(0), 1.0 / up_(1), -2.0 / up_(2));
+  xrefpt.normalize();
+  tfc.add(xrefpt, Vector3f(1, 0, 0));
+  raw_to_up_ = tfc.getTransformation();
+
+  // cout << up_.transpose() << endl;
+  // cout << endl;
+  // cout << xrefpt.transpose() << endl;
+  // cout << endl;
+  // cout << raw_to_up_.matrix() << endl;
+  // cout << endl;
+  // cout << (raw_to_up_.matrix().block<3, 3>(0, 0) * up_).transpose() << endl;
+  // cout << endl;
+  // cout << (raw_to_up_.matrix().block<3, 3>(0, 0) * up_ - Vector3f(0, 0, 1)).norm() << endl;
+
+  ROS_ASSERT(fabs(xrefpt.dot(up_)) < 1e-6);
+  ROS_ASSERT((raw_to_up_.matrix().block<3, 3>(0, 0) * up_ - Vector3f(0, 0, 1)).norm() < 1e-6);
+}
+
+void GravitationalCloudOrienter::compute()
+{
+  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
+  Cloud::ConstPtr cloud = blob.cloud_;
+  ROS_ASSERT(up_.rows() == 3);
+
+  // -- Demean the input cloud.
+  Vector4f centroid;
+  pcl::compute3DCentroid(*cloud, centroid);
+  pcl::demeanPointCloud(*cloud, centroid, *demeaned_);
+  ROS_ASSERT(!demeaned_->empty());
+
+  // -- Rotate the demeaned cloud so that it points up.  Project into the ground plane.
+  pcl::transformPointCloud(*demeaned_, *upped_, raw_to_up_);
+  *projected_ = *upped_;
+  for(size_t i = 0; i < projected_->size(); ++i)
+    projected_->at(i).z = 0;
+  
+  // -- Run SVD on the projection of the points into the ground plane.
+  pcl::PCA<Point> pca;
+  pca.setInputCloud(projected_);
+  Matrix4f rotation = Matrix4f::Identity();
+  rotation.block<3, 3>(0, 0) = pca.getEigenVectors();
+  pcl::transformPointCloud(*upped_, *oriented_, rotation);
+    
+  // -- Get height of the visible object.
+  Vector4f minpt, maxpt;
+  pcl::getMinMax3D(*oriented_, minpt, maxpt);
+  height_(0) = maxpt(2) - minpt(2);
+
+  // -- Get the height of the highest point.  This is a surrogate for height when we
+  //    can't see the full object.
+  highest_point_(0) = -numeric_limits<float>::max();
+  for(size_t i = 0; i < cloud->size(); ++i)
+    highest_point_(0) = max(highest_point_(0), up_.dot(cloud->at(i).getVector3fMap()));
+  
+  push<Cloud::ConstPtr>("OrientedCloud", oriented_);
+  push<const VectorXf*>("Height", &height_);
+  push<const VectorXf*>("HighestPoint", &highest_point_);
+}
+
+void GravitationalCloudOrienter::debug() const
+{
+  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
+  pcl::io::savePCDFileBinary(debugBasePath() + "-00-original.pcd", *blob.cloud_);
+  pcl::io::savePCDFileBinary(debugBasePath() + "-01-demeaned.pcd", *demeaned_);
+  pcl::io::savePCDFileBinary(debugBasePath() + "-02-upped.pcd", *upped_);
+  pcl::io::savePCDFileBinary(debugBasePath() + "-03-oriented.pcd", *oriented_);
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "height_: " << height_.transpose() << endl;
+  f << "highest_point_: " << highest_point_.transpose() << endl;
+  f << "raw_to_up_: " << endl << raw_to_up_.matrix() << endl;
+  f.close();
+}
 
 /************************************************************
  * CentroidFinder

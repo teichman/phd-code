@@ -15,12 +15,14 @@ int main(int argc, char** argv)
   string config_path;
   vector<string> td_paths;
   int num_threads;
+  string up_path;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("config", bpo::value<string>(&config_path)->default_value(DescriptorPipeline::defaultSpecificationPath()), "")
     ("tds", bpo::value< vector<string> >(&td_paths)->required()->multitoken(), "")
     ("debug", "")
     ("num-threads,j", bpo::value(&num_threads)->default_value(1))
+    ("up,u", bpo::value(&up_path), "")
     ;
 
   p.add("tds", -1);
@@ -41,11 +43,18 @@ int main(int argc, char** argv)
   cout << "Using " << num_threads << " threads to update descriptors." << endl;
   cout << "Using pipeline defined at " << config_path << "." << endl;
 
+  VectorXf up;
+  if(opts.count("up")) {
+    cout << "Setting up vector to that found at " << up_path << endl;
+    eigen_extensions::loadASCII(up_path, &up);
+    cout << "Up: " << up.transpose() << endl;
+  }
+  
   for(size_t i = 0; i < td_paths.size(); ++i) {
     cout << "Working on " << td_paths[i] << endl;
     TrackDataset td;
     td.load(td_paths[i]);
-    double ms_per_obj = updateDescriptors(config["Pipeline"], num_threads, &td, opts.count("debug"));
+    double ms_per_obj = updateDescriptors(config["Pipeline"], num_threads, &td, opts.count("debug"), up);
     // Only save if something changed.
     if(ms_per_obj != 0) {
       // Serializable writes to a temporary file and then does a move,

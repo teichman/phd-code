@@ -12,8 +12,8 @@ Pipeline:
       Params: ~
       Inputs:
         Blob: BlobEntryPoint.Output
-    - Name: CloudOrienter
-      Type: CloudOrienter
+    - Name: GravitationalCloudOrienter
+      Type: GravitationalCloudOrienter
       Params: ~
       Inputs:
         ProjectedBlob: BlobProjector.ProjectedBlob
@@ -21,13 +21,13 @@ Pipeline:
       Type: BoundingBoxSize
       Params: ~
       Inputs:
-        Cloud: CloudOrienter.OrientedCloud
+        Cloud: GravitationalCloudOrienter.OrientedCloud
     - Name: OrientedNormalizedDensityHistogram
       Type: NormalizedDensityHistogram
       Params:
         NumBins: 10
       Inputs:
-        Cloud: CloudOrienter.OrientedCloud
+        Cloud: GravitationalCloudOrienter.OrientedCloud
     - Name: CloudProjectorXY
       Type: CloudProjector
       Params:
@@ -38,7 +38,7 @@ Pipeline:
         MinIntensity: 1
         KernelSize: 1
       Inputs:
-        Cloud: CloudOrienter.OrientedCloud
+        Cloud: GravitationalCloudOrienter.OrientedCloud
     - Name: CloudProjectorYZ
       Type: CloudProjector
       Params:
@@ -49,7 +49,7 @@ Pipeline:
         MinIntensity: 1
         KernelSize: 1
       Inputs:
-        Cloud: CloudOrienter.OrientedCloud
+        Cloud: GravitationalCloudOrienter.OrientedCloud
     - Name: CloudProjectorXZ
       Type: CloudProjector
       Params:
@@ -60,7 +60,7 @@ Pipeline:
         MinIntensity: 1
         KernelSize: 1
       Inputs:
-        Cloud: CloudOrienter.OrientedCloud
+        Cloud: GravitationalCloudOrienter.OrientedCloud
     - Name: DynamicImageWindowXY
       Type: DynamicImageWindow
       Params:
@@ -149,4 +149,7 @@ Pipeline:
           HogArrayYZ.ConcatenatedDescriptors
           HogArrayXZ.ConcatenatedDescriptors
           IntensityHistogram.Histogram
+          GravitationalCloudOrienter.Height
+          GravitationalCloudOrienter.HighestPoint
+          
           
