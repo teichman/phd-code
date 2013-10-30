@@ -2,5 +2,5 @@
 <launch>
   <arg name="rotation" default="180" />
   <node name="jarvis" pkg="jarvis" type="jarvis" args="-v1 -r$(arg rotation) -c $(find jarvis)/data/classifier.gc --config $(find jarvis)/config/hand_specified.yml" required="true" />
-  <node name="request_detection_recording" pkg="jarvis" type="request_detection_recording" args="cat 5 2" required="true" output="screen" />
+  <node name="request_detection_recording" pkg="jarvis" type="request_detection_recording" args="cat 10 2" required="true" output="screen" />
 </launch>

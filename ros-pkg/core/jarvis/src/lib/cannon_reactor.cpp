@@ -158,6 +158,10 @@ PythonCannonDriver::PythonCannonDriver() :
   mpli("import roslib; roslib.load_manifest('jarvis')");
   mpli("from rosrocket import *");
   mpli("rd = RocketDriver()");
+  mpli("rd.down(3)");
+  usleep(2e5);
+  mpli("rd.left(6)");
+  usleep(2e5);
 }
 
 void PythonCannonDriver::_run()
