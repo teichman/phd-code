@@ -44,15 +44,7 @@ int main(int argc, char** argv)
  
   Jarvis jarvis(vis_level, rotation, output_directory);
   if(output_directory != "")
-    cout << "Saving TD files to \"" << output_directory << "\"" << endl;
-
-  if(opts.count("up")) {
-    VectorXf up;
-    cout << "Setting up vector to that found at " << up_path << endl;
-    eigen_extensions::loadASCII(up_path, &up);
-    jarvis.dp_->setUpVector(up);
-  }
-  
+    cout << "Saving TD files to \"" << output_directory << "\"" << endl;  
   
   // -- If we're going to classify things...
   if(gc_path != "") {
@@ -72,8 +64,15 @@ int main(int argc, char** argv)
     cout << "Loading classifier at \"" << gc_path << "\"." << endl;
     jarvis.gc_ = GridClassifier::Ptr(new GridClassifier);
     jarvis.gc_->load(gc_path);
-  }
 
+    if(opts.count("up")) {
+      VectorXf up;
+      cout << "Setting up vector to that found at " << up_path << endl;
+      eigen_extensions::loadASCII(up_path, &up);
+      jarvis.dp_->setUpVector(up);
+    }
+  }
+  
   // -- Run.
   ros::spin();
 
