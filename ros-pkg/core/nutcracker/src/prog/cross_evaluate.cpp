@@ -30,26 +30,37 @@ float computeSURF(cv::Mat3b img)
 //       delta(y, x) = fabs(curr(y, x) - prev(y, x));
 // }
 
-void loadData(std::string data_dir, int maxnum, Eigen::MatrixXd* X, Eigen::VectorXd* y)
+double stdev(const Eigen::VectorXd& vec)
+{
+  double mean = vec.sum() / vec.rows();
+  double total = 0;
+  for(int i = 0; i < vec.rows(); ++i)
+    total += pow(vec(i) - mean, 2);
+
+  return sqrt(total / vec.rows());
+}
+
+void loadData(std::string data_dir, int maxnum, Eigen::MatrixXd* X, Eigen::VectorXd* y, std::vector<string>* paths)
 {
   // -- Get the number of labeled instances and their paths.
-  vector<string> paths = glob(data_dir + "/*.png");
-  if(maxnum > 0 && paths.size() > (size_t)maxnum)
-    paths.resize(maxnum);
-  *y = VectorXd(paths.size());
-  *X = MatrixXd(1, paths.size());
+  *paths = glob(data_dir + "/*.png");
+  if(maxnum > 0 && paths->size() > (size_t)maxnum)
+    paths->resize(maxnum);
+  *y = VectorXd(paths->size());
+  *X = MatrixXd(2, paths->size());
   
-  for(size_t i = 0; i < paths.size(); ++i) {
+  for(size_t i = 0; i < paths->size(); ++i) {
     // -- Load image and set the label.
-    cout << "Loading " << paths[i] << endl;
-    cv::Mat3b img = cv::imread(paths[i]);
-    string numstr = paths[i].substr(paths[i].find_last_of("-") + 1);
+    cout << "Loading " << (*paths)[i] << endl;
+    cv::Mat3b img = cv::imread((*paths)[i]);
+    string numstr = (*paths)[i].substr((*paths)[i].find_last_of("-") + 1);
     numstr = numstr.substr(0, numstr.size() - 4);
     y->coeffRef(i) = atof(numstr.c_str());
     
     // -- Compute the features.
-    X->coeffRef(0, i) = computeSURF(img);
-    //X->coeffRef(1, i) = deltaImage(img);
+    X->coeffRef(0, i) = 1;
+    X->coeffRef(1, i) = computeSURF(img);
+    //X->coeffRef(2, i) = deltaImage(img);
   }
 }
 
@@ -60,10 +71,12 @@ int main(int argc, char** argv)
 
   string data_dir;
   int maxnum;
+  int plot_index;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("data", bpo::value(&data_dir)->required(), "")
     ("maxnum", bpo::value(&maxnum)->default_value(0), "")
+    ("plot", bpo::value(&plot_index), "Which index to plot, if any")
     ;
 
   p.add("data", 1);
@@ -83,24 +96,84 @@ int main(int argc, char** argv)
   cout << "Loading data at \"" << data_dir << "\"." << endl;
   MatrixXd X;
   VectorXd y;
-  loadData(data_dir, maxnum, &X, &y);
+  vector<string> paths;
+  loadData(data_dir, maxnum, &X, &y, &paths);
 
   for(int i = 0; i < y.rows(); ++i)
     cout << X.col(i).transpose() << " -- " << y(i) << endl;
 
-  mpliBegin();
-  mpli("from pylab import *");
-  mpliPrintSize();
-  mpliExport(X);
-  mpliExport(y);
-  mpli("print X[0, :]");
-  mpli("print y");
-  mpli("scatter(X[0, :], y)");
-  mpli("xlabel('SURF feature count')");
-  mpli("ylabel('Ground truth nut count')");
-  mpli("draw()");
-  mpli("savefig('scatterplot.png')");
-  mpli("clf()");
+  // -- Plot data.
+  if(opts.count("plot")) {
+    mpliBegin();
+    mpli("from pylab import *");
+    mpliPrintSize();
+    mpliExport(X);
+    mpliExport(y);
+    mpliExport(plot_index);
+    mpli("print X[plot_index, :]");
+    mpli("print y");
+    mpli("scatter(X[plot_index, :], y)");
+    mpli("xlabel('SURF feature count')");
+    mpli("ylabel('Ground truth nut count')");
+    mpli("draw()");
+    mpli("savefig('scatterplot.png')");
+    mpli("clf()");
+  }
+
+  // -- Leave one out cross-validation.
+  VectorXd absolute_errors(y.rows());
+  VectorXd signed_errors(y.rows());
+  VectorXd percent_errors(y.rows());
+  VectorXd predictions(y.rows());
+  for(int i = 0; i < y.rows(); ++i) {
+    // Construct the training set.
+    MatrixXd X2(X.rows(), X.cols() - 1);
+    VectorXd y2(y.rows() - 1);
+    int idx = 0;
+    for(int j = 0; j < y.rows(); ++j) {
+      if(j != i) {
+        X2.col(idx) = X.col(j);
+        y2(idx) = y(j);
+        ++idx;
+      }
+    }
+
+    // Fit the model.
+    VectorXd weights = (X2 * X2.transpose()).inverse() * X2 * y2;
+    cout << "weights: " << weights.transpose();
+    cout << ", x: " << X.col(i).transpose();
+
+    // Evaluate on the held-out test example.
+    double yhat = weights.dot(X.col(i));
+    cout << ", prediction: " << yhat << ", L1 error: " << fabs(yhat - y(i));
+    cout << endl;
+
+    predictions(i) = yhat;
+    absolute_errors(i) = fabs(yhat - y(i));
+    signed_errors(i) = yhat - y(i);
+    percent_errors(i) = fabs(yhat - y(i)) / max<double>(y(i), 1);
+  }
+
+  cout << endl;
+  cout << "Mean count error: " << absolute_errors.sum() / absolute_errors.rows() << endl;
+  cout << "Standard deviation of count error: " << stdev(absolute_errors) << endl;
+  cout << "Mean percent error: " << percent_errors.sum() / percent_errors.rows() << endl;
+  cout << "Standard deviation of percent error: " << stdev(percent_errors) << endl;
+
+  vector< pair<double, size_t> > index;
+  index.resize(absolute_errors.rows());
+  for(int i = 0; i < absolute_errors.rows(); ++i) {
+    index[i].first = absolute_errors(i);
+    index[i].second = i;
+  }
+  sort(index.begin(), index.end(), greater< pair<double, size_t> >());  // descending
+
+  int k = 5;
+  cout << "Worst " << k << " test examples: " << endl;
+  for(int i = 0; i < k; ++i) {
+    size_t idx = index[i].second;
+    cout << "Prediction: " << predictions(idx) << ", Ground truth: " << y(idx) << ", Error: " << signed_errors(idx) << ", path: " << paths[idx] << endl;
+  }
   
   return 0;
 }
