@@ -49,7 +49,7 @@ debug:
 kitchen-tds: $(addsuffix /extracted, $(KITCHEN_TD_DIRS))
 kitchen/tds/%/extracted: $(KITCHEN_DIR)/%.bag
 	mkdir -p $(@D)
-	roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
+	ROS_MASTER_URI=http://localhost:$$(( $$(ls $(KITCHEN_DIR) | awk '{if($$0 == "$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
 	touch $@
 
 office-tds: $(addsuffix /extracted, $(OFFICE_TD_DIRS))
@@ -59,10 +59,10 @@ office/tds/%/extracted: $(OFFICE_DIR)/%.bag
 	touch $@
 
 # -- Compute descriptors and add the name mapping.
-kitchen_descriptors: $(addsuffix /descriptors_computed, $(KITCHEN_TD_DIRS))
+kitchen-td-descriptors: $(addsuffix /descriptors_computed, $(KITCHEN_TD_DIRS))
 kitchen/tds/%/descriptors_computed: kitchen/tds/%/extracted
 	rosrun jarvis update_descriptors --config $(CONFIG) --tds $(@D)/*.td
-	rosrun online_learning apply_cmap -n alex cindy cat --tds $(@D)/*.td
+	rosrun online_learning apply_cmap -n cat --tds $(@D)/*.td
 	touch $@
 
 kitchen-update-all-descriptors: kitchen-update-unlabeled-descriptors kitchen-update-test-descriptors
@@ -79,7 +79,7 @@ kitchen-update-test-descriptors:
 
 KITCHEN_CLASS_NAMES := cat
 
-kitchen/induction: kitchen_descriptors
+kitchen/induction: #kitchen-descriptors
 	. ~/.bashrc && rosgdb jarvis induct \
 	--class-names $(KITCHEN_CLASS_NAMES) \
 	--config $(CONFIG) \
