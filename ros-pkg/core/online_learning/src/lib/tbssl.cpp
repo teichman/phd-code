@@ -1486,7 +1486,9 @@ void getNextPath(std::string dir, std::string ext, std::string* path)
   vector<string> file_paths;
   bfs::recursive_directory_iterator it(dir), eod;
   BOOST_FOREACH(const bfs::path& p, make_pair(it, eod)) {
-    if(is_regular_file(p) && bfs::extension(p).compare(ext) == 0)
+    // Ignore hidden files.  If you are saving new TD files while group induction is running,
+    // this will prevent you from loading partially-saved files.
+    if(is_regular_file(p) && bfs::extension(p).compare(ext) == 0 && p.leaf().string()[0] != '.')
       file_paths.push_back(p.string());
   }
   sort(file_paths.begin(), file_paths.end());
