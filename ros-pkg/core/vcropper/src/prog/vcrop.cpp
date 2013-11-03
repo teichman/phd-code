@@ -38,7 +38,9 @@ bool isVideoPath(const string& str)
 void extractClips(const bpo::variables_map& opts,
                   const std::string& video_path,
                   const std::vector<double>& crop_times,
+                  int step,
                   std::vector< std::vector<cv::Mat3b> >* clips)
+
 {
   cv::VideoCapture cap(video_path);
   if(!cap.isOpened()) {
@@ -67,7 +69,7 @@ void extractClips(const bpo::variables_map& opts,
       if(time >= crop_times[i-1] && time < crop_times[i])
         clipnum = orig_num_clips + i / 2;
 
-    if(clipnum != -1) {
+    if(clipnum != -1 && num % step == 0) {
       cout << time << endl;
       (*clips)[clipnum].push_back(orig.clone());
     }
@@ -133,11 +135,17 @@ int main(int argc, char** argv)
   vector<string> args;
   size_t overlap;
   string output_dir;
+  int step;
+  double fps;
+  double crf;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("args", bpo::value(&args)->required()->multitoken(), "")
     ("overlap", bpo::value(&overlap)->default_value(30), "frames of overlap")
-    ("output-dir,o", bpo::value(&output_dir)->required())
+    ("output-dir,o", bpo::value(&output_dir)->default_value("vcrop"))
+    ("step,s", bpo::value(&step)->default_value(1), "Number of frames to step.  Can speed up video this way.")
+    ("fps,f", bpo::value(&fps)->default_value(30), "")
+    ("crf", bpo::value(&crf)->default_value(13), "x264 compression level.  Lower is higher quality.")
     ;
 
   p.add("args", -1);
@@ -163,7 +171,14 @@ int main(int argc, char** argv)
     }
     else {
       ROS_ASSERT(!crop_times.empty());
-      crop_times.back().push_back(atof(args[i].c_str()));
+      if(args[i].find_first_of(':') == string::npos)
+        crop_times.back().push_back(atof(args[i].c_str()));
+      else {
+        int minutes = atoi(args[i].substr(0, args[i].find_first_of(':')).c_str());
+        int seconds = atoi(args[i].substr(args[i].find_first_of(':') + 1).c_str());
+        crop_times.back().push_back(minutes * 60 + seconds);
+        cout << "Cropping at " << crop_times.back().back() << endl;
+      }
     }
   }
 
@@ -179,7 +194,7 @@ int main(int argc, char** argv)
   vector< vector<cv::Mat3b> > clips;
   for(size_t i = 0; i < video_paths.size(); ++i) {
     cout << "Working on " << video_paths[i] << endl;
-    extractClips(opts, video_paths[i], crop_times[i], &clips);
+    extractClips(opts, video_paths[i], crop_times[i], step, &clips);
   }
 
   // -- Blend the imagery in RAM.
@@ -188,8 +203,11 @@ int main(int argc, char** argv)
   // -- Compile the video and save to disk.
   ostringstream oss;
   oss << "mencoder mf://" << output_dir
-      << "/*.png -mf fps=30 -ovc x264 -x264encopts crf=13 -o "
+      << "/*.png -mf fps=" << fps << " -ovc x264 -x264encopts crf=" << crf << " -o "
       << output_dir << "/cropped.avi";
+  cout << "--------------------------------------------------------------------------------" << endl;
+  cout << "Command: " << oss.str() << endl;
+  cout << "--------------------------------------------------------------------------------" << endl;
   int retval = system(oss.str().c_str());
   ROS_ASSERT(retval == 0);
 
