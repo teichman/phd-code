@@ -8,6 +8,11 @@
 class GridSearchViewHandler
 {
 public:
+  // TODO: There should probably be both const and non-const versions of this, and
+  // GridSearch should have both a setHandler(const GridSearchViewHandler*) and
+  // setHandler(GridSearchViewHandler*).  Then the user can get either behavior.
+  // Or this should just be const and the visualizer on the other end has to be
+  // mutable or a pointer; that'd be fine too.
   virtual void handleGridSearchUpdate(const Eigen::ArrayXd& x, double objective) = 0;
 };
 
