@@ -27,6 +27,7 @@ public:
   void writeVideo(size_t rows, size_t cols, 
                   const std::string& path,
                   size_t num_frames = 0,
+                  float fps = 30,
                   bool keep_images = false);
 
 protected:

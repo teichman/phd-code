@@ -47,16 +47,18 @@ cv::Mat3b TrackDatasetCollageGenerator::generateGrid(size_t rows, size_t cols,
   }
 
   // -- Add text.
-  int pad = 20;
-  int thickness = 1;
-  float scale = 0.5;
-  cv::Scalar color(0, 0, 0);
-  ostringstream oss;
-  if(name_ != "")
+  if(name_ != "") {
+    int pad = 20;
+    int thickness = 1;
+    float scale = 0.5;
+    cv::Scalar color(0, 0, 0);
+    ostringstream oss;
+    
     oss << name_ << ": ";
-  oss << td_->size() << " tracks.";
-  cv::putText(grid, oss.str(), cv::Point(pad, grid.rows - pad),
-              cv::FONT_HERSHEY_SIMPLEX, scale, color, thickness, CV_AA);
+    oss << td_->size() << " tracks.";
+    cv::putText(grid, oss.str(), cv::Point(pad, grid.rows - pad),
+                cv::FONT_HERSHEY_SIMPLEX, scale, color, thickness, CV_AA);
+  }
   
   return grid;
 }
@@ -81,6 +83,7 @@ std::vector<size_t> TrackDatasetCollageGenerator::generateRandomIndices(size_t m
 void TrackDatasetCollageGenerator::writeVideo(size_t rows, size_t cols,
                                               const std::string& path,
                                               size_t num_frames,
+                                              float fps,
                                               bool keep_images)
 {
   string dir = path + ".d";
@@ -100,7 +103,7 @@ void TrackDatasetCollageGenerator::writeVideo(size_t rows, size_t cols,
   }
 
   ostringstream oss;
-  oss << "mencoder \"mf://" << dir << "/*.png\" -mf fps=15 -o " << path
+  oss << "mencoder \"mf://" << dir << "/*.png\" -mf fps=" << fps << " -o " << path
       << " -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=16000000 1> /dev/null 2>&1";
   int retval = system(oss.str().c_str());
   if(retval != 0) {

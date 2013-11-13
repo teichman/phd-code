@@ -91,6 +91,30 @@ void Blob::deserialize(std::istream& in)
     eigen_extensions::deserializeScalar(in, &depth_[i]);
 }
 
+cv::Mat3b Blob::image() const
+{
+  cv::Mat3b vis(cv::Size(width_, height_), cv::Vec3b(127, 127, 127));
+  for(size_t i = 0; i < indices_.size(); ++i) {
+    uint32_t idx = indices_[i];
+    vis(idx)[0] = color_[i*3+2];
+    vis(idx)[1] = color_[i*3+1];
+    vis(idx)[2] = color_[i*3+0];
+  }
+
+  int border = 1;
+  for(int y = 0; y < vis.rows; ++y) {
+    for(int x = 0; x < vis.cols; ++x) {
+      if(y < border || y > vis.rows - 1 - border ||
+         x < border || x > vis.cols - 1 - border)
+      {
+        vis(y, x) = cv::Vec3b(0, 0, 0);
+      }
+    }
+  }
+  
+  return vis;
+}
+
 
 Tracker::Tracker(size_t max_track_length) :
   visualize_(false),

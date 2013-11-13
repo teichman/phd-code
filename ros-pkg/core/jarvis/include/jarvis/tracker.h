@@ -48,6 +48,8 @@ public:
 
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);
+  //! Reconstructs an image showing the object.  Variable size.
+  cv::Mat3b image() const;
 };
 
 //! Takes FG messages, outputs Blobs with track ids.
