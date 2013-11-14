@@ -23,7 +23,7 @@ all:
 LOG_DIR := $(MAKE_ROOT)/logs
 LABELED_TD_DIR := $(MAKE_ROOT)/labeled
 CONFIG := `rospack find jarvis`/config/hand_specified-up.yml
-#CONFIG := `rospack find jarvis`/config/config.yml
+CONFIG2 := `rospack find jarvis`/config/old_hand_specified.yml
 
 KITCHEN_DIR := $(LOG_DIR)/kitchen-new_bg_subtr
 KITCHEN_NAMES := $(shell ls $(KITCHEN_DIR) | sed 's/\.bag//')
@@ -120,6 +120,17 @@ kitchen/cross_evaluation:
 	--class-names $(KITCHEN_CLASS_NAMES) \
 	--tds $(KITCHEN_LABELS_DIR)/*.td \
 	-u $(KITCHEN_UP_VECTOR) \
+	--num-orderings 3 \
+	-o $@ | tee $@-log.txt
+	mv $@-log.txt $@/
+
+kitchen/cross_evaluation2:
+	rosrun jarvis cross_evaluate \
+	--config $(CONFIG2) \
+	--class-names $(KITCHEN_CLASS_NAMES) \
+	--tds $(KITCHEN_LABELS_DIR)/*.td \
+	-u $(KITCHEN_UP_VECTOR) \
+	--num-orderings 3 \
 	-o $@ | tee $@-log.txt
 	mv $@-log.txt $@/
 

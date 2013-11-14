@@ -19,6 +19,7 @@ int main(int argc, char** argv)
   vector<string> dataset_paths;
   string output_dir;
   string up_path;
+  size_t num_orderings;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("config", bpo::value(&config_path)->required(), "")
@@ -26,6 +27,7 @@ int main(int argc, char** argv)
     ("tds", bpo::value(&dataset_paths)->required()->multitoken(), "Labeled data")
     ("output,o", bpo::value(&output_dir)->required(), "Output directory")
     ("up,u", bpo::value(&up_path), "")
+    ("num-orderings", bpo::value(&num_orderings), "")
     ;
 
   bpo::variables_map opts;
@@ -94,7 +96,7 @@ int main(int argc, char** argv)
   for(size_t i = 0; i < tds.size(); ++i)
     ce.addTrackDataset(tds[i], dataset_names[i]);
 
-  ce.evaluate(output_dir, nc, thresh);
+  ce.evaluateTrainingSetSize(output_dir, num_orderings, nc, thresh);
 
   return 0;
 }
