@@ -52,7 +52,7 @@ float differenceFeature(cv::Mat1b img)
 
 void loadData(std::string data_dir, std::string difference_image_dir, int maxnum, Eigen::MatrixXd* X, Eigen::VectorXd* y, std::vector<string>* paths)
 {
-  int num_features = 3;
+  int num_features = 6;
   
   // -- Get the number of labeled instances and their paths.
   *paths = glob(data_dir + "/*.png");
@@ -88,9 +88,22 @@ void loadData(std::string data_dir, std::string difference_image_dir, int maxnum
         
     
     // -- Compute the features.
+    // X->coeffRef(0, i) = 1;
+    // X->coeffRef(1, i) = computeSURF(img);
+    // X->coeffRef(2, i) = differenceFeature(diff);
+
+    // X->coeffRef(0, i) = 1;
+    // X->coeffRef(1, i) = differenceFeature(diff);
+
+    // X->coeffRef(0, i) = 1;
+    // X->coeffRef(1, i) = computeSURF(img);
+
     X->coeffRef(0, i) = 1;
     X->coeffRef(1, i) = computeSURF(img);
-    X->coeffRef(2, i) = differenceFeature(diff);
+    X->coeffRef(2, i) = X->coeffRef(1, i) * X->coeffRef(1, i);
+    X->coeffRef(3, i) = differenceFeature(diff);
+    X->coeffRef(4, i) = X->coeffRef(3, i) * X->coeffRef(3, i);
+    X->coeffRef(5, i) = X->coeffRef(1, i) * X->coeffRef(3, i);
   }
 }
 
@@ -145,7 +158,7 @@ int main(int argc, char** argv)
     mpli("print X[plot_index, :]");
     mpli("print y");
     mpli("scatter(X[plot_index, :], y)");
-    mpli("xlabel('SURF feature count')");
+    mpli("xlabel('Feature')");
     mpli("ylabel('Ground truth nut count')");
     mpli("draw()");
     mpli("savefig('scatterplot.png')");
