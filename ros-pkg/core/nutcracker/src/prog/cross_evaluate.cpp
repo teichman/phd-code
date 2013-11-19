@@ -40,14 +40,26 @@ double stdev(const Eigen::VectorXd& vec)
   return sqrt(total / vec.rows());
 }
 
-void loadData(std::string data_dir, int maxnum, Eigen::MatrixXd* X, Eigen::VectorXd* y, std::vector<string>* paths)
+float differenceFeature(cv::Mat1b img)
 {
+  float diff = 0;
+  for(int y = 0; y < img.rows; ++y)
+    for(int x = 0; x < img.cols; ++x)
+      diff += img(y, x);
+  diff /= (img.rows * img.cols);
+  return diff;
+}
+
+void loadData(std::string data_dir, std::string difference_image_dir, int maxnum, Eigen::MatrixXd* X, Eigen::VectorXd* y, std::vector<string>* paths)
+{
+  int num_features = 3;
+  
   // -- Get the number of labeled instances and their paths.
   *paths = glob(data_dir + "/*.png");
   if(maxnum > 0 && paths->size() > (size_t)maxnum)
     paths->resize(maxnum);
   *y = VectorXd(paths->size());
-  *X = MatrixXd(2, paths->size());
+  *X = MatrixXd(num_features, paths->size());
   
   for(size_t i = 0; i < paths->size(); ++i) {
     // -- Load image and set the label.
@@ -56,11 +68,29 @@ void loadData(std::string data_dir, int maxnum, Eigen::MatrixXd* X, Eigen::Vecto
     string numstr = (*paths)[i].substr((*paths)[i].find_last_of("-") + 1);
     numstr = numstr.substr(0, numstr.size() - 4);
     y->coeffRef(i) = atof(numstr.c_str());
+
+    // -- Load the delta image.
+    string filename = (*paths)[i].substr((*paths)[i].find_last_of('/') + 1);
+    string framestr = filename.substr(0, filename.find("raw"));
+    string difference_image_path = difference_image_dir + "/difference" + framestr + ".png";
+    cv::Mat1b diff = cv::imread(difference_image_path, CV_LOAD_IMAGE_GRAYSCALE);
+    for(int y = 0; y < diff.rows; ++y) {
+      for(int x = 0; x < diff.cols; ++x) {
+        if(diff(y, x) > 50)
+          diff(y, x) = 255;
+        else
+          diff(y, x) = 0;
+      }
+    }
+    // cout << "diff: " << differenceFeature(diff) << endl;
+    // cv::imshow("diff", diff);
+    // cv::waitKey();
+        
     
     // -- Compute the features.
     X->coeffRef(0, i) = 1;
     X->coeffRef(1, i) = computeSURF(img);
-    //X->coeffRef(2, i) = deltaImage(img);
+    X->coeffRef(2, i) = differenceFeature(diff);
   }
 }
 
@@ -70,11 +100,13 @@ int main(int argc, char** argv)
   bpo::positional_options_description p;
 
   string data_dir;
+  string difference_image_dir;
   int maxnum;
   int plot_index;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("data", bpo::value(&data_dir)->required(), "")
+    ("difference-image-dir", bpo::value(&difference_image_dir)->required(), "")
     ("maxnum", bpo::value(&maxnum)->default_value(0), "")
     ("plot", bpo::value(&plot_index), "Which index to plot, if any")
     ;
@@ -97,7 +129,7 @@ int main(int argc, char** argv)
   MatrixXd X;
   VectorXd y;
   vector<string> paths;
-  loadData(data_dir, maxnum, &X, &y, &paths);
+  loadData(data_dir, difference_image_dir, maxnum, &X, &y, &paths);
 
   for(int i = 0; i < y.rows(); ++i)
     cout << X.col(i).transpose() << " -- " << y(i) << endl;
