@@ -68,7 +68,11 @@ kitchen/tds/%/descriptors_computed: kitchen/tds/%/extracted
 kitchen-update-all-descriptors: kitchen-update-unlabeled-descriptors kitchen-update-test-descriptors
 
 kitchen-update-unlabeled-descriptors:
-	rosrun jarvis update_descriptors --config $(CONFIG) --tds `find kitchen/tds/ -name '*.td' | sort`
+	rosrun jarvis update_descriptors \
+	--config $(CONFIG) \
+	-u $(KITCHEN_UP_VECTOR) \
+	--tds `find kitchen/tds/ -name '*.td' | sort` \
+	-j 24
 
 kitchen-update-test-descriptors:
 	rosrun jarvis update_descriptors \

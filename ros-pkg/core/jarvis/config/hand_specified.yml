@@ -136,10 +136,12 @@ Pipeline:
         UVPattern: Dense
       Inputs:
         Image: DynamicImageWindowXZ.Image
-    - Name: IntensityHistogram
-      Type: IntensityHistogram
+    - Name: HSVHistogram
+      Type: HSVHistogram
       Params:
         NumBins: 10
+        ValueThreshold: 0.2
+        SaturationThreshold: 0.2
       Inputs:
         Blob: BlobProjector.ProjectedBlob  # Can't use the EntryPoint because of const-correctness.
     - Name: DescriptorAggregator
@@ -154,7 +156,9 @@ Pipeline:
           HogArrayXY.ConcatenatedDescriptors
           HogArrayYZ.ConcatenatedDescriptors
           HogArrayXZ.ConcatenatedDescriptors
-          IntensityHistogram.Histogram
+          HSVHistogram.Hue
+          HSVHistogram.Saturation
+          HSVHistogram.Value
           GravitationalCloudOrienter.Height
           GravitationalCloudOrienter.HighestPoint
           CloudOrienter.Eigenvalues

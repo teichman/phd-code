@@ -28,6 +28,7 @@ void DescriptorPipeline::registerPodTypes()
   REGISTER_POD(DynamicImageWindow);
   REGISTER_POD(HogArray);
   REGISTER_POD(IntensityHistogram);
+  REGISTER_POD(HSVHistogram);
 }
 
 std::string DescriptorPipeline::defaultSpecificationPath()

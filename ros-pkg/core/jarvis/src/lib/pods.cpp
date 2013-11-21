@@ -283,6 +283,80 @@ void IntensityHistogram::debug() const
   f.close();
 }
 
+/************************************************************
+ * HSVHistogram
+ ************************************************************/
+
+void HSVHistogram::compute()
+{
+  const Blob& blob = *pull<Blob::ConstPtr>("Blob");
+  ROS_ASSERT(blob.color_.size() % 3 == 0);
+
+  // -- Get the HSV values.
+  cv::Mat3f bgr(cv::Size(blob.indices_.size(), 1));
+  for(size_t i = 0; i < blob.indices_.size(); ++i) {
+    bgr(i)[0] = (float)blob.color_[i*3+2] / 255.0;
+    bgr(i)[1] = (float)blob.color_[i*3+1] / 255.0;
+    bgr(i)[2] = (float)blob.color_[i*3+0] / 255.0;
+  }
+  // hsv_ will be ([0,360], [0,1], [0,1])... I think.
+  cv::cvtColor(bgr, hsv_, CV_BGR2HSV_FULL);
+  
+  // -- Initialize bins.
+  int num_bins = param<double>("NumBins");
+  if(hue_.rows() != num_bins) {
+    hue_ = VectorXf(num_bins);
+    sat_ = VectorXf(num_bins);
+    val_ = VectorXf(num_bins);
+  }
+  hue_.setZero();
+  sat_.setZero();
+  val_.setZero();
+
+  // -- Accumulate counts.  Normalize for number of points.
+  float value_threshold = param<double>("ValueThreshold");
+  float saturation_threshold = param<double>("SaturationThreshold");
+  float hue_bin_width = 360.0 / num_bins;
+  float sv_bin_width = 1.0 / num_bins;
+  for(int i = 0; i < hsv_.cols; ++i) {    
+    float value = hsv_(i)[2];
+    int value_idx = max<int>(0, min<int>(num_bins - 1, value / sv_bin_width));
+    ++val_(value_idx);
+
+    if(value < value_threshold)
+      continue;
+
+    float sat = hsv_(i)[1];
+    int sat_idx = max<int>(0, min<int>(num_bins - 1, sat / sv_bin_width));
+    ++sat_(sat_idx);
+
+    if(sat < saturation_threshold)
+      continue;
+    
+    float hue = hsv_(i)[0];
+    int hue_idx = max<int>(0, min<int>(num_bins - 1, hue / hue_bin_width));
+    ++hue_(hue_idx);
+  }
+  hue_ /= hsv_.cols;
+  sat_ /= hsv_.cols;
+  val_ /= hsv_.cols;
+  
+  push<const VectorXf*>("Hue", &hue_);
+  push<const VectorXf*>("Saturation", &sat_);
+  push<const VectorXf*>("Value", &val_);
+}
+
+void HSVHistogram::debug() const
+{
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "hue_: " << hue_.transpose() << endl;
+  f << "sat_: " << sat_.transpose() << endl;
+  f << "val_: " << val_.transpose() << endl;
+  f.close();
+  
+  cv::imwrite(debugBasePath() + "-original_image.png", pull<Blob::ConstPtr>("Blob")->image());
+}
+
 
 /************************************************************
  * NormalizedDensityHistogram

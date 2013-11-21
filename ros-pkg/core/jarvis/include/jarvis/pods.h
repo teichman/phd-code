@@ -59,6 +59,32 @@ protected:
   Eigen::VectorXf hist_;
 };
 
+class HSVHistogram : public pl::Pod
+{
+public:
+  DECLARE_POD(HSVHistogram);
+  HSVHistogram(std::string name) :
+    Pod(name)
+  {
+    declareInput<Blob::ConstPtr>("Blob");
+    declareParam<double>("NumBins", 10);
+    declareParam<double>("ValueThreshold", 0.2);  // Pixel must be brighter than this to use its hue & saturation.  [0, 1].
+    declareParam<double>("SaturationThreshold", 0.2);  // Pixel must be more saturated than this to use its hue.  [0, 1].
+    declareOutput<const Eigen::VectorXf*>("Hue");
+    declareOutput<const Eigen::VectorXf*>("Saturation");
+    declareOutput<const Eigen::VectorXf*>("Value");
+  }
+
+  void compute();
+  void debug() const;
+
+protected:
+  cv::Mat3f hsv_;
+  Eigen::VectorXf hue_;
+  Eigen::VectorXf sat_;
+  Eigen::VectorXf val_;
+};
+
 
 class DescriptorAggregator : public pl::Pod
 {
