@@ -1,6 +1,6 @@
 GlobalParams:
   NumCells: 10
-  ObjThresh: 200
+  ObjThresh: 20
 Pipeline:
   Pods:
     - Name: BlobEntryPoint
