@@ -89,10 +89,14 @@ public:
   DECLARE_POD(CloudOrienter);
   CloudOrienter(std::string name) :
     Pod(name),
-    oriented_(new Cloud)
+    oriented_(new Cloud),
+    relative_curvature_(1)
   {
     declareInput<Blob::ConstPtr>("ProjectedBlob");
+    declareParam<bool>("OrientCloud", true);  // If you're only using the descriptors, you can set this to false.
     declareOutput<Cloud::ConstPtr>("OrientedCloud");
+    declareOutput<const Eigen::VectorXf*>("Eigenvalues");
+    declareOutput<const Eigen::VectorXf*>("RelativeCurvature");
   }
 
   void compute();
@@ -100,6 +104,9 @@ public:
 
 protected:
   Cloud::Ptr oriented_;
+  Eigen::VectorXf eigenvalues_;
+  Eigen::VectorXf relative_curvature_;
+  Eigen::Matrix3f eigenvectors_;
 };
 
 class GravitationalCloudOrienter : public pl::Pod

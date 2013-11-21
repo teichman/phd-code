@@ -31,6 +31,10 @@ namespace dst
                                                    const std::vector<int>& indices,
                                                    pcl::Normal* normal)
   {
+    // TODO:  This method could probably be made substantially better by using RANSAC.  This would help prevent the
+    // "blurry" surface normals at edges, which is really what we're after.  Sounds expensive, but there are
+    // probably some tricks one could do to bring the cost down.  See 2013-11-20 notes.
+    
     weights_.clear();
     weights_.resize(indices.size(), 0);
     double total_weight = 0;

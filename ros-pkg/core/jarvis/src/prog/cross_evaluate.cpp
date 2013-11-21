@@ -27,7 +27,8 @@ int main(int argc, char** argv)
     ("tds", bpo::value(&dataset_paths)->required()->multitoken(), "Labeled data")
     ("output,o", bpo::value(&output_dir)->required(), "Output directory")
     ("up,u", bpo::value(&up_path), "")
-    ("num-orderings", bpo::value(&num_orderings), "")
+    ("vary-training-set-size", "")
+    ("num-orderings", bpo::value(&num_orderings)->default_value(3), "Only makes sense with --vary-training-set-size")
     ;
 
   bpo::variables_map opts;
@@ -96,7 +97,10 @@ int main(int argc, char** argv)
   for(size_t i = 0; i < tds.size(); ++i)
     ce.addTrackDataset(tds[i], dataset_names[i]);
 
-  ce.evaluateTrainingSetSize(output_dir, num_orderings, nc, thresh);
+  if(opts.count("vary-training-set-size"))
+    ce.evaluateTrainingSetSize(output_dir, num_orderings, nc, thresh);
+  else
+    ce.evaluate(output_dir, nc, thresh);
 
   return 0;
 }

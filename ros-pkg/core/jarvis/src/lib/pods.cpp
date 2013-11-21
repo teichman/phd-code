@@ -111,16 +111,33 @@ void CloudOrienter::compute()
 
   pcl::PCA<Point> pca;
   pca.setInputCloud(cloud);
-  pca.project(*cloud, *oriented_);
+  if(param<bool>("OrientCloud")) {
+    pca.project(*cloud, *oriented_);
+    push<Cloud::ConstPtr>("OrientedCloud", oriented_);
+  }
+
+  eigenvectors_ = pca.getEigenVectors();
+  // for(int i = 0; i < 3; ++i)
+  //   ROS_ASSERT(fabs(eigenvectors_.col(i).dot(eigenvectors_.col(i)) - 1.0) < 1e-6);
+  eigenvalues_ = pca.getEigenValues();
+  relative_curvature_.coeffRef(0) = eigenvalues_.coeffRef(2) / eigenvalues_.coeffRef(0); 
  
-  push<Cloud::ConstPtr>("OrientedCloud", oriented_);
+  push<const VectorXf*>("Eigenvalues", &eigenvalues_);
+  push<const VectorXf*>("RelativeCurvature", &relative_curvature_);
 }
 
 void CloudOrienter::debug() const
 {
   const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
   pcl::io::savePCDFileBinary(debugBasePath() + "-original.pcd", *blob.cloud_);
-  pcl::io::savePCDFileBinary(debugBasePath() + "-oriented.pcd", *oriented_);
+  if(param<bool>("OrientCloud"))
+    pcl::io::savePCDFileBinary(debugBasePath() + "-oriented.pcd", *oriented_);
+
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "Eigenvalues: " << eigenvalues_.transpose() << endl;
+  f << "Relative curvature: " << relative_curvature_.transpose() << endl;
+  f << "Eigenvectors: " << endl << eigenvectors_ << endl;
+  f.close();
 }
 
 
