@@ -408,7 +408,7 @@ void ROSStreamingSentinel::processHook(openni::VideoFrameRef color,
       double ts = video_buffer_[i].first;
       cv::Mat3b img = video_buffer_[i].second;
       ostringstream oss;
-      oss << "image" << fixed << setprecision(16) << setw(16) << setfill('0') << ts << ".png";
+      oss << "image" << fixed << setprecision(16) << setw(16) << setfill('0') << ts << ".jpg";
       string filename = oss.str();
       serializer_.push(img, frames_dir_ + "/" + filename);
 
