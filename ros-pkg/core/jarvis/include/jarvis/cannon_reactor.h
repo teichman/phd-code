@@ -42,7 +42,7 @@ protected:
 class CannonReactor : public Reactor
 {
 public:
-  CannonReactor(size_t min_num_frames = 30, double threshold = 3.0);
+  CannonReactor(size_t min_num_frames = 15, double threshold = 2.0);
   ~CannonReactor();
   
 protected:

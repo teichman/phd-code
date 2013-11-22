@@ -95,6 +95,7 @@ void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
 
     // Send message for this track.
     jarvis::Detection msg;
+    msg.header.stamp = fgmsg->header.stamp;
     msg.sensor_timestamp = fgmsg->sensor_timestamp;
     msg.track_id = id;
     msg.centroid = eigen_extensions::eigToVec(blob->centroid_);

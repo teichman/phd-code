@@ -42,7 +42,7 @@ void RecordingRequester::detectionCallback(const jarvis::Detection& det)
   
   size_t id = cmap.toId(class_name_);
   if(tpred(id) > 0) {
-    cout << "[RecordingRequester] " << class_name_ << " " << tpred(id) << ".";
+    cout << "[RecordingRequester] " << det.header.stamp << " " << class_name_ << " " << tpred(id) << ".";
     if(tpred(id) > threshold_) {
       sentinel::RecordingRequest rr;
       rr.timeout = det.header.stamp + ros::Duration(seconds_);
