@@ -14,9 +14,11 @@ using namespace Eigen;
 namespace bpo = boost::program_options;
 namespace bfs = boost::filesystem;
 
-float computeSURF(cv::Mat3b img)
+float computeSURF(bpo::variables_map opts, cv::Mat3b img)
 {
-  cv::SURF surf(1000);
+  cv::SURF surf(opts["surf-hessian-threshold"].as<double>(),
+                opts["surf-num-octaves"].as<int>(),
+                opts["surf-num-octave-layers"].as<int>());
   vector<cv::KeyPoint> keypoints;
   surf(img, cv::Mat(), keypoints);
   return keypoints.size();
@@ -50,7 +52,9 @@ float differenceFeature(cv::Mat1b img)
   return diff;
 }
 
-void loadData(std::string data_dir, std::string difference_image_dir, int maxnum, Eigen::MatrixXd* X, Eigen::VectorXd* y, std::vector<string>* paths)
+void loadData(std::string data_dir, std::string difference_image_dir,
+              bpo::variables_map opts,
+              int maxnum, Eigen::MatrixXd* X, Eigen::VectorXd* y, std::vector<string>* paths)
 {
   int num_features = 6;
   
@@ -76,30 +80,15 @@ void loadData(std::string data_dir, std::string difference_image_dir, int maxnum
     cv::Mat1b diff = cv::imread(difference_image_path, CV_LOAD_IMAGE_GRAYSCALE);
     for(int y = 0; y < diff.rows; ++y) {
       for(int x = 0; x < diff.cols; ++x) {
-        if(diff(y, x) > 50)
+        if(diff(y, x) > opts["difference-image-threshold"].as<float>())
           diff(y, x) = 255;
         else
           diff(y, x) = 0;
       }
     }
-    // cout << "diff: " << differenceFeature(diff) << endl;
-    // cv::imshow("diff", diff);
-    // cv::waitKey();
-        
-    
-    // -- Compute the features.
-    // X->coeffRef(0, i) = 1;
-    // X->coeffRef(1, i) = computeSURF(img);
-    // X->coeffRef(2, i) = differenceFeature(diff);
-
-    // X->coeffRef(0, i) = 1;
-    // X->coeffRef(1, i) = differenceFeature(diff);
-
-    // X->coeffRef(0, i) = 1;
-    // X->coeffRef(1, i) = computeSURF(img);
 
     X->coeffRef(0, i) = 1;
-    X->coeffRef(1, i) = computeSURF(img);
+    X->coeffRef(1, i) = computeSURF(opts, img);
     X->coeffRef(2, i) = X->coeffRef(1, i) * X->coeffRef(1, i);
     X->coeffRef(3, i) = differenceFeature(diff);
     X->coeffRef(4, i) = X->coeffRef(3, i) * X->coeffRef(3, i);
@@ -116,12 +105,22 @@ int main(int argc, char** argv)
   string difference_image_dir;
   int maxnum;
   int plot_index;
+  float difference_image_threshold;
+  string feature_string;
+  double surf_hessian_threshold;
+  int surf_num_octaves;
+  int surf_num_octave_layers;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("data", bpo::value(&data_dir)->required(), "")
     ("difference-image-dir", bpo::value(&difference_image_dir)->required(), "")
     ("maxnum", bpo::value(&maxnum)->default_value(0), "")
     ("plot", bpo::value(&plot_index), "Which index to plot, if any")
+    ("difference-image-threshold", bpo::value(&difference_image_threshold)->default_value(5), "")
+    ("feature-string", bpo::value(&feature_string)->default_value("Feature"), "")
+    ("surf-hessian-threshold", bpo::value(&surf_hessian_threshold)->default_value(100), "")
+    ("surf-num-octaves", bpo::value(&surf_num_octaves)->default_value(4), "")
+    ("surf-num-octave-layers", bpo::value(&surf_num_octave_layers)->default_value(2), "")
     ;
 
   p.add("data", 1);
@@ -142,7 +141,7 @@ int main(int argc, char** argv)
   MatrixXd X;
   VectorXd y;
   vector<string> paths;
-  loadData(data_dir, difference_image_dir, maxnum, &X, &y, &paths);
+  loadData(data_dir, difference_image_dir, opts, maxnum, &X, &y, &paths);
 
   for(int i = 0; i < y.rows(); ++i)
     cout << X.col(i).transpose() << " -- " << y(i) << endl;
@@ -155,11 +154,13 @@ int main(int argc, char** argv)
     mpliExport(X);
     mpliExport(y);
     mpliExport(plot_index);
+    mpliExport(feature_string);
     mpli("print X[plot_index, :]");
     mpli("print y");
     mpli("scatter(X[plot_index, :], y)");
-    mpli("xlabel('Feature')");
+    mpli("xlabel(feature_string)");
     mpli("ylabel('Ground truth nut count')");
+    mpli("xlim(xmin=0)");
     mpli("draw()");
     mpli("savefig('scatterplot.png')");
     mpli("clf()");
