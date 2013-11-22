@@ -55,6 +55,17 @@ void RecordingRequester::detectionCallback(const jarvis::Detection& det)
 
   // -- Record metadata to a text file.  We'll use this to generate a video with bounding boxes.
   //    (All classifications are sent within the Detection messages, not just positive detections.)
+  ostringstream oss;
+  oss << "detection" << fixed << setprecision(16) << setw(16) << setfill('0') << det.header.stamp.toSec() << ".txt";
+  ofstream file;
+  file.open(oss.str().c_str(), std::fstream::app);
+  file << det.track_id
+       << det.upper_left.x << " " << det.upper_left.y
+       << det.lower_right.x << " " << det.lower_right.y;
+  for(size_t i = 0; i < det.frame_prediction.size(); ++i)
+    file << " " << det.cmap[i] << " " << det.frame_prediction[i];
+  file << endl;
+  file.close();
 }
 
 int main(int argc, char** argv)

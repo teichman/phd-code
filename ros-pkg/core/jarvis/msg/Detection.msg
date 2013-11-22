@@ -6,3 +6,5 @@ string[] cmap
 float32[] frame_prediction
 float32[] track_prediction
 uint64 num_frames
+ImageLocation upper_left
+ImageLocation lower_right

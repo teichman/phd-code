@@ -93,7 +93,7 @@ void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
     Label fpred = gc_->classify(*dp_->computeDescriptors(blob));
     filters_[id].addObservation(fpred, blob->centroid_, blob->sensor_timestamp_);
 
-    // Send message for this track.
+    // Construct message for this track.
     jarvis::Detection msg;
     msg.header.stamp = fgmsg->header.stamp;
     msg.sensor_timestamp = fgmsg->sensor_timestamp;
@@ -103,6 +103,21 @@ void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
     msg.frame_prediction = fpred.vector();
     msg.track_prediction = filters_[id].trackPrediction().vector();
     msg.num_frames = filters_[id].numObservations();
+
+    // Get image coords.
+    msg.upper_left.x = blob->width_;
+    msg.upper_left.y = blob->height_;
+    msg.lower_right.x = 0;
+    msg.lower_right.y = 0;
+    for(size_t i = 0; i < blob->indices_.size(); ++i) {
+      uint16_t y = blob->indices_[i] / blob->width_;
+      uint16_t x = blob->indices_[i] - blob->width_ * y;
+      msg.upper_left.x = min(msg.upper_left.x, x);
+      msg.upper_left.y = min(msg.upper_left.y, y);
+      msg.lower_right.x = max(msg.lower_right.x, x);
+      msg.lower_right.y = max(msg.lower_right.y, y);
+    }
+
     det_pub_.publish(msg);
   }
 
