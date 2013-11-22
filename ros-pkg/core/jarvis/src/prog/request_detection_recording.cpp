@@ -45,13 +45,16 @@ void RecordingRequester::detectionCallback(const jarvis::Detection& det)
     cout << "[RecordingRequester] " << class_name_ << " " << tpred(id) << ".";
     if(tpred(id) > threshold_) {
       sentinel::RecordingRequest rr;
-      rr.timeout = ros::Time::now() + ros::Duration(seconds_);
+      rr.timeout = det.header.stamp + ros::Duration(seconds_);
       rr.tag = class_name_;
       pub_.publish(rr);
       cout << "   Published.  " << rr.timeout;
     }
     cout << endl;
   }
+
+  // -- Record metadata to a text file.  We'll use this to generate a video with bounding boxes.
+  //    (All classifications are sent within the Detection messages, not just positive detections.)
 }
 
 int main(int argc, char** argv)

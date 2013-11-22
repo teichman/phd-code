@@ -33,12 +33,13 @@ public:
   }
   
   void rgbdCallback(openni::VideoFrameRef color, openni::VideoFrameRef depth,
-                    size_t frame_id, double timestamp);
+                    size_t frame_id, double wall_timestamp);
   void run();
 
   //! Called before running processBackgroundSubtraction.
   virtual void processHook(openni::VideoFrameRef color,
-                           openni::VideoFrameRef depth) {}
+                           openni::VideoFrameRef depth,
+                           double wall_timestamp) {}
   virtual void handleDetection(openni::VideoFrameRef color,
                                openni::VideoFrameRef depth,
                                const std::vector<uint32_t>& indices,
@@ -107,8 +108,8 @@ protected:
   std::string recording_dir_;
   std::string frames_dir_;
   std::string tags_dir_;
-  //! tag, time to stop recording at.
-  std::map<std::string, ros::Time> recording_tags_;
+  //! tag, time (seconds) to stop recording at.
+  std::map<std::string, double> recording_tags_;
   ThreadedSerializer<cv::Mat3b, ImageSerializer> serializer_;
   //! timestamp, img.
   std::deque< std::pair<double, cv::Mat3b> > video_buffer_;
@@ -138,7 +139,7 @@ protected:
                           double wall_timestamp,
                           size_t frame_id);
   //! Used for processing recordings.
-  void processHook(openni::VideoFrameRef color, openni::VideoFrameRef depth);
+  void processHook(openni::VideoFrameRef color, openni::VideoFrameRef depth, double wall_timestamp);
   void recordingRequestCallback(const sentinel::RecordingRequest& rr);
 };
 

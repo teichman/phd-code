@@ -67,7 +67,7 @@ void Sentinel::run()
 }
 
 void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameRef oni_depth,
-                            size_t frame_id, double timestamp)
+                            size_t frame_id, double wall_timestamp)
 {
   #if JARVIS_DEBUG
   cout << "############################################################" << endl;
@@ -93,8 +93,8 @@ void Sentinel::rgbdCallback(openni::VideoFrameRef oni_color, openni::VideoFrameR
   prev_depth_timestamp = depth_timestamp;
   #endif
 
-  processHook(oni_color, oni_depth);
-  processBackgroundSubtraction(oni_color, oni_depth, depth_timestamp, timestamp, frame_id);
+  processHook(oni_color, oni_depth, wall_timestamp);
+  processBackgroundSubtraction(oni_color, oni_depth, depth_timestamp, wall_timestamp, frame_id);
 }
 
 void Sentinel::processBackgroundSubtraction(openni::VideoFrameRef color,
@@ -373,21 +373,21 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
 
 void ROSStreamingSentinel::recordingRequestCallback(const sentinel::RecordingRequest& rr)
 {
-  recording_tags_[rr.tag] = rr.timeout;
+  recording_tags_[rr.tag] = rr.timeout.toSec();
   cout << "[ROSStreamingSentinel]  Got RecordingRequest.  Recording " << rr.tag << " until " << rr.timeout << endl;
 }
 
 void ROSStreamingSentinel::processHook(openni::VideoFrameRef color,
-                                       openni::VideoFrameRef depth)
+                                       openni::VideoFrameRef depth,
+                                       double wall_timestamp)
 {
   // -- Handle any RecordingRequest messages we have waiting in the queue.
   ros::spinOnce();
   
   // -- Prune away any recording tags that are now out of date.
-  ros::Time now = ros::Time::now();
-  map<string, ros::Time>::iterator it = recording_tags_.begin();
+  map<string, double>::iterator it = recording_tags_.begin();
   while(it != recording_tags_.end()) {
-    if(now > it->second)
+    if(wall_timestamp > it->second)
       recording_tags_.erase(it++);
     else
       it++;
@@ -398,7 +398,7 @@ void ROSStreamingSentinel::processHook(openni::VideoFrameRef color,
   
   // -- Put the new image into the video buffer.
   size_t max_video_buffer_size = 150;
-  video_buffer_.push_back(pair<double, cv::Mat3b>(now.toSec(), img));
+  video_buffer_.push_back(pair<double, cv::Mat3b>(wall_timestamp, img));
   if(video_buffer_.size() == max_video_buffer_size)
     video_buffer_.pop_front();
   
