@@ -29,7 +29,10 @@ KITCHEN_DIR := $(LOG_DIR)/kitchen-new_bg_subtr
 KITCHEN_NAMES := $(shell ls $(KITCHEN_DIR) | sed 's/\.bag//')
 KITCHEN_TD_DIRS := $(addprefix kitchen/tds/, $(KITCHEN_NAMES))
 KITCHEN_LABELS_DIR := $(LABELED_TD_DIR)/kitchen
-KITCHEN_UP_VECTOR := `rospack find jarvis`/config/up-kitchen.eig.txt
+# This is for logfiles taken in the kitchen after ~ Nov 19 2013
+KITCHEN_UP_VECTOR := `rospack find jarvis`/config/up-kitchen-post_gluing.eig.txt
+# This is for logfiles taken in the kitchen before ~ Nov 19 2013
+#KITCHEN_UP_VECTOR := `rospack find jarvis`/config/up-kitchen.eig.txt
 
 OFFICE_DIR := $(LOG_DIR)/office
 OFFICE_NAMES := $(shell ls $(OFFICE_DIR) | sed 's/\.bag//')
