@@ -159,8 +159,8 @@ Pipeline:
           HSVHistogram.Hue
           HSVHistogram.Saturation
           HSVHistogram.Value
-          GravitationalCloudOrienter.Height
-          GravitationalCloudOrienter.HighestPoint
           CloudOrienter.Eigenvalues
           CloudOrienter.RelativeCurvature
+#          GravitationalCloudOrienter.Height
+#          GravitationalCloudOrienter.HighestPoint
           
