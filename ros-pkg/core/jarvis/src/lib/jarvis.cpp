@@ -53,7 +53,7 @@ Jarvis::Jarvis(int vis_level, int rotation, string output_directory) :
   rotation_(rotation)
 {
   if(output_directory != "") {
-    tda_ = TrackDatasetAssembler::Ptr(new TrackDatasetAssembler(output_directory, 10, 100, 10000));
+    tda_ = TrackDatasetAssembler::Ptr(new TrackDatasetAssembler(output_directory, 30, 150, 40000));
   }
   
   fg_sub_ = nh_.subscribe("foreground", 3, &Jarvis::foregroundCallback, this);
