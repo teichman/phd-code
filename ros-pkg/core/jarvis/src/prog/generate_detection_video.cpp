@@ -5,8 +5,10 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <fstream>
 #include <ros/assert.h>
+#include <jarvis/jarvis.h>
 
 using namespace std;
+using namespace Eigen;
 namespace bfs = boost::filesystem;
 
 double logistic(double logodds, double sigma)
@@ -58,6 +60,8 @@ int main(int argc, char** argv)
   if(bfs::exists(tmpdir))
     bfs::remove_all(tmpdir);
   bfs::create_directory(tmpdir);
+
+  std::map<size_t, DiscreteBayesFilter> filters;
   
   vector<string> image_paths = glob(images_dir + "/*.jpg");
   for(size_t i = 0; i < image_paths.size(); ++i) {
@@ -66,7 +70,8 @@ int main(int argc, char** argv)
     // Get the corresponding detection file.
     bfs::path path(image_paths[i]);
     string leaf = path.leaf().string();
-    string detection_filename = "detection" + leaf.substr(5, leaf.size() - 9) + ".txt";
+    string timestamp_string = leaf.substr(5, leaf.size() - 9);
+    string detection_filename = "detection" + timestamp_string + ".txt";
     string detection_path = detection_metadata_dir + "/" + detection_filename;
 
     // If it exists, draw in the image.
@@ -87,26 +92,38 @@ int main(int argc, char** argv)
         iss >> uly;
         iss >> lrx;
         iss >> lry;
-        cout << track_id << " " << ulx << " " << uly << " " << lrx << " " << lry;
+        vector<float> frame_prediction_stl;
+        vector<string> class_names;
         while(!iss.eof()) {
-          string classname;
-          iss >> classname;
+          string class_name;
+          iss >> class_name;
           float logodds;
           iss >> logodds;
-
-          cout << " " << classname << " " << logodds;
-          if(classname == show) {
-            cv::Point ul(max(0, ulx - pad), max(0, uly - pad));
-            cv::Point lr(min(lrx + pad, img.cols), min(lry + pad, img.rows));
-            cv::Scalar color(127, 127, 127);
-            if(logodds > 0) {
-              float val = 255 * logistic(logodds, sigma);
-              color = cv::Scalar(127 - val, 127 - val, 127 + 127 * val);
-            }
-            cv::rectangle(img, ul, lr, color, 2);
-          }
+          frame_prediction_stl.push_back(logodds);
+          class_names.push_back(class_name);
         }
-        cout << endl;
+
+        // -- Update DiscreteBayesFilter.  Use fake centroid motion because we don't have
+        //    that info anymore.
+        Label fpred(frame_prediction_stl);
+        double timestamp = atof(timestamp_string.c_str());
+        VectorXf centroid = VectorXf::Ones(3); 
+        centroid *= timestamp;
+        filters[track_id].addObservation(fpred, centroid, timestamp);
+        NameMapping cmap(class_names);
+        
+        // -- Draw.
+        Label tpred = filters[track_id].trackPrediction();
+        float logodds = tpred(cmap.toId(show));
+        //float logodds = fpred(cmap.toId(show));
+        cv::Point ul(max(0, ulx - pad), max(0, uly - pad));
+        cv::Point lr(min(lrx + pad, img.cols), min(lry + pad, img.rows));
+        cv::Scalar color(127, 127, 127);
+        if(logodds > 0) {
+          float val = 255 * logistic(logodds, sigma);
+          color = cv::Scalar(127 - val, 127 - val, 127 + 127 * val);
+        }
+        cv::rectangle(img, ul, lr, color, 2);
       }
     }
 
