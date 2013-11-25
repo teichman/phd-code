@@ -43,7 +43,11 @@ void Inductor::chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_
   vector<Label> cda;
   tracks.reserve(td->size());
   cda.reserve(chunk_diagnostic_annotations->size());
-  
+
+  // -- Tracks must be moving a bit for them to be used.
+  //    This is because running group induction on stationary tracks 
+  //    essentially reduces to self-learning - all the groups
+  //    contain near-identical instances.
   for(size_t i = 0; i < td->size(); ++i) {
     Dataset::Ptr track = td->tracks_[i];
     if(track->empty())

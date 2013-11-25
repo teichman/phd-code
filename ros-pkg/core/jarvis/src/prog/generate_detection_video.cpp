@@ -34,10 +34,12 @@ int main(int argc, char** argv)
     ("images-dir", bpo::value(&images_dir)->required(), "")
     ("detection-metadata-dir", bpo::value(&detection_metadata_dir)->required(), "")
     ("show", bpo::value(&show)->required(), "class to show detections for")
-    ("pad", bpo::value(&pad)->default_value(3), "padding on the bounding box")
+    ("pad", bpo::value(&pad)->default_value(7), "padding on the bounding box")
     ("sigma", bpo::value(&sigma)->default_value(5), "in the logistic function for coloring")
     ("fps", bpo::value(&fps)->default_value(30), "")
     ("rotation", bpo::value(&rotation)->default_value("rotate=1,rotate=1"), "mencoder rotation option")
+    ("only-pos", "Show only positive detections rather than everything")
+    ("frame", "Show frame predictions rather than track predictions")
     ;
 
   p.add("images-dir", 1);
@@ -115,15 +117,19 @@ int main(int argc, char** argv)
         // -- Draw.
         Label tpred = filters[track_id].trackPrediction();
         float logodds = tpred(cmap.toId(show));
-        //float logodds = fpred(cmap.toId(show));
+        if(opts.count("frame"))
+          logodds = fpred(cmap.toId(show));
         cv::Point ul(max(0, ulx - pad), max(0, uly - pad));
         cv::Point lr(min(lrx + pad, img.cols), min(lry + pad, img.rows));
         cv::Scalar color(127, 127, 127);
         if(logodds > 0) {
           float val = 255 * logistic(logodds, sigma);
-          color = cv::Scalar(127 - val, 127 - val, 127 + 127 * val);
+          //color = cv::Scalar(127 - val, 127 - val, 127 + 127 * val);  // red
+          color = cv::Scalar(127 - val, 127 + 127 * val, 127 - val);  // green
         }
-        cv::rectangle(img, ul, lr, color, 2);
+
+        if(!opts.count("only-pos") || (opts.count("only-pos") && logodds > 0))
+          cv::rectangle(img, ul, lr, color, 2);
       }
     }
 
