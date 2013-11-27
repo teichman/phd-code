@@ -29,14 +29,14 @@ KITCHEN_DIR := $(LOG_DIR)/kitchen-new_bg_subtr
 KITCHEN_NAMES := $(shell ls $(KITCHEN_DIR) | sed 's/\.bag//')
 KITCHEN_TD_DIRS := $(addprefix kitchen/tds/, $(KITCHEN_NAMES))
 KITCHEN_LABELS_DIR := $(LABELED_TD_DIR)/kitchen
-# This is for logfiles taken in the kitchen before ~ Nov 19 2013
+# This is for logfiles taken in the kitchen before ~ Nov 21 2013
 KITCHEN_UP_VECTOR := `rospack find jarvis`/config/up-kitchen.eig.txt
 
 KITCHEN_GLUED_DIR := $(LOG_DIR)/kitchen_glued
 KITCHEN_GLUED_NAMES := $(shell ls $(KITCHEN_GLUED_DIR) | sed 's/\.bag//')
 KITCHEN_GLUED_TD_DIRS := $(addprefix kitchen_glued/tds/, $(KITCHEN_GLUED_NAMES))
 KITCHEN_GLUED_LABELS_DIR := $(LABELED_TD_DIR)/kitchen_glued
-# This is for logfiles taken in the kitchen after ~ Nov 19 2013
+# This is for logfiles taken in the kitchen after ~ Nov 21 2013
 KITCHEN_GLUED_UP_VECTOR := `rospack find jarvis`/config/up-kitchen-post_gluing.eig.txt
 
 OFFICE_DIR := $(LOG_DIR)/office
@@ -161,20 +161,11 @@ kitchen/group_induction_errors: kitchen/induction
 
 KITCHEN_GLUED_CLASS_NAMES := cat
 
-kitchen_glued-update-all-descriptors: kitchen_glued-update-unlabeled-descriptors kitchen_glued-update-test-descriptors
-
 kitchen_glued-update-unlabeled-descriptors:
 	rosrun jarvis update_descriptors \
 	--config $(CONFIG) \
 	-u $(KITCHEN_GLUED_UP_VECTOR) \
 	--tds `find kitchen_glued/tds/ -name '*.td' | sort` \
-	-j 24
-
-kitchen_glued-update-test-descriptors:
-	rosrun jarvis update_descriptors \
-	--config $(CONFIG) \
-	-u $(KITCHEN_GLUED_UP_VECTOR) \
-	--tds $(KITCHEN_GLUED_LABELS_DIR)/*.td \
 	-j 24
 
 kitchen_glued/induction: 
@@ -189,7 +180,11 @@ kitchen_glued/induction:
 	--evaluate-every 1 \
 	--output-dir $@ \
 	--unlabeled-td-dir kitchen_glued/tds/ \
-	--init TODO \
+	--init \
+	kitchen_glued/tds/sentinel_2013-11-23-19-42-04_8/jarvis-0000.td \
+	kitchen_glued/tds/sentinel_2013-11-22-17-07-10_0/jarvis-0000.td \
+	kitchen_glued/tds/sentinel_2013-11-24-19-05-46_16/jarvis-0000.td \
+	kitchen_glued/tds/sentinel_2013-11-23-19-56-50_9/jarvis-0000.td \
 	| tee $@-log.txt
 	mv $@-log.txt $@/
 
