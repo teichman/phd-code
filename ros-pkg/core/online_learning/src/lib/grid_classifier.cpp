@@ -804,6 +804,16 @@ void GCBT::train(const std::vector<TrackDataset::ConstPtr>& datasets,
     const Instance& inst = (*datasets[ds[i]])[ts[i]][fs[i]];
     labels.col(i) = inst.label_.sign().array().cast<double>();  // -1, 0, +1
 
+    // 2013-11-26: Got some suspicious output from below indicating that unlabeled
+    // examples in datasets[...] were being used as negative training examples.
+    // We're not using weighting in the training sets anymore, so the instance
+    // labels should be exactly -1, 0, and +1.  Otherwise we could get bad behavior
+    // where, e.g., a label of -1e-13 gets set to -1 by the above.
+    for(int j = 0; j < inst.label_.rows(); ++j) {
+      float val = inst.label_.coeffRef(j); 
+      ROS_ASSERT(val == -1 || val == 0 || val == +1);
+    }
+
     // Log weights includes the importance weight embedded in the label.
     log_weights.col(i) = -labels.col(i) * gc_->classify(inst).array().cast<double>();
     for(int j = 0; j < inst.label_.rows(); ++j)

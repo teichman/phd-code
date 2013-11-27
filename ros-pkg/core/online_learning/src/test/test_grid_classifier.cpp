@@ -11,6 +11,20 @@ using namespace Eigen;
 
 #define NUM_PARALLEL_EVALS (getenv("NUM_PARALLEL_EVALS") ? atoi(getenv("NUM_PARALLEL_EVALS")) : 1)
 
+TEST(GridClassifierBoostingTrainer, Labels)
+{
+  Label label = VectorXf::Zero(4);
+  label(0) = -42;
+  label(2) = +42;
+  label(3) = -numeric_limits<float>::min();
+  ArrayXd array = label.sign().array().cast<double>();  // This is assumed to produce a vector in -1, 0, +1.
+  cout << array.transpose() << endl;
+  EXPECT_FLOAT_EQ(array(0), -1);
+  EXPECT_FLOAT_EQ(array(1), 0);
+  EXPECT_FLOAT_EQ(array(2), 1);
+  EXPECT_FLOAT_EQ(array(3), -1);
+}
+
 TEST(Grid, NaN)
 {
   float val = std::numeric_limits<float>::quiet_NaN();
