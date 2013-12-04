@@ -181,8 +181,15 @@ int main(int argc, char** argv)
       cv::Vec3b color = cv::Vec3b(0, 0, 255);
       for(int y = 0; y < reticle.rows; ++y) {
         for(int x = 0; x < reticle.cols; ++x) {
-          cv::Vec3b curr = img(retpt.y - reticle.rows / 2 + y, retpt.x - reticle.cols / 2 + x);
-          img(retpt.y - reticle.rows / 2 + y, retpt.x - reticle.cols / 2 + x) = ((float)reticle(y, x)) / 255.0 * color + (1 - (float)reticle(y, x) / 255.0) * curr;
+          cv::Point drawpt;
+          drawpt.y = retpt.y - reticle.rows / 2 + y;
+          drawpt.x = retpt.x - reticle.cols / 2 + x;
+          if(drawpt.y < 0 || drawpt.y >= img.rows)
+            continue;
+          if(drawpt.x < 0 || drawpt.x >= img.cols)
+            continue;
+
+          img(drawpt) = ((float)reticle(y, x)) / 255.0 * color + (1 - (float)reticle(y, x) / 255.0) * img(drawpt);
         }
       }
     }
