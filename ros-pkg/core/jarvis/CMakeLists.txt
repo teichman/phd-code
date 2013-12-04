@@ -101,6 +101,7 @@ rosbuild_link_boost(generate_collage program_options filesystem)
 target_link_libraries(generate_collage jarvis_core)
 
 rosbuild_add_executable(generate_detection_video src/prog/generate_detection_video.cpp)
+rosbuild_add_compile_flags(generate_detection_video -std=c++0x)
 rosbuild_link_boost(generate_detection_video program_options filesystem)
 target_link_libraries(generate_detection_video jarvis_core)
 

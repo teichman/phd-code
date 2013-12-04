@@ -115,54 +115,65 @@ int main(int argc, char** argv)
   bfs::create_directory(tmpdir);
 
   std::map<size_t, DiscreteBayesFilter> filters;
-  
-  vector<string> image_paths = glob(images_dir + "/*.jpg");
-  for(size_t i = 0; i < image_paths.size(); ++i) {
-    cv::Mat3b img = cv::imread(image_paths[i]);
 
-    // Get the corresponding detection data.
-    bfs::path path(image_paths[i]);
-    string leaf = path.leaf().string();
-    string timestamp_string = leaf.substr(5, leaf.size() - 9);
-    double timestamp = atof(timestamp_string.c_str());
+  for(auto it = detections.begin(); it != detections.end(); ++it) {
+    double timestamp = it->first;
+    const vector<Det>& dets = it->second;
 
-    // If it exists, draw in the image.
-    if(detections.count(timestamp)) {
-      vector<Det> imgdet = detections[timestamp];
-      for(size_t j = 0; j < imgdet.size(); ++j) {
-        Det det = imgdet[j];
+    // -- Update the filters.
+    for(size_t j = 0; j < dets.size(); ++j) {
+      const Det& det = dets[j];
+      // Initialize if necessary.
+      if(!filters.count(det.track_id_))
+        filters[det.track_id_] = DiscreteBayesFilter(10, 1);
         
-        // -- Update DiscreteBayesFilter.  Use fake centroid motion because we don't have
-        //    that info anymore.
-        Label fpred(det.frame_predictions_);
-        VectorXf centroid = VectorXf::Ones(3); 
-        centroid *= timestamp;
-        filters[det.track_id_].addObservation(fpred, centroid, timestamp);
-        NameMapping cmap(det.class_names_);
-        
-        // -- Draw.
-        Label tpred = filters[det.track_id_].trackPrediction();
-        float logodds = tpred(cmap.toId(show));
-        if(opts.count("frame"))
-          logodds = fpred(cmap.toId(show));
-        cv::Point ul(max(0, det.ulx_ - pad), max(0, det.uly_ - pad));
-        cv::Point lr(min(det.lrx_ + pad, img.cols), min(det.lry_ + pad, img.rows));
-        cv::Scalar color(127, 127, 127);
-        if(logodds > 0) {
-          float val = 255 * logistic(logodds, sigma);
-          //color = cv::Scalar(127 - val, 127 - val, 127 + 127 * val);  // red
-          color = cv::Scalar(127 - val, 127 + 127 * val, 127 - val);  // green
-        }
-
-        if(!opts.count("only-pos") || (opts.count("only-pos") && logodds > 0))
-          cv::rectangle(img, ul, lr, color, 2);
-      }
+      // Update DiscreteBayesFilter.  Use fake centroid motion because we don't have
+      // that info anymore.
+      Label fpred(det.frame_predictions_);
+      VectorXf centroid = VectorXf::Zero(3);
+      centroid(0) = filters[det.track_id_].numObservations();
+      filters[det.track_id_].addObservation(fpred, centroid, timestamp);
     }
+   
+    // -- If a corresponding image exists, draw in it.
+    ostringstream oss;
+    oss << "image" << fixed << setprecision(16) << setw(16) << setfill('0') << timestamp << ".jpg";
+    string filename = oss.str();
+    string path = images_dir + "/" + filename;
+    if(!bfs::exists(path))
+      continue;
 
+    cv::Mat3b img = cv::imread(path);
+    for(size_t j = 0; j < dets.size(); ++j) {
+      const Det& det = dets[j];
+
+      NameMapping cmap(det.class_names_);
+      Label fpred(det.frame_predictions_);
+      Label tpred = filters[det.track_id_].trackPrediction();
+      float logodds = tpred(cmap.toId(show));
+      if(opts.count("frame"))
+        logodds = fpred(cmap.toId(show));
+
+      // cout << det.track_id_ << " " << tpred(cmap.toId(show)) << " " << fpred(cmap.toId(show)) << " "
+      //      << setprecision(16) << setw(16) << setfill('0') << timestamp << endl;
+      
+      cv::Point ul(max(0, det.ulx_ - pad), max(0, det.uly_ - pad));
+      cv::Point lr(min(det.lrx_ + pad, img.cols), min(det.lry_ + pad, img.rows));
+      cv::Scalar color(127, 127, 127);
+      if(logodds > 0) {
+        float val = 255 * logistic(logodds, sigma);
+        //color = cv::Scalar(127 - val, 127 - val, 127 + 127 * val);  // red
+        color = cv::Scalar(127 - val, 127 + 127 * val, 127 - val);  // green
+      }
+      
+      if(!opts.count("only-pos") || (opts.count("only-pos") && logodds > 0))
+        cv::rectangle(img, ul, lr, color, 2);
+    }
+    
     // Save to the tmp dir.
     cv::imshow("img", img);
     cv::waitKey(2);
-    cv::imwrite(tmpdir + "/" + leaf, img);
+    cv::imwrite(tmpdir + "/" + filename, img);
   }
 
   // -- Generate the video.
