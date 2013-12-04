@@ -73,6 +73,8 @@ int main(int argc, char** argv)
   double sigma;
   double fps;
   string rotation;
+  string reticle_path;
+  float alpha;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("images-dir", bpo::value(&images_dir)->required(), "")
@@ -84,6 +86,8 @@ int main(int argc, char** argv)
     ("rotation", bpo::value(&rotation)->default_value("rotate=1,rotate=1"), "mencoder rotation option")
     ("only-pos", "Show only positive detections rather than everything")
     ("frame", "Show frame predictions rather than track predictions")
+    ("reticle", bpo::value(&reticle_path), "Image to use instead of a box.  Must be white on black.")
+    ("alpha", bpo::value(&alpha)->default_value(0.1), "How fast the reticle should follow the cat around")
     ;
 
   p.add("images-dir", 1);
@@ -102,6 +106,14 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  // -- Set up reticle.
+  cv::Mat1b reticle;
+  if(opts.count("reticle")) {
+    cout << "Using reticle at " << reticle_path << endl;
+    reticle = cv::imread(reticle_path, CV_LOAD_IMAGE_GRAYSCALE);
+  }
+  cv::Point2f retpt(160, 120);
+     
   // -- Load all detection metadata.
   map<double, vector<Det> > detections;
   for(size_t i = 0; i < detection_metadata_paths.size(); ++i) {
@@ -144,30 +156,66 @@ int main(int argc, char** argv)
       continue;
 
     cv::Mat3b img = cv::imread(path);
-    for(size_t j = 0; j < dets.size(); ++j) {
-      const Det& det = dets[j];
 
-      NameMapping cmap(det.class_names_);
-      Label fpred(det.frame_predictions_);
-      Label tpred = filters[det.track_id_].trackPrediction();
-      float logodds = tpred(cmap.toId(show));
-      if(opts.count("frame"))
-        logodds = fpred(cmap.toId(show));
-
-      // cout << det.track_id_ << " " << tpred(cmap.toId(show)) << " " << fpred(cmap.toId(show)) << " "
-      //      << setprecision(16) << setw(16) << setfill('0') << timestamp << endl;
-      
-      cv::Point ul(max(0, det.ulx_ - pad), max(0, det.uly_ - pad));
-      cv::Point lr(min(det.lrx_ + pad, img.cols), min(det.lry_ + pad, img.rows));
-      cv::Scalar color(127, 127, 127);
-      if(logodds > 0) {
-        float val = 255 * logistic(logodds, sigma);
-        //color = cv::Scalar(127 - val, 127 - val, 127 + 127 * val);  // red
-        color = cv::Scalar(127 - val, 127 + 127 * val, 127 - val);  // green
+    // -- Reticle mode.
+    if(reticle.rows > 0) {
+      int idx = -1;
+      float max_logodds = 0;
+      for(size_t j = 0; j < dets.size(); ++j) {
+        const Det& det = dets[j];
+        NameMapping cmap(det.class_names_);
+        Label tpred = filters[det.track_id_].trackPrediction();
+        float logodds = tpred(cmap.toId(show));
+        if(logodds > max_logodds) {
+          max_logodds = logodds;
+          idx = j;
+        }
       }
+
+      if(idx >= 0) {
+        const Det& det = dets[idx];
+        cv::Point2f center((det.lrx_ + det.ulx_) / 2, (det.lry_ + det.uly_) / 2);
+        retpt = alpha * center + (1.0 - alpha) * retpt;
+      }
+        
+      cv::Vec3b color = cv::Vec3b(0, 0, 255);
+      for(int y = 0; y < reticle.rows; ++y) {
+        for(int x = 0; x < reticle.cols; ++x) {
+          cv::Vec3b curr = img(retpt.y - reticle.rows / 2 + y, retpt.x - reticle.cols / 2 + x);
+          img(retpt.y - reticle.rows / 2 + y, retpt.x - reticle.cols / 2 + x) = ((float)reticle(y, x)) / 255.0 * color + (1 - (float)reticle(y, x) / 255.0) * curr;
+        }
+      }
+    }
+
+    // -- Box mode
+    else {
+      for(size_t j = 0; j < dets.size(); ++j) {
+        const Det& det = dets[j];
+        
+        NameMapping cmap(det.class_names_);
+        Label fpred(det.frame_predictions_);
+        Label tpred = filters[det.track_id_].trackPrediction();
+        float logodds = tpred(cmap.toId(show));
+        if(opts.count("frame"))
+          logodds = fpred(cmap.toId(show));
+        
+        // cout << det.track_id_ << " " << tpred(cmap.toId(show)) << " " << fpred(cmap.toId(show)) << " "
+        //      << setprecision(16) << setw(16) << setfill('0') << timestamp << endl;
+        
+        cv::Vec3b color(127, 127, 127);
+        if(logodds > 0) {
+          float val = 255 * logistic(logodds, sigma);
+          color = cv::Vec3b(127 - val, 127 + 127 * val, 127 - val);  // green
+        }
       
-      if(!opts.count("only-pos") || (opts.count("only-pos") && logodds > 0))
-        cv::rectangle(img, ul, lr, color, 2);
+
+        else {
+          cv::Point ul(max(0, det.ulx_ - pad), max(0, det.uly_ - pad));
+          cv::Point lr(min(det.lrx_ + pad, img.cols), min(det.lry_ + pad, img.rows));
+          if(!opts.count("only-pos") || (opts.count("only-pos") && logodds > 0))
+            cv::rectangle(img, ul, lr, cv::Scalar(color[0], color[1], color[2]), 2);
+        }
+      }
     }
     
     // Save to the tmp dir.
