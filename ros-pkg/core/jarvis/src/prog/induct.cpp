@@ -22,6 +22,7 @@ int main(int argc, char** argv)
   double emax;
   size_t buffer_size;
   size_t max_track_length;
+  int max_iters;
   int snapshot_every;
   int evaluate_every;
   string output_dir;
@@ -47,6 +48,7 @@ int main(int argc, char** argv)
     ("emax", bpo::value<double>(&emax)->required())
     ("buffer-size", bpo::value<size_t>(&buffer_size)->required())
     ("max-track-length", bpo::value<size_t>(&max_track_length)->required())
+    ("max-iters", bpo::value<int>(&max_iters)->default_value(0))
     ("snapshot-every", bpo::value<int>(&snapshot_every)->required())
     ("evaluate-every", bpo::value<int>(&evaluate_every)->required())
     ("output-dir", bpo::value<string>(&output_dir)->required(), "Directory to put output.")
@@ -122,7 +124,6 @@ int main(int argc, char** argv)
     
   // -- Initialize Inductor.
   cout << "Initializing Inductor..." << endl;
-  int max_iters = 0;
   Inductor inductor(config, emax, buffer_size, max_track_length,
                     classifier, trainer, max_iters, snapshot_every,
                     evaluate_every, output_dir, unlabeled_td_dir,
