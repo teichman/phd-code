@@ -163,23 +163,20 @@ int main(int argc, char** argv)
   }
 
   // -- Go.
-  ThreadPtr learning_thread = inductor.launch();
+  inductor.detach();
 
-  BlobView view;
-  VCMultiplexor multiplexor(&view);
-  ActiveLearningViewController alvc(&multiplexor, &inductor, unlabeled_td_dir);
-  InductionViewController ivc(&inductor, &multiplexor);
-  multiplexor.addVC(&alvc);
-  multiplexor.addVC(&ivc);
-
-  ThreadPtr view_thread = view.launch();
-  ThreadPtr alvc_thread = alvc.launch();
-  ThreadPtr ivc_thread = ivc.launch();
-
-  learning_thread->join();
-  view_thread->join();
-  alvc_thread->join();
-  ivc_thread->join();
+  if(!opts.count("no-vis")) {
+    BlobView view;
+    VCMultiplexor multiplexor(&view);
+    ActiveLearningViewController alvc(&multiplexor, &inductor, unlabeled_td_dir);
+    InductionViewController ivc(&inductor, &multiplexor);
+    multiplexor.addVC(&alvc);
+    multiplexor.addVC(&ivc);
+    
+    view.detach();
+    alvc.detach();
+    ivc.detach();
+  }
 
   return 0;
 }

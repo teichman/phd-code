@@ -195,6 +195,39 @@ kitchen_glued/induction:
 
 REGRESSION_DIR := regression
 
-regression-test-kitchen:
-	RUN_DIR=$(REGRESSION-DIR)/runs/`date +%F_%T`_`roscd jarvis && git rev-parse --short HEAD`_kitchen
-	mkdir -p $$RUN_DIR
+regression-test-kitchen00:
+	RUN_DIR=$(REGRESSION_DIR)/runs/`date +%F_%T`_`cd $(REPO_ROOT) && git rev-parse --short HEAD`_kitchen; \
+	mkdir -p $$RUN_DIR; \
+	rosrun jarvis induct \
+	--max-iters 300 \
+	--saved-annotations-dir $(REGRESSION_DIR)/saved_annotations/kitchen00 \
+	--class-names $(KITCHEN_CLASS_NAMES) \
+	--config $(CONFIG) \
+	-u $(KITCHEN_UP_VECTOR) \
+	--emax 0 \
+	--buffer-size 1000 \
+	--max-track-length 30 \
+	--snapshot-every 0 \
+	--evaluate-every 1 \
+	--output-dir $(RUN_DIR) \
+	--unlabeled-td-dir kitchen/tds/ \
+	--init \
+	kitchen-old/tds/sentinel_2013-09-20-21-00-29_0/jarvis-0003.td \
+	kitchen-old/tds/sentinel_2013-09-18-23-31-20_1/jarvis-0003.td \
+	kitchen-old/tds/sentinel_2013-09-20-21-00-29_0/jarvis-0001.td \
+	kitchen/tds/sentinel_2013-10-25-01-58-21_5/jarvis-0003.td \
+	kitchen/tds/sentinel_2013-10-24-19-32-07_1/jarvis-0000.td \
+	kitchen/tds/sentinel_2013-10-23-23-04-26_1/jarvis-0005.td \
+	kitchen/tds/sentinel_2013-10-26-03-03-44_0/jarvis-0000.td \
+	--test $(KITCHEN_LABELS_DIR)/*.td \
+	| tee $(RUN_DIR)/log.txt
+	echo
+	echo -- Cleaning up. --
+	echo
+	cp `find $(RUN_DIR) -name classifier.gc | sort | tail -n1` $(RUN_DIR)/final_classifier.gc
+	cp `find $(RUN_DIR) -name track_results.txt | sort | tail -n1` $(RUN_DIR)/final_track_results.txt
+	rm `find $(RUN_DIR) -name classifier.gc`
+	rm `find $(RUN_DIR) -name '*.eig'`
+	rm `find $(RUN_DIR) -name cmap`
+	rm -rf `find $(RUN_DIR) -name test_results_annotated`
+	cd $(RUN_DIR) && rosrun online_learning plot_perclass_pr.py cat
