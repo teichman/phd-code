@@ -5,6 +5,7 @@
 SHELL                   := /bin/bash
 REPO_ROOT               := $(shell dirname $$(dirname $$(dirname $$(rospack find jarvis))))
 MAKE_ROOT               := $(REPO_ROOT)/project/jarvis
+MAKEFILE                := $(MAKE_ROOT)/Makefile
 export NUM_THREADS      := 24
 export ROS_PACKAGE_PATH := $(ROS_PACKAGE_PATH):$(REPO_ROOT)/ros-pkg
 
@@ -194,13 +195,20 @@ kitchen_glued/induction:
 ############################################################
 
 REGRESSION_DIR := regression
+SAVED_ANNOTATIONS_DIR := $(MAKE_ROOT)/saved_annotations
+
+regression-test-kitchen00-multi:
+	for i in {1..10}; do make -f $(MAKEFILE) regression-test-kitchen00; done
 
 regression-test-kitchen00:
+	pwd
 	RUN_DIR=$(REGRESSION_DIR)/runs/`date +%F_%T`_`cd $(REPO_ROOT) && git rev-parse --short HEAD`_kitchen; \
-	mkdir -p $$RUN_DIR; \
+	mkdir -p $$RUN_DIR/induction; \
 	rosrun jarvis induct \
-	--max-iters 300 \
-	--saved-annotations-dir $(REGRESSION_DIR)/saved_annotations/kitchen00 \
+	--randomize \
+	--no-vis \
+	--max-iters 50 \
+	--saved-annotations-dir $(SAVED_ANNOTATIONS_DIR)/kitchen00 \
 	--class-names $(KITCHEN_CLASS_NAMES) \
 	--config $(CONFIG) \
 	-u $(KITCHEN_UP_VECTOR) \
@@ -209,7 +217,7 @@ regression-test-kitchen00:
 	--max-track-length 30 \
 	--snapshot-every 0 \
 	--evaluate-every 1 \
-	--output-dir $(RUN_DIR) \
+	--output-dir $$RUN_DIR/induction \
 	--unlabeled-td-dir kitchen/tds/ \
 	--init \
 	kitchen-old/tds/sentinel_2013-09-20-21-00-29_0/jarvis-0003.td \
@@ -220,14 +228,33 @@ regression-test-kitchen00:
 	kitchen/tds/sentinel_2013-10-23-23-04-26_1/jarvis-0005.td \
 	kitchen/tds/sentinel_2013-10-26-03-03-44_0/jarvis-0000.td \
 	--test $(KITCHEN_LABELS_DIR)/*.td \
-	| tee $(RUN_DIR)/log.txt
-	echo
-	echo -- Cleaning up. --
-	echo
-	cp `find $(RUN_DIR) -name classifier.gc | sort | tail -n1` $(RUN_DIR)/final_classifier.gc
-	cp `find $(RUN_DIR) -name track_results.txt | sort | tail -n1` $(RUN_DIR)/final_track_results.txt
-	rm `find $(RUN_DIR) -name classifier.gc`
-	rm `find $(RUN_DIR) -name '*.eig'`
-	rm `find $(RUN_DIR) -name cmap`
-	rm -rf `find $(RUN_DIR) -name test_results_annotated`
-	cd $(RUN_DIR) && rosrun online_learning plot_perclass_pr.py cat
+	| tee $$RUN_DIR/induction/log.txt; \
+	cd $$RUN_DIR/induction; \
+	rosrun online_learning plot_perclass_pr.py cat; \
+	rosrun online_learning plot_perclass_accuracy.py cat; \
+	cd -; \
+	echo; \
+	echo -- Running baseline_unfair --; \
+	echo; \
+	mkdir -p $$RUN_DIR/baseline_unfair; \
+	rosrun jarvis baseline_unfair \
+	--class-names $(KITCHEN_CLASS_NAMES) \
+	--config $(CONFIG) \
+	-u $(KITCHEN_UP_VECTOR) \
+	--root $$RUN_DIR/induction \
+	--test $(KITCHEN_LABELS_DIR)/*.td \
+	--num-iters 10 \
+	--o $$RUN_DIR/baseline_unfair \
+	| tee $$RUN_DIR/baseline_unfair/log.txt; \
+	echo; \
+	echo -- Cleaning up. --; \
+	echo; \
+	cp `find $$RUN_DIR/induction -name classifier.gc | sort | tail -n1` $$RUN_DIR/induction/final_classifier.gc; \
+	cp `find $$RUN_DIR/induction -name track_results.txt | sort | tail -n1` $$RUN_DIR/induction/final_track_results.txt; \
+	rm `find $$RUN_DIR/induction -name classifier.gc`; \
+	rm `find $$RUN_DIR/induction -name 'annotated*.td'`; \
+	rm `find $$RUN_DIR/induction -name '*.eig'`; \
+	rm `find $$RUN_DIR/induction -name cmap.txt`; \
+	rm -rf `find $$RUN_DIR/induction -name test_results_annotated`; \
+
+

@@ -57,7 +57,6 @@ int main(int argc, char** argv)
   bpo::notify(opts);
 
   string output_path = opts["output"].as<string>();
-  ROS_ASSERT(!bfs::exists(output_path));
   cout << "Saving to " << output_path << endl;
 
   // -- Load the config.
@@ -158,7 +157,9 @@ int main(int argc, char** argv)
   trainer.gamma_ = 0;
   trainer.verbose_ = true;
    //GridClassifier::StochasticLogisticTrainer trainer(gc);
-  bfs::create_directory(output_path);
+  if(!bfs::exists(output_path))
+    bfs::create_directory(output_path);
+  
   for(int i = 0; i < num_iters; ++i) {
     cout << "Running iter " << i << endl;
     ostringstream oss;

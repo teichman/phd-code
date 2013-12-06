@@ -61,6 +61,8 @@ int main(int argc, char** argv)
 
     ("init", bpo::value< vector<string> >(&init_paths)->required()->multitoken(), ".td files to initialize the classifier grids with.")
     ("class-names", bpo::value(&class_names)->required()->multitoken(), "")
+    ("no-vis", "")
+    ("randomize", "Set the random seed to a random number.")
     ;
 
   bpo::variables_map opts;
@@ -73,6 +75,11 @@ int main(int argc, char** argv)
     cout << endl;
     cout << opts_desc << endl;
     return 1;
+  }
+
+  if(opts.count("randomize")) {
+    cout << "Setting the random seed to something random." << endl;
+    srand(time(NULL));
   }
   
   // -- Load the config.
@@ -165,21 +172,29 @@ int main(int argc, char** argv)
   // -- Go.
   ThreadPtr learning_thread = inductor.launch();
 
-  BlobView view;
-  VCMultiplexor multiplexor(&view);
-  ActiveLearningViewController alvc(&multiplexor, &inductor, unlabeled_td_dir);
-  InductionViewController ivc(&inductor, &multiplexor);
-  multiplexor.addVC(&alvc);
-  multiplexor.addVC(&ivc);
+  if(opts.count("no-vis"))
+    learning_thread->join();
+  else {
+    BlobView view;
+    VCMultiplexor multiplexor(&view);
+    ActiveLearningViewController alvc(&multiplexor, &inductor, unlabeled_td_dir);
+    InductionViewController ivc(&inductor, &multiplexor);
+    multiplexor.addVC(&alvc);
+    multiplexor.addVC(&ivc);
+    
+    ThreadPtr view_thread = view.launch();
+    ThreadPtr alvc_thread = alvc.launch();
+    ThreadPtr ivc_thread = ivc.launch();
 
-  ThreadPtr view_thread = view.launch();
-  ThreadPtr alvc_thread = alvc.launch();
-  ThreadPtr ivc_thread = ivc.launch();
-
-  learning_thread->join();
-  view_thread->join();
-  alvc_thread->join();
-  ivc_thread->join();
+    learning_thread->join();
+    
+    view.quit();
+    alvc.quit();
+    ivc.quit();
+    view_thread->join();
+    alvc_thread->join();
+    ivc_thread->join();
+  }
 
   return 0;
 }
