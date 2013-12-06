@@ -188,3 +188,13 @@ kitchen_glued/induction:
 	| tee $@-log.txt
 	mv $@-log.txt $@/
 
+
+############################################################
+# Regression tests
+############################################################
+
+REGRESSION_DIR := regression
+
+regression-test-kitchen:
+	RUN_DIR=$(REGRESSION-DIR)/runs/`date +%F_%T`_`roscd jarvis && git rev-parse --short HEAD`_kitchen
+	mkdir -p $$RUN_DIR
