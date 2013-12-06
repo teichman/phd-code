@@ -676,25 +676,21 @@ void OnlineLearner::_run()
      * Training
      ************************************************************/
 
-    // TODO: This was the cause of the inconsistent numbers reported by training
-    //   vs what is in learner_status.txt.  My assumptions here were true when I wrote
-    //   this code but they are not any longer.  The viewable_unsupervised_ thing
-    //   is a mess and needs to be cleaned up.
-    
     // -- Re-induct for the benefit of InductionView.
     //    This way, if it pauses and then updates its view,
     //    it's guaranteed to get the freshest data.
-    //    Class limits aren't respected here but that's probably not a big deal.    
-    // {
-    //   ScopedTimer st("OnlineLearner: Re-inducting for InductionView.");
-    //   ObjectiveIndex throwaway_index;
-    //   VectorXf emin = -VectorXf::Ones(nameMapping("cmap").size()) * emax_;
-    //   VectorXf emax = VectorXf::Ones(nameMapping("cmap").size()) * emax_;
-    //   vector< vector<Label> > frame_logodds;
-    //   inductDataset(emin, emax, unsupervised_.get(), &throwaway_index, &unsupervised_logodds_, &frame_logodds);
-    // }
-    // // Update the data that is publicly viewable.
-    // updateViewableUnsupervised();
+    //    Class limits aren't respected here but that's probably not a big deal.
+    {
+      ScopedTimer st("OnlineLearner: Re-inducting for InductionView.");
+      ObjectiveIndex throwaway_index;
+      VectorXf emin = -VectorXf::Ones(nameMapping("cmap").size()) * emax_;
+      VectorXf emax = VectorXf::Ones(nameMapping("cmap").size()) * emax_;
+      vector< vector<Label> > frame_logodds;
+      inductDataset(emin, emax, unsupervised_.get(), &throwaway_index, &unsupervised_logodds_, &frame_logodds);
+    }
+
+    // Update the data that is publicly viewable.
+    updateViewableUnsupervised();
     
     // -- If paused, wait here until the user is done adding
     //    new annotations.
