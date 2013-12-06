@@ -113,6 +113,8 @@ int main(int argc, char** argv)
     reticle = cv::imread(reticle_path, CV_LOAD_IMAGE_GRAYSCALE);
   }
   cv::Point2f retpt(160, 120);
+  int reticle_target_id = -1;
+  int reticle_counter = 0;
      
   // -- Load all detection metadata.
   map<double, vector<Det> > detections;
@@ -159,7 +161,8 @@ int main(int argc, char** argv)
 
     // -- Reticle mode.
     if(reticle.rows > 0) {
-      int idx = -1;
+      // -- Get most likely target.
+      int best_target_id = -1;
       float max_logodds = 0;
       for(size_t j = 0; j < dets.size(); ++j) {
         const Det& det = dets[j];
@@ -168,16 +171,51 @@ int main(int argc, char** argv)
         float logodds = tpred(cmap.toId(show));
         if(logodds > max_logodds) {
           max_logodds = logodds;
-          idx = j;
+          best_target_id = dets[j].track_id_;
         }
       }
 
-      if(idx >= 0) {
-        const Det& det = dets[idx];
-        cv::Point2f center((det.lrx_ + det.ulx_) / 2, (det.lry_ + det.uly_) / 2);
-        retpt = alpha * center + (1.0 - alpha) * retpt;
+      // Check if the current target exists.  If so, get its logodds.
+      bool current_target_exists = false;
+      float current_target_logodds;
+      for(size_t j = 0; j < dets.size(); ++j) {
+        if(reticle_target_id == (int)dets[j].track_id_) {
+          const Det& det = dets[j];
+          NameMapping cmap(det.class_names_);
+          Label tpred = filters[det.track_id_].trackPrediction();
+          current_target_exists = true;            
+          current_target_logodds = tpred(cmap.toId(show));
+        }
       }
-        
+
+      // If current target doesn't exist, take the most likely target if any.
+      if(!current_target_exists) {
+        if(best_target_id >= 0) {
+          reticle_target_id = best_target_id;
+          current_target_exists = true;
+          reticle_counter = 0;
+        }
+      }
+      // Otherwise, if there is a better one and we haven't switched in a while, switch to it.
+      else if(max_logodds > current_target_logodds && reticle_counter > 300) {
+        reticle_target_id = best_target_id;
+        reticle_counter = 0;
+      }
+      ++reticle_counter;
+      
+      // -- If we have a target, move towards it.
+      if(current_target_exists) {
+        for(size_t j = 0; j < dets.size(); ++j) {
+          const Det& det = dets[j];
+          if((int)det.track_id_ == reticle_target_id) {
+            cv::Point2f center((det.lrx_ + det.ulx_) / 2, (det.lry_ + det.uly_) / 2);
+            retpt = alpha * center + (1.0 - alpha) * retpt;
+            break;
+          }
+        }
+      }
+
+      // -- Draw the reticle.
       cv::Vec3b color = cv::Vec3b(0, 0, 255);
       for(int y = 0; y < reticle.rows; ++y) {
         for(int x = 0; x < reticle.cols; ++x) {
