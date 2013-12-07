@@ -195,9 +195,16 @@ kitchen_glued/induction:
 ############################################################
 
 REGRESSION_DIR := regression
+REGRESSION_NAMES := $(shell ls $(REGRESSION_DIR)/tests)
 
-regression-test-kitchen00-multi:
-	for i in {1..10}; do make -f $(MAKEFILE) regression-test-kitchen00; done
+all-regression-tests-multi: $(addprefix regression-test-,$(addsuffix -multi, $(REGRESSION_NAMES)))
 
-regression-test-kitchen00:
-	rosrun jarvis run_regression.sh $(REGRESSION_DIR)/tests/kitchen00 $(CONFIG) 10 $(REGRESSION_DIR)/runs $(KITCHEN_CLASS_NAMES)
+define REGRESSION_RULE_GENERATOR
+regression-test-$(1)-multi:
+	for i in {1..10}; do make -f $(MAKEFILE) regression-test-$(1); done
+regression-test-$(1):
+	rosrun jarvis run_regression.sh $(REGRESSION_DIR)/tests/$(1) $(CONFIG) 50 $(REGRESSION_DIR)/runs $(KITCHEN_CLASS_NAMES)
+endef
+$(foreach REGRESSION_NAME,$(REGRESSION_NAMES),$(eval $(call REGRESSION_RULE_GENERATOR,$(REGRESSION_NAME))))
+
+
