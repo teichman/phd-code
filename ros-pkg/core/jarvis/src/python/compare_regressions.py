@@ -3,6 +3,7 @@
 import sys
 import os
 import argparse
+import itertools
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -27,5 +28,29 @@ os.system("grep 'Total acc' `find " + post_dir + " -name final_track_results.txt
 post_acc = np.loadtxt(tmpfile)
 print "Mean: " + str(np.mean(post_acc))
 print post_acc
+
+improvement = np.mean(post_acc) - np.mean(pre_acc)
+print "Improvement: " + str(improvement)
+all = np.concatenate((pre_acc, post_acc))
+
+#print "permutations"
+num_perm_better = 0.
+num_samples = 1000
+for _ in range(num_samples):
+    perm = np.random.permutation(all)
+    pre = perm[0:len(pre_acc)]
+    post = perm[len(pre_acc):]
+    improvement_perm = np.mean(post) - np.mean(pre)
+#    print "Improvement: " + str(improvement_perm)
+    if improvement_perm >= improvement:
+        num_perm_better += 1
+
+p = num_perm_better / num_samples
+print "p: " + str(p)
+    
+    
+# Hah, there's a lot.  n!.
+#for permutation in itertools.permutations(all):
+#    print permutation
 
 
