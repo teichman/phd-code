@@ -1,3 +1,4 @@
+#include <boost/date_time.hpp>
 #include <jarvis/tracker.h>
 #include <bag_of_tricks/connected_components.h>
 #include <sentinel/background_model.h>
@@ -467,10 +468,15 @@ void Tracker::draw(cv::Mat3b img) const
 
 void addTimestamp(const bpt::ptime& ptime, cv::Mat3b img)
 {
+  boost::local_time::time_zone_ptr zone(new boost::local_time::posix_time_zone("PST-08:00:00"));
+  boost::local_time::local_date_time dt_with_zone(ptime, zone);
+  
   ostringstream oss;
-  const bpt::time_facet* f = new bpt::time_facet("%Y-%m-%d %H:%M:%S UTC%Q");
+  //const bpt::time_facet* f = new bpt::time_facet("%Y-%m-%d %H:%M:%S UTC%Q");
+  const boost::local_time::local_time_facet* f = new boost::local_time::local_time_facet("%Y-%m-%d %H:%M:%S UTC%Q");
   oss.imbue(locale(oss.getloc(), f));
-  oss << ptime;
+  //oss << ptime;
+  oss << dt_with_zone;
   
   float thickness = 1.5;
   float scale = 0.5;
