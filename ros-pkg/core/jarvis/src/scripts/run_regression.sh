@@ -63,6 +63,7 @@ echo
 
 mkdir -p $RUN_DIR/baseline_unfair
 rosrun jarvis baseline_unfair \
+    --randomize \
     --class-names $CLASS_NAMES \
     --config $CONFIG \
     -u $TEST_DIR/up.eig.txt \

@@ -46,6 +46,7 @@ int main(int argc, char** argv)
     ("output,o", bpo::value<string>()->required(), "Output path.")
     ("num-iters", bpo::value<int>(&num_iters)->required(), "Number of times to (accumulatively) train the classifier.")
     ("class-names", bpo::value(&class_names)->required()->multitoken(), "")
+    ("randomize", "Set the random seed to a random number.")
     ;
 
   bpo::variables_map opts;
@@ -56,6 +57,11 @@ int main(int argc, char** argv)
   }
   bpo::notify(opts);
 
+  if(opts.count("randomize")) {
+    cout << "Setting the random seed to something random." << endl;
+    srand(time(NULL));
+  }
+  
   string output_path = opts["output"].as<string>();
   cout << "Saving to " << output_path << endl;
 
