@@ -3,7 +3,6 @@
 import sys
 import argparse
 import itertools
-import matplotlib.pyplot as plt
 
 import roslib
 roslib.load_manifest('jarvis')
