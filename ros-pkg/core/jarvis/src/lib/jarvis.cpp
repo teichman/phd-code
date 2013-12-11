@@ -44,12 +44,13 @@ Label DiscreteBayesFilter::trackPrediction() const
   return track_prediction;
 }
 
-Jarvis::Jarvis(int vis_level, int rotation, string output_directory) :
+Jarvis::Jarvis(int vis_level, int rotation, string output_directory, bool write_video_frames) :
   record_(false),
   min_predictions_(1),
   min_confidence_(0),
   tracker_(100),
   vis_level_(vis_level),
+  write_video_frames_(write_video_frames),
   rotation_(rotation)
 {
   if(output_directory != "") {
@@ -164,6 +165,13 @@ void Jarvis::foregroundCallback(sentinel::ForegroundConstPtr msg)
     orient(rotation_, &color_vis_scaled);
     addTimestamp(msg->header.stamp.toBoost(), color_vis_scaled);
     cv::imshow("tracks", color_vis_scaled);
+
+    if(write_video_frames_) {
+      ostringstream oss;
+      oss << fixed << setprecision(16) << setw(16) << setfill('0')
+          << msg->header.stamp.toSec() << ".jpg";
+      cv::imwrite(oss.str(), color_vis_scaled);
+    }
   }
 
   if(vis_level_ > 1) {

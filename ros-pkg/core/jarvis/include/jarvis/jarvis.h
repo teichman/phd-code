@@ -45,7 +45,9 @@ public:
   float min_confidence_;
   
   //! rotation is the angle in degrees and must be one of 0, 90, 180, or 270.
-  Jarvis(int vis_level, int rotation, std::string output_directory = "");
+  Jarvis(int vis_level, int rotation,
+         std::string output_directory = "",
+         bool write_video_frames = false);
   //! Saves any unsaved tracks in the TrackDatasetAssembler and clears the current contents.
   void flush() { if(tda_) tda_->flush(); }
   
@@ -60,6 +62,7 @@ protected:
   Tracker tracker_;
   TrackDatasetAssembler::Ptr tda_;
   int vis_level_;
+  bool write_video_frames_;
   int rotation_;
   //! track id, track predictions.
   std::map<size_t, DiscreteBayesFilter> filters_;

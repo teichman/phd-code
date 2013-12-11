@@ -26,6 +26,7 @@ int main(int argc, char** argv)
     ("config", bpo::value(&config_path)->default_value(""), "")
     ("classifier,c", bpo::value(&gc_path)->default_value(""), "")
     ("up,u", bpo::value(&up_path), "")
+    ("video", "")
     ;
 
   bpo::variables_map opts;
@@ -42,7 +43,7 @@ int main(int argc, char** argv)
 
   cout << "Using vis_level " << vis_level << " and rotation " << rotation << endl;
  
-  Jarvis jarvis(vis_level, rotation, output_directory);
+  Jarvis jarvis(vis_level, rotation, output_directory, opts.count("video"));
   if(output_directory != "")
     cout << "Saving TD files to \"" << output_directory << "\"" << endl;  
   
