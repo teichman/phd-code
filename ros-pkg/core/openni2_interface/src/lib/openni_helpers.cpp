@@ -98,10 +98,10 @@ cv::Mat3b visualize(const openni::VideoFrameRef& color,
   
   uchar* data = (uchar*)color.getData();
   double total = 0;
-  for(int i = 0; i < color.getWidth() * color.getHeight(); i+=3)
+  for(int i = 0; i < 3 * color.getWidth() * color.getHeight(); i+=3)
     total += (double)(data[i] + data[i+1] + data[i+2]);
   double mean = total / (3 * color.getWidth() * color.getHeight());
-  cout << "Mean: " << mean << endl;
+  //cout << "Mean: " << mean << endl;
   cv::Mat3b img;
   if(mean > intensity_threshold) {
     img = oniToCV(color);

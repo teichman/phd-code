@@ -23,7 +23,7 @@ cv::Mat3b colorize(DepthMat depth, double min_range, double max_range);
 //! min_range and max_range are [0,10]m.
 cv::Mat3b visualize(const openni::VideoFrameRef& color,
                     const openni::VideoFrameRef& depth,
-                    double intensity_threshold = 10,
+                    double intensity_threshold = 30,
                     double min_range = 0.5, double max_range = 7);
 
 
