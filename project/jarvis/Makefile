@@ -40,6 +40,12 @@ KITCHEN_GLUED_LABELS_DIR := $(LABELED_TD_DIR)/kitchen_glued
 # This is for logfiles taken in the kitchen after ~ Nov 21 2013
 KITCHEN_GLUED_UP_VECTOR := `rospack find jarvis`/config/up-kitchen-post_gluing.eig.txt
 
+FRONT_DOOR_DIR := $(LOG_DIR)/front_door
+FRONT_DOOR_NAMES := $(shell ls $(FRONT_DOOR_DIR) | sed 's/\.bag//')
+FRONT_DOOR_TD_DIRS := $(addprefix front_door/tds/, $(FRONT_DOOR_NAMES))
+FRONT_DOOR_LABELS_DIR := $(LABELED_TD_DIR)/front_door
+#FRONT_DOOR_UP_VECTOR := `rospack find jarvis`/config/up-kitchen-post_gluing.eig.txt
+
 OFFICE_DIR := $(LOG_DIR)/office
 OFFICE_NAMES := $(shell ls $(OFFICE_DIR) | sed 's/\.bag//')
 OFFICE_TD_DIRS := $(addprefix office/tds/, $(OFFICE_NAMES))
@@ -67,11 +73,29 @@ kitchen_glued/tds/%/extracted: $(KITCHEN_GLUED_DIR)/%.bag
 	ROS_MASTER_URI=http://localhost:$$(( $$(ls $(KITCHEN_GLUED_DIR) | awk '{if($$0 == "$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
 	touch $@
 
+front_door-tds: $(addsuffix /extracted, $(FRONT_DOOR_TD_DIRS))
+front_door/tds/%/extracted: $(FRONT_DOOR_DIR)/%.bag
+	mkdir -p $(@D)
+	ROS_MASTER_URI=http://localhost:$$(( $$(ls $(FRONT_DOOR_DIR) | awk '{if($$0 == "$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
+	touch $@
+
 office-tds: $(addsuffix /extracted, $(OFFICE_TD_DIRS))
 office/tds/%/extracted: $(OFFICE_DIR)/%.bag
 	mkdir -p $(@D)
 	roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
 	touch $@
+
+############################################################
+# front_door
+############################################################
+
+front_door-update-unlabeled-descriptors:
+	rosrun jarvis update_descriptors \
+	--config $(CONFIG) \
+	-u $(FRONT_DOOR_UP_VECTOR) \
+	--tds `find front_door/tds/ -name '*.td' | sort` \
+	-j 24
+
 
 ############################################################
 # kitchen
