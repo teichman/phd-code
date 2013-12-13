@@ -44,7 +44,7 @@ FRONT_DOOR_DIR := $(LOG_DIR)/front_door
 FRONT_DOOR_NAMES := $(shell ls $(FRONT_DOOR_DIR) | sed 's/\.bag//')
 FRONT_DOOR_TD_DIRS := $(addprefix front_door/tds/, $(FRONT_DOOR_NAMES))
 FRONT_DOOR_LABELS_DIR := $(LABELED_TD_DIR)/front_door
-#FRONT_DOOR_UP_VECTOR := `rospack find jarvis`/config/up-kitchen-post_gluing.eig.txt
+FRONT_DOOR_UP_VECTOR := `rospack find jarvis`/config/2013-12-12_front_door-up.eig.txt
 
 OFFICE_DIR := $(LOG_DIR)/office
 OFFICE_NAMES := $(shell ls $(OFFICE_DIR) | sed 's/\.bag//')
@@ -89,13 +89,14 @@ office/tds/%/extracted: $(OFFICE_DIR)/%.bag
 # front_door
 ############################################################
 
-front_door-update-unlabeled-descriptors:
+front_door-update-unlabeled-descriptors: $(addprefix front_door/tds/, $(addsuffix /updated, $(FRONT_DOOR_NAMES)))
+front_door/tds/%/updated: front_door/tds/$$*/extracted
 	rosrun jarvis update_descriptors \
 	--config $(CONFIG) \
 	-u $(FRONT_DOOR_UP_VECTOR) \
-	--tds `find front_door/tds/ -name '*.td' | sort` \
+	--tds `find front_door/tds/$*/ -name '*.td' | sort` \
 	-j 24
-
+	touch $@
 
 ############################################################
 # kitchen
