@@ -18,6 +18,7 @@ int main(int argc, char** argv)
   string config_path;
   string gc_path;
   string up_path;
+  double timeout;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("vis-level,v", bpo::value(&vis_level)->default_value(0), "")
@@ -27,6 +28,7 @@ int main(int argc, char** argv)
     ("classifier,c", bpo::value(&gc_path)->default_value(""), "")
     ("up,u", bpo::value(&up_path), "")
     ("video", "")
+    ("timeout", bpo::value(&timeout)->default_value(0), "Stop this process if no messages are received for this number of seconds.  Generally only useful for automatically extracting TDs.")
     ;
 
   bpo::variables_map opts;
@@ -75,7 +77,15 @@ int main(int argc, char** argv)
   }
   
   // -- Run.
-  ros::spin();
+  while(ros::ok()) { 
+    ros::spinOnce();
+    //usleep(1e3);
+    if(timeout > 0 && jarvis.secondsSinceLastMessage() > timeout) {
+      cout << "Jarvis saw no messages for the last " << timeout << " seconds.  Terminating..." << endl;
+      break;
+    }
+  }
+    
 
   // -- Save any remaining tracks.
   jarvis.flush();

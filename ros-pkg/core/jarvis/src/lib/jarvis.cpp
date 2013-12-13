@@ -136,6 +136,11 @@ void Jarvis::foregroundCallback(sentinel::ForegroundConstPtr msg)
 {
   //reconstructor_.update(msg);
 
+  // -- Update the message timer.
+  //    This is used for automatically terminating jarvis if nothing is heard for a while.
+  message_hrt_.reset();
+  message_hrt_.start();
+  
   // -- Run the tracker.
   tracker_.update(msg);
 

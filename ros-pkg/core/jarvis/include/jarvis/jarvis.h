@@ -48,8 +48,10 @@ public:
   Jarvis(int vis_level, int rotation,
          std::string output_directory = "",
          bool write_video_frames = false);
+         
   //! Saves any unsaved tracks in the TrackDatasetAssembler and clears the current contents.
   void flush() { if(tda_) tda_->flush(); }
+  double secondsSinceLastMessage() const { return message_hrt_.getSeconds(); }
   
 protected:
   ros::NodeHandle nh_;
@@ -66,6 +68,7 @@ protected:
   int rotation_;
   //! track id, track predictions.
   std::map<size_t, DiscreteBayesFilter> filters_;
+  HighResTimer message_hrt_;
   
   void foregroundCallback(sentinel::ForegroundConstPtr msg);
   void backgroundCallback(sentinel::BackgroundConstPtr msg);
