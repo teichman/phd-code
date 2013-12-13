@@ -89,6 +89,8 @@ office/tds/%/extracted: $(OFFICE_DIR)/%.bag
 # front_door
 ############################################################
 
+FRONT_DOOR_CLASS_NAMES := open_door
+
 front_door-update-unlabeled-descriptors: $(addprefix front_door/tds/, $(addsuffix /updated, $(FRONT_DOOR_NAMES)))
 front_door/tds/%/updated: front_door/tds/$$*/extracted
 	rosrun jarvis update_descriptors \
@@ -97,6 +99,55 @@ front_door/tds/%/updated: front_door/tds/$$*/extracted
 	--tds `find front_door/tds/$*/ -name '*.td' | sort` \
 	-j 24
 	touch $@
+
+front_door/induction-open_door: 
+	. ~/.bashrc && rosgdb jarvis induct \
+	--class-names open_door \
+	--config $(CONFIG) \
+	-u $(FRONT_DOOR_UP_VECTOR) \
+	--emax 0 \
+	--buffer-size 1000 \
+	--max-track-length 30 \
+	--snapshot-every 0 \
+	--evaluate-every 1 \
+	--output-dir $@ \
+	--unlabeled-td-dir front_door/tds/ \
+	--init `find front_door/tds/ -name '*.td' | sort -R | head -n4` \
+	| tee $@-log.txt
+	mv $@-log.txt $@/
+
+front_door/induction-person: 
+	rosrun jarvis induct \
+	--class-names person \
+	--config $(CONFIG) \
+	-u $(FRONT_DOOR_UP_VECTOR) \
+	--emax 0 \
+	--buffer-size 1000 \
+	--max-track-length 30 \
+	--snapshot-every 0 \
+	--evaluate-every 1 \
+	--output-dir $@ \
+	--unlabeled-td-dir front_door/tds/ \
+	--init `find front_door/tds/ -name '*.td' | sort -R | head -n4` \
+	| tee $@-log.txt
+	mv $@-log.txt $@/
+
+front_door/induction-cat: 
+	. ~/.bashrc && rosgdb jarvis induct \
+	--class-names cat \
+	--config $(CONFIG) \
+	-u $(FRONT_DOOR_UP_VECTOR) \
+	--emax 0 \
+	--buffer-size 1000 \
+	--max-track-length 30 \
+	--snapshot-every 0 \
+	--evaluate-every 1 \
+	--output-dir $@ \
+	--unlabeled-td-dir front_door/tds/ \
+	--init `find front_door/tds/ -name '*.td' | sort -R | head -n4` \
+	| tee $@-log.txt
+	mv $@-log.txt $@/
+
 
 ############################################################
 # kitchen
