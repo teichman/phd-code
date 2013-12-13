@@ -107,6 +107,8 @@ void TrackDatasetAssembler::flush()
   
   // -- Save and clear td_.
   string path = nextPath(output_directory_, "jarvis-", ".td", 4);
-  td_.save(path);
-  td_.tracks_.clear();
+  if(td_.size() > 0) {
+    td_.save(path);
+    td_.tracks_.clear();
+  }
 }
