@@ -128,6 +128,13 @@ front_door/baseline_unfair-open_door: front_door/induction-open_door
 	--o $@ | tee $@-log.txt
 	mv $@-log.txt $@/
 
+front_door/group_induction_errors-open_door: front_door/induction-open_door
+	rosrun online_learning filter_errors \
+	-c `find -L $< -name classifier.gc | sort | tail -n1` \
+	-d $(FRONT_DOOR_LABELS_DIR)/open_door/*.td \
+	--class-names open_door \
+	-o $@
+
 front_door/induction-person:
 	mkdir -p $@
 	rosrun jarvis induct \
