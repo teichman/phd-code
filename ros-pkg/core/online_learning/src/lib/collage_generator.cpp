@@ -104,7 +104,7 @@ void TrackDatasetCollageGenerator::writeVideo(size_t rows, size_t cols,
 
   ostringstream oss;
   oss << "mencoder \"mf://" << dir << "/*.png\" -mf fps=" << fps << " -o " << path
-      << " -ovc lavc -lavcopts vcodec=msmpeg4v2:vbitrate=16000000 1> /dev/null 2>&1";
+      << " -ovc x264 -x264encopts crf=13 1> /dev/null 2>&1";
   int retval = system(oss.str().c_str());
   if(retval != 0) {
     ROS_WARN_STREAM("Video generation command failed.  retval: " << retval);

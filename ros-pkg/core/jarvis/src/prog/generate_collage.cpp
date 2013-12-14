@@ -41,13 +41,16 @@ int main(int argc, char** argv)
   int size;
   vector<string> td_paths;
   size_t num_frames;
+  double fps;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("size,s", bpo::value(&size)->default_value(5), "Rows and columns in the collage (number of images)")
     ("tds,d", bpo::value(&td_paths)->required()->multitoken(), "")
     ("image,i", "")
     ("video,v", "")
+    ("fps", bpo::value(&fps)->default_value(30), "")
     ("num-frames,n", bpo::value(&num_frames)->default_value(0), "If writing a video, use this number of frames.  0 => use max track length.")
+    ("keep-images", "")
     ;
 
   bpo::variables_map opts;
@@ -104,7 +107,7 @@ int main(int argc, char** argv)
       else
         video_path = p.stem().string() + ".avi";
       cout << "Saving video to " << video_path << endl;
-      collagen.writeVideo(size, size, video_path, 60, num_frames);
+      collagen.writeVideo(size, size, video_path, num_frames, fps, opts.count("keep-images"));
     }
   }
   
