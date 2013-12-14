@@ -111,10 +111,22 @@ front_door/induction-open_door:
 	--max-track-length 30 \
 	--snapshot-every 0 \
 	--evaluate-every 1 \
+	--test $(FRONT_DOOR_LABELS_DIR)/open_door/*.td \
 	--output-dir $@ \
 	--unlabeled-td-dir front_door/tds/ \
 	--init `find front_door/tds/ -name '*.td' | sort -R | head -n4` \
 	| tee $@/log.txt
+
+front_door/baseline_unfair-open_door: front_door/induction-open_door
+	rosrun jarvis baseline_unfair \
+	--class-names open_door \
+	--config $(CONFIG) \
+	-u $(FRONT_DOOR_UP_VECTOR) \
+	--root $< \
+	--test $(FRONT_DOOR_LABELS_DIR)/open_door/*.td \
+	--num-iters 15 \
+	--o $@ | tee $@-log.txt
+	mv $@-log.txt $@/
 
 front_door/induction-person:
 	mkdir -p $@
