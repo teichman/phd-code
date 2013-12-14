@@ -100,8 +100,9 @@ front_door/tds/%/updated: front_door/tds/$$*/extracted
 	-j 24
 	touch $@
 
-front_door/induction-open_door: 
-	. ~/.bashrc && rosgdb jarvis induct \
+front_door/induction-open_door:
+	mkdir -p $@
+	rosrun jarvis induct \
 	--class-names open_door \
 	--config $(CONFIG) \
 	-u $(FRONT_DOOR_UP_VECTOR) \
@@ -113,10 +114,10 @@ front_door/induction-open_door:
 	--output-dir $@ \
 	--unlabeled-td-dir front_door/tds/ \
 	--init `find front_door/tds/ -name '*.td' | sort -R | head -n4` \
-	| tee $@-log.txt
-	mv $@-log.txt $@/
+	| tee $@/log.txt
 
-front_door/induction-person: 
+front_door/induction-person:
+	mkdir -p $@
 	rosrun jarvis induct \
 	--class-names person \
 	--config $(CONFIG) \
@@ -129,11 +130,11 @@ front_door/induction-person:
 	--output-dir $@ \
 	--unlabeled-td-dir front_door/tds/ \
 	--init `find front_door/tds/ -name '*.td' | sort -R | head -n4` \
-	| tee $@-log.txt
-	mv $@-log.txt $@/
+	| tee $@/log.txt
 
-front_door/induction-cat: 
-	. ~/.bashrc && rosgdb jarvis induct \
+front_door/induction-cat:
+	mkdir -p $@
+	rosrun jarvis induct \
 	--class-names cat \
 	--config $(CONFIG) \
 	-u $(FRONT_DOOR_UP_VECTOR) \
@@ -145,7 +146,7 @@ front_door/induction-cat:
 	--output-dir $@ \
 	--unlabeled-td-dir front_door/tds/ \
 	--init `find front_door/tds/ -name '*.td' | sort -R | head -n4` \
-	| tee $@-log.txt
+	| tee $@/log.txt
 	mv $@-log.txt $@/
 
 
