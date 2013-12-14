@@ -304,7 +304,7 @@ define REGRESSION_RULE_GENERATOR
 regression-test-$(1)-multi:
 	for i in {1..10}; do make -f $(MAKEFILE) regression-test-$(1); done
 regression-test-$(1):
-	rosrun jarvis run_regression.sh $(REGRESSION_DIR)/tests/$(1) $(CONFIG) 50 $(REGRESSION_DIR)/runs/$(1) $(KITCHEN_CLASS_NAMES)
+	rosrun jarvis run_regression.sh $(REGRESSION_DIR)/tests/$(1) $(CONFIG) 50 $(REGRESSION_DIR)/runs/$(1)
 endef
 $(foreach REGRESSION_NAME,$(REGRESSION_NAMES),$(eval $(call REGRESSION_RULE_GENERATOR,$(REGRESSION_NAME))))
 
