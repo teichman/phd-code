@@ -163,6 +163,9 @@ target_link_libraries(sample_random_tracks online_learning online_learning_pcs)
 rosbuild_add_executable(filter_tracks src/program/filter_tracks.cpp)
 target_link_libraries(filter_tracks online_learning online_learning_pcs)
 
+rosbuild_add_executable(classify src/program/classify.cpp)
+target_link_libraries(classify online_learning online_learning_pcs)
+
 # -- Programs that need to use PCDSerializer.
 #    This content should maybe be moved out to another package.
 
