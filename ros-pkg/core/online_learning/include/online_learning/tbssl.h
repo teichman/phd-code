@@ -134,9 +134,6 @@ protected:
   TrackDataset::Ptr unsupervised_;  // Du
   //! If set, will be evaluated on.
   TrackDataset::Ptr test_;
-  //! If annotated data is used as unlabeled, the labels are stripped and stored here.
-  //! This can help diagnose incorrect induction.
-  std::vector<Label> diagnostic_annotations_;
   //! The unsupervised_ dataset contains labels in {-1, 0, +1}.
   //! Here, we store the actual log odds.
   std::vector<Label> unsupervised_logodds_;
@@ -206,12 +203,19 @@ protected:
                      std::vector<Label>* logodds,
                      std::vector< std::vector<Label> >* frame_logodds) const;
   void handleAnnotatedData();
-  void removePerfectAndNonInducted(TrackDataset* unlabeled_chunk,
-                                   std::vector<Label>* chunk_diagnostic_annotations) const;
+  void removePerfectAndNonInducted(TrackDataset* unlabeled_chunk) const;
+                                   
   void removeDuplicates(TrackDataset* td) const;
   void updateViewableUnsupervised();
-  void inductionStep(TrackDataset* unlabeled_chunk, const std::vector<Label>& chunk_diagnostic_annotations);
-  TrackDataset::Ptr getNextUnlabeledChunk(std::vector<Label>* chunk_diagnostic_annotations);
+  void inductionStep(TrackDataset* unlabeled_chunk);
+  //! De-induct tracks in unsupervised_ so that the ratio of pos : neg is about the same 
+  //! as that in annotated_.
+  //! Experimental.  Probably shouldn't be used.
+  void balance(const ObjectiveIndex& index);
+  //! Keep only the most useful tracks in unsupervised_.
+  //! This function assumes dual induction and not mutual induction.
+  void prune(const ObjectiveIndex& index);
+  TrackDataset::Ptr getNextUnlabeledChunk();
   //! Searches the inducted set for any tracks that match hash.
   //! If any exist, they are removed from the inducted set, labeled with label,
   //! and added to incoming_annotated.
@@ -230,7 +234,7 @@ protected:
   //! This function is called on the unlabeled chunk just before induction occurs.
   //! You can use it to, for example, remove tracks that don't include enough motion
   //! to be valuable for group induction.
-  virtual void chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_annotations) const {}
+  virtual void chunkHook(TrackDataset* td) const {}
   //! De-induct tracks that the new annotations indicate should not have been inducted.
   //! i.e. "In retrospect, that was wrong..."
   //! By default this uses the worst-case classifier noise method.
