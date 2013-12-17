@@ -109,7 +109,7 @@ bool similar(const Dataset& annotation, const Dataset& inducted)
       min_dist = min(min_dist, max_pct_change);
     }
   }
-  return (min_dist < 0.1);
+  return (min_dist < 0.2);
 }
 
 void Inductor::retrospection(const TrackDataset& new_annotations, const std::vector<Label>& predictions)
