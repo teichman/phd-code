@@ -10,11 +10,12 @@ namespace bfs = boost::filesystem;
 bool isDesired(const Label& label, const NameMapping& cmap,
                const vector<string>& pos,
                const vector<string>& unk,
-               const vector<string>& neg)
+               const vector<string>& neg,
+               float min_confidence)
 {
   for(size_t i = 0; i < pos.size(); ++i) {
     ROS_ASSERT(cmap.hasName(pos[i]));
-    if(label(cmap.toId(pos[i])) <= 0)
+    if(label(cmap.toId(pos[i])) <= min_confidence)
       return false;
   }
   for(size_t i = 0; i < unk.size(); ++i) {
@@ -24,7 +25,7 @@ bool isDesired(const Label& label, const NameMapping& cmap,
   }
   for(size_t i = 0; i < neg.size(); ++i) {
     ROS_ASSERT(cmap.hasName(neg[i]));
-    if(label(cmap.toId(neg[i])) >= 0)
+    if(label(cmap.toId(neg[i])) >= -min_confidence)
       return false;
   }
   return true;
@@ -41,12 +42,14 @@ int main(int argc, char** argv)
   vector<string> unk;
   vector<string> neg;
   string output_path;
+  float min_confidence;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("tds", bpo::value(&td_paths)->required()->multitoken(), "List of TrackDatasets")
     ("pos", bpo::value(&pos)->multitoken())
     ("unk", bpo::value(&unk)->multitoken())
     ("neg", bpo::value(&neg)->multitoken())
+    ("min-confidence", bpo::value(&min_confidence)->default_value(0), "")
     ("output,o", bpo::value(&output_path), "")
     ;
 
@@ -76,7 +79,7 @@ int main(int argc, char** argv)
 
     // -- Select the tracks that meet our criteria.
     for(size_t j = 0; j < td.size(); ++j)
-      if(isDesired(td.label(j), td.nameMapping("cmap"), pos, unk, neg))
+      if(isDesired(td.label(j), td.nameMapping("cmap"), pos, unk, neg, min_confidence))
         filtered.tracks_.push_back(td.tracks_[j]);
   }
 

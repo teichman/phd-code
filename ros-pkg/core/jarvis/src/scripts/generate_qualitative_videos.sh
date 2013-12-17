@@ -34,8 +34,8 @@ rosrun online_learning classify $CLASSIFIER --tds $TMPDIR/*.td
 echo
 echo == Filtering.
 mkdir $TMPDIR/filtered
-rosrun online_learning filter_tracks --pos $CLASSNAME --tds $TMPDIR/*.td -o $TMPDIR/filtered/${CLASSNAME}-pos.td
-rosrun online_learning filter_tracks --neg $CLASSNAME --tds $TMPDIR/*.td -o $TMPDIR/filtered/${CLASSNAME}-neg.td
+rosrun online_learning filter_tracks --min-confidence 1 --pos $CLASSNAME --tds $TMPDIR/*.td -o $TMPDIR/filtered/${CLASSNAME}-pos.td
+rosrun online_learning filter_tracks --min-confidence 1 --neg $CLASSNAME --tds $TMPDIR/*.td -o $TMPDIR/filtered/${CLASSNAME}-neg.td
 
 echo
 echo == Generating videos.
