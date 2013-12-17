@@ -114,7 +114,7 @@ front_door/induction-open_door:
 	--test $(FRONT_DOOR_LABELS_DIR)/open_door/*.td \
 	--output-dir $@ \
 	--unlabeled-td-dir front_door/tds/ \
-	--init `find front_door/tds/ -name '*.td' | sort -R | head -n4` \
+	--init `find front_door/tds/ -name '*.td' | sort -R | head -n5` \
 	| tee $@/log.txt
 
 front_door/baseline_unfair-open_door: front_door/induction-open_door
@@ -148,7 +148,7 @@ front_door/induction-person:
 	--evaluate-every 1 \
 	--output-dir $@ \
 	--unlabeled-td-dir front_door/tds/ \
-	--init `find front_door/tds/ -name '*.td' | sort -R | head -n4` \
+	--init `find front_door/tds/ -name '*.td' | sort -R | head -n5` \
 	| tee $@/log.txt
 
 front_door/induction-cat:
@@ -164,7 +164,7 @@ front_door/induction-cat:
 	--evaluate-every 1 \
 	--output-dir $@ \
 	--unlabeled-td-dir front_door/tds/ \
-	--init `find front_door/tds/ -name '*.td' | sort -R | head -n4` \
+	--init `find front_door/tds/ -name '*.td' | sort -R | head -n5` \
 	| tee $@/log.txt
 	mv $@-log.txt $@/
 
