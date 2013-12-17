@@ -19,13 +19,16 @@ int main(int argc, char** argv)
     ("tds,d", bpo::value< vector<string> >(&td_paths)->required()->multitoken(), "")
     ;
 
+  p.add("classifier", 1);
+  p.add("tds", -1);
+  
   bpo::variables_map opts;
   bpo::store(bpo::command_line_parser(argc, argv).options(opts_desc).positional(p).run(), opts);
   bool badargs = false;
   try { bpo::notify(opts); }
   catch(...) { badargs = true; }
   if(opts.count("help") || badargs) {
-    cout << "Usage: " << argv[0] << " [OPTS] --tds TD [ TD ... ] -c CLASSIFIER" << endl;
+    cout << "Usage: " << argv[0] << " [OPTS] CLASSIFIER --tds TD [ TD ... ] " << endl;
     cout << "  Classifies the given TD files in-place.  Use with care." << endl;
     cout << endl;
     cout << opts_desc << endl;
