@@ -977,6 +977,8 @@ TrackDataset::Ptr loadDatasets(const std::vector<std::string> paths,
                    << Instance::custom_serializer_->name());
       
   TrackDataset::Ptr data(new TrackDataset());
+  if(verbose)
+    cout << "Loading \"" << paths[0] << "\"" << endl;
   data->load(paths[0]);
   if(!cmap.empty())
     data->applyNameMapping("cmap", cmap);
