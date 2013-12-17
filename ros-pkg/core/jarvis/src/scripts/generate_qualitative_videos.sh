@@ -24,7 +24,8 @@ mkdir $TMPDIR
 
 echo
 echo == Copying TDs.
-rsync -av $TDS $TMPDIR/ --progress
+#rsync -av $TDS $TMPDIR/ --progress
+rosrun online_learning merge_tds --tds $TDS -o $TMPDIR/merged.td
 
 echo
 echo == Classifying.
