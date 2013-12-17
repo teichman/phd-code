@@ -23,27 +23,19 @@ echo $TMPDIR
 mkdir $TMPDIR
 
 echo
-echo == Copying TDs.
-#rsync -av $TDS $TMPDIR/ --progress
-rosrun online_learning merge_tds --tds $TDS -o $TMPDIR/merged.td
-
-echo
-echo == Classifying.
-rosrun online_learning classify $CLASSIFIER --tds $TMPDIR/*.td
-
-echo
 echo == Filtering.
-mkdir $TMPDIR/filtered
-rosrun online_learning filter_tracks --min-confidence 1 --pos $CLASSNAME --tds $TMPDIR/*.td -o $TMPDIR/filtered/${CLASSNAME}-pos.td
-rosrun online_learning filter_tracks --min-confidence 1 --neg $CLASSNAME --tds $TMPDIR/*.td -o $TMPDIR/filtered/${CLASSNAME}-neg.td
+rosrun online_learning filter_tracks --classifier $CLASSIFIER --max-tracks 1000 \
+    --min-confidence 2 --pos $CLASSNAME --tds $TDS -o $TMPDIR/${CLASSNAME}-pos.td
+rosrun online_learning filter_tracks --classifier $CLASSIFIER --max-tracks 1000 \
+    --min-confidence 2 --neg $CLASSNAME --tds $TDS -o $TMPDIR/${CLASSNAME}-neg.td
 
 echo
 echo == Generating videos.
 for idx in `seq -f'%02g' 0 5`; do 
-    rosrun jarvis generate_collage --tds $TMPDIR/filtered/${CLASSNAME}-pos.td -s 5 -v
-    rosrun jarvis generate_collage --tds $TMPDIR/filtered/${CLASSNAME}-neg.td -s 5 -v
-    mv $TMPDIR/filtered/${CLASSNAME}-pos.avi ${CLASSNAME}-pos-${idx}.avi
-    mv $TMPDIR/filtered/${CLASSNAME}-neg.avi ${CLASSNAME}-neg-${idx}.avi
+    rosrun jarvis generate_collage --tds $TMPDIR/${CLASSNAME}-pos.td -s 5 -v
+    rosrun jarvis generate_collage --tds $TMPDIR/${CLASSNAME}-neg.td -s 5 -v
+    mv $TMPDIR/${CLASSNAME}-pos.avi ${CLASSNAME}-pos-${idx}.avi
+    mv $TMPDIR/${CLASSNAME}-neg.avi ${CLASSNAME}-neg-${idx}.avi
 done
 
 rm -rf $TMPDIR
