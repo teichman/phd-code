@@ -51,8 +51,10 @@ rosrun jarvis induct \
 
 # -- Plot.
 cd $RUN_DIR/induction
-rosrun online_learning plot_perclass_pr.py cat
-rosrun online_learning plot_perclass_accuracy.py cat
+for name in $CLASS_NAMES; do
+    rosrun online_learning plot_perclass_pr.py $name
+    rosrun online_learning plot_perclass_accuracy.py $name
+done
 cd -
 
 # -- Run the baseline.

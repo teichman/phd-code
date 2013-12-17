@@ -73,12 +73,6 @@ kitchen_glued/tds/%/extracted: $(KITCHEN_GLUED_DIR)/%.bag
 	ROS_MASTER_URI=http://localhost:$$(( $$(ls $(KITCHEN_GLUED_DIR) | awk '{if($$0 == "$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
 	touch $@
 
-front_door-tds: $(addsuffix /extracted, $(FRONT_DOOR_TD_DIRS))
-front_door/tds/%/extracted: $(FRONT_DOOR_DIR)/%.bag
-	mkdir -p $(@D)
-	ROS_MASTER_URI=http://localhost:$$(( $$(ls $(FRONT_DOOR_DIR) | awk '{if($$0 == "$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
-	touch $@
-
 office-tds: $(addsuffix /extracted, $(OFFICE_TD_DIRS))
 office/tds/%/extracted: $(OFFICE_DIR)/%.bag
 	mkdir -p $(@D)
@@ -89,7 +83,13 @@ office/tds/%/extracted: $(OFFICE_DIR)/%.bag
 # front_door
 ############################################################
 
-FRONT_DOOR_CLASS_NAMES := open_door
+FRONT_DOOR_CLASS_NAMES := open_door cat person
+
+front_door-tds: $(addsuffix /extracted, $(FRONT_DOOR_TD_DIRS))
+front_door/tds/%/extracted: $(FRONT_DOOR_DIR)/%.bag
+	mkdir -p $(@D)
+	ROS_MASTER_URI=http://localhost:$$(( $$(ls $(FRONT_DOOR_DIR) | awk '{if($$0 == "$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
+	touch $@
 
 front_door-update-unlabeled-descriptors: $(addprefix front_door/tds/, $(addsuffix /updated, $(FRONT_DOOR_NAMES)))
 front_door/tds/%/updated: front_door/tds/$$*/extracted
@@ -100,10 +100,12 @@ front_door/tds/%/updated: front_door/tds/$$*/extracted
 	-j 24
 	touch $@
 
-front_door/induction-open_door:
-	mkdir -p $@
+define FRONT_DOOR_RULE_GENERATOR
+
+front_door/$(1)/induction:
+	mkdir -p $$@
 	rosrun jarvis induct \
-	--class-names open_door \
+	--class-names $(1) \
 	--config $(CONFIG) \
 	-u $(FRONT_DOOR_UP_VECTOR) \
 	--emax 0 \
@@ -111,62 +113,32 @@ front_door/induction-open_door:
 	--max-track-length 30 \
 	--snapshot-every 0 \
 	--evaluate-every 1 \
-	--test $(FRONT_DOOR_LABELS_DIR)/open_door/*.td \
-	--output-dir $@ \
+	--test $(FRONT_DOOR_LABELS_DIR)/$(1)/*.td \
+	--output-dir $$@ \
 	--unlabeled-td-dir front_door/tds/ \
 	--init `find front_door/tds/ -name '*.td' | sort -R | head -n5` \
 	| tee $@/log.txt
 
-front_door/baseline_unfair-open_door: front_door/induction-open_door
+front_door/$(1)/baseline_unfair: front_door/$(1)/induction
 	rosrun jarvis baseline_unfair \
-	--class-names open_door \
+	--class-names $(1) \
 	--config $(CONFIG) \
 	-u $(FRONT_DOOR_UP_VECTOR) \
 	--root $< \
-	--test $(FRONT_DOOR_LABELS_DIR)/open_door/*.td \
+	--test $(FRONT_DOOR_LABELS_DIR)/$(1)/*.td \
 	--num-iters 15 \
 	--o $@ | tee $@-log.txt
 	mv $@-log.txt $@/
 
-front_door/group_induction_errors-open_door: front_door/induction-open_door
+front_door/$(1)/group_induction_errors: front_door/$(1)/induction
 	rosrun online_learning filter_errors \
 	-c `find -L $< -name classifier.gc | sort | tail -n1` \
-	-d $(FRONT_DOOR_LABELS_DIR)/open_door/*.td \
-	--class-names open_door \
+	-d $(FRONT_DOOR_LABELS_DIR)/$(1)/*.td \
+	--class-names $(1) \
 	-o $@
 
-front_door/induction-person:
-	mkdir -p $@
-	rosrun jarvis induct \
-	--class-names person \
-	--config $(CONFIG) \
-	-u $(FRONT_DOOR_UP_VECTOR) \
-	--emax 0 \
-	--buffer-size 1000 \
-	--max-track-length 30 \
-	--snapshot-every 0 \
-	--evaluate-every 1 \
-	--output-dir $@ \
-	--unlabeled-td-dir front_door/tds/ \
-	--init `find front_door/tds/ -name '*.td' | sort -R | head -n5` \
-	| tee $@/log.txt
-
-front_door/induction-cat:
-	mkdir -p $@
-	rosrun jarvis induct \
-	--class-names cat \
-	--config $(CONFIG) \
-	-u $(FRONT_DOOR_UP_VECTOR) \
-	--emax 0 \
-	--buffer-size 1000 \
-	--max-track-length 30 \
-	--snapshot-every 0 \
-	--evaluate-every 1 \
-	--output-dir $@ \
-	--unlabeled-td-dir front_door/tds/ \
-	--init `find front_door/tds/ -name '*.td' | sort -R | head -n5` \
-	| tee $@/log.txt
-	mv $@-log.txt $@/
+endef
+$(foreach CLASS_NAME,$(FRONT_DOOR_CLASS_NAMES),$(eval $(call FRONT_DOOR_RULE_GENERATOR,$(CLASS_NAME))))
 
 
 ############################################################
