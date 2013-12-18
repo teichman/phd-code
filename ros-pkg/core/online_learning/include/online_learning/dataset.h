@@ -299,6 +299,7 @@ public:
   //! Sets the magnitude of the label values, interpreted as importance by all Trainer objects.
   void setImportance(float importance);
   //! Tries to determine the DescriptorDimensionality object.
+  //! Crashes if it can't.  (Should probably instead return a special value for "unknown".)
   DescriptorDimensionality inferDescriptorDimensionality() const;
   
 protected:

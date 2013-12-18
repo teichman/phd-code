@@ -751,10 +751,20 @@ size_t TrackDataset::numBytes() const
 std::string TrackDataset::status(const std::string& prefix, bool show_name_mappings) const
 {
   ostringstream oss;
-  if(show_name_mappings)
-    oss << nameMappingStatus(prefix);
+  if(show_name_mappings) {
+    oss << prefix << "Class Map" << endl;
+    oss << nameMapping("cmap").status(prefix + "  ");
+    DescriptorDimensionality dim = inferDescriptorDimensionality();
+    oss << prefix << "Descriptor Map" << endl;
+    NameMapping dmap = nameMapping("dmap");
+    for(size_t i = 0; i < dmap.size(); ++i) {
+      oss << prefix << "  " << setw(2) << setfill('0') << i << ": (";
+      oss << setw(4) << setfill('0') << dim[i] << ") " << dmap.names()[i] << endl;
+    }
+    oss << prefix << "Total dimensionality: " << dim.num_elements_.sum() << endl;
+  }
   
-  oss << prefix << "TrackDataset memory usage: " << numBytes() << " bytes." << endl;
+  oss << prefix << "TrackDataset memory usage (without raw data): " << numBytes() << " bytes." << endl;
   oss << prefix << tracks_.size() << " tracks." << endl;
   double total_importance = 0;
   for(size_t i = 0; i < tracks_.size(); ++i)
