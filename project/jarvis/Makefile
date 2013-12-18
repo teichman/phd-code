@@ -262,21 +262,22 @@ kitchen_glued/induction:
 # Regression tests
 ############################################################
 
-REGRESSION_DIR := regression
-REGRESSION_NAMES := $(shell ls $(REGRESSION_DIR)/tests)
+REGRESSION_TESTS_DIR := $(MAKE_ROOT)/regression_tests
+REGRESSION_RUNS_DIR := regression_runs
+REGRESSION_NAMES := $(shell ls $(REGRESSION_TESTS_DIR))
 
-all-regression-tests: $(REGRESSION_DIR)/runs/completed
+all-regression-tests: $(REGRESSION_RUNS_DIR)/completed
 $(REGRESSION_DIR)/runs/completed: $(addprefix regression-test-,$(addsuffix -multi, $(REGRESSION_NAMES)))
 	touch $@
 
-analyze-regression-tests: $(REGRESSION_DIR)/runs/completed
-	rosrun jarvis analyze_regression_tests.py $(REGRESSION_DIR)/runs
+analyze-regression-tests: $(REGRESSION_RUNS_DIR)/completed
+	rosrun jarvis analyze_regression_tests.py $(REGRESSION_RUNS_DIR)
 
 define REGRESSION_RULE_GENERATOR
 regression-test-$(1)-multi:
 	for i in {1..10}; do make -f $(MAKEFILE) regression-test-$(1); done
 regression-test-$(1):
-	rosrun jarvis run_regression.sh $(REGRESSION_DIR)/tests/$(1) $(CONFIG) $(REGRESSION_DIR)/runs/$(1)
+	rosrun jarvis run_regression.sh $(REGRESSION_TESTS_DIR)/$(1) $(CONFIG) $(REGRESSION_RUNS_DIR)/$(1)
 endef
 $(foreach REGRESSION_NAME,$(REGRESSION_NAMES),$(eval $(call REGRESSION_RULE_GENERATOR,$(REGRESSION_NAME))))
 
