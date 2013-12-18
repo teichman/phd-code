@@ -83,7 +83,7 @@ office/tds/%/extracted: $(OFFICE_DIR)/%.bag
 # front_door
 ############################################################
 
-FRONT_DOOR_CLASS_NAMES := open_door cat person
+FRONT_DOOR_CLASS_NAMES := open_door cat person mailman
 
 front_door-tds: $(addsuffix /extracted, $(FRONT_DOOR_TD_DIRS))
 front_door/tds/%/extracted: $(FRONT_DOOR_DIR)/%.bag
@@ -117,7 +117,7 @@ front_door/$(1)/induction:
 	--output-dir $$@ \
 	--unlabeled-td-dir front_door/tds/ \
 	--init `find front_door/tds/ -name '*.td' | sort -R | head -n5` \
-	| tee $@/log.txt
+	| tee $$@/log.txt
 
 front_door/$(1)/baseline_unfair: front_door/$(1)/induction
 	rosrun jarvis baseline_unfair \
@@ -127,15 +127,15 @@ front_door/$(1)/baseline_unfair: front_door/$(1)/induction
 	--root $< \
 	--test $(FRONT_DOOR_LABELS_DIR)/$(1)/*.td \
 	--num-iters 15 \
-	--o $@ | tee $@-log.txt
-	mv $@-log.txt $@/
+	--o $$@ | tee $$@-log.txt
+	mv $$@-log.txt $$@/
 
 front_door/$(1)/group_induction_errors: front_door/$(1)/induction
 	rosrun online_learning filter_errors \
 	-c `find -L $< -name classifier.gc | sort | tail -n1` \
 	-d $(FRONT_DOOR_LABELS_DIR)/$(1)/*.td \
 	--class-names $(1) \
-	-o $@
+	-o $$@
 
 endef
 $(foreach CLASS_NAME,$(FRONT_DOOR_CLASS_NAMES),$(eval $(call FRONT_DOOR_RULE_GENERATOR,$(CLASS_NAME))))
