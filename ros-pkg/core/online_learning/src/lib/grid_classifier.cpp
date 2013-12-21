@@ -850,8 +850,8 @@ void GCBT::train(const std::vector<TrackDataset::ConstPtr>& datasets,
   int iter = 0;
   eigen_extensions::UniformSampler sampler(0);
 
-  //int chunk_size = 24;
-  int chunk_size = sysconf(_SC_NPROCESSORS_ONLN);
+  int chunk_size = 24;
+  //int chunk_size = sysconf(_SC_NPROCESSORS_ONLN);
   vector<CellIndex> cell_indices(chunk_size);
   vector<bool> valid(chunk_size);
   vector<double> improvements(chunk_size);
