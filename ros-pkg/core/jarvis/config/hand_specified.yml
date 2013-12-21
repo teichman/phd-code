@@ -34,108 +34,6 @@ Pipeline:
         NumBins: 10
       Inputs:
         Cloud: GravitationalCloudOrienter.OrientedCloud
-    - Name: CloudProjectorXY
-      Type: CloudProjector
-      Params:
-        View: XY
-        PixelsPerMeter: 50
-        NumRows: 50
-        NumCols: 50
-        MinIntensity: 1
-        KernelSize: 1
-      Inputs:
-        Cloud: GravitationalCloudOrienter.OrientedCloud
-    - Name: CloudProjectorYZ
-      Type: CloudProjector
-      Params:
-        View: YZ
-        PixelsPerMeter: 50
-        NumRows: 50
-        NumCols: 50
-        MinIntensity: 1
-        KernelSize: 1
-      Inputs:
-        Cloud: GravitationalCloudOrienter.OrientedCloud
-    - Name: CloudProjectorXZ
-      Type: CloudProjector
-      Params:
-        View: XZ
-        PixelsPerMeter: 50
-        NumRows: 50
-        NumCols: 50
-        MinIntensity: 1
-        KernelSize: 1
-      Inputs:
-        Cloud: GravitationalCloudOrienter.OrientedCloud
-    - Name: DynamicImageWindowXY
-      Type: DynamicImageWindow
-      Params:
-        VerticalAlignment: Center
-        HorizontalAlignment: Center
-        HeightPercent: 1
-        WidthPercent: 1
-        Scaling: 1
-      Inputs:
-        Image: CloudProjectorXY.Image
-    - Name: HogArrayXY
-      Type: HogArray
-      Params:
-        WindowWidth: 25
-        WindowHeight: 25
-        BlockWidth: 25
-        BlockHeight: 25
-        BlockStride: 25
-        CellSize: 5
-        NumBins: 6
-        UVPattern: Dense
-      Inputs:
-        Image: DynamicImageWindowXY.Image
-    - Name: DynamicImageWindowYZ
-      Type: DynamicImageWindow
-      Params:
-        VerticalAlignment: Center
-        HorizontalAlignment: Center
-        HeightPercent: 1
-        WidthPercent: 1
-        Scaling: 1
-      Inputs:
-        Image: CloudProjectorYZ.Image
-    - Name: HogArrayYZ
-      Type: HogArray
-      Params:
-        WindowWidth: 25
-        WindowHeight: 25
-        BlockWidth: 25
-        BlockHeight: 25
-        BlockStride: 25
-        CellSize: 5
-        NumBins: 6
-        UVPattern: Dense
-      Inputs:
-        Image: DynamicImageWindowYZ.Image
-    - Name: DynamicImageWindowXZ
-      Type: DynamicImageWindow
-      Params:
-        VerticalAlignment: Center
-        HorizontalAlignment: Center
-        HeightPercent: 1
-        WidthPercent: 1
-        Scaling: 1
-      Inputs:
-        Image: CloudProjectorXZ.Image
-    - Name: HogArrayXZ
-      Type: HogArray
-      Params:
-        WindowWidth: 25
-        WindowHeight: 25
-        BlockWidth: 25
-        BlockHeight: 25
-        BlockStride: 25
-        CellSize: 5
-        NumBins: 6
-        UVPattern: Dense
-      Inputs:
-        Image: DynamicImageWindowXZ.Image
     - Name: HSVHistogram
       Type: HSVHistogram
       Params:
@@ -153,14 +51,9 @@ Pipeline:
           OrientedNormalizedDensityHistogram.X
           OrientedNormalizedDensityHistogram.Y
           OrientedNormalizedDensityHistogram.Z
-          HogArrayXY.ConcatenatedDescriptors
-          HogArrayYZ.ConcatenatedDescriptors
-          HogArrayXZ.ConcatenatedDescriptors
           HSVHistogram.Hue
           HSVHistogram.Saturation
           HSVHistogram.Value
           CloudOrienter.Eigenvalues
           CloudOrienter.RelativeCurvature
-#          GravitationalCloudOrienter.Height
-#          GravitationalCloudOrienter.HighestPoint
           
