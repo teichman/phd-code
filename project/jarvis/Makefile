@@ -272,7 +272,7 @@ $(REGRESSION_RUNS_DIR)/completed-debug: $(addprefix regression-test-,$(REGRESSIO
 	touch $@
 
 all-regression-tests: $(REGRESSION_RUNS_DIR)/completed
-$(REGRESSION_RUNS_DIR)/completed: $(addprefix regression-test-,$(addsuffix -multi, $(REGRESSION_NAMES)))
+$(REGRESSION_RUNS_DIR)/runs/completed: $(addprefix regression-test-,$(addsuffix -multi, $(REGRESSION_NAMES)))
 	touch $@
 
 analyze-regression-tests: $(REGRESSION_RUNS_DIR)/completed
