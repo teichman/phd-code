@@ -13,13 +13,14 @@ def npLoadBash(command):
 
 # pre and post are np arrays.
 def permutationTest(pre, post, num_samples = 10000):
+    assert(pre.size == post.size)
     improvement = np.mean(post) - np.mean(pre)
-    all = np.concatenate((pre, post))
+    all = np.hstack((pre, post))
     num_perm_better = 0.
     for _ in range(num_samples):
         perm = np.random.permutation(all)
-        sample_post = perm[0:len(post)]
-        sample_pre = perm[len(post):]
+        sample_post = perm[0:post.size]
+        sample_pre = perm[post.size:]
         sample_improvement = np.mean(sample_post) - np.mean(sample_pre)
         if sample_improvement >= improvement:
             num_perm_better += 1
@@ -38,10 +39,10 @@ def stratifiedPermutationTest(pre, post, num_samples = 10000):
         sample_pre = []
         sample_post = []
         for (idx, __) in enumerate(pre):
-            all = np.concatenate((pre[idx], post[idx]))
+            all = np.hstack((pre[idx], post[idx]))
             perm = np.random.permutation(all)
-            sample_post.append(perm[0:len(post[idx])])
-            sample_pre.append(perm[len(post[idx]):])
+            sample_post.append(perm[0:post[idx].size])
+            sample_pre.append(perm[post[idx].size:])
 
         # Increment if better than the actual version.
         sample_improvement = np.mean(np.array(sample_post)) - np.mean(np.array(sample_pre))
@@ -67,9 +68,12 @@ def compareTests(pre_scores, post_scores, pre_name = 'Pre', post_name = 'Post', 
         print post_name + ' mean ' + score_name + ': ' + str(np.mean(post_scores[idx]))
         improvement = np.mean(post_scores[idx]) - np.mean(pre_scores[idx])
         print 'Improvement: ' + str(improvement)
+        print pre_scores[idx]
+        print post_scores[idx]
         pvalue = permutationTest(pre_scores[idx], post_scores[idx], num_samples)
         print 'P < ' + str(pvalue)
         print
+        print score_name + " changes:"
         print post_scores[idx] - pre_scores[idx]
 
     print "================================================================================"

@@ -19,6 +19,7 @@ test_names = sorted(os.walk(output_dir).next()[1])
 gi_accs = []
 baseline_accs = []
 for test_name in test_names:
+    print test_name
     gi_accs.append(npLoadBash("grep 'Total acc' `find " + os.path.join(output_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
     baseline_accs.append(npLoadBash("grep 'Total acc' `find " + os.path.join(output_dir, test_name) + " -wholename '*iter009/track_results.txt' | sort` | awk '{print $NF}'"))
 
