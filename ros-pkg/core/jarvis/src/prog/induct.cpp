@@ -40,6 +40,7 @@ int main(int argc, char** argv)
   vector<size_t> num_cells;
   num_cells.push_back(10);
 
+  string fake_supervisor_path;
 
   vector<string> class_names;
   opts_desc.add_options()
@@ -64,7 +65,7 @@ int main(int argc, char** argv)
     ("class-names", bpo::value(&class_names)->required()->multitoken(), "")
     ("no-vis", "")
     ("randomize", "Set the random seed to a random number.")
-    ("fake-supervisor", "InductionSupervisor.")
+    ("fake-supervisor", bpo::value(&fake_supervisor_path), "Path to GridClassifier")
     ;
 
   bpo::variables_map opts;
@@ -151,9 +152,9 @@ int main(int argc, char** argv)
     cout << seed->status("  ");
     inductor.pushHandLabeledDataset(seed);
   }
-  TrackDataset::Ptr autobg;
+
   if(!autobg_paths.empty()) {
-    autobg = loadDatasets(autobg_paths, config, cmap, up, true);
+    TrackDataset::Ptr autobg = loadDatasets(autobg_paths, config, cmap, up, true);
     for(size_t i = 0; i < autobg->size(); ++i) {
       const Dataset& track = *autobg->tracks_[i];
       for(size_t j = 0; j < track.size(); ++j) {
@@ -165,9 +166,8 @@ int main(int argc, char** argv)
     inductor.pushAutoLabeledDataset(autobg);
   }
 
-  TrackDataset::Ptr test;
   if(!test_paths.empty()) {
-    test = loadDatasets(test_paths, config, cmap, up, true);
+    TrackDataset::Ptr test = loadDatasets(test_paths, config, cmap, up, true);
     inductor.setTestData(test);
     cout << "Using test dataset: " << endl;
     cout << test->status("  ");
@@ -176,11 +176,10 @@ int main(int argc, char** argv)
   // -- Set up induction supervisor.
   InductionSupervisor::Ptr isup;
   if(opts.count("fake-supervisor")) {
-    ROS_ASSERT(test);
-    cout << "Using fake supervisor." << endl;
-
-    isup = InductionSupervisor::Ptr(new InductionSupervisor(&inductor, 0.5, output_dir));
-    isup->train(test, nc, config["GlobalParams"]["ObjThresh"].as<double>());
+    cout << "Using fake supervisor at " << fake_supervisor_path << endl;
+    GridClassifier gc;
+    gc.load(fake_supervisor_path);
+    isup = InductionSupervisor::Ptr(new InductionSupervisor(gc, &inductor, 0.5, output_dir));
     isup->launch();
   }
   

@@ -9,14 +9,12 @@ public:
   typedef boost::shared_ptr<InductionSupervisor> Ptr;
   typedef boost::shared_ptr<const InductionSupervisor> ConstPtr;
 
-  InductionSupervisor(OnlineLearner* ol, float conf_thresh, std::string output_dir);
-  void train(TrackDataset::Ptr td,
-             const std::vector<size_t>& nc,
-             double obj_thresh);
+  InductionSupervisor(GridClassifier gc, OnlineLearner* ol,
+                      float conf_thresh, std::string output_dir);
   void _run();
 
 protected:
-  GridClassifier::Ptr gc_;
+  GridClassifier gc_;
   OnlineLearner* ol_;
   float conf_thresh_;
   std::string output_dir_;
