@@ -46,7 +46,6 @@ rosrun jarvis induct \
     --unlabeled-td-dir $TEST_DIR/unlabeled \
     --init $TEST_DIR/init/*.td \
     --test $TEST_DIR/test/*.td \
-    --fake-supervisor $TEST_DIR/supervisor.gc \
     | tee $RUN_DIR/induction/log.txt
 
 
