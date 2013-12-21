@@ -154,7 +154,7 @@ public:
   //! Deep-copies the descriptors.
   Instance(const Instance& other);
   ~Instance();
-  //! Deep-copies the descriptors.
+  //! Deep-copies the descriptors, shallow-copies raw_.
   Instance& operator=(const Instance& other);
   //! Deep-copies.
   void copy(const std::vector<Eigen::VectorXf*>& descriptors);

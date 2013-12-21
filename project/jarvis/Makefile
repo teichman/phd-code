@@ -117,6 +117,7 @@ front_door/$(1)/induction:
 	--output-dir $$@ \
 	--unlabeled-td-dir front_door/tds/ \
 	--init `find front_door/tds/ -name '*.td' | sort -R | head -n5` \
+	--fake-supervisor \
 	| tee $$@/log.txt
 
 front_door/$(1)/baseline_unfair: front_door/$(1)/induction
@@ -266,8 +267,12 @@ REGRESSION_TESTS_DIR := $(MAKE_ROOT)/regression_tests
 REGRESSION_RUNS_DIR := regression_runs
 REGRESSION_NAMES := $(shell ls $(REGRESSION_TESTS_DIR))
 
+all-regression-tests-debug: $(REGRESSION_RUNS_DIR)/completed-debug
+$(REGRESSION_RUNS_DIR)/completed-debug: $(addprefix regression-test-,$(REGRESSION_NAMES))
+	touch $@
+
 all-regression-tests: $(REGRESSION_RUNS_DIR)/completed
-$(REGRESSION_DIR)/runs/completed: $(addprefix regression-test-,$(addsuffix -multi, $(REGRESSION_NAMES)))
+$(REGRESSION_RUNS_DIR)/runs/completed: $(addprefix regression-test-,$(addsuffix -multi, $(REGRESSION_NAMES)))
 	touch $@
 
 analyze-regression-tests: $(REGRESSION_RUNS_DIR)/completed

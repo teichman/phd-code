@@ -2,6 +2,7 @@
 #include <boost/program_options.hpp>
 #include <bag_of_tricks/bag_of_tricks.h>
 #include <jarvis/inductor.h>
+#include <online_learning/induction_supervisor.h>
 #include <jarvis/blob_view.h>
 #include <jarvis/descriptor_pipeline.h>
 
@@ -63,6 +64,7 @@ int main(int argc, char** argv)
     ("class-names", bpo::value(&class_names)->required()->multitoken(), "")
     ("no-vis", "")
     ("randomize", "Set the random seed to a random number.")
+    ("fake-supervisor", "InductionSupervisor.")
     ;
 
   bpo::variables_map opts;
@@ -149,8 +151,9 @@ int main(int argc, char** argv)
     cout << seed->status("  ");
     inductor.pushHandLabeledDataset(seed);
   }
+  TrackDataset::Ptr autobg;
   if(!autobg_paths.empty()) {
-    TrackDataset::Ptr autobg = loadDatasets(autobg_paths, config, cmap, up, true);
+    autobg = loadDatasets(autobg_paths, config, cmap, up, true);
     for(size_t i = 0; i < autobg->size(); ++i) {
       const Dataset& track = *autobg->tracks_[i];
       for(size_t j = 0; j < track.size(); ++j) {
@@ -162,13 +165,25 @@ int main(int argc, char** argv)
     inductor.pushAutoLabeledDataset(autobg);
   }
 
+  TrackDataset::Ptr test;
   if(!test_paths.empty()) {
-    TrackDataset::Ptr test = loadDatasets(test_paths, config, cmap, up, true);
+    test = loadDatasets(test_paths, config, cmap, up, true);
     inductor.setTestData(test);
     cout << "Using test dataset: " << endl;
     cout << test->status("  ");
   }
 
+  // -- Set up induction supervisor.
+  InductionSupervisor::Ptr isup;
+  if(opts.count("fake-supervisor")) {
+    ROS_ASSERT(test);
+    cout << "Using fake supervisor." << endl;
+
+    isup = InductionSupervisor::Ptr(new InductionSupervisor(&inductor, 0.5, output_dir));
+    isup->train(test, nc, config["GlobalParams"]["ObjThresh"].as<double>());
+    isup->launch();
+  }
+  
   // -- Go.
   ThreadPtr learning_thread = inductor.launch();
 
@@ -194,6 +209,11 @@ int main(int argc, char** argv)
     view_thread->join();
     alvc_thread->join();
     ivc_thread->join();
+  }
+
+  if(isup) {
+    isup->quit();
+    isup->thread()->join();
   }
 
   return 0;

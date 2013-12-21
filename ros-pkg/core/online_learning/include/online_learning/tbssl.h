@@ -49,7 +49,7 @@ public:
     void incrementUnlabeled(const TrackDataset& dataset);
     std::string status(const std::string& prefix = "") const;
     void serialize(std::ostream& out) const;
-    void deserialize(std::istream& in);
+    void deserialize(std::istream& in);      
   
   protected:
     void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
@@ -93,6 +93,12 @@ public:
   void copyClassifier(GridClassifier* classifier);
   void _run();
   std::string status(const std::string& prefix = "") const;
+  //! Copies and returns at most num inducted tracks from viewable_unsupervised_.
+  //! Classification logodds for all will be as near to prediction as possible.
+  //! e.g. setting prediction = 0 will return unconfident examples, whereas
+  //! setting it to 10 will give you things that are likely to be examples of cname.
+  TrackDataset requestInductedSample(const std::string& cname,
+                                     float prediction, size_t num) const;
 
   //! Makes a copy of viewable_unsupervised_ and viewable_unsupervised_hashes
   //! for a view controller.
@@ -109,6 +115,13 @@ public:
   //! Public so that classes like the ActiveLearningViewController can make use of the
   //! same entryHook that OnlineLearner uses.
   TrackDataset::Ptr loadTrackDataset(const std::string& path) const;
+
+  //! This function is called any time a new TD enters the OnlineLearner from any source.
+  //! This includes the disk and things like pushHandLabeledDataset and pushAutoLabeledDataset.
+  //! Subclasses can use this to do things like update descriptors whenever a new TD arrives.
+  //! Path is "" if this TD did not come from disk.
+  virtual void entryHook(TrackDataset* td, const std::string& path = "") const;
+
   
 protected:
   typedef std::vector< std::pair<double, size_t> > ObjectiveIndex;
@@ -226,11 +239,6 @@ protected:
   void serialize(std::ostream& out) const;
   void deserialize(std::istream& in);
 
-  //! This function is called any time a new TD enters the OnlineLearner from any source.
-  //! This includes the disk and things like pushHandLabeledDataset and pushAutoLabeledDataset.
-  //! Subclasses can use this to do things like update descriptors whenever a new TD arrives.
-  //! Path is "" if this TD did not come from disk.
-  virtual void entryHook(TrackDataset* td, const std::string& path = "") const;
   //! This function is called on the unlabeled chunk just before induction occurs.
   //! You can use it to, for example, remove tracks that don't include enough motion
   //! to be valuable for group induction.
