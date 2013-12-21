@@ -181,3 +181,8 @@ target_link_libraries(visualize_augmented_td online_learning online_learning_pcd
 
 rosbuild_add_executable(generate_group_induction_video src/program/generate_group_induction_video.cpp)
 target_link_libraries(generate_group_induction_video online_learning online_learning_pcd_serializer vtkCommon vtkRendering vtkFiltering)
+
+# -- Other
+
+rosbuild_add_executable(nprocs src/program/nprocs.cpp)
+
