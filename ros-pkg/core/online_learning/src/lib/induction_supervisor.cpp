@@ -16,7 +16,7 @@ void InductionSupervisor::_run()
 {
   int iter = 0;
   while(!quitting_) {
-    usleep(1e7);
+    usleep(3e7);
     for(size_t i = 0; i < gc_.nameMapping("cmap").size(); ++i) {
       string cname = gc_.nameMapping("cmap").toName(i);
 
