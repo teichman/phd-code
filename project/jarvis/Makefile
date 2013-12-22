@@ -117,7 +117,6 @@ front_door/$(1)/induction:
 	--output-dir $$@ \
 	--unlabeled-td-dir front_door/tds/ \
 	--init `find front_door/tds/ -name '*.td' | sort -R | head -n5` \
-	--fake-supervisor \
 	| tee $$@/log.txt
 
 front_door/$(1)/baseline_unfair: front_door/$(1)/induction
@@ -125,7 +124,7 @@ front_door/$(1)/baseline_unfair: front_door/$(1)/induction
 	--class-names $(1) \
 	--config $(CONFIG) \
 	-u $(FRONT_DOOR_UP_VECTOR) \
-	--root $< \
+	--root $$< \
 	--test $(FRONT_DOOR_LABELS_DIR)/$(1)/*.td \
 	--num-iters 15 \
 	--o $$@ | tee $$@-log.txt
