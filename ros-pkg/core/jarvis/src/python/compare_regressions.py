@@ -26,8 +26,8 @@ assert(pre_test_names == post_test_names)
 test_names = pre_test_names
 
 for test_name in test_names:
-    pre_accs.append(npLoadBash("grep 'Total acc' `find " + os.path.join(pre_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
-    post_accs.append(npLoadBash("grep 'Total acc' `find " + os.path.join(post_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
+    pre_accs.append(npLoadBash("grep 'Total acc' `find -L " + os.path.join(pre_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
+    post_accs.append(npLoadBash("grep 'Total acc' `find -L " + os.path.join(post_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
 
 compareTests(pre_accs, post_accs,
              'Pre', 'Post',

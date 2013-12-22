@@ -20,8 +20,8 @@ gi_accs = []
 baseline_accs = []
 for test_name in test_names:
     print test_name
-    gi_accs.append(npLoadBash("grep 'Total acc' `find " + os.path.join(output_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
-    baseline_accs.append(npLoadBash("grep 'Total acc' `find " + os.path.join(output_dir, test_name) + " -wholename '*iter009/track_results.txt' | sort` | awk '{print $NF}'"))
+    gi_accs.append(npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
+    baseline_accs.append(npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -wholename '*iter009/track_results.txt' | sort` | awk '{print $NF}'"))
 
 # -- Run test.
 compareTests(baseline_accs, gi_accs,
