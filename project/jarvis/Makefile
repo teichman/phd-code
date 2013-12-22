@@ -176,13 +176,10 @@ kitchen/induction: #kitchen-descriptors
 	--output-dir $@ \
 	--unlabeled-td-dir kitchen/tds/ \
 	--init \
-	kitchen-old/tds/sentinel_2013-09-20-21-00-29_0/jarvis-0003.td \
-	kitchen-old/tds/sentinel_2013-09-18-23-31-20_1/jarvis-0003.td \
-	kitchen-old/tds/sentinel_2013-09-20-21-00-29_0/jarvis-0001.td \
-	kitchen/tds/sentinel_2013-10-25-01-58-21_5/jarvis-0003.td \
-	kitchen/tds/sentinel_2013-10-24-19-32-07_1/jarvis-0000.td \
-	kitchen/tds/sentinel_2013-10-23-23-04-26_1/jarvis-0005.td \
-	kitchen/tds/sentinel_2013-10-26-03-03-44_0/jarvis-0000.td \
+	kitchen/tds/sentinel_2013-10-24-22-01-00_2/jarvis-0003.td \
+	kitchen/tds/sentinel_2013-09-22-18-31-42_1/jarvis-0006.td \
+	kitchen/tds/sentinel_2013-09-22-23-15-32_3/jarvis-0005.td \
+	kitchen/tds/sentinel_2013-10-22-14-43-33_32/jarvis-0004.td \
 	--test $(KITCHEN_LABELS_DIR)/*.td \
 	| tee $@-log.txt
 	mv $@-log.txt $@/
