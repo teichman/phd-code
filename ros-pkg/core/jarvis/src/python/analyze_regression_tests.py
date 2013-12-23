@@ -7,7 +7,7 @@ import itertools
 import roslib
 roslib.load_manifest('jarvis')
 from regression_testing import * 
-    
+
 if len(sys.argv) != 2:
     print 'Usage: ' + sys.argv[0] + ' DIR'
     print '  where DIR is the output directory for a full suite of regression tests.'
@@ -26,4 +26,4 @@ for test_name in test_names:
 # -- Run test.
 compareTests(baseline_accs, gi_accs,
              'Baseline', 'Group induction',
-             test_names, 'accuracy', 10000)
+             test_names, 'accuracy', 1000000)

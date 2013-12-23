@@ -3,6 +3,7 @@
 import os
 import tempfile
 import numpy as np
+import random
 
 def npLoadBash(command):
     tmpfile = '.python-asotuesntahoensuthnat'  # TODO: Use tempfile library.
@@ -15,12 +16,17 @@ def npLoadBash(command):
 def permutationTest(pre, post, num_samples = 10000):
     assert(pre.size == post.size)
     improvement = np.mean(post) - np.mean(pre)
-    all = np.hstack((pre, post))
+
+    sample_pre = list(pre)  # Copy the list.
+    sample_post = list(post)
+    assert(len(sample_pre) == len(sample_post))
     num_perm_better = 0.
     for _ in range(num_samples):
-        perm = np.random.permutation(all)
-        sample_post = perm[0:post.size]
-        sample_pre = perm[post.size:]
+        for (i, _) in enumerate(sample_pre):
+            if random.randint(0, 1) == 0:
+                tmp = sample_pre[i]
+                sample_pre[i] = sample_post[i]
+                sample_post[i] = tmp
         sample_improvement = np.mean(sample_post) - np.mean(sample_pre)
         if sample_improvement >= improvement:
             num_perm_better += 1
@@ -28,7 +34,8 @@ def permutationTest(pre, post, num_samples = 10000):
     p = num_perm_better / num_samples
     return p
 
-# pre and post are lists of np arrays.
+# pre and post are lists of np arrays.  Swaps can occur within matched pre / post arrays,
+# but not between unmatched arrays.
 def stratifiedPermutationTest(pre, post, num_samples = 10000):
     improvement = np.mean(np.array(post)) - np.mean(np.array(pre))
     
@@ -36,13 +43,15 @@ def stratifiedPermutationTest(pre, post, num_samples = 10000):
     for _ in range(num_samples):
 
         # Generate a scrambled version of pre and post.
-        sample_pre = []
-        sample_post = []
-        for (idx, __) in enumerate(pre):
-            all = np.hstack((pre[idx], post[idx]))
-            perm = np.random.permutation(all)
-            sample_post.append(perm[0:post[idx].size])
-            sample_pre.append(perm[post[idx].size:])
+        sample_pre = list(pre)  # Copy the list.
+        sample_post = list(post)
+        for (i, __) in enumerate(sample_pre):
+            assert(len(sample_pre[i]) == len(sample_post[i]))
+            for (j, ___) in enumerate(sample_pre[i]):
+                if random.randint(0, 1) == 0:
+                    tmp = sample_pre[i][j]
+                    sample_pre[i][j] = sample_post[i][j]
+                    sample_post[i][j] = tmp
 
         # Increment if better than the actual version.
         sample_improvement = np.mean(np.array(sample_post)) - np.mean(np.array(sample_pre))
