@@ -52,13 +52,13 @@ void InductionSupervisor::_run()
       if(!errors->empty())
         ol_->pushHandLabeledDataset(errors);
 
-      ostringstream oss;
-      oss << output_dir_ << "/InductionSupervisor-" << setw(4) << setfill('0') << iter << "-received.td";
-      td.save(oss.str());
+      // ostringstream oss;
+      // oss << output_dir_ << "/InductionSupervisor-" << setw(4) << setfill('0') << iter << "-received.td";
+      // td.save(oss.str());
 
-      oss.str("");
-      oss << output_dir_ << "/InductionSupervisor-" << setw(4) << setfill('0') << iter << "-corrections.td";
-      errors->save(oss.str());
+      // oss.str("");
+      // oss << output_dir_ << "/InductionSupervisor-" << setw(4) << setfill('0') << iter << "-corrections.td";
+      // errors->save(oss.str());
       
       ++iter;
     }
