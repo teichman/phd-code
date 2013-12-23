@@ -26,4 +26,4 @@ for test_name in test_names:
 # -- Run test.
 compareTests(baseline_accs, gi_accs,
              'Baseline', 'Group induction',
-             test_names, 'accuracy', 1000000)
+             test_names, 'accuracy', 10000)
