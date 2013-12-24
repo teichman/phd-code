@@ -144,12 +144,12 @@ void Inductor::retrospection(const TrackDataset& new_annotations, const std::vec
   }
 
   // -- Reset classes for which de-induction occurred.
-  scopeLockWrite;
-  ROS_ASSERT(nameMappingsAreEqual(*classifier_));
-  for(size_t c = 0; c < deinduction_occurred.size(); ++c) {
-    if(deinduction_occurred[c]) {
-      classifier_->setZero(c);
-      cout << "[Inductor::retrospection]  Reset " << nameMapping("cmap").toName(c) << " classifier (index " << c << ")." << endl;
-    }
-  }
+  // scopeLockWrite;
+  // ROS_ASSERT(nameMappingsAreEqual(*classifier_));
+  // for(size_t c = 0; c < deinduction_occurred.size(); ++c) {
+  //   if(deinduction_occurred[c]) {
+  //     classifier_->setZero(c);
+  //     cout << "[Inductor::retrospection]  Reset " << nameMapping("cmap").toName(c) << " classifier (index " << c << ")." << endl;
+  //   }
+  // }
 }
