@@ -229,14 +229,14 @@ void OnlineLearner::retrospection(const TrackDataset& new_annotations, const std
   saveInductionAccuracy("retrospection");
 
   // -- Reset classes for which de-induction (may have) occurred.
-  scopeLockWrite;
-  ROS_ASSERT(nameMappingsAreEqual(*classifier_));
-  for(size_t c = 0; c < nameMapping("cmap").size(); ++c) {
-    if(emin(c) < -emax_ - 1e-3 || emax(c) > emax_ + 1e-3) {
-      classifier_->setZero(c);
-      cout << "Reset " << nameMapping("cmap").toName(c) << " classifier (index " << c << ")." << endl;
-    }
-  }
+  // scopeLockWrite;
+  // ROS_ASSERT(nameMappingsAreEqual(*classifier_));
+  // for(size_t c = 0; c < nameMapping("cmap").size(); ++c) {
+  //   if(emin(c) < -emax_ - 1e-3 || emax(c) > emax_ + 1e-3) {
+  //     classifier_->setZero(c);
+  //     cout << "Reset " << nameMapping("cmap").toName(c) << " classifier (index " << c << ")." << endl;
+  //   }
+  // }
 
   // -- Reset the classifier for classes that got new annotated data.
   // scopeLockWrite;
