@@ -63,6 +63,8 @@ Jarvis::Jarvis(int vis_level, int rotation, string output_directory, bool write_
   
   if(vis_level_ > 1)
     tracker_.visualize_ = true;
+
+  cv::namedWindow("tracks", cv::WINDOW_NORMAL);
 }
 
 void Jarvis::backgroundCallback(sentinel::BackgroundConstPtr msg)
