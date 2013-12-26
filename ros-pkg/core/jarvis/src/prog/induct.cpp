@@ -2,7 +2,7 @@
 #include <boost/program_options.hpp>
 #include <bag_of_tricks/bag_of_tricks.h>
 #include <jarvis/inductor.h>
-#include <online_learning/induction_supervisor.h>
+#include <jarvis/induction_supervisor.h>
 #include <jarvis/blob_view.h>
 #include <jarvis/descriptor_pipeline.h>
 
@@ -41,6 +41,7 @@ int main(int argc, char** argv)
   num_cells.push_back(10);
 
   string fake_supervisor_path;
+  string fake_supervisor_config_path;
 
   vector<string> class_names;
   opts_desc.add_options()
@@ -66,6 +67,7 @@ int main(int argc, char** argv)
     ("no-vis", "")
     ("randomize", "Set the random seed to a random number.")
     ("fake-supervisor", bpo::value(&fake_supervisor_path), "Path to GridClassifier")
+    ("fake-supervisor-config", bpo::value(&fake_supervisor_config_path), "Path to config used by fake supervisor")
     ;
 
   bpo::variables_map opts;
@@ -176,10 +178,14 @@ int main(int argc, char** argv)
   // -- Set up induction supervisor.
   InductionSupervisor::Ptr isup;
   if(opts.count("fake-supervisor")) {
+    ROS_ASSERT(opts.count("fake-supervisor-config"));
     cout << "Using fake supervisor at " << fake_supervisor_path << endl;
+    cout << "  with config at " << fake_supervisor_config_path << endl;
     GridClassifier gc;
     gc.load(fake_supervisor_path);
-    isup = InductionSupervisor::Ptr(new InductionSupervisor(gc, &inductor, 0.5, output_dir));
+    YAML::Node fs_config = YAML::LoadFile(fake_supervisor_config_path);
+    ROS_ASSERT(fs_config["Pipeline"]);
+    isup = InductionSupervisor::Ptr(new InductionSupervisor(gc, fs_config, up, &inductor, 0.5, output_dir));
     isup->launch();
   }
   

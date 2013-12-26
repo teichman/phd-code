@@ -47,6 +47,7 @@ rosrun jarvis induct \
     --init $TEST_DIR/init/*.td \
     --test $TEST_DIR/test/*.td \
     --fake-supervisor $TEST_DIR/supervisor.gc \
+    --fake-supervisor-config $TEST_DIR/supervisor_config.yml \
     | tee $RUN_DIR/induction/log.txt
 
 

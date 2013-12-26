@@ -34,6 +34,7 @@ rosbuild_add_library(jarvis_core
   src/lib/inductor.cpp
   src/lib/reactor.cpp
   src/lib/cannon_reactor.cpp
+  src/lib/induction_supervisor.cpp
   )
 rosbuild_add_compile_flags(jarvis_core -std=c++0x)
 target_link_libraries(jarvis_core tcmalloc)
