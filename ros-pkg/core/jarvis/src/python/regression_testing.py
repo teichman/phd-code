@@ -76,7 +76,7 @@ def compareTests(pre_scores, post_scores, pre_name = 'Pre', post_name = 'Post', 
         print pre_name + ' mean ' + score_name + ': ' + str(np.mean(pre_scores[idx]))
         print post_name + ' mean ' + score_name + ': ' + str(np.mean(post_scores[idx]))
         improvement = np.mean(post_scores[idx]) - np.mean(pre_scores[idx])
-        print 'Improvement: ' + str(improvement)
+        print 'Increase: ' + str(improvement)
         if score_name == 'accuracy':
             error_reduction = (1 - (1 - np.mean(post_scores[idx])) / (1 - np.mean(pre_scores[idx]))) * 100
             print 'Error reduction: %3.1f%%' % (error_reduction)
@@ -93,7 +93,7 @@ def compareTests(pre_scores, post_scores, pre_name = 'Pre', post_name = 'Post', 
     print pre_name + ' mean ' + score_name + ': ' + str(np.mean(pre_scores))
     print post_name + ' mean ' + score_name + ': ' + str(np.mean(post_scores))
     improvement = np.mean(np.array(post_scores)) - np.mean(np.array(pre_scores))
-    print 'Improvement: ' + str(improvement)
+    print 'Increase: ' + str(improvement)
     if score_name == 'accuracy':
         error_reduction = (1 - (1 - np.mean(np.array(post_scores))) / (1 - np.mean(np.array(pre_scores)))) * 100
         print 'Error reduction: %3.1f%%' % (error_reduction)
