@@ -1,11 +1,14 @@
-#include <online_learning/induction_supervisor.h>
+#include <jarvis/induction_supervisor.h>
 
 using namespace std;
 using namespace Eigen;
 
-InductionSupervisor::InductionSupervisor(GridClassifier gc, OnlineLearner* ol,
+InductionSupervisor::InductionSupervisor(GridClassifier gc, YAML::Node config,
+                                         const Eigen::VectorXf& up, OnlineLearner* ol,
                                          float conf_thresh, std::string output_dir) :
   gc_(gc),
+  config_(config),
+  up_(up),
   ol_(ol),
   conf_thresh_(conf_thresh),
   output_dir_(output_dir)
@@ -27,7 +30,7 @@ void InductionSupervisor::_run()
 
       TrackDataset td = ol_->requestInductedSample(cname, val, 50);
       cout << "[InductionSupervisor] Got " << td.size() << " tracks for class " << cname << endl;
-      ol_->entryHook(&td);  // Compute descriptors.
+      updateDescriptors(config_["Pipeline"], 24, &td, up_);
       ROS_ASSERT(gc_.nameMappingsAreEqual(td));
       
       // -- Classify tracks and save errors to a new dataset.
