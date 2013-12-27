@@ -144,16 +144,18 @@ def analyze(pre, post, pre_name = 'Pre', post_name = 'Post', test_names = [], qu
 
     print '================================================================================'
     print 'Regression test: ' + quantity_name
-    print 
-
-    print '{0:20s} \t {1:s} \t {2:s}'.format('Name', 'Change', 'Significance')
+    print
+    print '{0:16s} {1:10s} {2:10s} {3:10s} {4:10s}'.format('Test', pre_name, post_name, 'Change', 'Significance')
+    print "----------------------------------------------------------------------"
     for (idx, test_name) in enumerate(test_names):
         (change, p) = swapTest(pre[idx], post[idx], num_samples)
-        print '{0:20s} \t %.2f\t\t p < %2.3f'.format(test_name) % (change, p)
+        print '{0:16s} {1:<10.2f} {2:<10.2f} {3:<+10.2f} p < {4:<10.3f}'.format(test_name, np.mean(pre[idx]), np.mean(post[idx]), change, p)
 
 
-    print "--------------------------------------------------------------------------------"
+    print "----------------------------------------------------------------------"
     aggregate_pre = np.concatenate(pre)
     aggregate_post = np.concatenate(post)
     (change, p) = swapTest(aggregate_pre, aggregate_post, num_samples)
-    print '{0:20s} \t %.2f\t\t p < %2.3f'.format('Overall') % (change, p)
+    print '{0:16s} {1:<10.2f} {2:<10.2f} {3:<+10.2f} p < {4:<10.3f}'.format('all', np.mean(aggregate_pre), np.mean(aggregate_post), change, p)
+    print
+
