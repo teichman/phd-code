@@ -100,3 +100,60 @@ def compareTests(pre_scores, post_scores, pre_name = 'Pre', post_name = 'Post', 
 
     pvalue = stratifiedPermutationTest(pre_scores, post_scores, num_samples)
     print 'P < ' + str(pvalue)
+
+
+# pre and post are np arrays.
+# Returns (change, p value).
+# Two-tailed test.  The p value is the probability that, if there
+# was no difference between pre and post, you'd see a change at
+# least as extreme *in the direction of the observed change* at random.
+# A change of exactly zero is not well-defined.
+def swapTest(pre, post, num_samples = 10000):
+    assert(pre.size == post.size)
+    mean_change = np.mean(post) - np.mean(pre)
+
+    sign = 1.0
+    if mean_change == 0:
+        return (0, 0.5)
+    elif mean_change < 0:
+        sign = -1.0
+
+    sample_pre = list(pre)  # Copy the list.
+    sample_post = list(post)
+    num_more_extreme = 0.
+    for _ in range(num_samples):
+        for i in range(pre.size):
+            if random.randint(0, 1) == 0:
+                tmp = sample_pre[i]
+                sample_pre[i] = sample_post[i]
+                sample_post[i] = tmp
+        sample_change = np.mean(sample_post) - np.mean(sample_pre)
+        if sample_change * sign >= mean_change * sign:
+            num_more_extreme += 1
+
+    p = num_more_extreme / num_samples
+    return (mean_change, p)
+
+# pre and post are lists of np arrays.
+def analyze(pre, post, pre_name = 'Pre', post_name = 'Post', test_names = [], quantity_name = 'quantity', num_samples = 10000):
+    if len(test_names) == 0:
+        test_names = ["Test%03d" % i for i in range(len(pre))]
+
+    assert(len(pre) == len(post))
+    assert(len(test_names) == len(pre))
+
+    print '================================================================================'
+    print 'Regression test: ' + quantity_name
+    print 
+
+    print '{0:20s} \t {1:s} \t {2:s}'.format('Name', 'Change', 'Significance')
+    for (idx, test_name) in enumerate(test_names):
+        (change, p) = swapTest(pre[idx], post[idx], num_samples)
+        print '{0:20s} \t %.2f\t\t p < %2.3f'.format(test_name) % (change, p)
+
+
+    print "--------------------------------------------------------------------------------"
+    aggregate_pre = np.concatenate(pre)
+    aggregate_post = np.concatenate(post)
+    (change, p) = swapTest(aggregate_pre, aggregate_post, num_samples)
+    print '{0:20s} \t %.2f\t\t p < %2.3f'.format('Overall') % (change, p)

@@ -26,10 +26,10 @@ assert(pre_test_names == post_test_names)
 test_names = pre_test_names
 
 for test_name in test_names:
-    pre_time.append(-npLoadBash("for dir in `find -L " + os.path.join(pre_dir, test_name) + " -maxdepth 1 -mindepth 1 -type d`; do grep 'Total elapsed time' `find $dir -name learner_status.txt | sort | tail -n1`; done | awk '{print $NF}'"))
-    post_time.append(-npLoadBash("for dir in `find -L " + os.path.join(post_dir, test_name) + " -maxdepth 1 -mindepth 1 -type d`; do grep 'Total elapsed time' `find $dir -name learner_status.txt | sort | tail -n1`; done | awk '{print $NF}'"))
+    pre_time.append(npLoadBash("for dir in `find -L " + os.path.join(pre_dir, test_name) + " -maxdepth 1 -mindepth 1 -type d`; do grep 'Total elapsed time' `find $dir -name learner_status.txt | sort | tail -n1`; done | awk '{print $NF}'"))
+    post_time.append(npLoadBash("for dir in `find -L " + os.path.join(post_dir, test_name) + " -maxdepth 1 -mindepth 1 -type d`; do grep 'Total elapsed time' `find $dir -name learner_status.txt | sort | tail -n1`; done | awk '{print $NF}'"))
 
-compareTests(pre_time, post_time,
-             'Pre', 'Post',
-             test_names, 'negative time', 10000)
+analyze(pre_time, post_time,
+        'Pre', 'Post',
+        test_names, 'Seconds', 10000)
 
