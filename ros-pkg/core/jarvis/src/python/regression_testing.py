@@ -134,6 +134,17 @@ def swapTest(pre, post, num_samples = 10000):
     p = num_more_extreme / num_samples
     return (mean_change, p)
 
+def splitNum(num, signed = False):
+    numstr = '%.2f' % num
+    if(signed):
+        numstr = '%+.2f' % num
+    strs = numstr.split('.')
+    whole = strs[0]
+    decimal = ''
+    if len(strs) == 2:
+        decimal = strs[1]
+    return(whole, decimal)
+
 # pre and post are lists of np arrays.
 def analyze(pre, post, pre_name = 'Pre', post_name = 'Post', test_names = [], quantity_name = 'quantity', num_samples = 10000):
     if len(test_names) == 0:
@@ -145,17 +156,20 @@ def analyze(pre, post, pre_name = 'Pre', post_name = 'Post', test_names = [], qu
     print '================================================================================'
     print 'Regression test: ' + quantity_name
     print
-    print '{0:16s} {1:10s} {2:10s} {3:10s} {4:10s}'.format('Test', pre_name, post_name, 'Change', 'Significance')
-    print "----------------------------------------------------------------------"
+    print '{0:20s}  {1:12s} {2:12s}  {3:12s} {4:12s}'.format('Test', pre_name, post_name, 'Change', 'Significance')
+    print "--------------------------------------------------------------------------------"
     for (idx, test_name) in enumerate(test_names):
         (change, p) = swapTest(pre[idx], post[idx], num_samples)
-        print '{0:16s} {1:<10.2f} {2:<10.2f} {3:<+10.2f} p < {4:<10.3f}'.format(test_name, np.mean(pre[idx]), np.mean(post[idx]), change, p)
+#        print '{0:16s} {1:<10.2f} {2:<10.2f} {3:<+10.2f} p < {4:<10.3f}'.format(test_name, np.mean(pre[idx]), np.mean(post[idx]), change, p)
+        print "{name:16s} {pre_mean_vals[0]:>6}.{pre_mean_vals[1]:<6} {post_mean_vals[0]:>6}.{post_mean_vals[1]:<6} {change_vals[0]:>6}.{change_vals[1]:<6}    p < {p:<10.3f}".format(name=test_name, pre_mean_vals=splitNum(np.mean(pre[idx])), post_mean_vals=splitNum(np.mean(post[idx])), change_vals=splitNum(change, True), p=p)
 
 
-    print "----------------------------------------------------------------------"
+    print "--------------------------------------------------------------------------------"
     aggregate_pre = np.concatenate(pre)
     aggregate_post = np.concatenate(post)
     (change, p) = swapTest(aggregate_pre, aggregate_post, num_samples)
-    print '{0:16s} {1:<10.2f} {2:<10.2f} {3:<+10.2f} p < {4:<10.3f}'.format('all', np.mean(aggregate_pre), np.mean(aggregate_post), change, p)
+#    print '{0:16s} {1:<10.2f} {2:<10.2f} {3:<+10.2f} p < {4:<10.3f}'.format('all', np.mean(aggregate_pre), np.mean(aggregate_post), change, p)
+    print "{name:16s} {pre_mean_vals[0]:>6}.{pre_mean_vals[1]:<6} {post_mean_vals[0]:>6}.{post_mean_vals[1]:<6} {change_vals[0]:>6}.{change_vals[1]:<6}    p < {p:<10.3f}".format(name='all', pre_mean_vals=splitNum(np.mean(aggregate_pre)), post_mean_vals=splitNum(np.mean(aggregate_post)), change_vals=splitNum(change), p=p)
+
     print
 
