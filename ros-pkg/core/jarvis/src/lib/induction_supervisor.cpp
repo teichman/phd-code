@@ -30,7 +30,15 @@ void InductionSupervisor::_run()
 
       TrackDataset td = ol_->requestInductedSample(cname, val, 50);
       cout << "[InductionSupervisor] Got " << td.size() << " tracks for class " << cname << endl;
+      if(td.empty())
+        continue;
+      
       updateDescriptors(config_["Pipeline"], 24, &td, up_);
+      if(!gc_.nameMappingsAreEqual(td)) {
+        cout << gc_.nameMappingStatus() << endl;
+        cout << "---" << endl;
+        cout << td.nameMappingStatus() << endl;
+      }
       ROS_ASSERT(gc_.nameMappingsAreEqual(td));
       
       // -- Classify tracks and save errors to a new dataset.
