@@ -276,7 +276,7 @@ analyze-regression-tests: $(REGRESSION_RUNS_DIR)/completed
 
 define REGRESSION_RULE_GENERATOR
 regression-test-$(1)-multi:
-	for i in {1..10}; do make -f $(MAKEFILE) regression-test-$(1); done
+	for i in {1..3}; do make -f $(MAKEFILE) regression-test-$(1); done
 regression-test-$(1):
 	rosrun jarvis run_regression.sh $(REGRESSION_TESTS_DIR)/$(1) $(CONFIG) $(REGRESSION_RUNS_DIR)/$(1)
 endef
