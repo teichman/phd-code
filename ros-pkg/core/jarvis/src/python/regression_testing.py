@@ -44,47 +44,6 @@ def stratifiedPermutationTest(pre, post, num_samples = 10000):
     p = num_more_extreme / num_samples
     return (mean_change, p)
 
-
-# pre_scores and post_scores are lists of np arrays.
-def compareTests(pre_scores, post_scores, pre_name = 'Pre', post_name = 'Post', test_names = [], score_name = 'score', num_samples = 10000):
-    if len(test_names) == 0:
-        test_names = ["%03d" % i for i in range(len(pre_scores))]
-
-    assert(len(pre_scores) == len(post_scores))
-    assert(len(test_names) == len(pre_scores))
-    
-    for (idx, test_name) in enumerate(test_names):
-        print "================================================================================"
-        print "Test: " + test_name
-        print pre_name + ' mean ' + score_name + ': ' + str(np.mean(pre_scores[idx]))
-        print post_name + ' mean ' + score_name + ': ' + str(np.mean(post_scores[idx]))
-        improvement = np.mean(post_scores[idx]) - np.mean(pre_scores[idx])
-        print 'Increase: ' + str(improvement)
-        if score_name == 'accuracy':
-            error_reduction = (1 - (1 - np.mean(post_scores[idx])) / (1 - np.mean(pre_scores[idx]))) * 100
-            print 'Error reduction: %3.1f%%' % (error_reduction)
-        print pre_scores[idx]
-        print post_scores[idx]
-        pvalue = stratifiedPermutationTest(pre_scores[idx], post_scores[idx], num_samples)
-        print 'P < ' + str(pvalue)
-        print
-        print score_name + " changes:"
-        print post_scores[idx] - pre_scores[idx]
-
-    print "================================================================================"
-    print "Overall results"
-    print pre_name + ' mean ' + score_name + ': ' + str(np.mean(pre_scores))
-    print post_name + ' mean ' + score_name + ': ' + str(np.mean(post_scores))
-    improvement = np.mean(np.array(post_scores)) - np.mean(np.array(pre_scores))
-    print 'Increase: ' + str(improvement)
-    if score_name == 'accuracy':
-        error_reduction = (1 - (1 - np.mean(np.array(post_scores))) / (1 - np.mean(np.array(pre_scores)))) * 100
-        print 'Error reduction: %3.1f%%' % (error_reduction)
-
-    pvalue = stratifiedPermutationTest(pre_scores, post_scores, num_samples)
-    print 'P < ' + str(pvalue)
-
-
 # pre and post are np arrays.
 # Returns (change, p value).
 # Two-tailed test.  The p value is the probability that, if there
@@ -129,7 +88,8 @@ def splitNum(num, signed = False):
     return(whole, decimal)
 
 # pre and post are lists of np arrays.
-def analyze(pre, post, pre_name = 'Pre', post_name = 'Post', test_names = [], quantity_name = 'quantity', num_samples = 10000):
+# If paired == True, then use pairwise swapping only in the statistical significance test.
+def analyze(pre, post, pre_name = 'Pre', post_name = 'Post', test_names = [], quantity_name = 'quantity', num_samples = 10000, paired = False):
     if len(test_names) == 0:
         test_names = ["Test%03d" % i for i in range(len(pre))]
 
@@ -142,12 +102,19 @@ def analyze(pre, post, pre_name = 'Pre', post_name = 'Post', test_names = [], qu
     print '{0:20s}  {1:12s} {2:12s}  {3:12s} {4:12s}'.format('Test', pre_name, post_name, 'Change', 'Significance')
     print "--------------------------------------------------------------------------------"
     for (idx, test_name) in enumerate(test_names):
-        (change, p) = stratifiedPermutationTest([pre[idx]], [post[idx]], num_samples)
+        if paired:
+            (change, p) = swapTest(pre[idx], post[idx], num_samples)
+        else:
+            (change, p) = stratifiedPermutationTest([pre[idx]], [post[idx]], num_samples)
+        
         print "{name:16s} {pre_mean_vals[0]:>6}.{pre_mean_vals[1]:<6} {post_mean_vals[0]:>6}.{post_mean_vals[1]:<6} {change_vals[0]:>6}.{change_vals[1]:<6}    p < {p:<10.3f}".format(name=test_name, pre_mean_vals=splitNum(np.mean(pre[idx])), post_mean_vals=splitNum(np.mean(post[idx])), change_vals=splitNum(change, True), p=p)
 
 
     print "--------------------------------------------------------------------------------"
-    (change, p) = stratifiedPermutationTest(pre, post, num_samples)
+    if paired:
+        (change, p) = swapTest(np.concatenate(pre), np.concatenate(post), num_samples)
+    else:
+        (change, p) = stratifiedPermutationTest(pre, post, num_samples)
     pre_mean = np.mean(np.concatenate(pre))
     post_mean = np.mean(np.concatenate(post))
     print "{name:16s} {pre_mean_vals[0]:>6}.{pre_mean_vals[1]:<6} {post_mean_vals[0]:>6}.{post_mean_vals[1]:<6} {change_vals[0]:>6}.{change_vals[1]:<6}    p < {p:<10.3f}".format(name='all', pre_mean_vals=splitNum(pre_mean), post_mean_vals=splitNum(post_mean), change_vals=splitNum(change), p=p)

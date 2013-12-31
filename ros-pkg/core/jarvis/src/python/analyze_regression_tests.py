@@ -25,4 +25,4 @@ for test_name in test_names:
 # -- Run test.
 analyze(baseline_accs, gi_accs,
         'Baseline', 'GI',
-        test_names, 'Accuracy (%)', 10000)
+        test_names, 'Accuracy (%)', 10000, paired = True)
