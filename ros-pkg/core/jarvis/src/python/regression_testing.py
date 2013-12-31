@@ -12,54 +12,37 @@ def npLoadBash(command):
     os.system('rm ' + tmpfile)
     return array
 
-# pre and post are np arrays.
-def permutationTest(pre, post, num_samples = 10000):
-    assert(pre.size == post.size)
-    improvement = np.mean(post) - np.mean(pre)
-
-    sample_pre = list(pre)  # Copy the list.
-    sample_post = list(post)
-    assert(len(sample_pre) == len(sample_post))
-    num_perm_better = 0.
-    for _ in range(num_samples):
-        for (i, _) in enumerate(sample_pre):
-            if random.randint(0, 1) == 0:
-                tmp = sample_pre[i]
-                sample_pre[i] = sample_post[i]
-                sample_post[i] = tmp
-        sample_improvement = np.mean(sample_post) - np.mean(sample_pre)
-        if sample_improvement >= improvement:
-            num_perm_better += 1
-
-    p = num_perm_better / num_samples
-    return p
-
 # pre and post are lists of np arrays.  Swaps can occur within matched pre / post arrays,
 # but not between unmatched arrays.
 def stratifiedPermutationTest(pre, post, num_samples = 10000):
-    improvement = np.mean(np.array(post)) - np.mean(np.array(pre))
+    assert(len(pre) == len(post))  # Number of strata must match.
+    mean_change = np.mean(np.concatenate(post)) - np.mean(np.concatenate(pre))
+    sign = 1.0
+    if mean_change == 0:
+        return (0, 0.5)
+    elif mean_change < 0:
+        sign = -1.0
     
-    num_perm_better = 0.
+    num_more_extreme = 0.
     for _ in range(num_samples):
 
         # Generate a scrambled version of pre and post.
         sample_pre = list(pre)  # Copy the list.
         sample_post = list(post)
-        for (i, __) in enumerate(sample_pre):
-            assert(len(sample_pre[i]) == len(sample_post[i]))
-            for (j, ___) in enumerate(sample_pre[i]):
-                if random.randint(0, 1) == 0:
-                    tmp = sample_pre[i][j]
-                    sample_pre[i][j] = sample_post[i][j]
-                    sample_post[i][j] = tmp
+        for i in range(len(sample_pre)):
+            permutation = np.random.permutation(np.concatenate([sample_pre[i], sample_post[i]]))
+            sample_pre[i] = permutation[:len(pre[i])]
+            sample_post[i] = permutation[len(pre[i]):]
+            assert(len(sample_pre[i]) == len(pre[i]))
+            assert(len(sample_post[i]) == len(post[i]))
 
-        # Increment if better than the actual version.
-        sample_improvement = np.mean(np.array(sample_post)) - np.mean(np.array(sample_pre))
-        if sample_improvement >= improvement:
-            num_perm_better += 1
+        # Increment if more extreme than the actual change.
+        sample_change = np.mean(np.concatenate(sample_post)) - np.mean(np.concatenate(sample_pre))
+        if sample_change * sign >= mean_change * sign:
+            num_more_extreme += 1
 
-    p = num_perm_better / num_samples
-    return p
+    p = num_more_extreme / num_samples
+    return (mean_change, p)
 
 
 # pre_scores and post_scores are lists of np arrays.
@@ -82,7 +65,7 @@ def compareTests(pre_scores, post_scores, pre_name = 'Pre', post_name = 'Post', 
             print 'Error reduction: %3.1f%%' % (error_reduction)
         print pre_scores[idx]
         print post_scores[idx]
-        pvalue = permutationTest(pre_scores[idx], post_scores[idx], num_samples)
+        pvalue = stratifiedPermutationTest(pre_scores[idx], post_scores[idx], num_samples)
         print 'P < ' + str(pvalue)
         print
         print score_name + " changes:"
@@ -159,17 +142,15 @@ def analyze(pre, post, pre_name = 'Pre', post_name = 'Post', test_names = [], qu
     print '{0:20s}  {1:12s} {2:12s}  {3:12s} {4:12s}'.format('Test', pre_name, post_name, 'Change', 'Significance')
     print "--------------------------------------------------------------------------------"
     for (idx, test_name) in enumerate(test_names):
-        (change, p) = swapTest(pre[idx], post[idx], num_samples)
-#        print '{0:16s} {1:<10.2f} {2:<10.2f} {3:<+10.2f} p < {4:<10.3f}'.format(test_name, np.mean(pre[idx]), np.mean(post[idx]), change, p)
+        (change, p) = stratifiedPermutationTest([pre[idx]], [post[idx]], num_samples)
         print "{name:16s} {pre_mean_vals[0]:>6}.{pre_mean_vals[1]:<6} {post_mean_vals[0]:>6}.{post_mean_vals[1]:<6} {change_vals[0]:>6}.{change_vals[1]:<6}    p < {p:<10.3f}".format(name=test_name, pre_mean_vals=splitNum(np.mean(pre[idx])), post_mean_vals=splitNum(np.mean(post[idx])), change_vals=splitNum(change, True), p=p)
 
 
     print "--------------------------------------------------------------------------------"
-    aggregate_pre = np.concatenate(pre)
-    aggregate_post = np.concatenate(post)
-    (change, p) = swapTest(aggregate_pre, aggregate_post, num_samples)
-#    print '{0:16s} {1:<10.2f} {2:<10.2f} {3:<+10.2f} p < {4:<10.3f}'.format('all', np.mean(aggregate_pre), np.mean(aggregate_post), change, p)
-    print "{name:16s} {pre_mean_vals[0]:>6}.{pre_mean_vals[1]:<6} {post_mean_vals[0]:>6}.{post_mean_vals[1]:<6} {change_vals[0]:>6}.{change_vals[1]:<6}    p < {p:<10.3f}".format(name='all', pre_mean_vals=splitNum(np.mean(aggregate_pre)), post_mean_vals=splitNum(np.mean(aggregate_post)), change_vals=splitNum(change), p=p)
+    (change, p) = stratifiedPermutationTest(pre, post, num_samples)
+    pre_mean = np.mean(np.concatenate(pre))
+    post_mean = np.mean(np.concatenate(post))
+    print "{name:16s} {pre_mean_vals[0]:>6}.{pre_mean_vals[1]:<6} {post_mean_vals[0]:>6}.{post_mean_vals[1]:<6} {change_vals[0]:>6}.{change_vals[1]:<6}    p < {p:<10.3f}".format(name='all', pre_mean_vals=splitNum(pre_mean), post_mean_vals=splitNum(post_mean), change_vals=splitNum(change), p=p)
 
     print
 
