@@ -11,6 +11,134 @@ using namespace std;
 using namespace Eigen;
 using namespace pl;
 
+/************************************************************
+ * TrajectoryStatistics
+ ************************************************************/
+
+std::string Trajectory::status(const std::string& prefix) const
+{
+  ostringstream oss;
+  oss << fixed << setprecision(3);
+  for(size_t i = 0; i < size(); ++i) {
+    oss << prefix << timestamps_[i] << "\t";
+    oss << prefix << centroids_[i].transpose() << endl;
+  }
+  return oss.str();
+}
+
+void TrajectoryStatistics::compute()
+{
+  const Trajectory& traj = *pull<const Trajectory*>("RawTrajectory");
+
+  // -- Center the trajectory at 0.
+  normalized_.clear();
+  normalized_.resize(traj.size());
+  for(size_t i = 0; i < traj.size(); ++i) {
+    ROS_ASSERT(traj.timestamps_[i] != 0);
+    normalized_.centroids_[i] = traj.centroids_[i] - traj.centroids_[0];
+    normalized_.timestamps_[i] = traj.timestamps_[i] - traj.timestamps_[0];
+  }
+
+  // -- Compute covariance.
+  Matrix2f cov = Matrix2f::Zero();
+  for(size_t i = 0; i < traj.size(); ++i) {
+    Vector2f pt = normalized_.centroids_[i].head(2);
+    cov += pt * pt.transpose();
+  }
+  cov /= normalized_.size();
+
+  // -- Compute rotation matrix.
+  SelfAdjointEigenSolver<Matrix2f> es(cov);
+  Vector2f pc = es.eigenvectors().col(0);
+  double theta = -atan2(pc(1), pc(0));
+  AngleAxis<float> aa(theta, Vector3f(0, 0, 1));
+  Affine3f rot;
+  rot = aa;
+
+  // -- Rotate.
+  for(size_t i = 0; i < normalized_.size(); ++i)
+    normalized_.centroids_[i] = rot * normalized_.centroids_[i];
+
+  // -- Compute statistics if the trajectory is long enough.
+  mean_speed_.resize(1);
+  mean_velocity_.resize(3);
+  mean_angular_speed_.resize(1);
+  mean_speed_.setZero();
+  mean_velocity_.setZero();
+  mean_angular_speed_.setZero();
+  if(traj.size() == 0) {
+    push<const Eigen::VectorXf*>("MeanSpeed", NULL);
+    push<const Eigen::VectorXf*>("MeanVelocity", NULL);
+    push<const Eigen::VectorXf*>("MeanAngularSpeed", NULL);
+  }
+  else {
+    velocities_.clear();
+    velocities_.reserve(traj.size());
+    timestamps_.clear();
+    timestamps_.reserve(traj.size());
+    size_t lookback = param<double>("Lookback");
+    ROS_ASSERT(lookback > 0);
+    float dt;
+    Vector3f vel;
+    Vector3f dx;
+    for(size_t i = lookback; i < normalized_.size(); ++i) {
+      dt = normalized_.timestamps_[i] - normalized_.timestamps_[i-lookback];
+      bool bad_dt = (dt > 10.0 || dt <= 0);
+      if(bad_dt) {
+        cout << "Bad dt in TrajectoryStatistics.  Are the timestamps correct?"
+             << "  dt: " << dt << endl;
+        cout << "Trajectory: " << endl << traj.status("  ") << endl;
+      }
+      ROS_ASSERT(!bad_dt);
+      dx = normalized_.centroids_[i] - normalized_.centroids_[i-lookback];
+      vel = dx / dt;
+      mean_velocity_ += vel;
+      mean_speed_(0) += vel.norm();
+      velocities_.push_back(vel);
+      timestamps_.push_back(normalized_.timestamps_[i]);
+    }
+    mean_speed_ /= velocities_.size();
+    mean_velocity_ /= velocities_.size();
+    push<const Eigen::VectorXf*>("MeanSpeed", &mean_speed_);
+    push<const Eigen::VectorXf*>("MeanVelocity", &mean_velocity_);
+
+    if(velocities_.size() < 2) {
+      push<const Eigen::VectorXf*>("MeanAngularSpeed", NULL);
+    }
+    else {
+      float thresh = 0.25;
+      float num = 0;
+      for(size_t i = 1; i < velocities_.size(); ++i) {
+        const Vector3f& vel0 = velocities_[i-1];
+        const Vector3f& vel1 = velocities_[i];
+        float norm0 = vel0.norm();
+        float norm1 = vel1.norm();
+        if(norm0 > thresh && norm1 > thresh) {
+          double theta = fabs(acos(vel0.dot(vel1) / (norm0 * norm1)));
+          double dt = timestamps_[i] - timestamps_[i-1];
+          mean_angular_speed_(0) += theta / dt;
+        }
+        ++num;  // mean_angular_speed_(0) += 0 in this case.
+      }
+      mean_angular_speed_ /= num;
+      push<const Eigen::VectorXf*>("MeanAngularSpeed", &mean_angular_speed_);
+    }
+  }
+}
+
+void TrajectoryStatistics::debug() const
+{
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "Mean speed: " << mean_speed_.transpose() << endl;
+  f << "Mean velocity: " << mean_velocity_.transpose() << endl;
+  f << "Mean angular speed: " << mean_angular_speed_.transpose() << endl;
+  //const Trajectory& traj = *pull<const Trajectory*>("RawTrajectory");
+  // f << "Normalized trajectory / Original trajectory: " << endl;
+  // for(size_t i = 0; i < normalized_.size(); ++i)
+  //   f << "  " << normalized_.centroids_[i].transpose() << "\t"
+  //     << traj.centroids_[i].transpose() << endl;
+  f.close();
+}
 
 /************************************************************
  * BlobProjector

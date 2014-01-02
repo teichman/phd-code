@@ -6,6 +6,55 @@
 #include <name_mapping/name_mapping.h>
 #include <jarvis/tracker.h>
 
+struct Trajectory
+{
+  //! Fixed-size vectorizable Eigen objects don't mix with
+  //! STL containers.  Vector3f is fine, though.
+  //! See http://eigen.tuxfamily.org/dox/TopicStlContainers.html.
+  //! z should point up.
+  std::vector<Eigen::Vector3f> centroids_;
+  //! seconds.
+  std::vector<double> timestamps_;
+
+  void clear() { centroids_.clear(); timestamps_.clear(); }
+  void reserve(size_t num) { centroids_.reserve(num); timestamps_.reserve(num); }
+  void resize(size_t num) { centroids_.resize(num); timestamps_.resize(num); }
+  size_t size() const { ROS_ASSERT(centroids_.size() == timestamps_.size()); return centroids_.size(); }
+  std::string status(const std::string& prefix = "") const;
+};
+
+//! Normalizes centroid history, i.e. sets the first centroid to (0, 0, 0)
+//! and rotates the trajectory around the z axis so that the first principal
+//! component points along the y axis.
+//! Provides summarizing statistics about the normalized centroid history.
+class TrajectoryStatistics : public pl::Pod
+{
+public:
+  DECLARE_POD(TrajectoryStatistics);
+  TrajectoryStatistics(std::string name) :
+    Pod(name)
+  {
+    declareInput<const Trajectory*>("RawTrajectory");
+    declareParam<double>("Lookback", 1);
+    declareOutput<const Eigen::VectorXf*>("MeanSpeed");
+    declareOutput<const Eigen::VectorXf*>("MeanVelocity");
+    declareOutput<const Eigen::VectorXf*>("MeanAngularSpeed");
+    //declareOutput<const std::vector<Eigen::VectorXf>*>("CentroidHistory");
+    //declareOutput<const std::vector<Eigen::VectorXf>*>("VelocityHistory");
+  }
+
+protected:
+  Trajectory normalized_;
+  Eigen::VectorXf mean_speed_;
+  Eigen::VectorXf mean_velocity_;
+  Eigen::VectorXf mean_angular_speed_;
+  std::vector<Eigen::Vector3f> velocities_;
+  std::vector<double> timestamps_;
+  
+  void compute();
+  void debug() const;
+};
+
 class BlobProjector : public pl::Pod
 {
 public:
