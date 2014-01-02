@@ -35,7 +35,8 @@ void TrajectoryAccumulator::compute()
   Vector4f centroid;
   pcl::compute3DCentroid(cloud, centroid);
   traj_.centroids_.push_back(centroid.head(3));
-  traj_.timestamps_.push_back(cloud.header.stamp * 1e-9);
+  traj_.timestamps_.push_back((double)cloud.header.stamp * 1e-9);
+  cout << cloud.header.stamp << " " << (double)cloud.header.stamp * 1e-9 << endl;
   ROS_ASSERT(traj_.timestamps_.back() != 0);
 
   push<const Trajectory*>("Trajectory", &traj_);
@@ -46,7 +47,8 @@ void TrajectoryAccumulator::debug() const
   ofstream f((debugBasePath() + ".txt").c_str());
   f << "Trajectory: " << endl;
   for(size_t i = 0; i < traj_.size(); ++i)
-    f << "  " << traj_.centroids_[i].transpose() << "   " << traj_.timestamps_[i] << endl;
+    f << "  " << traj_.centroids_[i].transpose() << "   "
+      << setprecision(16) << setw(16) << setfill('0') << traj_.timestamps_[i] << endl;
   f.close();
 }
 
@@ -368,9 +370,17 @@ void GravitationalCloudOrienter::compute()
   for(size_t i = 0; i < cloud->size(); ++i)
     highest_point_(0) = max(highest_point_(0), up_.dot(cloud->at(i).getVector3fMap()));
 
-  // -- Set the timestamp of the cloud to be the sensor timestamp closest to
+  // -- Set the timestamp of the clouds to be the wall timestamp closest to
   //    when the Blob was seen.  See TrajectoryAccumulator.
-  oriented_->header.stamp = blob.sensor_timestamp_ * (uint64_t)1e9;
+  //    This should probably be sensor_timestamp_ but that may have been
+  //    incorrectly rounded to the nearest second.
+
+  upped_->header.stamp = blob.wall_timestamp_.toSec() * (uint64_t)1e9;
+  oriented_->header.stamp = blob.wall_timestamp_.toSec() * (uint64_t)1e9;
+
+  // upped_->header.stamp = blob.sensor_timestamp_ * (uint64_t)1e9;
+  // oriented_->header.stamp = blob.sensor_timestamp_ * (uint64_t)1e9;
+  // cout << "Timestamps: " << blob.sensor_timestamp_ << " " << blob.wall_timestamp_ << endl;
   
   push<Cloud::ConstPtr>("OrientedCloud", oriented_);
   push<Cloud::ConstPtr>("UppedCloud", upped_);
@@ -380,15 +390,17 @@ void GravitationalCloudOrienter::compute()
 
 void GravitationalCloudOrienter::debug() const
 {
+  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
+
   ofstream f((debugBasePath() + ".txt").c_str());
   f << "height_: " << height_.transpose() << endl;
   f << "highest_point_: " << highest_point_.transpose() << endl;
   f << "raw_to_up_: " << endl << raw_to_up_.matrix() << endl;
   f << "oriented_ size: " << oriented_->size() << endl;
   f << "oriented_ timestamp: " << oriented_->header.stamp * 1e-9 << endl;
+  f << "blob sensor_timestamp_: " << blob.sensor_timestamp_ << endl;
   f.close();
 
-  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
   pcl::io::savePCDFileBinary(debugBasePath() + "-00-original.pcd", *blob.cloud_);
   pcl::io::savePCDFileBinary(debugBasePath() + "-01-upped.pcd", *upped_);
   pcl::io::savePCDFileBinary(debugBasePath() + "-02-demeaned.pcd", *demeaned_);
