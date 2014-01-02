@@ -22,6 +22,7 @@ public:
   NameMapping dmap() const { return pl_.pod<DescriptorAggregator>()->dmap(); }
   void setDebug(bool debug) { pl_.setDebug(debug); }
   void setUpVector(const Eigen::VectorXf up);
+  void reset() { pl_.reset(); }
 };
 
 double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td,

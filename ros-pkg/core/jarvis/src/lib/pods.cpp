@@ -11,9 +11,6 @@ using namespace std;
 using namespace Eigen;
 using namespace pl;
 
-/************************************************************
- * TrajectoryStatistics
- ************************************************************/
 
 std::string Trajectory::status(const std::string& prefix) const
 {
@@ -26,9 +23,41 @@ std::string Trajectory::status(const std::string& prefix) const
   return oss.str();
 }
 
+
+/************************************************************
+ * TrajectoryAccumulator
+ ************************************************************/
+
+void TrajectoryAccumulator::compute()
+{
+  const Cloud& cloud = *pull<Cloud::ConstPtr>("UppedCloud");
+
+  Vector4f centroid;
+  pcl::compute3DCentroid(cloud, centroid);
+  traj_.centroids_.push_back(centroid.head(3));
+  traj_.timestamps_.push_back(cloud.header.stamp * 1e-9);
+  ROS_ASSERT(traj_.timestamps_.back() != 0);
+
+  push<const Trajectory*>("Trajectory", &traj_);
+}
+
+void TrajectoryAccumulator::debug() const
+{
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "Trajectory: " << endl;
+  for(size_t i = 0; i < traj_.size(); ++i)
+    f << "  " << traj_.centroids_[i].transpose() << "   " << traj_.timestamps_[i] << endl;
+  f.close();
+}
+
+
+/************************************************************
+ * TrajectoryStatistics
+ ************************************************************/
+
 void TrajectoryStatistics::compute()
 {
-  const Trajectory& traj = *pull<const Trajectory*>("RawTrajectory");
+  const Trajectory& traj = *pull<const Trajectory*>("Trajectory");
 
   // -- Center the trajectory at 0.
   normalized_.clear();
@@ -307,15 +336,17 @@ void GravitationalCloudOrienter::compute()
   Cloud::ConstPtr cloud = blob.cloud_;
   ROS_ASSERT(up_.rows() == 3);
 
-  // -- Demean the input cloud.
+  // -- Rotate the cloud so that z points up.
+  pcl::transformPointCloud(*cloud, *upped_, raw_to_up_);
+  
+  // -- Demean the cloud.
   Vector4f centroid;
-  pcl::compute3DCentroid(*cloud, centroid);
-  pcl::demeanPointCloud(*cloud, centroid, *demeaned_);
+  pcl::compute3DCentroid(*upped_, centroid);
+  pcl::demeanPointCloud(*upped_, centroid, *demeaned_);
   ROS_ASSERT(!demeaned_->empty());
 
-  // -- Rotate the demeaned cloud so that it points up.  Project into the ground plane.
-  pcl::transformPointCloud(*demeaned_, *upped_, raw_to_up_);
-  *projected_ = *upped_;
+  // -- Project into the ground plane.
+  *projected_ = *demeaned_;
   for(size_t i = 0; i < projected_->size(); ++i)
     projected_->at(i).z = 0;
   
@@ -324,7 +355,7 @@ void GravitationalCloudOrienter::compute()
   pca.setInputCloud(projected_);
   Matrix4f rotation = Matrix4f::Identity();
   rotation.block<3, 3>(0, 0) = pca.getEigenVectors();
-  pcl::transformPointCloud(*upped_, *oriented_, rotation);
+  pcl::transformPointCloud(*demeaned_, *oriented_, rotation);
     
   // -- Get height of the visible object.
   Vector4f minpt, maxpt;
@@ -336,24 +367,32 @@ void GravitationalCloudOrienter::compute()
   highest_point_(0) = -numeric_limits<float>::max();
   for(size_t i = 0; i < cloud->size(); ++i)
     highest_point_(0) = max(highest_point_(0), up_.dot(cloud->at(i).getVector3fMap()));
+
+  // -- Set the timestamp of the cloud to be the sensor timestamp closest to
+  //    when the Blob was seen.  See TrajectoryAccumulator.
+  oriented_->header.stamp = blob.sensor_timestamp_ * (uint64_t)1e9;
   
   push<Cloud::ConstPtr>("OrientedCloud", oriented_);
+  push<Cloud::ConstPtr>("UppedCloud", upped_);
   push<const VectorXf*>("Height", &height_);
   push<const VectorXf*>("HighestPoint", &highest_point_);
 }
 
 void GravitationalCloudOrienter::debug() const
 {
-  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
-  pcl::io::savePCDFileBinary(debugBasePath() + "-00-original.pcd", *blob.cloud_);
-  pcl::io::savePCDFileBinary(debugBasePath() + "-01-demeaned.pcd", *demeaned_);
-  pcl::io::savePCDFileBinary(debugBasePath() + "-02-upped.pcd", *upped_);
-  pcl::io::savePCDFileBinary(debugBasePath() + "-03-oriented.pcd", *oriented_);
   ofstream f((debugBasePath() + ".txt").c_str());
   f << "height_: " << height_.transpose() << endl;
   f << "highest_point_: " << highest_point_.transpose() << endl;
   f << "raw_to_up_: " << endl << raw_to_up_.matrix() << endl;
+  f << "oriented_ size: " << oriented_->size() << endl;
+  f << "oriented_ timestamp: " << oriented_->header.stamp * 1e-9 << endl;
   f.close();
+
+  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
+  pcl::io::savePCDFileBinary(debugBasePath() + "-00-original.pcd", *blob.cloud_);
+  pcl::io::savePCDFileBinary(debugBasePath() + "-01-upped.pcd", *upped_);
+  pcl::io::savePCDFileBinary(debugBasePath() + "-02-demeaned.pcd", *demeaned_);
+  pcl::io::savePCDFileBinary(debugBasePath() + "-03-oriented.pcd", *oriented_);
 }
 
 /************************************************************

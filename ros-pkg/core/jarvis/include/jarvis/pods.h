@@ -23,6 +23,30 @@ struct Trajectory
   std::string status(const std::string& prefix = "") const;
 };
 
+//! As new OrientedClouds get pushed in, the Trajectory gets longer.
+//! Trajectory is cleared on reset().
+class TrajectoryAccumulator : public pl::Pod
+{
+public:
+  DECLARE_POD(TrajectoryAccumulator);
+  TrajectoryAccumulator(std::string name) :
+    Pod(name)
+  {
+    traj_.reserve(1000);
+
+    // Note that this cloud needs to NOT be de-meaned.
+    declareInput<Cloud::ConstPtr>("UppedCloud");
+    declareOutput<const Trajectory*>("Trajectory");
+  }
+
+protected:
+  Trajectory traj_;
+  
+  void compute();
+  void debug() const;
+  void reset() { traj_.clear(); }
+};
+
 //! Normalizes centroid history, i.e. sets the first centroid to (0, 0, 0)
 //! and rotates the trajectory around the z axis so that the first principal
 //! component points along the y axis.
@@ -34,7 +58,7 @@ public:
   TrajectoryStatistics(std::string name) :
     Pod(name)
   {
-    declareInput<const Trajectory*>("RawTrajectory");
+    declareInput<const Trajectory*>("Trajectory");
     declareParam<double>("Lookback", 1);
     declareOutput<const Eigen::VectorXf*>("MeanSpeed");
     declareOutput<const Eigen::VectorXf*>("MeanVelocity");
@@ -190,8 +214,8 @@ public:
   DECLARE_POD(GravitationalCloudOrienter);
   GravitationalCloudOrienter(std::string name) :
     Pod(name),
-    demeaned_(new Cloud),
     upped_(new Cloud),
+    demeaned_(new Cloud),
     projected_(new Cloud),
     oriented_(new Cloud),
     height_(1),
@@ -199,6 +223,7 @@ public:
   {
     declareInput<Blob::ConstPtr>("ProjectedBlob");
     declareOutput<Cloud::ConstPtr>("OrientedCloud");
+    declareOutput<Cloud::ConstPtr>("UppedCloud");  // Not de-meaned.
     declareOutput<const Eigen::VectorXf*>("Height");
     declareOutput<const Eigen::VectorXf*>("HighestPoint");
   }
@@ -211,8 +236,9 @@ public:
 protected:
   Eigen::VectorXf up_;
   Eigen::Affine3f raw_to_up_;
-  Cloud::Ptr demeaned_;
+  //! Just rotated so that z is up.  Not de-meaned.
   Cloud::Ptr upped_;
+  Cloud::Ptr demeaned_;
   Cloud::Ptr projected_;
   Cloud::Ptr oriented_;
   Eigen::VectorXf height_;

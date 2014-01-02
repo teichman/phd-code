@@ -17,6 +17,23 @@ Pipeline:
       Params: ~
       Inputs:
         ProjectedBlob: BlobProjector.ProjectedBlob
+    - Name: TrajectoryAccumulator
+      Type: TrajectoryAccumulator
+      Params: ~
+      Inputs:
+        UppedCloud: GravitationalCloudOrienter.UppedCloud
+    - Name: TrajectoryStatistics01
+      Type: TrajectoryStatistics
+      Params:
+        Lookback: 1
+      Inputs:
+        Trajectory: TrajectoryAccumulator.Trajectory
+    - Name: TrajectoryStatistics10
+      Type: TrajectoryStatistics
+      Params:
+        Lookback: 10
+      Inputs:
+        Trajectory: TrajectoryAccumulator.Trajectory
     - Name: CloudOrienter
       Type: CloudOrienter
       Params:
@@ -161,6 +178,12 @@ Pipeline:
           HSVHistogram.Value
           CloudOrienter.Eigenvalues
           CloudOrienter.RelativeCurvature
+          TrajectoryStatistics01.MeanSpeed
+          TrajectoryStatistics01.MeanVelocity
+          TrajectoryStatistics01.MeanAngularSpeed
+          TrajectoryStatistics10.MeanSpeed
+          TrajectoryStatistics10.MeanVelocity
+          TrajectoryStatistics10.MeanAngularSpeed
 #          GravitationalCloudOrienter.Height
 #          GravitationalCloudOrienter.HighestPoint
           
