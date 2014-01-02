@@ -18,6 +18,7 @@ void DescriptorPipeline::registerPodTypes()
   REGISTER_POD_TEMPLATE(EntryPoint, Blob::Ptr);
   REGISTER_POD(TrajectoryAccumulator);
   REGISTER_POD(TrajectoryStatistics);
+  REGISTER_POD(SimpleTrajectoryStatistics);
   REGISTER_POD(BlobProjector);
   REGISTER_POD(BoundingBoxSize);
   REGISTER_POD(DescriptorAggregator);

@@ -22,16 +22,18 @@ Pipeline:
       Params: ~
       Inputs:
         UppedCloud: GravitationalCloudOrienter.UppedCloud
-    - Name: TrajectoryStatistics01
-      Type: TrajectoryStatistics
+    - Name: SimpleTrajectoryStatistics01
+      Type: SimpleTrajectoryStatistics
       Params:
         Lookback: 1
+        MaxValidSpeed: 5
       Inputs:
         Trajectory: TrajectoryAccumulator.Trajectory
-    - Name: TrajectoryStatistics10
-      Type: TrajectoryStatistics
+    - Name: SimpleTrajectoryStatistics10
+      Type: SimpleTrajectoryStatistics
       Params:
         Lookback: 10
+        MaxValidSpeed: 5
       Inputs:
         Trajectory: TrajectoryAccumulator.Trajectory
     - Name: CloudOrienter
@@ -178,12 +180,12 @@ Pipeline:
           HSVHistogram.Value
           CloudOrienter.Eigenvalues
           CloudOrienter.RelativeCurvature
-          TrajectoryStatistics01.MeanSpeed
-          TrajectoryStatistics01.MeanVelocity
-          TrajectoryStatistics01.MeanAngularSpeed
-          TrajectoryStatistics10.MeanSpeed
-          TrajectoryStatistics10.MeanVelocity
-          TrajectoryStatistics10.MeanAngularSpeed
-#          GravitationalCloudOrienter.Height
-#          GravitationalCloudOrienter.HighestPoint
+          SimpleTrajectoryStatistics01.Velocity
+          SimpleTrajectoryStatistics01.Speed
+          SimpleTrajectoryStatistics01.LateralSpeed
+          SimpleTrajectoryStatistics01.VerticalSpeed
+          SimpleTrajectoryStatistics10.Velocity
+          SimpleTrajectoryStatistics10.Speed
+          SimpleTrajectoryStatistics10.LateralSpeed
+          SimpleTrajectoryStatistics10.VerticalSpeed
           

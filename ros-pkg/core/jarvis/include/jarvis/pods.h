@@ -47,6 +47,45 @@ protected:
   void reset() { traj_.clear(); }
 };
 
+
+class SimpleTrajectoryStatistics : public pl::Pod
+{
+public:
+  DECLARE_POD(SimpleTrajectoryStatistics);
+  SimpleTrajectoryStatistics(std::string name) :
+    Pod(name),
+    dpos_(3),
+    velocity_(3),
+    speed_(1),
+    lateral_speed_(1),
+    vertical_speed_(1)
+  {
+    declareInput<const Trajectory*>("Trajectory");
+    declareParam<double>("Lookback", 1);
+    // If speed is greater than this, throw out the data.
+    // This is because of a bug in the tracker.  The tracker needs to
+    // be fixed, but it's too late for the large amounts of data I've
+    // already labeled, so I need a gross workaround (i.e. this) as well.
+    declareParam<double>("MaxValidSpeed", 5);
+    declareOutput<const Eigen::VectorXf*>("Velocity");
+    declareOutput<const Eigen::VectorXf*>("Speed");
+    declareOutput<const Eigen::VectorXf*>("LateralSpeed");
+    declareOutput<const Eigen::VectorXf*>("VerticalSpeed");
+  }
+
+protected:
+  Eigen::VectorXf dpos_;
+  double dt_;
+  Eigen::VectorXf velocity_;
+  Eigen::VectorXf speed_;
+  Eigen::VectorXf lateral_speed_;
+  Eigen::VectorXf vertical_speed_;
+
+  void pass();
+  void compute();
+  void debug() const;
+};
+  
 //! Normalizes centroid history, i.e. sets the first centroid to (0, 0, 0)
 //! and rotates the trajectory around the z axis so that the first principal
 //! component points along the y axis.

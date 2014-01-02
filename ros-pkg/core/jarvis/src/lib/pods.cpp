@@ -54,6 +54,70 @@ void TrajectoryAccumulator::debug() const
 
 
 /************************************************************
+ * SimpleTrajectoryStatistics
+ ************************************************************/
+
+void SimpleTrajectoryStatistics::pass()
+{
+  velocity_.setConstant(numeric_limits<float>::quiet_NaN());
+  speed_.setConstant(numeric_limits<float>::quiet_NaN());
+  lateral_speed_.setConstant(numeric_limits<float>::quiet_NaN());
+  vertical_speed_.setConstant(numeric_limits<float>::quiet_NaN());
+  push<const Eigen::VectorXf*>("Velocity", NULL);
+  push<const Eigen::VectorXf*>("Speed", NULL);
+  push<const Eigen::VectorXf*>("LateralSpeed", NULL);
+  push<const Eigen::VectorXf*>("VerticalSpeed", NULL);
+}
+
+void SimpleTrajectoryStatistics::compute()
+{
+  const Trajectory& traj = *pull<const Trajectory*>("Trajectory");
+  size_t lookback = param<double>("Lookback");
+  ROS_ASSERT(lookback > 0);
+  if(traj.size() < lookback + 1) {
+    pass();
+    return;
+  }
+
+  dpos_ = traj.centroids_.back() - traj.centroids_[traj.centroids_.size() - lookback - 1];
+  dt_ = traj.timestamps_.back() - traj.timestamps_[traj.timestamps_.size() - lookback - 1];
+
+  velocity_ = dpos_ / dt_;
+  speed_(0) = velocity_.norm();
+  lateral_speed_(0) = velocity_.head(2).norm();
+  vertical_speed_(0) = velocity_.tail(1).norm();
+
+  if(speed_(0) > param<double>("MaxValidSpeed")) {
+    pass();
+    return;
+  }
+
+  push<const Eigen::VectorXf*>("Velocity", &velocity_);
+  push<const Eigen::VectorXf*>("Speed", &speed_);
+  push<const Eigen::VectorXf*>("LateralSpeed", &lateral_speed_);
+  push<const Eigen::VectorXf*>("VerticalSpeed", &vertical_speed_);
+}
+
+void SimpleTrajectoryStatistics::debug() const
+{
+  const Trajectory& traj = *pull<const Trajectory*>("Trajectory");
+  
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "Current centroid: " << traj.centroids_.back().transpose() << endl;
+  size_t lookback = param<double>("Lookback");
+  f << "Lookback: " << lookback << endl;
+  f << "Previous centroid: " << traj.centroids_[traj.centroids_.size() - lookback - 1].transpose() << endl;
+  f << "dt: " << dt_ << endl;
+  f << "dpos: " << dpos_.transpose() << endl;
+  f << "velocity: " << velocity_.transpose() << endl;
+  f << "speed: " << speed_ << endl;
+  f << "lateral_speed: " << lateral_speed_ << endl;
+  f << "vertical_speed: " << vertical_speed_ << endl;
+  f.close();
+}
+
+
+/************************************************************
  * TrajectoryStatistics
  ************************************************************/
 
@@ -163,11 +227,13 @@ void TrajectoryStatistics::debug() const
   f << "Mean speed: " << mean_speed_.transpose() << endl;
   f << "Mean velocity: " << mean_velocity_.transpose() << endl;
   f << "Mean angular speed: " << mean_angular_speed_.transpose() << endl;
-  //const Trajectory& traj = *pull<const Trajectory*>("RawTrajectory");
-  // f << "Normalized trajectory / Original trajectory: " << endl;
-  // for(size_t i = 0; i < normalized_.size(); ++i)
-  //   f << "  " << normalized_.centroids_[i].transpose() << "\t"
-  //     << traj.centroids_[i].transpose() << endl;
+
+  const Trajectory& traj = *pull<const Trajectory*>("Trajectory");
+  f << "Normalized trajectory / Original trajectory: " << endl;
+  for(size_t i = 0; i < normalized_.size(); ++i)
+    f << "  " << normalized_.centroids_[i].transpose() << "\t"
+      << traj.centroids_[i].transpose() << endl;
+
   f.close();
 }
 
