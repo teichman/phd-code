@@ -145,8 +145,17 @@ protected:
   TrackDataset::Ptr annotated_;  // The first part of Da
   TrackDataset::Ptr autobg_;  // The second part of Da
   TrackDataset::Ptr unsupervised_;  // Du
-  //! If set, will be evaluated on.
+  //! If set, will be evaluated on.  This should be
+  //! a comprehensive test dataset for evaluation purposes.
+  //! It is not assumed to be generally available.
   TrackDataset::Ptr test_;
+  //! Some annotated examples are diverted to this dataset.
+  //! It is for estimating classifier health for the end user
+  //! at runtime, when a large test_ dataset is not available.
+  //! This data is not trained on.
+  TrackDataset::Ptr validation_;
+  //! Used for determining which annotated examples end up in validation_.
+  size_t ann_counter_;
   //! The unsupervised_ dataset contains labels in {-1, 0, +1}.
   //! Here, we store the actual log odds.
   std::vector<Label> unsupervised_logodds_;
