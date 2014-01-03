@@ -24,6 +24,8 @@ OnlineLearner::OnlineLearner(double emax,
   annotated_(new TrackDataset),
   autobg_(new TrackDataset),
   unsupervised_(new TrackDataset),
+  validation_(new TrackDataset),
+  ann_counter_(0),
   viewable_unsupervised_(new TrackDataset),
   max_iters_(max_iters),
   snapshot_every_(snapshot_every),
@@ -190,18 +192,30 @@ void OnlineLearner::handleAnnotatedData()
   incoming_annotated_.clear();
   saveByClassAndLabel(new_annotations, iter_dir_ + "/annotated");
 
-  // -- Classify them all.
-  vector<Label> predictions(new_annotations.size());
+  // -- Split them between annotated_ and validation_.
+  TrackDataset annotations_to_use;
+  annotations_to_use.applyNameMappings(new_annotations);
+  for(size_t i = 0; i < new_annotations.size(); ++i, ++ann_counter_) {
+    if(ann_counter_ % 4 == 0) {
+      validation_->tracks_.push_back(new_annotations.tracks_[i]);
+    }
+    else {
+      annotations_to_use.tracks_.push_back(new_annotations.tracks_[i]);
+    }
+  }
+      
+  // -- Classify those that don't end up in validation_.
+  vector<Label> predictions(annotations_to_use.size());
   lockRead();
-  ROS_ASSERT(classifier_->nameMappingsAreEqual(new_annotations));
+  ROS_ASSERT(classifier_->nameMappingsAreEqual(annotations_to_use));
 #pragma omp parallel for
-  for(size_t i = 0; i < new_annotations.size(); ++i)
-    predictions[i] = classifier_->classifyTrack(new_annotations[i]);
+  for(size_t i = 0; i < annotations_to_use.size(); ++i)
+    predictions[i] = classifier_->classifyTrack(annotations_to_use[i]);
   unlockRead();
 
   // -- De-induct tracks that the new annotations indicate 
   //    should not have been inducted.
-  retrospection(new_annotations, predictions);
+  retrospection(annotations_to_use, predictions);
 }
 
 void OnlineLearner::retrospection(const TrackDataset& new_annotations, const std::vector<Label>& predictions)
@@ -820,18 +834,27 @@ void OnlineLearner::evaluate()
   MatrixXf annotations, predictions;
   ev.evaluateParallel(*test_, &annotations, &predictions);
   ev.plot_ = false;
-  ev.saveResults(iter_dir_);
+  bfs::create_directory(iter_dir_ + "/test_results/");
+  ev.saveResults(iter_dir_ + "/test_results/");
   hrt.stop();
   ROS_DEBUG_STREAM(hrt.report() << flush);
   eigen_extensions::save(annotations, iter_dir_ + "/test_track_annotations.eig");
   eigen_extensions::save(predictions, iter_dir_ + "/test_track_predictions.eig");
   nameMapping("cmap").save(iter_dir_ + "/cmap.txt");
-  // Save evaluation results for the annotated data, too.
+  // -- Save evaluation results for the annotated data, too.
   Evaluator ev_ann(classifier_);
   ev_ann.plot_ = false;
   ev_ann.evaluateParallel(*annotated_);
-  bfs::create_directory(iter_dir_ + "/test_results_annotated/");
-  ev_ann.saveResults(iter_dir_ + "/test_results_annotated/");
+  bfs::create_directory(iter_dir_ + "/annotation_results/");
+  ev_ann.saveResults(iter_dir_ + "/annotation_results/");
+
+  // -- ... and the validation_ set.
+  Evaluator ev_val(classifier_);
+  ev_val.plot_ = false;
+  ev_val.evaluateParallel(*validation_);
+  bfs::create_directory(iter_dir_ + "/validation_results/");
+  ev_val.saveResults(iter_dir_ + "/validation_results/");
+
   unlockRead();
 }
 
@@ -1025,6 +1048,9 @@ std::string OnlineLearner::status(const std::string& prefix) const
   oss << prefix << "------------------------------------------------------------" << endl;
   oss << prefix << "Unsupervised dataset:" << endl;
   oss << unsupervised_->status(prefix + "  ", false);
+  oss << prefix << "------------------------------------------------------------" << endl;
+  oss << prefix << "Validation dataset:" << endl;
+  oss << validation_->status(prefix + "  ", false);
 
   oss << prefix << "============================================================" << endl;
   oss << prefix << "= Bookkeeping params" << endl;
@@ -1061,6 +1087,7 @@ void OnlineLearner::_applyNameTranslator(const std::string& id, const NameTransl
   annotated_->applyNameTranslator(id, translator);
   autobg_->applyNameTranslator(id, translator);
   unsupervised_->applyNameTranslator(id, translator);
+  validation_->applyNameTranslator(id, translator);
   if(test_)
     test_->applyNameTranslator(id, translator);
   
@@ -1093,6 +1120,8 @@ void OnlineLearner::serialize(std::ostream& out) const
   out << *annotated_;
   out << *autobg_;
   out << *unsupervised_;
+  out << *validation_;
+  eigen_extensions::serializeScalar(ann_counter_, out);
   for(size_t i = 0; i < unsupervised_logodds_.size(); ++i)
     out << unsupervised_logodds_[i];
 
@@ -1144,6 +1173,9 @@ void OnlineLearner::deserialize(std::istream& in)
   in >> *autobg_;
   unsupervised_ = TrackDataset::Ptr(new TrackDataset);
   in >> *unsupervised_;
+  validation_ = TrackDataset::Ptr(new TrackDataset);
+  in >> *validation_;
+  eigen_extensions::deserializeScalar(in, &ann_counter_);
 
   unsupervised_logodds_.resize(unsupervised_->size());
   for(size_t i = 0; i < unsupervised_logodds_.size(); ++i)
