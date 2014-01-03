@@ -36,7 +36,6 @@ void TrajectoryAccumulator::compute()
   pcl::compute3DCentroid(cloud, centroid);
   traj_.centroids_.push_back(centroid.head(3));
   traj_.timestamps_.push_back((double)cloud.header.stamp * 1e-9);
-  cout << cloud.header.stamp << " " << (double)cloud.header.stamp * 1e-9 << endl;
   ROS_ASSERT(traj_.timestamps_.back() != 0);
 
   push<const Trajectory*>("Trajectory", &traj_);
