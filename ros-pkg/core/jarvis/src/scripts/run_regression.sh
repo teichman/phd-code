@@ -82,7 +82,7 @@ echo
 echo -- Cleaning up. --
 echo
 cp `find $RUN_DIR/induction -name classifier.gc | sort | tail -n1` $RUN_DIR/induction/final_classifier.gc
-cp `find $RUN_DIR/induction -name track_results.txt | sort | tail -n1` $RUN_DIR/induction/final_track_results.txt
+cp `find $RUN_DIR/induction -name track_results.txt | sort | grep test_results | tail -n1` $RUN_DIR/induction/final_track_results.txt
 rm `find $RUN_DIR/induction -name classifier.gc`
 rm `find $RUN_DIR/induction -name 'annotated*.td'`
 rm `find $RUN_DIR/induction -name '*.eig'`
