@@ -69,6 +69,10 @@ public:
   //! Returns the sparsity of the weak classifiers for each class.
   //! Each element is in [0, 1].
   Eigen::ArrayXf sparsity() const;
+  //! instance must have a label.
+  void computeCellIndexWeighting(const Instance& instance,
+                                 std::vector<CellIndex>* index,
+                                 std::vector<double>* ci_weights) const;
   size_t numCells() const;
   size_t numElements() const;
   size_t numResolutions() const { return grids_.size(); }
@@ -79,6 +83,12 @@ protected:
   void classify(const Eigen::VectorXf& descriptor, size_t id, Label* prediction) const;
   void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
 
+  void computeCellIndexWeighting(const Label& annotation,
+                                 const Eigen::VectorXf& descriptor,
+                                 CellIndex ci,
+                                 std::vector<CellIndex>* index,
+                                 std::vector<double>* ci_weights) const;
+  
   friend class StochasticLogisticTrainer;
 };
 

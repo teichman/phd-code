@@ -222,6 +222,44 @@ size_t GridClassifier::numElements() const
   return num;
 }
 
+// ci.didx_ must be set correctly.  The other members of ci can be ignored by the user of this function.
+void GridClassifier::computeCellIndexWeighting(const Label& annotation,
+                                               const Eigen::VectorXf& descriptor,
+                                               CellIndex ci,
+                                               std::vector<CellIndex>* index,
+                                               std::vector<double>* ci_weights) const
+{
+  for(ci.eidx_ = 0; ci.eidx_ < descriptor.rows(); ++ci.eidx_) { 
+    float val = descriptor(ci.eidx_);
+    for(ci.ridx_ = 0; ci.ridx_ < (int)grids_.size(); ++ci.ridx_) {
+      ROS_ASSERT(grids_[ci.ridx_][ci.didx_][ci.eidx_]);
+      ROS_ASSERT((int)grids_[ci.ridx_][ci.didx_].size() == descriptor.rows());
+      const Grid& grid = *grids_[ci.ridx_][ci.didx_][ci.eidx_];
+      ci.cidx_ = grid.getCellIdx(val);
+
+      //double weight = TBSSL_EXP(-annotation.dot(grid.cells_.col(ci.cidx_))) / descriptor.rows();
+      double weight = 1.0 / descriptor.rows();
+      ci_weights->push_back(weight);
+      index->push_back(ci);
+    }
+  }
+}
+
+void GridClassifier::computeCellIndexWeighting(const Instance& instance,
+                                               std::vector<CellIndex>* index,
+                                               std::vector<double>* ci_weights) const
+{
+  index->clear();
+  ci_weights->clear();
+
+  CellIndex ci;
+  for(ci.didx_ = 0; ci.didx_ < (int)instance.size(); ++ci.didx_)
+    if(instance[ci.didx_])
+      computeCellIndexWeighting(instance.label_, *instance[ci.didx_], ci, index, ci_weights);
+
+  ROS_ASSERT(index->size() == ci_weights->size());
+}
+
 void GridClassifier::serialize(std::ostream& out) const
 {
   serializeNameMappings(out);
