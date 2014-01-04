@@ -304,9 +304,9 @@ namespace eigen_extensions {
     strm.read((char*)val, sizeof(T));
   }
 
-  template<class T>
-  inline std::vector<T> eigToVec(const Eigen::Matrix<T, Eigen::Dynamic, 1>& eig) {
-    std::vector<T> vec(eig.rows());
+  template<class S, int T>
+  inline std::vector<S> eigToVec(const Eigen::Matrix<S, T, 1>& eig) {
+    std::vector<S> vec(eig.rows());
     for(int i = 0; i < eig.rows(); ++i)
       vec[i] = eig.coeffRef(i);
     return vec;
