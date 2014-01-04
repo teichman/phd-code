@@ -29,13 +29,13 @@ cp.setup()
 tmpfile = '.python-astoehusathoesutahoneuth'
 
 # -- Load global statistics.
-os.system("grep 'Total acc' `find -name 'track_results.txt' | grep -v annotated | sort` | awk '{print $NF}' > " + tmpfile)
+os.system("grep 'Total acc' `find -name 'track_results.txt' | grep test_results | sort` | awk '{print $NF}' > " + tmpfile)
 accuracies = np.loadtxt(tmpfile)
-os.system("grep 'Total acc' `find -name 'track_results.txt' | grep -v annotated | sort` | awk -F/ '{print $2}' | grep -o '[0-9]*' > " + tmpfile)
+os.system("grep 'Total acc' `find -name 'track_results.txt' | grep test_results | sort` | awk -F/ '{print $2}' | grep -o '[0-9]*' > " + tmpfile)
 accuracies_idx = np.loadtxt(tmpfile)
-os.system("grep elapsed $(find -name track_results.txt | grep -v annotated | sort | awk -F/ '{print $2 \"/learner_status.txt\"}') | awk '{print $NF}' > " + tmpfile)
+os.system("grep elapsed $(find -name track_results.txt | grep test_results | sort | awk -F/ '{print $2 \"/learner_status.txt\"}') | awk '{print $NF}' > " + tmpfile)
 accuracies_times = np.loadtxt(tmpfile)
-os.system("grep 'Total unlabeled frames' $(find -name track_results.txt | grep -v annotated | sort | awk -F/ '{print $2 \"/learner_status.txt\"}') | awk '{print $NF}' > " + tmpfile)
+os.system("grep 'Total unlabeled frames' $(find -name track_results.txt | grep test_results | sort | awk -F/ '{print $2 \"/learner_status.txt\"}') | awk '{print $NF}' > " + tmpfile)
 eval_num_unl = np.loadtxt(tmpfile)
 os.system("grep 'Total unlabeled frames' `find -name 'learner_status.txt' | sort` | awk '{print $NF}' > " + tmpfile)
 num_unl = np.loadtxt(tmpfile)
@@ -46,11 +46,11 @@ os.system("grep 'Total elapsed' `find -name 'learner_status.txt' | sort` | awk '
 times = np.loadtxt(tmpfile)
 
 # -- Load class-only statistics
-os.system("grep -A12 'Class: " + args.cl + "' `find -name 'track_results.txt' | grep -v annotated | sort` | grep 'Per-class recall' | awk '{print $NF}' > " + tmpfile)
+os.system("grep -A12 'Class: " + args.cl + "' `find -name 'track_results.txt' | grep test_results | sort` | grep 'Per-class recall' | awk '{print $NF}' > " + tmpfile)
 cl_recall = np.loadtxt(tmpfile)
-os.system("grep -A12 'Class: " + args.cl + "' `find -name 'track_results.txt' | grep -v annotated | sort` | grep 'Per-class precision' | awk '{print $NF}' > " + tmpfile)
+os.system("grep -A12 'Class: " + args.cl + "' `find -name 'track_results.txt' | grep test_results | sort` | grep 'Per-class precision' | awk '{print $NF}' > " + tmpfile)
 cl_precision = np.loadtxt(tmpfile)
-os.system("grep -A10 'Class: " + args.cl + "' `find -name 'track_results.txt' | grep -v annotated | sort` | grep Accuracy | awk '{print $NF}' > " + tmpfile)
+os.system("grep -A10 'Class: " + args.cl + "' `find -name 'track_results.txt' | grep test_results | sort` | grep Accuracy | awk '{print $NF}' > " + tmpfile)
 cl_accuracy = np.loadtxt(tmpfile)
 
 os.system("grep 'Num tracks annotated as " + args.cl + "' `find -name 'learner_status.txt' | sort` | awk '{print $NF}' > " + tmpfile)

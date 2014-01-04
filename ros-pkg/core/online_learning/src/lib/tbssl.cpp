@@ -196,7 +196,7 @@ void OnlineLearner::handleAnnotatedData()
   TrackDataset annotations_to_use;
   annotations_to_use.applyNameMappings(new_annotations);
   for(size_t i = 0; i < new_annotations.size(); ++i, ++ann_counter_) {
-    if(ann_counter_ % 4 == 0) {
+    if(ann_counter_ % 3 == 0) {
       validation_->tracks_.push_back(new_annotations.tracks_[i]);
     }
     else {
