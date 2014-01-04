@@ -34,6 +34,9 @@ public:
   //! grids_[resolution_idx][descriptor][element].
   std::vector< std::vector< std::vector<Grid*> > > grids_;
 
+  //! ci.cidx_ is ignored.
+  Grid* grid(const CellIndex& ci) const { return grids_[ci.ridx_][ci.didx_][ci.eidx_]; }
+  
   GridClassifier();
   ~GridClassifier();
   GridClassifier& operator=(const GridClassifier& other);
@@ -63,6 +66,12 @@ public:
   std::string status(const std::string& prefix = "", bool show_namemappings = false) const;
   //! Returns a string saying which descriptor space predicts what.
   std::string debug(const std::vector<const Eigen::VectorXf*>& descriptors) const;
+  //! Returns the sparsity of the weak classifiers for each class.
+  //! Each element is in [0, 1].
+  Eigen::ArrayXf sparsity() const;
+  size_t numCells() const;
+  size_t numElements() const;
+  size_t numResolutions() const { return grids_.size(); }
 
 protected:
   std::vector<size_t> num_cells_;
@@ -72,6 +81,8 @@ protected:
 
   friend class StochasticLogisticTrainer;
 };
+
+std::ostream& operator<<(std::ostream& out, const GridClassifier::CellIndex& ci);
 
 class GridClassifier::BoostingTrainer : public Trainer, public SharedLockable
 {

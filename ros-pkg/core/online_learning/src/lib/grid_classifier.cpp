@@ -8,6 +8,12 @@ using namespace Eigen;
 #define TBSSL_EXP exp
 //#define TBSSL_EXP fastexp
 
+std::ostream& operator<<(std::ostream& out, const GridClassifier::CellIndex& ci)
+{
+  out << "[" << ci.ridx_ << ", " << ci.didx_ << ", " << ci.eidx_ << ", " << ci.cidx_ << "]";
+  return out;
+}
+
 GridClassifier::GridClassifier()
 {
 }
@@ -193,6 +199,29 @@ void GridClassifier::classify(const Eigen::VectorXf& descriptor, size_t id, Labe
   }
 }
 
+size_t GridClassifier::numCells() const
+{
+  size_t num = 0;
+  for(size_t i = 0; i < grids_.size(); ++i) {
+    for(size_t j = 0; j < grids_[i].size(); ++j) {
+      for(size_t k = 0; k < grids_[i][j].size(); ++k) {
+        ROS_ASSERT(grids_[i][j][k]);
+        num += grids_[i][j][k]->cells_.cols();
+      }
+    }
+  }
+  return num;
+}
+
+size_t GridClassifier::numElements() const
+{
+  ROS_ASSERT(!grids_.empty());
+  size_t num = 0;
+  for(size_t j = 0; j < grids_[0].size(); ++j)
+    num += grids_[0][j].size();
+  return num;
+}
+
 void GridClassifier::serialize(std::ostream& out) const
 {
   serializeNameMappings(out);
@@ -308,6 +337,24 @@ std::string GridClassifier::debug(const std::vector<const Eigen::VectorXf*>& des
   oss << setw(70) << "Total" << endl;
 
   return oss.str();
+}
+
+Eigen::ArrayXf GridClassifier::sparsity() const
+{
+  float total = 0;
+  ArrayXf num_zeros = ArrayXf::Zero(nameMapping("cmap").size());
+  for(size_t i = 0; i < grids_.size(); ++i) {
+    for(size_t j = 0; j < grids_[i].size(); ++j) {
+      for(size_t k = 0; k < grids_[i][j].size(); ++k) {
+        const Grid* grid = grids_[i][j][k];
+        ROS_ASSERT(grid);
+        const MatrixXf& cells = grid->cells_;
+        num_zeros += (cells.array() == 0).cast<float>().rowwise().sum();
+        total += cells.cols();
+      }
+    }
+  }
+  return num_zeros / total;
 }
 
 /************************************************************

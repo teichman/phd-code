@@ -358,8 +358,10 @@ TEST(GentleBoostingTrainer, RealTest)
   if(getenv("DATASET")) {
     string path = getenv("DATASET");
 
+    cout << "Loading " << path << endl;
     TrackDataset::Ptr train(new TrackDataset);
     train->load(path);
+    cout << "Done." << endl;
 
     GridClassifier::Ptr gc(new GridClassifier);
     vector<size_t> num_cells;
@@ -385,7 +387,7 @@ TEST(GentleBoostingTrainer, RealTest)
 
     Evaluator ev(gc);
     ev.evaluate(*train);
-    cout << "Training set set frame accuracy: " << ev.frame_stats_.getTotalAccuracy() << endl;
+    cout << "Training set frame accuracy: " << ev.frame_stats_.getTotalAccuracy() << endl;
     cout << "Training set track accuracy: " << ev.track_stats_.getTotalAccuracy() << endl;
   }
 }
@@ -394,9 +396,12 @@ TEST(GentleBoostingTrainer, LabelSwitch)
 {
   if(!getenv("DATASET"))
     return;
+
   string path = getenv("DATASET");
+  cout << "Loading " << path << endl;
   TrackDataset::Ptr train(new TrackDataset);
   train->load(path);
+  cout << "Done." << endl;
 
   GridClassifier::Ptr gc(new GridClassifier);
   vector<size_t> num_cells;
@@ -405,16 +410,23 @@ TEST(GentleBoostingTrainer, LabelSwitch)
   gc->initialize(*train, num_cells);
   GridClassifier::BoostingTrainer trainer(gc);
   trainer.gamma_ = 0.5;
-  trainer.verbose_ = true;
+  trainer.verbose_ = false;
   
   vector<TrackDataset::ConstPtr> ds;
   ds.push_back(train);
   vector<Indices> indices;
   indices.push_back(Indices::All(ds[0]->size()));
 
-  while(true) {     
+  while(true) {
+    HighResTimer hrt("Training"); hrt.start();
     trainer.train(ds, indices);
+    hrt.stop(); cout << hrt.reportSeconds() << endl;
+    cout << "Sparsity: " << gc->sparsity().transpose() << endl;
 
+    Evaluator ev(gc);
+    ev.evaluateParallel(*train);
+    cout << "Training set frame accuracy: " << ev.frame_stats_.getTotalAccuracy() << endl;
+    
     // -- Negate the training set.
     for(size_t i = 0; i < train->size(); ++i) {
       Label label = (*train)[i][0].label_;
