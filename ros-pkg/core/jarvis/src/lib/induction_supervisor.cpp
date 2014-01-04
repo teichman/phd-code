@@ -21,9 +21,8 @@ void InductionSupervisor::_run()
   int last_iter_provided = -1;
   while(!quitting_) {
     usleep(1e6);
-    if(ol_->iter() % 5 != 2 && ol_->iter() != last_iter_provided)
+    if(ol_->iter() % 5 != 2 || ol_->iter() == last_iter_provided)
       continue;
-
     last_iter_provided = ol_->iter();
     
     for(size_t i = 0; i < gc_.nameMapping("cmap").size(); ++i) {
