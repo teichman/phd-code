@@ -137,6 +137,11 @@ front_door/$(1)/group_induction_errors: front_door/$(1)/induction
 	--class-names $(1) \
 	-o $$@
 
+compare-front-door-$(1)-results: front_door/$(1)/baseline_unfair
+	@grc -es --colour=auto diff -y -W150 \
+	`find front_door/$(1)/baseline_unfair/ -name track_results.txt | sort | tail -n1` \
+	`find front_door/$(1)/induction/ -name track_results.txt | grep test_results | sort | tail -n1` || exit 0
+
 endef
 $(foreach CLASS_NAME,$(FRONT_DOOR_CLASS_NAMES),$(eval $(call FRONT_DOOR_RULE_GENERATOR,$(CLASS_NAME))))
 
