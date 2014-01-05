@@ -122,6 +122,8 @@ public:
   //! Path is "" if this TD did not come from disk.
   virtual void entryHook(TrackDataset* td, const std::string& path = "") const;
 
+  int iter() const { return iter_; }
+
   
 protected:
   typedef std::vector< std::pair<double, size_t> > ObjectiveIndex;

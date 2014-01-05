@@ -8,6 +8,12 @@ using namespace Eigen;
 #define TBSSL_EXP exp
 //#define TBSSL_EXP fastexp
 
+std::ostream& operator<<(std::ostream& out, const GridClassifier::CellIndex& ci)
+{
+  out << "[" << ci.ridx_ << ", " << ci.didx_ << ", " << ci.eidx_ << ", " << ci.cidx_ << "]";
+  return out;
+}
+
 GridClassifier::GridClassifier()
 {
 }
@@ -193,6 +199,67 @@ void GridClassifier::classify(const Eigen::VectorXf& descriptor, size_t id, Labe
   }
 }
 
+size_t GridClassifier::numCells() const
+{
+  size_t num = 0;
+  for(size_t i = 0; i < grids_.size(); ++i) {
+    for(size_t j = 0; j < grids_[i].size(); ++j) {
+      for(size_t k = 0; k < grids_[i][j].size(); ++k) {
+        ROS_ASSERT(grids_[i][j][k]);
+        num += grids_[i][j][k]->cells_.cols();
+      }
+    }
+  }
+  return num;
+}
+
+size_t GridClassifier::numElements() const
+{
+  ROS_ASSERT(!grids_.empty());
+  size_t num = 0;
+  for(size_t j = 0; j < grids_[0].size(); ++j)
+    num += grids_[0][j].size();
+  return num;
+}
+
+// ci.didx_ must be set correctly.  The other members of ci can be ignored by the user of this function.
+void GridClassifier::computeCellIndexWeighting(const Label& annotation,
+                                               const Eigen::VectorXf& descriptor,
+                                               CellIndex ci,
+                                               std::vector<CellIndex>* index,
+                                               std::vector<double>* ci_weights) const
+{
+  for(ci.eidx_ = 0; ci.eidx_ < descriptor.rows(); ++ci.eidx_) { 
+    float val = descriptor(ci.eidx_);
+    for(ci.ridx_ = 0; ci.ridx_ < (int)grids_.size(); ++ci.ridx_) {
+      ROS_ASSERT(grids_[ci.ridx_][ci.didx_][ci.eidx_]);
+      ROS_ASSERT((int)grids_[ci.ridx_][ci.didx_].size() == descriptor.rows());
+      const Grid& grid = *grids_[ci.ridx_][ci.didx_][ci.eidx_];
+      ci.cidx_ = grid.getCellIdx(val);
+
+      //double weight = TBSSL_EXP(-annotation.dot(grid.cells_.col(ci.cidx_))) / descriptor.rows();
+      double weight = 1.0 / descriptor.rows();
+      ci_weights->push_back(weight);
+      index->push_back(ci);
+    }
+  }
+}
+
+void GridClassifier::computeCellIndexWeighting(const Instance& instance,
+                                               std::vector<CellIndex>* index,
+                                               std::vector<double>* ci_weights) const
+{
+  index->clear();
+  ci_weights->clear();
+
+  CellIndex ci;
+  for(ci.didx_ = 0; ci.didx_ < (int)instance.size(); ++ci.didx_)
+    if(instance[ci.didx_])
+      computeCellIndexWeighting(instance.label_, *instance[ci.didx_], ci, index, ci_weights);
+
+  ROS_ASSERT(index->size() == ci_weights->size());
+}
+
 void GridClassifier::serialize(std::ostream& out) const
 {
   serializeNameMappings(out);
@@ -308,6 +375,24 @@ std::string GridClassifier::debug(const std::vector<const Eigen::VectorXf*>& des
   oss << setw(70) << "Total" << endl;
 
   return oss.str();
+}
+
+Eigen::ArrayXf GridClassifier::sparsity() const
+{
+  float total = 0;
+  ArrayXf num_zeros = ArrayXf::Zero(nameMapping("cmap").size());
+  for(size_t i = 0; i < grids_.size(); ++i) {
+    for(size_t j = 0; j < grids_[i].size(); ++j) {
+      for(size_t k = 0; k < grids_[i][j].size(); ++k) {
+        const Grid* grid = grids_[i][j][k];
+        ROS_ASSERT(grid);
+        const MatrixXf& cells = grid->cells_;
+        num_zeros += (cells.array() == 0).cast<float>().rowwise().sum();
+        total += cells.cols();
+      }
+    }
+  }
+  return num_zeros / total;
 }
 
 /************************************************************

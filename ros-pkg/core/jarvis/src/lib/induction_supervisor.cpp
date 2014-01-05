@@ -18,8 +18,13 @@ InductionSupervisor::InductionSupervisor(GridClassifier gc, YAML::Node config,
 void InductionSupervisor::_run()
 {
   int iter = 0;
+  int last_iter_provided = -1;
   while(!quitting_) {
-    usleep(3e7);
+    usleep(1e6);
+    if(ol_->iter() % 5 != 2 || ol_->iter() == last_iter_provided)
+      continue;
+    last_iter_provided = ol_->iter();
+    
     for(size_t i = 0; i < gc_.nameMapping("cmap").size(); ++i) {
       string cname = gc_.nameMapping("cmap").toName(i);
 
