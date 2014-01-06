@@ -101,7 +101,7 @@ public:
                                              float prediction, size_t num) const;
   //! Derived classes can optionally do something to the requested sample that
   //! is to be returned.  Common example: filter out near-duplicate tracks.
-  virtual void requestInductedSampleHook(TrackDataset* td) const {}
+  virtual void requestInductedSampleHook(TrackDataset* td, int cidx) const {}
 
   //! Makes a copy of viewable_unsupervised_ and viewable_unsupervised_hashes
   //! for a view controller.

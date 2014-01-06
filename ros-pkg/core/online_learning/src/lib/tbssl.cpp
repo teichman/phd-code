@@ -1243,7 +1243,7 @@ TrackDataset OnlineLearner::requestInductedSample(const std::string& cname,
   // TODO: This should happen for vuns, too, ... but we'll be getting rid of that.
   td.applyNameMapping("dmap", NameMapping());
 
-  requestInductedSampleHook(&td);
+  requestInductedSampleHook(&td, cidx);
   
   return td;
 }
