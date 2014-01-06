@@ -178,44 +178,45 @@ void OnlineLearner::handleAnnotatedData()
 
   cout << "[OnlineLearner] incoming_annotated_.size() is " << incoming_annotated_.size() << endl;
   
-  // -- Record stats and save for later use.
+  // -- Record stats.
   for(size_t i = 0; i < incoming_annotated_.size(); ++i) {
-    *annotated_ += *incoming_annotated_[i];
     stats_.incrementAnnotation(*incoming_annotated_[i]);
   }
-  
+
   // -- Aggregate the new annotations.
-  TrackDataset new_annotations = *incoming_annotated_[0];  // Copy name mappings.
-  ROS_ASSERT(nameMappingsAreEqual(new_annotations));
+  TrackDataset aggregated = *incoming_annotated_[0];  // Copy name mappings.
+  ROS_ASSERT(nameMappingsAreEqual(aggregated));
   for(size_t i = 1; i < incoming_annotated_.size(); ++i)
-    new_annotations += *incoming_annotated_[i];
+    aggregated += *incoming_annotated_[i];
   incoming_annotated_.clear();
-  saveByClassAndLabel(new_annotations, iter_dir_ + "/annotated");
+  saveByClassAndLabel(aggregated, iter_dir_ + "/annotated");
 
   // -- Split them between annotated_ and validation_.
-  TrackDataset annotations_to_use;
-  annotations_to_use.applyNameMappings(new_annotations);
-  for(size_t i = 0; i < new_annotations.size(); ++i, ++ann_counter_) {
-    if(ann_counter_ % 3 == 0) {
-      validation_->tracks_.push_back(new_annotations.tracks_[i]);
+  TrackDataset for_annotated;
+  for_annotated.applyNameMappings(aggregated);
+  for(size_t i = 0; i < aggregated.size(); ++i, ++ann_counter_) {
+    if(ann_counter_ > 10 && ann_counter_ % 3 == 0) {
+      validation_->tracks_.push_back(aggregated.tracks_[i]);
     }
     else {
-      annotations_to_use.tracks_.push_back(new_annotations.tracks_[i]);
+      for_annotated.tracks_.push_back(aggregated.tracks_[i]);
     }
   }
+  annotated_->tracks_.insert(annotated_->tracks_.end(),
+                             for_annotated.tracks_.begin(), for_annotated.tracks_.end());  
       
-  // -- Classify those that don't end up in validation_.
-  vector<Label> predictions(annotations_to_use.size());
+  // -- Classify the new annotated tracks that didn't end up in validation_.
+  vector<Label> predictions(for_annotated.size());
   lockRead();
-  ROS_ASSERT(classifier_->nameMappingsAreEqual(annotations_to_use));
+  ROS_ASSERT(classifier_->nameMappingsAreEqual(for_annotated));
 #pragma omp parallel for
-  for(size_t i = 0; i < annotations_to_use.size(); ++i)
-    predictions[i] = classifier_->classifyTrack(annotations_to_use[i]);
+  for(size_t i = 0; i < for_annotated.size(); ++i)
+    predictions[i] = classifier_->classifyTrack(for_annotated[i]);
   unlockRead();
 
-  // -- De-induct tracks that the new annotations indicate 
+  // -- De-induct tracks that the new annotated tracks indicate 
   //    should not have been inducted.
-  retrospection(annotations_to_use, predictions);
+  retrospection(for_annotated, predictions);
 }
 
 void OnlineLearner::retrospection(const TrackDataset& new_annotations, const std::vector<Label>& predictions)
