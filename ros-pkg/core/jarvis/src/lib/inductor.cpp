@@ -225,28 +225,33 @@ void Inductor::retrospection(const TrackDataset& new_annotations, const std::vec
 
 void Inductor::requestInductedSampleHook(TrackDataset* td, int cidx) const
 {
+  // -- Make a copy of the tracks and compute descriptors.
+  TrackDataset cloned = *td->clone();
+  entryHook(&cloned);
+  
   // -- Sort the tracks according to confidence.  We want the most confident
   //    tracks to be sent while their less-confidently-classified near-duplicates
   //    get dropped.
   vector< pair<double, size_t> > index;
-  index.reserve(td->size());
-  for(size_t i = 0; i < td->size(); ++i) {
-    Label pred = td->label(i);
+  index.reserve(cloned.size());
+  for(size_t i = 0; i < cloned.size(); ++i) {
+    Label pred = cloned.label(i);
     index.push_back(pair<double, size_t>(fabs(pred(cidx)), i));
   }
   sort(index.begin(), index.end(), greater< pair<double, size_t> >());  // descending
 
   // -- Filter out tracks that are near-duplicates.
   TrackDataset filtered;
-  filtered.applyNameMappings(*td);
+  filtered.applyNameMappings(cloned);
+  filtered.tracks_.reserve(cloned.size());
   for(size_t i = 0; i < index.size(); ++i) {
     size_t idx = index[i].second;
     bool unique = true;
     for(size_t j = 0; unique && j < filtered.size(); ++j)
-      if(similar((*td)[idx], filtered[j], *classifier_, 0.9))
+      if(similar(cloned[idx], filtered[j], *classifier_, 0.9))
         unique = false;
     if(unique)
-      filtered.tracks_.push_back(td->tracks_[idx]);
+      filtered.tracks_.push_back(Dataset::Ptr(new Dataset(cloned[idx])));
   }
   
   // -- Re-sort the tracks according to prediction absolute value
