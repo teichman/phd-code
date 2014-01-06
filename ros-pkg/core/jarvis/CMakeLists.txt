@@ -53,6 +53,10 @@ rosbuild_add_executable(visualize_augmented_td src/prog/visualize_augmented_td.c
 target_link_libraries(visualize_augmented_td jarvis_core)
 rosbuild_link_boost(visualize_augmented_td program_options)
 
+rosbuild_add_executable(find_similar_tracks src/prog/find_similar_tracks.cpp)
+target_link_libraries(find_similar_tracks jarvis_core)
+rosbuild_link_boost(find_similar_tracks program_options)
+
 rosbuild_add_executable(update_descriptors src/prog/update_descriptors.cpp)
 target_link_libraries(update_descriptors jarvis_core)
 rosbuild_link_boost(update_descriptors program_options)

@@ -98,7 +98,10 @@ public:
   //! e.g. setting prediction = 0 will return unconfident examples, whereas
   //! setting it to 10 will give you things that are likely to be examples of cname.
   TrackDataset requestInductedSample(const std::string& cname,
-                                     float prediction, size_t num) const;
+                                             float prediction, size_t num) const;
+  //! Derived classes can optionally do something to the requested sample that
+  //! is to be returned.  Common example: filter out near-duplicate tracks.
+  virtual void requestInductedSampleHook(TrackDataset* td) const {}
 
   //! Makes a copy of viewable_unsupervised_ and viewable_unsupervised_hashes
   //! for a view controller.

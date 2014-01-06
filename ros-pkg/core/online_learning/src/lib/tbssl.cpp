@@ -1242,6 +1242,8 @@ TrackDataset OnlineLearner::requestInductedSample(const std::string& cname,
   // Clear the dmap for the outgoing tracks since they do not include descriptors.
   // TODO: This should happen for vuns, too, ... but we'll be getting rid of that.
   td.applyNameMapping("dmap", NameMapping());
+
+  requestInductedSampleHook(&td);
   
   return td;
 }

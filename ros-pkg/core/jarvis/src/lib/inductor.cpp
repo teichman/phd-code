@@ -74,6 +74,75 @@ void Inductor::chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_
   *chunk_diagnostic_annotations = cda;
 }
 
+Eigen::ArrayXf computeNormalizedCellHistogram(const Dataset& track, size_t descriptor_id, const GridClassifier& gc)
+{
+  ROS_ASSERT(gc.numResolutions() == 1);  // Only deal with a single grid resolution for now.  This could be extended later.   
+  vector<Grid*> grids = gc.grids_[0][descriptor_id];  // One grid per element of this descriptor space.
+  ROS_ASSERT(!grids.empty());
+  int num_cells_per_element = grids[0]->cells_.cols();  // Each element gets the same number of grid cells.
+  int num_cells = grids.size() * num_cells_per_element;
+  ArrayXf hist = ArrayXf::Zero(num_cells);
+  for(size_t i = 0; i < grids.size(); ++i) {
+    ROS_ASSERT(grids[i]);
+    const Grid& grid = *grids[i];
+    ROS_ASSERT(i == 0 || grid.cells_.cols() == grids[i-1]->cells_.cols());
+
+    for(size_t j = 0; j < track.size(); ++j) {
+      const Instance& frame = track[j];
+      if(!frame[descriptor_id])
+        continue;
+
+      const VectorXf& descriptor = *frame[descriptor_id];
+      size_t idx = grid.getCellIdx(descriptor.coeffRef(i));
+      ROS_ASSERT(i * num_cells_per_element + idx < (size_t)hist.rows());
+      ++hist(i * num_cells_per_element + idx);
+    }
+  }
+
+  hist /= hist.sum();
+  return hist;
+}
+
+float histogramIntersection(const Eigen::ArrayXf& hist0, const Eigen::ArrayXf& hist1)
+{
+  ROS_ASSERT(hist0.rows() == hist1.rows());
+
+  float val = 0;
+  for(int i = 0; i < hist0.rows(); ++i)
+    val += min(hist0.coeffRef(i), hist1.coeffRef(i));
+  return val;
+}
+
+//! annotation and inducted have descriptors computed.
+bool similar(const Dataset& track0, const Dataset& track1, const GridClassifier& gc, double threshold)
+{
+  ROS_ASSERT(track0.nameMappingsAreEqual(track1));
+  const NameMapping& dmap = track0.nameMapping("dmap");
+
+  vector<string> dspaces;
+  dspaces.push_back("OrientedBoundingBoxSize.BoundingBoxSize:9048624352072648104");  // BoundingBoxSize from GravitationalCloudOrienter.
+  dspaces.push_back("CloudOrienter.Eigenvalues:12466250795116632929");
+  dspaces.push_back("CloudOrienter.RelativeCurvature:11309880616745749126");
+  dspaces.push_back("HSVHistogram.Hue:14694502210542588030");
+  dspaces.push_back("HSVHistogram.Saturation:10273388249095023270");
+  dspaces.push_back("HSVHistogram.Value:8985795375221662105");
+
+  for(size_t i = 0; i < dspaces.size(); ++i) {
+    if(!dmap.hasName(dspaces[i])) {
+      cout << dmap << endl;
+      ROS_ASSERT(dmap.hasName(dspaces[i]));
+    }
+
+    size_t id = dmap.toId(dspaces[i]);
+    ArrayXf hist0 = computeNormalizedCellHistogram(track0, id, gc);
+    ArrayXf hist1 = computeNormalizedCellHistogram(track1, id, gc);
+
+    if(histogramIntersection(hist0, hist1) < threshold)
+      return false;
+  }
+  return true;
+}
+
 bool similar(const Dataset& annotation, const Dataset& inducted)
 {
   const NameMapping& dmap = annotation.nameMapping("dmap");
@@ -153,3 +222,20 @@ void Inductor::retrospection(const TrackDataset& new_annotations, const std::vec
     }
   }
 }
+
+void Inductor::requestInductedSampleHook(TrackDataset* td) const
+{
+  TrackDataset filtered;
+  filtered.applyNameMappings(*td);
+  for(size_t i = 0; i < td->size(); ++i) {
+    bool unique = true;
+    for(size_t j = 0; unique && j < filtered.size(); ++j)
+      if(similar((*td)[i], filtered[j], *classifier_, 0.9))
+        unique = false;
+    if(unique)
+      filtered.tracks_.push_back(td->tracks_[i]);
+  }
+
+  *td = filtered;
+}
+

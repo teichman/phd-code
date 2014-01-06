@@ -34,9 +34,12 @@ protected:
   //! Removes tracks that don't include enough motion.
   void chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_annotations) const;
   void retrospection(const TrackDataset& new_annotations, const std::vector<Label>& predictions);
+  void requestInductedSampleHook(TrackDataset* td) const;
   
   void serialize(std::ostream& out) const { ROS_ASSERT(0); }
   void deserialize(std::istream& in) { ROS_ASSERT(0); }
 };
+
+bool similar(const Dataset& track0, const Dataset& track1, const GridClassifier& gc, double threshold);
 
 #endif // INDUCTOR_H
