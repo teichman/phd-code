@@ -217,7 +217,8 @@ string PerfStats::statString() {
 
   // -- Print overall statistics.
   oss << "Total test examples (number of objects, not times num classes):\t\t" << total_test_examples_ << endl;
-  oss << "Total accuracy (" << nameMapping("cmap").size() + 1 << "-way classification, not aggregate 1-vs-all): " << (double)total_correct_ / (double)total_test_examples_ << endl;
+  // C-way classification accuracy, not aggregate one-vs-all.
+  oss << "Total accuracy (" << nameMapping("cmap").size() + 1 << "-way classification): " << (double)total_correct_ / (double)total_test_examples_ << endl;
   oss << "Mean logistic score (max is 0, higher is better): " << getMeanLogisticScore() << endl;
   oss << "Mean exponential loss (min is 0, lower is better): " << getMeanExponentialLoss() << endl;
   
