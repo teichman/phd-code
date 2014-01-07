@@ -104,7 +104,7 @@ define FRONT_DOOR_RULE_GENERATOR
 
 front_door/$(1)/induction:
 	mkdir -p $$@
-	rosrun jarvis induct \
+	. ~/.bashrc && rosgdb jarvis induct \
 	--class-names $(1) \
 	--config $(CONFIG) \
 	-u $(FRONT_DOOR_UP_VECTOR) \

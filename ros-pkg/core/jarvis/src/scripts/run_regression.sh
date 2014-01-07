@@ -30,7 +30,8 @@ echo -e "Run dir:\t" $RUN_DIR
 
 mkdir -p $RUN_DIR/induction
 echo `hostname` > $RUN_DIR/hostname.txt
-rosrun jarvis induct \
+#rosrun jarvis induct 
+rosgdb jarvis induct \
     --randomize \
     --no-vis \
     --max-iters $MAX_ITERS \
@@ -66,7 +67,8 @@ echo -- Running baseline_unfair --
 echo
 
 mkdir -p $RUN_DIR/baseline_unfair
-rosrun jarvis baseline_unfair \
+#rosrun jarvis baseline_unfair 
+rosgdb jarvis baseline_unfair \
     --randomize \
     --class-names $CLASS_NAMES \
     --config $CONFIG \
