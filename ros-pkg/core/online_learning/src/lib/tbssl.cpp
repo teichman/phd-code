@@ -579,7 +579,7 @@ void OnlineLearner::_run()
     int paused_iter = 0;
     while(true) {
       {
-        boost::unique_lock<boost::shared_mutex>(hand_mutex_);
+        boost::unique_lock<boost::shared_mutex> ulock(hand_mutex_);
         if(!paused_)
           break;
       }
@@ -1017,7 +1017,7 @@ void OnlineLearner::inductDataset(const Eigen::VectorXf& emin, const Eigen::Vect
 
 std::string OnlineLearner::status(const std::string& prefix) const
 {
-  boost::unique_lock<boost::shared_mutex>(hand_mutex_);
+  boost::unique_lock<boost::shared_mutex> ulock(hand_mutex_);
   
   ostringstream oss;
   oss << prefix << "============================================================" << endl;
@@ -1103,7 +1103,7 @@ void OnlineLearner::_applyNameTranslator(const std::string& id, const NameTransl
 void OnlineLearner::serialize(std::ostream& out) const
 {
   scopeLockRead;
-  boost::unique_lock<boost::shared_mutex>(hand_mutex_);
+  boost::unique_lock<boost::shared_mutex> ulock(hand_mutex_);
 
   out << "OnlineLearner v0.2" << endl;
   serializeNameMappings(out);
@@ -1144,7 +1144,7 @@ void OnlineLearner::serialize(std::ostream& out) const
 void OnlineLearner::deserialize(std::istream& in)
 {
   scopeLockWrite;
-  boost::unique_lock<boost::shared_mutex>(hand_mutex_);
+  boost::unique_lock<boost::shared_mutex> ulock(hand_mutex_);
 
   string buf;
   getline(in, buf);
@@ -1206,7 +1206,7 @@ void OnlineLearner::deserialize(std::istream& in)
 TrackDataset OnlineLearner::requestInductedSample(const std::string& cname,
                                                   float prediction, size_t num) const
 {
-  boost::unique_lock<boost::shared_mutex>(viewable_unsupervised_mutex_);
+  boost::unique_lock<boost::shared_mutex> ulock(viewable_unsupervised_mutex_);
 
   if(!nameMapping("cmap").hasName(cname)) {
     ROS_WARN_STREAM("OnlineLearner got a request for inducted tracks of class \""
