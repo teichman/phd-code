@@ -11,17 +11,20 @@ int main(int argc, char** argv)
   bpo::positional_options_description p;
 
   string gc_path;
-  float threshold;
+  float intersection_threshold;
+  int max_different_dspaces;
   string td_path;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("gc", bpo::value(&gc_path)->required(), "GridClassifier")
-    ("threshold", bpo::value(&threshold)->required(), "")
+    ("intersection-threshold,i", bpo::value(&intersection_threshold)->required(), "")
+    ("max-different-dspaces,m", bpo::value(&max_different_dspaces)->required(), "")
     ("td", bpo::value(&td_path)->required(), "TrackDataset.")
     ;
 
   p.add("gc", 1);
-  p.add("threshold", 1);
+  p.add("intersection-threshold", 1);
+  p.add("max-different-dspaces", 1);
   p.add("td", 1);
 
   bpo::variables_map opts;
@@ -30,7 +33,7 @@ int main(int argc, char** argv)
   try { bpo::notify(opts); }
   catch(...) { badargs = true; }
   if(opts.count("help") || badargs) {
-    cout << "Usage: " << argv[0] << " GC THRESHOLD TD" << endl;
+    cout << "Usage: " << argv[0] << " GC INTERSECTION_THRESHOLD MAX_DIFFERENT_DSPACES TD" << endl;
     cout << endl;
     cout << opts_desc << endl;
     return 1;
@@ -48,7 +51,7 @@ int main(int argc, char** argv)
   for(size_t i = 0; i < td.size(); ++i) {
     cout << i << " / " << td.size() << endl;
     for(size_t j = 0; j < td.size(); ++j)
-      if(similar(td[i], td[j], gc, threshold))
+      if(similar(td[i], td[j], gc, intersection_threshold, max_different_dspaces))
         ++num(i);
   }
   cout << num.transpose() << endl;
@@ -60,7 +63,7 @@ int main(int argc, char** argv)
   TrackDataset cluster;
   cluster.applyNameMappings(td);
   for(size_t i = 0; i < td.size(); ++i)
-    if(similar(td[idx], td[i], gc, threshold))
+    if(similar(td[idx], td[i], gc, intersection_threshold, max_different_dspaces))
       cluster.tracks_.push_back(td.tracks_[i]);
 
   string filename = "cluster.td";

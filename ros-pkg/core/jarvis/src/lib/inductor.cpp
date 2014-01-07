@@ -114,7 +114,7 @@ float histogramIntersection(const Eigen::ArrayXf& hist0, const Eigen::ArrayXf& h
 }
 
 //! annotation and inducted have descriptors computed.
-bool similar(const Dataset& track0, const Dataset& track1, const GridClassifier& gc, double threshold)
+bool similar(const Dataset& track0, const Dataset& track1, const GridClassifier& gc, double intersection_threshold, int max_different_dspaces)
 {
   ROS_ASSERT(track0.nameMappingsAreEqual(track1));
   const NameMapping& dmap = track0.nameMapping("dmap");
@@ -127,6 +127,7 @@ bool similar(const Dataset& track0, const Dataset& track1, const GridClassifier&
   dspaces.push_back("HSVHistogram.Saturation:10273388249095023270");
   dspaces.push_back("HSVHistogram.Value:8985795375221662105");
 
+  int num_different_dspaces = 0;
   for(size_t i = 0; i < dspaces.size(); ++i) {
     if(!dmap.hasName(dspaces[i])) {
       cout << dmap << endl;
@@ -137,8 +138,11 @@ bool similar(const Dataset& track0, const Dataset& track1, const GridClassifier&
     ArrayXf hist0 = computeNormalizedCellHistogram(track0, id, gc);
     ArrayXf hist1 = computeNormalizedCellHistogram(track1, id, gc);
 
-    if(histogramIntersection(hist0, hist1) < threshold)
-      return false;
+    if(histogramIntersection(hist0, hist1) < intersection_threshold) {
+      ++num_different_dspaces;
+      if(num_different_dspaces > max_different_dspaces)
+        return false;
+    }
   }
   return true;
 }
@@ -248,7 +252,7 @@ void Inductor::requestInductedSampleHook(TrackDataset* td, int cidx) const
     size_t idx = index[i].second;
     bool unique = true;
     for(size_t j = 0; unique && j < filtered.size(); ++j)
-      if(similar(cloned[idx], filtered[j], *classifier_, 0.9))
+      if(similar(cloned[idx], filtered[j], *classifier_, 0.9, 0))
         unique = false;
     if(unique)
       filtered.tracks_.push_back(Dataset::Ptr(new Dataset(cloned[idx])));
