@@ -195,7 +195,8 @@ void OnlineLearner::handleAnnotatedData()
   TrackDataset for_annotated;
   for_annotated.applyNameMappings(aggregated);
   for(size_t i = 0; i < aggregated.size(); ++i, ++ann_counter_) {
-    if(ann_counter_ > 20 && ann_counter_ % 3 == 0) {
+    // Disabled for now.
+    if(false && ann_counter_ > 20 && ann_counter_ % 3 == 0) {
       validation_->tracks_.push_back(aggregated.tracks_[i]);
     }
     else {
