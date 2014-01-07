@@ -38,6 +38,8 @@ void Inductor::entryHook(TrackDataset* td, const std::string& path) const
 
 void Inductor::chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_annotations) const
 {
+  return;  // Turning off the motion requirement below.
+  
   ROS_ASSERT(td->size() == chunk_diagnostic_annotations->size());
   vector<Dataset::Ptr> tracks;
   vector<Label> cda;
