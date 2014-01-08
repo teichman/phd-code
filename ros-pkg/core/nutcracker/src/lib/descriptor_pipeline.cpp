@@ -50,13 +50,12 @@ Eigen::VectorXd DescriptorPipeline::computeDescriptors(cv::Mat3b img)
 
 double DescriptorPipeline::differenceDescriptor(cv::Mat1b diff) const 
 {
-  cv::imshow("diff", diff);
   uint8_t thresh = config_["difference-image-threshold"].as<float>();
   double val = 0;
   for(int y = 0; y < diff.rows; ++y)
     for(int x = 0; x < diff.cols; ++x)
       if(diff(y, x) > thresh)
-        ++val;
+        val += 255;
   return val / (diff.rows * diff.cols);
 }
 

@@ -19,12 +19,15 @@ int main(int argc, char** argv)
   string config_path;
   string weights_path;
   string output_dir;
+  int skip;
   opts_desc.add_options()
     ("help,h", "produce help message")
+    ("display", "")
     ("video,v", bpo::value(&video_path)->required(), "")
     ("weights,w", bpo::value(&weights_path)->required(), "")
     ("output,o",  bpo::value(&output_dir)->default_value(""), "")
     ("config,c", bpo::value(&config_path)->default_value(""), "")
+    ("skip,s", bpo::value(&skip), "Skip the first k frames")
     ("dump-images,d", "")
     ;
 
@@ -47,8 +50,12 @@ int main(int argc, char** argv)
   if(output_dir == "")
     output_dir = video_path + "-output";
   ROS_ASSERT(!bfs::exists(output_dir));
-  //bfs::create_directory(output_dir);
+  bfs::create_directory(output_dir);
+  if(opts.count("dump-images"))
+    bfs::create_directory(output_dir + "/images");
   cout << "Using output directory of " << output_dir << endl;
+  string csv_path = output_dir + "/output.csv";
+  ofstream f(csv_path.c_str());
 
   if(config_path == "")
     config_path = ros::package::getPath("nutcracker") + "/config/config.yml";
@@ -70,17 +77,33 @@ int main(int argc, char** argv)
   // -- Main loop.
   DescriptorPipeline dp(config);
   cv::Mat3b img;
-  for(int i = 0; i < 500; ++i) cap >> img;
+  int frame_num = 0;
+  for(int i = 0; i < skip; ++i) {
+    cap >> img;
+    ++frame_num;
+  }
+  
   while(true) {
     cap >> img;
     VectorXd descriptors = dp.computeDescriptors(img);
-    cout << descriptors.transpose() << endl;
+    //cout << descriptors.transpose() << endl;
     if(descriptors.rows() == 0)
       continue;
-    cout << "Estimate: " << weights.dot(descriptors) << endl;
-    cv::imshow("video", dp.cropped());
-    cv::waitKey(0);
+    f << frame_num << ", " << weights.dot(descriptors) << endl;
+    cout << frame_num << ", " << weights.dot(descriptors) << endl;
+    if(opts.count("display")) {
+      cv::imshow("video", dp.cropped());
+      cv::waitKey(5);
+    }
+
+    if(opts.count("dump-images")) {
+      ostringstream oss;
+      oss << output_dir << "/images/" << "img" << setw(5) << setfill('0') << frame_num << ".jpg";
+      cv::imwrite(oss.str(), dp.cropped());
+    }
+    ++frame_num;
   }
-  
+
+  f.close();
   return 0;
 }
