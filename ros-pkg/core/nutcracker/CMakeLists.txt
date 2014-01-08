@@ -23,11 +23,16 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_boost_directories()
 #common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
+rosbuild_add_library(${PROJECT_NAME}
+  src/lib/descriptor_pipeline.cpp)
+
 #target_link_libraries(${PROJECT_NAME} another_library)
 
 rosbuild_add_executable(optical_flow_experiment src/prog/optical_flow_experiment.cpp)
 rosbuild_add_executable(dump src/prog/dump.cpp)
+rosbuild_add_executable(generate_unlabeled_dataset src/prog/generate_unlabeled_dataset.cpp)
+rosbuild_link_boost(generate_unlabeled_dataset program_options filesystem)
+
 rosbuild_add_executable(lkdemo src/prog/lkdemo.cpp)
 rosbuild_add_executable(cross_evaluate src/prog/cross_evaluate.cpp)
 rosbuild_link_boost(cross_evaluate program_options filesystem)

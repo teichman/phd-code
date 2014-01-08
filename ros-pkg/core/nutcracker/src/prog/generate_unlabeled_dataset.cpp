@@ -5,6 +5,7 @@
 #include <opencv2/video/tracking.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 #include <timer/timer.h>
+#include <boost/program_options.hpp>
 
 using namespace std;
 
