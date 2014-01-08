@@ -1,0 +1,11 @@
+surf-hessian-threshold: 100
+surf-num-octaves: 4 
+surf-num-octave-layers: 2
+difference-image-threshold: 5
+# On Bankout N and S
+roi:
+  xoffset: 324
+  yoffset: 385
+  width: 1166
+  height: 148
+

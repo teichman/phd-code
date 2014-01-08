@@ -15,12 +15,13 @@
 class DescriptorPipeline
 {
 public:
-  DescriptorPipeline(YAML::Node params, cv::Rect roi);
+  DescriptorPipeline(YAML::Node config);
   int dimensionality() const;
   Eigen::VectorXd computeDescriptors(cv::Mat3b img);
+  cv::Mat3b cropped() { return cropped_; }
   
 protected:
-  YAML::Node params_;
+  YAML::Node config_;
   cv::Rect roi_;
   cv::Mat3b cropped_;
   cv::Mat1b gray_;

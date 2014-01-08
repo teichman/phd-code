@@ -34,7 +34,12 @@ rosbuild_add_executable(generate_unlabeled_dataset src/prog/generate_unlabeled_d
 rosbuild_link_boost(generate_unlabeled_dataset program_options filesystem)
 
 rosbuild_add_executable(lkdemo src/prog/lkdemo.cpp)
+
 rosbuild_add_executable(cross_evaluate src/prog/cross_evaluate.cpp)
 rosbuild_link_boost(cross_evaluate program_options filesystem)
+
+rosbuild_add_executable(predict src/prog/predict.cpp)
+target_link_libraries(predict ${PROJECT_NAME})
+rosbuild_link_boost(predict program_options filesystem)
 
 #target_link_libraries(example ${PROJECT_NAME})

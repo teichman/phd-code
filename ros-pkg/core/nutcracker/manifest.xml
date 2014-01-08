@@ -13,6 +13,7 @@
   <depend package="bag_of_tricks"/>
   <depend package="eigen_extensions"/>
   <depend package="pipeline3"/>
+  <depend package="roslib"/>
   <depend package="matplotlib_interface"/>
 
 </package>
