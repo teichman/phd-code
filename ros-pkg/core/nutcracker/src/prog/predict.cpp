@@ -85,12 +85,20 @@ int main(int argc, char** argv)
   
   while(true) {
     cap >> img;
+
+    if(img.rows == 0)
+      break;
+    
     VectorXd descriptors = dp.computeDescriptors(img);
     //cout << descriptors.transpose() << endl;
     if(descriptors.rows() == 0)
       continue;
-    f << frame_num << ", " << weights.dot(descriptors) << endl;
-    cout << frame_num << ", " << weights.dot(descriptors) << endl;
+    f << setw(5) << setfill('0') << frame_num;
+    f << ", " << weights.dot(descriptors) << endl;
+
+    cout << setw(5) << setfill('0') << frame_num;
+    cout << ", " << weights.dot(descriptors) << endl;
+    
     if(opts.count("display")) {
       cv::imshow("video", dp.cropped());
       cv::waitKey(5);
