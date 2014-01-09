@@ -7,7 +7,9 @@
 #include <opencv2/video/tracking.hpp>
 #include <opencv2/nonfree/features2d.hpp>
 #include <bag_of_tricks/glob.h>
-
+#include <fstream>
+#include <iomanip>
+#include <eigen_extensions/eigen_extensions.h>
 
 using namespace std;
 using namespace Eigen;
@@ -220,6 +222,18 @@ int main(int argc, char** argv)
     size_t idx = index[i].second;
     cout << "Prediction: " << predictions(idx) << ", Ground truth: " << y(idx) << ", Error: " << signed_errors(idx) << ", path: " << paths[idx] << endl;
   }
+
+  string csv_path = "results.csv";
+  ofstream f(csv_path.c_str());
+  f << "Filename, Ground truth, Estimate" << endl;
+  for(int i = 0; i < predictions.rows(); ++i) 
+    f << bfs::path(paths[i]).leaf().string() << ", " << setprecision(7) << y(i) << ", " << predictions(i) << ", " << endl;
+  f.close();
+  cout << "Wrote results to " << csv_path << endl;
+
+  VectorXd weights = (X * X.transpose()).inverse() * X * y;
+  eigen_extensions::saveASCII(weights, "weights.eig.txt");
+  cout << "Saved weights.eig.txt." << endl;
   
   return 0;
 }
