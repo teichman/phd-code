@@ -82,6 +82,11 @@ int main(int argc, char** argv)
     cap >> img;
     ++frame_num;
   }
+  // Gross hack to make output match the numbering of our initial labeling,
+  // whose frame numbers I am unwilling to change at this point.
+  ROS_WARN("Gross frame num hack.");
+  ROS_ASSERT(skip == 500);
+  frame_num -= 498;  
   
   while(true) {
     cap >> img;
