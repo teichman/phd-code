@@ -619,7 +619,7 @@ void OnlineLearner::_run()
      * Induction
      ************************************************************/
     TrackDataset::Ptr unlabeled_chunk = getNextUnlabeledChunk();
-    removePerfectAndNonInducted(unlabeled_chunk.get());
+    //removePerfectAndNonInducted(unlabeled_chunk.get());
     chunkHook(unlabeled_chunk.get());
     inductionStep(unlabeled_chunk.get());
 
