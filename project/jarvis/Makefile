@@ -297,7 +297,8 @@ TWIDDLE_TEST_NAMES := kitchen00 leo00 mailman00 open_door00
 
 .PHONY: twiddle
 twiddle:
-	rosrun jarvis twiddle \
+	. ~/.bashrc && rosgdb jarvis twiddle \
+	--decimate 0.5 \
 	--initial-config $(CONFIG) \
 	--regression-test-dir $(REGRESSION_TESTS_DIR) \
 	-o $@ \

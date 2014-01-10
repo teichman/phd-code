@@ -330,5 +330,8 @@ NameMapping getStubDescriptorMap(int num_descriptors);
 //! Depends on the hash functionality.  Could be brittle depending on your case.
 //! This will fail if you don't have descriptors, for example.
 void removeDuplicates(TrackDataset* td);
-
+//! Divides tracks between two different datasets.
+//! Does not make deep copies.
+void splitDataset(const TrackDataset& td, double pct0, TrackDataset* split0, TrackDataset* split1);
+  
 #endif // DATASET_H

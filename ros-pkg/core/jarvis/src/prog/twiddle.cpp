@@ -23,6 +23,7 @@ int main(int argc, char** argv)
   string output_dir;
   double max_hours;
   vector<string> hint_paths;
+  double decimate;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("initial-config", bpo::value(&config_path)->required(), "")
@@ -31,6 +32,7 @@ int main(int argc, char** argv)
     ("regression-tests", bpo::value(&names)->multitoken(), "If provided, only use these regression tests")
     ("max-hours", bpo::value<double>(&max_hours)->default_value(0))
     ("hints", bpo::value(&hint_paths)->multitoken(), "Optional configuration hints")
+    ("decimate", bpo::value(&decimate)->default_value(0), "Downsample tracks this much.  (0, 1).")
     ;
 
   bpo::variables_map opts;
@@ -86,8 +88,13 @@ int main(int argc, char** argv)
     cout << cmap << endl;
     
     vector<string> td_paths = glob(test_dirs[i] + "/test/*.td");
-    TrackDataset::Ptr td = loadDatasets(td_paths, config, cmap, up, true);
-    datasets.push_back(*td);
+    TrackDataset td = *loadDatasets(td_paths, config, cmap, up, true);
+    if(decimate != 0) {
+      TrackDataset split0, split1;
+      splitDataset(td, decimate, &split0, &split1);
+      td = split1;
+    }
+    datasets.push_back(td);
   }
   ROS_ASSERT(!datasets.empty());
 
