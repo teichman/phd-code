@@ -16,15 +16,13 @@ int main(int argc, char** argv)
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
 
-  vector<string> train_paths;
-  vector<string> test_paths;
+  vector<string> dataset_paths;
   string output_dir;
   double max_hours;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("initial-config", bpo::value<string>())
-    ("train", bpo::value< vector<string> >(&train_paths)->required()->multitoken(), "training data")
-    ("test", bpo::value< vector<string> >(&test_paths)->required()->multitoken(), "testing data")
+    ("datasets", bpo::value< vector<string> >(&dataset_paths)->required()->multitoken(), "labeled data to be used, one for each separate test")
     ("output-dir,o", bpo::value<string>(&output_dir)->required(), "Where to save results")
     ("max-hours", bpo::value<double>(&max_hours)->default_value(0))
     ("hints", bpo::value< vector<string> >()->multitoken(), "Optional configuration hints")
@@ -60,16 +58,17 @@ int main(int argc, char** argv)
     ROS_ASSERT(JarvisTwiddler::isRequired(dp.pod< EntryPoint<Blob::Ptr> >()));
   }
 
-  // -- Set up training and testing sets.
-  TrackDataset::Ptr train = loadDatasets(train_paths);
-  TrackDataset::Ptr test = loadDatasets(test_paths);
-  cout << "Training set: " << endl;
-  cout << train->status("  ", true) << endl;
-  cout << "Testing set: " << endl;
-  cout << test->status("  ", true) << endl;
+  // -- Load data.
+  vector<TrackDataset> datasets;
+  for(size_t i = 0; i < dataset_paths.size(); ++i) {
+    cout << "Loading " << dataset_paths[i] << endl;
+    TrackDataset td;
+    td.load(dataset_paths[i]);
+    datasets.push_back(td);
+  }
 
   // -- Initialize the twiddler.
-  JarvisTwiddler jt(train, test, NUM_THREADS);
+  JarvisTwiddler jt(datasets, NUM_THREADS);
   if(bfs::exists(output_dir))
     jt.load(output_dir);
   else

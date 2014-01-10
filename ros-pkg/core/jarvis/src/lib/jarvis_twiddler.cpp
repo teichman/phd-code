@@ -9,31 +9,12 @@ using namespace pl;
  * JarvisTwiddler
  ************************************************************/
 
-JarvisTwiddler::JarvisTwiddler(TrackDataset::Ptr train,
-                               TrackDataset::Ptr test,
+JarvisTwiddler::JarvisTwiddler(vector<TrackDataset> datasets,
                                int num_threads) :
   PipelineTwiddler(),
   num_threads_(num_threads),
-  train_(train),
-  test_(test),
-  speed_check_(new TrackDataset)
+  datasets_(datasets)
 {
-  // -- Shuffle the training and test set so we don't get bad
-  //    core utilization due to datasets ordered by track length.
-  random_shuffle(train_->tracks_.begin(), train_->tracks_.end());
-  random_shuffle(test_->tracks_.begin(), test_->tracks_.end());
-  
-  // -- Set up speed check dataset.
-  //    We need to deep copy here otherwise the name mapping
-  //    would change for some Dataset objects but not
-  //    for the containing TrackDataset.
-  size_t sc_size = 50;
-  ROS_ASSERT(train_->size() > sc_size);
-  speed_check_->applyNameMappings(*train_);
-  speed_check_->tracks_.resize(sc_size);
-  for(size_t i = 0; i < speed_check_->size(); ++i)
-    speed_check_->tracks_[i] = Dataset::Ptr(new Dataset(*train_->tracks_[i]));
-  
   // -- Set up twiddle actions.
   REGISTER_ACTION(JarvisTwiddler::twiddleNumCells);
   REGISTER_ACTION(JarvisTwiddler::twiddleTrainerThreshold);
@@ -78,6 +59,79 @@ void JarvisTwiddler::improvementHook(const YAML::Node& config,
   pl.writeGraphviz(root_dir_ + "/best_pipeline.gv");
 }
 
+double JarvisTwiddler::runSingleEval(YAML::Node config, TrackDataset::ConstPtr train, TrackDataset::ConstPtr test) const
+{
+  // -- Train a classifier.
+  GridClassifier::Ptr gc(new GridClassifier);
+  string ncstr = config["GlobalParams"]["NumCells"].as<string>();
+  istringstream iss(ncstr);
+  vector<size_t> nc;
+  while(!iss.eof()) {
+    size_t buf;
+    iss >> buf;
+    nc.push_back(buf);
+    cout << "NC: " << buf << endl;
+  }
+  gc->initialize(*train, nc);
+  GridClassifier::BoostingTrainer::Ptr trainer(new GridClassifier::BoostingTrainer(gc));
+  trainer->obj_thresh_ = config["GlobalParams"]["ObjThresh"].as<double>();
+  vector<TrackDataset::ConstPtr> datasets; datasets.push_back(train);
+  vector<Indices> indices; indices.push_back(Indices::All(train->size()));
+  trainer->train(datasets, indices);
+  
+  // -- Run evaluation.
+  Evaluator ev(gc);
+  ev.evaluateParallel(*test);
+
+  return ev.track_stats_.getTotalAccuracy();
+}
+
+void JarvisTwiddler::splitDataset(const TrackDataset& td, double pct0, TrackDataset* split0, TrackDataset* split1) const
+{
+  ROS_ASSERT(!td.empty());
+  ROS_ASSERT(pct0 >= 0 && pct0 <= 1);
+
+  // -- Copy name mappings.
+  split0->applyNameMappings(td);
+  split1->applyNameMappings(td);
+
+  // -- Get a random ordering.
+  vector<size_t> index(td.size());
+  for(size_t i = 0; i < td.size(); ++i)
+    index[i] = i;
+  random_shuffle(index.begin(), index.end());
+
+  // -- Split.
+  split0->tracks_.reserve(td.size());
+  split1->tracks_.reserve(td.size());
+  for(size_t i = 0; i < index.size(); ++i) {
+    if((double)i / index.size() < pct0)
+      split0->tracks_.push_back(td.tracks_[index[i]]);
+    else
+      split1->tracks_.push_back(td.tracks_[index[i]]);
+  }
+}
+
+double JarvisTwiddler::runMultipleEvals(std::string debugging_name, const TrackDataset& dataset,
+                                        YAML::Node config, int num_evals, double pct_train) const
+{
+  double accuracy = 0;
+  for(int i = 0; i < num_evals; ++i) {
+    (*eval_log_) << "== " << debugging_name << " " << i << " == " << endl;
+    TrackDataset::Ptr train(new TrackDataset);
+    TrackDataset::Ptr test(new TrackDataset);
+    splitDataset(dataset, pct_train, train.get(), test.get());
+
+    (*eval_log_) << "Train: " << endl;
+    (*eval_log_) << train->status("  ", true) << endl;
+    (*eval_log_) << "Test: " << endl;
+    (*eval_log_) << test->status("  ", true) << endl;
+
+    accuracy += runSingleEval(config, train, test);
+  }
+  return accuracy / num_evals;
+}
+
 YAML::Node JarvisTwiddler::evaluate(const YAML::Node& config, std::string evalpath)
 {
   YAML::Node results;
@@ -94,48 +148,33 @@ YAML::Node JarvisTwiddler::evaluate(const YAML::Node& config, std::string evalpa
     return results;
   }
 
-  // Check memory usage.
+  // -- Check memory usage.
   int retval = system(("free -m > " + evalpath + "/free.txt").c_str()); --retval;
 
-  // -- Compute descriptors on training set.  If too slow, don't proceed.
-  double ms_per_obj = updateDescriptors(config["Pipeline"], num_threads_, train_.get());
+  // -- Compute new descriptors for each class problem.  If too slow, don't proceed.
+  double ms_per_obj = 0;
+  for(size_t i = 0; i < datasets_.size(); ++i) {
+    ms_per_obj += updateDescriptors(config["Pipeline"], num_threads_, &datasets_[i]) / datasets_.size();
+    (*eval_log_) << "==================== Test " << i << " " << endl;
+    (*eval_log_) << "Dataset: " << endl;
+    (*eval_log_) << datasets_[i].status("  ", true) << endl;
+  }
   results["MsPerObj"] = ms_per_obj;
   if(ms_per_obj > (double)MAX_MS_PER_OBJ) {
     results["DescriptorComputationTooSlow"] = true;
     return results;
   }
-  (*eval_log_) << "Training set: " << endl;
-  (*eval_log_) << train_->status("  ", true) << endl;
 
-  // -- Update test set descriptors.
-  updateDescriptors(config["Pipeline"], num_threads_, test_.get());
-  (*eval_log_) << "Test set: " << endl;
-  (*eval_log_) << test_->status("  ", true) << endl;
-  
-  // -- Train a classifier.
-  GridClassifier::Ptr gc(new GridClassifier);
-  string ncstr = config["GlobalParams"]["NumCells"].as<string>();
-  istringstream iss(ncstr);
-  vector<size_t> nc;
-  while(!iss.eof()) {
-    size_t buf;
-    iss >> buf;
-    nc.push_back(buf);
-    cout << "NC: " << buf << endl;
+  // -- Run accuracy evaluations for each test.
+  double large_eval_accuracy = 0;
+  double tiny_eval_accuracy = 0;
+  for(size_t i = 0; i < datasets_.size(); ++i) {
+    large_eval_accuracy += runMultipleEvals("LargeEval", datasets_[i], config, 3, 0.5);
+    tiny_eval_accuracy += runMultipleEvals("TinyEval", datasets_[i], config, 10, 30.0 / datasets_[i].size());
   }
-  gc->initialize(*train_, nc);
-  GridClassifier::BoostingTrainer::Ptr trainer(new GridClassifier::BoostingTrainer(gc));
-  trainer->obj_thresh_ = config["GlobalParams"]["ObjThresh"].as<double>();
-  trainer->train(train_);
-  gc->save(evalpath + "/classifier.gc");
-  
-  // -- Run evaluation.
-  Evaluator ev(gc);
-  ev.evaluateParallel(*test_);
-  ev.plot_ = false;
-  ev.saveResults(evalpath);
+  results["LargeEvalAccuracy"] = large_eval_accuracy / datasets_.size();
+  results["TinyEvalAccuracy"] = tiny_eval_accuracy / datasets_.size();
 
-  results["Accuracy"] = ev.track_stats_.getTotalAccuracy();
   return results;
 }
 
