@@ -43,6 +43,7 @@ protected:
   void initializeBaseClassifiers(const YAML::Node& config);
   
   // -- Actions
+  void projectAllHOG(YAML::Node config) const;
   void twiddleNumCells(YAML::Node config) const;
   void twiddleTrainerThreshold(YAML::Node config) const;
   void deleteRandomPod(YAML::Node config) const;

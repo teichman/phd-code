@@ -18,13 +18,16 @@ JarvisTwiddler::JarvisTwiddler(vector<TrackDataset> datasets,
   up_vectors_(up_vectors)
 {
   // -- Set up twiddle actions.
-  REGISTER_ACTION(JarvisTwiddler::twiddleNumCells);
-  REGISTER_ACTION(JarvisTwiddler::twiddleTrainerThreshold);
-  REGISTER_ACTION(JarvisTwiddler::deleteRandomPod);
-  REGISTER_ACTION(JarvisTwiddler::addRawNormalizedHistogramBranch);
-  REGISTER_ACTION(JarvisTwiddler::addOrientedNormalizedHistogramBranch);
-  REGISTER_ACTION(JarvisTwiddler::addHogBranch);
-  REGISTER_ACTION(JarvisTwiddler::replaceHogBranch);
+  REGISTER_ACTION(JarvisTwiddler::projectAllHOG);
+  
+  // REGISTER_ACTION(JarvisTwiddler::twiddleNumCells);
+  // REGISTER_ACTION(JarvisTwiddler::twiddleTrainerThreshold);
+  // REGISTER_ACTION(JarvisTwiddler::deleteRandomPod);
+  // REGISTER_ACTION(JarvisTwiddler::addRawNormalizedHistogramBranch);
+  // REGISTER_ACTION(JarvisTwiddler::addOrientedNormalizedHistogramBranch);
+  // REGISTER_ACTION(JarvisTwiddler::addHogBranch);
+  // REGISTER_ACTION(JarvisTwiddler::replaceHogBranch);
+  
   // registerAction("twiddleRandomHistogramNumBins",
   //                boost::bind(&PipelineTwiddler::twiddlePodParamsLockstep<NormalizedDensityHistogram, double>, *this, _1,
   //                            "NumBins", vector<double>{5, 10, 20}));
@@ -190,9 +193,9 @@ YAML::Node JarvisTwiddler::evaluate(const YAML::Node& config, std::string evalpa
   for(size_t i = 0; i < datasets_.size(); ++i) {
     large_eval_accuracy += runMultipleEvals("LargeEval", config,
                                             base_classifiers_[i], datasets_[i],
-                                            20, 0.5);
+                                            50, 0.5);
     tiny_eval_accuracy += runMultipleEvals("TinyEval", config, base_classifiers_[i],
-                                           datasets_[i], 100, 30.0 / datasets_[i].size());
+                                           datasets_[i], 200, 30.0 / datasets_[i].size());
   }
   results["LargeEvalAccuracy"] = large_eval_accuracy / datasets_.size();
   results["TinyEvalAccuracy"] = tiny_eval_accuracy / datasets_.size();
@@ -356,6 +359,26 @@ void JarvisTwiddler::addHogBranch(YAML::Node config) const
   hog->setParam<double>("NumBins", nbs[rand() % nbs.size()]);
   pl.connect(hog->name() + ".Image <- " + dw->name() + ".Image");
   pl.connect("DescriptorAggregator.Descriptors <- " + hog->name() + ".ConcatenatedDescriptors");
+  
+  config["Pipeline"] = pl.YAMLize();
+}
+
+void JarvisTwiddler::projectAllHOG(YAML::Node config) const
+{
+  ROS_ASSERT(config["Pipeline"]);
+  Pipeline pl(1);
+  pl.deYAMLize(config["Pipeline"]);
+
+  vector<int> nums {5, 10, 20};
+  int num = nums[rand() % nums.size()];
+  vector<HogArray*> hogs = pl.filterPods<HogArray>();
+  for(size_t i = 0; i < hogs.size(); ++i) {
+    Pod* rp = pl.createPod("RandomProjector");
+    rp->setParam<double>("Seed", i);
+    rp->setParam<double>("NumProjections", num);
+    pl.connect(rp->name() + ".Descriptor <- " + hogs[i]->name() + ".ConcatenatedDescriptors");
+    pl.connect("DescriptorAggregator.Descriptors <- " + rp->name() + ".Projected");
+  }
   
   config["Pipeline"] = pl.YAMLize();
 }

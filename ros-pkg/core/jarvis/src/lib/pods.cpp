@@ -714,3 +714,57 @@ void HogArray::debug() const
   f << "concatenated_: " << concatenated_.transpose() << endl;
   f.close();
 }
+
+/************************************************************
+ * RandomProjector
+ ************************************************************/
+
+void RandomProjector::compute()
+{
+  // -- If missing descriptor, pass it on.
+  if(!pull<const VectorXf*>("Descriptor")) {
+    push<const VectorXf*>("Projected", NULL);
+    return;
+  }
+
+  // -- Initialize projection matrix if necessary.
+  const VectorXf& descriptor = *pull<const VectorXf*>("Descriptor");
+  int num_projections = param<double>("NumProjections");
+  if(projector_.rows() != num_projections) {
+    uint64_t seed = param<double>("Seed");
+    generateProjectionMatrix(descriptor.rows(), num_projections, seed, &projector_);
+  }
+
+  // The size of the descriptors entering should never change.
+  ROS_ASSERT(projector_.cols() == descriptor.rows());
+
+  projected_ = projector_ * descriptor;
+  push<const VectorXf*>("Projected", &projected_);
+}
+
+void RandomProjector::generateProjectionMatrix(int input_dim, int output_dim, uint64_t seed,
+                                               Eigen::MatrixXf* projector) const
+{
+  projector->resize(output_dim, input_dim);
+  
+  // -- Each entry in the projector is drawn from the standard normal.
+  // http://books.google.com/books?id=6Ewlh_lNo4sC&lpg=PP9&ots=JrJ9sqV0a5&dq=random%20projection&lr=&pg=PA2#v=twopage&q=&f=false
+  eigen_extensions::GaussianSampler gs(0, 1, seed);
+  gs.sample(projector);
+}
+  
+void RandomProjector::debug() const
+{
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "Projection matrix: " << endl;
+  f << projector_ << endl;
+  f << endl << endl;
+  if(!pull<const VectorXf*>("Descriptor"))
+    f << "No descriptor." << endl;
+  else {
+    f << "Orig: " << pull<const VectorXf*>("Descriptor")->transpose() << endl;
+    f << endl;
+    f << "Projected: " << projected_.transpose() << endl;
+  }
+  f.close();
+}

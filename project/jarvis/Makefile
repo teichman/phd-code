@@ -293,9 +293,7 @@ $(foreach REGRESSION_NAME,$(REGRESSION_NAMES),$(eval $(call REGRESSION_RULE_GENE
 ############################################################
 
 TWIDDLE_TEST_NAMES := kitchen00 leo00 mailman00 open_door00
-#TWIDDLE_TEST_NAMES := kitchen00
 
-#	. ~/.bashrc && rosgdb jarvis twiddle \
 .PHONY: twiddle
 twiddle:
 	rosrun jarvis twiddle \
@@ -305,3 +303,12 @@ twiddle:
 	--regression-test-dir $(REGRESSION_TESTS_DIR) \
 	-o $@ \
 	--regression-tests $(TWIDDLE_TEST_NAMES)
+
+twiddle-tiny:
+	rosrun jarvis twiddle \
+	--randomize \
+	--decimate 0.9 \
+	--initial-config $(CONFIG) \
+	--regression-test-dir $(REGRESSION_TESTS_DIR) \
+	-o $@ \
+	--regression-tests leo00

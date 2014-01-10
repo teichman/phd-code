@@ -5,6 +5,7 @@
 #include <pipeline/pipeline.h>
 #include <name_mapping/name_mapping.h>
 #include <jarvis/tracker.h>
+#include <eigen_extensions/random.h>
 
 class BlobProjector : public pl::Pod
 {
@@ -360,5 +361,31 @@ protected:
   void compute();
   void debug() const;
 };
+
+class RandomProjector : public pl::Pod
+{
+public:
+  DECLARE_POD(RandomProjector);
+  RandomProjector(std::string name) :
+    Pod(name)
+  {
+    declareInput<const Eigen::VectorXf*>("Descriptor");
+    declareParam<double>("Seed");
+    declareParam<double>("NumProjections");
+    declareOutput<const Eigen::VectorXf*>("Projected");
+  }
+
+protected:
+  eigen_extensions::UniformSampler sampler_;
+  Eigen::MatrixXf projector_;
+  Eigen::VectorXf projected_;
+
+  void compute();
+  void debug() const;
+  void generateProjectionMatrix(int input_dim, int output_dim, uint64_t seed,
+                                Eigen::MatrixXf* projector) const;
+
+};
+
 
 #endif // JARVIS_PODS_H
