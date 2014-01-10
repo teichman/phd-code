@@ -83,19 +83,35 @@ namespace pl {
     killThreadPool();
     spawnThreadPool(num_threads);
   }
-  
-  void Pipeline::connect(std::string connection)
+
+  void parseConnection(const std::string& connection,
+                       std::string* sink_pod,
+                       std::string* sink_input,
+                       std::string* source_pod,
+                       std::string* source_output)
   {
     const string& c = connection;
-    string sink_pod = c.substr(0, c.find_first_of(separator()));
-    string sink_input = c.substr(c.find_first_of(separator()) + 1, c.find_first_of(" ") - c.find_first_of(separator()) - 1);
+    *sink_pod = c.substr(0, c.find_first_of(separator()));
+    *sink_input = c.substr(c.find_first_of(separator()) + 1, c.find_first_of(" ") - c.find_first_of(separator()) - 1);
     string r = c.substr(c.find_first_of("<- ")).substr(4);
-    string source_pod = r.substr(0, r.find_first_of(separator()));
-    string source_output = r.substr(r.find_first_of(separator()) + 1);
+    *source_pod = r.substr(0, r.find_first_of(separator()));
+    *source_output = r.substr(r.find_first_of(separator()) + 1);
+  }
 
+  void Pipeline::connect(std::string connection)
+  {
+    string sink_pod, sink_input, source_pod, source_output;
+    parseConnection(connection, &sink_pod, &sink_input, &source_pod, &source_output);
     pod(sink_pod)->registerInput(sink_input, pod(source_pod), source_output);
   }
-    
+
+  void Pipeline::disconnect(std::string connection)
+  {
+    string sink_pod, sink_input, source_pod, source_output;
+    parseConnection(connection, &sink_pod, &sink_input, &source_pod, &source_output);
+    pod(sink_pod)->unregisterInput(sink_input, pod(source_pod), source_output);
+  }
+
   bool Pipeline::trylock() {
     if(pthread_mutex_trylock(&mutex_) == EBUSY)
       return false;
@@ -632,6 +648,12 @@ namespace pl {
   
   void Pipeline::prune(GenericPodTest isImmune)
   {
+    if(pods_.empty()) {
+      PL_ABORT("No Pods left during a call to Pipeline::prune()."
+               << "  Did you specify prune's Pod immunity function correctly?"
+               << "  At the minimum, your input and output Pods should be immune.");
+    }
+
     Pod* to_delete = NULL;
     
     // -- Find a Pod that has no outputs.

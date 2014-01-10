@@ -261,6 +261,50 @@ namespace pl
     pod->children_.push_back(this);
   }
 
+  void Pod::unregisterInput(const std::string& input_name, Pod* pod, const std::string& output_name)
+  {
+    if(declared_inputs_.count(input_name) == 0) {
+      PL_ABORT(getClassName() << " \"" << name() << "\" tried to unregister undeclared input \"" << input_name << "\".");
+    }
+
+    if(!pod->hasOutput(output_name)) {
+      PL_ABORT("Tried to disconnect " << name() << separator() << input_name << " <- " << pod->name() << separator() << output_name
+               << ", but Pod \"" << pod->name() << "\" does not have an output named \"" << output_name << "\".");
+    }
+    
+    const Outlet* outlet = pod->getOutlet(output_name);
+    if(!outlet->checkType(declared_inputs_[input_name])) { 
+      PL_ABORT(getClassName() << " \"" << name() << "\" tried to unregister \"" << input_name << " <- "
+               << pod->name() << separator() << output_name << "\", but types do not match.");
+    }
+
+    if(!inputs_.count(input_name)) {
+      PL_ABORT(getClassName() << " \"" << name() << "\" tried to unregister input \"" << input_name << "\", but no registered inputs were found.");
+    }
+
+    // -- Delete the outlet from inputs_.
+    vector<const Outlet*>& outlets = inputs_[input_name];
+    vector<const Outlet*>::iterator it = find(outlets.begin(), outlets.end(), outlet);
+    if(it == outlets.end()) {
+      PL_ABORT(getClassName() << " \"" << name() << "\" tried to unregister \"" << input_name << " <- "
+               << pod->name() << separator() << output_name << "\", but that connection was not found.");
+    }
+    outlets.erase(it);
+    
+    // -- If there are no more connections between this Pod and the parent Pod,
+    //    remove the corresponding entries from parents_ and pod->children_.
+    //    hasParent(name) only uses inputs_, which has been updated above at this point.
+    if(!hasParent(pod->name())) {
+      vector<Pod*>::iterator it0 = find(parents_.begin(), parents_.end(), pod);
+      PL_ASSERT(it0 != parents_.end());
+      parents_.erase(it0);
+
+      vector<Pod*>::iterator it1 = find(pod->children_.begin(), pod->children_.end(), this);
+      PL_ASSERT(it1 != pod->children_.end());
+      pod->children_.erase(it1);
+    }
+  }
+
   const Outlet* Pod::getOutlet(std::string output_name) const
   {
     if(outlets_.count(output_name) != 1) {
@@ -414,6 +458,19 @@ namespace pl
           pods.push_back(children_[i]);
     }
     return pods;
+  }
+
+  bool Pod::hasParent(const std::string& name) const
+  {
+    // omg we need c++11
+    std::map<std::string, std::vector<const Outlet*> >::const_iterator it;  
+    for(it = inputPipes().begin(); it != inputPipes().end(); ++it) {
+      const std::vector<const Outlet*>& outlets = it->second;
+      for(size_t i = 0; i < outlets.size(); ++i)
+        if(outlets[i]->pod()->name() == name)
+          return true;
+    }
+    return false;
   }
   
 } // namespace pl

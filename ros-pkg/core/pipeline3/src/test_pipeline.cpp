@@ -30,6 +30,40 @@ TEST(Pipeline, hasParent)
   }
 }
 
+bool immune(Pod* pod)
+{
+  if(pod->isPodType< EntryPoint< boost::shared_ptr<const Vec> > >())
+    return true;
+  if(pod->isPodType<ConcretePodA>())
+    return true;
+  if(pod->isPodType<ConcretePodB>())
+    return true;
+
+  return false;
+}
+
+TEST(Pipeline, disconnect)
+{
+  registerPods();
+  Pipeline pl(1);
+  generateDefaultPipeline(&pl);
+  EXPECT_TRUE(pl.hasPod("View0"));
+  EXPECT_TRUE(pl.pod("Sorter0")->hasParent("View0"));
+
+  pl.disconnect("Sorter0.Points <- View0.Output");
+  pl.writeGraphviz("graphvis-disconnect-before_pruning");
+  EXPECT_TRUE(pl.hasPod("View0"));
+  EXPECT_TRUE(!pl.pod("Sorter0")->hasParent("View0"));
+
+  pl.prune(immune);
+  pl.writeGraphviz("graphvis-disconnect-after_pruning");
+  EXPECT_TRUE(pl.hasPod("View0"));
+  EXPECT_TRUE(!pl.hasPod("Sorter0"));
+  EXPECT_TRUE(!pl.hasPod("Histogram0"));
+  EXPECT_TRUE(pl.hasPod("Aggregator0"));
+  EXPECT_TRUE(pl.hasPod("DescriptorAssembler"));
+}
+
 TEST(Pipeline, Serialize)
 {
   registerPods();

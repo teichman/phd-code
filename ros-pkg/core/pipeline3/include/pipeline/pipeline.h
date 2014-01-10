@@ -21,6 +21,7 @@ namespace pl
  
 
   typedef bool (*GenericPodTest)(Pod* pod);
+  template<typename T> bool isPodType(Pod* pod) { return pod->isPodType<T>(); }
   
   //! Class that represents the entire computation graph and manages its execution.
   //! Pods added to a Pipeline will be deleted by that Pipeline.
@@ -37,6 +38,8 @@ namespace pl
     Pod* createPod(const std::string& type);
     //! "Pod.Input <- Pod.Output"
     void connect(std::string connection);
+    //! Opposite of connect.
+    void disconnect(std::string connection);
     template<typename T> void setParam(std::string pod_name, std::string param_name, T val);
     //! Calls setData on an EntryPoint<T>.
     //! This is the normal way of pushing new data into a Pipeline.
@@ -109,6 +112,8 @@ namespace pl
     //! Returns true if it deleted something.
     //! Test should return true for anything that is immune from pruning.
     //! For example, this might include required inputs and outputs.
+    //! There is no default because at the minimum, your EntryPoint Pods
+    //! and output pods should be immune.  See isPodType() for an example.
     void prune(GenericPodTest isImmune);
     template<typename T> std::string defaultPodName() const;
     std::string defaultPodName(const std::string type) const;

@@ -80,9 +80,11 @@ namespace pl
     std::vector<const Outlet*> inputPipes(const std::string& input_name) const;
     //! There can be only one.
     const Outlet* inputPipe(const std::string& input_name) const;
+    template<typename T> bool isPodType() const;
     //! Returns true if this Pod has at least one parent of type T.
     template<typename T> bool hasParent() const;
-    
+    //! Returns true if this Pod has a parent with the provided name.
+    bool hasParent(const std::string& name) const;
     
   protected:
     // ----------------------------------------
@@ -182,6 +184,8 @@ namespace pl
     
     //! Connects the output of a Pod to this Pod's input.
     void registerInput(const std::string& input_name, Pod* pod, const std::string& output_name);
+    //! Does the opposite of registerInput.
+    void unregisterInput(const std::string& input_name, Pod* pod, const std::string& output_name);
     bool doneComputation() const {return done_computation_;}
     void flush();
     void pl_compute();
@@ -365,15 +369,22 @@ namespace pl
 
   template<typename T> bool Pod::hasParent() const
   {
-    for(auto it = inputPipes().begin(); it != inputPipes().end(); ++it) {
+    // omg we need c++11
+    std::map<std::string, std::vector<const Outlet*> >::const_iterator it;  
+    for(it = inputPipes().begin(); it != inputPipes().end(); ++it) {
       const std::vector<const Outlet*>& outlets = it->second;
       for(size_t i = 0; i < outlets.size(); ++i)
-        if(dynamic_cast<T*>(outlets[i]->pod()))
+        if(outlets[i]->pod()->isPodType<T>())
           return true;
     }
     return false;
   }
-
+  
+  template<typename T> bool Pod::isPodType() const
+  {
+    return dynamic_cast<const T*>(this);
+  }
+  
   /************************************************************
    * Outlet template definitions
    ************************************************************/
