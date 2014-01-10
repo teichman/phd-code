@@ -23,6 +23,8 @@ int main(int argc, char** argv)
     ("debug", "")
     ("num-threads,j", bpo::value(&num_threads)->default_value(1))
     ("up,u", bpo::value(&up_path), "")
+    ("force,f", "")
+    ("randomize", "")
     ;
 
   p.add("tds", -1);
@@ -39,6 +41,11 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  if(opts.count("randomize")) {
+    cout << "Setting random seed to something random." << endl;
+    srand(time(NULL));
+  }
+  
   YAML::Node config = YAML::LoadFile(config_path);
   cout << "Using " << num_threads << " threads to update descriptors." << endl;
   cout << "Using pipeline defined at " << config_path << "." << endl;
@@ -54,6 +61,14 @@ int main(int argc, char** argv)
     cout << "Working on " << td_paths[i] << endl;
     TrackDataset td;
     td.load(td_paths[i]);
+
+    // To force descriptor re-computation, apply an empty dmap,
+    // which will drop all descriptors.
+    if(opts.count("force")) {
+      cout << "Forcing descriptor re-computation." << endl;
+      td.applyNameMapping("dmap", NameMapping());
+    }
+    
     double ms_per_obj = updateDescriptors(config["Pipeline"], num_threads, &td, up, opts.count("debug"));
     // Only save if something changed.
     if(ms_per_obj != 0) {
