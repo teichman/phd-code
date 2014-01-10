@@ -45,6 +45,9 @@ protected:
   // -- Actions
   void projectAllHOG(YAML::Node config) const;
   void projectAllHOGAndRemoveRaw(YAML::Node config) const;
+  void projectRandomDescriptor(YAML::Node config) const;
+  void deleteRandomProjector(YAML::Node config) const;
+  
   void twiddleNumCells(YAML::Node config) const;
   void twiddleTrainerThreshold(YAML::Node config) const;
   void deleteRandomPod(YAML::Node config) const;

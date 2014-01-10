@@ -48,11 +48,6 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  if(opts.count("randomize")) {
-    cout << "Setting random seed to something random." << endl;
-    srand(time(NULL));
-  }
-
   // -- Set up the initial config.
   cout << "Using config: " << config_path << endl;
   YAML::Node config = YAML::LoadFile(config_path);
@@ -66,6 +61,10 @@ int main(int argc, char** argv)
     ROS_ASSERT(JarvisTwiddler::isRequired(dp.pod< EntryPoint<Blob::Ptr> >()));
   }
 
+  // We don't want decimate to get a different split every time.
+  // So, set the random seed to zero.  This should be unnecessary.
+  srand(0);  
+  
   // -- Load data.
   vector<string> test_dirs = glob(regression_test_dir + "/*");
   vector<TrackDataset> datasets;
@@ -95,7 +94,7 @@ int main(int argc, char** argv)
     
     vector<string> td_paths = glob(test_dirs[i] + "/test/*.td");
     TrackDataset td = *loadDatasets(td_paths, config, cmap, up, true);
-    if(decimate != 0) {
+    if(decimate != 0) {      
       TrackDataset split0, split1;
       splitDataset(td, decimate, &split0, &split1);
       td = split1;
@@ -104,6 +103,12 @@ int main(int argc, char** argv)
   }
   ROS_ASSERT(!datasets.empty());
 
+  if(opts.count("randomize")) {
+    cout << "Setting random seed to something random." << endl;
+    cout << "Note this does not affect decimation splitting, which always uses the same random seed." << endl;
+    srand(time(NULL));
+  }
+  
   // -- Initialize the twiddler.
   JarvisTwiddler jt(datasets, up_vectors, NUM_THREADS);
   if(bfs::exists(output_dir))

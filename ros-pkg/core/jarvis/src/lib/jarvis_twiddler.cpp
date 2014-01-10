@@ -19,7 +19,11 @@ JarvisTwiddler::JarvisTwiddler(vector<TrackDataset> datasets,
 {
   // -- Set up twiddle actions.
   REGISTER_ACTION(JarvisTwiddler::projectAllHOG);
+  REGISTER_ACTION(JarvisTwiddler::projectAllHOGAndRemoveRaw);
+  REGISTER_ACTION(JarvisTwiddler::projectRandomDescriptor);
+  REGISTER_ACTION(JarvisTwiddler::deleteRandomProjector);
   
+  // REGISTER_ACTION(JarvisTwiddler::deleteRandomPod);
   // REGISTER_ACTION(JarvisTwiddler::twiddleNumCells);
   // REGISTER_ACTION(JarvisTwiddler::twiddleTrainerThreshold);
   // REGISTER_ACTION(JarvisTwiddler::deleteRandomPod);
@@ -128,7 +132,9 @@ double JarvisTwiddler::runMultipleEvals(std::string debugging_name,
     (*eval_log_) << "Test: " << endl;
     (*eval_log_) << test->status("  ", true) << endl;
 
-    accuracy += runSingleEval(config, base_classifier, train, test);
+    double acc = runSingleEval(config, base_classifier, train, test);
+    (*eval_log_) << debugging_name << " " << i << " eval accuracy: " << acc << endl;
+    accuracy += acc;
   }
   return accuracy / num_evals;
 }
@@ -193,7 +199,7 @@ YAML::Node JarvisTwiddler::evaluate(const YAML::Node& config, std::string evalpa
   for(size_t i = 0; i < datasets_.size(); ++i) {
     large_eval_accuracy += runMultipleEvals("LargeEval", config,
                                             base_classifiers_[i], datasets_[i],
-                                            50, 0.5);
+                                            20, 0.5);
     tiny_eval_accuracy += runMultipleEvals("TinyEval", config, base_classifiers_[i],
                                            datasets_[i], 200, 30.0 / datasets_[i].size());
   }
@@ -363,37 +369,65 @@ void JarvisTwiddler::addHogBranch(YAML::Node config) const
   config["Pipeline"] = pl.YAMLize();
 }
 
-// void JarvisTwiddler::projectRandomDescriptor(YAML::Node config) const
-// {
-//   ROS_ASSERT(config["Pipeline"]);
-//   Pipeline pl(1);
-//   pl.deYAMLize(config["Pipeline"]);
+void JarvisTwiddler::projectRandomDescriptor(YAML::Node config) const
+{
+  ROS_ASSERT(config["Pipeline"]);
+  Pipeline pl(1);
+  pl.deYAMLize(config["Pipeline"]);
+  
+  // -- Get a random descriptor going into DescriptorAggregator.
+  Pod* da = pl.pod<DescriptorAggregator>();
+  ROS_ASSERT(da);
+  vector<const Outlet*> outlets = da->inputPipes("Descriptors");
+  vector<const Outlet*> valid; valid.reserve(outlets.size());
+  for(size_t i = 0; i < outlets.size(); ++i) {
+    if(outlets[i]->pod()->isPodType<HogArray>())
+      continue;
+    if(outlets[i]->pod()->isPodType<RandomProjector>())
+      continue;
+    valid.push_back(outlets[i]);
+  }
+  if(valid.empty())
+    return;
+  const Outlet* outlet = valid[rand() % valid.size()];
+  Pod* pod = outlet->pod();
 
-//   vector<int> nps {5, 10, 20};
-//   int np = nps[rand() % nps.size()];
+  // -- Remove any existing RPs attached to that Descriptor.
+  vector<RandomProjector*> rps = pl.filterPods<RandomProjector>();
+  for(size_t i = 0; i < rps.size(); ++i)
+    if(rps[i]->hasParent(pod->name()))
+      pl.deletePod(rps[i]->name());
+  rps.clear();
+  
+  // -- Add a RandomProjector.
+  vector<int> nps {5, 10, 20};
+  int np = nps[rand() % nps.size()];
+  Pod* rp = pl.createPod("RandomProjector");
+  // We use the unique Pod hash as the seed so that we don't use the same seed everywhere
+  // and that we don't keep trying configurations that are identical other than the
+  // change in random seed.
+  rp->setParam<double>("Seed", pod->getUniqueHash());
+  rp->setParam<double>("NumProjections", np);
+  pl.connect(rp->name() + ".Descriptor <- " + outlet->address());
+  pl.connect("DescriptorAggregator.Descriptors <- " + rp->name() + ".Projected");
+  
+  config["Pipeline"] = pl.YAMLize();
+}
 
-//   // -- Get a random descriptor going into DescriptorAggregator.
-//   Pod* da = pl.pod<DescriptorAggregator>();
-//   ROS_ASSERT(da);
-//   vector<const Outlet*> outlets = da->inputPipes("Descriptors");
-//   vector<const Outlet*> valid; valid.reserve(outlets.size());
-//   for(size_t i = 0; i < outlets.size(); ++i) {
-//     if(outlets[i]->pod()->isPodType<HogArray>())
-//       continue;
-//     if(outlets[i]->pod()->isPodType<RandomProjector>())
-//       continue;
-//     valid.push_back(outlets[i]);
-//   }
-//   if(valid.empty())
-//     return;
-//   Outlet outlet = valid[rand() % valid.size()];
+void JarvisTwiddler::deleteRandomProjector(YAML::Node config) const
+{
+  ROS_ASSERT(config["Pipeline"]);
+  Pipeline pl(1);
+  pl.deYAMLize(config["Pipeline"]);
 
-//   // -- Disconnect that descriptor from DescriptorAggregator.
-//   pl.disconnect("DescriptorAggregator.Descriptors <- " + outlet->address());
-
-//   // -- Add a RandomProjector
-
-// }
+  vector<RandomProjector*> rps = pl.filterPods<RandomProjector>();
+  if(rps.empty())
+    return;
+  RandomProjector* rp = rps[rand() % rps.size()];
+  pl.deletePod(rp->name());
+  
+  config["Pipeline"] = pl.YAMLize();
+}
 
 void JarvisTwiddler::projectAllHOGAndRemoveRaw(YAML::Node config) const
 {
@@ -410,7 +444,7 @@ void JarvisTwiddler::projectAllHOGAndRemoveRaw(YAML::Node config) const
   for(size_t i = 0; i < outlets.size(); ++i)
     if(outlets[i]->pod()->isPodType<HogArray>())
       pl.disconnect("DescriptorAggregator.Descriptors <- " + outlets[i]->address());
-
+  
   config["Pipeline"] = pl.YAMLize();
 }
 
@@ -425,7 +459,6 @@ void JarvisTwiddler::projectAllHOG(YAML::Node config) const
   for(size_t i = 0; i < rps.size(); ++i)
     if(rps[i]->hasParent<HogArray>())
       pl.deletePod(rps[i]->name());
-  pl.prune(JarvisTwiddler::isRequired);
   
   // -- Add new RandomProjectors.
   vector<int> nps {5, 10, 20, 50};
