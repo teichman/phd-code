@@ -186,9 +186,7 @@ double JarvisTwiddler::objective(const YAML::Node& results) const
     return std::numeric_limits<double>::infinity();    
   }
 
-  double ms_per_obj = results["MsPerObj"].as<double>();
-  double pct_error = (1.0 - results["Accuracy"].as<double>()) * 100.0;
-  return pct_error + ms_per_obj;
+  return (results["TinyEvalAccuracy"].as<double>() + results["LargeEvalAccuracy"].as<double>()) / 2.0;
 }
 
 void JarvisTwiddler::twiddleNumCells(YAML::Node config) const
