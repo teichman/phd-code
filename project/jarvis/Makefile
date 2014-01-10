@@ -288,3 +288,17 @@ endef
 $(foreach REGRESSION_NAME,$(REGRESSION_NAMES),$(eval $(call REGRESSION_RULE_GENERATOR,$(REGRESSION_NAME))))
 
 
+############################################################
+# Twiddling
+############################################################
+
+TWIDDLE_TEST_NAMES := kitchen00 leo00 mailman00 open_door00
+#TWIDDLE_TEST_NAMES := kitchen00
+
+twiddle:
+	rosrun jarvis twiddle \
+	--initial-config $(CONFIG) \
+	--regression-test-dir $(REGRESSION_TESTS_DIR) \
+	-o $@ \
+	--regression-tests $(TWIDDLE_TEST_NAMES) \
+	--hints `rospack find jarvis`/config/config.yml

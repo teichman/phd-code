@@ -74,9 +74,19 @@ int main(int argc, char** argv)
     VectorXf up;
     eigen_extensions::loadASCII(test_dirs[i] + "/up.eig.txt", &up);
     up_vectors.push_back(up);
+
+    NameMapping cmap;
+    ifstream f(test_dirs[i] + "/class_names.txt");
+    while(true) {
+      string name;
+      f >> name;
+      if(f.eof()) break;
+      cmap.addName(name);
+    }
+    cout << cmap << endl;
     
     vector<string> td_paths = glob(test_dirs[i] + "/test/*.td");
-    TrackDataset::Ptr td = loadDatasets(td_paths, config, NameMapping(), up, true);
+    TrackDataset::Ptr td = loadDatasets(td_paths, config, cmap, up, true);
     datasets.push_back(*td);
   }
   ROS_ASSERT(!datasets.empty());
