@@ -2,6 +2,7 @@
 #include <boost/program_options.hpp>
 #include <jarvis/descriptor_pipeline.h>
 #include <ros/package.h>
+#include <bag_of_tricks/glob.h>
 
 using namespace std;
 using namespace Eigen;
@@ -16,16 +17,20 @@ int main(int argc, char** argv)
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
 
-  vector<string> dataset_paths;
+  string config_path;
+  string regression_test_dir;
+  vector<string> names;
   string output_dir;
   double max_hours;
+  vector<string> hint_paths;
   opts_desc.add_options()
     ("help,h", "produce help message")
-    ("initial-config", bpo::value<string>())
-    ("datasets", bpo::value< vector<string> >(&dataset_paths)->required()->multitoken(), "labeled data to be used, one for each separate test")
+    ("initial-config", bpo::value(&config_path)->required(), "")
+    ("regression-test-dir", bpo::value(&regression_test_dir)->required(), "")
     ("output-dir,o", bpo::value<string>(&output_dir)->required(), "Where to save results")
+    ("regression-tests", bpo::value(&names)->multitoken(), "If provided, only use these regression tests")
     ("max-hours", bpo::value<double>(&max_hours)->default_value(0))
-    ("hints", bpo::value< vector<string> >()->multitoken(), "Optional configuration hints")
+    ("hints", bpo::value(&hint_paths)->multitoken(), "Optional configuration hints")
     ;
 
   bpo::variables_map opts;
@@ -34,18 +39,13 @@ int main(int argc, char** argv)
   try { bpo::notify(opts); }
   catch(...) { badargs = true; }
   if(opts.count("help") || badargs) {
-    cout << "Usage: " << argv[0] << " [OPTS] --train [ TRAIN ... ] --test [ TEST ... ] -o OUTPUT_DIR" << endl;
+    cout << "Usage: " << argv[0] << " [OPTS]" << endl;
     cout << endl;
     cout << opts_desc << endl;
     return 1;
   }
 
   // -- Set up the initial config.
-  string config_path;
-  if(opts.count("initial-config"))
-    config_path = opts["initial-config"].as<string>();
-  else
-    config_path = ros::package::getPath("jarvis") + "/config/config.yml";
   cout << "Using config: " << config_path << endl;
   YAML::Node config = YAML::LoadFile(config_path);
 
@@ -59,35 +59,47 @@ int main(int argc, char** argv)
   }
 
   // -- Load data.
+  vector<string> test_dirs = glob(regression_test_dir + "/*");
   vector<TrackDataset> datasets;
-  for(size_t i = 0; i < dataset_paths.size(); ++i) {
-    cout << "Loading " << dataset_paths[i] << endl;
-    TrackDataset td;
-    td.load(dataset_paths[i]);
-    datasets.push_back(td);
+  vector<VectorXf> up_vectors;
+  for(size_t i = 0; i < test_dirs.size(); ++i) {
+    string name = bfs::path(test_dirs[i]).leaf().string();
+    if(!names.empty() && find(names.begin(), names.end(), name) == names.end()) {
+      cout << "Skipping test \"" << name
+           << "\" because it was not specified but other tests were." << endl;
+      continue;
+    }
+    cout << "Loading test \"" << name << "\"." << endl;
+
+    VectorXf up;
+    eigen_extensions::loadASCII(test_dirs[i] + "/up.eig.txt", &up);
+    up_vectors.push_back(up);
+    
+    vector<string> td_paths = glob(test_dirs[i] + "/test/*.td");
+    TrackDataset::Ptr td = loadDatasets(td_paths, config, NameMapping(), up, true);
+    datasets.push_back(*td);
   }
+  ROS_ASSERT(!datasets.empty());
 
   // -- Initialize the twiddler.
-  JarvisTwiddler jt(datasets, NUM_THREADS);
+  JarvisTwiddler jt(datasets, up_vectors, NUM_THREADS);
   if(bfs::exists(output_dir))
     jt.load(output_dir);
   else
     jt.initialize(config, output_dir);
 
   // -- Add optional hints.
-  if(opts.count("hints")) {
-    vector<string> hint_paths = opts["hints"].as< vector<string> >();
-    cout << "Got " << hint_paths.size() << " hints." << endl;
-    for(size_t i = 0; i < hint_paths.size(); ++i) {
-      YAML::Node config = YAML::LoadFile(hint_paths[i]);
-      bfs::path path(hint_paths[i]);
-      cout << "Adding config hint: " << path.filename().string() << endl;
-      saveYAML(config, output_dir + "/hints/" + path.filename().string());
-    }
+  cout << "Got " << hint_paths.size() << " hints." << endl;
+  for(size_t i = 0; i < hint_paths.size(); ++i) {
+    YAML::Node config = YAML::LoadFile(hint_paths[i]);
+    bfs::path path(hint_paths[i]);
+    cout << "Adding config hint: " << path.filename().string() << endl;
+    saveYAML(config, output_dir + "/hints/" + path.filename().string());
   }
 
   // -- Go.
-  cout << "Twiddling for " << max_hours << " hours maximum." << endl;
+  if(max_hours > 0)
+    cout << "Twiddling for " << max_hours << " hours maximum." << endl;
   jt.twiddle(max_hours);
   return 0;
 }

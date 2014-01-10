@@ -10,10 +10,12 @@ using namespace pl;
  ************************************************************/
 
 JarvisTwiddler::JarvisTwiddler(vector<TrackDataset> datasets,
+                               vector<Eigen::VectorXf> up_vectors,
                                int num_threads) :
   PipelineTwiddler(),
   num_threads_(num_threads),
-  datasets_(datasets)
+  datasets_(datasets),
+  up_vectors_(up_vectors)
 {
   // -- Set up twiddle actions.
   REGISTER_ACTION(JarvisTwiddler::twiddleNumCells);
@@ -59,20 +61,13 @@ void JarvisTwiddler::improvementHook(const YAML::Node& config,
   pl.writeGraphviz(root_dir_ + "/best_pipeline.gv");
 }
 
-double JarvisTwiddler::runSingleEval(YAML::Node config, TrackDataset::ConstPtr train, TrackDataset::ConstPtr test) const
+double JarvisTwiddler::runSingleEval(const YAML::Node& config,
+                                     const GridClassifier& base_classifier,
+                                     TrackDataset::ConstPtr train,
+                                     TrackDataset::ConstPtr test) const
 {
   // -- Train a classifier.
-  GridClassifier::Ptr gc(new GridClassifier);
-  string ncstr = config["GlobalParams"]["NumCells"].as<string>();
-  istringstream iss(ncstr);
-  vector<size_t> nc;
-  while(!iss.eof()) {
-    size_t buf;
-    iss >> buf;
-    nc.push_back(buf);
-    cout << "NC: " << buf << endl;
-  }
-  gc->initialize(*train, nc);
+  GridClassifier::Ptr gc(new GridClassifier(base_classifier));
   GridClassifier::BoostingTrainer::Ptr trainer(new GridClassifier::BoostingTrainer(gc));
   trainer->obj_thresh_ = config["GlobalParams"]["ObjThresh"].as<double>();
   vector<TrackDataset::ConstPtr> datasets; datasets.push_back(train);
@@ -112,8 +107,11 @@ void JarvisTwiddler::splitDataset(const TrackDataset& td, double pct0, TrackData
   }
 }
 
-double JarvisTwiddler::runMultipleEvals(std::string debugging_name, const TrackDataset& dataset,
-                                        YAML::Node config, int num_evals, double pct_train) const
+double JarvisTwiddler::runMultipleEvals(std::string debugging_name,
+                                        const YAML::Node& config,
+                                        const GridClassifier& base_classifier,
+                                        const TrackDataset& dataset,
+                                        int num_evals, double pct_train) const
 {
   double accuracy = 0;
   for(int i = 0; i < num_evals; ++i) {
@@ -127,9 +125,27 @@ double JarvisTwiddler::runMultipleEvals(std::string debugging_name, const TrackD
     (*eval_log_) << "Test: " << endl;
     (*eval_log_) << test->status("  ", true) << endl;
 
-    accuracy += runSingleEval(config, train, test);
+    accuracy += runSingleEval(config, base_classifier, train, test);
   }
   return accuracy / num_evals;
+}
+
+void JarvisTwiddler::initializeBaseClassifiers(const YAML::Node& config)
+{
+  base_classifiers_.clear();
+  for(size_t i = 0; i < datasets_.size(); ++i) {
+    GridClassifier gc;
+    string ncstr = config["GlobalParams"]["NumCells"].as<string>();
+    istringstream iss(ncstr);
+    vector<size_t> nc;
+    while(!iss.eof()) {
+      size_t buf;
+      iss >> buf;
+      nc.push_back(buf);
+    }
+    gc.initialize(datasets_[i], nc);
+    base_classifiers_.push_back(gc);
+  }
 }
 
 YAML::Node JarvisTwiddler::evaluate(const YAML::Node& config, std::string evalpath)
@@ -150,11 +166,11 @@ YAML::Node JarvisTwiddler::evaluate(const YAML::Node& config, std::string evalpa
 
   // -- Check memory usage.
   int retval = system(("free -m > " + evalpath + "/free.txt").c_str()); --retval;
-
+  
   // -- Compute new descriptors for each class problem.  If too slow, don't proceed.
   double ms_per_obj = 0;
   for(size_t i = 0; i < datasets_.size(); ++i) {
-    ms_per_obj += updateDescriptors(config["Pipeline"], num_threads_, &datasets_[i]) / datasets_.size();
+    ms_per_obj += updateDescriptors(config["Pipeline"], num_threads_, &datasets_[i], up_vectors_[i]) / datasets_.size();
     (*eval_log_) << "==================== Test " << i << " " << endl;
     (*eval_log_) << "Dataset: " << endl;
     (*eval_log_) << datasets_[i].status("  ", true) << endl;
@@ -165,16 +181,26 @@ YAML::Node JarvisTwiddler::evaluate(const YAML::Node& config, std::string evalpa
     return results;
   }
 
+  // -- Initialize the base classifiers.
+  initializeBaseClassifiers(config);
+  
   // -- Run accuracy evaluations for each test.
   double large_eval_accuracy = 0;
   double tiny_eval_accuracy = 0;
   for(size_t i = 0; i < datasets_.size(); ++i) {
-    large_eval_accuracy += runMultipleEvals("LargeEval", datasets_[i], config, 3, 0.5);
-    tiny_eval_accuracy += runMultipleEvals("TinyEval", datasets_[i], config, 10, 30.0 / datasets_[i].size());
+    large_eval_accuracy += runMultipleEvals("LargeEval", config,
+                                            base_classifiers_[i], datasets_[i],
+                                            5, 0.5);
+    tiny_eval_accuracy += runMultipleEvals("TinyEval", config, base_classifiers_[i],
+                                           datasets_[i], 30, 30.0 / datasets_[i].size());
   }
   results["LargeEvalAccuracy"] = large_eval_accuracy / datasets_.size();
   results["TinyEvalAccuracy"] = tiny_eval_accuracy / datasets_.size();
-
+  
+  double large_eval_error = 1.0 - results["LargeEvalAccuracy"].as<double>();
+  double tiny_eval_error = 1.0 - results["TinyEvalAccuracy"].as<double>();
+  results["MeanError"] = (large_eval_error + tiny_eval_error) / 2;
+  
   return results;
 }
 
@@ -185,8 +211,7 @@ double JarvisTwiddler::objective(const YAML::Node& results) const
   {
     return std::numeric_limits<double>::infinity();    
   }
-
-  return (results["TinyEvalAccuracy"].as<double>() + results["LargeEvalAccuracy"].as<double>()) / 2.0;
+  return results["MeanError"].as<double>();
 }
 
 void JarvisTwiddler::twiddleNumCells(YAML::Node config) const
@@ -271,11 +296,11 @@ void JarvisTwiddler::addHogBranch(YAML::Node config) const
     cp->setParam<double>("KernelSize", 1);
 
     // -- If we don't have a CloudOrienter, add one.
-    if(!pl.hasPod<CloudOrienter>()) {
-      Pod* co = pl.createPod("CloudOrienter");
+    if(!pl.hasPod<GravitationalCloudOrienter>()) {
+      Pod* co = pl.createPod("GravitationalCloudOrienter");
       pl.connect(co->name() + ".ProjectedBlob <- BlobProjector.ProjectedBlob");
     }
-    Pod* co = pl.pod<CloudOrienter>();
+    Pod* co = pl.pod<GravitationalCloudOrienter>();
     
     pl.connect(cp->name() + ".Cloud <- " + co->name() + ".OrientedCloud");
   }
@@ -376,12 +401,12 @@ void JarvisTwiddler::addOrientedNormalizedHistogramBranch(YAML::Node config) con
   }
   Pod* bp = pl.pod<BlobProjector>();
   
-  // -- If we don't have a CloudOrienter, add one.
-  if(!pl.hasPod<CloudOrienter>()) {
-    Pod* co = pl.createPod("CloudOrienter");
+  // -- If we don't have a GravitationalCloudOrienter, add one.
+  if(!pl.hasPod<GravitationalCloudOrienter>()) {
+    Pod* co = pl.createPod("GravitationalCloudOrienter");
     pl.connect(co->name() + ".ProjectedBlob <- " + bp->name() + ".ProjectedBlob");
   }
-  Pod* co = pl.pod<CloudOrienter>();
+  Pod* co = pl.pod<GravitationalCloudOrienter>();
 
   ROS_ASSERT(bp && co);
   Pod* ndh = pl.createPod("NormalizedDensityHistogram");
