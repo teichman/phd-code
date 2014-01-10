@@ -80,6 +80,9 @@ namespace pl
     std::vector<const Outlet*> inputPipes(const std::string& input_name) const;
     //! There can be only one.
     const Outlet* inputPipe(const std::string& input_name) const;
+    //! Returns true if this Pod has at least one parent of type T.
+    template<typename T> bool hasParent() const;
+    
     
   protected:
     // ----------------------------------------
@@ -360,6 +363,16 @@ namespace pl
     params_.set(param_name, val);
   }
 
+  template<typename T> bool Pod::hasParent() const
+  {
+    for(auto it = inputPipes().begin(); it != inputPipes().end(); ++it) {
+      const std::vector<const Outlet*>& outlets = it->second;
+      for(size_t i = 0; i < outlets.size(); ++i)
+        if(dynamic_cast<T*>(outlets[i]->pod()))
+          return true;
+    }
+    return false;
+  }
 
   /************************************************************
    * Outlet template definitions

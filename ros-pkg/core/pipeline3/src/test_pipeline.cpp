@@ -18,6 +18,18 @@ TEST(Pipeline, RemovePodNames)
   cout << pl.pod("DescriptorAssembler")->getUniqueString() << endl;
 }
 
+TEST(Pipeline, hasParent)
+{
+  registerPods();
+  Pipeline pl(1);
+  generateDefaultPipeline(&pl);
+  vector<Sorter*> sorters = pl.filterPods<Sorter>();
+  for(size_t i = 0; i < sorters.size(); ++i) { 
+    EXPECT_TRUE(sorters[i]->hasParent< EntryPoint< boost::shared_ptr<const Vec> > >());
+    EXPECT_TRUE(!sorters[i]->hasParent<Aggregator>());
+  }
+}
+
 TEST(Pipeline, Serialize)
 {
   registerPods();
@@ -142,7 +154,7 @@ TEST(Pipeline, UniqueString)
 TEST(Pipeline, MultiCompute)
 {
   Pipeline pl(10);
-  pl.loadYAML("example.pl");
+  pl.loadYAML("example.yml");
 
   int num_points = 1e3;
   Vec::ConstPtr v0 = generateVec(num_points);
@@ -163,7 +175,7 @@ TEST(Pipeline, MultiCompute)
 TEST(Pipeline, OutputFlush)
 {
   Pipeline pl(10);
-  pl.loadYAML("example.pl");
+  pl.loadYAML("example.yml");
 
   int num_points = 1e3;
   Vec::ConstPtr v0 = generateVec(num_points);
