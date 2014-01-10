@@ -363,19 +363,78 @@ void JarvisTwiddler::addHogBranch(YAML::Node config) const
   config["Pipeline"] = pl.YAMLize();
 }
 
+// void JarvisTwiddler::projectRandomDescriptor(YAML::Node config) const
+// {
+//   ROS_ASSERT(config["Pipeline"]);
+//   Pipeline pl(1);
+//   pl.deYAMLize(config["Pipeline"]);
+
+//   vector<int> nps {5, 10, 20};
+//   int np = nps[rand() % nps.size()];
+
+//   // -- Get a random descriptor going into DescriptorAggregator.
+//   Pod* da = pl.pod<DescriptorAggregator>();
+//   ROS_ASSERT(da);
+//   vector<const Outlet*> outlets = da->inputPipes("Descriptors");
+//   vector<const Outlet*> valid; valid.reserve(outlets.size());
+//   for(size_t i = 0; i < outlets.size(); ++i) {
+//     if(outlets[i]->pod()->isPodType<HogArray>())
+//       continue;
+//     if(outlets[i]->pod()->isPodType<RandomProjector>())
+//       continue;
+//     valid.push_back(outlets[i]);
+//   }
+//   if(valid.empty())
+//     return;
+//   Outlet outlet = valid[rand() % valid.size()];
+
+//   // -- Disconnect that descriptor from DescriptorAggregator.
+//   pl.disconnect("DescriptorAggregator.Descriptors <- " + outlet->address());
+
+//   // -- Add a RandomProjector
+
+// }
+
+void JarvisTwiddler::projectAllHOGAndRemoveRaw(YAML::Node config) const
+{
+  projectAllHOG(config);
+
+  ROS_ASSERT(config["Pipeline"]);
+  Pipeline pl(1);
+  pl.deYAMLize(config["Pipeline"]);
+
+  // -- Remove raw HOG descriptors.
+  Pod* da = pl.pod<DescriptorAggregator>();
+  ROS_ASSERT(da);
+  vector<const Outlet*> outlets = da->inputPipes("Descriptors");
+  for(size_t i = 0; i < outlets.size(); ++i)
+    if(outlets[i]->pod()->isPodType<HogArray>())
+      pl.disconnect("DescriptorAggregator.Descriptors <- " + outlets[i]->address());
+
+  config["Pipeline"] = pl.YAMLize();
+}
+
 void JarvisTwiddler::projectAllHOG(YAML::Node config) const
 {
   ROS_ASSERT(config["Pipeline"]);
   Pipeline pl(1);
   pl.deYAMLize(config["Pipeline"]);
 
-  vector<int> nums {5, 10, 20};
-  int num = nums[rand() % nums.size()];
+  // -- Get rid of any RandomProjectors already attached to HogArrays.
+  vector<RandomProjector*> rps = pl.filterPods<RandomProjector>();
+  for(size_t i = 0; i < rps.size(); ++i)
+    if(rps[i]->hasParent<HogArray>())
+      pl.deletePod(rps[i]->name());
+  pl.prune(JarvisTwiddler::isRequired);
+  
+  // -- Add new RandomProjectors.
+  vector<int> nps {5, 10, 20, 50};
+  int np = nps[rand() % nps.size()];
   vector<HogArray*> hogs = pl.filterPods<HogArray>();
   for(size_t i = 0; i < hogs.size(); ++i) {
     Pod* rp = pl.createPod("RandomProjector");
     rp->setParam<double>("Seed", i);
-    rp->setParam<double>("NumProjections", num);
+    rp->setParam<double>("NumProjections", np);
     pl.connect(rp->name() + ".Descriptor <- " + hogs[i]->name() + ".ConcatenatedDescriptors");
     pl.connect("DescriptorAggregator.Descriptors <- " + rp->name() + ".Projected");
   }

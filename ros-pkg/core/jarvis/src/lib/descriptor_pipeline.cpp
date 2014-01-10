@@ -90,6 +90,9 @@ double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, E
   
   // -- Delete all the existing descriptors.
   //    Testing the hypothesis that this will fix memory fragmentation issues.
+  //    ... looks like it doesn't.  Hm.
+  //    12Gb total memory usage -> 43Gb after doing an update... and that's only
+  //    when adding 60 new axes to the total descriptor space (out of ~4000).
   td->deleteDescriptors();
 
   // -- Apply the new dmap.

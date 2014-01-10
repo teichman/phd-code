@@ -304,6 +304,7 @@ twiddle:
 	-o $@ \
 	--regression-tests $(TWIDDLE_TEST_NAMES)
 
+.PHONY: twiddle-tiny
 twiddle-tiny:
 	rosrun jarvis twiddle \
 	--randomize \
