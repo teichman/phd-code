@@ -33,6 +33,7 @@ int main(int argc, char** argv)
     ("max-hours", bpo::value<double>(&max_hours)->default_value(0))
     ("hints", bpo::value(&hint_paths)->multitoken(), "Optional configuration hints")
     ("decimate", bpo::value(&decimate)->default_value(0), "Downsample tracks this much.  (0, 1).")
+    ("randomize", "")
     ;
 
   bpo::variables_map opts;
@@ -45,6 +46,11 @@ int main(int argc, char** argv)
     cout << endl;
     cout << opts_desc << endl;
     return 1;
+  }
+
+  if(opts.count("randomize")) {
+    cout << "Setting random seed to something random." << endl;
+    srand(time(NULL));
   }
 
   // -- Set up the initial config.

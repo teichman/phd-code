@@ -295,9 +295,11 @@ $(foreach REGRESSION_NAME,$(REGRESSION_NAMES),$(eval $(call REGRESSION_RULE_GENE
 TWIDDLE_TEST_NAMES := kitchen00 leo00 mailman00 open_door00
 #TWIDDLE_TEST_NAMES := kitchen00
 
+#	. ~/.bashrc && rosgdb jarvis twiddle \
 .PHONY: twiddle
 twiddle:
-	. ~/.bashrc && rosgdb jarvis twiddle \
+	rosrun jarvis twiddle \
+	--randomize \
 	--decimate 0.5 \
 	--initial-config $(CONFIG) \
 	--regression-test-dir $(REGRESSION_TESTS_DIR) \

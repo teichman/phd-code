@@ -190,9 +190,9 @@ YAML::Node JarvisTwiddler::evaluate(const YAML::Node& config, std::string evalpa
   for(size_t i = 0; i < datasets_.size(); ++i) {
     large_eval_accuracy += runMultipleEvals("LargeEval", config,
                                             base_classifiers_[i], datasets_[i],
-                                            5, 0.5);
+                                            20, 0.5);
     tiny_eval_accuracy += runMultipleEvals("TinyEval", config, base_classifiers_[i],
-                                           datasets_[i], 30, 30.0 / datasets_[i].size());
+                                           datasets_[i], 100, 30.0 / datasets_[i].size());
   }
   results["LargeEvalAccuracy"] = large_eval_accuracy / datasets_.size();
   results["TinyEvalAccuracy"] = tiny_eval_accuracy / datasets_.size();
