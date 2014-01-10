@@ -190,7 +190,7 @@ void OnlineLearner::handleAnnotatedData()
     aggregated += *incoming_annotated_[i];
   incoming_annotated_.clear();
   saveByClassAndLabel(aggregated, iter_dir_ + "/annotated");
-
+  
   // -- Split them between annotated_ and validation_.
   TrackDataset for_annotated;
   for_annotated.applyNameMappings(aggregated);
@@ -205,7 +205,38 @@ void OnlineLearner::handleAnnotatedData()
   }
   annotated_->tracks_.insert(annotated_->tracks_.end(),
                              for_annotated.tracks_.begin(), for_annotated.tracks_.end());  
-      
+
+  // -- Search for duplicate tracks in unsupervised_.  Remove them.
+  // We actually don't want to use similar tracks.  This could have the
+  // unintended side effect of de-inducting many tracks that are
+  // correctly-labeled.  The hash is more appropriate.
+  // TODO: Caching the hashes would be a good idea if this is slow.
+  vector<double> uns_hashes(unsupervised_->size());
+  for(size_t i = 0; i < unsupervised_->size(); ++i) {
+    uns_hashes[i] = (*unsupervised_)[i].hash();
+  }
+  vector<bool> to_remove(unsupervised_->size(), false);
+  for(size_t i = 0; i < for_annotated.size(); ++i) {
+    double hash = for_annotated[i].hash();
+    for(size_t j = 0; j < uns_hashes.size(); ++j)
+      if(hash == uns_hashes[j])
+        to_remove[j] = true;
+  }
+  vector<Dataset::Ptr> tracks;
+  vector<Label> uls;
+  tracks.reserve(buffer_size_);
+  uls.reserve(buffer_size_);
+  for(size_t i = 0; i < to_remove.size(); ++i) {
+    if(!to_remove[i]) {
+      tracks.push_back(unsupervised_->tracks_[i]);
+      uls.push_back(unsupervised_logodds_[i]);
+    }
+  }
+  size_t num_before = unsupervised_->size();
+  unsupervised_->tracks_ = tracks;
+  unsupervised_logodds_ = uls;
+  cout << "Dropped " << num_before - unsupervised_->size() << " tracks in unsupervised_ that were identical to new annotations." << endl;
+  
   // -- Classify the new annotated tracks that didn't end up in validation_.
   vector<Label> predictions(for_annotated.size());
   lockRead();
