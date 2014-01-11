@@ -306,7 +306,7 @@ twiddle:
 
 .PHONY: twiddle-tiny
 twiddle-tiny:
-	rosrun jarvis twiddle \
+	. ~/.bashrc && rosgdb jarvis twiddle \
 	--randomize \
 	--decimate 0.9 \
 	--initial-config $(CONFIG) \

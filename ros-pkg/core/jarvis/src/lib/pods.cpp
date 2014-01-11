@@ -768,3 +768,38 @@ void RandomProjector::debug() const
   }
   f.close();
 }
+
+
+/************************************************************
+ * DescriptorConcatenator
+ ************************************************************/
+
+void DescriptorConcatenator::compute()
+{
+  vector<const VectorXf*> descriptors;
+  multiPull("Descriptors", &descriptors);
+  
+  int num = 0;
+  for(size_t i = 0; i < descriptors.size(); ++i) {
+    ROS_ASSERT(descriptors[i]);
+    ROS_ASSERT(descriptors[i]->rows() > 0);
+    num += descriptors[i]->rows();
+  }
+
+  if(concatenated_.rows() != num)
+    concatenated_ = VectorXf(num);
+
+  int idx = 0;
+  for(size_t i = 0; i < descriptors.size(); ++i) {
+    concatenated_.segment(idx, descriptors[i]->rows()) = *descriptors[i];
+    idx += descriptors[i]->rows();
+  }
+  
+  push<const VectorXf*>("ConcatenatedDescriptors", &concatenated_);
+}
+
+void DescriptorConcatenator::debug() const
+{
+
+}
+

@@ -48,6 +48,8 @@ protected:
   void projectAllHOGAndRemoveRaw(YAML::Node config) const;
   void projectRandomDescriptor(YAML::Node config) const;
   void deleteRandomProjector(YAML::Node config) const;
+  void projectAllDescriptorsConcatenated(YAML::Node config) const;
+  void coupleAllDescriptorSpaces(YAML::Node config) const;
   
   void twiddleNumCells(YAML::Node config) const;
   void twiddleTrainerThreshold(YAML::Node config) const;

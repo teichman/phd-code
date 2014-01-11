@@ -87,6 +87,24 @@ protected:
 };
 
 
+class DescriptorConcatenator : public pl::Pod
+{
+public:
+  DECLARE_POD(DescriptorConcatenator);
+  DescriptorConcatenator(std::string name) :
+    Pod(name)
+  {
+    declareMultiInput<const Eigen::VectorXf*>("Descriptors");
+    declareOutput<const Eigen::VectorXf*>("ConcatenatedDescriptors");
+  }
+
+protected:
+  Eigen::VectorXf concatenated_;
+  
+  void compute();
+  void debug() const;
+};
+
 class DescriptorAggregator : public pl::Pod
 {
 public:

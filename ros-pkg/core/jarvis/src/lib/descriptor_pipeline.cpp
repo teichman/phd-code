@@ -30,6 +30,7 @@ void DescriptorPipeline::registerPodTypes()
   REGISTER_POD(IntensityHistogram);
   REGISTER_POD(HSVHistogram);
   REGISTER_POD(RandomProjector);
+  REGISTER_POD(DescriptorConcatenator);
 }
 
 std::string DescriptorPipeline::defaultSpecificationPath()
