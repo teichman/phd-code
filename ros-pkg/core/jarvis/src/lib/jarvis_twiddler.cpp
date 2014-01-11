@@ -22,6 +22,7 @@ JarvisTwiddler::JarvisTwiddler(vector<TrackDataset> datasets,
   REGISTER_ACTION(JarvisTwiddler::projectAllHOGAndRemoveRaw);
   REGISTER_ACTION(JarvisTwiddler::projectRandomDescriptor);
   REGISTER_ACTION(JarvisTwiddler::deleteRandomProjector);
+  REGISTER_ACTION(JarvisTwiddler::projectAllDescriptors);
   
   // REGISTER_ACTION(JarvisTwiddler::deleteRandomPod);
   // REGISTER_ACTION(JarvisTwiddler::twiddleNumCells);
@@ -425,6 +426,35 @@ void JarvisTwiddler::deleteRandomProjector(YAML::Node config) const
     return;
   RandomProjector* rp = rps[rand() % rps.size()];
   pl.deletePod(rp->name());
+  
+  config["Pipeline"] = pl.YAMLize();
+}
+
+void JarvisTwiddler::projectAllDescriptors(YAML::Node config) const
+{
+  ROS_ASSERT(config["Pipeline"]);
+  Pipeline pl(1);
+  pl.deYAMLize(config["Pipeline"]);
+
+  // -- Get rid of any existing RandomProjectors.
+  vector<RandomProjector*> rps = pl.filterPods<RandomProjector>();
+  for(size_t i = 0; i < rps.size(); ++i)
+    pl.deletePod(rps[i]->name());
+  
+  // -- Add new RandomProjectors for all descriptors.
+  vector<int> nps {2, 5, 10, 20};
+  int np = nps[rand() % nps.size()];
+
+  Pod* da = pl.pod<DescriptorAggregator>();
+  ROS_ASSERT(da);
+  vector<const Outlet*> outlets = da->inputPipes("Descriptors");
+  for(size_t i = 0; i < outlets.size(); ++i) {
+    Pod* rp = pl.createPod("RandomProjector");
+    rp->setParam<double>("Seed", outlets[i]->pod()->getUniqueHash());
+    rp->setParam<double>("NumProjections", np);
+    pl.connect(rp->name() + ".Descriptor <- " + outlets[i]->address());
+    pl.connect("DescriptorAggregator.Descriptors <- " + rp->name() + ".Projected");
+  }
   
   config["Pipeline"] = pl.YAMLize();
 }

@@ -44,6 +44,7 @@ protected:
   
   // -- Actions
   void projectAllHOG(YAML::Node config) const;
+  void projectAllDescriptors(YAML::Node config) const;
   void projectAllHOGAndRemoveRaw(YAML::Node config) const;
   void projectRandomDescriptor(YAML::Node config) const;
   void deleteRandomProjector(YAML::Node config) const;
