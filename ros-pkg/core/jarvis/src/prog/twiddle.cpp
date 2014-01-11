@@ -62,7 +62,10 @@ int main(int argc, char** argv)
   }
 
   // We don't want decimate to get a different split every time.
-  // So, set the random seed to zero.  This should be unnecessary.
+  // This is because if we restart the Twiddler, we really want the
+  // same data split, even if we want --randomize.
+  // So, set the random seed to zero at this point.  The srand call should be
+  // unnecessary, but just in case...
   srand(0);  
   
   // -- Load data.
