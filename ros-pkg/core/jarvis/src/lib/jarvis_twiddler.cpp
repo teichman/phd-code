@@ -408,8 +408,9 @@ void JarvisTwiddler::projectRandomDescriptor(YAML::Node config) const
   Pod* rp = pl.createPod("RandomProjector");
   // We use the unique Pod hash as the seed so that we don't use the same seed everywhere
   // and that we don't keep trying configurations that are identical other than the
-  // change in random seed.
-  rp->setParam<double>("Seed", pod->getUniqueHash());
+  // change in random seed.  The % 10000 is so that we don't get very large seeds which
+  // get serialize / deserialize properly.
+  rp->setParam<double>("Seed", pod->getUniqueHash() % 10000);
   rp->setParam<double>("NumProjections", np);
   pl.connect(rp->name() + ".Descriptor <- " + outlet->address());
   pl.connect("DescriptorAggregator.Descriptors <- " + rp->name() + ".Projected");
@@ -452,7 +453,7 @@ void JarvisTwiddler::projectAllDescriptors(YAML::Node config) const
   vector<const Outlet*> outlets = da->inputPipes("Descriptors");
   for(size_t i = 0; i < outlets.size(); ++i) {
     Pod* rp = pl.createPod("RandomProjector");
-    rp->setParam<double>("Seed", outlets[i]->pod()->getUniqueHash());
+    rp->setParam<double>("Seed", outlets[i]->pod()->getUniqueHash() % 10000);
     rp->setParam<double>("NumProjections", np);
     pl.connect(rp->name() + ".Descriptor <- " + outlets[i]->address());
     pl.connect("DescriptorAggregator.Descriptors <- " + rp->name() + ".Projected");
@@ -501,7 +502,7 @@ void JarvisTwiddler::coupleAllDescriptorSpaces(YAML::Node config) const
   int np = nps[rand() % nps.size()];
 
   Pod* rp = pl.createPod("RandomProjector");
-  rp->setParam<double>("Seed", dc->getUniqueHash());
+  rp->setParam<double>("Seed", dc->getUniqueHash() % 10000);
   rp->setParam<double>("NumProjections", np);
   pl.connect(rp->name() + ".Descriptor <- " + dc->name() + ".ConcatenatedDescriptors");
   pl.connect("DescriptorAggregator.Descriptors <- " + rp->name() + ".Projected");
