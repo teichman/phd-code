@@ -8,21 +8,30 @@ import roslib
 roslib.load_manifest('jarvis')
 from regression_testing import * 
 
-if len(sys.argv) != 2:
-    print 'Usage: ' + sys.argv[0] + ' DIR'
-    print '  where DIR is the output directory for a full suite of regression tests.'
-    exit(0)
+parser = argparse.ArgumentParser()
+parser.add_argument("-t", "--type", help="comparison type", choices=["accuracy", "annotations"], default="accuracy")
+parser.add_argument("dir", help="regression test dir")
+args = parser.parse_args()
 
 # -- Load data.
 output_dir = sys.argv[1]
 test_names = sorted(os.walk(output_dir).next()[1])
-gi_accs = []
-baseline_accs = []
-for test_name in test_names:
-    gi_accs.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
-    baseline_accs.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -wholename '*iter009/track_results.txt' | sort` | awk '{print $NF}'"))
+gi_vals = []
+baseline_vals = []
+
+if args.type == "accuracy":
+    label = 'Accuracy (%)'
+    for test_name in test_names:
+        gi_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
+        baseline_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -wholename '*iter009/track_results.txt' | sort` | awk '{print $NF}'"))
+
+elif args.type == "annotations":
+    label = 'Num annotations'
+    for test_name in test_names:
+        gi_vals.append(npLoadBash("for dir in `find -L " + os.path.join(output_dir, test_name) + " -maxdepth 1 -mindepth 1 -type d`; do grep -A2 'Hand-annotated' `find $dir -name learner_status.txt | sort | tail -n1`; done | grep tracks | awk '{print $1}'"))
+        baseline_vals.append(npLoadBash("for dir in `find -L " + os.path.join(output_dir, test_name) + " -maxdepth 1 -mindepth 1 -type d`; do grep -A2 'Hand-annotated' `find $dir -name learner_status.txt | sort | tail -n1`; done | grep tracks | awk '{print $1}'"))
 
 # -- Run test.
-analyze(baseline_accs, gi_accs,
+analyze(baseline_vals, gi_vals,
         'Baseline', 'GI',
-        test_names, 'Accuracy (%)', 10000, paired = True)
+        test_names, label, 10000, paired = True)
