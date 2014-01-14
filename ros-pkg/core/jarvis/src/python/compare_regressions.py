@@ -12,9 +12,10 @@ from regression_testing import *
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-t", "--type", help="comparison type", choices=["accuracy", "annotations"], default="accuracy")
 parser.add_argument("pre_dir", help="pre-condition regression test dir")
 parser.add_argument("post_dir", help="post-condition regression test dir")
+parser.add_argument("-t", "--type", help="comparison type", choices=["accuracy", "annotations"], default="accuracy")
+parser.add_argument("--print-vals", action='store_true')
 parser.add_argument("-n", "--num-permutations", type=int, default=10000)
 args = parser.parse_args()
 
@@ -37,11 +38,13 @@ elif args.type == 'annotations':
         pre_vals.append(npLoadBash("for dir in `find -L " + os.path.join(args.pre_dir, test_name) + " -maxdepth 1 -mindepth 1 -type d`; do grep -A2 'Hand-annotated' `find $dir -name learner_status.txt | sort | tail -n1`; done | grep tracks | awk '{print $1}'"))
         post_vals.append(npLoadBash("for dir in `find -L " + os.path.join(args.post_dir, test_name) + " -maxdepth 1 -mindepth 1 -type d`; do grep -A2 'Hand-annotated' `find $dir -name learner_status.txt | sort | tail -n1`; done | grep tracks | awk '{print $1}'"))
 
-for i in range(len(test_names)):
-    print test_names[i]
-    print pre_vals[i]
-    print post_vals[i]
 print
+if args.print_vals:
+    for i in range(len(test_names)):
+        print test_names[i]
+        print str(pre_vals[i]) + "\t" + str(np.mean(pre_vals[i]))
+        print str(post_vals[i]) + "\t" + str(np.mean(post_vals[i]))
+        print
 
 analyze(pre_vals, post_vals,
         'Pre', 'Post',
