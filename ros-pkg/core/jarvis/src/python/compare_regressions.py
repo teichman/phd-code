@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("pre_dir", help="pre-condition regression test dir")
 parser.add_argument("post_dir", help="post-condition regression test dir")
 parser.add_argument("-t", "--type", help="comparison type", choices=["accuracy", "annotations"], default="accuracy")
-parser.add_argument("--print-vals", action='store_true')
+parser.add_argument("-v", "--print-vals", action='store_true')
 parser.add_argument("-n", "--num-permutations", type=int, default=10000)
 args = parser.parse_args()
 
