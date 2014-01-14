@@ -37,6 +37,12 @@ elif args.type == 'annotations':
         pre_vals.append(npLoadBash("for dir in `find -L " + os.path.join(args.pre_dir, test_name) + " -maxdepth 1 -mindepth 1 -type d`; do grep -A2 'Hand-annotated' `find $dir -name learner_status.txt | sort | tail -n1`; done | grep tracks | awk '{print $1}'"))
         post_vals.append(npLoadBash("for dir in `find -L " + os.path.join(args.post_dir, test_name) + " -maxdepth 1 -mindepth 1 -type d`; do grep -A2 'Hand-annotated' `find $dir -name learner_status.txt | sort | tail -n1`; done | grep tracks | awk '{print $1}'"))
 
+for i in range(len(test_names)):
+    print test_names[i]
+    print pre_vals[i]
+    print post_vals[i]
+print
+
 analyze(pre_vals, post_vals,
         'Pre', 'Post',
         test_names, label,

@@ -17,15 +17,9 @@ def npLoadBash(command):
 def stratifiedPermutationTest(pre, post, num_samples = 10000):
     assert(len(pre) == len(post))  # Number of strata must match.
     mean_change = np.mean(np.concatenate(post)) - np.mean(np.concatenate(pre))
-    sign = 1.0
-    if mean_change == 0:
-        return (0, 0.5)
-    elif mean_change < 0:
-        sign = -1.0
-    
     num_more_extreme = 0.
-    for _ in range(num_samples):
 
+    for _ in range(num_samples):
         # Generate a scrambled version of pre and post.
         sample_pre = list(pre)  # Copy the list.
         sample_post = list(post)
@@ -38,7 +32,7 @@ def stratifiedPermutationTest(pre, post, num_samples = 10000):
 
         # Increment if more extreme than the actual change.
         sample_change = np.mean(np.concatenate(sample_post)) - np.mean(np.concatenate(sample_pre))
-        if sample_change * sign >= mean_change * sign:
+        if abs(sample_change) >= abs(mean_change):
             num_more_extreme += 1
 
     p = num_more_extreme / num_samples
@@ -48,17 +42,10 @@ def stratifiedPermutationTest(pre, post, num_samples = 10000):
 # Returns (change, p value).
 # Two-tailed test.  The p value is the probability that, if there
 # was no difference between pre and post, you'd see a change at
-# least as extreme *in the direction of the observed change* at random.
-# A change of exactly zero is not well-defined.
+# least as extreme at random.
 def swapTest(pre, post, num_samples = 10000):
     assert(pre.size == post.size)
     mean_change = np.mean(post) - np.mean(pre)
-
-    sign = 1.0
-    if mean_change == 0:
-        return (0, 0.5)
-    elif mean_change < 0:
-        sign = -1.0
 
     sample_pre = list(pre)  # Copy the list.
     sample_post = list(post)
@@ -70,7 +57,7 @@ def swapTest(pre, post, num_samples = 10000):
                 sample_pre[i] = sample_post[i]
                 sample_post[i] = tmp
         sample_change = np.mean(sample_post) - np.mean(sample_pre)
-        if sample_change * sign >= mean_change * sign:
+        if abs(sample_change) >= abs(mean_change):
             num_more_extreme += 1
 
     p = num_more_extreme / num_samples
