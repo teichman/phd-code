@@ -11,6 +11,7 @@ from regression_testing import *
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--type", help="comparison type", choices=["accuracy", "annotations"], default="accuracy")
 parser.add_argument("dir", help="regression test dir")
+parser.add_argument("-n", "--num-permutations", type=int, default=10000)
 args = parser.parse_args()
 
 # -- Load data.
@@ -34,4 +35,4 @@ elif args.type == "annotations":
 # -- Run test.
 analyze(baseline_vals, gi_vals,
         'Baseline', 'GI',
-        test_names, label, 10000, paired = True)
+        test_names, label, args.num_permutations, paired = True)

@@ -15,6 +15,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--type", help="comparison type", choices=["accuracy", "annotations"], default="accuracy")
 parser.add_argument("pre_dir", help="pre-condition regression test dir")
 parser.add_argument("post_dir", help="post-condition regression test dir")
+parser.add_argument("-n", "--num-permutations", type=int, default=10000)
 args = parser.parse_args()
 
 pre_test_names = sorted(os.walk(args.pre_dir).next()[1])
@@ -38,5 +39,6 @@ elif args.type == 'annotations':
 
 analyze(pre_vals, post_vals,
         'Pre', 'Post',
-        test_names, label, 10000)
+        test_names, label,
+        args.num_permutations, paired=False)
 
