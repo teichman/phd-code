@@ -117,7 +117,7 @@ def analyze(pre, post, pre_name = 'Pre', post_name = 'Post', test_names = [], qu
         (change, p) = stratifiedPermutationTest(pre, post, num_samples)
     pre_mean = np.mean(np.concatenate(pre))
     post_mean = np.mean(np.concatenate(post))
-    print "{name:16s} {pre_mean_vals[0]:>6}.{pre_mean_vals[1]:<6} {post_mean_vals[0]:>6}.{post_mean_vals[1]:<6} {change_vals[0]:>6}.{change_vals[1]:<6}    p < {p:<10.3f}".format(name='all', pre_mean_vals=splitNum(pre_mean), post_mean_vals=splitNum(post_mean), change_vals=splitNum(change), p=p)
+    print "{name:16s} {pre_mean_vals[0]:>6}.{pre_mean_vals[1]:<6} {post_mean_vals[0]:>6}.{post_mean_vals[1]:<6} {change_vals[0]:>6}.{change_vals[1]:<6}    p < {p:<10.3f}".format(name='all', pre_mean_vals=splitNum(pre_mean), post_mean_vals=splitNum(post_mean), change_vals=splitNum(change, True), p=p)
 
     print
 
