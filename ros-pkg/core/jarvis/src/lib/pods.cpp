@@ -22,8 +22,20 @@ void BlobProjector::compute()
   if(!blob->cloud_)
     blob->project();
 
+  if(img_.rows != blob->height_ || img_.cols != blob->width_)
+    img_ = cv::Mat1b(cv::Size(blob->width_, blob->height_));
+  img_ = 0;
+  for(size_t i = 0; i < blob->indices_.size(); ++i)
+    img_(blob->indices_[i]) = 255;
+  
   push<Blob::ConstPtr>("ProjectedBlob", blob);
   push<Cloud::ConstPtr>("Cloud", blob->cloud_);
+  push<cv::Mat1b>("BinaryImage", img_);
+}
+
+void BlobProjector::debug() const
+{
+  cv::imwrite(debugBasePath() + "-binary_image.png", img_);
 }
 
 void BoundingBoxSize::compute()

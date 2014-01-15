@@ -17,9 +17,14 @@ public:
     declareInput<Blob::Ptr>("Blob");
     declareOutput<Blob::ConstPtr>("ProjectedBlob");
     declareOutput<Cloud::ConstPtr>("Cloud");
+    declareOutput<cv::Mat1b>("BinaryImage");  // 255 for filled, 0 for unfilled.
   }
 
   void compute();
+  void debug() const;
+
+protected:
+  cv::Mat1b img_;
 };
 
 class BoundingBoxSize : public pl::Pod
@@ -404,6 +409,5 @@ protected:
                                 Eigen::MatrixXf* projector) const;
 
 };
-
 
 #endif // JARVIS_PODS_H
