@@ -17,12 +17,24 @@ parser.add_argument("post_dir", help="post-condition regression test dir")
 parser.add_argument("-t", "--type", help="comparison type", choices=["accuracy", "annotations"], default="accuracy")
 parser.add_argument("-v", "--print-vals", action='store_true')
 parser.add_argument("-n", "--num-permutations", type=int, default=10000)
+parser.add_argument("--include-tests", help="limit to these tests", type=str, nargs='+', default=[])
+parser.add_argument("--exclude-tests", help="limit to these tests", type=str, nargs='+', default=[])
 args = parser.parse_args()
 
 pre_test_names = sorted(os.walk(args.pre_dir).next()[1])
 post_test_names = sorted(os.walk(args.post_dir).next()[1])
-assert(pre_test_names == post_test_names)
-test_names = pre_test_names
+test_names = sorted(list(set(pre_test_names) & set(post_test_names)))  # Only consider tests that appear in both directories.
+if len(args.include_tests) > 0:
+    assert(len(args.exclude_tests) == 0)
+    for name in args.include_tests:
+        assert(name in test_names)
+    test_names = args.include_tests
+if len(args.exclude_tests) > 0:
+    assert(len(args.include_tests) == 0)
+    for name in args.exclude_tests:
+       test_names.remove(name)
+
+
 pre_vals = []
 post_vals = []
 
