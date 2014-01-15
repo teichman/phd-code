@@ -16,6 +16,9 @@ using namespace clams;
 class UpSelector : public OpenNI2Handler, public OpenCVViewDelegate, public Agent
 {
 public:
+  //! meters
+  double tol_;
+  
   UpSelector(std::string output_path);
   ~UpSelector();
   void rgbdCallback(openni::VideoFrameRef color, openni::VideoFrameRef depth,
@@ -41,6 +44,7 @@ UpSelector::~UpSelector()
 }
 
 UpSelector::UpSelector(std::string output_path) :
+  tol_(0.03),
   oni_(OpenNI2Interface::VGA, OpenNI2Interface::VGA),
   view_("PlaneSelector"),
   output_path_(output_path),
@@ -68,8 +72,8 @@ void UpSelector::mouseEvent(int event, int x, int y, int flags, void* param)
 void UpSelector::rgbdCallback(openni::VideoFrameRef color, openni::VideoFrameRef depth,
                               size_t frame_id, double timestamp)
 {
-  //cv::Mat3b img = colorize(oniDepthToEigen(depth), 0.5, 7);
-  cv::Mat3b img = oniToCV(color);
+  cv::Mat3b img = colorize(oniDepthToEigen(depth), 0.5, 7);
+  //cv::Mat3b img = oniToCV(color);
   
   if(selection_.rows != img.rows)
     selection_ = cv::Mat1b(img.size(), 0);
@@ -152,10 +156,9 @@ void UpSelector::selectPlane()
   }
           
   // -- Fit the best plane.
-  double tol = 0.03;
   pcl::SampleConsensusModelPlane<Point>::Ptr plane(new pcl::SampleConsensusModelPlane<Point>(pcd));
   pcl::RandomSampleConsensus<Point> ransac(plane);
-  ransac.setDistanceThreshold(tol);
+  ransac.setDistanceThreshold(tol_);
   ransac.computeModel();
   std::vector<int> inliers;
   ransac.getInliers(inliers);  // inliers indexes into pcd
@@ -175,7 +178,7 @@ void UpSelector::selectPlane()
   
   for(size_t i = 0; i < pcd->size(); ++i) {
     const Point& pt = pcd->at(i);
-    if(fabs(coefs.dot(pt.getVector4fMap())) < tol) {
+    if(fabs(coefs.dot(pt.getVector4fMap())) < tol_) {
       ProjectivePoint ppt;
       proj.project(pt, &ppt);
       selection_(ppt.v_, ppt.u_) = 255;
@@ -202,6 +205,7 @@ int main(int argc, char** argv)
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("output-path", bpo::value(&output_path)->default_value("up.eig.txt"), "")
+    ("tol", bpo::value<double>(), "")
     ;
 
   p.add("output-path", 1);
@@ -221,6 +225,10 @@ int main(int argc, char** argv)
   cout << "Saving to " << output_path << endl;
 
   UpSelector ups(output_path);
+  if(opts.count("tol"))
+    ups.tol_ = opts["tol"].as<double>();
+
+  cout << "Using tolerance of " << ups.tol_ << " meters." << endl;
   ups.run();
   
   return 0;
