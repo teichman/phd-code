@@ -71,25 +71,29 @@ int main(int argc, char** argv)
   cout << "Minimum: " << bins.head(1) << endl;
   cout << "Maximum: " << bins.tail(1) << endl;
   
-    
+  return 0;
+
+  // -- For some reason this is not working.
   mpliBegin();
-  mpli("import matplotlib.pyplot as plt");
-  mpli("import numpy as np");
+  mpli("from pylab import *");
+  // mpli("import matplotlib.pyplot as plt");
+  // mpli("import numpy as np");
   mpliPrintSize();
   mpliExport(weights);
   mpliExport(bins);
   mpliExport(minval);
   mpliExport(maxval);
   mpliNamedExport("w", width);
-  mpli("plt.bar(bins, weights, width=w)");
-  mpli("plt.xlim(minval, maxval)");
-  //mpli("plt.ylim(-1, 1)");
-  mpli("plt.ylabel('Weights')");
-  mpli("plt.xlabel('Feature values')");
+  mpli("bar(bins, weights, width=w)");
+  mpli("xlim(minval, maxval)");
+  //mpli("ylim(-1, 1)");
+  mpli("ylabel('Weights')");
+  mpli("xlabel('Feature values')");
   mpliExport(output_path);
-  mpli("plt.savefig(output_path + '.png')");
-  //mpli("plt.savefig(output_path + '.pdf')");
-  mpli("plt.close()");
+  mpli("draw()");
+  mpli("savefig(output_path + '.png')");
+  //mpli("savefig(output_path + '.pdf')");
+  mpli("close()");
 
   return 0;
 }

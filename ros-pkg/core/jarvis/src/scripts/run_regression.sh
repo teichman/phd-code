@@ -30,8 +30,8 @@ echo -e "Run dir:\t" $RUN_DIR
 
 mkdir -p $RUN_DIR/induction
 echo `hostname` > $RUN_DIR/hostname.txt
-#rosrun jarvis induct 
-rosgdb jarvis induct \
+#rosgdb jarvis induct
+rosrun jarvis induct \
     --randomize \
     --no-vis \
     --max-iters $MAX_ITERS \
