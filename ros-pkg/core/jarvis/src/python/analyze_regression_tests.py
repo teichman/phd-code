@@ -14,6 +14,7 @@ parser.add_argument("dir", help="regression test dir")
 parser.add_argument("-n", "--num-permutations", type=int, default=10000)
 parser.add_argument("-v", "--print-vals", action='store_true')
 parser.add_argument("--include-tests", help="limit to these tests", type=str, nargs='+', default=[])
+parser.add_argument("--exclude-tests", help="limit to these tests", type=str, nargs='+', default=[])
 args = parser.parse_args()
 
 # -- Load data.
@@ -25,6 +26,11 @@ if len(args.include_tests) > 0:
     for name in args.include_tests:
         assert(name in test_names)
     test_names = args.include_tests
+if len(args.exclude_tests) > 0:
+    assert(len(args.include_tests) == 0)
+    for name in args.exclude_tests:
+       test_names.remove(name)
+
 test_names = sorted(test_names)
 
 if args.type == "accuracy":
