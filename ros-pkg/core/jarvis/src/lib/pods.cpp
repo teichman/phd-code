@@ -140,10 +140,10 @@ void CloudOrienter::compute()
 
 void CloudOrienter::debug() const
 {
-  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
-  pcl::io::savePCDFileBinary(debugBasePath() + "-original.pcd", *blob.cloud_);
-  if(param<bool>("OrientCloud"))
-    pcl::io::savePCDFileBinary(debugBasePath() + "-oriented.pcd", *oriented_);
+  // const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
+  // pcl::io::savePCDFileBinary(debugBasePath() + "-original.pcd", *blob.cloud_);
+  // if(param<bool>("OrientCloud"))
+  //   pcl::io::savePCDFileBinary(debugBasePath() + "-oriented.pcd", *oriented_);
 
   ofstream f((debugBasePath() + ".txt").c_str());
   f << "Eigenvalues: " << eigenvalues_.transpose() << endl;
@@ -228,11 +228,11 @@ void GravitationalCloudOrienter::compute()
 
 void GravitationalCloudOrienter::debug() const
 {
-  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
-  pcl::io::savePCDFileBinary(debugBasePath() + "-00-original.pcd", *blob.cloud_);
-  pcl::io::savePCDFileBinary(debugBasePath() + "-01-demeaned.pcd", *demeaned_);
-  pcl::io::savePCDFileBinary(debugBasePath() + "-02-upped.pcd", *upped_);
-  pcl::io::savePCDFileBinary(debugBasePath() + "-03-oriented.pcd", *oriented_);
+  // const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
+  // pcl::io::savePCDFileBinary(debugBasePath() + "-00-original.pcd", *blob.cloud_);
+  // pcl::io::savePCDFileBinary(debugBasePath() + "-01-demeaned.pcd", *demeaned_);
+  // pcl::io::savePCDFileBinary(debugBasePath() + "-02-upped.pcd", *upped_);
+  // pcl::io::savePCDFileBinary(debugBasePath() + "-03-oriented.pcd", *oriented_);
   ofstream f((debugBasePath() + ".txt").c_str());
   f << "height_: " << height_.transpose() << endl;
   f << "highest_point_: " << highest_point_.transpose() << endl;
@@ -813,5 +813,74 @@ void DescriptorConcatenator::compute()
 void DescriptorConcatenator::debug() const
 {
 
+}
+
+
+/************************************************************
+ * EdginessEstimator
+ ************************************************************/
+
+void EdginessEstimator::compute()
+{
+  cv::Mat1b img = pull<cv::Mat1b>("BinaryImage");
+
+  // TODO: Replace this with a param.
+  num_erosions_.clear();
+  num_erosions_.push_back(1);
+  num_erosions_.push_back(2);
+  num_erosions_.push_back(5);
+  
+  if(eroded_.size() != num_erosions_.size()) {
+    eroded_.clear();
+    eroded_.reserve(num_erosions_.size());
+    for(size_t i = 0; i < num_erosions_.size(); ++i)
+      eroded_.push_back(cv::Mat1b());
+  }
+  if((size_t)edginess_.rows() != num_erosions_.size())
+    edginess_ = VectorXf(num_erosions_.size());
+  
+  int num_applied = 0;
+  for(size_t i = 0; i < num_erosions_.size(); ++i) {
+    int to_apply = num_erosions_[i] - num_applied;
+    if(i == 0)
+      cv::erode(img, eroded_[i], cv::Mat(), cv::Point(-1, -1), to_apply);
+    else
+      cv::erode(eroded_[i-1], eroded_[i], cv::Mat(), cv::Point(-1, -1), to_apply);
+    num_applied += to_apply;
+
+    int num_edge_pixels = 0;
+    int num_interior_pixels = 0;
+    for(int y = 0; y < img.rows; ++y) {
+      for(int x = 0; x < img.cols; ++x) {
+        if(img(y, x) == 255) {
+          if(eroded_[i](y, x) != 255)
+            ++num_edge_pixels;
+          else
+            ++num_interior_pixels;
+        }
+      }
+    }
+
+    edginess_(i) = (float)num_edge_pixels / (num_edge_pixels + num_interior_pixels);
+  }
+  
+  push<const VectorXf*>("Edginess", &edginess_);
+}
+
+void EdginessEstimator::debug() const
+{
+  for(size_t i = 0; i < num_erosions_.size(); ++i) {
+    ostringstream oss;
+    oss << debugBasePath() << "-eroded" << setw(2) << setfill('0') << num_erosions_[i] << ".png";
+    cv::imwrite(oss.str(), eroded_[i]);
+  }
+  
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "Num erosions:";
+  for(size_t i = 0; i < num_erosions_.size(); ++i)
+    f << " " << num_erosions_[i];
+  f << endl;
+  f << "Edginess: " << edginess_.transpose() << endl;
+  f.close();
 }
 

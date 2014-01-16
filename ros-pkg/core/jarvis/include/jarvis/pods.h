@@ -410,4 +410,24 @@ protected:
 
 };
 
+class EdginessEstimator : public pl::Pod
+{
+public:
+  DECLARE_POD(EdginessEstimator);
+  EdginessEstimator(std::string name) :
+    Pod(name)
+  {
+    declareInput<cv::Mat1b>("BinaryImage");
+    declareOutput<const Eigen::VectorXf*>("Edginess");
+  }
+
+protected:
+  std::vector<size_t> num_erosions_;
+  std::vector<cv::Mat1b> eroded_;
+  Eigen::VectorXf edginess_;
+  
+  void compute();
+  void debug() const;
+};
+
 #endif // JARVIS_PODS_H
