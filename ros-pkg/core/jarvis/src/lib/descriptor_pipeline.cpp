@@ -16,6 +16,9 @@ DescriptorPipeline::DescriptorPipeline() :
 void DescriptorPipeline::registerPodTypes()
 {
   REGISTER_POD_TEMPLATE(EntryPoint, Blob::Ptr);
+  REGISTER_POD(TrajectoryAccumulator);
+  REGISTER_POD(TrajectoryStatistics);
+  REGISTER_POD(SimpleTrajectoryStatistics);
   REGISTER_POD(BlobProjector);
   REGISTER_POD(BoundingBoxSize);
   REGISTER_POD(DescriptorAggregator);
@@ -129,6 +132,9 @@ double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, E
         inst.copy(*descriptors);
         ROS_ASSERT(inst.descriptors_.size() == descriptors->size());
       }
+      // Clear any data that accumulated over the course of the track.
+      // This includes, for example, TrajectoryAccumulator.
+      dp.reset();
     }
   }
   

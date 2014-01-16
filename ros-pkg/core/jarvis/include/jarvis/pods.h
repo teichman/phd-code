@@ -7,6 +7,118 @@
 #include <jarvis/tracker.h>
 #include <eigen_extensions/random.h>
 
+struct Trajectory
+{
+  //! Fixed-size vectorizable Eigen objects don't mix with
+  //! STL containers.  Vector3f is fine, though.
+  //! See http://eigen.tuxfamily.org/dox/TopicStlContainers.html.
+  //! z should point up.
+  std::vector<Eigen::Vector3f> centroids_;
+  //! seconds.
+  std::vector<double> timestamps_;
+
+  void clear() { centroids_.clear(); timestamps_.clear(); }
+  void reserve(size_t num) { centroids_.reserve(num); timestamps_.reserve(num); }
+  void resize(size_t num) { centroids_.resize(num); timestamps_.resize(num); }
+  size_t size() const { ROS_ASSERT(centroids_.size() == timestamps_.size()); return centroids_.size(); }
+  std::string status(const std::string& prefix = "") const;
+};
+
+//! As new OrientedClouds get pushed in, the Trajectory gets longer.
+//! Trajectory is cleared on reset().
+class TrajectoryAccumulator : public pl::Pod
+{
+public:
+  DECLARE_POD(TrajectoryAccumulator);
+  TrajectoryAccumulator(std::string name) :
+    Pod(name)
+  {
+    traj_.reserve(1000);
+
+    // Note that this cloud needs to NOT be de-meaned.
+    declareInput<Cloud::ConstPtr>("UppedCloud");
+    declareOutput<const Trajectory*>("Trajectory");
+  }
+
+protected:
+  Trajectory traj_;
+  
+  void compute();
+  void debug() const;
+  void reset() { traj_.clear(); }
+};
+
+
+class SimpleTrajectoryStatistics : public pl::Pod
+{
+public:
+  DECLARE_POD(SimpleTrajectoryStatistics);
+  SimpleTrajectoryStatistics(std::string name) :
+    Pod(name),
+    dpos_(3),
+    velocity_(3),
+    speed_(1),
+    lateral_speed_(1),
+    vertical_speed_(1)
+  {
+    declareInput<const Trajectory*>("Trajectory");
+    declareParam<double>("Lookback", 1);
+    // If speed is greater than this, throw out the data.
+    // This is because of a bug in the tracker.  The tracker needs to
+    // be fixed, but it's too late for the large amounts of data I've
+    // already labeled, so I need a gross workaround (i.e. this) as well.
+    declareParam<double>("MaxValidSpeed", 5);
+    declareOutput<const Eigen::VectorXf*>("Velocity");
+    declareOutput<const Eigen::VectorXf*>("Speed");
+    declareOutput<const Eigen::VectorXf*>("LateralSpeed");
+    declareOutput<const Eigen::VectorXf*>("VerticalSpeed");
+  }
+
+protected:
+  Eigen::VectorXf dpos_;
+  double dt_;
+  Eigen::VectorXf velocity_;
+  Eigen::VectorXf speed_;
+  Eigen::VectorXf lateral_speed_;
+  Eigen::VectorXf vertical_speed_;
+
+  void pass();
+  void compute();
+  void debug() const;
+};
+  
+//! Normalizes centroid history, i.e. sets the first centroid to (0, 0, 0)
+//! and rotates the trajectory around the z axis so that the first principal
+//! component points along the y axis.
+//! Provides summarizing statistics about the normalized centroid history.
+class TrajectoryStatistics : public pl::Pod
+{
+public:
+  DECLARE_POD(TrajectoryStatistics);
+  TrajectoryStatistics(std::string name) :
+    Pod(name)
+  {
+    declareInput<const Trajectory*>("Trajectory");
+    declareParam<double>("Lookback", 1);
+    declareOutput<const Eigen::VectorXf*>("MeanSpeed");
+    declareOutput<const Eigen::VectorXf*>("MeanVelocity");
+    declareOutput<const Eigen::VectorXf*>("MeanAngularSpeed");
+    //declareOutput<const std::vector<Eigen::VectorXf>*>("CentroidHistory");
+    //declareOutput<const std::vector<Eigen::VectorXf>*>("VelocityHistory");
+  }
+
+protected:
+  Trajectory normalized_;
+  Eigen::VectorXf mean_speed_;
+  Eigen::VectorXf mean_velocity_;
+  Eigen::VectorXf mean_angular_speed_;
+  std::vector<Eigen::Vector3f> velocities_;
+  std::vector<double> timestamps_;
+  
+  void compute();
+  void debug() const;
+};
+
 class BlobProjector : public pl::Pod
 {
 public:
@@ -165,8 +277,8 @@ public:
   DECLARE_POD(GravitationalCloudOrienter);
   GravitationalCloudOrienter(std::string name) :
     Pod(name),
-    demeaned_(new Cloud),
     upped_(new Cloud),
+    demeaned_(new Cloud),
     projected_(new Cloud),
     oriented_(new Cloud),
     height_(1),
@@ -174,6 +286,7 @@ public:
   {
     declareInput<Blob::ConstPtr>("ProjectedBlob");
     declareOutput<Cloud::ConstPtr>("OrientedCloud");
+    declareOutput<Cloud::ConstPtr>("UppedCloud");  // Not de-meaned.
     declareOutput<const Eigen::VectorXf*>("Height");
     declareOutput<const Eigen::VectorXf*>("HighestPoint");
   }
@@ -186,8 +299,9 @@ public:
 protected:
   Eigen::VectorXf up_;
   Eigen::Affine3f raw_to_up_;
-  Cloud::Ptr demeaned_;
+  //! Just rotated so that z is up.  Not de-meaned.
   Cloud::Ptr upped_;
+  Cloud::Ptr demeaned_;
   Cloud::Ptr projected_;
   Cloud::Ptr oriented_;
   Eigen::VectorXf height_;

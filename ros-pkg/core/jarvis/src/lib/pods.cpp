@@ -12,6 +12,230 @@ using namespace Eigen;
 using namespace pl;
 
 
+std::string Trajectory::status(const std::string& prefix) const
+{
+  ostringstream oss;
+  oss << fixed << setprecision(3);
+  for(size_t i = 0; i < size(); ++i) {
+    oss << prefix << timestamps_[i] << "\t";
+    oss << prefix << centroids_[i].transpose() << endl;
+  }
+  return oss.str();
+}
+
+
+/************************************************************
+ * TrajectoryAccumulator
+ ************************************************************/
+
+void TrajectoryAccumulator::compute()
+{
+  const Cloud& cloud = *pull<Cloud::ConstPtr>("UppedCloud");
+
+  Vector4f centroid;
+  pcl::compute3DCentroid(cloud, centroid);
+  traj_.centroids_.push_back(centroid.head(3));
+  traj_.timestamps_.push_back((double)cloud.header.stamp * 1e-9);
+  ROS_ASSERT(traj_.timestamps_.back() != 0);
+
+  push<const Trajectory*>("Trajectory", &traj_);
+}
+
+void TrajectoryAccumulator::debug() const
+{
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "Trajectory: " << endl;
+  for(size_t i = 0; i < traj_.size(); ++i)
+    f << "  " << traj_.centroids_[i].transpose() << "   "
+      << setprecision(16) << setw(16) << setfill('0') << traj_.timestamps_[i] << endl;
+  f.close();
+}
+
+
+/************************************************************
+ * SimpleTrajectoryStatistics
+ ************************************************************/
+
+void SimpleTrajectoryStatistics::pass()
+{
+  velocity_.setConstant(numeric_limits<float>::quiet_NaN());
+  speed_.setConstant(numeric_limits<float>::quiet_NaN());
+  lateral_speed_.setConstant(numeric_limits<float>::quiet_NaN());
+  vertical_speed_.setConstant(numeric_limits<float>::quiet_NaN());
+  push<const Eigen::VectorXf*>("Velocity", NULL);
+  push<const Eigen::VectorXf*>("Speed", NULL);
+  push<const Eigen::VectorXf*>("LateralSpeed", NULL);
+  push<const Eigen::VectorXf*>("VerticalSpeed", NULL);
+}
+
+void SimpleTrajectoryStatistics::compute()
+{
+  const Trajectory& traj = *pull<const Trajectory*>("Trajectory");
+  size_t lookback = param<double>("Lookback");
+  ROS_ASSERT(lookback > 0);
+  if(traj.size() < lookback + 1) {
+    pass();
+    return;
+  }
+
+  dpos_ = traj.centroids_.back() - traj.centroids_[traj.centroids_.size() - lookback - 1];
+  dt_ = traj.timestamps_.back() - traj.timestamps_[traj.timestamps_.size() - lookback - 1];
+
+  velocity_ = dpos_ / dt_;
+  speed_(0) = velocity_.norm();
+  lateral_speed_(0) = velocity_.head(2).norm();
+  vertical_speed_(0) = velocity_.tail(1).norm();
+
+  if(speed_(0) > param<double>("MaxValidSpeed")) {
+    pass();
+    return;
+  }
+
+  push<const Eigen::VectorXf*>("Velocity", &velocity_);
+  push<const Eigen::VectorXf*>("Speed", &speed_);
+  push<const Eigen::VectorXf*>("LateralSpeed", &lateral_speed_);
+  push<const Eigen::VectorXf*>("VerticalSpeed", &vertical_speed_);
+}
+
+void SimpleTrajectoryStatistics::debug() const
+{
+  const Trajectory& traj = *pull<const Trajectory*>("Trajectory");
+  
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "Current centroid: " << traj.centroids_.back().transpose() << endl;
+  size_t lookback = param<double>("Lookback");
+  f << "Lookback: " << lookback << endl;
+  f << "Previous centroid: " << traj.centroids_[traj.centroids_.size() - lookback - 1].transpose() << endl;
+  f << "dt: " << dt_ << endl;
+  f << "dpos: " << dpos_.transpose() << endl;
+  f << "velocity: " << velocity_.transpose() << endl;
+  f << "speed: " << speed_ << endl;
+  f << "lateral_speed: " << lateral_speed_ << endl;
+  f << "vertical_speed: " << vertical_speed_ << endl;
+  f.close();
+}
+
+
+/************************************************************
+ * TrajectoryStatistics
+ ************************************************************/
+
+void TrajectoryStatistics::compute()
+{
+  const Trajectory& traj = *pull<const Trajectory*>("Trajectory");
+
+  // -- Center the trajectory at 0.
+  normalized_.clear();
+  normalized_.resize(traj.size());
+  for(size_t i = 0; i < traj.size(); ++i) {
+    ROS_ASSERT(traj.timestamps_[i] != 0);
+    normalized_.centroids_[i] = traj.centroids_[i] - traj.centroids_[0];
+    normalized_.timestamps_[i] = traj.timestamps_[i] - traj.timestamps_[0];
+  }
+
+  // -- Compute covariance.
+  Matrix2f cov = Matrix2f::Zero();
+  for(size_t i = 0; i < traj.size(); ++i) {
+    Vector2f pt = normalized_.centroids_[i].head(2);
+    cov += pt * pt.transpose();
+  }
+  cov /= normalized_.size();
+
+  // -- Compute rotation matrix.
+  SelfAdjointEigenSolver<Matrix2f> es(cov);
+  Vector2f pc = es.eigenvectors().col(0);
+  double theta = -atan2(pc(1), pc(0));
+  AngleAxis<float> aa(theta, Vector3f(0, 0, 1));
+  Affine3f rot;
+  rot = aa;
+
+  // -- Rotate.
+  for(size_t i = 0; i < normalized_.size(); ++i)
+    normalized_.centroids_[i] = rot * normalized_.centroids_[i];
+
+  // -- Compute statistics if the trajectory is long enough.
+  mean_speed_.resize(1);
+  mean_velocity_.resize(3);
+  mean_angular_speed_.resize(1);
+  mean_speed_.setZero();
+  mean_velocity_.setZero();
+  mean_angular_speed_.setZero();
+  if(traj.size() == 0) {
+    push<const Eigen::VectorXf*>("MeanSpeed", NULL);
+    push<const Eigen::VectorXf*>("MeanVelocity", NULL);
+    push<const Eigen::VectorXf*>("MeanAngularSpeed", NULL);
+  }
+  else {
+    velocities_.clear();
+    velocities_.reserve(traj.size());
+    timestamps_.clear();
+    timestamps_.reserve(traj.size());
+    size_t lookback = param<double>("Lookback");
+    ROS_ASSERT(lookback > 0);
+    float dt;
+    Vector3f vel;
+    Vector3f dx;
+    for(size_t i = lookback; i < normalized_.size(); ++i) {
+      dt = normalized_.timestamps_[i] - normalized_.timestamps_[i-lookback];
+      bool bad_dt = (dt > 10.0 || dt <= 0);
+      if(bad_dt) {
+        cout << "Bad dt in TrajectoryStatistics.  Are the timestamps correct?"
+             << "  dt: " << dt << endl;
+        cout << "Trajectory: " << endl << traj.status("  ") << endl;
+      }
+      ROS_ASSERT(!bad_dt);
+      dx = normalized_.centroids_[i] - normalized_.centroids_[i-lookback];
+      vel = dx / dt;
+      mean_velocity_ += vel;
+      mean_speed_(0) += vel.norm();
+      velocities_.push_back(vel);
+      timestamps_.push_back(normalized_.timestamps_[i]);
+    }
+    mean_speed_ /= velocities_.size();
+    mean_velocity_ /= velocities_.size();
+    push<const Eigen::VectorXf*>("MeanSpeed", &mean_speed_);
+    push<const Eigen::VectorXf*>("MeanVelocity", &mean_velocity_);
+
+    if(velocities_.size() < 2) {
+      push<const Eigen::VectorXf*>("MeanAngularSpeed", NULL);
+    }
+    else {
+      float thresh = 0.25;
+      float num = 0;
+      for(size_t i = 1; i < velocities_.size(); ++i) {
+        const Vector3f& vel0 = velocities_[i-1];
+        const Vector3f& vel1 = velocities_[i];
+        float norm0 = vel0.norm();
+        float norm1 = vel1.norm();
+        if(norm0 > thresh && norm1 > thresh) {
+          double theta = fabs(acos(vel0.dot(vel1) / (norm0 * norm1)));
+          double dt = timestamps_[i] - timestamps_[i-1];
+          mean_angular_speed_(0) += theta / dt;
+        }
+        ++num;  // mean_angular_speed_(0) += 0 in this case.
+      }
+      mean_angular_speed_ /= num;
+      push<const Eigen::VectorXf*>("MeanAngularSpeed", &mean_angular_speed_);
+    }
+  }
+}
+
+void TrajectoryStatistics::debug() const
+{
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "Mean speed: " << mean_speed_.transpose() << endl;
+  f << "Mean velocity: " << mean_velocity_.transpose() << endl;
+  f << "Mean angular speed: " << mean_angular_speed_.transpose() << endl;
+
+  const Trajectory& traj = *pull<const Trajectory*>("Trajectory");
+  f << "Normalized trajectory / Original trajectory: " << endl;
+  for(size_t i = 0; i < normalized_.size(); ++i)
+    f << "  " << normalized_.centroids_[i].transpose() << "\t"
+      << traj.centroids_[i].transpose() << endl;
+
+  f.close();
+}
+
 /************************************************************
  * BlobProjector
  ************************************************************/
@@ -191,15 +415,17 @@ void GravitationalCloudOrienter::compute()
   Cloud::ConstPtr cloud = blob.cloud_;
   ROS_ASSERT(up_.rows() == 3);
 
-  // -- Demean the input cloud.
+  // -- Rotate the cloud so that z points up.
+  pcl::transformPointCloud(*cloud, *upped_, raw_to_up_);
+  
+  // -- Demean the cloud.
   Vector4f centroid;
-  pcl::compute3DCentroid(*cloud, centroid);
-  pcl::demeanPointCloud(*cloud, centroid, *demeaned_);
+  pcl::compute3DCentroid(*upped_, centroid);
+  pcl::demeanPointCloud(*upped_, centroid, *demeaned_);
   ROS_ASSERT(!demeaned_->empty());
 
-  // -- Rotate the demeaned cloud so that it points up.  Project into the ground plane.
-  pcl::transformPointCloud(*demeaned_, *upped_, raw_to_up_);
-  *projected_ = *upped_;
+  // -- Project into the ground plane.
+  *projected_ = *demeaned_;
   for(size_t i = 0; i < projected_->size(); ++i)
     projected_->at(i).z = 0;
   
@@ -208,7 +434,7 @@ void GravitationalCloudOrienter::compute()
   pca.setInputCloud(projected_);
   Matrix4f rotation = Matrix4f::Identity();
   rotation.block<3, 3>(0, 0) = pca.getEigenVectors();
-  pcl::transformPointCloud(*upped_, *oriented_, rotation);
+  pcl::transformPointCloud(*demeaned_, *oriented_, rotation);
     
   // -- Get height of the visible object.
   Vector4f minpt, maxpt;
@@ -220,8 +446,21 @@ void GravitationalCloudOrienter::compute()
   highest_point_(0) = -numeric_limits<float>::max();
   for(size_t i = 0; i < cloud->size(); ++i)
     highest_point_(0) = max(highest_point_(0), up_.dot(cloud->at(i).getVector3fMap()));
+
+  // -- Set the timestamp of the clouds to be the wall timestamp closest to
+  //    when the Blob was seen.  See TrajectoryAccumulator.
+  //    This should probably be sensor_timestamp_ but that may have been
+  //    incorrectly rounded to the nearest second.
+
+  upped_->header.stamp = blob.wall_timestamp_.toSec() * (uint64_t)1e9;
+  oriented_->header.stamp = blob.wall_timestamp_.toSec() * (uint64_t)1e9;
+
+  // upped_->header.stamp = blob.sensor_timestamp_ * (uint64_t)1e9;
+  // oriented_->header.stamp = blob.sensor_timestamp_ * (uint64_t)1e9;
+  // cout << "Timestamps: " << blob.sensor_timestamp_ << " " << blob.wall_timestamp_ << endl;
   
   push<Cloud::ConstPtr>("OrientedCloud", oriented_);
+  push<Cloud::ConstPtr>("UppedCloud", upped_);
   push<const VectorXf*>("Height", &height_);
   push<const VectorXf*>("HighestPoint", &highest_point_);
 }
@@ -233,10 +472,14 @@ void GravitationalCloudOrienter::debug() const
   // pcl::io::savePCDFileBinary(debugBasePath() + "-01-demeaned.pcd", *demeaned_);
   // pcl::io::savePCDFileBinary(debugBasePath() + "-02-upped.pcd", *upped_);
   // pcl::io::savePCDFileBinary(debugBasePath() + "-03-oriented.pcd", *oriented_);
+
   ofstream f((debugBasePath() + ".txt").c_str());
   f << "height_: " << height_.transpose() << endl;
   f << "highest_point_: " << highest_point_.transpose() << endl;
   f << "raw_to_up_: " << endl << raw_to_up_.matrix() << endl;
+  f << "oriented_ size: " << oriented_->size() << endl;
+  f << "oriented_ timestamp: " << oriented_->header.stamp * 1e-9 << endl;
+  f << "blob sensor_timestamp_: " << blob.sensor_timestamp_ << endl;
   f.close();
 }
 
