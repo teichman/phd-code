@@ -185,7 +185,7 @@ Pipeline:
           HSVHistogram.Value
           CloudOrienter.Eigenvalues
           CloudOrienter.RelativeCurvature
-          SimpleTrajectoryStatistics01.Speed
+          SimpleTrajectoryStatistics05.Speed
           SimpleTrajectoryStatistics10.Speed
           EdginessEstimator.Edginess
 

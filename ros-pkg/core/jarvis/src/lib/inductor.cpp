@@ -122,12 +122,25 @@ bool similar(const Dataset& track0, const Dataset& track1, const GridClassifier&
   const NameMapping& dmap = track0.nameMapping("dmap");
 
   vector<string> dspaces;
-  dspaces.push_back("OrientedBoundingBoxSize.BoundingBoxSize:9048624352072648104");  // BoundingBoxSize from GravitationalCloudOrienter.
-  dspaces.push_back("CloudOrienter.Eigenvalues:12466250795116632929");
-  dspaces.push_back("CloudOrienter.RelativeCurvature:11309880616745749126");
+  // -- less-gravity
+  dspaces.push_back("OrientedBoundingBoxSize.BoundingBoxSize:14462707047095316535");
+  dspaces.push_back("CloudOrienter.Eigenvalues:12988381052486413110");
+  dspaces.push_back("CloudOrienter.RelativeCurvature:1286978089874286107");
   dspaces.push_back("HSVHistogram.Hue:14694502210542588030");
   dspaces.push_back("HSVHistogram.Saturation:10273388249095023270");
   dspaces.push_back("HSVHistogram.Value:8985795375221662105");
+  // maybe include these too...
+  // dspaces.push_back("SimpleTrajectoryStatistics05.Speed:6152030001663489947");
+  // dspaces.push_back("SimpleTrajectoryStatistics10.Speed:9221731694321102499");
+  // dspaces.push_back("EdginessEstimator.Edginess:6941314615084190538");
+    
+  // -- old
+  // dspaces.push_back("OrientedBoundingBoxSize.BoundingBoxSize:9048624352072648104");  // BoundingBoxSize from GravitationalCloudOrienter.
+  // dspaces.push_back("CloudOrienter.Eigenvalues:12466250795116632929");
+  // dspaces.push_back("CloudOrienter.RelativeCurvature:11309880616745749126");
+  // dspaces.push_back("HSVHistogram.Hue:14694502210542588030");
+  // dspaces.push_back("HSVHistogram.Saturation:10273388249095023270");
+  // dspaces.push_back("HSVHistogram.Value:8985795375221662105");
 
   int num_different_dspaces = 0;
   for(size_t i = 0; i < dspaces.size(); ++i) {
@@ -152,8 +165,9 @@ bool similar(const Dataset& track0, const Dataset& track1, const GridClassifier&
 bool similar(const Dataset& annotation, const Dataset& inducted)
 {
   const NameMapping& dmap = annotation.nameMapping("dmap");
-  //string name = "OrientedBoundingBoxSize.BoundingBoxSize:15595929600647926249";  // BoundingBoxSize from CloudOrienter.
-  string name = "OrientedBoundingBoxSize.BoundingBoxSize:9048624352072648104";  // BoundingBoxSize from GravitationalCloudOrienter.
+
+  string name = "OrientedBoundingBoxSize.BoundingBoxSize:14462707047095316535";  // BoundingBoxSize from CloudOrienter.
+  //string name = "OrientedBoundingBoxSize.BoundingBoxSize:9048624352072648104";  // BoundingBoxSize from GravitationalCloudOrienter.
   if(!dmap.hasName(name)) {
     cout << dmap << endl;
     ROS_ASSERT(dmap.hasName(name));

@@ -9,7 +9,7 @@ MAKEFILE                := $(MAKE_ROOT)/Makefile
 export NUM_THREADS      := 24
 export ROS_PACKAGE_PATH := $(ROS_PACKAGE_PATH):$(REPO_ROOT)/ros-pkg
 ROSRUN			:= rosrun
-#ROSRUN			:= rosgdb
+#ROSRUN			:= . ~/.bashrc && rosgdb
 
 .SECONDEXPANSION:       # Allows use of automatic vars in prerequisites.
 .SECONDARY:             # Prevents deletion of intermediate targets in a chain of implicit rules.
@@ -25,7 +25,8 @@ all:
 # You should symlink these in your own repo.
 LOG_DIR := $(MAKE_ROOT)/logs
 LABELED_TD_DIR := $(MAKE_ROOT)/labeled
-CONFIG := `rospack find jarvis`/config/hand_specified.yml
+CONFIG := `rospack find jarvis`/config/less_gravity.yml
+#CONFIG := `rospack find jarvis`/config/hand_specified.yml
 CONFIG2 := `rospack find jarvis`/config/old_hand_specified.yml
 
 KITCHEN_DIR := $(LOG_DIR)/kitchen-new_bg_subtr-set0
@@ -51,7 +52,7 @@ FRONT_DOOR_UP_VECTOR := `rospack find jarvis`/config/2013-12-12_front_door-up.ei
 FRONT_DOOR_DIR_1 := $(LOG_DIR)/front_door-set1
 FRONT_DOOR_NAMES_1 := $(shell ls $(FRONT_DOOR_DIR_1) | sed 's/\.bag//')
 FRONT_DOOR_TD_DIRS_1 := $(addprefix front_door-set1/tds/, $(FRONT_DOOR_NAMES_1))
-FRONT_DOOR_LABELS_DIR_1 := $(LABELED_TD_DIR)/front_door-set1
+FRONT_DOOR_LABELS_DIR_1 := $(LABELED_TD_DIR)/front_door
 FRONT_DOOR_UP_VECTOR_1 := `rospack find jarvis`/config/2014-01-14_front_door-up.eig.txt
 
 OFFICE_DIR := $(LOG_DIR)/office-set0
@@ -193,6 +194,12 @@ front_door-set1/$(1)/induction:
 	--init `find front_door-set1/tds/ -name '*.td' | sort -R | head -n5` \
 	| tee $$@/log.txt
 
+front_door-set1-save-annotations-$(1):
+	$(ROSRUN) online_learning merge_tds \
+	--remove-duplicates \
+	--tds `find front_door-set1/$(1)/induction/ -name '*.td'` \
+	-o `date +%F_%T`-$(1)-annotations.td 
+
 front_door-set1/$(1)/baseline_unfair: front_door-set1/$(1)/induction
 	$(ROSRUN) jarvis baseline_unfair \
 	--class-names $(1) \
@@ -206,10 +213,17 @@ front_door-set1/$(1)/baseline_unfair: front_door-set1/$(1)/induction
 
 front_door-set1/$(1)/group_induction_errors: front_door-set1/$(1)/induction
 	$(ROSRUN) online_learning filter_errors \
-	-c `find -L $< -name classifier.gc | sort | tail -n1` \
+	-c `find -L $$< -name classifier.gc | sort | tail -n1` \
 	-d $(FRONT_DOOR_LABELS_DIR_1)/$(1)/*.td \
 	--class-names $(1) \
 	-o $$@
+
+front_door-set1-update-test-descriptors-$(1):
+	$(ROSRUN) jarvis update_descriptors \
+	-j 24 \
+	-u $(FRONT_DOOR_UP_VECTOR_1) \
+	--config $(CONFIG) \
+	--tds $(FRONT_DOOR_LABELS_DIR_1)/$(1)/*.td
 
 compare-front-door-set1-$(1)-results: front_door-set1/$(1)/baseline_unfair
 	@grc -es --colour=auto diff -y -W150 \
