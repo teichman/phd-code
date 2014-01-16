@@ -17,8 +17,27 @@ Pipeline:
       Params: ~
       Inputs:
         BinaryImage: BlobProjector.BinaryImage
-    - Name: GravitationalCloudOrienter
-      Type: GravitationalCloudOrienter
+    - Name: TrajectoryAccumulator
+      Type: TrajectoryAccumulator
+      Params: ~
+      Inputs:
+        UppedCloud: CloudOrienter.OrientedCloud
+    - Name: SimpleTrajectoryStatistics01
+      Type: SimpleTrajectoryStatistics
+      Params:
+        Lookback: 1
+        MaxValidSpeed: 5
+      Inputs:
+        Trajectory: TrajectoryAccumulator.Trajectory
+    - Name: SimpleTrajectoryStatistics10
+      Type: SimpleTrajectoryStatistics
+      Params:
+        Lookback: 10
+        MaxValidSpeed: 5
+      Inputs:
+        Trajectory: TrajectoryAccumulator.Trajectory
+    - Name: CloudOrienter
+      Type: CloudOrienter
       Params: ~
       Inputs:
         ProjectedBlob: BlobProjector.ProjectedBlob
@@ -32,13 +51,13 @@ Pipeline:
       Type: BoundingBoxSize
       Params: ~
       Inputs:
-        Cloud: GravitationalCloudOrienter.OrientedCloud
+        Cloud: CloudOrienter.OrientedCloud
     - Name: OrientedNormalizedDensityHistogram
       Type: NormalizedDensityHistogram
       Params:
         NumBins: 10
       Inputs:
-        Cloud: GravitationalCloudOrienter.OrientedCloud
+        Cloud: CloudOrienter.OrientedCloud
     - Name: CloudProjectorXY
       Type: CloudProjector
       Params:
@@ -49,7 +68,7 @@ Pipeline:
         MinIntensity: 1
         KernelSize: 1
       Inputs:
-        Cloud: GravitationalCloudOrienter.OrientedCloud
+        Cloud: CloudOrienter.OrientedCloud
     - Name: CloudProjectorYZ
       Type: CloudProjector
       Params:
@@ -60,7 +79,7 @@ Pipeline:
         MinIntensity: 1
         KernelSize: 1
       Inputs:
-        Cloud: GravitationalCloudOrienter.OrientedCloud
+        Cloud: CloudOrienter.OrientedCloud
     - Name: CloudProjectorXZ
       Type: CloudProjector
       Params:
@@ -71,7 +90,7 @@ Pipeline:
         MinIntensity: 1
         KernelSize: 1
       Inputs:
-        Cloud: GravitationalCloudOrienter.OrientedCloud
+        Cloud: CloudOrienter.OrientedCloud
     - Name: DynamicImageWindowXY
       Type: DynamicImageWindow
       Params:
@@ -166,6 +185,7 @@ Pipeline:
           HSVHistogram.Value
           CloudOrienter.Eigenvalues
           CloudOrienter.RelativeCurvature
-#          GravitationalCloudOrienter.Height
-#          GravitationalCloudOrienter.HighestPoint
-          
+          SimpleTrajectoryStatistics01.Speed
+          SimpleTrajectoryStatistics10.Speed
+          EdginessEstimator.Edginess
+
