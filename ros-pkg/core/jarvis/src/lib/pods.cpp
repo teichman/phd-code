@@ -349,6 +349,13 @@ void CloudOrienter::compute()
   pca.setInputCloud(cloud);
   if(param<bool>("OrientCloud")) {
     pca.project(*cloud, *oriented_);
+
+    // Set the timestamp of the cloud to be the wall timestamp closest to
+    // when the Blob was seen.  See TrajectoryAccumulator.
+    // This should probably be sensor_timestamp_ but that may have been
+    // incorrectly rounded to the nearest second.
+    oriented_->header.stamp = blob.wall_timestamp_.toSec() * (uint64_t)1e9;
+    
     push<Cloud::ConstPtr>("OrientedCloud", oriented_);
   }
 
@@ -467,7 +474,7 @@ void GravitationalCloudOrienter::compute()
 
 void GravitationalCloudOrienter::debug() const
 {
-  // const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
+  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
   // pcl::io::savePCDFileBinary(debugBasePath() + "-00-original.pcd", *blob.cloud_);
   // pcl::io::savePCDFileBinary(debugBasePath() + "-01-demeaned.pcd", *demeaned_);
   // pcl::io::savePCDFileBinary(debugBasePath() + "-02-upped.pcd", *upped_);

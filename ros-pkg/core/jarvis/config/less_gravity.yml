@@ -12,6 +12,17 @@ Pipeline:
       Params: ~
       Inputs:
         Blob: BlobEntryPoint.Output
+    - Name: CloudOrienter
+      Type: CloudOrienter
+      Params:
+        OrientCloud: True
+      Inputs:
+        ProjectedBlob: BlobProjector.ProjectedBlob
+    - Name: GravitationalCloudOrienter
+      Type: GravitationalCloudOrienter
+      Params: ~
+      Inputs:
+        ProjectedBlob: BlobProjector.ProjectedBlob
     - Name: EdginessEstimator
       Type: EdginessEstimator
       Params: ~
@@ -21,32 +32,21 @@ Pipeline:
       Type: TrajectoryAccumulator
       Params: ~
       Inputs:
-        UppedCloud: CloudOrienter.OrientedCloud
-    - Name: SimpleTrajectoryStatistics01
+        UppedCloud: GravitationalCloudOrienter.UppedCloud
+    - Name: SimpleTrajectoryStatistics05
       Type: SimpleTrajectoryStatistics
       Params:
-        Lookback: 1
-        MaxValidSpeed: 5
+        Lookback: 5
+        MaxValidSpeed: 2
       Inputs:
         Trajectory: TrajectoryAccumulator.Trajectory
     - Name: SimpleTrajectoryStatistics10
       Type: SimpleTrajectoryStatistics
       Params:
         Lookback: 10
-        MaxValidSpeed: 5
+        MaxValidSpeed: 2
       Inputs:
         Trajectory: TrajectoryAccumulator.Trajectory
-    - Name: CloudOrienter
-      Type: CloudOrienter
-      Params: ~
-      Inputs:
-        ProjectedBlob: BlobProjector.ProjectedBlob
-    - Name: CloudOrienter
-      Type: CloudOrienter
-      Params:
-        OrientCloud: False
-      Inputs:
-        ProjectedBlob: BlobProjector.ProjectedBlob
     - Name: OrientedBoundingBoxSize
       Type: BoundingBoxSize
       Params: ~
