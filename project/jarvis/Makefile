@@ -8,6 +8,8 @@ MAKE_ROOT               := $(REPO_ROOT)/project/jarvis
 MAKEFILE                := $(MAKE_ROOT)/Makefile
 export NUM_THREADS      := 24
 export ROS_PACKAGE_PATH := $(ROS_PACKAGE_PATH):$(REPO_ROOT)/ros-pkg
+ROSRUN			:= rosrun
+#ROSRUN			:= rosgdb
 
 .SECONDEXPANSION:       # Allows use of automatic vars in prerequisites.
 .SECONDARY:             # Prevents deletion of intermediate targets in a chain of implicit rules.
@@ -99,7 +101,7 @@ front_door/tds/%/extracted: $(FRONT_DOOR_DIR)/%.bag
 
 front_door-update-unlabeled-descriptors: $(addprefix front_door/tds/, $(addsuffix /updated, $(FRONT_DOOR_NAMES)))
 front_door/tds/%/updated: front_door/tds/$$*/extracted
-	rosrun jarvis update_descriptors \
+	$(ROSRUN) jarvis update_descriptors \
 	--config $(CONFIG) \
 	-u $(FRONT_DOOR_UP_VECTOR) \
 	--tds `find front_door/tds/$*/ -name '*.td' | sort` \
@@ -110,7 +112,7 @@ define FRONT_DOOR_RULE_GENERATOR
 
 front_door/$(1)/induction:
 	mkdir -p $$@
-	. ~/.bashrc && rosgdb jarvis induct \
+	$(ROSRUN) jarvis induct \
 	--class-names $(1) \
 	--config $(CONFIG) \
 	-u $(FRONT_DOOR_UP_VECTOR) \
@@ -126,7 +128,7 @@ front_door/$(1)/induction:
 	| tee $$@/log.txt
 
 front_door/$(1)/baseline_unfair: front_door/$(1)/induction
-	rosrun jarvis baseline_unfair \
+	$(ROSRUN) jarvis baseline_unfair \
 	--class-names $(1) \
 	--config $(CONFIG) \
 	-u $(FRONT_DOOR_UP_VECTOR) \
@@ -137,7 +139,7 @@ front_door/$(1)/baseline_unfair: front_door/$(1)/induction
 	mv $$@-log.txt $$@/
 
 front_door/$(1)/group_induction_errors: front_door/$(1)/induction
-	rosrun online_learning filter_errors \
+	$(ROSRUN) online_learning filter_errors \
 	-c `find -L $< -name classifier.gc | sort | tail -n1` \
 	-d $(FRONT_DOOR_LABELS_DIR)/$(1)/*.td \
 	--class-names $(1) \
@@ -165,7 +167,7 @@ front_door-set1/tds/%/extracted: $(FRONT_DOOR_DIR_1)/%.bag
 
 front_door-set1-update-unlabeled-descriptors: $(addprefix front_door-set1/tds/, $(addsuffix /updated, $(FRONT_DOOR_NAMES_1)))
 front_door-set1/tds/%/updated: front_door-set1/tds/$$*/extracted
-	rosrun jarvis update_descriptors \
+	$(ROSRUN) jarvis update_descriptors \
 	--config $(CONFIG) \
 	-u $(FRONT_DOOR_UP_VECTOR_1) \
 	--tds `find front_door-set1/tds/$*/ -name '*.td' | sort` \
@@ -176,7 +178,7 @@ define FRONT_DOOR-SET1_RULE_GENERATOR
 
 front_door-set1/$(1)/induction:
 	mkdir -p $$@
-	. ~/.bashrc && rosgdb jarvis induct \
+	$(ROSRUN) jarvis induct \
 	--class-names $(1) \
 	--config $(CONFIG) \
 	-u $(FRONT_DOOR_UP_VECTOR_1) \
@@ -192,7 +194,7 @@ front_door-set1/$(1)/induction:
 	| tee $$@/log.txt
 
 front_door-set1/$(1)/baseline_unfair: front_door-set1/$(1)/induction
-	rosrun jarvis baseline_unfair \
+	$(ROSRUN) jarvis baseline_unfair \
 	--class-names $(1) \
 	--config $(CONFIG) \
 	-u $(FRONT_DOOR_UP_VECTOR_1) \
@@ -203,7 +205,7 @@ front_door-set1/$(1)/baseline_unfair: front_door-set1/$(1)/induction
 	mv $$@-log.txt $$@/
 
 front_door-set1/$(1)/group_induction_errors: front_door-set1/$(1)/induction
-	rosrun online_learning filter_errors \
+	$(ROSRUN) online_learning filter_errors \
 	-c `find -L $< -name classifier.gc | sort | tail -n1` \
 	-d $(FRONT_DOOR_LABELS_DIR_1)/$(1)/*.td \
 	--class-names $(1) \
@@ -227,21 +229,21 @@ KITCHEN_CLASS_NAMES := cat
 kitchen-update-all-descriptors: kitchen-update-unlabeled-descriptors kitchen-update-test-descriptors
 
 kitchen-update-unlabeled-descriptors:
-	rosrun jarvis update_descriptors \
+	$(ROSRUN) jarvis update_descriptors \
 	--config $(CONFIG) \
 	-u $(KITCHEN_UP_VECTOR) \
 	--tds `find kitchen/tds/ -name '*.td' | sort` \
 	-j 24
 
 kitchen-update-test-descriptors:
-	rosrun jarvis update_descriptors \
+	$(ROSRUN) jarvis update_descriptors \
 	--config $(CONFIG) \
 	-u $(KITCHEN_UP_VECTOR) \
 	--tds $(KITCHEN_LABELS_DIR)/*.td \
 	-j 24
 
 kitchen/induction: #kitchen-descriptors
-	. ~/.bashrc && rosgdb jarvis induct \
+	$(ROSRUN) jarvis induct \
 	--class-names $(KITCHEN_CLASS_NAMES) \
 	--config $(CONFIG) \
 	-u $(KITCHEN_UP_VECTOR) \
@@ -262,7 +264,7 @@ kitchen/induction: #kitchen-descriptors
 	mv $@-log.txt $@/
 
 kitchen/baseline_unfair: kitchen/induction
-	rosrun jarvis baseline_unfair \
+	$(ROSRUN) jarvis baseline_unfair \
 	--class-names $(KITCHEN_CLASS_NAMES) \
 	--config $(CONFIG) \
 	-u $(KITCHEN_UP_VECTOR) \
@@ -273,7 +275,7 @@ kitchen/baseline_unfair: kitchen/induction
 	mv $@-log.txt $@/
 
 kitchen/cross_evaluation:
-	rosrun jarvis cross_evaluate \
+	$(ROSRUN) jarvis cross_evaluate \
 	--config $(CONFIG) \
 	--class-names $(KITCHEN_CLASS_NAMES) \
 	--tds $(KITCHEN_LABELS_DIR)/*.td \
@@ -282,7 +284,7 @@ kitchen/cross_evaluation:
 	mv $@-log.txt $@/
 
 kitchen/cross_evaluation2:
-	rosrun jarvis cross_evaluate \
+	$(ROSRUN) jarvis cross_evaluate \
 	--config $(CONFIG2) \
 	--class-names $(KITCHEN_CLASS_NAMES) \
 	--tds $(KITCHEN_LABELS_DIR)/*.td \
@@ -291,7 +293,7 @@ kitchen/cross_evaluation2:
 	mv $@-log.txt $@/
 
 kitchen/group_induction_errors: kitchen/induction
-	rosrun online_learning filter_errors \
+	$(ROSRUN) online_learning filter_errors \
 	-c `find kitchen/induction/ -name classifier.gc | sort | tail -n1` \
 	-d $(KITCHEN_LABELS_DIR)/*.td \
 	--class-names $(KITCHEN_CLASS_NAMES) \
@@ -305,14 +307,14 @@ kitchen/group_induction_errors: kitchen/induction
 KITCHEN_GLUED_CLASS_NAMES := cat
 
 kitchen_glued-update-unlabeled-descriptors:
-	rosrun jarvis update_descriptors \
+	$(ROSRUN) jarvis update_descriptors \
 	--config $(CONFIG) \
 	-u $(KITCHEN_GLUED_UP_VECTOR) \
 	--tds `find kitchen_glued/tds/ -name '*.td' | sort` \
 	-j 24
 
 kitchen_glued/induction: 
-	. ~/.bashrc && rosgdb jarvis induct \
+	$(ROSRUN) jarvis induct \
 	--class-names $(KITCHEN_GLUED_CLASS_NAMES) \
 	--config $(CONFIG) \
 	-u $(KITCHEN_GLUED_UP_VECTOR) \
@@ -349,13 +351,13 @@ $(REGRESSION_RUNS_DIR)/completed: $(addprefix regression-test-,$(addsuffix -mult
 	touch $@
 
 analyze-regression-tests: $(REGRESSION_RUNS_DIR)/completed
-	rosrun jarvis analyze_regression_tests.py $(REGRESSION_RUNS_DIR)
+	$(ROSRUN) jarvis analyze_regression_tests.py $(REGRESSION_RUNS_DIR)
 
 define REGRESSION_RULE_GENERATOR
 regression-test-$(1)-multi:
 	for i in {1..3}; do make -f $(MAKEFILE) regression-test-$(1); done
 regression-test-$(1):
-	rosrun jarvis run_regression.sh $(REGRESSION_TESTS_DIR)/$(1) $(CONFIG) $(REGRESSION_RUNS_DIR)/$(1)
+	$(ROSRUN) jarvis run_regression.sh $(REGRESSION_TESTS_DIR)/$(1) $(CONFIG) $(REGRESSION_RUNS_DIR)/$(1)
 endef
 $(foreach REGRESSION_NAME,$(REGRESSION_NAMES),$(eval $(call REGRESSION_RULE_GENERATOR,$(REGRESSION_NAME))))
 
@@ -368,7 +370,7 @@ TWIDDLE_TEST_NAMES := kitchen00 leo00 mailman00 open_door00
 
 .PHONY: twiddle
 twiddle:
-	rosrun jarvis twiddle \
+	$(ROSRUN) jarvis twiddle \
 	--randomize \
 	--decimate 0.5 \
 	--initial-config $(CONFIG) \
@@ -378,7 +380,7 @@ twiddle:
 
 .PHONY: twiddle-tiny
 twiddle-tiny:
-	. ~/.bashrc && rosgdb jarvis twiddle \
+	$(ROSRUN) jarvis twiddle \
 	--randomize \
 	--decimate 0.9 \
 	--initial-config $(CONFIG) \
