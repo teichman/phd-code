@@ -74,6 +74,10 @@ def splitNum(num, signed = False):
         decimal = strs[1]
     return(whole, decimal)
 
+# pre and post are in percent.
+def errorReduction(pre, post):
+    return 100.0 - 100.0 * ((100.0 - post) / (100.0 - pre))
+
 # pre and post are lists of np arrays.
 # If paired == True, then use pairwise swapping only in the statistical significance test.
 def analyze(pre, post, pre_name = 'Pre', post_name = 'Post', test_names = [], quantity_name = 'quantity', num_samples = 10000, paired = False):
@@ -83,28 +87,38 @@ def analyze(pre, post, pre_name = 'Pre', post_name = 'Post', test_names = [], qu
     assert(len(pre) == len(post))
     assert(len(test_names) == len(pre))
 
-    print '================================================================================'
+    print '===================================================================================================='
     print 'Regression test: ' + quantity_name
     print
-    print '{0:20s}  {1:12s} {2:12s}  {3:12s} {4:12s}'.format('Test', pre_name, post_name, 'Change', 'Significance')
-    print "--------------------------------------------------------------------------------"
+    if quantity_name == "Accuracy (%)":
+        print '{0:20s}  {1:12s} {2:12s}  {3:12s} {4:22s} {5:12s}'.format('Test', pre_name, post_name, 'Change', 'Error reduction (%)', 'Significance')
+    else:
+        print '{0:20s}  {1:12s} {2:12s}  {3:12s} {4:12s}'.format('Test', pre_name, post_name, 'Change', 'Significance')
+    print "----------------------------------------------------------------------------------------------------"
     for (idx, test_name) in enumerate(test_names):
         if paired:
             (change, p) = swapTest(pre[idx], post[idx], num_samples)
         else:
             (change, p) = stratifiedPermutationTest([pre[idx]], [post[idx]], num_samples)
-        
-        print "{name:16s} {pre_mean_vals[0]:>6}.{pre_mean_vals[1]:<6} {post_mean_vals[0]:>6}.{post_mean_vals[1]:<6} {change_vals[0]:>6}.{change_vals[1]:<6}    p = {p:<10.3f}".format(name=test_name, pre_mean_vals=splitNum(np.mean(pre[idx])), post_mean_vals=splitNum(np.mean(post[idx])), change_vals=splitNum(change, True), p=p)
+
+        if quantity_name == "Accuracy (%)":
+            er = errorReduction(np.mean(pre[idx]), np.mean(post[idx]))
+            print "{name:16s} {pre_mean_vals[0]:>6}.{pre_mean_vals[1]:<6} {post_mean_vals[0]:>6}.{post_mean_vals[1]:<6} {change_vals[0]:>6}.{change_vals[1]:<6}      {er_vals[0]:>6}.{er_vals[1]:<6}         p = {p:<10.3f}".format(name=test_name, pre_mean_vals=splitNum(np.mean(pre[idx])), post_mean_vals=splitNum(np.mean(post[idx])), change_vals=splitNum(change, True), er_vals=splitNum(er, True), p=p)            
+        else:
+            print "{name:16s} {pre_mean_vals[0]:>6}.{pre_mean_vals[1]:<6} {post_mean_vals[0]:>6}.{post_mean_vals[1]:<6} {change_vals[0]:>6}.{change_vals[1]:<6}    p = {p:<10.3f}".format(name=test_name, pre_mean_vals=splitNum(np.mean(pre[idx])), post_mean_vals=splitNum(np.mean(post[idx])), change_vals=splitNum(change, True), p=p)
 
 
-    print "--------------------------------------------------------------------------------"
+    print "----------------------------------------------------------------------------------------------------"
     if paired:
         (change, p) = swapTest(np.concatenate(pre), np.concatenate(post), num_samples)
     else:
         (change, p) = stratifiedPermutationTest(pre, post, num_samples)
     pre_mean = np.mean(np.concatenate(pre))
     post_mean = np.mean(np.concatenate(post))
-    print "{name:16s} {pre_mean_vals[0]:>6}.{pre_mean_vals[1]:<6} {post_mean_vals[0]:>6}.{post_mean_vals[1]:<6} {change_vals[0]:>6}.{change_vals[1]:<6}    p = {p:<10.3f}".format(name='all', pre_mean_vals=splitNum(pre_mean), post_mean_vals=splitNum(post_mean), change_vals=splitNum(change, True), p=p)
-
+    if quantity_name == "Accuracy (%)":
+        er = errorReduction(pre_mean, post_mean)
+        print "{name:16s} {pre_mean_vals[0]:>6}.{pre_mean_vals[1]:<6} {post_mean_vals[0]:>6}.{post_mean_vals[1]:<6} {change_vals[0]:>6}.{change_vals[1]:<6}      {er_vals[0]:>6}.{er_vals[1]:<6}         p = {p:<10.3f}".format(name='all', pre_mean_vals=splitNum(pre_mean), post_mean_vals=splitNum(post_mean), change_vals=splitNum(change, True), er_vals=splitNum(er, True), p=p)            
+    else:
+        print "{name:16s} {pre_mean_vals[0]:>6}.{pre_mean_vals[1]:<6} {post_mean_vals[0]:>6}.{post_mean_vals[1]:<6} {change_vals[0]:>6}.{change_vals[1]:<6}    p = {p:<10.3f}".format(name='all', pre_mean_vals=splitNum(pre_mean), post_mean_vals=splitNum(post_mean), change_vals=splitNum(change, True), p=p)
     print
 
