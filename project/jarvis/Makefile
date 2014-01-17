@@ -128,6 +128,12 @@ front_door/$(1)/induction:
 	--init `find front_door/tds/ -name '*.td' | sort -R | head -n5` \
 	| tee $$@/log.txt
 
+front_door-save-annotations-$(1):
+	$(ROSRUN) online_learning merge_tds \
+	--remove-duplicates \
+	--tds `find front_door/$(1)/induction/ -name '*.td'` \
+	-o `date +%F_%T`-$(1)-annotations.td 
+
 front_door/$(1)/baseline_unfair: front_door/$(1)/induction
 	$(ROSRUN) jarvis baseline_unfair \
 	--class-names $(1) \

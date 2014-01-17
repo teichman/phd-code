@@ -79,14 +79,16 @@ rosgdb jarvis baseline_unfair \
     --o $RUN_DIR/baseline_unfair \
     | tee $RUN_DIR/baseline_unfair/log.txt
 
+# -- Save output in an easy-to-find location.
+cp `find $RUN_DIR/induction -name classifier.gc | sort | tail -n1` $RUN_DIR/induction/final_classifier.gc
+cp `find $RUN_DIR/induction -name track_results.txt | sort | grep test_results | tail -n1` $RUN_DIR/induction/final_track_results.txt
+
 # -- Delete things we don't need to save disk space.
 echo
 echo -- Cleaning up. --
 echo
-cp `find $RUN_DIR/induction -name classifier.gc | sort | tail -n1` $RUN_DIR/induction/final_classifier.gc
-cp `find $RUN_DIR/induction -name track_results.txt | sort | grep test_results | tail -n1` $RUN_DIR/induction/final_track_results.txt
-rm `find $RUN_DIR/induction -name classifier.gc`
-rm `find $RUN_DIR/induction -name 'annotated*.td'`
+rm `find $RUN_DIR/induction -name classifier.gc | sort | sed '$d'`
+# rm `find $RUN_DIR/induction -name 'annotated*.td'`
 rm `find $RUN_DIR/induction -name '*.eig'`
 rm `find $RUN_DIR/induction -name cmap.txt`
 rm -rf `find $RUN_DIR/induction -name test_results_annotated`
