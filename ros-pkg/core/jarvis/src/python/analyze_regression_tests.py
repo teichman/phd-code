@@ -37,7 +37,7 @@ if args.type == "accuracy":
     label = 'Accuracy (%)'
     for test_name in test_names:
         gi_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
-        baseline_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -wholename '*iter009/track_results.txt' | sort` | awk '{print $NF}'"))
+        baseline_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -wholename '*baseline_unfair/*iter009/track_results.txt' | sort` | awk '{print $NF}'"))
 
 elif args.type == "annotations":
     label = 'Num annotations'
