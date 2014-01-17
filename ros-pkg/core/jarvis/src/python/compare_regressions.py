@@ -63,3 +63,9 @@ analyze(pre_vals, post_vals,
         test_names, label,
         args.num_permutations, paired=False)
 
+
+
+# time
+    # pre_time.append(npLoadBash("for dir in `find -L " + os.path.join(pre_dir, test_name) + " -maxdepth 1 -mindepth 1 -type d`; do grep 'Total elapsed time' `find $dir -name learner_status.txt | sort | tail -n1`; done | awk '{print $NF}'"))
+    # post_time.append(npLoadBash("for dir in `find -L " + os.path.join(post_dir, test_name) + " -maxdepth 1 -mindepth 1 -type d`; do grep 'Total elapsed time' `find $dir -name learner_status.txt | sort | tail -n1`; done | awk '{print $NF}'"))
+ 
