@@ -162,6 +162,7 @@ int main(int argc, char** argv)
   GridClassifier::BoostingTrainer trainer(gc);
   trainer.gamma_ = 0;
   trainer.verbose_ = true;
+  trainer.obj_thresh_ = config["GlobalParams"]["ObjThresh"].as<double>();
    //GridClassifier::StochasticLogisticTrainer trainer(gc);
   if(!bfs::exists(output_path))
     bfs::create_directory(output_path);
