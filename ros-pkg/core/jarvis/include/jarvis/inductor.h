@@ -32,7 +32,7 @@ protected:
   //! Updates descriptors and saves them to disk if necessary.
   void entryHook(TrackDataset* td, const std::string& path = "") const;
   //! Removes tracks that don't include enough motion.
-  void chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_annotations) const;
+  void chunkHook(TrackDataset* td) const;
   void retrospection(const TrackDataset& new_annotations, const std::vector<Label>& predictions);
   void requestInductedSampleHook(TrackDataset* td, int cidx) const;
   

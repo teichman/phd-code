@@ -36,15 +36,12 @@ void Inductor::entryHook(TrackDataset* td, const std::string& path) const
   }
 }
 
-void Inductor::chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_annotations) const
+void Inductor::chunkHook(TrackDataset* td) const
 {
-  return;  // Turning off the motion requirement below.
+  cout << "Running Inductor::chunkHook." << endl;
   
-  ROS_ASSERT(td->size() == chunk_diagnostic_annotations->size());
   vector<Dataset::Ptr> tracks;
-  vector<Label> cda;
   tracks.reserve(td->size());
-  cda.reserve(chunk_diagnostic_annotations->size());
 
   // -- Tracks must be moving a bit for them to be used.
   //    This is because running group induction on stationary tracks 
@@ -65,7 +62,6 @@ void Inductor::chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_
     double dt = last_blob->sensor_timestamp_ - first_blob->sensor_timestamp_;
     if(dist / dt > 0.05) {
       tracks.push_back(track);
-      cda.push_back(chunk_diagnostic_annotations->at(i));
     }
   }
 
@@ -73,7 +69,6 @@ void Inductor::chunkHook(TrackDataset* td, std::vector<Label>* chunk_diagnostic_
        << tracks.size() << " tracks remain." << endl;
   
   td->tracks_ = tracks;
-  *chunk_diagnostic_annotations = cda;
 }
 
 Eigen::ArrayXf computeNormalizedCellHistogram(const Dataset& track, size_t descriptor_id, const GridClassifier& gc)
