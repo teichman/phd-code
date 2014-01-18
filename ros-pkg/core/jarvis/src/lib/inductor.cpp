@@ -219,6 +219,7 @@ void Inductor::retrospection(const TrackDataset& new_annotations, const std::vec
         int sign = predictions[i].sign()(c);
         for(size_t j = 0; j < unsupervised_->size(); ++j) {
           Label pred = unsupervised_->label(j);
+          // New retrospection.
           if(pred.sign()(c) == sign &&
              similar(new_annotations[i], (*unsupervised_)[j], *classifier_, 0.9, 1))
           {
