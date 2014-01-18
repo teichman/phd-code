@@ -274,11 +274,7 @@ kitchen/induction: #kitchen-descriptors
 	--evaluate-every 1 \
 	--output-dir $@ \
 	--unlabeled-td-dir kitchen/tds/ \
-	--init \
-	kitchen/tds/sentinel_2013-10-24-22-01-00_2/jarvis-0003.td \
-	kitchen/tds/sentinel_2013-09-22-18-31-42_1/jarvis-0006.td \
-	kitchen/tds/sentinel_2013-09-22-23-15-32_3/jarvis-0005.td \
-	kitchen/tds/sentinel_2013-10-22-14-43-33_32/jarvis-0004.td \
+	--init `find kitchen/tds/ -name '*.td' | sort -R | tail -n4` \
 	--test $(KITCHEN_LABELS_DIR)/*.td \
 	| tee $@-log.txt
 	mv $@-log.txt $@/
@@ -360,8 +356,8 @@ kitchen_glued/induction:
 
 REGRESSION_TESTS_DIR := $(MAKE_ROOT)/regression_tests
 REGRESSION_RUNS_DIR := regression_runs
-#REGRESSION_NAMES := $(shell ls $(REGRESSION_TESTS_DIR))
-REGRESSION_NAMES := $(shell ls $(REGRESSION_TESTS_DIR) | grep -v kitchen)
+REGRESSION_NAMES := $(shell ls $(REGRESSION_TESTS_DIR))
+#REGRESSION_NAMES := kitchen00 leo00 mailman00 open_door00 person00 
 
 all-regression-tests-debug: $(REGRESSION_RUNS_DIR)/completed-debug
 $(REGRESSION_RUNS_DIR)/completed-debug: $(addprefix regression-test-,$(REGRESSION_NAMES))
@@ -387,7 +383,7 @@ $(foreach REGRESSION_NAME,$(REGRESSION_NAMES),$(eval $(call REGRESSION_RULE_GENE
 # Twiddling
 ############################################################
 
-TWIDDLE_TEST_NAMES := kitchen00 leo00 mailman00 open_door00
+TWIDDLE_TEST_NAMES := kitchen00 leo00 mailman00 open_door00 person00
 
 .PHONY: twiddle
 twiddle:
