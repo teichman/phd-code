@@ -125,7 +125,7 @@ front_door/$(1)/induction:
 	--test $(FRONT_DOOR_LABELS_DIR)/$(1)/*.td \
 	--output-dir $$@ \
 	--unlabeled-td-dir front_door/tds/ \
-	--init `find front_door/tds/ -name '*.td' | sort -R | head -n5` \
+	--init `find front_door/tds/ -name '*.td' | sort -R | head -n4` \
 	| tee $$@/log.txt
 
 front_door-save-annotations-$(1):
@@ -197,7 +197,7 @@ front_door-set1/$(1)/induction:
 	--test $(FRONT_DOOR_LABELS_DIR_1)/$(1)/*.td \
 	--output-dir $$@ \
 	--unlabeled-td-dir front_door-set1/tds/ \
-	--init `find front_door-set1/tds/ -name '*.td' | sort -R | head -n5` \
+	--init `find front_door-set1/tds/ -name '*.td' | sort -R | head -n4` \
 	| tee $$@/log.txt
 
 front_door-set1-save-annotations-$(1):
@@ -356,8 +356,8 @@ kitchen_glued/induction:
 
 REGRESSION_TESTS_DIR := $(MAKE_ROOT)/regression_tests
 REGRESSION_RUNS_DIR := regression_runs
-REGRESSION_NAMES := $(shell ls $(REGRESSION_TESTS_DIR))
-#REGRESSION_NAMES := kitchen00 leo00 mailman00 open_door00 person00 
+#REGRESSION_NAMES := $(shell ls $(REGRESSION_TESTS_DIR))
+REGRESSION_NAMES := kitchen02 leo00 mailman00 open_door00 person00 
 
 all-regression-tests-debug: $(REGRESSION_RUNS_DIR)/completed-debug
 $(REGRESSION_RUNS_DIR)/completed-debug: $(addprefix regression-test-,$(REGRESSION_NAMES))

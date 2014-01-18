@@ -129,7 +129,6 @@ bool similar(const Dataset& track0, const Dataset& track1, const GridClassifier&
   dspaces.push_back("HSVHistogram.Hue:14694502210542588030");
   dspaces.push_back("HSVHistogram.Saturation:10273388249095023270");
   dspaces.push_back("HSVHistogram.Value:8985795375221662105");
-  // maybe include these too...
   // dspaces.push_back("SimpleTrajectoryStatistics05.Speed:6152030001663489947");
   // dspaces.push_back("SimpleTrajectoryStatistics10.Speed:9221731694321102499");
   // dspaces.push_back("EdginessEstimator.Edginess:6941314615084190538");
@@ -221,7 +220,7 @@ void Inductor::retrospection(const TrackDataset& new_annotations, const std::vec
           Label pred = unsupervised_->label(j);
           // New retrospection.
           if(pred.sign()(c) == sign &&
-             similar(new_annotations[i], (*unsupervised_)[j], *classifier_, 0.8, 1))
+             similar(new_annotations[i], (*unsupervised_)[j], *classifier_, 0.75, 2))
           {
             if(pred.squaredNorm() > 1e-6)
               ++num_deinducted;
