@@ -544,4 +544,27 @@ protected:
   void debug() const;
 };
 
+class ProjectedSize : public pl::Pod
+{
+public:
+  DECLARE_POD(ProjectedSize);
+  ProjectedSize(std::string name) :
+    Pod(name),
+    projected_size_(4)
+  {
+    declareInput<Blob::ConstPtr>("ProjectedBlob");
+    declareOutput<const Eigen::VectorXf*>("ProjectedSize");  // u, v, depth-scaled u, depth-scaled v.
+  }
+
+protected:
+  int min_u_;
+  int max_u_;
+  int min_v_;
+  int max_v_;
+  Eigen::VectorXf projected_size_;
+  
+  void compute();
+  void debug() const;
+};
+
 #endif // JARVIS_PODS_H

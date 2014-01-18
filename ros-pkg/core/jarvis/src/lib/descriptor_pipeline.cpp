@@ -35,6 +35,7 @@ void DescriptorPipeline::registerPodTypes()
   REGISTER_POD(RandomProjector);
   REGISTER_POD(DescriptorConcatenator);
   REGISTER_POD(EdginessEstimator);
+  REGISTER_POD(ProjectedSize);
 }
 
 std::string DescriptorPipeline::defaultSpecificationPath()

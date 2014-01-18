@@ -1134,3 +1134,48 @@ void EdginessEstimator::debug() const
   f.close();
 }
 
+void ProjectedSize::compute()
+{
+  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
+
+  max_u_ = 0;
+  min_u_ = blob.width_;
+  max_v_ = 0;
+  min_v_ = blob.height_;
+  for(size_t i = 0; i < blob.indices_.size(); ++i) {
+    int idx = blob.indices_[i];
+    int v = idx / blob.width_;
+    int u = idx - v * blob.width_;
+    max_u_ = max(max_u_, u);
+    max_v_ = max(max_v_, v);
+    min_u_ = min(min_u_, u);
+    min_v_ = min(min_v_, v);
+  }
+
+  float du = max_u_ - min_u_;
+  float dv = max_v_ - min_v_;
+  float mean_depth = blob.centroid_(2);
+
+  projected_size_(0) = du;
+  projected_size_(1) = dv;
+  // Assuming standard primesense focal length for
+  // 320 x 240 images.
+  projected_size_(2) = du * mean_depth / (525.0 / 2.0);  
+  projected_size_(3) = dv * mean_depth / (525.0 / 2.0);
+
+  push<const VectorXf*>("ProjectedSize", &projected_size_);
+}
+
+void ProjectedSize::debug() const
+{
+  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "blob.width_: " << blob.width_ << endl;
+  f << "blob.height_: " << blob.height_ << endl;
+  f << "min_u_ to max_u_: " << min_u_ << " " << max_u_ << endl;
+  f << "min_v_ to max_v_: " << min_v_ << " " << max_v_ << endl;
+  f << "mean depth: " << blob.centroid_(2) << endl;
+  f << "projected_size_: " << projected_size_.transpose() << endl;
+  f.close();
+}
+

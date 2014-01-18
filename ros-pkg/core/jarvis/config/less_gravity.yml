@@ -12,6 +12,11 @@ Pipeline:
       Params: ~
       Inputs:
         Blob: BlobEntryPoint.Output
+    - Name: ProjectedSize
+      Type: ProjectedSize
+      Params: ~
+      Inputs:
+        ProjectedBlob: BlobProjector.ProjectedBlob
     - Name: CloudOrienter
       Type: CloudOrienter
       Params:
@@ -188,4 +193,6 @@ Pipeline:
           SimpleTrajectoryStatistics05.Speed
           SimpleTrajectoryStatistics10.Speed
           EdginessEstimator.Edginess
+          ProjectedSize.ProjectedSize
+          
 
