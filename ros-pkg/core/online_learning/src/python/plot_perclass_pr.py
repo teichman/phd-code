@@ -87,7 +87,8 @@ ax2.set_ylabel('Precision and recall')
 ymin, ymax = plt.ylim()
 plt.ylim(ymin, 1.0)
 
-plt.legend(loc='center right')
+#plt.legend(loc='center right')
+plt.legend(loc='best')
 
 plt.savefig(basename + '.pdf')
 plt.savefig(basename + '.png')
