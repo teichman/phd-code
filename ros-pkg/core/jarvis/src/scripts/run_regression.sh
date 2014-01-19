@@ -88,7 +88,7 @@ echo
 echo -- Cleaning up. --
 echo
 rm `find $RUN_DIR/induction -name classifier.gc | sort | sed '$d'`
-# rm `find $RUN_DIR/induction -name 'annotated*.td'`
+rm `find $RUN_DIR/induction -name 'annotated*.td'`
 rm `find $RUN_DIR/induction -name '*.eig'`
 rm `find $RUN_DIR/induction -name cmap.txt`
 rm -rf `find $RUN_DIR/induction -name test_results_annotated`
