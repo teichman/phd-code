@@ -33,8 +33,6 @@ protected:
                        const GridClassifier& base_classifier,
                        TrackDataset::ConstPtr train,
                        TrackDataset::ConstPtr test) const;
-  void splitDataset(const TrackDataset& td, double pct0,
-                    TrackDataset* split0, TrackDataset* split1) const;
   double runMultipleEvals(std::string debugging_name,
                           const YAML::Node& config,
                           const GridClassifier& base_classifier,

@@ -113,3 +113,6 @@ target_link_libraries(generate_detection_video jarvis_core)
 rosbuild_add_gtest(test_jarvis src/test/test_jarvis.cpp)
 target_link_libraries(test_jarvis jarvis_core)
 
+rosbuild_add_executable(naive_supervised_baseline src/prog/naive_supervised_baseline.cpp)
+rosbuild_link_boost(naive_supervised_baseline program_options filesystem)
+target_link_libraries(naive_supervised_baseline jarvis_core)

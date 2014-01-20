@@ -91,32 +91,6 @@ double JarvisTwiddler::runSingleEval(const YAML::Node& config,
   return ev.track_stats_.getTotalAccuracy();
 }
 
-void JarvisTwiddler::splitDataset(const TrackDataset& td, double pct0, TrackDataset* split0, TrackDataset* split1) const
-{
-  ROS_ASSERT(!td.empty());
-  ROS_ASSERT(pct0 >= 0 && pct0 <= 1);
-
-  // -- Copy name mappings.
-  split0->applyNameMappings(td);
-  split1->applyNameMappings(td);
-
-  // -- Get a random ordering.
-  vector<size_t> index(td.size());
-  for(size_t i = 0; i < td.size(); ++i)
-    index[i] = i;
-  random_shuffle(index.begin(), index.end());
-
-  // -- Split.
-  split0->tracks_.reserve(td.size());
-  split1->tracks_.reserve(td.size());
-  for(size_t i = 0; i < index.size(); ++i) {
-    if((double)i / index.size() < pct0)
-      split0->tracks_.push_back(td.tracks_[index[i]]);
-    else
-      split1->tracks_.push_back(td.tracks_[index[i]]);
-  }
-}
-
 double JarvisTwiddler::runMultipleEvals(std::string debugging_name,
                                         const YAML::Node& config,
                                         const GridClassifier& base_classifier,
