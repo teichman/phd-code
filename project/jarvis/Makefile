@@ -225,6 +225,17 @@ front_door-set1-update-test-descriptors-$(1):
 	--config $(CONFIG) \
 	--tds $(FRONT_DOOR_LABELS_DIR_1)/$(1)/*.td
 
+compare-front-door-set1-$(1)-results: front_door-set1/$(1)/baseline_unfair front_door-set1/$(1)/naive_supervised_baseline
+	@echo -en 'Group induction:\t\t'
+	@echo $$$$(grep 'Total acc' `find front_door-set1/$(1)/induction/ -name track_results.txt | grep test_results | sort | tail -n1` | awk '{print $$$$NF}')
+	@echo -en 'Matched supervised baseline:\t'
+	@echo $$$$(grep 'Total acc' `find front_door-set1/$(1)/baseline_unfair/ -name track_results.txt | sort | tail -n1` | awk '{print $$$$NF}')
+	@echo -en 'Naive supervised baseline:\t'
+	@echo $$$$(grep 'Total acc' front_door-set1/$(1)/naive_supervised_baseline/average_results/track_results.txt | awk '{print $$$$NF}')
+	@echo
+	@echo -- Annotations from group induction --
+	@grep 'Hand-annotated' -A10 `find front_door-set1/$(1)/induction/ -name learner_status.txt | sort | tail -n1`
+
 # The || exit 0 is so that Make does not interpret the non-zero return value of diff
 # as an error.
 compare-front-door-set1-$(1)-results-with-matched: front_door-set1/$(1)/baseline_unfair

@@ -124,9 +124,9 @@ bool similar(const Dataset& track0, const Dataset& track1, const GridClassifier&
   dspaces.push_back("HSVHistogram.Hue:14694502210542588030");
   dspaces.push_back("HSVHistogram.Saturation:10273388249095023270");
   dspaces.push_back("HSVHistogram.Value:8985795375221662105");
-  // dspaces.push_back("SimpleTrajectoryStatistics05.Speed:6152030001663489947");
-  // dspaces.push_back("SimpleTrajectoryStatistics10.Speed:9221731694321102499");
-  // dspaces.push_back("EdginessEstimator.Edginess:6941314615084190538");
+//  dspaces.push_back("SimpleTrajectoryStatistics05.Speed:6152030001663489947");
+  dspaces.push_back("SimpleTrajectoryStatistics10.Speed:9221731694321102499");
+  dspaces.push_back("EdginessEstimator.Edginess:6941314615084190538");
     
   // -- old
   // dspaces.push_back("OrientedBoundingBoxSize.BoundingBoxSize:9048624352072648104");  // BoundingBoxSize from GravitationalCloudOrienter.
@@ -213,7 +213,7 @@ void Inductor::retrospection(const TrackDataset& new_annotations, const std::vec
         int sign = predictions[i].sign()(c);
         for(size_t j = 0; j < unsupervised_->size(); ++j) {
           Label pred = unsupervised_->label(j);
-          // New retrospection.
+          // New retrospection.  De-induct tracks that look roughly the same.
           if(pred.sign()(c) == sign &&
              similar(new_annotations[i], (*unsupervised_)[j], *classifier_, 0.75, 2))
           {
