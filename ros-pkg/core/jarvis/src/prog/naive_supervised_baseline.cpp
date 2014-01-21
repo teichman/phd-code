@@ -75,6 +75,10 @@ int main(int argc, char** argv)
   cmap.addNames(class_names);
   cout << "Using cmap: " << endl;
   cout << cmap.status("  ") << endl;
+  if(cmap.size() != 1) {
+    ROS_FATAL("naive_supervised_baseline can only work with exactly one class at a time because of the proportional dataset splitting.");
+    return 1;
+  }
 
   // -- Load data.
   cout << "Loading data." << endl;
@@ -116,9 +120,12 @@ int main(int argc, char** argv)
     double pct = (double)subsample / train.size();
     TrackDataset ignore;
     TrackDataset::Ptr training_subsample(new TrackDataset);
-    splitDataset(train, pct, training_subsample.get(), &ignore);
+    *training_subsample = sampleDatasetProportional(train, subsample, cmap.toName(0), test.labelRatio(cmap.toName(0)));
+    //splitDatasetProportional(train, test.labelRatio(cmap.names()[0]), pct, training_subsample.get(), &ignore);
     cout << "Training subsample:" << endl;
     cout << training_subsample->status("  ") << endl;
+    cout << "Training set ratio: " << training_subsample->labelRatio(cmap.toName(0)) << endl;
+    cout << "Test set ratio: " << test.labelRatio(cmap.toName(0)) << endl;
 
     // -- Train the classifier.
     GridClassifier::Ptr gc(new GridClassifier(*base_classifier));
