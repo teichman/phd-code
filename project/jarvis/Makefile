@@ -8,8 +8,13 @@ MAKE_ROOT               := $(REPO_ROOT)/project/jarvis
 MAKEFILE                := $(MAKE_ROOT)/Makefile
 export NUM_THREADS      := 24
 export ROS_PACKAGE_PATH := $(ROS_PACKAGE_PATH):$(REPO_ROOT)/ros-pkg
+
+ifdef DEBUG
+ROSRUN			:= . ~/.bashrc && rosgdb
+else
 ROSRUN			:= rosrun
-#ROSRUN			:= . ~/.bashrc && rosgdb
+endif
+
 
 .SECONDEXPANSION:       # Allows use of automatic vars in prerequisites.
 .SECONDARY:             # Prevents deletion of intermediate targets in a chain of implicit rules.
