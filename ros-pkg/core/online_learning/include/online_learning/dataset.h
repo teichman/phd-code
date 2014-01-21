@@ -319,6 +319,8 @@ public:
   //! Tries to determine the DescriptorDimensionality object.
   //! Crashes if it can't.  (Should probably instead return a special value for "unknown".)
   DescriptorDimensionality inferDescriptorDimensionality() const;
+  //! Returns num_pos / num_neg for class_name.
+  double labelRatio(const std::string& class_name) const;
   
 protected:
   //! Can apply "dmap" or "cmap".
@@ -351,5 +353,9 @@ void removeDuplicates(TrackDataset* td);
 //! Divides tracks between two different datasets.
 //! Does not make deep copies.
 void splitDataset(const TrackDataset& td, double pct0, TrackDataset* split0, TrackDataset* split1);
-  
+//! Samples num_tracks from td, considering only tracks with non-zero label for class_name.
+//! The ratio of positive to negative of class_name will be set to ratio.
+//! Does not make deep copies.
+TrackDataset sampleDatasetProportional(const TrackDataset& td, size_t num_tracks,
+                                       const std::string& class_name, double ratio);
 #endif // DATASET_H

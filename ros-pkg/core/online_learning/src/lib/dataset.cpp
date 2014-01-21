@@ -668,6 +668,23 @@ DescriptorDimensionality TrackDataset::inferDescriptorDimensionality() const
   return dim;
 }
 
+double TrackDataset::labelRatio(const std::string& class_name) const
+{
+  ROS_ASSERT(nameMapping("cmap").hasName(class_name));
+  size_t idx = nameMapping("cmap").toId(class_name);
+  
+  double num_pos = 0;
+  double num_neg = 0;
+  for(size_t i = 0; i < size(); ++i) {
+    Label annotation = label(i);
+    if(annotation(idx) > 0)
+      ++num_pos;
+    else if(annotation(idx) < 0)
+      ++num_neg;
+  }
+  return num_pos / num_neg;
+}
+
 void TrackDataset::serialize(std::ostream& out) const
 {
   if(boost::dynamic_pointer_cast<ReadOnlyEmptyCustomSerializer>(Instance::custom_serializer_)) {
@@ -1089,4 +1106,42 @@ void splitDataset(const TrackDataset& td, double pct0, TrackDataset* split0, Tra
     else
       split1->tracks_.push_back(td.tracks_[index[i]]);
   }
+}
+
+TrackDataset sampleDatasetProportional(const TrackDataset& td, size_t num_tracks,
+                                       const std::string& class_name, double ratio)
+{
+  ROS_ASSERT(td.nameMapping("cmap").hasName(class_name));
+  size_t idx = td.nameMapping("cmap").toId(class_name);
+ 
+  size_t num_desired_neg = num_tracks / (ratio + 1);
+  size_t num_desired_pos = num_tracks * ratio / (ratio + 1);
+
+  // -- Get positive and negative tracks.
+  vector<Dataset::Ptr> pos, neg;
+  pos.reserve(td.size());
+  neg.reserve(td.size());
+  for(size_t i = 0; i < td.size(); ++i) {
+    Label label = td.label(i);
+    if(label(idx) > 0)
+      pos.push_back(td.tracks_[i]);
+    else if(label(idx) < 0)
+      neg.push_back(td.tracks_[i]);
+  }
+  ROS_ASSERT(pos.size() >= num_desired_pos);
+  ROS_ASSERT(neg.size() >= num_desired_neg);
+
+  // -- Select some at random in desired proportions.
+  random_shuffle(pos.begin(), pos.end());
+  random_shuffle(neg.begin(), neg.end());
+  
+  TrackDataset sample;
+  sample.applyNameMappings(td);
+  sample.tracks_.reserve(num_tracks);
+  for(size_t i = 0; i < num_desired_pos; ++i)
+    sample.tracks_.push_back(pos[i]);
+  for(size_t i = 0; i < num_desired_neg; ++i)
+    sample.tracks_.push_back(neg[i]);
+
+  return sample;
 }
