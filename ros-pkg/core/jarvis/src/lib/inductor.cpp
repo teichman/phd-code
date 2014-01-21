@@ -215,7 +215,7 @@ void Inductor::retrospection(const TrackDataset& new_annotations, const std::vec
           Label pred = unsupervised_->label(j);
           // New retrospection.  De-induct tracks that look roughly the same.
           if(pred.sign()(c) == sign &&
-             similar(new_annotations[i], (*unsupervised_)[j], *classifier_, 0.75, 2))
+             similar(new_annotations[i], (*unsupervised_)[j], *classifier_, 0.7, 3))
           {
             if(pred.squaredNorm() > 1e-6)
               ++num_deinducted;
