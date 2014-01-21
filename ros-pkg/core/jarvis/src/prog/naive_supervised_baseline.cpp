@@ -88,7 +88,7 @@ int main(int argc, char** argv)
   saveYAML(config, output_dir + "/config.yml");
 
   // -- Initialize the base classifier on all the data available.
-  GridClassifier base_classifier;
+  GridClassifier::Ptr base_classifier(new GridClassifier);
   string ncstr = config["GlobalParams"]["NumCells"].as<string>();
   istringstream iss(ncstr);
   vector<size_t> nc;
@@ -99,10 +99,12 @@ int main(int argc, char** argv)
   }
   TrackDataset::Ptr init(new TrackDataset(train));
   *init += test;
-  base_classifier.initialize(*init, nc);
+  base_classifier->initialize(*init, nc);
   init.reset();
 
-  
+
+  Evaluator ev_overall(base_classifier);
+  ev_overall.plot_ = false;
   for(int i = 0; i < num_runs; ++i) {
     // -- Create the output directory for this run.
     ostringstream oss;
@@ -119,7 +121,7 @@ int main(int argc, char** argv)
     cout << training_subsample->status("  ") << endl;
 
     // -- Train the classifier.
-    GridClassifier::Ptr gc(new GridClassifier(base_classifier));
+    GridClassifier::Ptr gc(new GridClassifier(*base_classifier));
     GridClassifier::BoostingTrainer::Ptr trainer(new GridClassifier::BoostingTrainer(gc));
     trainer->obj_thresh_ = config["GlobalParams"]["ObjThresh"].as<double>();
     vector<TrackDataset::ConstPtr> datasets; datasets.push_back(training_subsample);
@@ -127,13 +129,18 @@ int main(int argc, char** argv)
     trainer->train(datasets, indices);
 
     // -- Evaluate.
-    Evaluator::Ptr ev(new Evaluator(gc));
-    ev->plot_ = false;
-    ev->evaluateParallel(test);
-    ev->saveResults(run_dir);
+    Evaluator ev(gc);
+    ev.plot_ = false;
+    ev.evaluateParallel(test);
+    ev.saveResults(run_dir);
+    cout << ev.track_stats_.statString() << endl;
 
-    cout << ev->track_stats_.statString() << endl;
+    ev_overall.classifier_ = gc;
+    ev_overall.evaluateParallel(test);
   }
+
+  bfs::create_directory(output_dir + "/average_results");
+  ev_overall.saveResults(output_dir + "/average_results");
   
   return 0;
 }
