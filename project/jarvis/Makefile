@@ -217,6 +217,20 @@ front_door-set1/$(1)/baseline_unfair: front_door-set1/$(1)/induction
 	--o $$@ | tee $$@-log.txt
 	mv $$@-log.txt $$@/
 
+front_door-set1/$(1)/naive_supervised_baseline: front_door-set1/$(1)/induction
+	mkdir -p $$@
+	$(ROSRUN) jarvis naive_supervised_baseline \
+	--config $(CONFIG) \
+	-u $(FRONT_DOOR_UP_VECTOR_1) \
+	--class-names $(1) \
+	--train $(FRONT_DOOR_LABELS_DIR)/$(1)/*.td \
+	--test $(FRONT_DOOR_LABELS_DIR_1)/$(1)/*.td \
+	--num-runs 15 \
+	--subsample `grep -A2 'Hand-annotated' $$$$(find front_door-set1/$(1)/induction -name learner_status.txt | sort | tail -n1) | grep tracks | awk '{print $$$$1}'` \
+	-o $$@ \
+	-j 24 \
+	--randomize | tee $$@/log.txt
+
 front_door-set1/$(1)/group_induction_errors: front_door-set1/$(1)/induction
 	$(ROSRUN) online_learning filter_errors \
 	-c `find -L $$< -name classifier.gc | sort | tail -n1` \

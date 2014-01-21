@@ -112,16 +112,19 @@ int main(int argc, char** argv)
     
     // -- Subsample the training data.
     double pct = (double)subsample / train.size();
-    TrackDataset training_subsample, ignore;
-    splitDataset(train, pct, &training_subsample, &ignore);
+    TrackDataset ignore;
+    TrackDataset::Ptr training_subsample(new TrackDataset);
+    splitDataset(train, pct, training_subsample.get(), &ignore);
     cout << "Training subsample:" << endl;
-    cout << training_subsample.status("  ") << endl;
+    cout << training_subsample->status("  ") << endl;
 
     // -- Train the classifier.
     GridClassifier::Ptr gc(new GridClassifier(base_classifier));
     GridClassifier::BoostingTrainer::Ptr trainer(new GridClassifier::BoostingTrainer(gc));
     trainer->obj_thresh_ = config["GlobalParams"]["ObjThresh"].as<double>();
-    trainer->train(training_subsample);
+    vector<TrackDataset::ConstPtr> datasets; datasets.push_back(training_subsample);
+    vector<Indices> indices; indices.push_back(Indices::All(training_subsample->size()));
+    trainer->train(datasets, indices);
 
     // -- Evaluate.
     Evaluator::Ptr ev(new Evaluator(gc));
