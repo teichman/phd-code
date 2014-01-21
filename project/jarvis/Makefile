@@ -33,31 +33,40 @@ LABELED_TD_DIR := $(MAKE_ROOT)/labeled
 CONFIG := `rospack find jarvis`/config/less_gravity.yml
 #CONFIG := `rospack find jarvis`/config/hand_specified.yml
 CONFIG2 := `rospack find jarvis`/config/old_hand_specified.yml
+CONTEXTS := front_door kitchen
 
-KITCHEN_DIR := $(LOG_DIR)/kitchen-new_bg_subtr-set0
-KITCHEN_NAMES := $(shell ls $(KITCHEN_DIR) | sed 's/\.bag//')
-KITCHEN_TD_DIRS := $(addprefix kitchen/tds/, $(KITCHEN_NAMES))
-KITCHEN_LABELS_DIR := $(LABELED_TD_DIR)/kitchen
+# -- Front door variables.
+UP_VECTOR_front_door	:= `rospack find jarvis`/config/2013-12-12_front_door-up.eig.txt
+CLASS_NAMES_front_door	:= open_door cat person mailman
+LOG_DIR_front_door_0	:= $(LOG_DIR)/front_door-set0
+LOG_DIR_front_door_1	:= $(LOG_DIR)/front_door-set1
+NAMES_front_door_0	:= $(shell ls $(LOG_DIR_front_door_0) | sed 's/\.bag//')
+NAMES_front_door_1	:= $(shell ls $(LOG_DIR_front_door_1) | sed 's/\.bag//')
+TD_DIRS_front_door_0	:= $(addprefix front_door-set0/tds/, $(NAMES_front_door_0))
+TD_DIRS_front_door_1	:= $(addprefix front_door-set1/tds/, $(NAMES_front_door_1))
+LABELS_DIR_front_door_0 := $(LABELED_TD_DIR)/front_door-set0
+LABELS_DIR_front_door_1 := $(LABELED_TD_DIR)/front_door-set1
+
+# -- Kitchen variables
 # This is for logfiles taken in the kitchen before ~ Nov 21 2013
-KITCHEN_UP_VECTOR := `rospack find jarvis`/config/up-kitchen.eig.txt
+UP_VECTOR_kitchen	:= `rospack find jarvis`/config/up-kitchen.eig.txt
+CLASS_NAMES_kitchen	:= cat
+LOG_DIR_kitchen_0	:= $(LOG_DIR)/kitchen-new_bg_subtr-set0
+LOG_DIR_kitchen_1	:= $(LOG_DIR)/kitchen-new_bg_subtr-set1
+NAMES_kitchen_0		:= $(shell ls $(LOG_DIR_kitchen_0) | sed 's/\.bag//')
+NAMES_kitchen_1		:= $(shell ls $(LOG_DIR_kitchen_1) | sed 's/\.bag//')
+TD_DIRS_kitchen_0	:= $(addprefix kitchen-set0/tds/, $(NAMES_kitchen_0))
+TD_DIRS_kitchen_1	:= $(addprefix kitchen-set1/tds/, $(NAMES_kitchen_1))
+LABELS_DIR_kitchen_0	:= $(LABELED_TD_DIR)/kitchen-set0
+LABELS_DIR_kitchen_1	:= $(LABELED_TD_DIR)/kitchen-set1
 
+# -- Cruft.
 KITCHEN_GLUED_DIR := $(LOG_DIR)/kitchen_glued-set0
 KITCHEN_GLUED_NAMES := $(shell ls $(KITCHEN_GLUED_DIR) | sed 's/\.bag//')
 KITCHEN_GLUED_TD_DIRS := $(addprefix kitchen_glued/tds/, $(KITCHEN_GLUED_NAMES))
 KITCHEN_GLUED_LABELS_DIR := $(LABELED_TD_DIR)/kitchen_glued
 # This is for logfiles taken in the kitchen after ~ Nov 21 2013
 KITCHEN_GLUED_UP_VECTOR := `rospack find jarvis`/config/up-kitchen-post_gluing.eig.txt
-
-
-FRONT_DOOR_UP_VECTOR := `rospack find jarvis`/config/2013-12-12_front_door-up.eig.txt
-FRONT_DOOR_DIR_0 := $(LOG_DIR)/front_door-set0
-FRONT_DOOR_NAMES_0 := $(shell ls $(FRONT_DOOR_DIR_0) | sed 's/\.bag//')
-FRONT_DOOR_TD_DIRS_0 := $(addprefix front_door-set0/tds/, $(FRONT_DOOR_NAMES_0))
-FRONT_DOOR_LABELS_DIR_0 := $(LABELED_TD_DIR)/front_door-set0
-FRONT_DOOR_DIR_1 := $(LOG_DIR)/front_door-set1
-FRONT_DOOR_NAMES_1 := $(shell ls $(FRONT_DOOR_DIR_1) | sed 's/\.bag//')
-FRONT_DOOR_TD_DIRS_1 := $(addprefix front_door-set1/tds/, $(FRONT_DOOR_NAMES_1))
-FRONT_DOOR_LABELS_DIR_1 := $(LABELED_TD_DIR)/front_door-set1
 
 OFFICE_DIR := $(LOG_DIR)/office-set0
 OFFICE_NAMES := $(shell ls $(OFFICE_DIR) | sed 's/\.bag//')
@@ -73,264 +82,273 @@ debug:
 	@echo KITCHEN_TD_DIRS: $(KITCHEN_TD_DIRS)
 
 
-# -- Extract TD files from bagfiles.
-kitchen-tds: $(addsuffix /extracted, $(KITCHEN_TD_DIRS))
-kitchen/tds/%/extracted: $(KITCHEN_DIR)/%.bag
-	mkdir -p $(@D)
-	ROS_MASTER_URI=http://localhost:$$(( $$(ls $(KITCHEN_DIR) | awk '{if($$0 == "$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
-	touch $@
+############################################################
+# SET0
+############################################################
+
+define SET0_CONTEXT_RULE_GENERATOR
+
+$(1)-set0-tds: $$(addsuffix /extracted, $$(TD_DIRS_$(1)_0))
+$(1)-set0/tds/%/extracted: $$(LOG_DIR_$(1)_0)/$$*.bag
+	mkdir -p $$(@D)
+	ROS_MASTER_URI=http://localhost:$$$$(( $$$$(ls $$(LOG_DIR_$(1)_0) | awk '{if($$$$0 == "$$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$$< output-directory:=$$$$(pwd)/$$(@D)
+	touch $$@
+
+$(1)-set0-update-unlabeled-descriptors: $$(addprefix $(1)-set0/tds/, $$(addsuffix /updated, $$(NAMES_$(1)_0)))
+$(1)-set0/tds/%/updated: $(1)-set0/tds/$$*/extracted
+	$(ROSRUN) jarvis update_descriptors \
+	--config $(CONFIG) \
+	-u $$(UP_VECTOR_$(1)) \
+	--tds `find $(1)-set0/tds/$$*/ -name '*.td' | sort` \
+	-j 24
+	touch $$@
+
+endef
+$(foreach CONTEXT,$(CONTEXTS), \
+$(eval $(call SET0_CONTEXT_RULE_GENERATOR,$(CONTEXT))))
+
+
+define SET0_CONTEXT_CLASS_RULE_GENERATOR
+
+$(1)-set0-update-test-descriptors-$(2):
+	$(ROSRUN) jarvis update_descriptors \
+	-j 24 \
+	-u $$(UP_VECTOR_$(1)) \
+	--config $(CONFIG) \
+	--tds $$(LABELS_DIR_$(1)_0)/$(2)/*.td
+
+$(1)-set0/$(2)/induction:
+	mkdir -p $$@
+	$(ROSRUN) jarvis induct \
+	--class-names $(2) \
+	--config $(CONFIG) \
+	-u $$($(1)_UP_VECTOR) \
+	--emax 0 \
+	--buffer-size 1000 \
+	--max-track-length 30 \
+	--snapshot-every 0 \
+	--evaluate-every 1 \
+	--output-dir $$@ \
+	--unlabeled-td-dir $(1)-set0/tds/ \
+	--init `find $(1)-set0/tds/ -name '*.td' | sort -R | head -n4` \
+	| tee $$@/log.txt
+
+$(1)-set0-save-annotations-$(2):
+	$(ROSRUN) online_learning merge_tds \
+	--remove-duplicates \
+	--tds `find $(1)-set0/$(2)/induction/ -name '*.td'` \
+	-o `date +%F_%T`-$(2)-annotations.td 
+
+endef
+$(foreach CONTEXT,$(CONTEXTS), \
+$(foreach CLASS_NAME,$(CLASS_NAMES_$(CONTEXT)), \
+$(eval $(call SET0_CONTEXT_CLASS_RULE_GENERATOR,$(CONTEXT),$(CLASS_NAME)))))
+
+
+############################################################
+# SET1
+############################################################
+
+define SET1_CONTEXT_RULE_GENERATOR
+
+$(1)-set1-tds: $$(addsuffix /extracted, $$(TD_DIRS_$(1)_1))
+$(1)-set1/tds/%/extracted: $$(LOG_DIR_$(1)_1)/$$*.bag
+	mkdir -p $$(@D)
+	ROS_MASTER_URI=http://localhost:$$$$(( $$$$(ls $$(LOG_DIR_$(1)_1) | awk '{if($$$$0 == "$$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$$< output-directory:=$$$$(pwd)/$$(@D)
+	touch $$@
+
+$(1)-set1-update-unlabeled-descriptors: $$(addprefix $(1)-set1/tds/, $$(addsuffix /updated, $$(NAMES_$(1)_1)))
+$(1)-set1/tds/%/updated: $(1)-set1/tds/%/extracted
+	$(ROSRUN) jarvis update_descriptors \
+	--config $(CONFIG) \
+	-u $$(UP_VECTOR_$(1)) \
+	--tds `find $(1)-set1/tds/$$*/ -name '*.td' | sort` \
+	-j 24
+	touch $$@
+
+endef
+$(foreach CONTEXT,$(CONTEXTS), \
+$(eval $(call SET1_CONTEXT_RULE_GENERATOR,$(CONTEXT))))
+
+
+define SET1_CONTEXT_CLASS_RULE_GENERATOR
+
+$(1)-set1/$(2)/induction:
+	mkdir -p $$@
+	$(ROSRUN) jarvis induct \
+	--class-names $(2) \
+	--config $(CONFIG) \
+	-u $$(UP_VECTOR_$(1)) \
+	--emax 0 \
+	--buffer-size 1000 \
+	--max-track-length 30 \
+	--snapshot-every 0 \
+	--evaluate-every 1 \
+	--test $$(LABELS_DIR_$(1)_0)/$(2)/*.td \
+	--output-dir $$@ \
+	--unlabeled-td-dir $(1)-set1/tds/ \
+	--init `find $(1)-set1/tds/ -name '*.td' | sort -R | head -n4` \
+	| tee $$@/log.txt
+
+$(1)-set1-save-annotations-$(2):
+	$(ROSRUN) online_learning merge_tds \
+	--remove-duplicates \
+	--tds `find $(1)-set1/$(2)/induction/ -name '*.td'` \
+	-o `date +%F_%T`-$(2)-annotations.td 
+
+$(1)-set1/$(2)/baseline_unfair: $(1)-set1/$(2)/induction
+	$(ROSRUN) jarvis baseline_unfair \
+	--class-names $(2) \
+	--config $(CONFIG) \
+	-u $$(UP_VECTOR_$(1)) \
+	--root $$< \
+	--test $$(LABELS_DIR_$(1)_0)/$(2)/*.td \
+	--num-iters 15 \
+	--o $$@ | tee $$@-log.txt
+	mv $$@-log.txt $$@/
+
+$(1)-set1/$(2)/naive_supervised_baseline: $(1)-set1/$(2)/induction
+	mkdir -p $$@
+	$(ROSRUN) jarvis naive_supervised_baseline \
+	--config $(CONFIG) \
+	-u $$(UP_VECTOR_$(1)) \
+	--class-names $(2) \
+	--train $$(LABELS_DIR_$(1)_1)/$(2)/*.td \
+	--test $$(LABELS_DIR_$(1)_0)/$(2)/*.td \
+	--num-runs 15 \
+	--subsample `grep -A2 'Hand-annotated' $$$$(find $(1)-set1/$(2)/induction -name learner_status.txt | sort | tail -n1) | grep tracks | awk '{print $$$$1}'` \
+	-o $$@ \
+	-j 24 \
+	--randomize | tee $$@/log.txt
+
+$(1)-set1/$(2)/group_induction_errors: $(1)-set1/$(2)/induction
+	$(ROSRUN) online_learning filter_errors \
+	-c `find -L $$< -name classifier.gc | sort | tail -n1` \
+	-d $$(LABELS_DIR_$(1)_0)/$(2)/*.td \
+	--class-names $(2) \
+	-o $$@
+
+$(1)-set1-update-test-descriptors-$(2):
+	$(ROSRUN) jarvis update_descriptors \
+	-j 24 \
+	-u $$(UP_VECTOR_$(1)) \
+	--config $(CONFIG) \
+	--tds $$(LABELS_DIR_$(1)_1)/$(2)/*.td
+
+compare-$(1)-set1-$(2)-results: $(1)-set1/$(2)/baseline_unfair $(1)-set1/$(2)/naive_supervised_baseline
+	@echo -en 'Group induction:\t\t'
+	@echo $$$$(grep 'Total acc' `find $(1)-set1/$(2)/induction/ -name track_results.txt | grep test_results | sort | tail -n1` | awk '{print $$$$NF}')
+	@echo -en 'Matched supervised baseline:\t'
+	@echo $$$$(grep 'Total acc' `find $(1)-set1/$(2)/baseline_unfair/ -name track_results.txt | sort | tail -n1` | awk '{print $$$$NF}')
+	@echo -en 'Naive supervised baseline:\t'
+	@echo $$$$(grep 'Total acc' $(1)-set1/$(2)/naive_supervised_baseline/average_results/track_results.txt | awk '{print $$$$NF}')
+	@echo
+	@echo -- Annotations from group induction --
+	@grep 'Hand-annotated' -A10 `find $(1)-set1/$(2)/induction/ -name learner_status.txt | sort | tail -n1`
+
+# The || exit 0 is so that Make does not interpret the non-zero return value of diff
+# as an error.
+compare-$(1)-set1-$(2)-results-with-matched: $(1)-set1/$(2)/baseline_unfair
+	@grc -es --colour=auto diff -y -W150 \
+	`find $(1)-set1/$(2)/baseline_unfair/ -name track_results.txt | sort | tail -n1` \
+	`find $(1)-set1/$(2)/induction/ -name track_results.txt | grep test_results | sort | tail -n1` || exit 0
+
+compare-$(1)-set1-$(2)-results-with-naive: $(1)-set1/$(2)/naive_supervised_baseline
+	@grc -es --colour=auto diff -y -W150 \
+	$$</average_results/track_results.txt \
+	`find $(1)-set1/$(2)/induction/ -name track_results.txt | grep test_results | sort | tail -n1` || exit 0
+
+endef
+$(foreach CONTEXT,$(CONTEXTS), \
+$(foreach CLASS_NAME,$(CLASS_NAMES_$(CONTEXT)), \
+$(eval $(call SET1_CONTEXT_CLASS_RULE_GENERATOR,$(CONTEXT),$(CLASS_NAME)))))
+
+
+# ############################################################
+# # kitchen
+# ############################################################
+
+# KITCHEN_CLASS_NAMES := cat
+
+# kitchen-update-all-descriptors: kitchen-update-unlabeled-descriptors kitchen-update-test-descriptors
+
+# kitchen-update-unlabeled-descriptors:
+# 	$(ROSRUN) jarvis update_descriptors \
+# 	--config $(CONFIG) \
+# 	-u $(KITCHEN_UP_VECTOR) \
+# 	--tds `find kitchen/tds/ -name '*.td' | sort` \
+# 	-j 24
+
+# kitchen-update-test-descriptors:
+# 	$(ROSRUN) jarvis update_descriptors \
+# 	--config $(CONFIG) \
+# 	-u $(KITCHEN_UP_VECTOR) \
+# 	--tds $(KITCHEN_LABELS_DIR)/*.td \
+# 	-j 24
+
+# kitchen/induction: #kitchen-descriptors
+# 	$(ROSRUN) jarvis induct \
+# 	--class-names $(KITCHEN_CLASS_NAMES) \
+# 	--config $(CONFIG) \
+# 	-u $(KITCHEN_UP_VECTOR) \
+# 	--emax 0 \
+# 	--buffer-size 1000 \
+# 	--max-track-length 30 \
+# 	--snapshot-every 0 \
+# 	--evaluate-every 1 \
+# 	--output-dir $@ \
+# 	--unlabeled-td-dir kitchen/tds/ \
+# 	--init `find kitchen/tds/ -name '*.td' | sort -R | tail -n4` \
+# 	--test $(KITCHEN_LABELS_DIR)/*.td \
+# 	| tee $@-log.txt
+# 	mv $@-log.txt $@/
+
+# kitchen/baseline_unfair: kitchen/induction
+# 	$(ROSRUN) jarvis baseline_unfair \
+# 	--class-names $(KITCHEN_CLASS_NAMES) \
+# 	--config $(CONFIG) \
+# 	-u $(KITCHEN_UP_VECTOR) \
+# 	--root $< \
+# 	--test $(KITCHEN_LABELS_DIR)/*.td \
+# 	--num-iters 15 \
+# 	--o $@ | tee $@-log.txt
+# 	mv $@-log.txt $@/
+
+# kitchen/cross_evaluation:
+# 	$(ROSRUN) jarvis cross_evaluate \
+# 	--config $(CONFIG) \
+# 	--class-names $(KITCHEN_CLASS_NAMES) \
+# 	--tds $(KITCHEN_LABELS_DIR)/*.td \
+# 	-u $(KITCHEN_UP_VECTOR) \
+# 	-o $@ | tee $@-log.txt
+# 	mv $@-log.txt $@/
+
+# kitchen/cross_evaluation2:
+# 	$(ROSRUN) jarvis cross_evaluate \
+# 	--config $(CONFIG2) \
+# 	--class-names $(KITCHEN_CLASS_NAMES) \
+# 	--tds $(KITCHEN_LABELS_DIR)/*.td \
+# 	-u $(KITCHEN_UP_VECTOR) \
+# 	-o $@ | tee $@-log.txt
+# 	mv $@-log.txt $@/
+
+# kitchen/group_induction_errors: kitchen/induction
+# 	$(ROSRUN) online_learning filter_errors \
+# 	-c `find kitchen/induction/ -name classifier.gc | sort | tail -n1` \
+# 	-d $(KITCHEN_LABELS_DIR)/*.td \
+# 	--class-names $(KITCHEN_CLASS_NAMES) \
+# 	-o $@
+
+
+############################################################
+# kitchen_glued
+############################################################
 
 kitchen_glued-tds: $(addsuffix /extracted, $(KITCHEN_GLUED_TD_DIRS))
 kitchen_glued/tds/%/extracted: $(KITCHEN_GLUED_DIR)/%.bag
 	mkdir -p $(@D)
 	ROS_MASTER_URI=http://localhost:$$(( $$(ls $(KITCHEN_GLUED_DIR) | awk '{if($$0 == "$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
 	touch $@
-
-office-tds: $(addsuffix /extracted, $(OFFICE_TD_DIRS))
-office/tds/%/extracted: $(OFFICE_DIR)/%.bag
-	mkdir -p $(@D)
-	roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
-	touch $@
-
-############################################################
-# front_door-set0
-############################################################
-
-FRONT_DOOR_CLASS_NAMES_0 := open_door cat person mailman
-
-front_door-set0-tds: $(addsuffix /extracted, $(FRONT_DOOR_TD_DIRS_0))
-front_door-set0/tds/%/extracted: $(FRONT_DOOR_DIR_0)/%.bag
-	mkdir -p $(@D)
-	ROS_MASTER_URI=http://localhost:$$(( $$(ls $(FRONT_DOOR_DIR_0) | awk '{if($$0 == "$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
-	touch $@
-
-front_door-set0-update-unlabeled-descriptors: $(addprefix front_door-set0/tds/, $(addsuffix /updated, $(FRONT_DOOR_NAMES_0)))
-front_door-set0/tds/%/updated: front_door-set0/tds/$$*/extracted
-	$(ROSRUN) jarvis update_descriptors \
-	--config $(CONFIG) \
-	-u $(FRONT_DOOR_UP_VECTOR) \
-	--tds `find front_door/tds/$*/ -name '*.td' | sort` \
-	-j 24
-	touch $@
-
-define FRONT_DOOR_RULE_GENERATOR
-
-front_door/$(1)/induction:
-	mkdir -p $$@
-	$(ROSRUN) jarvis induct \
-	--class-names $(1) \
-	--config $(CONFIG) \
-	-u $(FRONT_DOOR_UP_VECTOR) \
-	--emax 0 \
-	--buffer-size 1000 \
-	--max-track-length 30 \
-	--snapshot-every 0 \
-	--evaluate-every 1 \
-	--output-dir $$@ \
-	--unlabeled-td-dir front_door-set0/tds/ \
-	--init `find front_door-set0/tds/ -name '*.td' | sort -R | head -n4` \
-	| tee $$@/log.txt
-
-front_door-set0-save-annotations-$(1):
-	$(ROSRUN) online_learning merge_tds \
-	--remove-duplicates \
-	--tds `find front_door-set0/$(1)/induction/ -name '*.td'` \
-	-o `date +%F_%T`-$(1)-annotations.td 
-
-endef
-$(foreach CLASS_NAME,$(FRONT_DOOR_CLASS_NAMES_0),$(eval $(call FRONT_DOOR_RULE_GENERATOR,$(CLASS_NAME))))
-
-############################################################
-# front_door-set1
-############################################################
-
-FRONT_DOOR_CLASS_NAMES_1 := open_door cat person mailman
-
-front_door-set1-tds: $(addsuffix /extracted, $(FRONT_DOOR_TD_DIRS_1))
-front_door-set1/tds/%/extracted: $(FRONT_DOOR_DIR_1)/%.bag
-	mkdir -p $(@D)
-	ROS_MASTER_URI=http://localhost:$$(( $$(ls $(FRONT_DOOR_DIR_1) | awk '{if($$0 == "$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$< output-directory:=$$(pwd)/$(@D)
-	touch $@
-
-front_door-set1-update-unlabeled-descriptors: $(addprefix front_door-set1/tds/, $(addsuffix /updated, $(FRONT_DOOR_NAMES_1)))
-front_door-set1/tds/%/updated: front_door-set1/tds/$$*/extracted
-	$(ROSRUN) jarvis update_descriptors \
-	--config $(CONFIG) \
-	-u $(FRONT_DOOR_UP_VECTOR) \
-	--tds `find front_door-set1/tds/$*/ -name '*.td' | sort` \
-	-j 24
-	touch $@
-
-define FRONT_DOOR-SET1_RULE_GENERATOR
-
-front_door-set1/$(1)/induction:
-	mkdir -p $$@
-	$(ROSRUN) jarvis induct \
-	--class-names $(1) \
-	--config $(CONFIG) \
-	-u $(FRONT_DOOR_UP_VECTOR) \
-	--emax 0 \
-	--buffer-size 1000 \
-	--max-track-length 30 \
-	--snapshot-every 0 \
-	--evaluate-every 1 \
-	--test $(FRONT_DOOR_LABELS_DIR_0)/$(1)/*.td \
-	--output-dir $$@ \
-	--unlabeled-td-dir front_door-set1/tds/ \
-	--init `find front_door-set1/tds/ -name '*.td' | sort -R | head -n4` \
-	| tee $$@/log.txt
-
-front_door-set1-save-annotations-$(1):
-	$(ROSRUN) online_learning merge_tds \
-	--remove-duplicates \
-	--tds `find front_door-set1/$(1)/induction/ -name '*.td'` \
-	-o `date +%F_%T`-$(1)-annotations.td 
-
-front_door-set1/$(1)/baseline_unfair: front_door-set1/$(1)/induction
-	$(ROSRUN) jarvis baseline_unfair \
-	--class-names $(1) \
-	--config $(CONFIG) \
-	-u $(FRONT_DOOR_UP_VECTOR) \
-	--root $$< \
-	--test $(FRONT_DOOR_LABELS_DIR_0)/$(1)/*.td \
-	--num-iters 15 \
-	--o $$@ | tee $$@-log.txt
-	mv $$@-log.txt $$@/
-
-front_door-set1/$(1)/naive_supervised_baseline: front_door-set1/$(1)/induction
-	mkdir -p $$@
-	$(ROSRUN) jarvis naive_supervised_baseline \
-	--config $(CONFIG) \
-	-u $(FRONT_DOOR_UP_VECTOR) \
-	--class-names $(1) \
-	--train $(FRONT_DOOR_LABELS_DIR_1)/$(1)/*.td \
-	--test $(FRONT_DOOR_LABELS_DIR_0)/$(1)/*.td \
-	--num-runs 15 \
-	--subsample `grep -A2 'Hand-annotated' $$$$(find front_door-set1/$(1)/induction -name learner_status.txt | sort | tail -n1) | grep tracks | awk '{print $$$$1}'` \
-	-o $$@ \
-	-j 24 \
-	--randomize | tee $$@/log.txt
-
-front_door-set1/$(1)/group_induction_errors: front_door-set1/$(1)/induction
-	$(ROSRUN) online_learning filter_errors \
-	-c `find -L $$< -name classifier.gc | sort | tail -n1` \
-	-d $(FRONT_DOOR_LABELS_DIR_0)/$(1)/*.td \
-	--class-names $(1) \
-	-o $$@
-
-front_door-set1-update-test-descriptors-$(1):
-	$(ROSRUN) jarvis update_descriptors \
-	-j 24 \
-	-u $(FRONT_DOOR_UP_VECTOR) \
-	--config $(CONFIG) \
-	--tds $(FRONT_DOOR_LABELS_DIR_1)/$(1)/*.td
-
-compare-front-door-set1-$(1)-results: front_door-set1/$(1)/baseline_unfair front_door-set1/$(1)/naive_supervised_baseline
-	@echo -en 'Group induction:\t\t'
-	@echo $$$$(grep 'Total acc' `find front_door-set1/$(1)/induction/ -name track_results.txt | grep test_results | sort | tail -n1` | awk '{print $$$$NF}')
-	@echo -en 'Matched supervised baseline:\t'
-	@echo $$$$(grep 'Total acc' `find front_door-set1/$(1)/baseline_unfair/ -name track_results.txt | sort | tail -n1` | awk '{print $$$$NF}')
-	@echo -en 'Naive supervised baseline:\t'
-	@echo $$$$(grep 'Total acc' front_door-set1/$(1)/naive_supervised_baseline/average_results/track_results.txt | awk '{print $$$$NF}')
-	@echo
-	@echo -- Annotations from group induction --
-	@grep 'Hand-annotated' -A10 `find front_door-set1/$(1)/induction/ -name learner_status.txt | sort | tail -n1`
-
-# The || exit 0 is so that Make does not interpret the non-zero return value of diff
-# as an error.
-compare-front-door-set1-$(1)-results-with-matched: front_door-set1/$(1)/baseline_unfair
-	@grc -es --colour=auto diff -y -W150 \
-	`find front_door-set1/$(1)/baseline_unfair/ -name track_results.txt | sort | tail -n1` \
-	`find front_door-set1/$(1)/induction/ -name track_results.txt | grep test_results | sort | tail -n1` || exit 0
-
-compare-front-door-set1-$(1)-results-with-naive: front_door-set1/$(1)/naive_supervised_baseline
-	@grc -es --colour=auto diff -y -W150 \
-	$$</average_results/track_results.txt \
-	`find front_door-set1/$(1)/induction/ -name track_results.txt | grep test_results | sort | tail -n1` || exit 0
-
-endef
-$(foreach CLASS_NAME,$(FRONT_DOOR_CLASS_NAMES_1),$(eval $(call FRONT_DOOR-SET1_RULE_GENERATOR,$(CLASS_NAME))))
-
-
-############################################################
-# kitchen
-############################################################
-
-KITCHEN_CLASS_NAMES := cat
-
-kitchen-update-all-descriptors: kitchen-update-unlabeled-descriptors kitchen-update-test-descriptors
-
-kitchen-update-unlabeled-descriptors:
-	$(ROSRUN) jarvis update_descriptors \
-	--config $(CONFIG) \
-	-u $(KITCHEN_UP_VECTOR) \
-	--tds `find kitchen/tds/ -name '*.td' | sort` \
-	-j 24
-
-kitchen-update-test-descriptors:
-	$(ROSRUN) jarvis update_descriptors \
-	--config $(CONFIG) \
-	-u $(KITCHEN_UP_VECTOR) \
-	--tds $(KITCHEN_LABELS_DIR)/*.td \
-	-j 24
-
-kitchen/induction: #kitchen-descriptors
-	$(ROSRUN) jarvis induct \
-	--class-names $(KITCHEN_CLASS_NAMES) \
-	--config $(CONFIG) \
-	-u $(KITCHEN_UP_VECTOR) \
-	--emax 0 \
-	--buffer-size 1000 \
-	--max-track-length 30 \
-	--snapshot-every 0 \
-	--evaluate-every 1 \
-	--output-dir $@ \
-	--unlabeled-td-dir kitchen/tds/ \
-	--init `find kitchen/tds/ -name '*.td' | sort -R | tail -n4` \
-	--test $(KITCHEN_LABELS_DIR)/*.td \
-	| tee $@-log.txt
-	mv $@-log.txt $@/
-
-kitchen/baseline_unfair: kitchen/induction
-	$(ROSRUN) jarvis baseline_unfair \
-	--class-names $(KITCHEN_CLASS_NAMES) \
-	--config $(CONFIG) \
-	-u $(KITCHEN_UP_VECTOR) \
-	--root $< \
-	--test $(KITCHEN_LABELS_DIR)/*.td \
-	--num-iters 15 \
-	--o $@ | tee $@-log.txt
-	mv $@-log.txt $@/
-
-kitchen/cross_evaluation:
-	$(ROSRUN) jarvis cross_evaluate \
-	--config $(CONFIG) \
-	--class-names $(KITCHEN_CLASS_NAMES) \
-	--tds $(KITCHEN_LABELS_DIR)/*.td \
-	-u $(KITCHEN_UP_VECTOR) \
-	-o $@ | tee $@-log.txt
-	mv $@-log.txt $@/
-
-kitchen/cross_evaluation2:
-	$(ROSRUN) jarvis cross_evaluate \
-	--config $(CONFIG2) \
-	--class-names $(KITCHEN_CLASS_NAMES) \
-	--tds $(KITCHEN_LABELS_DIR)/*.td \
-	-u $(KITCHEN_UP_VECTOR) \
-	-o $@ | tee $@-log.txt
-	mv $@-log.txt $@/
-
-kitchen/group_induction_errors: kitchen/induction
-	$(ROSRUN) online_learning filter_errors \
-	-c `find kitchen/induction/ -name classifier.gc | sort | tail -n1` \
-	-d $(KITCHEN_LABELS_DIR)/*.td \
-	--class-names $(KITCHEN_CLASS_NAMES) \
-	-o $@
-
-
-############################################################
-# kitchen_glued
-############################################################
 
 KITCHEN_GLUED_CLASS_NAMES := cat
 
