@@ -282,6 +282,14 @@ Instance::~Instance()
 
 void Instance::serialize(std::ostream& out) const
 {
+  // This is probably unnecessary.  No one is going to save an Instance in isolation, and the
+  // check could slow things down.
+  //
+  // if(boost::dynamic_pointer_cast<ReadOnlyEmptyCustomSerializer>(Instance::custom_serializer_)) {
+  //   cerr << "ReadOnlyEmptyCustomSerializer cannot serialize." << endl;
+  //   ROS_ASSERT(0);
+  // }
+
   out << label_;
   
   int buf = descriptors_.size();
@@ -346,7 +354,9 @@ void Instance::deserialize(std::istream& in)
   size_t num_bytes;
   eigen_extensions::deserializeScalar(in, &num_bytes);
 
-  if(custom_serializer_->name() == "EmptyCustomSerializer") {
+  if(custom_serializer_->name() == "EmptyCustomSerializer" ||
+     custom_serializer_->name() == "ReadOnlyEmptyCustomSerializer")
+  {
     // Skip the raw data.
     // TODO: Should this instead be an assertion fail?
     in.seekg(num_bytes, ios_base::cur);
@@ -499,6 +509,11 @@ void DescriptorDimensionality::_applyNameTranslator(const std::string& id, const
 
 void Dataset::serialize(std::ostream& out) const
 {
+  if(boost::dynamic_pointer_cast<ReadOnlyEmptyCustomSerializer>(Instance::custom_serializer_)) {
+    cerr << "ReadOnlyEmptyCustomSerializer cannot serialize." << endl;
+    ROS_ASSERT(0);
+  }
+    
   serializeNameMappings(out);
   
   int buf = instances_.size();
@@ -655,6 +670,11 @@ DescriptorDimensionality TrackDataset::inferDescriptorDimensionality() const
 
 void TrackDataset::serialize(std::ostream& out) const
 {
+  if(boost::dynamic_pointer_cast<ReadOnlyEmptyCustomSerializer>(Instance::custom_serializer_)) {
+    cerr << "ReadOnlyEmptyCustomSerializer cannot serialize." << endl;
+    ROS_ASSERT(0);
+  }
+  
   out << "TrackDataset v2" << endl;
   serializeNameMappings(out);
   int buf = tracks_.size();

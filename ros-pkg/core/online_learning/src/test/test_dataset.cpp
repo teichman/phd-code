@@ -7,6 +7,7 @@
 using namespace std;
 using namespace Eigen;
 
+
 TEST(Dataset, HashSynthetic)
 {
   int num_descriptors = 3;

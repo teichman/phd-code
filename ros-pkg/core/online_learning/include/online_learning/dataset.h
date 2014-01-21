@@ -45,6 +45,24 @@ public:
   void deserialize(std::istream& in, boost::any* raw) const {}
 };
 
+//! Special custom serializer that will skip deserializing any custom data
+//! that is present.  Writes are not allowed.  This is useful when you
+//! want to read in a track dataset, don't need the raw_ data, and
+//! want to be sure that you don't clobber the raw_ data with a write.
+class ReadOnlyEmptyCustomSerializer : public CustomSerializer
+{
+public:
+  typedef boost::shared_ptr<EmptyCustomSerializer> Ptr;
+  
+  std::string name() const { return "EmptyCustomSerializer"; }
+  void serialize(const boost::any& raw, std::ostream& out) const
+  {
+    std::cerr << "ReadOnlyEmptyCustomSerializer cannot serialize." << std::endl;
+    ROS_ASSERT(0);
+  }
+  void deserialize(std::istream& in, boost::any* raw) const {}
+};
+
 //! Special custom serializer that will deserialize custom data as
 //! a binary blob and serialize it under its original name.
 class PassthroughCustomSerializer : public CustomSerializer
