@@ -9,7 +9,7 @@ roslib.load_manifest('jarvis')
 from regression_testing import * 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-t", "--type", help="comparison type", choices=["accuracy", "annotations"], default="accuracy")
+parser.add_argument("-t", "--type", help="comparison type", choices=["acc-msb", "acc-nsb", "ann"], default="acc-nsb")
 parser.add_argument("dir", help="regression test dir")
 parser.add_argument("-n", "--num-permutations", type=int, default=10000)
 parser.add_argument("-v", "--print-vals", action='store_true')
@@ -33,13 +33,22 @@ if len(args.exclude_tests) > 0:
 
 test_names = sorted(test_names)
 
-if args.type == "accuracy":
+if args.type == "acc-msb":
+    baseline_label = "MSB"
     label = 'Accuracy (%)'
     for test_name in test_names:
         gi_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
         baseline_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -wholename '*baseline_unfair/*iter009/track_results.txt' | sort` | awk '{print $NF}'"))
 
-elif args.type == "annotations":
+elif args.type == "acc-nsb":
+    baseline_label = "NSB"
+    label = 'Accuracy (%)'
+    for test_name in test_names:
+        gi_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
+        baseline_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -wholename '*/naive_supervised_baseline/average_results/track_results.txt' | sort` | awk '{print $NF}'"))
+
+elif args.type == "ann":
+    baseline_label = "MSB"
     label = 'Num annotations'
     for test_name in test_names:
         gi_vals.append(npLoadBash("for dir in `find -L " + os.path.join(output_dir, test_name) + " -maxdepth 1 -mindepth 1 -type d`; do grep -A2 'Hand-annotated' `find $dir -name learner_status.txt | sort | tail -n1`; done | grep tracks | awk '{print $1}'"))
@@ -55,5 +64,5 @@ if args.print_vals:
 
 # -- Run test.
 analyze(baseline_vals, gi_vals,
-        'Baseline', 'GI',
+        baseline_label, 'GI',
         test_names, label, args.num_permutations, paired = True)
