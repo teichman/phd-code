@@ -14,7 +14,7 @@ from regression_testing import *
 parser = argparse.ArgumentParser()
 parser.add_argument("pre_dir", help="pre-condition regression test dir")
 parser.add_argument("post_dir", help="post-condition regression test dir")
-parser.add_argument("-t", "--type", help="comparison type", choices=["accuracy", "annotations"], default="accuracy")
+parser.add_argument("-t", "--type", help="comparison type", choices=["acc", "ann"], default="acc")
 parser.add_argument("-v", "--print-vals", action='store_true')
 parser.add_argument("-n", "--num-permutations", type=int, default=10000)
 parser.add_argument("--include-tests", help="limit to these tests", type=str, nargs='+', default=[])
@@ -38,13 +38,13 @@ if len(args.exclude_tests) > 0:
 pre_vals = []
 post_vals = []
 
-if args.type == 'accuracy':
+if args.type == 'acc':
     label = 'Accuracy (%)'
     for test_name in test_names:
         pre_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(args.pre_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
         post_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(args.post_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
 
-elif args.type == 'annotations':
+elif args.type == 'ann':
     label = 'Annotations'
     for test_name in test_names:
         pre_vals.append(npLoadBash("for dir in `find -L " + os.path.join(args.pre_dir, test_name) + " -maxdepth 1 -mindepth 1 -type d`; do grep -A2 'Hand-annotated' `find $dir -name learner_status.txt | sort | tail -n1`; done | grep tracks | awk '{print $1}'"))
