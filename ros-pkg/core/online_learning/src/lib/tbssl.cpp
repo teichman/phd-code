@@ -16,6 +16,7 @@ OnlineLearner::OnlineLearner(double emax,
                              std::string output_dir,
                              std::string unlabeled_dir,
                              std::string saved_annotations_dir) :
+  active_learning_(false),
   emax_(emax),
   buffer_size_(buffer_size),
   max_track_length_(max_track_length),
@@ -635,7 +636,8 @@ void OnlineLearner::_run()
     vector<TrackDataset::ConstPtr> datasets;
     datasets.push_back(annotated_);
     datasets.push_back(autobg_);
-    datasets.push_back(unsupervised_);
+    if(!active_learning_)
+      datasets.push_back(unsupervised_);
     vector<Indices> indices;
     for(size_t i = 0; i < datasets.size(); ++i)
       indices.push_back(Indices::All(datasets[i]->size()));

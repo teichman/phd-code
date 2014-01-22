@@ -31,6 +31,7 @@
 class OnlineLearner : public NameMappable, public Serializable, public Agent
 {
 public:
+
   class Stats : public Serializable, public NameMappable
   {
   public:
@@ -55,6 +56,10 @@ public:
     void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
   };
 
+  //! If set to true, don't run group induction; instead just run active learning.
+  //! This is a gross hack for the purposes of evaluation.
+  bool active_learning_;
+  
   virtual ~OnlineLearner() {}
   //! This is problematic.  If I make serialize and deserialize virtual functions,
   //! then this constructor is totally broken.  Yet I need a way to construct an OL

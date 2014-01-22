@@ -68,6 +68,7 @@ int main(int argc, char** argv)
     ("randomize", "Set the random seed to a random number.")
     ("fake-supervisor", bpo::value(&fake_supervisor_path), "Path to GridClassifier")
     ("fake-supervisor-config", bpo::value(&fake_supervisor_config_path), "Path to config used by fake supervisor")
+    ("active-learning", "Use active learning rather than group induction")
     ;
 
   bpo::variables_map opts;
@@ -141,6 +142,11 @@ int main(int argc, char** argv)
                     evaluate_every, output_dir, unlabeled_td_dir,
                     saved_annotations_dir);
   inductor.up_ = up;
+
+  if(opts.count("active-learning")) {
+    ROS_WARN("Using active learning rather than group induction.");
+    inductor.active_learning_ = true;
+  }
 
   if(!seed_paths.empty()) {
     TrackDataset::Ptr seed = loadDatasets(seed_paths, config, cmap, up, true);
