@@ -387,7 +387,7 @@ kitchen_glued/induction:
 REGRESSION_TESTS_DIR := $(MAKE_ROOT)/regression_tests
 REGRESSION_RUNS_DIR := regression_runs
 #REGRESSION_NAMES := $(shell ls $(REGRESSION_TESTS_DIR))
-REGRESSION_NAMES := kitchen02 leo00 mailman00 open_door00 person00 
+REGRESSION_NAMES := kitchen00 leo00 mailman00 open_door00 person00 
 
 all-regression-tests-debug: $(REGRESSION_RUNS_DIR)/completed-debug
 $(REGRESSION_RUNS_DIR)/completed-debug: $(addprefix regression-test-,$(REGRESSION_NAMES))

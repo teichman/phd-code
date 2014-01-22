@@ -30,7 +30,6 @@ echo -e "Run dir:\t" $RUN_DIR
 
 mkdir -p $RUN_DIR/induction
 echo `hostname` > $RUN_DIR/hostname.txt
-#rosgdb jarvis induct
 rosrun jarvis induct \
     --randomize \
     --no-vis \
@@ -61,14 +60,32 @@ for name in $CLASS_NAMES; do
 done
 cd -
 
-# -- Run the baseline.
+# -- Baseline tests
+
+echo
+echo -- Running naive supervised baseline --
+echo
+
+mkdir -p $RUN_DIR/naive_supervised_baseline
+rosrun jarvis naive_supervised_baseline \
+    --config $CONFIG \
+    -u $TEST_DIR/up.eig.txt \
+    --class-names $CLASS_NAMES \
+    --train $TEST_DIR/nsb_training/*.td \
+    --test $TEST_DIR/test/*.td \
+    --num-runs 15 \
+    --subsample `grep -A2 'Hand-annotated' $(find $RUN_DIR/induction/ -name learner_status.txt | sort | tail -n1) | grep tracks | awk '{print $1}'` \
+    -o $RUN_DIR/naive_supervised_baseline \
+    -j 24 \
+    --randomize \
+    | tee $RUN_DIR/naive_supervised_baseline/log.txt
+
 echo
 echo -- Running baseline_unfair --
 echo
 
 mkdir -p $RUN_DIR/baseline_unfair
-#rosrun jarvis baseline_unfair 
-rosgdb jarvis baseline_unfair \
+rosrun jarvis baseline_unfair \
     --randomize \
     --class-names $CLASS_NAMES \
     --config $CONFIG \
