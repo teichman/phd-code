@@ -20,7 +20,7 @@ void InductionSupervisor::_run()
 {
   int iter = 0;
   int last_iter_provided = -1;
-  int max_iter_to_supervise = 23;
+  int max_iter_to_supervise = 53;
   
   while(!quitting_) {
     usleep(1e6);
