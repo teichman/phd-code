@@ -6,6 +6,7 @@ using namespace Eigen;
 InductionSupervisor::InductionSupervisor(GridClassifier gc, YAML::Node config,
                                          const Eigen::VectorXf& up, OnlineLearner* ol,
                                          float conf_thresh, std::string output_dir) :
+  annotation_limit_(-1),
   gc_(gc),
   config_(config),
   up_(up),
@@ -52,32 +53,32 @@ void InductionSupervisor::_run()
       TrackDataset::Ptr errors(new TrackDataset);
       errors->applyNameMappings(td);
       for(size_t j = 0; j < td.size(); ++j) {
+        if(annotation_limit_ != -1 && (int)(ol_->annotated()->size() + errors->size()) >= annotation_limit_) {
+          cout << "[InductionSupervisor] Annotation limit reached." << endl;
+          break;
+        }
+
         Label prediction = gc_.classifyTrack(td[j]);
         cout << "[InductionSupervisor] supervisor prediction: " << prediction(i)
              << ", GI prediction: " << td.label(j)(i) << endl;
+
+        if(fabs(prediction(i)) < conf_thresh_)
+          continue;
+        if(prediction(i) * td.label(j)(i) >= 0)
+          continue;
         
-        if(fabs(prediction(i)) > conf_thresh_ && prediction(i) * td.label(j)(i) < 0) {
-          cout << "[InductionSupervisor] adding to errors." << endl;
-          errors->tracks_.push_back(td.tracks_[j]);
-          Label corrected = VectorXf::Zero(prediction.rows());
-          corrected(i) = prediction.sign()(i);
-          errors->tracks_.back()->setLabel(corrected);
-        }
+        cout << "[InductionSupervisor] adding to errors." << endl;
+        errors->tracks_.push_back(td.tracks_[j]);
+        Label corrected = VectorXf::Zero(prediction.rows());
+        corrected(i) = prediction.sign()(i);
+        errors->tracks_.back()->setLabel(corrected);
       }
-      cout << "[InductionSupervisor] Found " << errors->size() << " errors." << endl;
+      cout << "[InductionSupervisor] Sending " << errors->size() << " errors." << endl;
       
       // -- Send feedback to ol_.
       if(!errors->empty())
         ol_->pushHandLabeledDataset(errors);
 
-      // ostringstream oss;
-      // oss << output_dir_ << "/InductionSupervisor-" << setw(4) << setfill('0') << iter << "-received.td";
-      // td.save(oss.str());
-
-      // oss.str("");
-      // oss << output_dir_ << "/InductionSupervisor-" << setw(4) << setfill('0') << iter << "-corrections.td";
-      // errors->save(oss.str());
-      
       ++iter;
     }
   }

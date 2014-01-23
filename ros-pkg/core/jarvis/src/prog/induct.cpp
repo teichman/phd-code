@@ -42,6 +42,7 @@ int main(int argc, char** argv)
 
   string fake_supervisor_path;
   string fake_supervisor_config_path;
+  int fake_supervisor_annotation_limit;
 
   vector<string> class_names;
   opts_desc.add_options()
@@ -68,6 +69,7 @@ int main(int argc, char** argv)
     ("randomize", "Set the random seed to a random number.")
     ("fake-supervisor", bpo::value(&fake_supervisor_path), "Path to GridClassifier")
     ("fake-supervisor-config", bpo::value(&fake_supervisor_config_path), "Path to config used by fake supervisor")
+    ("fake-supervisor-annotation-limit", bpo::value(&fake_supervisor_annotation_limit)->default_value(-1), "FakeSupervisor will only provide corrections while OnlineLearner has fewer than this many annotations")
     ("active-learning", "Use active learning rather than group induction")
     ;
 
@@ -186,12 +188,14 @@ int main(int argc, char** argv)
   if(opts.count("fake-supervisor")) {
     ROS_ASSERT(opts.count("fake-supervisor-config"));
     cout << "Using fake supervisor at " << fake_supervisor_path << endl;
-    cout << "  with config at " << fake_supervisor_config_path << endl;
+    cout << "  Config: " << fake_supervisor_config_path << endl;
+    cout << "  Annotation limit: " << fake_supervisor_annotation_limit << endl;
     GridClassifier gc;
     gc.load(fake_supervisor_path);
     YAML::Node fs_config = YAML::LoadFile(fake_supervisor_config_path);
     ROS_ASSERT(fs_config["Pipeline"]);
     isup = InductionSupervisor::Ptr(new InductionSupervisor(gc, fs_config, up, &inductor, 0.5, output_dir));
+    isup->annotation_limit_ = fake_supervisor_annotation_limit;
     isup->launch();
   }
   

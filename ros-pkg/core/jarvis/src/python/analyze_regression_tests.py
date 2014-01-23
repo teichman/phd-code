@@ -9,7 +9,7 @@ roslib.load_manifest('jarvis')
 from regression_testing import * 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-t", "--type", help="comparison type", choices=["acc-msb", "acc-nsb", "ann"], default="acc-nsb")
+parser.add_argument("-t", "--type", help="comparison type", choices=["acc-msb", "acc-nsb", "acc-act", "ann"], default="acc-nsb")
 parser.add_argument("dir", help="regression test dir")
 parser.add_argument("-n", "--num-permutations", type=int, default=10000)
 parser.add_argument("-v", "--print-vals", action='store_true')
@@ -37,15 +37,23 @@ if args.type == "acc-msb":
     baseline_label = "MSB"
     label = 'Accuracy (%)'
     for test_name in test_names:
-        gi_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
+        gi_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -name 'final_track_results.txt' | sort | grep induction` | awk '{print $NF}'"))
         baseline_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -wholename '*baseline_unfair/*iter009/track_results.txt' | sort` | awk '{print $NF}'"))
 
 elif args.type == "acc-nsb":
     baseline_label = "NSB"
     label = 'Accuracy (%)'
     for test_name in test_names:
-        gi_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
+        gi_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -name 'final_track_results.txt' | sort | grep induction` | awk '{print $NF}'"))
         baseline_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -wholename '*/naive_supervised_baseline/average_results/track_results.txt' | sort` | awk '{print $NF}'"))
+
+elif args.type == "acc-act":
+    baseline_label = "ACT"
+    label = 'Accuracy (%)'
+    for test_name in test_names:
+        gi_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -name 'final_track_results.txt' | sort | grep induction` | awk '{print $NF}'"))
+        baseline_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(output_dir, test_name) + " -name 'final_track_results.txt' | sort | grep active_learning` | awk '{print $NF}'"))
+
 
 elif args.type == "ann":
     baseline_label = "MSB"
