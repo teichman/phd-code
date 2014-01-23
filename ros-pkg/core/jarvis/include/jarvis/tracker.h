@@ -38,6 +38,9 @@ public:
   std::vector<uint8_t> color_;
   std::vector<float> depth_;
 
+  //! idx indexes into indices_.
+  void coords(size_t idx, int* u, int* v) const;
+  
   //! Fills cloud_, centroid_, and kdtree_ from the indices_, color_, and depth_ data.
   //! You'll have to redo this if you save and then load.
   void project(bool compute_kdtree = true);

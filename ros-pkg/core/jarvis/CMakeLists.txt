@@ -116,3 +116,7 @@ target_link_libraries(test_jarvis jarvis_core)
 rosbuild_add_executable(naive_supervised_baseline src/prog/naive_supervised_baseline.cpp)
 rosbuild_link_boost(naive_supervised_baseline program_options filesystem)
 target_link_libraries(naive_supervised_baseline jarvis_core)
+
+rosbuild_add_executable(compression_experiment src/prog/compression_experiment.cpp)
+rosbuild_link_boost(compression_experiment program_options filesystem)
+target_link_libraries(compression_experiment jarvis_core)
