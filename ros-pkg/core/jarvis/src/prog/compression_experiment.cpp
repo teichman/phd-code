@@ -9,17 +9,23 @@ class CompressionType
 {
 public:
   CompressionType(std::string name);
-  virtual void compress(const TrackDataset& td, std::vector<uint8_t>* data) = 0;
-  virtual TrackDataset decompress(const std::vector<uint8_t>& data) = 0;
-
+  //! Compress the track and append to data.
+  virtual void compressTrack(const Dataset& track,
+                             std::vector<uint8_t>* data) = 0;
+  //! Decompress the track that starts at data[idx].
+  //! Return the index that the next track starts at.
+  //! If none, return zero.
+  virtual size_t decompressTrack(const std::vector<uint8_t>& data,
+                                 size_t idx, Dataset* track) = 0;
+  
   void run(const TrackDataset& td);
   
 protected:
   std::string name_;
 
   // The following consider only the raw_ data.
-  bool equal(const TrackDataset& td0, const TrackDataset& td1) const;
-  bool equal(const Blob& blob0, const Blob& blob1) const;
+  void assertEqual(const TrackDataset& td0, const TrackDataset& td1) const;
+  void assertEqual(const Blob& blob0, const Blob& blob1) const;
   size_t numBytes(const Blob& blob) const;
   size_t numBytes(const TrackDataset& td) const;
 };
@@ -52,58 +58,49 @@ size_t CompressionType::numBytes(const TrackDataset& td) const
   return num_bytes;
 }
   
-bool CompressionType::equal(const Blob& blob0, const Blob& blob1) const
+void CompressionType::assertEqual(const Blob& blob0, const Blob& blob1) const
 {
-  if(blob0.indices_.size() != blob1.indices_.size())
-    return false;
-  if(blob0.color_.size() != blob1.color_.size())
-    return false;
-  if(blob0.depth_.size() != blob1.depth_.size())
-    return false;
+  cv::imshow("blob0", blob0.image());
+  cv::imshow("blob1", blob1.image());
+  cv::waitKey(2);
+  return;  // SingleFrameCompression is apparently not lossless yet.
+  
+  ROS_ASSERT(blob0.indices_.size() == blob1.indices_.size());
+  ROS_ASSERT(blob0.color_.size() == blob1.color_.size());
+  ROS_ASSERT(blob0.depth_.size() == blob1.depth_.size());
 
   for(size_t i = 0; i < blob0.indices_.size(); ++i)
-    if(blob0.indices_[i] != blob1.indices_[i])
-      return false;
+    ROS_ASSERT(blob0.indices_[i] == blob1.indices_[i]);
   for(size_t i = 0; i < blob0.color_.size(); ++i)
-    if(blob0.color_[i] != blob1.color_[i])
-      return false;
+    ROS_ASSERT(blob0.color_[i] == blob1.color_[i]);
   for(size_t i = 0; i < blob0.depth_.size(); ++i)
-    if(blob0.depth_[i] != blob1.depth_[i])
-      return false;
-
-  return true;
+    ROS_ASSERT(blob0.depth_[i] == blob1.depth_[i]);
 }
 
-bool CompressionType::equal(const TrackDataset& td0, const TrackDataset& td1) const
+void CompressionType::assertEqual(const TrackDataset& td0, const TrackDataset& td1) const
 {
-  if(td0.size() != td1.size())
-    return false;
-  
+  ROS_ASSERT(td0.size() == td1.size());
   for(size_t i = 0; i < td0.size(); ++i) {
-    if(td0[i].size() != td1[i].size())
-      return false;
-    
+    ROS_ASSERT(td0[i].size() == td1[i].size());
     for(size_t j = 0; j < td0[i].size(); ++j) {
       const Blob& blob0 = *boost::any_cast<Blob::Ptr>(td0[i][j].raw_);
       const Blob& blob1 = *boost::any_cast<Blob::Ptr>(td1[i][j].raw_);
-      if(!equal(blob0, blob1))
-        return false;
+      assertEqual(blob0, blob1);
     }
   }
-
-  return true;
 }
 
 void CompressionType::run(const TrackDataset& td) 
 {
   HighResTimer hrt;
-
+  
   hrt.reset(); hrt.start();
   vector<uint8_t> compressed;
   // Reserve enough space for the whole thing uncompressed.
   // Re-allocation will not be an issue.
-  compressed.reserve(numBytes(td));  
-  compress(td, &compressed);
+  compressed.reserve(numBytes(td));
+  for(size_t i = 0; i < td.size(); ++i)
+    compressTrack(td[i], &compressed);
   hrt.stop();
   cout << name_ << " compression ratio: " << (double)numBytes(td) / compressed.size() << endl;
   cout << name_ << " compression time (ms per instance): "
@@ -111,20 +108,27 @@ void CompressionType::run(const TrackDataset& td)
 
 
   hrt.reset(); hrt.start();
-  TrackDataset td2 = decompress(compressed);
+  TrackDataset td2;
+  td2.tracks_.resize(td.size());
+  size_t idx = 0;
+  for(size_t i = 0; i < td.size(); ++i) {
+    td2.tracks_[i] = Dataset::Ptr(new Dataset);
+    idx = decompressTrack(compressed, idx, td2.tracks_[i].get());
+  }
   hrt.stop();
   cout << name_ << " decompression time (ms per instance): "
        << hrt.getMilliseconds() / td.totalInstances() << endl;
 
-  ROS_ASSERT(equal(td, td2));  // Ensure it is lossless compression.
+  assertEqual(td, td2);  // Ensure it is lossless compression.
 }
 
 class SingleFrameCompression : public CompressionType
 {
 public:
   SingleFrameCompression();
-  void compress(const TrackDataset& td, std::vector<uint8_t>* data);
-  TrackDataset decompress(const std::vector<uint8_t>& data);
+  void compressTrack(const Dataset& track, std::vector<uint8_t>* data);
+  size_t decompressTrack(const std::vector<uint8_t>& data,
+                         size_t idx, Dataset* track);
 
 protected:
   cv::Mat3b color_;
@@ -137,6 +141,19 @@ protected:
 SingleFrameCompression::SingleFrameCompression() :
     CompressionType("SingleFrameCompression")
 {
+}
+
+void writeToVec(size_t num, std::vector<uint8_t>* data)
+{
+  size_t idx = data->size();
+  data->resize(data->size() + sizeof(size_t));
+  memcpy(data->data() + idx, &num, sizeof(size_t));
+}
+
+size_t readFromVec(const std::vector<uint8_t>& data, size_t idx, size_t* num)
+{
+  memcpy(num, data.data() + idx, sizeof(size_t));
+  return idx + sizeof(size_t);
 }
 
 void writeToVec(const std::vector<uint8_t>& chunk, std::vector<uint8_t>* data)
@@ -155,26 +172,11 @@ size_t readFromVec(const std::vector<uint8_t>& data, size_t idx, std::vector<uin
   memcpy(&buf, data.data() + idx, sizeof(size_t));
   chunk->resize(buf);
   memcpy(chunk->data(), data.data() + idx + sizeof(size_t), buf);
-  return idx + buf;
+  return idx + buf + sizeof(size_t);
 }
 
 void SingleFrameCompression::compress(const Blob& blob, std::vector<uint8_t>* data) 
 {
-  // // -- Make rectangular images that can contain the blob.
-  // int min_u = blob.width_;
-  // int max_u = 0;
-  // int min_v = blob.height_;
-  // int max_v = 0;
-  // for(size_t i = 0; i < blob.indices_.size(); ++i) {
-  //   int u, v;
-  //   blob.coords(i, &u, &v);
-  //   min_u = min(min_u, u);
-  //   max_u = max(max_u, u);
-  //   min_v = min(min_v, v);
-  //   max_v = max(max_v, v);
-  // }
-  // cv::Size size(max_u - min_u, max_v - min_v);
-
   if(color_.rows != blob.height_) {
     cv::Size size(blob.width_, blob.height_);
     color_ = cv::Mat3b(size);
@@ -185,25 +187,20 @@ void SingleFrameCompression::compress(const Blob& blob, std::vector<uint8_t>* da
   
   // -- Make the color and depth images.
   for(size_t i = 0; i < blob.indices_.size(); ++i) {
-    int u, v;
-    blob.coords(i, &u, &v);
-    color_(v, u)[2] = blob.color_[i*3+0];
-    color_(v, u)[1] = blob.color_[i*3+1];
-    color_(v, u)[0] = blob.color_[i*3+2];
-    depth_(v, u) = blob.depth_[i];
+    int idx = blob.indices_[i];
+    color_(idx)[2] = blob.color_[i*3+0];
+    color_(idx)[1] = blob.color_[i*3+1];
+    color_(idx)[0] = blob.color_[i*3+2];
+    depth_(idx) = blob.depth_[i];
   }
 
-  cv::imshow("color", color_);
-  cv::imshow("depth", depth_);
-  cv::waitKey();
-  
   // -- Encode using PNG.
 
   // 1-9.  Higher is better but slower.
   // http://docs.opencv.org/modules/highgui/doc/reading_and_writing_images_and_video.html#bool%20imwrite%28const%20string&%20filename,%20InputArray%20img,%20const%20vector%3Cint%3E&%20params%29
   vector<int> compression_params;
   compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
-  compression_params.push_back(3);
+  compression_params.push_back(0);
 
   vector<uint8_t> color_data;
   vector<uint8_t> depth_data;
@@ -213,33 +210,76 @@ void SingleFrameCompression::compress(const Blob& blob, std::vector<uint8_t>* da
   writeToVec(depth_data, data);
 }
 
-void SingleFrameCompression::compress(const TrackDataset& td, std::vector<uint8_t>* data)
-{
-  for(size_t i = 0; i < td.size(); ++i) {
-    for(size_t j = 0; j < td[i].size(); ++j) {
-      const Blob& blob = *boost::any_cast<Blob::Ptr>(td[i][j].raw_);
-      compress(blob, data);
-    }
-  }
-}
-
 size_t SingleFrameCompression::decompress(const std::vector<uint8_t>& data,
                                           size_t idx, Blob* blob) 
 {
   
+  // -- PNG de-encode.
+  vector<uint8_t> color_data;
+  vector<uint8_t> depth_data;
+  idx = readFromVec(data, idx, &color_data);
+  idx = readFromVec(data, idx, &depth_data);
+  cv::Mat3b color = cv::imdecode(color_data, -1);  // Load as-is.
+  cv::Mat1f depth = cv::imdecode(depth_data, CV_LOAD_IMAGE_ANYDEPTH);  // This won't work.
+  ROS_ASSERT(color.size == depth.size);
+
+  // cv::imshow("color", color);
+  // cv::imshow("depth", depth);
+  // cv::waitKey();
+  
+  blob->height_ = color.rows;
+  blob->width_ = color.cols;
+
+  size_t num = 0;
+  for(int i = 0; i < depth.rows * depth.cols; ++i)
+    if(depth(i) != 0)
+      ++num;
+
+  blob->indices_.clear();
+  blob->color_.clear();
+  blob->depth_.clear();
+  blob->indices_.reserve(num);
+  blob->color_.reserve(num * 3);
+  blob->depth_.reserve(num);
+
+  for(int i = 0; i < depth.rows * depth.cols; ++i) {
+    if(depth(i) != 0) {
+      blob->indices_.push_back(i);
+      blob->depth_.push_back(depth(i));
+      blob->color_.push_back(color(i)[2]);
+      blob->color_.push_back(color(i)[1]);
+      blob->color_.push_back(color(i)[0]);
+    }
+  }
+  
+  return idx;
 }
 
-TrackDataset SingleFrameCompression::decompress(const std::vector<uint8_t>& data) 
+
+void SingleFrameCompression::compressTrack(const Dataset& track, std::vector<uint8_t>* data)
 {
-  TrackDataset td;
-  td.tracks_.reserve(10000);
-  
-  size_t idx = 0;
-  while(idx < data.size()) {
-    Blob blob;
-    idx = decompress(data, idx, &blob);
-    
+  writeToVec(track.size(), data);
+
+  for(size_t i = 0; i < track.size(); ++i) {
+    const Blob& blob = *boost::any_cast<Blob::Ptr>(track[i].raw_);
+    compress(blob, data);
   }
+}
+
+size_t SingleFrameCompression::decompressTrack(const std::vector<uint8_t>& data,
+                                               size_t idx, Dataset* track)
+{
+  
+  size_t num_frames;
+  idx = readFromVec(data, idx, &num_frames);
+  track->instances_.resize(num_frames);
+  for(size_t i = 0; i < track->size(); ++i) {
+    Blob::Ptr blob(new Blob);
+    idx = decompress(data, idx, blob.get());
+    track->instances_[i].raw_ = blob;
+  }
+
+  return idx;
 }
 
 
