@@ -56,9 +56,16 @@ public:
     void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
   };
 
+
+  // -- TODO: Params for OnlineLearner should probably go into a YAML.  There's too many.
+  //    Also, they should be consistent between public variables and constructor arguments.
+
   //! If set to true, don't run group induction; instead just run active learning.
   //! This is a gross hack for the purposes of evaluation.
   bool active_learning_;
+  //! Analogous to max_iters_.  Terminate if you receive this many annotations.
+  //! This is mainly for testing vs active learning.
+  int max_annotations_;
   
   virtual ~OnlineLearner() {}
   //! This is problematic.  If I make serialize and deserialize virtual functions,

@@ -17,6 +17,7 @@ OnlineLearner::OnlineLearner(double emax,
                              std::string unlabeled_dir,
                              std::string saved_annotations_dir) :
   active_learning_(false),
+  max_annotations_(-1),
   emax_(emax),
   buffer_size_(buffer_size),
   max_track_length_(max_track_length),
@@ -684,6 +685,8 @@ void OnlineLearner::_run()
     {
       scopeLockRead;
       if(iter_ == max_iters_)
+        break;
+      if(max_annotations_ != -1 && (int)annotated_->size() >= max_annotations_)
         break;
     }
   }
