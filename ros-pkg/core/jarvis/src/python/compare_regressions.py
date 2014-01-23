@@ -41,8 +41,8 @@ post_vals = []
 if args.type == 'acc':
     label = 'Accuracy (%)'
     for test_name in test_names:
-        pre_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(args.pre_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
-        post_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(args.post_dir, test_name) + " -name 'final_track_results.txt' | sort` | awk '{print $NF}'"))
+        pre_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(args.pre_dir, test_name) + " -wholename '*/induction/final_track_results.txt' | sort` | awk '{print $NF}'"))
+        post_vals.append(100 * npLoadBash("grep 'Total acc' `find -L " + os.path.join(args.post_dir, test_name) + " -wholename '*/induction/final_track_results.txt' | sort` | awk '{print $NF}'"))
 
 elif args.type == 'ann':
     label = 'Annotations'
