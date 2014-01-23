@@ -4,7 +4,7 @@
 
 # -- Parse args.
 if [ "$#" == "0" ]; then
-    echo "Usage: $0 TEST_DIR CONFIG RUN_BASE_DIR"
+    echo "Usage: $0 TEST_DIR CONFIG MAX_ITERS RUN_BASE_DIR"
     echo "  TEST_DIR is the location of all setup data needed for a test."
     echo "  RUN_BASE_DIR is where output will be saved.  The run dir will be created within this."
     exit 1
@@ -12,9 +12,10 @@ fi
 
 TEST_DIR=$1
 CONFIG=$2
-RUN_BASE_DIR=$3
+MAX_ITERS=$3
+RUN_BASE_DIR=$4
 CLASS_NAMES=`cat $TEST_DIR/class_names.txt`
-MAX_ITERS=`cat $TEST_DIR/max_iters.txt`
+#MAX_ITERS=`cat $TEST_DIR/max_iters.txt`
 
 echo -e "Test dir:\t" $TEST_DIR
 echo -e "Config file:\t" $CONFIG
