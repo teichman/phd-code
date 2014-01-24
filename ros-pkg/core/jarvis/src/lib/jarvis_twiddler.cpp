@@ -18,13 +18,14 @@ JarvisTwiddler::JarvisTwiddler(vector<TrackDataset> datasets,
   up_vectors_(up_vectors)
 {
   // -- Set up twiddle actions.
-  REGISTER_ACTION(JarvisTwiddler::projectAllHOG);
+  //REGISTER_ACTION(JarvisTwiddler::twiddleAllNumProjections);
+  // REGISTER_ACTION(JarvisTwiddler::projectAllHOG);
   REGISTER_ACTION(JarvisTwiddler::projectAllHOGAndRemoveRaw);
-  REGISTER_ACTION(JarvisTwiddler::projectRandomDescriptor);
-  REGISTER_ACTION(JarvisTwiddler::deleteRandomProjector);
-  REGISTER_ACTION(JarvisTwiddler::projectAllDescriptors);
-  REGISTER_ACTION(JarvisTwiddler::projectAllDescriptorsConcatenated);
-  REGISTER_ACTION(JarvisTwiddler::coupleAllDescriptorSpaces);
+  // REGISTER_ACTION(JarvisTwiddler::projectRandomDescriptor);
+  // REGISTER_ACTION(JarvisTwiddler::deleteRandomProjector);
+  // REGISTER_ACTION(JarvisTwiddler::projectAllDescriptors);
+  // REGISTER_ACTION(JarvisTwiddler::projectAllDescriptorsConcatenated);
+  // REGISTER_ACTION(JarvisTwiddler::coupleAllDescriptorSpaces);
   
   // REGISTER_ACTION(JarvisTwiddler::deleteRandomPod);
   // REGISTER_ACTION(JarvisTwiddler::twiddleNumCells);
@@ -392,6 +393,22 @@ void JarvisTwiddler::projectRandomDescriptor(YAML::Node config) const
   config["Pipeline"] = pl.YAMLize();
 }
 
+void JarvisTwiddler::twiddleAllNumProjections(YAML::Node config) const
+{
+  ROS_ASSERT(config["Pipeline"]);
+  Pipeline pl(1);
+  pl.deYAMLize(config["Pipeline"]);
+
+  vector<int> nps {10, 20, 50, 100};
+  int np = nps[rand() % nps.size()];
+
+  vector<RandomProjector*> rps = pl.filterPods<RandomProjector>();
+  for(size_t i = 0; i < rps.size(); ++i)
+    rps[i]->setParam<double>("NumProjections", np);
+
+  config["Pipeline"] = pl.YAMLize();
+}
+
 void JarvisTwiddler::deleteRandomProjector(YAML::Node config) const
 {
   ROS_ASSERT(config["Pipeline"]);
@@ -516,15 +533,15 @@ void JarvisTwiddler::projectAllHOG(YAML::Node config) const
       pl.deletePod(rps[i]->name());
   
   // -- Add new RandomProjectors.
-  vector<int> nps {5, 10, 20, 50};
+  vector<int> nps {5, 10, 20, 50, 100};
   int np = nps[rand() % nps.size()];
   vector<HogArray*> hogs = pl.filterPods<HogArray>();
   for(size_t i = 0; i < hogs.size(); ++i) {
     Pod* rp = pl.createPod("RandomProjector");
-    rp->setParam<double>("Seed", i);
     rp->setParam<double>("NumProjections", np);
     pl.connect(rp->name() + ".Descriptor <- " + hogs[i]->name() + ".ConcatenatedDescriptors");
     pl.connect("DescriptorAggregator.Descriptors <- " + rp->name() + ".Projected");
+    rp->setParam<double>("Seed", rp->getUniqueHash() % 10000);
   }
   
   config["Pipeline"] = pl.YAMLize();

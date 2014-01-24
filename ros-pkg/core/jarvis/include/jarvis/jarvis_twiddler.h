@@ -41,6 +41,7 @@ protected:
   void initializeBaseClassifiers(const YAML::Node& config);
   
   // -- Actions
+  void twiddleAllNumProjections(YAML::Node config) const;
   void projectAllHOG(YAML::Node config) const;
   void projectAllDescriptors(YAML::Node config) const;
   void projectAllHOGAndRemoveRaw(YAML::Node config) const;
