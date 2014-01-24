@@ -204,7 +204,9 @@ int main(int argc, char** argv)
     // annotations as long as it takes.
     if(fake_supervisor_annotation_limit != -1) {
       inductor.max_annotations_ = fake_supervisor_annotation_limit;
-      inductor.setMaxIters(-1);
+      // Ok, I lied.  Sometimes the system does so well that it never finds enough corrections
+      // to send.  Because of this, make it terminate after a while no matter what.
+      inductor.setMaxIters(max_iters * 1.5);  
       isup->annotation_limit_ = fake_supervisor_annotation_limit;
       isup->max_iter_to_supervise_ = -1;
     }
