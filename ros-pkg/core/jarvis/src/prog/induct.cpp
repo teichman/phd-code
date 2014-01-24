@@ -190,21 +190,25 @@ int main(int argc, char** argv)
     cout << "Using fake supervisor at " << fake_supervisor_path << endl;
     cout << "  Config: " << fake_supervisor_config_path << endl;
     cout << "  Annotation limit: " << fake_supervisor_annotation_limit << endl;
-
-    // If we're using a fake supervisor annotation limit,
-    // ignore the max iters option.  Use the annotation limit to decide when
-    // to stop instead.
-    if(fake_supervisor_annotation_limit != -1) {
-      inductor.max_annotations_ = fake_supervisor_annotation_limit;
-      inductor.setMaxIters(-1);
-    }
     
     GridClassifier gc;
     gc.load(fake_supervisor_path);
     YAML::Node fs_config = YAML::LoadFile(fake_supervisor_config_path);
     ROS_ASSERT(fs_config["Pipeline"]);
     isup = InductionSupervisor::Ptr(new InductionSupervisor(gc, fs_config, up, &inductor, 0.5, output_dir));
-    isup->annotation_limit_ = fake_supervisor_annotation_limit;
+    isup->max_iter_to_supervise_ = max<int>(0, max_iters - 7);  // Normally, stop providing annotations a few iterations before we stop OnlineLearner.
+    
+    // If we're using a fake supervisor annotation limit,
+    // ignore the max iters option.  Use the annotation limit to decide when
+    // to stop instead.  Also, let the InductionSupervisor keep providing
+    // annotations as long as it takes.
+    if(fake_supervisor_annotation_limit != -1) {
+      inductor.max_annotations_ = fake_supervisor_annotation_limit;
+      inductor.setMaxIters(-1);
+      isup->annotation_limit_ = fake_supervisor_annotation_limit;
+      isup->max_iter_to_supervise_ = -1;
+    }
+    
     isup->launch();
   }
   

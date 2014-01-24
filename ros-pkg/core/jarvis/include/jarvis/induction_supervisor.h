@@ -14,6 +14,7 @@ public:
   //! Otherwise, provide corrections only when ol_ has
   //! seen less than this number of annotations.
   int annotation_limit_;
+  int max_iter_to_supervise_;
   
   InductionSupervisor(GridClassifier gc, YAML::Node config,
                       const Eigen::VectorXf& up, OnlineLearner* ol,

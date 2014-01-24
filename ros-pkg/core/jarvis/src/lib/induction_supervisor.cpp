@@ -7,6 +7,7 @@ InductionSupervisor::InductionSupervisor(GridClassifier gc, YAML::Node config,
                                          const Eigen::VectorXf& up, OnlineLearner* ol,
                                          float conf_thresh, std::string output_dir) :
   annotation_limit_(-1),
+  max_iter_to_supervise_(-1),
   gc_(gc),
   config_(config),
   up_(up),
@@ -20,12 +21,14 @@ void InductionSupervisor::_run()
 {
   int iter = 0;
   int last_iter_provided = -1;
-  int max_iter_to_supervise = 53;
   
   while(!quitting_) {
     usleep(1e6);
-    if(ol_->iter() % 5 != 2 || ol_->iter() == last_iter_provided || ol_->iter() > max_iter_to_supervise)
+    if(ol_->iter() % 5 != 2 || ol_->iter() == last_iter_provided)
       continue;
+    if(max_iter_to_supervise_ != -1 && ol_->iter() > max_iter_to_supervise_)
+      continue;
+    
     last_iter_provided = ol_->iter();
     
     for(size_t i = 0; i < gc_.nameMapping("cmap").size(); ++i) {

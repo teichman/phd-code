@@ -600,6 +600,11 @@ void OnlineLearner::_run()
     file << status("  ") << endl;
     file.close();
 
+    // Check max_annotations_ here, after learner status has been updated to
+    // reflect the new annotations.
+    if(max_annotations_ != -1 && (int)annotated_->size() >= max_annotations_)
+      break;
+
     // Update the data that is publicly viewable.
     updateViewableUnsupervised();
     
@@ -685,8 +690,6 @@ void OnlineLearner::_run()
     {
       scopeLockRead;
       if(iter_ == max_iters_)
-        break;
-      if(max_annotations_ != -1 && (int)annotated_->size() >= max_annotations_)
         break;
     }
   }
