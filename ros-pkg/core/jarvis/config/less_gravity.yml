@@ -66,133 +66,136 @@ Pipeline:
     - Name: CloudProjectorXY
       Type: CloudProjector
       Params:
-        View: XY
-        PixelsPerMeter: 50
-        NumRows: 50
-        NumCols: 50
-        MinIntensity: 1
         KernelSize: 1
+        MinIntensity: 1
+        NumCols: 50
+        NumRows: 50
+        PixelsPerMeter: 50
+        View: XY
       Inputs:
         Cloud: CloudOrienter.OrientedCloud
     - Name: CloudProjectorYZ
       Type: CloudProjector
       Params:
-        View: YZ
-        PixelsPerMeter: 50
-        NumRows: 50
-        NumCols: 50
-        MinIntensity: 1
         KernelSize: 1
+        MinIntensity: 1
+        NumCols: 50
+        NumRows: 50
+        PixelsPerMeter: 50
+        View: YZ
       Inputs:
         Cloud: CloudOrienter.OrientedCloud
     - Name: CloudProjectorXZ
       Type: CloudProjector
       Params:
-        View: XZ
-        PixelsPerMeter: 50
-        NumRows: 50
-        NumCols: 50
-        MinIntensity: 1
         KernelSize: 1
+        MinIntensity: 1
+        NumCols: 50
+        NumRows: 50
+        PixelsPerMeter: 50
+        View: XZ
       Inputs:
         Cloud: CloudOrienter.OrientedCloud
     - Name: DynamicImageWindowXY
       Type: DynamicImageWindow
       Params:
-        VerticalAlignment: Center
-        HorizontalAlignment: Center
         HeightPercent: 1
-        WidthPercent: 1
+        HorizontalAlignment: Center
         Scaling: 1
+        VerticalAlignment: Center
+        WidthPercent: 1
       Inputs:
         Image: CloudProjectorXY.Image
     - Name: HogArrayXY
       Type: HogArray
       Params:
-        WindowWidth: 25
-        WindowHeight: 25
-        BlockWidth: 25
         BlockHeight: 25
         BlockStride: 25
+        BlockWidth: 25
         CellSize: 5
         NumBins: 6
         UVPattern: Dense
+        WindowHeight: 25
+        WindowWidth: 25
       Inputs:
         Image: DynamicImageWindowXY.Image
     - Name: DynamicImageWindowYZ
       Type: DynamicImageWindow
       Params:
-        VerticalAlignment: Center
-        HorizontalAlignment: Center
         HeightPercent: 1
-        WidthPercent: 1
+        HorizontalAlignment: Center
         Scaling: 1
+        VerticalAlignment: Center
+        WidthPercent: 1
       Inputs:
         Image: CloudProjectorYZ.Image
     - Name: HogArrayYZ
       Type: HogArray
       Params:
-        WindowWidth: 25
-        WindowHeight: 25
-        BlockWidth: 25
         BlockHeight: 25
         BlockStride: 25
+        BlockWidth: 25
         CellSize: 5
         NumBins: 6
         UVPattern: Dense
+        WindowHeight: 25
+        WindowWidth: 25
       Inputs:
         Image: DynamicImageWindowYZ.Image
     - Name: DynamicImageWindowXZ
       Type: DynamicImageWindow
       Params:
-        VerticalAlignment: Center
-        HorizontalAlignment: Center
         HeightPercent: 1
-        WidthPercent: 1
+        HorizontalAlignment: Center
         Scaling: 1
+        VerticalAlignment: Center
+        WidthPercent: 1
       Inputs:
         Image: CloudProjectorXZ.Image
     - Name: HogArrayXZ
       Type: HogArray
       Params:
-        WindowWidth: 25
-        WindowHeight: 25
-        BlockWidth: 25
         BlockHeight: 25
         BlockStride: 25
+        BlockWidth: 25
         CellSize: 5
         NumBins: 6
         UVPattern: Dense
+        WindowHeight: 25
+        WindowWidth: 25
       Inputs:
         Image: DynamicImageWindowXZ.Image
     - Name: HSVHistogram
       Type: HSVHistogram
       Params:
         NumBins: 10
-        ValueThreshold: 0.2
         SaturationThreshold: 0.2
+        ValueThreshold: 0.2
       Inputs:
-        Blob: BlobProjector.ProjectedBlob  # Can't use the EntryPoint because of const-correctness.
+        Blob: BlobProjector.ProjectedBlob
     - Name: DescriptorAggregator
       Type: DescriptorAggregator
       Params: ~
       Inputs:
-        Descriptors: >
-          OrientedBoundingBoxSize.BoundingBoxSize
-          OrientedNormalizedDensityHistogram.X
-          OrientedNormalizedDensityHistogram.Y
-          OrientedNormalizedDensityHistogram.Z
-          HogArrayXY.ConcatenatedDescriptors
-          HogArrayYZ.ConcatenatedDescriptors
-          HogArrayXZ.ConcatenatedDescriptors
-          HSVHistogram.Hue
-          HSVHistogram.Saturation
-          HSVHistogram.Value
-          CloudOrienter.Eigenvalues
-          CloudOrienter.RelativeCurvature
-          SimpleTrajectoryStatistics05.Speed
-          SimpleTrajectoryStatistics10.Speed
-          EdginessEstimator.Edginess
-          ProjectedSize.ProjectedSize
-          
-
+        Descriptors: OrientedBoundingBoxSize.BoundingBoxSize OrientedNormalizedDensityHistogram.X OrientedNormalizedDensityHistogram.Y OrientedNormalizedDensityHistogram.Z HSVHistogram.Hue HSVHistogram.Saturation HSVHistogram.Value CloudOrienter.Eigenvalues CloudOrienter.RelativeCurvature SimpleTrajectoryStatistics05.Speed SimpleTrajectoryStatistics10.Speed EdginessEstimator.Edginess ProjectedSize.ProjectedSize RandomProjector00.Projected RandomProjector01.Projected RandomProjector02.Projected
+    - Name: RandomProjector00
+      Type: RandomProjector
+      Params:
+        NumProjections: 50
+        Seed: 120
+      Inputs:
+        Descriptor: HogArrayXY.ConcatenatedDescriptors
+    - Name: RandomProjector01
+      Type: RandomProjector
+      Params:
+        NumProjections: 50
+        Seed: 4551
+      Inputs:
+        Descriptor: HogArrayYZ.ConcatenatedDescriptors
+    - Name: RandomProjector02
+      Type: RandomProjector
+      Params:
+        NumProjections: 50
+        Seed: 8641
+      Inputs:
+        Descriptor: HogArrayXZ.ConcatenatedDescriptors
