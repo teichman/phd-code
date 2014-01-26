@@ -164,7 +164,7 @@ void OnlineLearner::loadSavedAnnotations()
 
 void OnlineLearner::handleAnnotatedData()
 {
-
+  ScopedTimer st("OnlineLearner::handleAnnotatedData", TimeUnit::MS);
   boost::unique_lock<boost::shared_mutex> ulock(hand_mutex_);
 
   // -- Check for new annotations for the inducted dataset.
@@ -649,7 +649,7 @@ void OnlineLearner::_run()
       indices.push_back(Indices::All(datasets[i]->size()));
     
     {
-      ScopedTimer st("OnlineLearner: Training");
+      ScopedTimer st("[OnlineLearner] Training", TimeUnit::MS);
       scopeLockWrite;
       trainer_->train(datasets, indices);
     }
@@ -657,10 +657,16 @@ void OnlineLearner::_run()
     /************************************************************
      * Induction
      ************************************************************/
-    TrackDataset::Ptr unlabeled_chunk = getNextUnlabeledChunk();
-    //removePerfectAndNonInducted(unlabeled_chunk.get());
-    chunkHook(unlabeled_chunk.get());
-    inductionStep(unlabeled_chunk.get());
+    {
+      HighResTimer hrt("[OnlineLearner] TD loading"); hrt.start();
+      TrackDataset::Ptr unlabeled_chunk = getNextUnlabeledChunk();
+      hrt.stop(); cout << hrt.reportMilliseconds() << endl;
+      
+      ScopedTimer st("[OnlineLearner] Induction", TimeUnit::MS);
+      //removePerfectAndNonInducted(unlabeled_chunk.get());
+      chunkHook(unlabeled_chunk.get());
+      inductionStep(unlabeled_chunk.get());
+    }
 
     /************************************************************
      * Bookkeeping
