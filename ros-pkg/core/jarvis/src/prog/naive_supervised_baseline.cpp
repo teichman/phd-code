@@ -117,7 +117,6 @@ int main(int argc, char** argv)
     bfs::create_directory(run_dir);
     
     // -- Subsample the training data.
-    double pct = (double)subsample / train.size();
     TrackDataset ignore;
     TrackDataset::Ptr training_subsample(new TrackDataset);
     *training_subsample = sampleDatasetProportional(train, subsample, cmap.toName(0), test.labelRatio(cmap.toName(0)));

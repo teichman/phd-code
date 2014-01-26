@@ -2,6 +2,7 @@
 #include <jarvis/tracker.h>
 #include <online_learning/dataset.h>
 #include <boost/program_options.hpp>
+#include <pcl/io/lzf.h>
 
 using namespace std;
 
@@ -62,7 +63,9 @@ void CompressionType::assertEqual(const Blob& blob0, const Blob& blob1) const
 {
   cv::imshow("blob0", blob0.image());
   cv::imshow("blob1", blob1.image());
-  cv::waitKey(2);
+  cv::imshow("blob0depth", blob0.depthImage());
+  cv::imshow("blob1depth", blob1.depthImage());
+  cv::waitKey(0);
   return;  // SingleFrameCompression is apparently not lossless yet.
   
   ROS_ASSERT(blob0.indices_.size() == blob1.indices_.size());
@@ -132,7 +135,7 @@ public:
 
 protected:
   cv::Mat3b color_;
-  cv::Mat1f depth_;
+  cv::Mat1s depth_;
   
   void compress(const Blob& blob, std::vector<uint8_t>* data);
   size_t decompress(const std::vector<uint8_t>& data, size_t idx, Blob* blob);
@@ -180,7 +183,7 @@ void SingleFrameCompression::compress(const Blob& blob, std::vector<uint8_t>* da
   if(color_.rows != blob.height_) {
     cv::Size size(blob.width_, blob.height_);
     color_ = cv::Mat3b(size);
-    depth_ = cv::Mat1f(size);
+    depth_ = cv::Mat1s(size);
   }
   color_ = cv::Vec3b(127, 127, 127);
   depth_ = 0;
@@ -191,7 +194,7 @@ void SingleFrameCompression::compress(const Blob& blob, std::vector<uint8_t>* da
     color_(idx)[2] = blob.color_[i*3+0];
     color_(idx)[1] = blob.color_[i*3+1];
     color_(idx)[0] = blob.color_[i*3+2];
-    depth_(idx) = blob.depth_[i];
+    depth_(idx) = blob.depth_[i] * 1000;  // depth_ stores mm in unsigned shorts.
   }
 
   // -- Encode using PNG.
@@ -203,10 +206,19 @@ void SingleFrameCompression::compress(const Blob& blob, std::vector<uint8_t>* da
   compression_params.push_back(0);
 
   vector<uint8_t> color_data;
-  vector<uint8_t> depth_data;
   cv::imencode(".png", color_, color_data, compression_params);
-  cv::imencode(".png", depth_, depth_data, compression_params);
   writeToVec(color_data, data);
+
+  vector<uint16_t> shorts(color_.rows * color_.cols, 0);
+  for(size_t i = 0; i < blob.indices_.size(); ++i) {
+    shorts[blob.indices_[i]] = blob.depth_[i] * 1000;  // encode in mm.
+  }
+  vector<uint8_t> depth_data(shorts.size() * sizeof(uint16_t));
+  size_t final_size = pcl::lzfCompress(shorts.data(), shorts.size() + sizeof(uint16_t),
+                                       depth_data.data(), depth_data.size());
+  ROS_ASSERT(final_size < depth_data.size());
+  depth_data.resize(final_size);
+  writeToVec(shorts.size(), data);
   writeToVec(depth_data, data);
 }
 
@@ -216,25 +228,29 @@ size_t SingleFrameCompression::decompress(const std::vector<uint8_t>& data,
   
   // -- PNG de-encode.
   vector<uint8_t> color_data;
-  vector<uint8_t> depth_data;
   idx = readFromVec(data, idx, &color_data);
-  idx = readFromVec(data, idx, &depth_data);
   cv::Mat3b color = cv::imdecode(color_data, -1);  // Load as-is.
-  cv::Mat1f depth = cv::imdecode(depth_data, CV_LOAD_IMAGE_ANYDEPTH);  // This won't work.
-  ROS_ASSERT(color.size == depth.size);
 
-  // cv::imshow("color", color);
-  // cv::imshow("depth", depth);
-  // cv::waitKey();
+
+  size_t num_shorts;
+  idx = readFromVec(data, idx, &num_shorts);
+  ROS_ASSERT(num_shorts == (size_t)(color.rows * color.cols));
+  vector<uint8_t> depth_data;
+  idx = readFromVec(data, idx, &depth_data);
+  vector<uint16_t> shorts(num_shorts);
+  pcl::lzfDecompress(depth_data.data(), depth_data.size(),
+                     shorts.data(), shorts.size() * sizeof(uint16_t));
+  ROS_ASSERT(shorts.size() == (size_t)(color.rows * color.cols));
+
   
   blob->height_ = color.rows;
   blob->width_ = color.cols;
 
   size_t num = 0;
-  for(int i = 0; i < depth.rows * depth.cols; ++i)
-    if(depth(i) != 0)
+  for(size_t i = 0; i < shorts.size(); ++i)
+    if(shorts[i] != 0)
       ++num;
-
+  
   blob->indices_.clear();
   blob->color_.clear();
   blob->depth_.clear();
@@ -242,13 +258,13 @@ size_t SingleFrameCompression::decompress(const std::vector<uint8_t>& data,
   blob->color_.reserve(num * 3);
   blob->depth_.reserve(num);
 
-  for(int i = 0; i < depth.rows * depth.cols; ++i) {
-    if(depth(i) != 0) {
+  for(int i = 0; i < color.rows * color.cols; ++i) {
+    if(shorts[i] != 0) {
       blob->indices_.push_back(i);
-      blob->depth_.push_back(depth(i));
       blob->color_.push_back(color(i)[2]);
       blob->color_.push_back(color(i)[1]);
       blob->color_.push_back(color(i)[0]);
+      blob->depth_.push_back((float)shorts[i] / 1000);
     }
   }
   

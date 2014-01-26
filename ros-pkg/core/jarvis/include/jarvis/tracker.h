@@ -53,6 +53,8 @@ public:
   void deserialize(std::istream& in);
   //! Reconstructs an image showing the object.  Variable size.
   cv::Mat3b image() const;
+  //! Reconstructs an image showing the object.  Variable size.
+  cv::Mat3b depthImage() const;
 };
 
 //! Takes FG messages, outputs Blobs with track ids.
