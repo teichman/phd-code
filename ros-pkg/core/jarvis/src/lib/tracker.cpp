@@ -8,6 +8,12 @@ using namespace std;
 namespace bpt = boost::posix_time;
 using namespace Eigen;
 
+void Blob::coords(size_t idx, int* u, int* v) const
+{
+  *v = indices_[idx] / width_;
+  *u = indices_[idx] - *v * width_;
+}
+
 void Blob::project(bool compute_kdtree)
 {
   cloud_ = Cloud::Ptr(new Cloud);
