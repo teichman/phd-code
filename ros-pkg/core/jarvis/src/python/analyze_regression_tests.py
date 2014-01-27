@@ -9,7 +9,7 @@ roslib.load_manifest('jarvis')
 from regression_testing import * 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-t", "--type", help="comparison type", choices=["msb", "nsb", "act", "ann"], default="nsb")
+parser.add_argument("-t", "--type", help="comparison type", choices=["msb", "nsb", "act", "ann"], required=True)
 parser.add_argument("dir", help="regression test dir")
 parser.add_argument("-n", "--num-permutations", type=int, default=10000)
 parser.add_argument("-v", "--print-vals", action='store_true')
