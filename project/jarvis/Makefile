@@ -149,6 +149,36 @@ $(eval $(call SET0_CONTEXT_CLASS_RULE_GENERATOR,$(CONTEXT),$(CLASS_NAME)))))
 # SET1
 ############################################################
 
+#kitchen-set1/cat/naive_supervised_baseline \
+			front_door-set1/cat/naive_supervised_baseline \
+			front_door-set1/person/naive_supervised_baseline \
+			front_door-set1/mailman/naive_supervised_baseline \
+			front_door-set1/open_door/naive_supervised_baseline
+archive-manual-runs:
+	DIR=manual_runs/kitchen/`date +%F_%T`_`cd $(MAKE_ROOT) && git rev-parse --short HEAD`; \
+	mkdir -p $$DIR; \
+	rsync -av kitchen-set1/cat/* $$DIR; \
+	cp `find $$DIR/induction -name track_results.txt | sort | grep test_results | tail -n1` $$DIR/induction/final_track_results.txt;
+	DIR=manual_runs/leo/`date +%F_%T`_`cd $(MAKE_ROOT) && git rev-parse --short HEAD`; \
+	mkdir -p $$DIR; \
+	rsync -av front_door-set1/cat/* $$DIR; \
+	cp `find $$DIR/induction -name track_results.txt | sort | grep test_results | tail -n1` $$DIR/induction/final_track_results.txt;
+	DIR=manual_runs/person/`date +%F_%T`_`cd $(MAKE_ROOT) && git rev-parse --short HEAD`; \
+	mkdir -p $$DIR; \
+	rsync -av front_door-set1/person/* $$DIR; \
+	cp `find $$DIR/induction -name track_results.txt | sort | grep test_results | tail -n1` $$DIR/induction/final_track_results.txt;
+	DIR=manual_runs/open_door/`date +%F_%T`_`cd $(MAKE_ROOT) && git rev-parse --short HEAD`; \
+	mkdir -p $$DIR; \
+	rsync -av front_door-set1/open_door/* $$DIR; \
+	cp `find $$DIR/induction -name track_results.txt | sort | grep test_results | tail -n1` $$DIR/induction/final_track_results.txt;
+	DIR=manual_runs/mailman/`date +%F_%T`_`cd $(MAKE_ROOT) && git rev-parse --short HEAD`; \
+	mkdir -p $$DIR; \
+	rsync -av front_door-set1/mailman/* $$DIR; \
+	cp `find $$DIR/induction -name track_results.txt | sort | grep test_results | tail -n1` $$DIR/induction/final_track_results.txt;
+
+analyze-manual-runs:
+	rosrun jarvis analyze_regression_tests.py manual_runs -t nsb
+
 define SET1_CONTEXT_RULE_GENERATOR
 
 extract-tds-$(1)-set1: $$(addsuffix /extracted, $$(TD_DIRS_$(1)_1))
