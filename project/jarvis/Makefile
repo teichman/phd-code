@@ -88,13 +88,13 @@ debug:
 
 define SET0_CONTEXT_RULE_GENERATOR
 
-$(1)-set0-tds: $$(addsuffix /extracted, $$(TD_DIRS_$(1)_0))
+extract-tds-$(1)-set0: $$(addsuffix /extracted, $$(TD_DIRS_$(1)_0))
 $(1)-set0/tds/%/extracted: $$(LOG_DIR_$(1)_0)/$$*.bag
 	mkdir -p $$(@D)
 	ROS_MASTER_URI=http://localhost:$$$$(( $$$$(ls $$(LOG_DIR_$(1)_0) | awk '{if($$$$0 == "$$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$$< output-directory:=$$$$(pwd)/$$(@D)
 	touch $$@
 
-$(1)-set0-update-unlabeled-descriptors: $$(addprefix $(1)-set0/tds/, $$(addsuffix /updated, $$(NAMES_$(1)_0)))
+update-unlabeled-descriptors-$(1)-set0: $$(addprefix $(1)-set0/tds/, $$(addsuffix /updated, $$(NAMES_$(1)_0)))
 $(1)-set0/tds/%/updated: $(1)-set0/tds/$$*/extracted
 	$(ROSRUN) jarvis update_descriptors \
 	--config $(CONFIG) \
@@ -110,7 +110,7 @@ $(eval $(call SET0_CONTEXT_RULE_GENERATOR,$(CONTEXT))))
 
 define SET0_CONTEXT_CLASS_RULE_GENERATOR
 
-$(1)-set0-update-test-descriptors-$(2):
+update-test-descriptors-$(1)-set0-$(2):
 	$(ROSRUN) jarvis update_descriptors \
 	-j 24 \
 	-u $$(UP_VECTOR_$(1)) \
@@ -133,7 +133,7 @@ $(1)-set0/$(2)/induction:
 	--init `find $(1)-set0/tds/ -name '*.td' | sort -R | head -n4` \
 	| tee $$@/log.txt
 
-$(1)-set0-save-annotations-$(2):
+save-annotations-$(1)-set0-$(2):
 	$(ROSRUN) online_learning merge_tds \
 	--remove-duplicates \
 	--tds `find $(1)-set0/$(2)/induction/ -name '*.td'` \
@@ -151,13 +151,13 @@ $(eval $(call SET0_CONTEXT_CLASS_RULE_GENERATOR,$(CONTEXT),$(CLASS_NAME)))))
 
 define SET1_CONTEXT_RULE_GENERATOR
 
-$(1)-set1-tds: $$(addsuffix /extracted, $$(TD_DIRS_$(1)_1))
+extract-tds-$(1)-set1: $$(addsuffix /extracted, $$(TD_DIRS_$(1)_1))
 $(1)-set1/tds/%/extracted: $$(LOG_DIR_$(1)_1)/$$*.bag
 	mkdir -p $$(@D)
 	ROS_MASTER_URI=http://localhost:$$$$(( $$$$(ls $$(LOG_DIR_$(1)_1) | awk '{if($$$$0 == "$$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$$< output-directory:=$$$$(pwd)/$$(@D)
 	touch $$@
 
-$(1)-set1-update-unlabeled-descriptors: $$(addprefix $(1)-set1/tds/, $$(addsuffix /updated, $$(NAMES_$(1)_1)))
+update-unlabeled-descriptors-$(1)-set1: $$(addprefix $(1)-set1/tds/, $$(addsuffix /updated, $$(NAMES_$(1)_1)))
 $(1)-set1/tds/%/updated: $(1)-set1/tds/%/extracted
 	$(ROSRUN) jarvis update_descriptors \
 	--config $(CONFIG) \
@@ -190,11 +190,21 @@ $(1)-set1/$(2)/induction:
 	--init `find $(1)-set1/tds/ -name '*.td' | sort -R | head -n4` \
 	| tee $$@/log.txt
 
-$(1)-set1-save-annotations-$(2):
+baselines-$(1)-set1-$(2): $(1)-set1/$(2)/baseline_unfair $(1)-set1/$(2)/naive_supervised_baseline
+
+save-annotations-$(1)-set1-$(2):
 	$(ROSRUN) online_learning merge_tds \
 	--remove-duplicates \
 	--tds `find $(1)-set1/$(2)/induction/ -name '*.td'` \
-	-o `date +%F_%T`-$(2)-annotations.td 
+	-o `date +%F_%T`-$(2)-annotations.td
+
+clean-induction-dir-$(1)-set1-$(2):
+	rm -f `find $(1)-set1/$(2)/induction -name classifier.gc | sort | sed '$$$$d'`
+	rm -f `find $(1)-set1/$(2)/induction -name '*.td' | sort`
+	rm -f `find $(1)-set1/$(2)/induction -name '*.eig'`
+	rm -f `find $(1)-set1/$(2)/induction -name cmap.txt`
+	rm -rf `find $(1)-set1/$(2)/induction -name annotation_results | sort`
+	rm -rf `find $(1)-set1/$(2)/induction -name validation_results | sort`
 
 $(1)-set1/$(2)/baseline_unfair: $(1)-set1/$(2)/induction
 	$(ROSRUN) jarvis baseline_unfair \
@@ -228,14 +238,14 @@ $(1)-set1/$(2)/group_induction_errors: $(1)-set1/$(2)/induction
 	--class-names $(2) \
 	-o $$@
 
-$(1)-set1-update-test-descriptors-$(2):
+update-test-descriptors-$(1)-set1-$(2):
 	$(ROSRUN) jarvis update_descriptors \
 	-j 24 \
 	-u $$(UP_VECTOR_$(1)) \
 	--config $(CONFIG) \
 	--tds $$(LABELS_DIR_$(1)_1)/$(2)/*.td
 
-compare-$(1)-set1-$(2)-results: $(1)-set1/$(2)/baseline_unfair $(1)-set1/$(2)/naive_supervised_baseline
+compare-results-$(1)-set1-$(2): $(1)-set1/$(2)/baseline_unfair $(1)-set1/$(2)/naive_supervised_baseline
 	@echo -en 'Group induction:\t\t'
 	@echo $$$$(grep 'Total acc' `find $(1)-set1/$(2)/induction/ -name track_results.txt | grep test_results | sort | tail -n1` | awk '{print $$$$NF}')
 	@echo -en 'Matched supervised baseline:\t'
@@ -248,12 +258,12 @@ compare-$(1)-set1-$(2)-results: $(1)-set1/$(2)/baseline_unfair $(1)-set1/$(2)/na
 
 # The || exit 0 is so that Make does not interpret the non-zero return value of diff
 # as an error.
-compare-$(1)-set1-$(2)-results-with-matched: $(1)-set1/$(2)/baseline_unfair
+compare-results-with-matched-$(1)-set1-$(2): $(1)-set1/$(2)/baseline_unfair
 	@grc -es --colour=auto diff -y -W150 \
 	`find $(1)-set1/$(2)/baseline_unfair/ -name track_results.txt | sort | tail -n1` \
 	`find $(1)-set1/$(2)/induction/ -name track_results.txt | grep test_results | sort | tail -n1` || exit 0
 
-compare-$(1)-set1-$(2)-results-with-naive: $(1)-set1/$(2)/naive_supervised_baseline
+compare-results-with-naive-$(1)-set1-$(2): $(1)-set1/$(2)/naive_supervised_baseline
 	@grc -es --colour=auto diff -y -W150 \
 	$$</average_results/track_results.txt \
 	`find $(1)-set1/$(2)/induction/ -name track_results.txt | grep test_results | sort | tail -n1` || exit 0
