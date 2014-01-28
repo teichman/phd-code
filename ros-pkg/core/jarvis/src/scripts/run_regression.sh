@@ -147,12 +147,14 @@ rm `find $RUN_DIR/induction -name classifier.gc | sort | sed '$d'`
 rm `find $RUN_DIR/induction -name 'annotated*.td'`
 rm `find $RUN_DIR/induction -name '*.eig'`
 rm `find $RUN_DIR/induction -name cmap.txt`
-rm -rf `find $RUN_DIR/induction -name test_results_annotated`
+rm -rf `find $RUN_DIR/induction -name annotation_results`
+rm -rf `find $RUN_DIR/induction -name validation_results`
 rm `find $RUN_DIR/active_learning -name classifier.gc | sort | sed '$d'`
 rm `find $RUN_DIR/active_learning -name 'annotated*.td'`
 rm `find $RUN_DIR/active_learning -name '*.eig'`
 rm `find $RUN_DIR/active_learning -name cmap.txt`
-rm -rf `find $RUN_DIR/active_learning -name test_results_annotated`
+rm -rf `find $RUN_DIR/active_learning -name annotation_results`
+rm -rf `find $RUN_DIR/active_learning -name validation_results`
 
 
 
