@@ -53,9 +53,9 @@ public:
       ROS_WARN("Dropping frames...");
     prev_timestamp = depth.getTimestamp();
 
-    // ostringstream oss;
-    // oss << setw(5) << setfill('0') << counter << ".jpg";
-    // cv::imwrite(oss.str(), oniToCV(color));
+    ostringstream oss;
+    oss << setw(5) << setfill('0') << counter << ".png";
+    cv::imwrite(oss.str(), oniToCV(color));
   }
   
 };

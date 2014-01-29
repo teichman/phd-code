@@ -3,6 +3,7 @@
 #include <online_learning/dataset.h>
 #include <boost/program_options.hpp>
 #include <pcl/io/lzf.h>
+#include <jarvis/compression_helpers.h>
 
 using namespace std;
 
@@ -29,6 +30,10 @@ protected:
   void assertEqual(const Blob& blob0, const Blob& blob1) const;
   size_t numBytes(const Blob& blob) const;
   size_t numBytes(const TrackDataset& td) const;
+  // size_t numBytesDepth(const Blob& blob) const;
+  // size_t numBytesDepth(const TrackDataset& td) const;
+  // size_t numBytesRGB(const Blob& blob) const;
+  // size_t numBytesRGB(const TrackDataset& td) const;
 };
 
 CompressionType::CompressionType(std::string name) :
@@ -105,7 +110,7 @@ void CompressionType::run(const TrackDataset& td)
   for(size_t i = 0; i < td.size(); ++i)
     compressTrack(td[i], &compressed);
   hrt.stop();
-  cout << name_ << " compression ratio: " << (double)numBytes(td) / compressed.size() << endl;
+  cout << name_ << " overall RGBD compression ratio: " << (double)numBytes(td) / compressed.size() << endl;
   cout << name_ << " compression time (ms per instance): "
        << hrt.getMilliseconds() / td.totalInstances() << endl;
 
@@ -146,38 +151,6 @@ SingleFrameCompression::SingleFrameCompression() :
 {
 }
 
-void writeToVec(size_t num, std::vector<uint8_t>* data)
-{
-  size_t idx = data->size();
-  data->resize(data->size() + sizeof(size_t));
-  memcpy(data->data() + idx, &num, sizeof(size_t));
-}
-
-size_t readFromVec(const std::vector<uint8_t>& data, size_t idx, size_t* num)
-{
-  memcpy(num, data.data() + idx, sizeof(size_t));
-  return idx + sizeof(size_t);
-}
-
-void writeToVec(const std::vector<uint8_t>& chunk, std::vector<uint8_t>* data)
-{
-  // Assume that data is sufficiently large that we are not re-allocating constantly.
-  size_t idx = data->size();
-  data->resize(data->size() + chunk.size() + sizeof(size_t));
-  size_t buf = chunk.size();
-  memcpy(data->data() + idx, &buf, sizeof(size_t));
-  memcpy(data->data() + idx + sizeof(size_t), chunk.data(), chunk.size());
-}
-
-size_t readFromVec(const std::vector<uint8_t>& data, size_t idx, std::vector<uint8_t>* chunk)
-{
-  size_t buf;
-  memcpy(&buf, data.data() + idx, sizeof(size_t));
-  chunk->resize(buf);
-  memcpy(chunk->data(), data.data() + idx + sizeof(size_t), buf);
-  return idx + buf + sizeof(size_t);
-}
-
 void SingleFrameCompression::compress(const Blob& blob, std::vector<uint8_t>* data) 
 {
   if(color_.rows != blob.height_) {
@@ -199,22 +172,25 @@ void SingleFrameCompression::compress(const Blob& blob, std::vector<uint8_t>* da
 
   // -- Encode using PNG.
 
-  // 1-9.  Higher is better but slower.
+  // 0-9.  Higher is better but slower.
+  // 0 seems to give the best tradeoff, at least in initial experiments.
   // http://docs.opencv.org/modules/highgui/doc/reading_and_writing_images_and_video.html#bool%20imwrite%28const%20string&%20filename,%20InputArray%20img,%20const%20vector%3Cint%3E&%20params%29
   vector<int> compression_params;
   compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
-  compression_params.push_back(0);
+  compression_params.push_back(0);  
 
   vector<uint8_t> color_data;
   cv::imencode(".png", color_, color_data, compression_params);
   writeToVec(color_data, data);
 
   vector<uint16_t> shorts(color_.rows * color_.cols, 0);
+  ROS_ASSERT(blob.indices_.size() == blob.depth_.size());
   for(size_t i = 0; i < blob.indices_.size(); ++i) {
+    ROS_ASSERT(blob.indices_[i] < (size_t)color_.rows * color_.cols);
     shorts[blob.indices_[i]] = blob.depth_[i] * 1000;  // encode in mm.
   }
   vector<uint8_t> depth_data(shorts.size() * sizeof(uint16_t));
-  size_t final_size = pcl::lzfCompress(shorts.data(), shorts.size() + sizeof(uint16_t),
+  size_t final_size = pcl::lzfCompress(shorts.data(), shorts.size() * sizeof(uint16_t),
                                        depth_data.data(), depth_data.size());
   ROS_ASSERT(final_size < depth_data.size());
   depth_data.resize(final_size);

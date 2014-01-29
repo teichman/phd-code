@@ -35,6 +35,7 @@ rosbuild_add_library(jarvis_core
   src/lib/reactor.cpp
   src/lib/cannon_reactor.cpp
   src/lib/induction_supervisor.cpp
+  src/lib/compression_helpers.cpp
   )
 rosbuild_add_compile_flags(jarvis_core -std=c++0x)
 target_link_libraries(jarvis_core tcmalloc)
@@ -120,3 +121,7 @@ target_link_libraries(naive_supervised_baseline jarvis_core)
 rosbuild_add_executable(compression_experiment src/prog/compression_experiment.cpp)
 rosbuild_link_boost(compression_experiment program_options filesystem)
 target_link_libraries(compression_experiment jarvis_core)
+
+rosbuild_add_executable(background_compression_experiment src/prog/background_compression_experiment.cpp)
+rosbuild_link_boost(background_compression_experiment program_options filesystem)
+target_link_libraries(background_compression_experiment jarvis_core)
