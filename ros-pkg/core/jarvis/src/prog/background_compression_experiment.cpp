@@ -83,13 +83,12 @@ void CompressionTest::run(const std::vector<cv::Mat3b>& color)
   cout << name_ << " mean pixel difference (RGB values): " << diff << endl;
 }
 
-class PNGCompressionTest : public CompressionTest
+class SingleFrameCompressionTest : public CompressionTest
 {
 public:
   
-  PNGCompressionTest(std::string name, int level) :
-    CompressionTest(name),
-    level_(level)
+  SingleFrameCompressionTest(std::string name) :
+    CompressionTest(name)
   {
   }
   
@@ -103,17 +102,15 @@ public:
                          size_t idx, std::vector<cv::Mat3b>* color);
 
 protected:
-  int level_;
   //! Temporary storage.  Avoids excessive reallocation.
   vector<uint8_t> buffer_;
 
-  size_t decompressImage(const std::vector<uint8_t>& data,
-                         size_t idx, cv::Mat3b* img);
-  void compressImage(cv::Mat3b img, std::vector<uint8_t>* data);
+  virtual size_t decompressImage(const std::vector<uint8_t>& data,
+                                 size_t idx, cv::Mat3b* img) = 0;
+  virtual void compressImage(cv::Mat3b img, std::vector<uint8_t>* data) = 0;
 };
 
-
-void PNGCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
+void SingleFrameCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
                                                std::vector<uint8_t>* data)
 {
   writeToVec(color.size(), data);
@@ -121,19 +118,7 @@ void PNGCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
     compressImage(color[i], data);
 }
 
-void PNGCompressionTest::compressImage(cv::Mat3b img, std::vector<uint8_t>* data) 
-{
-  vector<int> compression_params;
-  compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
-  compression_params.push_back(level_);  
-
-  buffer_.clear();
-  buffer_.reserve(100000);
-  cv::imencode(".png", img, buffer_, compression_params);
-  writeToVec(buffer_, data);
-}
-
-size_t PNGCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
+size_t SingleFrameCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
                                                    size_t idx, std::vector<cv::Mat3b>* color)
 {
   size_t num_frames;
@@ -150,7 +135,74 @@ size_t PNGCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
   return idx;
 }
 
+class PNGCompressionTest : public SingleFrameCompressionTest
+{
+public:
+  PNGCompressionTest(std::string name, int level) :
+    SingleFrameCompressionTest(name),
+    level_(level)
+  {
+  }
+  
+  size_t decompressImage(const std::vector<uint8_t>& data,
+                         size_t idx, cv::Mat3b* img);
+  void compressImage(cv::Mat3b img, std::vector<uint8_t>* data);
+
+protected:
+  int level_;
+};
+
+void PNGCompressionTest::compressImage(cv::Mat3b img, std::vector<uint8_t>* data) 
+{
+  vector<int> compression_params;
+  compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+  compression_params.push_back(level_);  
+
+  buffer_.clear();
+  buffer_.reserve(100000);
+  cv::imencode(".png", img, buffer_, compression_params);
+  writeToVec(buffer_, data);
+}
+
 size_t PNGCompressionTest::decompressImage(const std::vector<uint8_t>& data,
+                                           size_t idx, cv::Mat3b* img) 
+{
+  buffer_.clear();
+  idx = readFromVec(data, idx, &buffer_);
+  *img = cv::imdecode(buffer_, -1);  // Load as-is.
+  return idx;
+}
+  
+class JPGCompressionTest : public SingleFrameCompressionTest
+{
+public:
+  JPGCompressionTest(std::string name, int level) :
+    SingleFrameCompressionTest(name),
+    level_(level)
+  {
+  }
+  
+  size_t decompressImage(const std::vector<uint8_t>& data,
+                         size_t idx, cv::Mat3b* img);
+  void compressImage(cv::Mat3b img, std::vector<uint8_t>* data);
+
+protected:
+  int level_;
+};
+
+void JPGCompressionTest::compressImage(cv::Mat3b img, std::vector<uint8_t>* data) 
+{
+  vector<int> compression_params;
+  compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
+  compression_params.push_back(level_);  
+
+  buffer_.clear();
+  buffer_.reserve(100000);
+  cv::imencode(".jpg", img, buffer_, compression_params);
+  writeToVec(buffer_, data);
+}
+
+size_t JPGCompressionTest::decompressImage(const std::vector<uint8_t>& data,
                                            size_t idx, cv::Mat3b* img) 
 {
   buffer_.clear();
@@ -198,6 +250,10 @@ int main(int argc, char** argv)
   cout << "Loaded " << color.size() << " test images." << endl;
   
   vector<CompressionTest*> cts;
+  cts.push_back(new JPGCompressionTest("JPGCompressionTest-0", 0));
+  cts.push_back(new JPGCompressionTest("JPGCompressionTest-50", 50));
+  cts.push_back(new JPGCompressionTest("JPGCompressionTest-90", 90));
+  cts.push_back(new JPGCompressionTest("JPGCompressionTest-99", 99));
   cts.push_back(new PNGCompressionTest("PNGCompressionTest-0", 0));
   cts.push_back(new PNGCompressionTest("PNGCompressionTest-5", 5));
   cts.push_back(new PNGCompressionTest("PNGCompressionTest-9", 9));
