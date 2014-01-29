@@ -6,6 +6,9 @@
 #include <boost/filesystem.hpp>
 #include <bag_of_tricks/glob.h>
 #include <jarvis/compression_helpers.h>
+extern "C" {
+#include <libavcodec/avcodec.h>
+}
 
 using namespace std;
 namespace bfs = boost::filesystem;
@@ -29,6 +32,113 @@ protected:
   std::string name_;
 
   double meanPixelDifference(cv::Mat3b img0, cv::Mat3b img1) const;
+};
+
+class SingleFrameCompressionTest : public CompressionTest
+{
+public:
+  
+  SingleFrameCompressionTest(std::string name) :
+    CompressionTest(name)
+  {
+  }
+  
+  //! Compress the chunk and append to data.
+  void compressChunk(const std::vector<cv::Mat3b>& color,
+                     std::vector<uint8_t>* data);
+  //! Decompress the chunk that starts at data[idx].
+  //! Return the index that the next track starts at.
+  //! If none, return zero.
+  size_t decompressChunk(const std::vector<uint8_t>& data,
+                         size_t idx, std::vector<cv::Mat3b>* color);
+
+protected:
+  //! Temporary storage.  Avoids excessive reallocation.
+  vector<uint8_t> buffer_;
+
+  virtual size_t decompressImage(const std::vector<uint8_t>& data,
+                                 size_t idx, cv::Mat3b* img) = 0;
+  virtual void compressImage(cv::Mat3b img, std::vector<uint8_t>* data) = 0;
+};
+
+class JPGCompressionTest : public SingleFrameCompressionTest
+{
+public:
+  JPGCompressionTest(std::string name, int level) :
+    SingleFrameCompressionTest(name),
+    level_(level)
+  {
+  }
+  
+  size_t decompressImage(const std::vector<uint8_t>& data,
+                         size_t idx, cv::Mat3b* img);
+  void compressImage(cv::Mat3b img, std::vector<uint8_t>* data);
+
+protected:
+  int level_;
+};
+
+class PNGCompressionTest : public SingleFrameCompressionTest
+{
+public:
+  PNGCompressionTest(std::string name, int level) :
+    SingleFrameCompressionTest(name),
+    level_(level)
+  {
+  }
+  
+  size_t decompressImage(const std::vector<uint8_t>& data,
+                         size_t idx, cv::Mat3b* img);
+  void compressImage(cv::Mat3b img, std::vector<uint8_t>* data);
+
+protected:
+  int level_;
+};
+
+class VideoCompressionTest : public CompressionTest
+{
+public:
+  
+  VideoCompressionTest(std::string name) :
+    CompressionTest(name)
+  {
+  }
+  
+  //! Compress the chunk and append to data.
+  void compressChunk(const std::vector<cv::Mat3b>& color,
+                     std::vector<uint8_t>* data);
+  //! Decompress the chunk that starts at data[idx].
+  //! Return the index that the next track starts at.
+  //! If none, return zero.
+  size_t decompressChunk(const std::vector<uint8_t>& data,
+                         size_t idx, std::vector<cv::Mat3b>* color);
+
+protected:
+  //! Temporary storage.  Avoids excessive reallocation.
+  vector<uint8_t> buffer_;
+};
+
+class OpenCVVideoCompressionTest : public CompressionTest
+{
+public:
+  
+  OpenCVVideoCompressionTest(std::string name) :
+    CompressionTest(name)
+  {
+  }
+  
+  //! Compress the chunk and append to data.
+  void compressChunk(const std::vector<cv::Mat3b>& color,
+                     std::vector<uint8_t>* data);
+  //! Decompress the chunk that starts at data[idx].
+  //! Return the index that the next track starts at.
+  //! If none, return zero.
+  size_t decompressChunk(const std::vector<uint8_t>& data,
+                         size_t idx, std::vector<cv::Mat3b>* color);
+
+protected:
+  //! Temporary storage.  Avoids excessive reallocation.
+  vector<uint8_t> buffer_;
 };
 
 double CompressionTest::meanPixelDifference(cv::Mat3b img0, cv::Mat3b img1) const
@@ -83,33 +193,6 @@ void CompressionTest::run(const std::vector<cv::Mat3b>& color)
   cout << name_ << " mean pixel difference (RGB values): " << diff << endl;
 }
 
-class SingleFrameCompressionTest : public CompressionTest
-{
-public:
-  
-  SingleFrameCompressionTest(std::string name) :
-    CompressionTest(name)
-  {
-  }
-  
-  //! Compress the chunk and append to data.
-  void compressChunk(const std::vector<cv::Mat3b>& color,
-                     std::vector<uint8_t>* data);
-  //! Decompress the chunk that starts at data[idx].
-  //! Return the index that the next track starts at.
-  //! If none, return zero.
-  size_t decompressChunk(const std::vector<uint8_t>& data,
-                         size_t idx, std::vector<cv::Mat3b>* color);
-
-protected:
-  //! Temporary storage.  Avoids excessive reallocation.
-  vector<uint8_t> buffer_;
-
-  virtual size_t decompressImage(const std::vector<uint8_t>& data,
-                                 size_t idx, cv::Mat3b* img) = 0;
-  virtual void compressImage(cv::Mat3b img, std::vector<uint8_t>* data) = 0;
-};
-
 void SingleFrameCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
                                                std::vector<uint8_t>* data)
 {
@@ -135,23 +218,6 @@ size_t SingleFrameCompressionTest::decompressChunk(const std::vector<uint8_t>& d
   return idx;
 }
 
-class PNGCompressionTest : public SingleFrameCompressionTest
-{
-public:
-  PNGCompressionTest(std::string name, int level) :
-    SingleFrameCompressionTest(name),
-    level_(level)
-  {
-  }
-  
-  size_t decompressImage(const std::vector<uint8_t>& data,
-                         size_t idx, cv::Mat3b* img);
-  void compressImage(cv::Mat3b img, std::vector<uint8_t>* data);
-
-protected:
-  int level_;
-};
-
 void PNGCompressionTest::compressImage(cv::Mat3b img, std::vector<uint8_t>* data) 
 {
   vector<int> compression_params;
@@ -172,23 +238,6 @@ size_t PNGCompressionTest::decompressImage(const std::vector<uint8_t>& data,
   *img = cv::imdecode(buffer_, -1);  // Load as-is.
   return idx;
 }
-  
-class JPGCompressionTest : public SingleFrameCompressionTest
-{
-public:
-  JPGCompressionTest(std::string name, int level) :
-    SingleFrameCompressionTest(name),
-    level_(level)
-  {
-  }
-  
-  size_t decompressImage(const std::vector<uint8_t>& data,
-                         size_t idx, cv::Mat3b* img);
-  void compressImage(cv::Mat3b img, std::vector<uint8_t>* data);
-
-protected:
-  int level_;
-};
 
 void JPGCompressionTest::compressImage(cv::Mat3b img, std::vector<uint8_t>* data) 
 {
@@ -211,6 +260,96 @@ size_t JPGCompressionTest::decompressImage(const std::vector<uint8_t>& data,
   return idx;
 }
   
+
+void VideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
+                                         std::vector<uint8_t>* data)
+{
+  avcodec_register_all();
+  
+  // -- Set up AVCodec.
+  //    See video_encode_example in libav.
+  //AVCodec* codec = avcodec_find_encoder(CODEC_ID_FFV1);
+  //AVCodec* codec = avcodec_find_encoder(CODEC_ID_H264);
+  AVCodec* codec = avcodec_find_encoder(CODEC_ID_MPEG1VIDEO);
+  AVCodecContext* ctx = avcodec_alloc_context3(codec);
+  ctx->bit_rate = 400000;
+  ctx->width = color[0].cols;
+  ctx->height = color[0].rows;
+  ctx->time_base = (AVRational){1, 25};
+  ctx->gop_size = 10;
+  ctx->max_b_frames = 1;
+  //ctx->pix_fmt = PIX_FMT_RGB32;
+  ctx->pix_fmt = PIX_FMT_YUV420P;
+
+  int err = avcodec_open2(ctx, codec, NULL);
+  if(err < 0) {
+    cout << "Failed to open codec." << endl;
+    cout << "Error: " << err << endl;
+    ROS_ASSERT(0);
+  }
+
+  // -- Set up the AVFrame.
+  size_t num_pixels = color[0].rows * color[0].cols;
+  vector<uint8_t> frame_buffer(3 * num_pixels / 2);
+  AVFrame* frame = avcodec_alloc_frame();
+  frame->data[0] = frame_buffer.data();
+  frame->data[1] = frame->data[0] + num_pixels;
+  frame->data[2] = frame->data[1] + num_pixels / 4;
+  frame->linesize[0] = ctx->width;
+  frame->linesize[1] = ctx->width / 2;
+  frame->linesize[2] = ctx->width / 2;
+
+  // -- Encode each frame one at a time.
+  cv::Mat3b yuv;
+  for(size_t i = 0; i < color.size(); ++i) {
+    cv::cvtColor(color[i], yuv, cv::COLOR_BGR2YCrCb);
+    for(size_t j = 0; j < num_pixels; ++j)
+      frame->data[0][j] = yuv(j)[0];
+    size_t idx = 0;
+    for(int y = 0; y < yuv.rows; y += 2) {
+      for(int x = 0; x < yuv.rows; x += 2, ++idx) { 
+        frame->data[1][idx] = yuv(y, x)[1];
+        frame->data[2][idx] = yuv(y, x)[2];
+      }
+    }
+    vector<uint8_t> output_buffer(100000);  
+    size_t out_size = avcodec_encode_video(ctx, output_buffer.data(), output_buffer.size(), frame);
+    ROS_ASSERT(out_size < output_buffer.size());
+    output_buffer.resize(out_size);
+    writeToVec(output_buffer, data);
+  }
+  
+  // -- Clean up.
+  avcodec_close(ctx);
+  av_free(ctx);
+  av_free(frame);
+}
+
+size_t VideoCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
+                                             size_t idx, std::vector<cv::Mat3b>* color)
+{
+  return 0;
+}
+
+void OpenCVVideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
+                                               std::vector<uint8_t>* data)
+{
+  cv::VideoWriter writer;
+
+  // This consistently spits out "Unsupported format or combination of formats"
+  // I am compiling with FFMPEG=ON.
+  writer.open("tmpvideo", CV_FOURCC('H','2','6','4'), 30, color[0].size());
+  //writer.open("tmpvideo", CV_FOURCC('P','I','M','1'), 30, color[0].size());
+  //writer.open("tmpvideo", CV_FOURCC('M','J','P','G'), 30, color[0].size());
+  
+  for(size_t i = 0; i < color.size(); ++i)
+    writer.write(color[i]);
+}
+size_t OpenCVVideoCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
+                                                   size_t idx, std::vector<cv::Mat3b>* color)
+{
+
+}
 
 int main(int argc, char** argv)
 {
@@ -250,6 +389,8 @@ int main(int argc, char** argv)
   cout << "Loaded " << color.size() << " test images." << endl;
   
   vector<CompressionTest*> cts;
+  //cts.push_back(new OpenCVVideoCompressionTest("OpenCVVideoCompressionTest"));
+  cts.push_back(new VideoCompressionTest("VideoCompressionTest"));
   cts.push_back(new JPGCompressionTest("JPGCompressionTest-0", 0));
   cts.push_back(new JPGCompressionTest("JPGCompressionTest-50", 50));
   cts.push_back(new JPGCompressionTest("JPGCompressionTest-90", 90));

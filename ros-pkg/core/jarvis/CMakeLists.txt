@@ -124,4 +124,4 @@ target_link_libraries(compression_experiment jarvis_core)
 
 rosbuild_add_executable(background_compression_experiment src/prog/background_compression_experiment.cpp)
 rosbuild_link_boost(background_compression_experiment program_options filesystem)
-target_link_libraries(background_compression_experiment jarvis_core)
+target_link_libraries(background_compression_experiment jarvis_core avcodec avformat avutil)
