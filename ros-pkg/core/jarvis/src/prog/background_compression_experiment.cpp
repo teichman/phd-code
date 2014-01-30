@@ -116,6 +116,8 @@ public:
 protected:
   //! Temporary storage.  Avoids excessive reallocation.
   vector<uint8_t> buffer_;
+
+  cv::Mat3b AVFrameToCV(const AVCodecContext& ctx, const AVFrame& frame) const;
 };
 
 class OpenCVVideoCompressionTest : public CompressionTest
@@ -190,6 +192,7 @@ void CompressionTest::run(const std::vector<cv::Mat3b>& color)
 
   double diff = 0;
   for(size_t i = 0; i < color.size(); ++i) {
+    cv::imshow("Original", color[i]);
     cv::imshow("Decompressed", color2[i]);
     cv::waitKey(2);
     diff += meanPixelDifference(color[i], color2[i]);
@@ -331,7 +334,7 @@ void VideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
   frame->linesize[0] = ctx->width;
   frame->linesize[1] = ctx->width / 2;
   frame->linesize[2] = ctx->width / 2;
-  cout << "Line sizes: " << frame->linesize[0] << " " << linesize[1] << " " << linesize[2] << endl;
+  cout << "Line sizes: " << frame->linesize[0] << " " << frame->linesize[1] << " " << frame->linesize[2] << endl;
 
   // -- Encode each frame one at a time.
   cv::Mat3b yuv;
@@ -356,6 +359,19 @@ void VideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
     ROS_ASSERT(out_size < output_buffer.size());
     output_buffer.resize(out_size);
     writeToVec(output_buffer, data);
+    cout << "Wrote chunk of size " << output_buffer.size() << endl;
+  }
+
+  // -- Flush out the buffer.
+  while(true) {
+    vector<uint8_t> output_buffer(100000);
+    size_t out_size = avcodec_encode_video(ctx, output_buffer.data(), output_buffer.size(), NULL);
+    ROS_ASSERT(out_size < output_buffer.size());
+    output_buffer.resize(out_size);
+    writeToVec(output_buffer, data);
+    cout << "Wrote chunk of size " << output_buffer.size() << endl;
+    if(out_size == 0)
+      break;
   }
   
   // -- Clean up.
@@ -375,6 +391,39 @@ static void pgm_save(unsigned char *buf, int wrap, int xsize, int ysize,
     for(i=0;i<ysize;i++)
         fwrite(buf + i * wrap,1,xsize,f);
     fclose(f);
+}
+
+cv::Mat3b VideoCompressionTest::AVFrameToCV(const AVCodecContext& ctx, const AVFrame& frame) const
+{
+  cv::Mat3b yuv(cv::Size(ctx.width, ctx.height));
+  for(int y = 0; y < yuv.rows; ++y) {
+    for(int x = 0; x < yuv.cols; ++x) {
+      yuv(y, x)[0] = frame.data[0][y * frame.linesize[0] + x];
+      yuv(y, x)[1] = frame.data[1][y/2 * frame.linesize[1] + x/2];
+      yuv(y, x)[2] = frame.data[2][y/2 * frame.linesize[2] + x/2];
+    }
+  }
+  cv::Mat1b uimg(cv::Size(ctx.width / 2, ctx.height / 2));
+  for(int y = 0; y < uimg.rows; ++y) {
+    for(int x = 0; x < uimg.cols; ++x) {
+      uimg(y, x) = frame.data[1][y * frame.linesize[1] + x];
+    }
+  }
+  cv::imshow("uimg", uimg);
+  cv::Mat1b vimg(cv::Size(ctx.width / 2, ctx.height / 2));
+  for(int y = 0; y < vimg.rows; ++y) {
+    for(int x = 0; x < vimg.cols; ++x) {
+      vimg(y, x) = frame.data[2][y * frame.linesize[2] + x];
+    }
+  }
+  cv::imshow("vimg", vimg);
+
+  cv::Mat3b bgr;
+  cv::cvtColor(yuv, bgr, cv::COLOR_YCrCb2BGR);
+  cv::imshow("decompressed", bgr);
+  cv::waitKey(2);
+
+  return bgr;
 }
 
 size_t VideoCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
@@ -407,11 +456,14 @@ size_t VideoCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
 
   vector<uint8_t> chunk;
   chunk.reserve(100000);
-  int num = 0;
+  int num_frames = 0;
+  int num_chunks = 0;
   while(idx < data.size()) {
     // Get the next chunk.
     chunk.clear();
     idx = readFromVec(data, idx, &chunk);
+    cout << "Reading chunk of size " << chunk.size() << endl;
+    ++num_chunks;
     if(chunk.empty())
       continue;
     
@@ -422,54 +474,33 @@ size_t VideoCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
       int got_frame;
       int len = avcodec_decode_video2(ctx, frame, &got_frame, &avpkt);
       if(len < 0) {
-        fprintf(stderr, "Error while decoding frame %d\n", num);
+        fprintf(stderr, "Error while decoding frame %d\n", num_frames);
         exit(1);
       }
       if(got_frame) {
-        // printf("saving frame %3d\n", num);
-        // fflush(stdout);
-        /* the picture is allocated by the decoder. no need to
-           free it */
-        // char buf[1024];
-        // snprintf(buf, sizeof(buf), "test%04d.pgm", num);
-        // pgm_save(frame->data[0], frame->linesize[0],
-        //          ctx->width, ctx->height, buf);
-
-        cv::Mat3b yuv(cv::Size(ctx->width, ctx->height));
-        for(int y = 0; y < yuv.rows; ++y) {
-          for(int x = 0; x < yuv.cols; ++x) {
-            yuv(y, x)[0] = frame->data[0][y * frame->linesize[0] + x];
-            yuv(y, x)[1] = frame->data[1][y/2 * frame->linesize[1] + x/2];
-            yuv(y, x)[2] = frame->data[2][y/2 * frame->linesize[2] + x/2];
-          }
-        }
-        cv::Mat1b uimg(cv::Size(ctx->width / 2, ctx->height / 2));
-        for(int y = 0; y < uimg.rows; ++y) {
-          for(int x = 0; x < uimg.cols; ++x) {
-            uimg(y, x) = frame->data[1][y * frame->linesize[1] + x];
-          }
-        }
-        cv::imshow("uimg", uimg);
-        cv::Mat1b vimg(cv::Size(ctx->width / 2, ctx->height / 2));
-        for(int y = 0; y < vimg.rows; ++y) {
-          for(int x = 0; x < vimg.cols; ++x) {
-            vimg(y, x) = frame->data[2][y * frame->linesize[2] + x];
-          }
-        }
-        cv::imshow("vimg", vimg);
-
-        cv::Mat3b bgr;
-        cv::cvtColor(yuv, bgr, cv::COLOR_YCrCb2BGR);
-        cv::imshow("decompressed", bgr);
-        cv::waitKey(0);
-        color->push_back(bgr);
-        
-        num++;
+        color->push_back(AVFrameToCV(*ctx, *frame));
+        ++num_frames;
       }
       avpkt.size -= len;
       avpkt.data += len;
     }
   }
+
+  /* some codecs, such as MPEG, transmit the I and P frame with a
+     latency of one frame. You must do the following to have a
+     chance to get the last frame of the video */
+  avpkt.data = NULL;
+  avpkt.size = 0;
+  int got_frame;
+  avcodec_decode_video2(ctx, frame, &got_frame, &avpkt);
+  if(got_frame) {
+    color->push_back(AVFrameToCV(*ctx, *frame));
+    ++num_frames;
+  }
+
+  cout << "Num chunks decoded: " << num_chunks << endl;
+  cout << "Num frames decoded: " << num_frames << endl;
+  
   return idx;
 }
 
