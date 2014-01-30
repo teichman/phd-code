@@ -96,9 +96,9 @@ class H264CompressionTest : public CompressionTest
 {
 public:
   
-  H264CompressionTest(std::string name, int bitrate) :
+  H264CompressionTest(std::string name, int bit_rate) :
     CompressionTest(name),
-    enc_(30, bitrate)
+    bit_rate_(bit_rate)
   {
   }
   
@@ -112,7 +112,10 @@ public:
                          size_t idx, std::vector<cv::Mat3b>* color);
 
 protected:
-  H264Encoder enc_;
+  //! Temporary storage.  Avoids excessive reallocation.
+  vector<uint8_t> buffer_;
+  int bit_rate_;
+  
   cv::Mat3b AVFrameToCV(const AVCodecContext& ctx, const AVFrame& frame) const;
 };
 
@@ -270,14 +273,109 @@ size_t JPGCompressionTest::decompressImage(const std::vector<uint8_t>& data,
 void H264CompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
                                          std::vector<uint8_t>* data)
 {
-  if(!enc_.initialized())
-    enc_.initialize(color[0].cols, color[0].rows);
+  avcodec_init(); 
+  avcodec_register_all();
+  av_log_set_level(-1);
+  
+  // -- Set up AVCodec.
+  //    See video_encode_example in libav.
+  //AVCodec* codec = avcodec_find_encoder(CODEC_ID_FFV1);
+  AVCodec* codec = avcodec_find_encoder(CODEC_ID_H264);
+  //AVCodec* codec = avcodec_find_encoder(CODEC_ID_MPEG1VIDEO);
+  ROS_ASSERT(codec);
 
-  for(size_t i = 0; i < color.size(); ++i)
-    enc_.addFrame(color[i]);
+  int fps = 30;
+  
+  AVCodecContext* ctx = avcodec_alloc_context3(codec);
+  ctx->width = color[0].cols;
+  ctx->height = color[0].rows;
+  ctx->time_base = (AVRational){1, fps};
+  ctx->pix_fmt = PIX_FMT_YUV420P;
 
-  enc_.finalize();
-  data->insert(data->back(), enc_.blob_.begin(), enc_.blob_.end());
+  // See http://stackoverflow.com/questions/3553003/encoding-h-264-with-libavcodec-x264
+  ctx->bit_rate = bit_rate_;
+  ctx->bit_rate_tolerance = 0;
+  ctx->rc_max_rate = 0;
+  ctx->rc_buffer_size = 0;
+  ctx->gop_size = 40;
+  ctx->max_b_frames = 3;
+  ctx->b_frame_strategy = 1;
+  ctx->coder_type = 1;
+  ctx->me_cmp = 1;
+  ctx->me_range = 16;
+  ctx->qmin = 10;
+  ctx->qmax = 51;
+  ctx->scenechange_threshold = 40;
+  ctx->flags |= CODEC_FLAG_LOOP_FILTER;
+  ctx->me_method = ME_HEX;
+  ctx->me_subpel_quality = 5;
+  ctx->i_quant_factor = 0.71;
+  ctx->qcompress = 0.6;
+  ctx->max_qdiff = 4;
+  ctx->directpred = 1;
+  ctx->flags2 |= CODEC_FLAG2_FASTPSKIP;
+
+  int err = avcodec_open2(ctx, codec, NULL);
+  if(err < 0) {
+    cout << "Failed to open codec." << endl;
+    cout << "Error: " << err << endl;
+    ROS_ASSERT(0);
+  }
+
+  // -- Set up the AVFrame.
+  size_t num_pixels = color[0].rows * color[0].cols;
+  vector<uint8_t> frame_buffer(3 * num_pixels / 2);
+  AVFrame* frame = avcodec_alloc_frame();
+  frame->data[0] = frame_buffer.data();
+  frame->data[1] = frame->data[0] + num_pixels;
+  frame->data[2] = frame->data[1] + num_pixels / 4;
+  frame->linesize[0] = ctx->width;
+  frame->linesize[1] = ctx->width / 2;
+  frame->linesize[2] = ctx->width / 2;
+  //cout << "Line sizes: " << frame->linesize[0] << " " << frame->linesize[1] << " " << frame->linesize[2] << endl;
+
+  // -- Encode each frame one at a time.
+  cv::Mat3b yuv;
+  for(size_t i = 0; i < color.size(); ++i) {
+    cv::cvtColor(color[i], yuv, cv::COLOR_BGR2YCrCb);
+    for(size_t j = 0; j < num_pixels; ++j)
+      frame->data[0][j] = yuv(j)[0];
+    for(int y = 0; y < ctx->height / 2; ++y) {
+      for(int x = 0; x < ctx->width / 2; ++x) { 
+        frame->data[1][y * frame->linesize[1] + x] = yuv(y*2, x*2)[1];
+        frame->data[2][y * frame->linesize[2] + x] = yuv(y*2, x*2)[2];
+      }
+    }
+
+    // http://stackoverflow.com/questions/6603979/ffmpegavcodec-encode-video-setting-pts-h264
+    // Calculate PTS: (1 / FPS) * sample rate * frame number
+    // sample rate 90KHz is for h.264 at 30 fps
+    frame->pts = (1.0 / fps) * 90 * i;
+
+    vector<uint8_t> output_buffer(1e6);
+    size_t out_size = avcodec_encode_video(ctx, output_buffer.data(), output_buffer.size(), frame);
+    ROS_ASSERT(out_size < output_buffer.size());
+    output_buffer.resize(out_size);
+    writeToVec(output_buffer, data);
+    //cout << "Wrote chunk of size " << output_buffer.size() << endl;
+  }
+
+  // -- Flush out the buffer.
+  while(true) {
+    vector<uint8_t> output_buffer(1e6);
+    size_t out_size = avcodec_encode_video(ctx, output_buffer.data(), output_buffer.size(), NULL);
+    ROS_ASSERT(out_size < output_buffer.size());
+    output_buffer.resize(out_size);
+    writeToVec(output_buffer, data);
+    //cout << "Wrote chunk of size " << output_buffer.size() << endl;
+    if(out_size == 0)
+      break;
+  }
+  
+  // -- Clean up.
+  avcodec_close(ctx);
+  av_free(ctx);
+  av_free(frame);
 }
 
 static void pgm_save(unsigned char *buf, int wrap, int xsize, int ysize,
