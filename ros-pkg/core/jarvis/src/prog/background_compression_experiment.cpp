@@ -331,6 +331,7 @@ void VideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
   frame->linesize[0] = ctx->width;
   frame->linesize[1] = ctx->width / 2;
   frame->linesize[2] = ctx->width / 2;
+  cout << "Line sizes: " << frame->linesize[0] << " " << linesize[1] << " " << linesize[2] << endl;
 
   // -- Encode each frame one at a time.
   cv::Mat3b yuv;
@@ -338,11 +339,10 @@ void VideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
     cv::cvtColor(color[i], yuv, cv::COLOR_BGR2YCrCb);
     for(size_t j = 0; j < num_pixels; ++j)
       frame->data[0][j] = yuv(j)[0];
-    size_t idx = 0;
-    for(int y = 0; y < yuv.rows; y += 2) {
-      for(int x = 0; x < yuv.rows; x += 2, ++idx) { 
-        frame->data[1][idx] = yuv(y, x)[1];
-        frame->data[2][idx] = yuv(y, x)[2];
+    for(int y = 0; y < ctx->height / 2; ++y) {
+      for(int x = 0; x < ctx->width / 2; ++x) { 
+        frame->data[1][y * frame->linesize[1] + x] = yuv(y*2, x*2)[1];
+        frame->data[2][y * frame->linesize[2] + x] = yuv(y*2, x*2)[2];
       }
     }
 
@@ -439,13 +439,29 @@ size_t VideoCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
         for(int y = 0; y < yuv.rows; ++y) {
           for(int x = 0; x < yuv.cols; ++x) {
             yuv(y, x)[0] = frame->data[0][y * frame->linesize[0] + x];
+            yuv(y, x)[1] = frame->data[1][y/2 * frame->linesize[1] + x/2];
+            yuv(y, x)[2] = frame->data[2][y/2 * frame->linesize[2] + x/2];
           }
         }
+        cv::Mat1b uimg(cv::Size(ctx->width / 2, ctx->height / 2));
+        for(int y = 0; y < uimg.rows; ++y) {
+          for(int x = 0; x < uimg.cols; ++x) {
+            uimg(y, x) = frame->data[1][y * frame->linesize[1] + x];
+          }
+        }
+        cv::imshow("uimg", uimg);
+        cv::Mat1b vimg(cv::Size(ctx->width / 2, ctx->height / 2));
+        for(int y = 0; y < vimg.rows; ++y) {
+          for(int x = 0; x < vimg.cols; ++x) {
+            vimg(y, x) = frame->data[2][y * frame->linesize[2] + x];
+          }
+        }
+        cv::imshow("vimg", vimg);
 
         cv::Mat3b bgr;
         cv::cvtColor(yuv, bgr, cv::COLOR_YCrCb2BGR);
         cv::imshow("decompressed", bgr);
-        cv::waitKey(2);
+        cv::waitKey(0);
         color->push_back(bgr);
         
         num++;
