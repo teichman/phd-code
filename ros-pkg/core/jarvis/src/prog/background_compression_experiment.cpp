@@ -269,45 +269,50 @@ size_t JPGCompressionTest::decompressImage(const std::vector<uint8_t>& data,
 void VideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
                                          std::vector<uint8_t>* data)
 {
+  avcodec_init(); 
   avcodec_register_all();
   
   // -- Set up AVCodec.
   //    See video_encode_example in libav.
   //AVCodec* codec = avcodec_find_encoder(CODEC_ID_FFV1);
-  //AVCodec* codec = avcodec_find_encoder(CODEC_ID_H264);
-  AVCodec* codec = avcodec_find_encoder(CODEC_ID_MPEG1VIDEO);
+  AVCodec* codec = avcodec_find_encoder(CODEC_ID_H264);
+  //AVCodec* codec = avcodec_find_encoder(CODEC_ID_MPEG1VIDEO);
+  ROS_ASSERT(codec);
+
+  int fps = 30;
+  
   AVCodecContext* ctx = avcodec_alloc_context3(codec);
   ctx->bit_rate = 400000;
   ctx->width = color[0].cols;
   ctx->height = color[0].rows;
-  ctx->time_base = (AVRational){1, 25};
+  ctx->time_base = (AVRational){1, fps};
   ctx->gop_size = 10;
   ctx->max_b_frames = 1;
   //ctx->pix_fmt = PIX_FMT_RGB32;
   ctx->pix_fmt = PIX_FMT_YUV420P;
 
   // // Shamelessly copied from http://stackoverflow.com/questions/3553003/encoding-h-264-with-libavcodec-x264
-  // ctx->bit_rate = 500*1000;
-  // ctx->bit_rate_tolerance = 0;
-  // ctx->rc_max_rate = 0;
-  // ctx->rc_buffer_size = 0;
-  // ctx->gop_size = 40;
-  // ctx->max_b_frames = 3;
-  // ctx->b_frame_strategy = 1;
-  // ctx->coder_type = 1;
-  // ctx->me_cmp = 1;
-  // ctx->me_range = 16;
-  // ctx->qmin = 10;
-  // ctx->qmax = 51;
-  // ctx->scenechange_threshold = 40;
-  // ctx->flags |= CODEC_FLAG_LOOP_FILTER;
-  // ctx->me_method = ME_HEX;
-  // ctx->me_subpel_quality = 5;
-  // ctx->i_quant_factor = 0.71;
-  // ctx->qcompress = 0.6;
-  // ctx->max_qdiff = 4;
-  // ctx->directpred = 1;
-  // ctx->flags2 |= CODEC_FLAG2_FASTPSKIP;
+  ctx->bit_rate = 500*1000;
+  ctx->bit_rate_tolerance = 0;
+  ctx->rc_max_rate = 0;
+  ctx->rc_buffer_size = 0;
+  ctx->gop_size = 40;
+  ctx->max_b_frames = 3;
+  ctx->b_frame_strategy = 1;
+  ctx->coder_type = 1;
+  ctx->me_cmp = 1;
+  ctx->me_range = 16;
+  ctx->qmin = 10;
+  ctx->qmax = 51;
+  ctx->scenechange_threshold = 40;
+  ctx->flags |= CODEC_FLAG_LOOP_FILTER;
+  ctx->me_method = ME_HEX;
+  ctx->me_subpel_quality = 5;
+  ctx->i_quant_factor = 0.71;
+  ctx->qcompress = 0.6;
+  ctx->max_qdiff = 4;
+  ctx->directpred = 1;
+  ctx->flags2 |= CODEC_FLAG2_FASTPSKIP;
 
   int err = avcodec_open2(ctx, codec, NULL);
   if(err < 0) {
@@ -340,7 +345,13 @@ void VideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
         frame->data[2][idx] = yuv(y, x)[2];
       }
     }
-    vector<uint8_t> output_buffer(100000);  
+
+    // http://stackoverflow.com/questions/6603979/ffmpegavcodec-encode-video-setting-pts-h264
+    // Calculate PTS: (1 / FPS) * sample rate * frame number
+    // sample rate 90KHz is for h.264 at 30 fps
+    frame->pts = (1.0 / fps) * 90 * i;
+
+    vector<uint8_t> output_buffer(100000);
     size_t out_size = avcodec_encode_video(ctx, output_buffer.data(), output_buffer.size(), frame);
     ROS_ASSERT(out_size < output_buffer.size());
     output_buffer.resize(out_size);
@@ -370,7 +381,8 @@ size_t VideoCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
                                              size_t idx, std::vector<cv::Mat3b>* color)
 {
   // See video_decode_example().
-  AVCodec* codec = avcodec_find_decoder(CODEC_ID_MPEG1VIDEO);
+  //AVCodec* codec = avcodec_find_decoder(CODEC_ID_MPEG1VIDEO);
+  AVCodec* codec = avcodec_find_decoder(CODEC_ID_H264);
   ROS_ASSERT(codec);
   AVCodecContext* ctx = avcodec_alloc_context3(codec);
   AVFrame* frame = avcodec_alloc_frame();
