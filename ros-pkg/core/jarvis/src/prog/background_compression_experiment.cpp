@@ -182,7 +182,12 @@ void CompressionTest::run(const std::vector<cv::Mat3b>& color)
   hrt.stop();
   cout << name_ << " decompression time (ms / frame): " << hrt.getMilliseconds() / color.size() << endl;
 
-  ROS_ASSERT(color.size() == color2.size());
+  if(color.size() != color2.size()) {
+    cout << "Before: " << color.size() << " frames." << endl;
+    cout << "After: " << color2.size() << " frames." << endl;
+    ROS_ASSERT(0);
+  }
+
   double diff = 0;
   for(size_t i = 0; i < color.size(); ++i) {
     cv::imshow("Decompressed", color2[i]);
@@ -281,6 +286,29 @@ void VideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
   //ctx->pix_fmt = PIX_FMT_RGB32;
   ctx->pix_fmt = PIX_FMT_YUV420P;
 
+  // // Shamelessly copied from http://stackoverflow.com/questions/3553003/encoding-h-264-with-libavcodec-x264
+  // ctx->bit_rate = 500*1000;
+  // ctx->bit_rate_tolerance = 0;
+  // ctx->rc_max_rate = 0;
+  // ctx->rc_buffer_size = 0;
+  // ctx->gop_size = 40;
+  // ctx->max_b_frames = 3;
+  // ctx->b_frame_strategy = 1;
+  // ctx->coder_type = 1;
+  // ctx->me_cmp = 1;
+  // ctx->me_range = 16;
+  // ctx->qmin = 10;
+  // ctx->qmax = 51;
+  // ctx->scenechange_threshold = 40;
+  // ctx->flags |= CODEC_FLAG_LOOP_FILTER;
+  // ctx->me_method = ME_HEX;
+  // ctx->me_subpel_quality = 5;
+  // ctx->i_quant_factor = 0.71;
+  // ctx->qcompress = 0.6;
+  // ctx->max_qdiff = 4;
+  // ctx->directpred = 1;
+  // ctx->flags2 |= CODEC_FLAG2_FASTPSKIP;
+
   int err = avcodec_open2(ctx, codec, NULL);
   if(err < 0) {
     cout << "Failed to open codec." << endl;
@@ -325,11 +353,23 @@ void VideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
   av_free(frame);
 }
 
+static void pgm_save(unsigned char *buf, int wrap, int xsize, int ysize,
+                     char *filename)
+{
+    FILE *f;
+    int i;
+
+    f=fopen(filename,"w");
+    fprintf(f,"P5\n%d %d\n%d\n",xsize,ysize,255);
+    for(i=0;i<ysize;i++)
+        fwrite(buf + i * wrap,1,xsize,f);
+    fclose(f);
+}
+
 size_t VideoCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
                                              size_t idx, std::vector<cv::Mat3b>* color)
 {
   // See video_decode_example().
-  
   AVCodec* codec = avcodec_find_decoder(CODEC_ID_MPEG1VIDEO);
   ROS_ASSERT(codec);
   AVCodecContext* ctx = avcodec_alloc_context3(codec);
@@ -346,53 +386,63 @@ size_t VideoCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
     ROS_ASSERT(0);
   }
 
-  
-  frame = 0;
-  for(;;) {
-    avpkt.size = fread(inbuf, 1, INBUF_SIZE, f);
-    if (avpkt.size == 0)
-      break;
+  AVPacket avpkt;
+  av_init_packet(&avpkt);
+  size_t inbuf_size = 4096;
+  size_t ff_input_buffer_padding_size = 8;
+  /* set end of buffer to 0 (this ensures that no overreading happens for damaged mpeg streams) */
+  vector<uint8_t> inbuf(inbuf_size + ff_input_buffer_padding_size, 0);
 
-    /* NOTE1: some codecs are stream based (mpegvideo, mpegaudio)
-       and this is the only method to use them because you cannot
-       know the compressed data size before analysing it.
+  vector<uint8_t> chunk;
+  chunk.reserve(100000);
+  int num = 0;
+  while(idx < data.size()) {
+    // Get the next chunk.
+    chunk.clear();
+    idx = readFromVec(data, idx, &chunk);
+    if(chunk.empty())
+      continue;
+    
+    avpkt.size = chunk.size();
+    avpkt.data = chunk.data();
 
-       BUT some other codecs (msmpeg4, mpeg4) are inherently frame
-       based, so you must call them with all the data for one
-       frame exactly. You must also initialize 'width' and
-       'height' before initializing them. */
-
-    /* NOTE2: some codecs allow the raw parameters (frame size,
-       sample rate) to be changed at any frame. We handle this, so
-       you should also take care of it */
-
-    /* here, we use a stream based decoder (mpeg1video), so we
-       feed decoder and see if it could decode a frame */
-    avpkt.data = inbuf;
-    while (avpkt.size > 0) {
-      len = avcodec_decode_video2(c, picture, &got_picture, &avpkt);
-      if (len < 0) {
-        fprintf(stderr, "Error while decoding frame %d\n", frame);
+    while(avpkt.size > 0) {
+      int got_frame;
+      int len = avcodec_decode_video2(ctx, frame, &got_frame, &avpkt);
+      if(len < 0) {
+        fprintf(stderr, "Error while decoding frame %d\n", num);
         exit(1);
       }
-      if (got_picture) {
-        printf("saving frame %3d\n", frame);
-        fflush(stdout);
-
+      if(got_frame) {
+        // printf("saving frame %3d\n", num);
+        // fflush(stdout);
         /* the picture is allocated by the decoder. no need to
            free it */
-        snprintf(buf, sizeof(buf), outfilename, frame);
-        pgm_save(picture->data[0], picture->linesize[0],
-                 c->width, c->height, buf);
-        frame++;
+        // char buf[1024];
+        // snprintf(buf, sizeof(buf), "test%04d.pgm", num);
+        // pgm_save(frame->data[0], frame->linesize[0],
+        //          ctx->width, ctx->height, buf);
+
+        cv::Mat3b yuv(cv::Size(ctx->width, ctx->height));
+        for(int y = 0; y < yuv.rows; ++y) {
+          for(int x = 0; x < yuv.cols; ++x) {
+            yuv(y, x)[0] = frame->data[0][y * frame->linesize[0] + x];
+          }
+        }
+
+        cv::Mat3b bgr;
+        cv::cvtColor(yuv, bgr, cv::COLOR_YCrCb2BGR);
+        cv::imshow("decompressed", bgr);
+        cv::waitKey(2);
+        color->push_back(bgr);
+        
+        num++;
       }
       avpkt.size -= len;
       avpkt.data += len;
     }
   }
-
-
-
+  return idx;
 }
 
 void OpenCVVideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
@@ -412,7 +462,8 @@ void OpenCVVideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& col
 size_t OpenCVVideoCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
                                                    size_t idx, std::vector<cv::Mat3b>* color)
 {
-
+  ROS_ASSERT(0);
+  return 0;
 }
 
 int main(int argc, char** argv)
