@@ -3,6 +3,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <bag_of_tricks/glob.h>
 #include <jarvis/compression_helpers.h>
+#include <fstream>
 
 using namespace std;
 namespace bfs = boost::filesystem;
@@ -36,6 +37,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
+
   // -- Load the data.
   vector<string> paths = glob(rgb_dir + "/*.png");
   vector<cv::Mat3b> color;
@@ -48,15 +50,26 @@ int main(int argc, char** argv)
   cout << "Loaded " << color.size() << " test images." << endl;
 
   // -- Encode.
-  H264Encoder enc(25, 2e5);
-  enc.initialize(color[0].cols, color[0].rows);
-  for(size_t i = 0; i < color.size(); ++i)
-    enc.addFrame(color[i]);
+  // H264Encoder enc(25, 2e5);
+  // enc.initialize(color[0].cols, color[0].rows);
+  // for(size_t i = 0; i < color.size(); ++i)
+  //   enc.addFrame(color[i]);
 
-  // -- Write to disk.
-  enc.finalize();
-  enc.save(path);
-  cout << "Wrote to " << path << endl;
+  // // -- Write to disk.
+  // enc.finalize();
+  // enc.save(path);
+  // cout << "Wrote to " << path << endl;
   
+  EncodingOptions encopts;
+  encopts.fps_ = 30;
+  encopts.crf_ = 13;
+
+  vector<uint8_t> blob;
+  encodeH264Shm(encopts, color, &blob);
+
+  ofstream file(path.c_str());
+  file.write((char*)blob.data(), blob.size());
+  file.close();
+
   return 0;
 }

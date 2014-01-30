@@ -2,8 +2,12 @@
 #include <string.h>  // memcpy
 #include <ros/assert.h>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <boost/filesystem.hpp>
+#include <fstream>
 
 using namespace std;
+namespace bfs = boost::filesystem;
 
 H264Encoder::H264Encoder(int fps, int bitrate) :
   fps_(fps),
@@ -206,4 +210,54 @@ size_t readFromVec(const std::vector<uint8_t>& data, size_t idx, std::vector<uin
   chunk->resize(buf);
   memcpy(chunk->data(), data.data() + idx + sizeof(size_t), buf);
   return idx + buf + sizeof(size_t);
+}
+
+int64_t filesize(const std::string& path)
+{
+  ifstream ifs(path, ios::binary);
+  ifs.seekg(0, ios::end);
+  ROS_ASSERT(ifs.tellg() > 0);
+  return ifs.tellg();
+}
+
+void readBlob(const std::string& path, std::vector<uint8_t>* blob)
+{
+  int64_t length = filesize(path);
+  blob->clear();
+  blob->resize(length);
+  ifstream ifs(path, ios::binary);
+  ifs.read((char*)blob->data(), length);
+}
+
+void encodeH264Shm(const EncodingOptions& opts, const std::vector<cv::Mat3b>& images, std::vector<uint8_t>* blob)
+{
+  // -- Create a directory to work in.
+  string dir = "/dev/shm/encodeH264Shm-" + bfs::unique_path().string();  // Technically a bad idea but fine for prototyping.
+  ROS_ASSERT(!bfs::exists(dir));
+  bfs::create_directory(dir);
+
+  // -- Dump out all the images.
+  cout << "Dumping" << endl;
+  for(size_t i = 0; i < images.size(); ++i) {
+    ostringstream oss;
+    oss << dir << "/img" << setw(6) << setfill('0') << i << ".png";
+    cv::imwrite(oss.str(), images[i]);
+  }
+  cout << "Done." << endl;
+  
+  // -- Encode the video.
+  ostringstream oss;
+  oss << "mencoder mf://" << dir << "/*.png -mf fps=" << opts.fps_ << " -ovc x264 -x264encopts crf=" << opts.crf_ << " -o " << dir << "/video.avi > /dev/null 2>&1";
+  cout << "Encoding" << endl;
+  int retval = system(oss.str().c_str());
+  cout << "Done." << endl;
+  ROS_ASSERT(retval == 0);
+
+  readBlob(dir + "/video.avi", blob);
+  bfs::remove_all(dir);
+}
+
+void decodeH264Shm(const std::vector<uint8_t>& blob, std::vector<cv::Mat3b>* images)
+{
+
 }

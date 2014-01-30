@@ -45,6 +45,23 @@ protected:
   cv::Mat3b yuv_;
 };
 
+struct EncodingOptions
+{
+  int fps_;
+  int crf_;
+
+  EncodingOptions() :
+    fps_(30),
+    crf_(13)
+  {
+  }
+};
+
+void readBlob(const std::string& path, std::vector<uint8_t>* blob);
+//! Warning: If the program terminates in the middle of this call, it will leave a turd in /dev/shm/encodeH264Shm-XXXXXX.
+void encodeH264Shm(const EncodingOptions& opts, const std::vector<cv::Mat3b>& images, std::vector<uint8_t>* blob);
+void decodeH264Shm(const std::vector<uint8_t>& blob, std::vector<cv::Mat3b>* images);
+
 void writeToVec(size_t num, std::vector<uint8_t>* data);
 size_t readFromVec(const std::vector<uint8_t>& data, size_t idx, size_t* num);
 void writeToVec(const std::vector<uint8_t>& chunk, std::vector<uint8_t>* data);
