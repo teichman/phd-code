@@ -95,12 +95,13 @@ protected:
   int level_;
 };
 
-class VideoCompressionTest : public CompressionTest
+class H264CompressionTest : public CompressionTest
 {
 public:
   
-  VideoCompressionTest(std::string name) :
-    CompressionTest(name)
+  H264CompressionTest(std::string name, int bit_rate) :
+    CompressionTest(name),
+    bit_rate_(bit_rate)
   {
   }
   
@@ -116,7 +117,8 @@ public:
 protected:
   //! Temporary storage.  Avoids excessive reallocation.
   vector<uint8_t> buffer_;
-
+  int bit_rate_;
+  
   cv::Mat3b AVFrameToCV(const AVCodecContext& ctx, const AVFrame& frame) const;
 };
 
@@ -161,6 +163,8 @@ double CompressionTest::meanPixelDifference(cv::Mat3b img0, cv::Mat3b img1) cons
 
 void CompressionTest::run(const std::vector<cv::Mat3b>& color)
 {
+  cout << "=== " << name_ << " ===" << endl;
+  
   for(size_t i = 1; i < color.size(); ++i)
     ROS_ASSERT(color[i].size() == color[i-1].size());
 
@@ -269,11 +273,12 @@ size_t JPGCompressionTest::decompressImage(const std::vector<uint8_t>& data,
 }
   
 
-void VideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
+void H264CompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
                                          std::vector<uint8_t>* data)
 {
   avcodec_init(); 
   avcodec_register_all();
+  av_log_set_level(-1);
   
   // -- Set up AVCodec.
   //    See video_encode_example in libav.
@@ -285,17 +290,13 @@ void VideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
   int fps = 30;
   
   AVCodecContext* ctx = avcodec_alloc_context3(codec);
-  ctx->bit_rate = 400000;
   ctx->width = color[0].cols;
   ctx->height = color[0].rows;
   ctx->time_base = (AVRational){1, fps};
-  ctx->gop_size = 10;
-  ctx->max_b_frames = 1;
-  //ctx->pix_fmt = PIX_FMT_RGB32;
   ctx->pix_fmt = PIX_FMT_YUV420P;
 
-  // // Shamelessly copied from http://stackoverflow.com/questions/3553003/encoding-h-264-with-libavcodec-x264
-  ctx->bit_rate = 500*1000;
+  // See http://stackoverflow.com/questions/3553003/encoding-h-264-with-libavcodec-x264
+  ctx->bit_rate = bit_rate_;
   ctx->bit_rate_tolerance = 0;
   ctx->rc_max_rate = 0;
   ctx->rc_buffer_size = 0;
@@ -334,7 +335,7 @@ void VideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
   frame->linesize[0] = ctx->width;
   frame->linesize[1] = ctx->width / 2;
   frame->linesize[2] = ctx->width / 2;
-  cout << "Line sizes: " << frame->linesize[0] << " " << frame->linesize[1] << " " << frame->linesize[2] << endl;
+  //cout << "Line sizes: " << frame->linesize[0] << " " << frame->linesize[1] << " " << frame->linesize[2] << endl;
 
   // -- Encode each frame one at a time.
   cv::Mat3b yuv;
@@ -354,22 +355,22 @@ void VideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
     // sample rate 90KHz is for h.264 at 30 fps
     frame->pts = (1.0 / fps) * 90 * i;
 
-    vector<uint8_t> output_buffer(100000);
+    vector<uint8_t> output_buffer(1e6);
     size_t out_size = avcodec_encode_video(ctx, output_buffer.data(), output_buffer.size(), frame);
     ROS_ASSERT(out_size < output_buffer.size());
     output_buffer.resize(out_size);
     writeToVec(output_buffer, data);
-    cout << "Wrote chunk of size " << output_buffer.size() << endl;
+    //cout << "Wrote chunk of size " << output_buffer.size() << endl;
   }
 
   // -- Flush out the buffer.
   while(true) {
-    vector<uint8_t> output_buffer(100000);
+    vector<uint8_t> output_buffer(1e6);
     size_t out_size = avcodec_encode_video(ctx, output_buffer.data(), output_buffer.size(), NULL);
     ROS_ASSERT(out_size < output_buffer.size());
     output_buffer.resize(out_size);
     writeToVec(output_buffer, data);
-    cout << "Wrote chunk of size " << output_buffer.size() << endl;
+    //cout << "Wrote chunk of size " << output_buffer.size() << endl;
     if(out_size == 0)
       break;
   }
@@ -393,7 +394,7 @@ static void pgm_save(unsigned char *buf, int wrap, int xsize, int ysize,
     fclose(f);
 }
 
-cv::Mat3b VideoCompressionTest::AVFrameToCV(const AVCodecContext& ctx, const AVFrame& frame) const
+cv::Mat3b H264CompressionTest::AVFrameToCV(const AVCodecContext& ctx, const AVFrame& frame) const
 {
   cv::Mat3b yuv(cv::Size(ctx.width, ctx.height));
   for(int y = 0; y < yuv.rows; ++y) {
@@ -403,30 +404,30 @@ cv::Mat3b VideoCompressionTest::AVFrameToCV(const AVCodecContext& ctx, const AVF
       yuv(y, x)[2] = frame.data[2][y/2 * frame.linesize[2] + x/2];
     }
   }
-  cv::Mat1b uimg(cv::Size(ctx.width / 2, ctx.height / 2));
-  for(int y = 0; y < uimg.rows; ++y) {
-    for(int x = 0; x < uimg.cols; ++x) {
-      uimg(y, x) = frame.data[1][y * frame.linesize[1] + x];
-    }
-  }
-  cv::imshow("uimg", uimg);
-  cv::Mat1b vimg(cv::Size(ctx.width / 2, ctx.height / 2));
-  for(int y = 0; y < vimg.rows; ++y) {
-    for(int x = 0; x < vimg.cols; ++x) {
-      vimg(y, x) = frame.data[2][y * frame.linesize[2] + x];
-    }
-  }
-  cv::imshow("vimg", vimg);
+  // cv::Mat1b uimg(cv::Size(ctx.width / 2, ctx.height / 2));
+  // for(int y = 0; y < uimg.rows; ++y) {
+  //   for(int x = 0; x < uimg.cols; ++x) {
+  //     uimg(y, x) = frame.data[1][y * frame.linesize[1] + x];
+  //   }
+  // }
+  // cv::imshow("uimg", uimg);
+  // cv::Mat1b vimg(cv::Size(ctx.width / 2, ctx.height / 2));
+  // for(int y = 0; y < vimg.rows; ++y) {
+  //   for(int x = 0; x < vimg.cols; ++x) {
+  //     vimg(y, x) = frame.data[2][y * frame.linesize[2] + x];
+  //   }
+  // }
+  // cv::imshow("vimg", vimg);
 
   cv::Mat3b bgr;
   cv::cvtColor(yuv, bgr, cv::COLOR_YCrCb2BGR);
-  cv::imshow("decompressed", bgr);
-  cv::waitKey(2);
+  // cv::imshow("decompressed", bgr);
+  // cv::waitKey(2);
 
   return bgr;
 }
 
-size_t VideoCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
+size_t H264CompressionTest::decompressChunk(const std::vector<uint8_t>& data,
                                              size_t idx, std::vector<cv::Mat3b>* color)
 {
   // See video_decode_example().
@@ -462,7 +463,7 @@ size_t VideoCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
     // Get the next chunk.
     chunk.clear();
     idx = readFromVec(data, idx, &chunk);
-    cout << "Reading chunk of size " << chunk.size() << endl;
+    //cout << "Reading chunk of size " << chunk.size() << endl;
     ++num_chunks;
     if(chunk.empty())
       continue;
@@ -498,8 +499,8 @@ size_t VideoCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
     ++num_frames;
   }
 
-  cout << "Num chunks decoded: " << num_chunks << endl;
-  cout << "Num frames decoded: " << num_frames << endl;
+  // cout << "Num chunks decoded: " << num_chunks << endl;
+  // cout << "Num frames decoded: " << num_frames << endl;
   
   return idx;
 }
@@ -563,8 +564,12 @@ int main(int argc, char** argv)
   cout << "Loaded " << color.size() << " test images." << endl;
   
   vector<CompressionTest*> cts;
-  //cts.push_back(new OpenCVVideoCompressionTest("OpenCVVideoCompressionTest"));
-  cts.push_back(new VideoCompressionTest("VideoCompressionTest"));
+  //cts.push_back(new OpenCVVideoCompressionTest("OpenCVH264CompressionTest"));
+  cts.push_back(new H264CompressionTest("H264CompressionTest-10kbps", 1e4));
+  cts.push_back(new H264CompressionTest("H264CompressionTest-100kbps", 1e5));
+  cts.push_back(new H264CompressionTest("H264CompressionTest-200kbps", 2e5));
+  cts.push_back(new H264CompressionTest("H264CompressionTest-500kbps", 5e5));
+  cts.push_back(new H264CompressionTest("H264CompressionTest-1Mbps", 1e6));
   cts.push_back(new JPGCompressionTest("JPGCompressionTest-0", 0));
   cts.push_back(new JPGCompressionTest("JPGCompressionTest-50", 50));
   cts.push_back(new JPGCompressionTest("JPGCompressionTest-90", 90));
