@@ -328,7 +328,71 @@ void VideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
 size_t VideoCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
                                              size_t idx, std::vector<cv::Mat3b>* color)
 {
-  return 0;
+  // See video_decode_example().
+  
+  AVCodec* codec = avcodec_find_decoder(CODEC_ID_MPEG1VIDEO);
+  ROS_ASSERT(codec);
+  AVCodecContext* ctx = avcodec_alloc_context3(codec);
+  AVFrame* frame = avcodec_alloc_frame();
+
+  // Dunno what this is.
+  if(codec->capabilities & CODEC_CAP_TRUNCATED)
+    ctx->flags |= CODEC_FLAG_TRUNCATED; /* we do not send complete frames */
+
+  int err = avcodec_open2(ctx, codec, NULL);
+  if(err < 0) {
+    cout << "Failed to open codec." << endl;
+    cout << "Error: " << err << endl;
+    ROS_ASSERT(0);
+  }
+
+  
+  frame = 0;
+  for(;;) {
+    avpkt.size = fread(inbuf, 1, INBUF_SIZE, f);
+    if (avpkt.size == 0)
+      break;
+
+    /* NOTE1: some codecs are stream based (mpegvideo, mpegaudio)
+       and this is the only method to use them because you cannot
+       know the compressed data size before analysing it.
+
+       BUT some other codecs (msmpeg4, mpeg4) are inherently frame
+       based, so you must call them with all the data for one
+       frame exactly. You must also initialize 'width' and
+       'height' before initializing them. */
+
+    /* NOTE2: some codecs allow the raw parameters (frame size,
+       sample rate) to be changed at any frame. We handle this, so
+       you should also take care of it */
+
+    /* here, we use a stream based decoder (mpeg1video), so we
+       feed decoder and see if it could decode a frame */
+    avpkt.data = inbuf;
+    while (avpkt.size > 0) {
+      len = avcodec_decode_video2(c, picture, &got_picture, &avpkt);
+      if (len < 0) {
+        fprintf(stderr, "Error while decoding frame %d\n", frame);
+        exit(1);
+      }
+      if (got_picture) {
+        printf("saving frame %3d\n", frame);
+        fflush(stdout);
+
+        /* the picture is allocated by the decoder. no need to
+           free it */
+        snprintf(buf, sizeof(buf), outfilename, frame);
+        pgm_save(picture->data[0], picture->linesize[0],
+                 c->width, c->height, buf);
+        frame++;
+      }
+      avpkt.size -= len;
+      avpkt.data += len;
+    }
+  }
+
+
+
 }
 
 void OpenCVVideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
