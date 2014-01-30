@@ -48,7 +48,8 @@ int main(int argc, char** argv)
   cout << "Loaded " << color.size() << " test images." << endl;
 
   // -- Encode.
-  H264Encoder enc(25, 2e5, color[0].cols, color[0].rows);
+  H264Encoder enc(25, 2e5);
+  enc.initialize(color[0].cols, color[0].rows);
   for(size_t i = 0; i < color.size(); ++i)
     enc.addFrame(color[i]);
 
