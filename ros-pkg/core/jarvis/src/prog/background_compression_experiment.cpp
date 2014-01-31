@@ -119,6 +119,23 @@ protected:
   cv::Mat3b AVFrameToCV(const AVCodecContext& ctx, const AVFrame& frame) const;
 };
 
+class H264ShmCompressionTest : public CompressionTest
+{
+public:
+  
+  H264ShmCompressionTest(std::string name, int crf) :
+    CompressionTest(name),
+    crf_(crf)
+  {
+  }
+  void compressChunk(const std::vector<cv::Mat3b>& color,
+                     std::vector<uint8_t>* data);
+  size_t decompressChunk(const std::vector<uint8_t>& data,
+                         size_t idx, std::vector<cv::Mat3b>* color);
+protected:
+  int crf_;
+};
+
 class OpenCVVideoCompressionTest : public CompressionTest
 {
 public:
@@ -502,6 +519,22 @@ size_t H264CompressionTest::decompressChunk(const std::vector<uint8_t>& data,
   return idx;
 }
 
+void H264ShmCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
+                                           std::vector<uint8_t>* data)
+{
+  EncodingOptions opts;
+  opts.crf_ = crf_;
+  encodeH264Shm(opts, color, data);
+}
+
+size_t H264ShmCompressionTest::decompressChunk(const std::vector<uint8_t>& data,
+                                               size_t idx, std::vector<cv::Mat3b>* color)
+{
+  decodeH264Shm(data, color);
+  return data.size();
+}
+
+
 void OpenCVVideoCompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
                                                std::vector<uint8_t>* data)
 {
@@ -561,7 +594,10 @@ int main(int argc, char** argv)
   cout << "Loaded " << color.size() << " test images." << endl;
   
   vector<CompressionTest*> cts;
-  //cts.push_back(new OpenCVVideoCompressionTest("OpenCVH264CompressionTest"));
+  cts.push_back(new H264ShmCompressionTest("H264ShmCompressionTest-CRF6", 6));
+  cts.push_back(new H264ShmCompressionTest("H264ShmCompressionTest-CRF13", 13));
+  cts.push_back(new H264ShmCompressionTest("H264ShmCompressionTest-CRF17", 17));
+  cts.push_back(new H264ShmCompressionTest("H264ShmCompressionTest-CRF21", 21));
   cts.push_back(new H264CompressionTest("H264CompressionTest-10kbps", 1e4));
   cts.push_back(new H264CompressionTest("H264CompressionTest-100kbps", 1e5));
   cts.push_back(new H264CompressionTest("H264CompressionTest-200kbps", 2e5));
