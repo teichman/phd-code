@@ -247,13 +247,13 @@ void encodeH264Shm(const EncodingOptions& opts, const std::vector<cv::Mat3b>& im
   // -- Dump out all the images.
     for(size_t i = 0; i < images.size(); ++i) {
     ostringstream oss;
-    oss << dir << "/img" << setw(6) << setfill('0') << i << ".png";
+    oss << dir << "/img" << setw(6) << setfill('0') << i << ".ppm";
     cv::imwrite(oss.str(), images[i]);
   }
     
   // -- Encode the video.
   ostringstream oss;
-  oss << "mencoder mf://" << dir << "/*.png -mf fps=" << opts.fps_ << " -ovc x264 -x264encopts crf=" << opts.crf_ << " -o " << dir << "/video.avi > /dev/null 2>&1";
+  oss << "avconv -i " << dir << "/img%06d.ppm -c:v libx264 -crf " << opts.crf_ << " -r " << opts.fps_ << " " << dir << "/video.avi > /dev/null 2>&1";
   int retval = system(oss.str().c_str());
   ROS_ASSERT(retval == 0);
 
@@ -273,7 +273,7 @@ void decodeH264Shm(const std::vector<uint8_t>& blob, std::vector<cv::Mat3b>* ima
   
   // -- Decode individual frames.
   bfs::create_directory(dir + "/imgs");
-  int retval = system(string("avconv -i " + dir + "/video.avi " + dir + "/imgs/img%06d.png > /dev/null 2>&1").c_str());
+  int retval = system(string("avconv -i " + dir + "/video.avi " + dir + "/imgs/img%06d.ppm > /dev/null 2>&1").c_str());
   ROS_ASSERT(retval == 0);
 
   // -- Read the frames.
