@@ -57,6 +57,7 @@ struct EncodingOptions
   }
 };
 
+void writeBlob(const std::vector<uint8_t>& blob, const std::string& path);
 void readBlob(const std::string& path, std::vector<uint8_t>* blob);
 //! Warning: If the program terminates in the middle of this call, it will leave a turd in /dev/shm/encodeH264Shm-XXXXXX.
 void encodeH264Shm(const EncodingOptions& opts, const std::vector<cv::Mat3b>& images, std::vector<uint8_t>* blob);

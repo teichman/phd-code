@@ -66,10 +66,17 @@ int main(int argc, char** argv)
 
   vector<uint8_t> blob;
   encodeH264Shm(encopts, color, &blob);
+  writeBlob(blob, path);
 
-  ofstream file(path.c_str());
-  file.write((char*)blob.data(), blob.size());
-  file.close();
-
+  // -- Test playback.
+  blob.clear();
+  readBlob(path, &blob);
+  color.clear();
+  decodeH264Shm(blob, &color);
+  for(size_t i = 0; i < color.size(); ++i) {
+    cv::imshow("Color", color[i]);
+    cv::waitKey(2);
+  }
+  
   return 0;
 }

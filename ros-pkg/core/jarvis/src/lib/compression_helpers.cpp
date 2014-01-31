@@ -5,6 +5,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <boost/filesystem.hpp>
 #include <fstream>
+#include <bag_of_tricks/glob.h>
 
 using namespace std;
 namespace bfs = boost::filesystem;
@@ -229,6 +230,13 @@ void readBlob(const std::string& path, std::vector<uint8_t>* blob)
   ifs.read((char*)blob->data(), length);
 }
 
+void writeBlob(const std::vector<uint8_t>& blob, const std::string& path)
+{
+  ofstream file(path.c_str());
+  file.write((char*)blob.data(), blob.size());
+  file.close();
+}
+
 void encodeH264Shm(const EncodingOptions& opts, const std::vector<cv::Mat3b>& images, std::vector<uint8_t>* blob)
 {
   // -- Create a directory to work in.
@@ -237,20 +245,16 @@ void encodeH264Shm(const EncodingOptions& opts, const std::vector<cv::Mat3b>& im
   bfs::create_directory(dir);
 
   // -- Dump out all the images.
-  cout << "Dumping" << endl;
-  for(size_t i = 0; i < images.size(); ++i) {
+    for(size_t i = 0; i < images.size(); ++i) {
     ostringstream oss;
     oss << dir << "/img" << setw(6) << setfill('0') << i << ".png";
     cv::imwrite(oss.str(), images[i]);
   }
-  cout << "Done." << endl;
-  
+    
   // -- Encode the video.
   ostringstream oss;
   oss << "mencoder mf://" << dir << "/*.png -mf fps=" << opts.fps_ << " -ovc x264 -x264encopts crf=" << opts.crf_ << " -o " << dir << "/video.avi > /dev/null 2>&1";
-  cout << "Encoding" << endl;
   int retval = system(oss.str().c_str());
-  cout << "Done." << endl;
   ROS_ASSERT(retval == 0);
 
   readBlob(dir + "/video.avi", blob);
@@ -259,5 +263,25 @@ void encodeH264Shm(const EncodingOptions& opts, const std::vector<cv::Mat3b>& im
 
 void decodeH264Shm(const std::vector<uint8_t>& blob, std::vector<cv::Mat3b>* images)
 {
+  // -- Create a directory to work in.
+  string dir = "/dev/shm/decodeH264Shm-" + bfs::unique_path().string();  // Technically a bad idea but fine for prototyping.
+  ROS_ASSERT(!bfs::exists(dir));
+  bfs::create_directory(dir);
 
+  // -- Put the blob into a file.
+  writeBlob(blob, dir + "/video.avi");
+  
+  // -- Decode individual frames.
+  bfs::create_directory(dir + "/imgs");
+  int retval = system(string("avconv -i " + dir + "/video.avi " + dir + "/imgs/img%06d.png > /dev/null 2>&1").c_str());
+  ROS_ASSERT(retval == 0);
+
+  // -- Read the frames.
+  vector<string> paths = glob(dir + "/imgs/*");
+  images->clear();
+  for(size_t i = 0; i < paths.size(); ++i)
+    images->push_back(cv::imread(paths[i]));
+
+  // -- Clean up.
+  bfs::remove_all(dir);
 }
