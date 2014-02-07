@@ -594,10 +594,10 @@ int main(int argc, char** argv)
   cout << "Loaded " << color.size() << " test images." << endl;
   
   vector<CompressionTest*> cts;
-  cts.push_back(new H264ShmCompressionTest("H264ShmCompressionTest-CRF6", 6));
   cts.push_back(new H264ShmCompressionTest("H264ShmCompressionTest-CRF13", 13));
   cts.push_back(new H264ShmCompressionTest("H264ShmCompressionTest-CRF17", 17));
   cts.push_back(new H264ShmCompressionTest("H264ShmCompressionTest-CRF21", 21));
+  cts.push_back(new H264ShmCompressionTest("H264ShmCompressionTest-CRF25", 25));
   cts.push_back(new H264CompressionTest("H264CompressionTest-10kbps", 1e4));
   cts.push_back(new H264CompressionTest("H264CompressionTest-100kbps", 1e5));
   cts.push_back(new H264CompressionTest("H264CompressionTest-200kbps", 2e5));

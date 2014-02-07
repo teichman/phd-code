@@ -69,6 +69,9 @@ struct SerializableSaveFunction
   void operator()(const Serializable& obj, const std::string& path) { obj.save(path); }
 };
 
+//! This could be more generic.  There's no need for it to serialize.
+//! It could instead be ThreadedBuffer which you insert things into
+//! and it calls some operation on the next element at its leisure.
 template<typename T, typename S = SerializableSaveFunction>
 class ThreadedSerializer : public Agent
 {
@@ -85,7 +88,7 @@ public:
 
   void _run()
   {
-    S serialize;
+    S serialize;  // TODO: This should become a member so users can modify parameters.
     while(true) {
       usleep(delay_ * 1e3);
       scopeLockWrite;

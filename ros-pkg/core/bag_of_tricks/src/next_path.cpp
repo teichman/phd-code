@@ -9,10 +9,14 @@ std::string nextPath(std::string dir, std::string prefix, std::string suffix, in
   ROS_ASSERT(bfs::exists(dir));
 
   // -- Find the max number in the directory.
-  int max_num = -1;
+  int max_num = 0;
   bfs::directory_iterator end_itr;  // default construction yields past-the-end
   for(bfs::directory_iterator itr(dir); itr != end_itr; ++itr) {
     string filename = itr->path().leaf().string();
+    if(filename.size() <= prefix.size())
+      continue;
+    if(filename.size() <= suffix.size())
+      continue;
     if(filename.substr(0, prefix.size()) != prefix)
       continue;
     if(filename.substr(filename.size() - suffix.size()) != suffix)

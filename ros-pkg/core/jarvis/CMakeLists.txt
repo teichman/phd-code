@@ -36,6 +36,7 @@ rosbuild_add_library(jarvis_core
   src/lib/cannon_reactor.cpp
   src/lib/induction_supervisor.cpp
   src/lib/compression_helpers.cpp
+  src/lib/video_streaming_sentinel.cpp
   )
 rosbuild_add_compile_flags(jarvis_core -std=c++0x)
 target_link_libraries(jarvis_core tcmalloc)
@@ -129,3 +130,7 @@ target_link_libraries(background_compression_experiment jarvis_core avcodec avfo
 rosbuild_add_executable(h264_encode_video src/prog/h264_encode_video.cpp)
 rosbuild_link_boost(h264_encode_video program_options filesystem)
 target_link_libraries(h264_encode_video jarvis_core avcodec avformat avutil)
+
+rosbuild_add_executable(stream_video_detections src/prog/stream_video_detections.cpp)
+rosbuild_link_boost(stream_video_detections program_options filesystem)
+target_link_libraries(stream_video_detections jarvis_core avcodec avformat avutil)
