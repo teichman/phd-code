@@ -48,6 +48,9 @@ protected:
 struct EncodingOptions
 {
   int fps_;
+  //! Higher is worse quality but smaller size.
+  //! 21ish is often good for small size.
+  //! 13ish is often good for high quality.
   int crf_;
 
   EncodingOptions() :

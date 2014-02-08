@@ -38,7 +38,16 @@ void VideoStreamingSentinel::handleDetection(openni::VideoFrameRef color,
 {
   // Make a visualization image and add to the video buffer.
   images_.push_back(visualize(color, depth));
-  cout << "[VideoStreamingSentinel] Detection " << images_.size() << "." << endl;
+  
+
+  cv::Mat3b img = images_.back();
+  float val = 0;
+  for(int y = 0; y < img.rows; ++y)
+    for(int x = 0; x < img.cols; ++x)
+      val += img(y, x)[0];
+
+  cout << "[VideoStreamingSentinel] Detection " << images_.size() << ".  Hash: " << val << endl;
+  
   timeout_ = 0;
 }
 
@@ -49,19 +58,12 @@ void VideoStreamingSentinel::handleNonDetection(openni::VideoFrameRef color,
                                                 size_t frame_id)
 {
   // If we haven't seen a detection in a while, flush the buffer.
-  if(!images_.empty()) {
-    ++timeout_;
-    
-    // If we have seen motion recently, keep adding to the buffer
-    // until we hit the timeout.
-    if(timeout_ < 30)
-      images_.push_back(visualize(color, depth));
-    else {
-      cout << "[VideoStreamingSentinel] Flushing." << endl;
-      serializer_.push(images_, nextPath(".", "", "-movement.avi", 4));
-      images_.clear();
-      timeout_ = 0;
-    }
+  ++timeout_;
+  if(timeout_ > 60 && !images_.empty()) {
+    cout << "[VideoStreamingSentinel] Flushing." << endl;
+    serializer_.push(images_, nextPath(".", "", "-movement.avi", 4));
+    images_.clear();
+    timeout_ = 0;
   }
 }
 

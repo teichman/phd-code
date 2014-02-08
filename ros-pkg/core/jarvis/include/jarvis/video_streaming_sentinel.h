@@ -7,8 +7,8 @@ struct H264Serializer
 
   H264Serializer()
   {
-    // opts_.fps_ = 30;
-    // opts_.crf_ = 13;
+    opts_.fps_ = 30;
+    opts_.crf_ = 23;
   }
   
   void operator()(std::vector<cv::Mat3b> images, std::string path)

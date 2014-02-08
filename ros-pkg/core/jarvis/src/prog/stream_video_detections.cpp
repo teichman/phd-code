@@ -23,9 +23,9 @@ int main(int argc, char** argv)
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("update-interval,u", bpo::value(&update_interval)->default_value(0.1), "How often to update, in seconds")
-    ("occupancy-threshold,o", bpo::value(&occupancy_threshold)->default_value(600), "")
+    ("occupancy-threshold,o", bpo::value(&occupancy_threshold)->default_value(60), "")
     ("raytracing-threshold,r", bpo::value(&raytracing_threshold)->default_value(10), "")
-    ("detection-threshold,d", bpo::value(&detection_threshold)->default_value(0), "Foreground must be greater than this percent in [0, 1] of the image to send a Foreground message.")
+    ("detection-threshold,d", bpo::value(&detection_threshold)->default_value(0.01), "Foreground must be greater than this percent in [0, 1] of the image to send a Foreground message.")
     ("color-res", bpo::value(&color_resolution), "QVGA or VGA")
     ("depth-res", bpo::value(&depth_resolution), "QVGA or VGA")
     ("visualize", "Show extra visualization")
@@ -43,7 +43,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  OpenNI2Interface::Resolution color_res = OpenNI2Interface::VGA;
+  OpenNI2Interface::Resolution color_res = OpenNI2Interface::QVGA;
   if(opts.count("color-res")) {
     if(color_resolution == "QVGA" || color_resolution == "qvga")
       color_res = OpenNI2Interface::QVGA;
@@ -54,7 +54,7 @@ int main(int argc, char** argv)
       return 1;
     }
   }
-  OpenNI2Interface::Resolution depth_res = OpenNI2Interface::VGA;
+  OpenNI2Interface::Resolution depth_res = OpenNI2Interface::QVGA;
   if(opts.count("depth-res")) {
     if(depth_resolution == "QVGA" || depth_resolution == "qvga")
       depth_res = OpenNI2Interface::QVGA;
