@@ -1,0 +1,19 @@
+<package>
+  <description brief="rod">
+
+     rod
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/rod</url>
+  <depend package="pcl_1_7"/>
+  <depend package="opencv_bleeding"/>
+  <depend package="image_labeler"/>
+  <depend package="openni2_interface"/>
+  <depend package="agent"/>
+
+</package>
+
+
