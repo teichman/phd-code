@@ -297,9 +297,9 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image)
   // Params.
   // TODO: These should elsewhere.  This function should probably be in its own object
   // and have a YAML for configuration.
-  int k = 2;
+  int k = 1;
   int max_consecutive_nondetections = 1e5;
-  float inlier_distance_thresh = 0.02;  // cm
+  float inlier_distance_thresh = 0.01;  // cm
   
   // Compute matches.
   //cv::FlannBasedMatcher matcher;
@@ -419,9 +419,9 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image)
         }
       }
     }
-    double rough_inlier_percent = (double)num_rough_inliers / model.keycloud_->size();
-    cout << "rough_inlier_percent: " << rough_inlier_percent << endl;
-    if(rough_inlier_percent < 0.10)
+    double rough_inlier_pct = (double)num_rough_inliers / model.keycloud_->size();
+    cout << "rough_inlier_pct: " << rough_inlier_pct << " --- total " << model.keycloud_->size() << endl;
+    if(rough_inlier_pct < 0.10)
       continue;
     
     // Transform the model into the image using the refined cloud.
@@ -447,8 +447,8 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image)
     }
     
     double inlier_pct = (double)inlier_indices.size() / model.keycloud_->size();
-    cout << "inlier_pct: " << inlier_pct << endl;
-    if(inlier_pct > 0.30) {
+    cout << "inlier_pct: " << inlier_pct << " --- total " << model.keycloud_->size() << endl;
+    if(inlier_pct > 0.20) {
       return detection;
     }
   }
