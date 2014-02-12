@@ -13,6 +13,7 @@
   <depend package="image_labeler"/>
   <depend package="openni2_interface"/>
   <depend package="agent"/>
+  <depend package="stream_sequence"/>
 
 </package>
 
