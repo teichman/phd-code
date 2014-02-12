@@ -251,27 +251,14 @@ void RodVisualizer::select()
   cv::imshow("Model", vis);
 }
 
-void sampleCorrespondence(const std::vector< std::vector<cv::DMatch> >& matches,
+void sampleCorrespondence(const std::vector<cv::DMatch>& matches,
                           const FeatureSet& model, const FeatureSet& image,
                           size_t* model_idx, size_t* image_idx)
 {
-  // Params.  TODO: Move to YAML.
-  float descriptor_distance_thresh = 0;
-
   while(true) {
-    int image_feature_idx = rand() % matches.size();
-    vector<cv::DMatch> mat = matches[image_feature_idx];
-    cv::DMatch m = mat[rand() % mat.size()];
-
-    // if(m.distance > descriptor_distance_thresh)
-    //   continue;
-    
-    //cout << m.trainIdx << " " << m.queryIdx << " " << m.distance << " " << image_feature_idx << endl;
-    // m.queryIdx indexes into image, m.trainIdx
-    ROS_ASSERT(m.queryIdx == image_feature_idx);
-    
+    const cv::DMatch& m = matches[rand() % matches.size()];
     *model_idx = m.trainIdx;
-    *image_idx = image_feature_idx;
+    *image_idx = m.queryIdx;
 
     // Only accept if both points have depth.
     if(isFinite(model.keycloud_->at(*model_idx)) &&
@@ -300,27 +287,29 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image)
   int k = 1;
   int max_consecutive_nondetections = 1e5;
   float inlier_distance_thresh = 0.01;  // cm
-  
+  int descriptor_distance_thresh = 50;
+ 
   // Compute matches.
   //cv::FlannBasedMatcher matcher;
   cv::BFMatcher matcher(cv::NORM_HAMMING);
-  vector< vector<cv::DMatch> > matches;  // matches[i][j] is the jth model feature match for the ith image feature.
-  matcher.knnMatch(image.descriptors_, model.descriptors_, matches, k);
+  vector< vector<cv::DMatch> > matches_raw;  // matches_raw[i][j] is the jth model feature match for the ith image feature.
+  matcher.knnMatch(image.descriptors_, model.descriptors_, matches_raw, k);
 
+  // Print out stats on the matches.
   double max_descriptor_distance = -std::numeric_limits<double>::max();
   double min_descriptor_distance = +std::numeric_limits<double>::max();
   double total_descriptor_distance = 0;
   int num_matches = 0;
-  for(size_t i = 0; i < matches.size(); ++i) {
-    if(matches[i].empty())
+  for(size_t i = 0; i < matches_raw.size(); ++i) {
+    if(matches_raw[i].empty())
       continue;
 
     // Check that matches go from best to worst.
-    for(size_t j = 1; j < matches[i].size(); ++j) {
-      ROS_ASSERT(matches[i][j].distance >= matches[i][j-1].distance);
+    for(size_t j = 1; j < matches_raw[i].size(); ++j) {
+      ROS_ASSERT(matches_raw[i][j].distance >= matches_raw[i][j-1].distance);
     }
     
-    const cv::DMatch& match = matches[i][0];
+    const cv::DMatch& match = matches_raw[i][0];
     max_descriptor_distance = max<double>(max_descriptor_distance, match.distance);
     min_descriptor_distance = min<double>(min_descriptor_distance, match.distance);
 
@@ -333,11 +322,26 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image)
   cout << "Min descriptor distance: " << min_descriptor_distance << endl;
   cout << "Max descriptor distance: " << max_descriptor_distance << endl;
   
+  // Throw out crappy matches.
+  size_t num_good = 0;
+  vector<cv::DMatch> matches;
+  matches.reserve(num_matches);
+  for(size_t i = 0; i < matches_raw.size(); ++i) {
+    for(size_t j = 0; j < matches_raw[i].size(); ++j) {
+      if(matches_raw[i][j].distance < descriptor_distance_thresh) {
+        matches.push_back(matches_raw[i][j]);
+      }
+    }
+  }
+  cout << "Good matches: " << matches.size() << endl;
+  if(matches.size() < model.keycloud_->size() / 5)
+    return FeatureSet();
+  
   int best_num_inliers = 0;
   int num_samples_without_detection = 0;
   while(true) {    
     // If we haven't found anything in a while, stop.
-    cout << "num_samples_without_detection: " << num_samples_without_detection << endl;
+    //cout << "num_samples_without_detection: " << num_samples_without_detection << endl;
     ++num_samples_without_detection;
     if(num_samples_without_detection > max_consecutive_nondetections)
       break;
@@ -377,7 +381,7 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image)
        d02 < inlier_distance_thresh ||
        d12 < inlier_distance_thresh)
     {
-      cout << "Sampled points are too close." << endl;
+      //cout << "Sampled points are too close." << endl;
       continue;
     }
     
@@ -393,7 +397,7 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image)
        (trans * m1.getVector3fMap() - i1.getVector3fMap()).norm() > inlier_distance_thresh ||
        (trans * m2.getVector3fMap() - i2.getVector3fMap()).norm() > inlier_distance_thresh)
     {
-      cout << "Inconsistent correspondences, skipping." << endl;
+      //cout << "Inconsistent correspondences, skipping." << endl;
       continue;
     }
 
@@ -407,16 +411,13 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image)
     size_t num_rough_inliers = 0;
     pcl::TransformationFromCorrespondences tfc2;
     for(size_t i = 0; i < matches.size(); ++i) {
-      for(size_t j = 0; j < matches[i].size(); ++j) {
-        const cv::DMatch& match = matches[i][j];
-        Point mpt = transformed_model_keycloud[match.trainIdx];
-        Point ipt = image.keycloud_->at(match.queryIdx);
-        float dist = pcl::euclideanDistance(mpt, ipt);
-        if(dist < inlier_distance_thresh) {
-          tfc2.add(model.keycloud_->at(match.trainIdx).getVector3fMap(), ipt.getVector3fMap());
-          ++num_rough_inliers;
-          break;
-        }
+      const cv::DMatch& match = matches[i];
+      Point mpt = transformed_model_keycloud[match.trainIdx];
+      Point ipt = image.keycloud_->at(match.queryIdx);
+      float dist = pcl::euclideanDistance(mpt, ipt);
+      if(dist < inlier_distance_thresh) {
+        tfc2.add(model.keycloud_->at(match.trainIdx).getVector3fMap(), ipt.getVector3fMap());
+        ++num_rough_inliers;
       }
     }
     double rough_inlier_pct = (double)num_rough_inliers / model.keycloud_->size();
@@ -433,16 +434,13 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image)
     inlier_indices.reserve(model.keycloud_->size());
     FeatureSet detection;
     for(size_t i = 0; i < matches.size(); ++i) {
-      for(size_t j = 0; j < matches[i].size(); ++j) {
-        const cv::DMatch& match = matches[i][j];
-        Point mpt = transformed_model_keycloud[match.trainIdx];
-        Point ipt = image.keycloud_->at(match.queryIdx);
-        float dist = pcl::euclideanDistance(mpt, ipt);
-        if(dist < inlier_distance_thresh) {
-          inlier_indices.push_back(i);
-          detection.keypoints_.push_back(image.keypoints_[i]);
-          break;
-        }
+      const cv::DMatch& match = matches[i];
+      Point mpt = transformed_model_keycloud[match.trainIdx];
+      Point ipt = image.keycloud_->at(match.queryIdx);
+      float dist = pcl::euclideanDistance(mpt, ipt);
+      if(dist < inlier_distance_thresh) {
+        inlier_indices.push_back(match.queryIdx);
+        detection.keypoints_.push_back(image.keypoints_[match.queryIdx]);
       }
     }
     
