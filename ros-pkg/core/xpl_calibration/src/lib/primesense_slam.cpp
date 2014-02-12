@@ -245,6 +245,7 @@ PrimeSenseSlam::FeaturesPtr PrimeSenseSlam::getFeatures(const rgbd::Frame &frame
   cv::Mat cvfeat;
   orb(img, mask, keypoints, cvfeat);
 
+  // This is probably just totally bogus.  ORB produces a bit vector.
   FeaturesPtr features(new cv::Mat1f(keypoints.size(), cvfeat.cols));
   for(size_t i = 0; i < keypoints.size(); i++)
     for(int j  = 0; j < cvfeat.cols; j++)
