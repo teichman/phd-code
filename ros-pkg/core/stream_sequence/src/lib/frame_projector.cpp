@@ -67,27 +67,33 @@ namespace clams
 
   void Frame::serialize(std::ostream& out) const
   {
-    eigen_extensions::serializeScalar(timestamp_, out);
-    eigen_extensions::serialize(*depth_, out);
+    // Change to row major.
+    ROS_ASSERT(0);
+    
+    // eigen_extensions::serializeScalar(timestamp_, out);
+    // eigen_extensions::serialize(*depth_, out);
 
-    vector<uchar> buf;
-    cv::imencode(".png", img_, buf);
-    size_t num_bytes = buf.size();
-    out.write((const char*)&num_bytes, sizeof(num_bytes));
-    out.write((const char*)&buf[0], num_bytes * sizeof(uchar));
+    // vector<uchar> buf;
+    // cv::imencode(".png", img_, buf);
+    // size_t num_bytes = buf.size();
+    // out.write((const char*)&num_bytes, sizeof(num_bytes));
+    // out.write((const char*)&buf[0], num_bytes * sizeof(uchar));
   }
 
   void Frame::deserialize(std::istream& in)
   {
-    eigen_extensions::deserializeScalar(in, &timestamp_);
-    depth_ = DepthMatPtr(new DepthMat);
-    eigen_extensions::deserialize(in, depth_.get());
+    // Change to row major.
+    ROS_ASSERT(0);
+    
+    // eigen_extensions::deserializeScalar(in, &timestamp_);
+    // depth_ = DepthMatPtr(new DepthMat);
+    // eigen_extensions::deserialize(in, depth_.get());
 
-    size_t num_bytes;
-    in.read((char*)&num_bytes, sizeof(num_bytes));
-    vector<uchar> buf(num_bytes);
-    in.read((char*)&buf[0], num_bytes * sizeof(uchar));
-    img_ = cv::imdecode(buf, 1);
+    // size_t num_bytes;
+    // in.read((char*)&num_bytes, sizeof(num_bytes));
+    // vector<uchar> buf(num_bytes);
+    // in.read((char*)&buf[0], num_bytes * sizeof(uchar));
+    // img_ = cv::imdecode(buf, 1);
   }
   
   FrameProjector::FrameProjector() :

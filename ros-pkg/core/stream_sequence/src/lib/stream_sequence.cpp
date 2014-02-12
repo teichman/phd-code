@@ -118,17 +118,21 @@ namespace clams
 
   void StreamSequence::readFrameImpl(size_t idx, Frame* frame) const
   {
-    ROS_ASSERT(idx < img_names_.size());
-    frame->img_ = cv::imread(root_path_ + "/" + img_names_[idx], 1);
-    frame->depth_ = DepthMatPtr(new DepthMat);
-    eigen_extensions::load(root_path_ + "/" + dpt_names_[idx], frame->depth_.get());
-    frame->timestamp_ = timestamps_[idx];
+    // Change to row major.
+    ROS_ASSERT(0);
+
     
-    if(max_depth_ != numeric_limits<double>::max())
-      for(int y = 0; y < frame->depth_->rows(); ++y)
-        for(int x = 0; x < frame->depth_->cols(); ++x)
-          if(frame->depth_->coeffRef(y, x) > max_depth_ * 1000)
-            frame->depth_->coeffRef(y, x) = 0;
+    // ROS_ASSERT(idx < img_names_.size());
+    // frame->img_ = cv::imread(root_path_ + "/" + img_names_[idx], 1);
+    // frame->depth_ = DepthMatPtr(new DepthMat);
+    // eigen_extensions::load(root_path_ + "/" + dpt_names_[idx], frame->depth_.get());
+    // frame->timestamp_ = timestamps_[idx];
+    
+    // if(max_depth_ != numeric_limits<double>::max())
+    //   for(int y = 0; y < frame->depth_->rows(); ++y)
+    //     for(int x = 0; x < frame->depth_->cols(); ++x)
+    //       if(frame->depth_->coeffRef(y, x) > max_depth_ * 1000)
+    //         frame->depth_->coeffRef(y, x) = 0;
 
   }
 

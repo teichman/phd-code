@@ -8,7 +8,9 @@
 
 namespace clams
 {
-  typedef Eigen::Matrix<unsigned short, Eigen::Dynamic, Eigen::Dynamic> DepthMat;  
+  // TODO: Just added the RowMajor.  Does this break things in clams?
+  // Doesn't really matter because this isn't the primary clams repo anymore...
+  typedef Eigen::Matrix<unsigned short, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> DepthMat;  
   typedef boost::shared_ptr<DepthMat> DepthMatPtr;
   typedef boost::shared_ptr<const DepthMat> DepthMatConstPtr;
 }
