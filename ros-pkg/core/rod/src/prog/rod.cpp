@@ -19,7 +19,7 @@ class FeatureSet
 {
 public:
   Cloud::Ptr keycloud_;
-  cv::Mat1f descriptors_;
+  cv::Mat1b descriptors_;
   std::vector<cv::KeyPoint> keypoints_;
 
   void draw(cv::Mat3b img) const;
@@ -97,7 +97,7 @@ void computeFeatures(clams::Frame frame, FeatureSet* fs)
     // ORB uses 8bit unsigned descriptors,
     // but FLANN requires floats.  Is this OK?
     // Or are the ORB descriptors only bitstrings?
-    fs->descriptors_ = cv::Mat1f(fs->keypoints_.size(), cvdesc.cols);
+    fs->descriptors_ = cv::Mat1b(fs->keypoints_.size(), cvdesc.cols);
     for(size_t i = 0; i < fs->keypoints_.size(); i++)
       for(int j  = 0; j < cvdesc.cols; j++)
         fs->descriptors_(i, j) = cvdesc.at<uint8_t>(i, j);
@@ -200,6 +200,7 @@ void RodVisualizer::keypress(char c)
     select();
     break;
   case 'd':
+    cout << "============================================================" << endl;
     detect();
     break;
   default:
@@ -239,7 +240,7 @@ void RodVisualizer::select()
       indices.push_back(i);
     }
   }
-  model_.descriptors_ = cv::Mat1f(model_.keypoints_.size(), fs.descriptors_.cols);
+  model_.descriptors_ = cv::Mat1b(model_.keypoints_.size(), fs.descriptors_.cols);
   for(int i = 0; i < model_.descriptors_.rows; ++i)
     for(int j  = 0; j < model_.descriptors_.cols; j++)
       model_.descriptors_(i, j) = fs.descriptors_(indices[i], j);
@@ -265,7 +266,7 @@ void sampleCorrespondence(const std::vector< std::vector<cv::DMatch> >& matches,
     // if(m.distance > descriptor_distance_thresh)
     //   continue;
     
-    cout << m.trainIdx << " " << m.queryIdx << " " << m.distance << " " << image_feature_idx << endl;
+    //cout << m.trainIdx << " " << m.queryIdx << " " << m.distance << " " << image_feature_idx << endl;
     // m.queryIdx indexes into image, m.trainIdx
     ROS_ASSERT(m.queryIdx == image_feature_idx);
     
@@ -296,9 +297,9 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image)
   // Params.
   // TODO: These should elsewhere.  This function should probably be in its own object
   // and have a YAML for configuration.
-  int k = 4;
-  int max_consecutive_nondetections = 1e4;
-  float inlier_distance_thresh = 0.01;  // cm
+  int k = 2;
+  int max_consecutive_nondetections = 1e5;
+  float inlier_distance_thresh = 0.02;  // cm
   
   // Compute matches.
   //cv::FlannBasedMatcher matcher;
@@ -331,8 +332,7 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image)
   cout << "Mean descriptor distance to match: " << total_descriptor_distance / num_matches << endl;
   cout << "Min descriptor distance: " << min_descriptor_distance << endl;
   cout << "Max descriptor distance: " << max_descriptor_distance << endl;
-  return FeatureSet();
-
+  
   int best_num_inliers = 0;
   int num_samples_without_detection = 0;
   while(true) {    
@@ -404,6 +404,31 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image)
     // Find number of inliers.
     // For every image keypoint, find the distance to its matches in the
     // transformed model.
+    size_t num_rough_inliers = 0;
+    pcl::TransformationFromCorrespondences tfc2;
+    for(size_t i = 0; i < matches.size(); ++i) {
+      for(size_t j = 0; j < matches[i].size(); ++j) {
+        const cv::DMatch& match = matches[i][j];
+        Point mpt = transformed_model_keycloud[match.trainIdx];
+        Point ipt = image.keycloud_->at(match.queryIdx);
+        float dist = pcl::euclideanDistance(mpt, ipt);
+        if(dist < inlier_distance_thresh) {
+          tfc2.add(model.keycloud_->at(match.trainIdx).getVector3fMap(), ipt.getVector3fMap());
+          ++num_rough_inliers;
+          break;
+        }
+      }
+    }
+    double rough_inlier_percent = (double)num_rough_inliers / model.keycloud_->size();
+    cout << "rough_inlier_percent: " << rough_inlier_percent << endl;
+    if(rough_inlier_percent < 0.10)
+      continue;
+    
+    // Transform the model into the image using the refined cloud.
+    Eigen::Affine3f trans_refined = tfc2.getTransformation();
+    pcl::transformPointCloud(*model.keycloud_, transformed_model_keycloud, trans_refined);
+
+    // Get inliers after refinement.
     vector<size_t> inlier_indices;
     inlier_indices.reserve(model.keycloud_->size());
     FeatureSet detection;
@@ -420,12 +445,12 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image)
         }
       }
     }
-
+    
     double inlier_pct = (double)inlier_indices.size() / model.keycloud_->size();
     cout << "inlier_pct: " << inlier_pct << endl;
-    // if(inlier_pct > 0.25) {
-    //   return detection;
-    // }
+    if(inlier_pct > 0.30) {
+      return detection;
+    }
   }
 
   return FeatureSet();  // No detection.
