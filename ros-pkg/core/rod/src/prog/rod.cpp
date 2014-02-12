@@ -281,7 +281,7 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
   int k = 1;
   int max_consecutive_nondetections = 1e5;
   float inlier_distance_thresh = 0.01;  // cm
-  int descriptor_distance_thresh = 50;
+  int descriptor_distance_thresh = 75;
  
   // Compute matches.
   //cv::FlannBasedMatcher matcher;
