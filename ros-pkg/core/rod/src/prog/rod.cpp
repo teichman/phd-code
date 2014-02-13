@@ -10,7 +10,7 @@
 #include <pcl/common/transformation_from_correspondences.h>
 
 using namespace std;
-
+using namespace Eigen;
 
 typedef pcl::PointXYZRGB Point;
 typedef pcl::PointCloud<pcl::PointXYZRGB> Cloud;
@@ -246,7 +246,7 @@ void RodVisualizer::select()
   
   // Compute features on just the selected region.
   FeatureSet fs;
-  computeFeatures(frame, &fs, 200, mask);
+  computeFeatures(frame, &fs, 500, mask);
 
   // Get the FeatureSet for the object model.
   model_.keypoints_.clear();
@@ -306,17 +306,87 @@ void sampleCorrespondence(const std::vector<cv::DMatch>& matches,
 
 }
 
+struct SearchStats
+{
+  int num_samples_;
+  int num_not_too_close_;
+  vector<int> num_rough_inliers_;
+  vector<int> num_refined_inliers_;
+  
+  SearchStats() :
+    num_samples_(0),
+    num_not_too_close_(0)
+  {
+  }
+
+  std::string status(const std::string& prefix = "") const;
+
+protected:
+  Eigen::VectorXf computeHistogram(const std::vector<int>& vals, int* maxval) const;
+  std::string printHistogram(const std::string& prefix, const std::vector<int>& vals) const;
+};
+
+VectorXf SearchStats::computeHistogram(const std::vector<int>& vals, int* maxval) const
+{
+  *maxval = -numeric_limits<int>::max();
+  for(size_t i = 0; i < vals.size(); ++i)
+    *maxval = max(*maxval, vals[i]);
+  int num_bins = 10;
+  float bin_width = (float)(*maxval) / num_bins;
+  VectorXf hist = VectorXf::Zero(num_bins);
+  for(size_t i = 0; i < vals.size(); ++i) {
+    int idx = min<int>(hist.rows() - 1, max<int>(0, vals[i] / bin_width));
+    ++hist(idx);
+  }
+  return hist;
+}
+
+std::string SearchStats::printHistogram(const std::string& prefix, const std::vector<int>& vals) const
+{
+  int maxval;
+  VectorXf hist = computeHistogram(vals, &maxval);
+  float bin_width = (float)maxval / hist.rows();
+
+  ostringstream oss;
+  for(int i = 0; i < hist.rows(); ++i)
+    oss << prefix << setiosflags(ios::fixed) << setprecision(0) << setw(5) << setfill('0') << i * bin_width << "\t|  " << hist[i] << endl;
+
+  return oss.str();
+}
+
+std::string SearchStats::status(const std::string& prefix) const
+{
+  ostringstream oss;
+  oss << prefix << "Total samples: " << num_samples_ << endl;
+  oss << prefix << "Num not too close: " << num_not_too_close_ << endl;
+  oss << prefix << "Num consistent: " << num_rough_inliers_.size() << endl;
+  oss << prefix << "Num that passed rough inlier check: " << num_refined_inliers_.size() << endl;
+
+  if(!num_rough_inliers_.empty()) {
+    oss << prefix << "Histogram of num rough inliers | num samples that had this many: " << endl;
+    oss << printHistogram(prefix + "  ", num_rough_inliers_) << endl;
+  }
+  if(!num_refined_inliers_.empty()) {
+    oss << prefix << "Histogram of num refined inliers | num samples that had this many: " << endl;
+    oss << printHistogram(prefix + "  ", num_refined_inliers_) << endl;
+  }
+
+  return oss.str();
+}
+
 FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>* remaining)
 {
+  cout << "============================================================ New search" << endl;
+  
   ROS_ASSERT(!model.keypoints_.empty());
   ROS_ASSERT(!image.keypoints_.empty());
 
   // Params.
   // TODO: These should elsewhere.  This function should probably be in its own object
   // and have a YAML for configuration.
-  int k = 1;
+  int k = 2;
   int max_consecutive_nondetections = 1e5;
-  float inlier_distance_thresh = 0.01;  // cm
+  float inlier_distance_thresh = 0.02;  // cm
   int descriptor_distance_thresh = 50;
  
   // Compute matches.
@@ -346,11 +416,11 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
     total_descriptor_distance += match.distance;
     ++num_matches;
 
-    cout << "descriptor distance: " << match.distance << endl;
+    //cout << "descriptor distance: " << match.distance << endl;
   }
-  cout << "Mean descriptor distance to match: " << total_descriptor_distance / num_matches << endl;
-  cout << "Min descriptor distance: " << min_descriptor_distance << endl;
-  cout << "Max descriptor distance: " << max_descriptor_distance << endl;
+  // cout << "Mean descriptor distance to match: " << total_descriptor_distance / num_matches << endl;
+  // cout << "Min descriptor distance: " << min_descriptor_distance << endl;
+  // cout << "Max descriptor distance: " << max_descriptor_distance << endl;
   
   // Throw out crappy matches.
   size_t num_good = 0;
@@ -364,17 +434,22 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
     }
   }
   cout << "Good matches: " << matches.size() << endl;
-  if(matches.size() < model.keycloud_->size() / 5)
+  if(matches.size() < 10)
     return FeatureSet();
-  
+
+
+  SearchStats stats;
   int best_num_inliers = 0;
   int num_samples_without_detection = 0;
-  while(true) {    
+  vector<size_t> best_inlier_indices;
+  FeatureSet best_detection;
+  while(true) {
     // If we haven't found anything in a while, stop.
     //cout << "num_samples_without_detection: " << num_samples_without_detection << endl;
     ++num_samples_without_detection;
     if(num_samples_without_detection > max_consecutive_nondetections)
       break;
+    ++stats.num_samples_;
 
     // Sample a possible set of three matches.
     // They should all have depth because of the mask applied in computeFeatures.
@@ -414,6 +489,7 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
       //cout << "Sampled points are too close." << endl;
       continue;
     }
+    ++stats.num_not_too_close_;
     
     // Compute the transform from model to image for this match.
     // Model to image.
@@ -450,7 +526,8 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
         ++num_rough_inliers;
       }
     }
-    if(num_rough_inliers < 15)
+    stats.num_rough_inliers_.push_back(num_rough_inliers);
+    if(num_rough_inliers < 3)
       continue;
     // double rough_inlier_pct = (double)num_rough_inliers / model.keycloud_->size();
     // cout << "rough_inlier_pct: " << rough_inlier_pct << " --- total " << model.keycloud_->size() << endl;
@@ -475,19 +552,27 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
         detection.keypoints_.push_back(image.keypoints_[match.queryIdx]);
       }
     }
+    stats.num_refined_inliers_.push_back(inlier_indices.size());
     
     // double inlier_pct = (double)inlier_indices.size() / model.keycloud_->size();
     // cout << "inlier_pct: " << inlier_pct << " --- total " << model.keycloud_->size() << endl;
     // if(inlier_pct > 0.20) {
-    if(inlier_indices.size() > 20) {
-      remaining->clear();
-      remaining->resize(image.keypoints_.size(), true);
-      for(size_t i = 0; i < inlier_indices.size(); ++i)
-        remaining->at(inlier_indices[i]) = false;
-      return detection;
-    }
+    best_inlier_indices = inlier_indices;
+    best_detection = detection;
   }
 
+  cout << "SearchStats: " << endl;
+  cout << stats.status("  ") << endl;
+
+  if(best_inlier_indices.size() > 30) {
+    remaining->clear();
+    remaining->resize(image.keypoints_.size(), true);
+    for(size_t i = 0; i < best_inlier_indices.size(); ++i)
+      remaining->at(best_inlier_indices[i]) = false;
+    return best_detection;
+  }
+  
+  cout << "No detections." << endl;
   return FeatureSet();  // No detection.
 }
 
