@@ -32,7 +32,7 @@ void FeatureSet::draw(cv::Mat3b img) const
 }
 
 // Only accepts keypoints that have 3D associated with them.
-void computeFeatures(clams::Frame frame, FeatureSet* fs)
+void computeFeatures(clams::Frame frame, FeatureSet* fs, int num_desired_keypoints = 500, cv::Mat1b mask = cv::Mat1b())
 {
   // Set up projector.
   clams::FrameProjector proj;
@@ -44,13 +44,21 @@ void computeFeatures(clams::Frame frame, FeatureSet* fs)
   proj.fx_ = 525;
   proj.fy_ = 525;
 
-  // Create mask.  Only allow points which have depth.
-  cv::Mat1b mask = cv::Mat1b(frame.img_.rows, frame.img_.cols);
-  mask = 255;
+  // If no mask has been provided, then use the whole frame.
+  if(mask.rows == 0) {
+    mask = cv::Mat1b(frame.img_.rows, frame.img_.cols);
+    mask = 255;
+  }
+  
+  // Only allow points with depth.
   for(int y = 0; y < frame.img_.rows; ++y)
     for(int x = 0; x < frame.img_.cols; ++x)
       if(frame.depth_->coeffRef(y, x) == 0)
         mask(y, x) = 0;
+
+  // cv::imshow("mask", mask);
+  // cv::imshow("depth image", frame.depthImage());
+  // cv::waitKey();
 
   cv::Mat1b gray;
   cv::cvtColor(frame.img_, gray, CV_BGR2GRAY);
@@ -66,7 +74,7 @@ void computeFeatures(clams::Frame frame, FeatureSet* fs)
     extractor.compute(gray, fs->keypoints_, cvdesc);
   }
   else {
-    cv::ORB orb(500);  // ~500 keypoints per image
+    cv::ORB orb(num_desired_keypoints);
     orb(gray, mask, fs->keypoints_, cvdesc);
   }
   cout << fs->keypoints_.size() << " " << cvdesc.rows << endl;
@@ -83,6 +91,8 @@ void computeFeatures(clams::Frame frame, FeatureSet* fs)
     kppt.u_ = kpt.pt.x;
     kppt.v_ = kpt.pt.y;
     kppt.z_ = frame.depth_->coeffRef(kppt.v_, kppt.u_);
+    // if(kppt.z_ == 0)
+    //   ROS_WARN_STREAM("Expected all keypoints to have depth, but this is apparently not true.  Keypoint: " << kpt.pt << " , rounded: " << kppt);
     proj.project(kppt, &(fs->keycloud_->points[i]));
   }
 
@@ -102,6 +112,11 @@ void computeFeatures(clams::Frame frame, FeatureSet* fs)
       for(int j  = 0; j < cvdesc.cols; j++)
         fs->descriptors_(i, j) = cvdesc.at<uint8_t>(i, j);
   }
+
+  // Debugging.
+  cv::Mat3b vis = frame.img_.clone();
+  fs->draw(vis);
+  cv::imshow("computeFeatures", vis);
 }
 
 //! Rigid Object Detector
@@ -151,10 +166,13 @@ void RodVisualizer::rgbdCallback(openni::VideoFrameRef color,
   current_color_ = color;
   current_depth_ = depth;
   unlockWrite();
+
+  cv::imshow("Depth", colorize(oniDepthToEigen(depth), 0.5, 5));
   
   cv::Mat3b vis = oniToCV(color);
   drawSelection(vis);
   view_.updateImage(vis);
+  
   char c = view_.cvWaitKey(2);
   if(c != -1)
     keypress(c);
@@ -215,12 +233,20 @@ void RodVisualizer::select()
     return;
   }
 
-  // Compute features on the entire image.
-  clams::Frame frame = getFrame();
-  FeatureSet fs;
-  computeFeatures(frame, &fs);
+  // Create the mask.
   cv::Point2i ul = selected_points_[0];
   cv::Point2i lr = selected_points_[1];  
+  clams::Frame frame = getFrame();
+  cv::Mat1b mask(frame.img_.size());
+  mask = 0;
+  for(int y = 0; y < mask.rows; ++y)
+    for(int x = 0; x < mask.cols; ++x)
+      if(x > ul.x && x < lr.x && y > ul.y && y < lr.y)
+        mask(y, x) = 255;
+  
+  // Compute features on just the selected region.
+  FeatureSet fs;
+  computeFeatures(frame, &fs, 200, mask);
 
   // Get the FeatureSet for the object model.
   model_.keypoints_.clear();
@@ -232,12 +258,20 @@ void RodVisualizer::select()
   indices.reserve(fs.keypoints_.size());
   for(size_t i = 0; i < fs.keypoints_.size(); ++i) {
     cv::Point2f kpt = fs.keypoints_[i].pt;
-    if(kpt.x > ul.x && kpt.x < lr.x &&
-       kpt.y > ul.y && kpt.y < lr.y)
+    // ORB returns keypoints that are outside the mask?
+    float slop = 10;
+    if(kpt.x > ul.x - slop && kpt.x < lr.x + slop &&
+       kpt.y > ul.y - slop && kpt.y < lr.y + slop)
     {
       model_.keypoints_.push_back(fs.keypoints_[i]);
       model_.keycloud_->push_back(fs.keycloud_->at(i));
       indices.push_back(i);
+    }
+    else {
+      cout << "Invalid keypoint: " << kpt << endl;
+      cout << "Upper left: " << ul << endl;
+      cout << "Lower right: " << lr << endl;
+      ROS_ASSERT(0);
     }
   }
   model_.descriptors_ = cv::Mat1b(model_.keypoints_.size(), fs.descriptors_.cols);
@@ -249,6 +283,8 @@ void RodVisualizer::select()
   cv::Mat3b vis = frame.img_.clone();
   model_.draw(vis);
   cv::imshow("Model", vis);
+
+  selected_points_.clear();
 }
 
 void sampleCorrespondence(const std::vector<cv::DMatch>& matches,
@@ -281,7 +317,7 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
   int k = 1;
   int max_consecutive_nondetections = 1e5;
   float inlier_distance_thresh = 0.01;  // cm
-  int descriptor_distance_thresh = 75;
+  int descriptor_distance_thresh = 50;
  
   // Compute matches.
   //cv::FlannBasedMatcher matcher;
@@ -414,10 +450,12 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
         ++num_rough_inliers;
       }
     }
-    double rough_inlier_pct = (double)num_rough_inliers / model.keycloud_->size();
-    cout << "rough_inlier_pct: " << rough_inlier_pct << " --- total " << model.keycloud_->size() << endl;
-    if(rough_inlier_pct < 0.10)
+    if(num_rough_inliers < 15)
       continue;
+    // double rough_inlier_pct = (double)num_rough_inliers / model.keycloud_->size();
+    // cout << "rough_inlier_pct: " << rough_inlier_pct << " --- total " << model.keycloud_->size() << endl;
+    // if(rough_inlier_pct < 0.10)
+    //   continue;
     
     // Transform the model into the image using the refined cloud.
     Eigen::Affine3f trans_refined = tfc2.getTransformation();
@@ -438,9 +476,10 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
       }
     }
     
-    double inlier_pct = (double)inlier_indices.size() / model.keycloud_->size();
-    cout << "inlier_pct: " << inlier_pct << " --- total " << model.keycloud_->size() << endl;
-    if(inlier_pct > 0.20) {
+    // double inlier_pct = (double)inlier_indices.size() / model.keycloud_->size();
+    // cout << "inlier_pct: " << inlier_pct << " --- total " << model.keycloud_->size() << endl;
+    // if(inlier_pct > 0.20) {
+    if(inlier_indices.size() > 20) {
       remaining->clear();
       remaining->resize(image.keypoints_.size(), true);
       for(size_t i = 0; i < inlier_indices.size(); ++i)
@@ -500,7 +539,7 @@ void RodVisualizer::detect()
   // Compute features on the current frame.
   clams::Frame frame = getFrame();
   FeatureSet fs_image;
-  computeFeatures(frame, &fs_image);
+  computeFeatures(frame, &fs_image, 1000);
 
   // Search for the model.
   vector<FeatureSet> detections;
@@ -529,7 +568,7 @@ void RodVisualizer::visualizeFeatures()
   clams::Frame frame = getFrame();
   FeatureSet fs;
   HighResTimer hrt("Feature computation"); hrt.start();
-  computeFeatures(frame, &fs);
+  computeFeatures(frame, &fs, 1000);
   hrt.stop(); cout << hrt.reportMilliseconds() << endl;
   cv::Mat3b vis = frame.img_.clone();
   fs.draw(vis);
