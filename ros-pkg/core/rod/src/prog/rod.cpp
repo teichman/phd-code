@@ -62,6 +62,9 @@ void computeFeatures(clams::Frame frame, FeatureSet* fs, int num_desired_keypoin
 
   cv::Mat1b gray;
   cv::cvtColor(frame.img_, gray, CV_BGR2GRAY);
+  cv::Mat1b canny;
+  cv::Canny(gray, canny, 75, 100);
+  cv::imshow("Canny", canny);
 
   // Compute features.
   string type = "ORB";
@@ -69,13 +72,13 @@ void computeFeatures(clams::Frame frame, FeatureSet* fs, int num_desired_keypoin
   if(type == "SURF") {
     int min_hessian = 400;
     cv::SurfFeatureDetector detector(min_hessian);
-    detector.detect(gray, fs->keypoints_);
+    detector.detect(canny, fs->keypoints_);
     cv::SurfDescriptorExtractor extractor;
-    extractor.compute(gray, fs->keypoints_, cvdesc);
+    extractor.compute(canny, fs->keypoints_, cvdesc);
   }
   else {
     cv::ORB orb(num_desired_keypoints);
-    orb(gray, mask, fs->keypoints_, cvdesc);
+    orb(canny, mask, fs->keypoints_, cvdesc);
   }
   cout << fs->keypoints_.size() << " " << cvdesc.rows << endl;
   ROS_ASSERT(fs->keypoints_.size() == (size_t)cvdesc.rows);
@@ -384,10 +387,10 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
   // Params.
   // TODO: These should elsewhere.  This function should probably be in its own object
   // and have a YAML for configuration.
-  int k = 2;
+  int k = 3;
   int max_consecutive_nondetections = 1e5;
   float inlier_distance_thresh = 0.02;  // cm
-  int descriptor_distance_thresh = 50;
+  int descriptor_distance_thresh = 60;
  
   // Compute matches.
   //cv::FlannBasedMatcher matcher;
@@ -436,7 +439,6 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
   cout << "Good matches: " << matches.size() << endl;
   if(matches.size() < 10)
     return FeatureSet();
-
 
   SearchStats stats;
   int best_num_inliers = 0;
@@ -529,10 +531,6 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
     stats.num_rough_inliers_.push_back(num_rough_inliers);
     if(num_rough_inliers < 3)
       continue;
-    // double rough_inlier_pct = (double)num_rough_inliers / model.keycloud_->size();
-    // cout << "rough_inlier_pct: " << rough_inlier_pct << " --- total " << model.keycloud_->size() << endl;
-    // if(rough_inlier_pct < 0.10)
-    //   continue;
     
     // Transform the model into the image using the refined cloud.
     Eigen::Affine3f trans_refined = tfc2.getTransformation();
@@ -554,16 +552,16 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
     }
     stats.num_refined_inliers_.push_back(inlier_indices.size());
     
-    // double inlier_pct = (double)inlier_indices.size() / model.keycloud_->size();
-    // cout << "inlier_pct: " << inlier_pct << " --- total " << model.keycloud_->size() << endl;
-    // if(inlier_pct > 0.20) {
-    best_inlier_indices = inlier_indices;
-    best_detection = detection;
+    if(inlier_indices.size() > best_inlier_indices.size()) {
+      best_inlier_indices = inlier_indices;
+      best_detection = detection;
+    }
   }
 
   cout << "SearchStats: " << endl;
   cout << stats.status("  ") << endl;
 
+  cout << "best_inlier_indices.size(): " << best_inlier_indices.size() << endl;
   if(best_inlier_indices.size() > 30) {
     remaining->clear();
     remaining->resize(image.keypoints_.size(), true);
