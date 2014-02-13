@@ -15,26 +15,8 @@ using namespace Eigen;
 typedef pcl::PointXYZRGB Point;
 typedef pcl::PointCloud<pcl::PointXYZRGB> Cloud;
 
-class FeatureSet
+clams::FrameProjector defaultProjector(clams::Frame frame)
 {
-public:
-  Cloud::Ptr keycloud_;
-  cv::Mat1b descriptors_;
-  std::vector<cv::KeyPoint> keypoints_;
-
-  void draw(cv::Mat3b img) const;
-};
-
-void FeatureSet::draw(cv::Mat3b img) const
-{
-  for(size_t i = 0; i < keypoints_.size(); ++i)
-    cv::circle(img, keypoints_[i].pt, 2, cv::Scalar(0, 0, 255), -1);
-}
-
-// Only accepts keypoints that have 3D associated with them.
-void computeFeatures(clams::Frame frame, FeatureSet* fs, int num_desired_keypoints = 500, cv::Mat1b mask = cv::Mat1b())
-{
-  // Set up projector.
   clams::FrameProjector proj;
   proj.width_ = frame.img_.cols;
   proj.height_ = frame.img_.rows;
@@ -43,6 +25,65 @@ void computeFeatures(clams::Frame frame, FeatureSet* fs, int num_desired_keypoin
   ROS_ASSERT(frame.img_.cols == 640);
   proj.fx_ = 525;
   proj.fy_ = 525;
+  return proj;
+}
+
+cv::Mat1b defaultCanny(cv::Mat3b img)
+{
+  cv::Mat1b gray;
+  cv::cvtColor(img, gray, CV_BGR2GRAY);
+  return defaultCanny(gray);
+}
+
+cv::Mat1b defaultCanny(cv::Mat1b gray)
+{
+  cv::Mat1b canny;
+  cv::Canny(gray, canny, 75, 100);
+  return canny;
+}
+
+class FeatureSet
+{
+public:
+  Cloud::Ptr keycloud_;
+  cv::Mat1b descriptors_;
+  std::vector<cv::KeyPoint> keypoints_;
+  Cloud::Ptr pcd_;
+
+  void drawKeypoints(cv::Mat3b img) const;
+  void drawCloud(cv::Mat3b img) const;
+};
+
+void FeatureSet::drawKeypoints(cv::Mat3b img) const
+{
+  for(size_t i = 0; i < keypoints_.size(); ++i)
+    cv::circle(img, keypoints_[i].pt, 2, cv::Scalar(0, 0, 255), -1);
+}
+
+void FeatureSet::drawCloud(cv::Mat3b img) const
+{
+  ROS_ASSERT(pcd_);
+
+  clams::Frame frame; frame.img_ = img;
+  clams::FrameProjector proj = defaultProjector(frame);
+
+  clams::ProjectivePoint ppt;
+  for(size_t i = 0; i < pcd_->size(); ++i) {
+    proj.project(pcd_->at(i), &ppt);
+    if(ppt.u_ <  0 || ppt.u_ >= img.cols)
+      continue;
+    if(ppt.v_ <  0 || ppt.v_ >= img.rows)
+      continue;
+    img(ppt.v_, ppt.u_)[0] = ppt.b_;
+    img(ppt.v_, ppt.u_)[1] = ppt.g_;
+    img(ppt.v_, ppt.u_)[2] = ppt.r_;
+  }
+}
+
+// Only accepts keypoints that have 3D associated with them.
+void computeFeatures(clams::Frame frame, FeatureSet* fs, int num_desired_keypoints = 500, cv::Mat1b mask = cv::Mat1b())
+{
+  clams::FrameProjector proj = defaultProjector(frame);
 
   // If no mask has been provided, then use the whole frame.
   if(mask.rows == 0) {
@@ -62,8 +103,7 @@ void computeFeatures(clams::Frame frame, FeatureSet* fs, int num_desired_keypoin
 
   cv::Mat1b gray;
   cv::cvtColor(frame.img_, gray, CV_BGR2GRAY);
-  cv::Mat1b canny;
-  cv::Canny(gray, canny, 75, 100);
+  cv::Mat1b canny = defaultCanny(gray);
   cv::imshow("Canny", canny);
 
   // Compute features.
@@ -118,7 +158,7 @@ void computeFeatures(clams::Frame frame, FeatureSet* fs, int num_desired_keypoin
 
   // Debugging.
   cv::Mat3b vis = frame.img_.clone();
-  fs->draw(vis);
+  fs->drawKeypoints(vis);
   cv::imshow("computeFeatures", vis);
 }
 
@@ -282,10 +322,39 @@ void RodVisualizer::select()
     for(int j  = 0; j < model_.descriptors_.cols; j++)
       model_.descriptors_(i, j) = fs.descriptors_(indices[i], j);
 
+  // Also get the raw pointcloud of the object.
+  // Color with a blurred edge image which we can match to later.
+  cv::Mat1b gray;
+  cv::cvtColor(frame.img_, gray, CV_BGR2GRAY);
+  cv::Mat1b canny = defaultCanny(gray);
+  cv::GaussianBlur(canny, canny, cv::Size(17, 17), 2);
+  clams::FrameProjector proj = defaultProjector(frame);
+  model_.pcd_ = Cloud::Ptr(new Cloud);
+  model_.pcd_->reserve(640*480 / 10);
+  for(int y = ul.y; y < lr.y; ++y) {
+    for(int x = ul.x; x < lr.x; ++x) { 
+      clams::ProjectivePoint ppt;
+      ppt.u_ = x;
+      ppt.v_ = y;
+      ppt.z_ = frame.depth_->coeffRef(ppt.v_, ppt.u_);
+      if(ppt.z_ == 0)
+        continue;
+      Point pt;
+      proj.project(ppt, &pt);
+      // pt.b = frame.img_(y, x)[0];
+      // pt.g = frame.img_(y, x)[1];
+      // pt.r = frame.img_(y, x)[2];
+      pt.b = canny(y, x);
+      pt.g = canny(y, x);
+      pt.r = canny(y, x);
+      model_.pcd_->push_back(pt);
+    }
+  }
+
   // Display.
   cv::Mat3b vis = frame.img_.clone();
-  model_.draw(vis);
-  cv::imshow("Model", vis);
+  model_.drawKeypoints(vis);
+  cv::imshow("Model Keypoints", vis);
 
   selected_points_.clear();
 }
@@ -313,8 +382,9 @@ struct SearchStats
 {
   int num_samples_;
   int num_not_too_close_;
-  vector<int> num_rough_inliers_;
-  vector<int> num_refined_inliers_;
+  vector<double> num_rough_inliers_;
+  vector<double> num_refined_inliers_;
+  vector<double> edge_differences_;
   
   SearchStats() :
     num_samples_(0),
@@ -325,18 +395,18 @@ struct SearchStats
   std::string status(const std::string& prefix = "") const;
 
 protected:
-  Eigen::VectorXf computeHistogram(const std::vector<int>& vals, int* maxval) const;
-  std::string printHistogram(const std::string& prefix, const std::vector<int>& vals) const;
+  Eigen::VectorXd computeHistogram(const std::vector<double>& vals, double* maxval) const;
+  std::string printHistogram(const std::string& prefix, const std::vector<double>& vals) const;
 };
 
-VectorXf SearchStats::computeHistogram(const std::vector<int>& vals, int* maxval) const
+VectorXd SearchStats::computeHistogram(const std::vector<double>& vals, double* maxval) const
 {
-  *maxval = -numeric_limits<int>::max();
+  *maxval = -numeric_limits<double>::max();
   for(size_t i = 0; i < vals.size(); ++i)
     *maxval = max(*maxval, vals[i]);
   int num_bins = 10;
   float bin_width = (float)(*maxval) / num_bins;
-  VectorXf hist = VectorXf::Zero(num_bins);
+  VectorXd hist = VectorXd::Zero(num_bins);
   for(size_t i = 0; i < vals.size(); ++i) {
     int idx = min<int>(hist.rows() - 1, max<int>(0, vals[i] / bin_width));
     ++hist(idx);
@@ -344,10 +414,10 @@ VectorXf SearchStats::computeHistogram(const std::vector<int>& vals, int* maxval
   return hist;
 }
 
-std::string SearchStats::printHistogram(const std::string& prefix, const std::vector<int>& vals) const
+std::string SearchStats::printHistogram(const std::string& prefix, const std::vector<double>& vals) const
 {
-  int maxval;
-  VectorXf hist = computeHistogram(vals, &maxval);
+  double maxval;
+  VectorXd hist = computeHistogram(vals, &maxval);
   float bin_width = (float)maxval / hist.rows();
 
   ostringstream oss;
@@ -373,11 +443,15 @@ std::string SearchStats::status(const std::string& prefix) const
     oss << prefix << "Histogram of num refined inliers | num samples that had this many: " << endl;
     oss << printHistogram(prefix + "  ", num_refined_inliers_) << endl;
   }
+  if(!edge_differences_.empty()) {
+    oss << prefix << "Histogram of edge differences | num samples that had this many: " << endl;
+    oss << printHistogram(prefix + "  ", edge_differences_) << endl;
+  }
 
   return oss.str();
 }
 
-FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>* remaining)
+FeatureSet search(const clams::Frame& frame, const FeatureSet& model, const FeatureSet& image, vector<bool>* remaining)
 {
   cout << "============================================================ New search" << endl;
   
@@ -388,7 +462,7 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
   // TODO: These should elsewhere.  This function should probably be in its own object
   // and have a YAML for configuration.
   int k = 3;
-  int max_consecutive_nondetections = 1e5;
+  int max_consecutive_nondetections = 1e4;
   float inlier_distance_thresh = 0.02;  // cm
   int descriptor_distance_thresh = 60;
  
@@ -440,11 +514,17 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
   if(matches.size() < 10)
     return FeatureSet();
 
+  // Compute canny image for use in final matching stage.
+  cv::Mat1b gray;
+  cv::cvtColor(frame.img_, gray, CV_BGR2GRAY);
+  cv::Mat1b canny = defaultCanny(gray);
+  
   SearchStats stats;
   int best_num_inliers = 0;
   int num_samples_without_detection = 0;
   vector<size_t> best_inlier_indices;
   FeatureSet best_detection;
+  double best_edge_difference = std::numeric_limits<double>::max();
   while(true) {
     // If we haven't found anything in a while, stop.
     //cout << "num_samples_without_detection: " << num_samples_without_detection << endl;
@@ -551,8 +631,29 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
       }
     }
     stats.num_refined_inliers_.push_back(inlier_indices.size());
+
+    // Project the model pointcloud into the current camera coordinate system.
+    detection.pcd_ = Cloud::Ptr(new Cloud);
+    pcl::transformPointCloud(*model.pcd_, *detection.pcd_, trans_refined);
+
+    // Check that this matches up.
+    clams::FrameProjector proj = defaultProjector(frame);
+    clams::ProjectivePoint ppt;
+    double total_edge_difference = 0;
+    for(size_t i = 0; i < detection.pcd_->size(); ++i) {
+      proj.project(detection.pcd_->at(i), &ppt);
+      if(ppt.u_ < 0 || ppt.u_ >= frame.img_.cols)
+        continue;
+      if(ppt.v_ < 0 || ppt.v_ >= frame.img_.rows)
+        continue;
+      total_edge_difference += fabs(canny(ppt.v_, ppt.u_) - detection.pcd_->at(i).r);
+    }
+    double edge_difference = total_edge_difference / detection.pcd_->size();
+    stats.edge_differences_.push_back(edge_difference);
     
+    // If it's the best, make a note.
     if(inlier_indices.size() > best_inlier_indices.size()) {
+      best_edge_difference = edge_difference;
       best_inlier_indices = inlier_indices;
       best_detection = detection;
     }
@@ -563,10 +664,20 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
 
   cout << "best_inlier_indices.size(): " << best_inlier_indices.size() << endl;
   if(best_inlier_indices.size() > 30) {
+
+    // The matches should come from roughly the same octave and orientation.
+    // This is not at all the case though.  WTH?
+    // for(size_t i = 0; i < best_detection.keypoints_.size(); ++i) {
+    //   cout << "keypoint " << i << ": " << best_detection.keypoints_[i].angle << " " 
+    //        << best_detection.keypoints_[i].octave << endl;
+    // }
+    
     remaining->clear();
     remaining->resize(image.keypoints_.size(), true);
     for(size_t i = 0; i < best_inlier_indices.size(); ++i)
       remaining->at(best_inlier_indices[i]) = false;
+
+    cout << "Returning detection with edge difference: " << best_edge_difference << endl;
     return best_detection;
   }
   
@@ -574,14 +685,14 @@ FeatureSet search(const FeatureSet& model, const FeatureSet& image, vector<bool>
   return FeatureSet();  // No detection.
 }
 
-void search(const FeatureSet& model, FeatureSet image, vector<FeatureSet>* detections)
+void search(const clams::Frame& frame, const FeatureSet& model, FeatureSet image, vector<FeatureSet>* detections)
 {
   detections->clear();
 
   while(true) {
     // Find a match.
     vector<bool> remaining;
-    FeatureSet detection = search(model, image, &remaining);
+    FeatureSet detection = search(frame, model, image, &remaining);
     if(detection.keypoints_.empty())
       break;
     detections->push_back(detection);
@@ -626,14 +737,16 @@ void RodVisualizer::detect()
 
   // Search for the model.
   vector<FeatureSet> detections;
-  search(model_, fs_image, &detections);
+  search(frame, model_, fs_image, &detections);
+  cout << "Total detections: " << detections.size() << endl;
   
   // Visualize detections.
   cv::Mat3b vis = frame.img_.clone();
-  for(size_t i = 0; i < detections.size(); ++i) { 
-    detections[i].draw(vis);
-  }
-  cv::imshow("Detection", vis);
+  for(size_t i = 0; i < detections.size(); ++i)
+    detections[i].drawCloud(vis);
+  for(size_t i = 0; i < detections.size(); ++i)
+    detections[i].drawKeypoints(vis);
+  cv::imshow("Detections", vis);
 }
 
 clams::Frame RodVisualizer::getFrame()
@@ -654,7 +767,7 @@ void RodVisualizer::visualizeFeatures()
   computeFeatures(frame, &fs, 1000);
   hrt.stop(); cout << hrt.reportMilliseconds() << endl;
   cv::Mat3b vis = frame.img_.clone();
-  fs.draw(vis);
+  fs.drawKeypoints(vis);
   cv::imshow("Features", vis);
 }
 
