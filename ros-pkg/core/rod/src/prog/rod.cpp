@@ -327,7 +327,6 @@ void RodVisualizer::select()
   cv::Mat1b gray;
   cv::cvtColor(frame.img_, gray, CV_BGR2GRAY);
   cv::Mat1b canny = defaultCanny(gray);
-  cv::GaussianBlur(canny, canny, cv::Size(17, 17), 2);
   clams::FrameProjector proj = defaultProjector(frame);
   model_.pcd_ = Cloud::Ptr(new Cloud);
   model_.pcd_->reserve(640*480 / 10);
@@ -384,7 +383,7 @@ struct SearchStats
   int num_not_too_close_;
   vector<double> num_rough_inliers_;
   vector<double> num_refined_inliers_;
-  vector<double> edge_differences_;
+  vector<double> edge_match_pcts_;
   
   SearchStats() :
     num_samples_(0),
@@ -396,7 +395,9 @@ struct SearchStats
 
 protected:
   Eigen::VectorXd computeHistogram(const std::vector<double>& vals, double* maxval) const;
-  std::string printHistogram(const std::string& prefix, const std::vector<double>& vals) const;
+  std::string printHistogram(const std::string& prefix,
+                             const std::vector<double>& vals,
+                             int precision) const;
 };
 
 VectorXd SearchStats::computeHistogram(const std::vector<double>& vals, double* maxval) const
@@ -414,7 +415,9 @@ VectorXd SearchStats::computeHistogram(const std::vector<double>& vals, double* 
   return hist;
 }
 
-std::string SearchStats::printHistogram(const std::string& prefix, const std::vector<double>& vals) const
+std::string SearchStats::printHistogram(const std::string& prefix,
+                                        const std::vector<double>& vals,
+                                        int precision = 0) const
 {
   double maxval;
   VectorXd hist = computeHistogram(vals, &maxval);
@@ -422,7 +425,7 @@ std::string SearchStats::printHistogram(const std::string& prefix, const std::ve
 
   ostringstream oss;
   for(int i = 0; i < hist.rows(); ++i)
-    oss << prefix << setiosflags(ios::fixed) << setprecision(0) << setw(5) << setfill('0') << i * bin_width << "\t|  " << hist[i] << endl;
+    oss << prefix << setiosflags(ios::fixed) << setprecision(precision) << setw(5) << setfill('0') << i * bin_width << "\t|  " << hist[i] << endl;
 
   return oss.str();
 }
@@ -443,9 +446,9 @@ std::string SearchStats::status(const std::string& prefix) const
     oss << prefix << "Histogram of num refined inliers | num samples that had this many: " << endl;
     oss << printHistogram(prefix + "  ", num_refined_inliers_) << endl;
   }
-  if(!edge_differences_.empty()) {
-    oss << prefix << "Histogram of edge differences | num samples that had this many: " << endl;
-    oss << printHistogram(prefix + "  ", edge_differences_) << endl;
+  if(!edge_match_pcts_.empty()) {
+    oss << prefix << "Histogram of edge match pcts | num samples that had this many: " << endl;
+    oss << printHistogram(prefix + "  ", edge_match_pcts_, 2) << endl;
   }
 
   return oss.str();
@@ -465,6 +468,8 @@ FeatureSet search(const clams::Frame& frame, const FeatureSet& model, const Feat
   int max_consecutive_nondetections = 1e4;
   float inlier_distance_thresh = 0.02;  // cm
   int descriptor_distance_thresh = 60;
+  double edge_match_pct_thresh = 0.75;
+  size_t model_inliers_set_thresh = 20;
  
   // Compute matches.
   //cv::FlannBasedMatcher matcher;
@@ -518,13 +523,16 @@ FeatureSet search(const clams::Frame& frame, const FeatureSet& model, const Feat
   cv::Mat1b gray;
   cv::cvtColor(frame.img_, gray, CV_BGR2GRAY);
   cv::Mat1b canny = defaultCanny(gray);
+  cv::GaussianBlur(canny, canny, cv::Size(11, 11), 1);  // TODO: This should be a Laplacian blur.
+  cv::imshow("Blurred Canny", canny);
   
   SearchStats stats;
   int best_num_inliers = 0;
   int num_samples_without_detection = 0;
   vector<size_t> best_inlier_indices;
+  set<size_t> best_model_inliers_set;
   FeatureSet best_detection;
-  double best_edge_difference = std::numeric_limits<double>::max();
+  double best_edge_match_pct = 0;
   while(true) {
     // If we haven't found anything in a while, stop.
     //cout << "num_samples_without_detection: " << num_samples_without_detection << endl;
@@ -617,6 +625,7 @@ FeatureSet search(const clams::Frame& frame, const FeatureSet& model, const Feat
     pcl::transformPointCloud(*model.keycloud_, transformed_model_keycloud, trans_refined);
 
     // Get inliers after refinement.
+    set<size_t> model_inliers_set;
     vector<size_t> inlier_indices;
     inlier_indices.reserve(model.keycloud_->size());
     FeatureSet detection;
@@ -626,11 +635,14 @@ FeatureSet search(const clams::Frame& frame, const FeatureSet& model, const Feat
       Point ipt = image.keycloud_->at(match.queryIdx);
       float dist = pcl::euclideanDistance(mpt, ipt);
       if(dist < inlier_distance_thresh) {
-        inlier_indices.push_back(match.queryIdx);
+        model_inliers_set.insert(match.trainIdx);
+        inlier_indices.push_back(match.queryIdx);        
         detection.keypoints_.push_back(image.keypoints_[match.queryIdx]);
       }
     }
-    stats.num_refined_inliers_.push_back(inlier_indices.size());
+    stats.num_refined_inliers_.push_back(model_inliers_set.size());
+    if(model_inliers_set.size() < model_inliers_set_thresh)
+      continue;
 
     // Project the model pointcloud into the current camera coordinate system.
     detection.pcd_ = Cloud::Ptr(new Cloud);
@@ -639,21 +651,30 @@ FeatureSet search(const clams::Frame& frame, const FeatureSet& model, const Feat
     // Check that this matches up.
     clams::FrameProjector proj = defaultProjector(frame);
     clams::ProjectivePoint ppt;
-    double total_edge_difference = 0;
+    double num_edge_points = 0;
+    double num_edge_matches = 0;
     for(size_t i = 0; i < detection.pcd_->size(); ++i) {
       proj.project(detection.pcd_->at(i), &ppt);
       if(ppt.u_ < 0 || ppt.u_ >= frame.img_.cols)
         continue;
       if(ppt.v_ < 0 || ppt.v_ >= frame.img_.rows)
         continue;
-      total_edge_difference += fabs(canny(ppt.v_, ppt.u_) - detection.pcd_->at(i).r);
+
+      if(detection.pcd_->at(i).r > 0) {
+        ++num_edge_points;
+        if(canny(ppt.v_, ppt.u_) > 0)
+          ++num_edge_matches;
+      }
     }
-    double edge_difference = total_edge_difference / detection.pcd_->size();
-    stats.edge_differences_.push_back(edge_difference);
+    double edge_match_pct = num_edge_matches / num_edge_points;
+    stats.edge_match_pcts_.push_back(edge_match_pct);
+    if(edge_match_pct < edge_match_pct_thresh)
+      continue;
     
     // If it's the best, make a note.
-    if(inlier_indices.size() > best_inlier_indices.size()) {
-      best_edge_difference = edge_difference;
+    if(model_inliers_set.size() > best_model_inliers_set.size()) {
+      best_model_inliers_set = model_inliers_set;
+      best_edge_match_pct = edge_match_pct;
       best_inlier_indices = inlier_indices;
       best_detection = detection;
     }
@@ -662,8 +683,8 @@ FeatureSet search(const clams::Frame& frame, const FeatureSet& model, const Feat
   cout << "SearchStats: " << endl;
   cout << stats.status("  ") << endl;
 
-  cout << "best_inlier_indices.size(): " << best_inlier_indices.size() << endl;
-  if(best_inlier_indices.size() > 30) {
+  cout << "best_model_inliers_set.size(): " << best_model_inliers_set.size() << endl;
+  if(best_model_inliers_set.size() > model_inliers_set_thresh) {
 
     // The matches should come from roughly the same octave and orientation.
     // This is not at all the case though.  WTH?
@@ -677,7 +698,7 @@ FeatureSet search(const clams::Frame& frame, const FeatureSet& model, const Feat
     for(size_t i = 0; i < best_inlier_indices.size(); ++i)
       remaining->at(best_inlier_indices[i]) = false;
 
-    cout << "Returning detection with edge difference: " << best_edge_difference << endl;
+    cout << "Returning detection with edge match pct: " << best_edge_match_pct << endl;
     return best_detection;
   }
   
