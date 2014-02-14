@@ -8,12 +8,15 @@
 #include <boost/program_options.hpp>
 #include <stream_sequence/frame_projector.h>
 #include <pcl/common/transformation_from_correspondences.h>
+#include <bag_of_tricks/next_path.h>
 
 using namespace std;
 using namespace Eigen;
 
 typedef pcl::PointXYZRGB Point;
 typedef pcl::PointCloud<pcl::PointXYZRGB> Cloud;
+
+#define SAVE_IMGS (getenv("SAVE_IMGS") ? atoi(getenv("SAVE_IMGS")) : 0)
 
 clams::FrameProjector defaultProjector(clams::Frame frame)
 {
@@ -271,6 +274,12 @@ void RodVisualizer::keypress(char c)
 
 void RodVisualizer::select()
 {
+  if(SAVE_IMGS) {
+    cv::Mat3b vis = getFrame().img_.clone();
+    drawSelection(vis);
+    cv::imwrite(nextPath(".", "", "-initial_segmentation.png", 4), vis);
+  }
+  
   if(selected_points_.size() != 2) {
     cout << "You must select the template first." << endl;
     return;
@@ -354,6 +363,8 @@ void RodVisualizer::select()
   cv::Mat3b vis = frame.img_.clone();
   model_.drawKeypoints(vis);
   cv::imshow("Model Keypoints", vis);
+  if(SAVE_IMGS)
+    cv::imwrite(nextPath(".", "", "-model_keypoints.png", 4), vis);
 
   selected_points_.clear();
 }
@@ -466,10 +477,10 @@ FeatureSet search(const clams::Frame& frame, const FeatureSet& model, const Feat
   // and have a YAML for configuration.
   int k = 3;
   int max_consecutive_nondetections = 1e4;
-  float inlier_distance_thresh = 0.02;  // cm
+  float inlier_distance_thresh = 0.03;  // cm
   int descriptor_distance_thresh = 60;
   double edge_match_pct_thresh = 0.75;
-  size_t model_inliers_set_thresh = 20;
+  size_t model_inliers_set_thresh = 15;
  
   // Compute matches.
   //cv::FlannBasedMatcher matcher;
@@ -768,6 +779,9 @@ void RodVisualizer::detect()
   for(size_t i = 0; i < detections.size(); ++i)
     detections[i].drawKeypoints(vis);
   cv::imshow("Detections", vis);
+
+  if(SAVE_IMGS)
+    cv::imwrite(nextPath(".", "", "-detections.png", 4), vis);
 }
 
 clams::Frame RodVisualizer::getFrame()
