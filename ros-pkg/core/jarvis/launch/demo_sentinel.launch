@@ -5,7 +5,7 @@
   <arg name="recording-directory" default=" $(env PWD)/sentinel_videos" />
   
   <node name="sentinel" pkg="sentinel" type="stream"
-        respawn="true"
+        required="true"
         args="--color-res QVGA
               --depth-res QVGA
               --sensor-id default_sensor_id
