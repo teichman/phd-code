@@ -1,0 +1,23 @@
+<launch>
+  
+  <!-- td-directory must be an absolute path! -->
+  <arg name="td-directory" default=" $(env PWD)/jarvis_tds" />
+  <!-- bagfile-directory must be an absolute path! -->
+  <arg name="bagfile-directory" default=" $(env PWD)/sentinel_bags" />
+
+  <!-- Track & classify objects.  Also save tracks to TD files.  -->
+  <!-- Right now this program only works with a single sentinel.  -->
+  <node name="jarvis" pkg="jarvis" type="jarvis"
+        required="true"
+        args="-v0
+              -r$(arg rotation)
+              --record $(arg td-directory)
+              --config $(find jarvis)/config/hand_specified.yml
+              -u $(find jarvis)/config/up-kitchen-post_gluing.eig.txt
+              "/>
+
+  <!-- Record all the foreground messages received from sentinel devices. -->
+  <node name="rosbag" pkg="rosbag" type="record"
+        args="-a --split=1024 -j -o $(arg bagfile-directory)"/>
+  
+</launch>
