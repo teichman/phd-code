@@ -1,6 +1,6 @@
 <launch>
 
-  <arg name="occupancy-threshold" default="1200" />
+  <arg name="occupancy-threshold" default="600" />
   <!-- recording-directory must be an absolute path! -->
   <arg name="recording-directory" default=" $(env PWD)/sentinel_videos" />
   
