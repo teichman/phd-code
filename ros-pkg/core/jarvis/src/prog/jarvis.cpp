@@ -68,12 +68,16 @@ int main(int argc, char** argv)
     jarvis.gc_ = GridClassifier::Ptr(new GridClassifier);
     jarvis.gc_->load(gc_path);
 
+    // Set the up vector.  If using less_gravity.yml, you need to put something here, but
+    // it won't have any effect.  TODO: Add accelerometer, get rid of the annoying
+    // cruft involving manually setting the up vector.
+    VectorXf up = VectorXf::Zero(3);
+    up(1) = -1;
     if(opts.count("up")) {
-      VectorXf up;
       cout << "Setting up vector to that found at " << up_path << endl;
       eigen_extensions::loadASCII(up_path, &up);
-      jarvis.dp_->setUpVector(up);
     }
+    jarvis.dp_->setUpVector(up);
   }
   
   // -- Run.

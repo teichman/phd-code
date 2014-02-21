@@ -3,9 +3,9 @@
   <!-- In degrees. -->
   <arg name="rotation" default="0" />
   <!-- td-directory must be an absolute path! -->
-  <arg name="td-directory" default=" $(env PWD)/jarvis_tds" />
+  <arg name="td-directory" default="$(env PWD)/jarvis_tds" />
   <!-- bagfile-directory must be an absolute path! -->
-  <arg name="bagfile-directory" default=" $(env PWD)/sentinel_bags" />
+  <arg name="bagfile-directory" default="$(env PWD)/sentinel_bags" />
 
   <!-- Track & classify objects.  Also save tracks to TD files.  -->
   <!-- Right now this program only works with a single sentinel.  -->
@@ -14,8 +14,7 @@
         args="-v1
               -r$(arg rotation)
               --record $(arg td-directory)
-              --config $(find jarvis)/config/hand_specified.yml
-              -u $(find jarvis)/config/up-kitchen-post_gluing.eig.txt
+              --config $(find jarvis)/config/less_gravity.yml
               "/>
 
   <!-- Record all the foreground messages received from sentinel devices. -->
