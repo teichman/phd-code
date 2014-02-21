@@ -14,4 +14,9 @@ ros-pkg/*/*/lib
 *.eig.gz
 *.pyc
 *.pcd
-
+.cproject
+.project
+.pydevproject
+_gtest_from_src/
+cmake_install.cmake
+msg_gen/
