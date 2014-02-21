@@ -397,7 +397,7 @@ void GravitationalCloudOrienter::setUpVector(const Eigen::Vector3f& up)
   pcl::TransformationFromCorrespondences tfc;
   tfc.add(Vector3f(0, 0, 0), Vector3f(0, 0, 0));
   tfc.add(up_, Vector3f(0, 0, 1));
-  Vector3f xrefpt(1.0 / up_(0), 1.0 / up_(1), -2.0 / up_(2));
+  Vector3f xrefpt(1.0 / up_(0), 1.0 / up_(1), -2.0 / up_(2));  // TODO: This is a disaster if any element of up_ is zero.
   xrefpt.normalize();
   tfc.add(xrefpt, Vector3f(1, 0, 0));
   raw_to_up_ = tfc.getTransformation();

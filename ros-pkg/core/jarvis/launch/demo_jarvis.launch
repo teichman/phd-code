@@ -1,24 +1,52 @@
 <launch>
 
+  <!-- ########################################################## -->
+  <!-- Args -->
+  <!-- ########################################################## -->
+  
   <!-- In degrees. -->
   <arg name="rotation" default="0" />
-  <!-- td-directory must be an absolute path! -->
-  <arg name="td-directory" default="$(env PWD)/jarvis_tds" />
-  <!-- bagfile-directory must be an absolute path! -->
-  <arg name="bagfile-directory" default="$(env PWD)/sentinel_bags" />
+  <!-- gi-dir must be an absolute path! -->
+  <arg name="gi-dir" default="$(env PWD)/group_induction" />
+  <!-- td-dir must be an absolute path! -->
+  <arg name="td-dir" default="$(env PWD)/jarvis_tds" />
+  <!-- bagfile-dir must be an absolute path! -->
+  <arg name="bagfile-dir" default="$(env PWD)/sentinel_bags" />
 
+  
+  <!-- ########################################################## -->
+  <!-- Programs -->
+  <!-- ########################################################## -->
+  
   <!-- Track & classify objects.  Also save tracks to TD files.  -->
   <!-- Right now this program only works with a single sentinel.  -->
   <node name="jarvis" pkg="jarvis" type="jarvis"
         required="true"
         args="-v1
               -r$(arg rotation)
-              --record $(arg td-directory)
+              --record $(arg td-dir)
               --config $(find jarvis)/config/less_gravity.yml
               "/>
 
   <!-- Record all the foreground messages received from sentinel devices. -->
   <node name="rosbag" pkg="rosbag" type="record"
-        args="-a --split=1024 -j -o $(arg bagfile-directory)"/>
+        args="-a --split=1024 -j -o $(arg bagfile-dir)"/>
+
+  <!-- Run group induction on the unlabeled data that is getting saved to disk
+       For initialization of the descriptor space bounds there need to be at least
+       a few .td files in $(arch td-dir) already. -->
+  <node name="induct" pkg="jarvis" type="induct"
+        required="true"
+        output="screen"
+        args="--class-names interesting
+              --config $(find jarvis)/config/less_gravity.yml
+              --emax 0
+              --buffer-size 1000
+              --max-track-length 30
+              --snapshot-every 0
+              --evaluate-every 0
+              --unlabeled-td-dir $(arg td-dir)
+              --output-dir $(arg gi-dir)
+              "/>
   
 </launch>

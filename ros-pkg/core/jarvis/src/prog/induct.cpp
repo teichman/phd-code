@@ -5,6 +5,7 @@
 #include <jarvis/induction_supervisor.h>
 #include <jarvis/blob_view.h>
 #include <jarvis/descriptor_pipeline.h>
+#include <ros/ros.h>
 
 using namespace std;
 using namespace Eigen;
@@ -13,6 +14,8 @@ namespace bfs = boost::filesystem;
 
 int main(int argc, char** argv)
 {
+  ros::init(argc, argv, "induct");
+  
   namespace bpo = boost::program_options;
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
@@ -63,7 +66,7 @@ int main(int argc, char** argv)
     ("seed", bpo::value< vector<string> >(&seed_paths)->multitoken(), ".td files to use as annotated seed data.")
     ("autobg", bpo::value< vector<string> >(&autobg_paths)->multitoken(), ".td files to use as automatically-annotated bg data.")
 
-    ("init", bpo::value< vector<string> >(&init_paths)->required()->multitoken(), ".td files to initialize the classifier grids with.")
+    ("init", bpo::value< vector<string> >(&init_paths)->multitoken(), "Use these specific .td files to initialize the classifier grids.  If this is not specified, three will be chosen at random from unlabeled-td-dir.")
     ("class-names", bpo::value(&class_names)->required()->multitoken(), "")
     ("no-vis", "")
     ("randomize", "Set the random seed to a random number.")
@@ -89,6 +92,12 @@ int main(int argc, char** argv)
     cout << "Setting the random seed to something random." << endl;
     srand(time(NULL));
   }
+
+  // -- Make sure the output dir has not been used before.
+  if(bfs::exists(output_dir + "/input_hand_annotations")) {
+    ROS_FATAL_STREAM("It appears that the group induction directory \"" << output_dir << "\" has been used before.  Aborting.");
+    return 1;
+  }
   
   // -- Load the config.
   YAML::Node config = YAML::LoadFile(config_path);
@@ -113,14 +122,29 @@ int main(int argc, char** argv)
   cout << cmap.status("  ") << endl;
 
   // -- Get the up vector.
-  VectorXf up;
+  // If using less_gravity.yml, you need to put something here, but
+  // it won't have any effect.  TODO: Add accelerometer, get rid of the annoying
+  // cruft involving manually setting the up vector.
+  VectorXf up = VectorXf::Ones(3);
   if(opts.count("up")) {
     cout << "Setting up vector to that found at " << up_path << endl;
     eigen_extensions::loadASCII(up_path, &up);
-    cout << "Up: " << up.transpose() << endl;
   }
   
   // -- Initialize classifier and trainer.
+  // If we weren't told specifically which tds to use for initialization,
+  // choose some at random.
+  if(!opts.count("init")) {
+    init_paths = recursiveFind(unlabeled_td_dir, "*.td");
+    cout << "Possible initialization paths: " << endl;
+    copy(init_paths.begin(), init_paths.end(), ostream_iterator<string>(cout, "\n"));
+    random_shuffle(init_paths.begin(), init_paths.end());
+    if(init_paths.size() < 3) {
+      ROS_FATAL_STREAM("Group induction requires at least 3 .td files in " << unlabeled_td_dir << " for initialization of GridClassifier.");
+      return 1;
+    }
+    init_paths.resize(3);
+  }
   cout << "Loading initialization datasets..." << endl;
   TrackDataset::Ptr init = loadDatasets(init_paths, config, cmap, up, true);
   cout << "Initializing classifier..." << endl;

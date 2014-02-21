@@ -71,7 +71,7 @@ int main(int argc, char** argv)
     // Set the up vector.  If using less_gravity.yml, you need to put something here, but
     // it won't have any effect.  TODO: Add accelerometer, get rid of the annoying
     // cruft involving manually setting the up vector.
-    VectorXf up = VectorXf::Zero(3);
+    VectorXf up = VectorXf::Ones(3);
     up(1) = -1;
     if(opts.count("up")) {
       cout << "Setting up vector to that found at " << up_path << endl;
