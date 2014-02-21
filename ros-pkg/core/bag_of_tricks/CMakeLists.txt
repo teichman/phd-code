@@ -26,6 +26,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/image_region_iterator.cpp
   src/connected_components.cpp
   src/next_path.cpp
+  src/recursive_find.cpp
   )
 rosbuild_add_boost_directories()
 rosbuild_link_boost(${PROJECT_NAME} thread filesystem system)

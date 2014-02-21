@@ -99,5 +99,7 @@ std::vector<Out> vectorCast(const std::vector<In>& vec)
   return cvec;
 }
 
+//! Similar to find dir -name 'pattern'.  Globbing (i.e. *) is understood.
+std::vector<std::string> recursiveFind(const std::string& dir, const std::string& pattern);
 
 #endif // BAG_OF_TRICKS_H
