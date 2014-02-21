@@ -1,5 +1,7 @@
 <launch>
-  
+
+  <!-- In degrees. -->
+  <arg name="rotation" default="0" />
   <!-- td-directory must be an absolute path! -->
   <arg name="td-directory" default=" $(env PWD)/jarvis_tds" />
   <!-- bagfile-directory must be an absolute path! -->
@@ -9,7 +11,7 @@
   <!-- Right now this program only works with a single sentinel.  -->
   <node name="jarvis" pkg="jarvis" type="jarvis"
         required="true"
-        args="-v0
+        args="-v1
               -r$(arg rotation)
               --record $(arg td-directory)
               --config $(find jarvis)/config/hand_specified.yml
