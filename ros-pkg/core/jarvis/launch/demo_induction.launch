@@ -7,7 +7,7 @@
 
   <!-- Run group induction on the unlabeled data that is getting saved to disk
        For initialization of the descriptor space bounds there need to be at least
-       a few .td files in $(arch td-dir) already. -->
+       a few .td files in $(arg td-dir) already. -->
   <node name="induct" pkg="jarvis" type="induct"
         required="true"
         output="screen"

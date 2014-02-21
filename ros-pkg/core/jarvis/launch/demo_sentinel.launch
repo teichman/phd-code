@@ -1,8 +1,8 @@
 <launch>
 
-  <arg name="occupancy-threshold" default="600" />
+  <arg name="occupancy-threshold" default="1200" />
   <!-- recording-directory must be an absolute path! -->
-  <arg name="recording-directory" default=" $(env PWD)/sentinel_videos" />
+  <arg name="recording-directory" default=" $(env PWD)/videos" />
   
   <node name="sentinel" pkg="sentinel" type="stream"
         required="true"

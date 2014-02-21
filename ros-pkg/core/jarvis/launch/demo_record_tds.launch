@@ -3,10 +3,10 @@
   <!-- In degrees. -->
   <arg name="rotation" default="0" />
   <!-- td-dir must be an absolute path! -->
-  <arg name="td-dir" default="$(env PWD)/jarvis_tds" />
+  <arg name="td-dir" default="$(env PWD)/tds" />
   <!-- bagfile-dir must be an absolute path! -->
   <!-- Also, the trailing slash is essential. -->
-  <arg name="bagfile-dir" default="$(env PWD)/sentinel_bags/" />
+  <arg name="bagfile-dir" default="$(env PWD)/bags" />
 
   <!-- Track & classify objects.  Also save tracks to TD files.  -->
   <!-- Right now this program only works with a single sentinel.  -->
@@ -19,7 +19,10 @@
               "/>
 
   <!-- Record all the foreground messages received from sentinel devices. -->
-  <node name="rosbag" pkg="rosbag" type="record"
-        args="-a --split=1024 -j -o $(arg bagfile-dir)"/>
-
+  <!-- This script seems to be required to automatically create the directory. -->
+  <node name="record_bags" pkg="sentinel" type="record_bags.sh"
+        required="true"
+        args="$(arg bagfile-dir)"
+        />
+  
 </launch>
