@@ -2,6 +2,11 @@
 
 . ~/.bashrc  # Set up ROS.
 
+# echo ============================================================
+# echo $(cd $(rospack find jarvis) && git rev-parse --short HEAD)  # This works.
+# echo $(roscd jarvis && git rev-parse --short HEAD)  # This doesn't.  Why?  roscd used to work here.
+# echo ============================================================
+
 # -- Parse args.
 if [ "$#" == "0" ]; then
     echo "Usage: $0 TEST_DIR CONFIG MAX_ITERS RUN_BASE_DIR"
@@ -26,7 +31,7 @@ echo -e "Class names:\t" $CLASS_NAMES
 TEST_NAME=`basename $TEST_DIR`
 echo -e "Test name:\t" $TEST_NAME
 
-RUN_DIR=$RUN_BASE_DIR/`date +%F_%T`_`roscd jarvis && git rev-parse --short HEAD`_$TEST_NAME
+RUN_DIR=$RUN_BASE_DIR/`date +%F_%T`_`cd $(rospack find jarvis) && git rev-parse --short HEAD`_$TEST_NAME
 echo -e "Run dir:\t" $RUN_DIR
 
 echo
