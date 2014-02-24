@@ -35,6 +35,7 @@ rosbuild_add_library(online_learning
   src/lib/collage_generator.cpp
   src/lib/track_dataset_visualizer.cpp
   src/lib/cross_evaluator.cpp
+  src/lib/gc_broadcaster.cpp
   )
 rosbuild_add_compile_flags(online_learning -Wno-deprecated-declarations)
 target_link_libraries(online_learning tcmalloc)

@@ -22,16 +22,16 @@ rosbuild_genmsg()
 #rosbuild_gensrv()
 
 #common commands for building c++ executables and libraries
-rosbuild_add_library(binary_blob_message
+rosbuild_add_library(blob
   src/lib/compression.cpp
-  src/lib/binary_blob_message.cpp
+  src/lib/blob.cpp
   )
-target_link_libraries(binary_blob_message bz2)
+target_link_libraries(blob bz2)
 
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_gtest(test_binary_blob_message src/test/test_binary_blob_message.cpp)
-target_link_libraries(test_binary_blob_message binary_blob_message gtest)
+rosbuild_add_gtest(test_blob src/test/test_blob.cpp)
+target_link_libraries(test_blob blob gtest)

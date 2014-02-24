@@ -1,7 +1,11 @@
 <launch>
+  <arg name="td-dir" default="$(env PWD)/tds" />
 
-  <include file="$(find jarvis)/launch/demo_record_tds.launch"/>
-
+  <!-- Launch demo_record_tds, passing through arguments. -->
+  <include file="$(find jarvis)/launch/demo_record_tds.launch">
+    <arg name="td-dir" value="$(arg td-dir)" />
+  </include>
+  
   <!-- gi-dir must be an absolute path! -->
   <arg name="gi-dir" default="$(env PWD)/group_induction" />
 
@@ -20,6 +24,7 @@
               --evaluate-every 0
               --unlabeled-td-dir $(arg td-dir)
               --output-dir $(arg gi-dir)
+              --broadcast
               "/>
   
 </launch>

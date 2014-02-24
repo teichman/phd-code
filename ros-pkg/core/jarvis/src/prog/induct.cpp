@@ -6,6 +6,7 @@
 #include <jarvis/blob_view.h>
 #include <jarvis/descriptor_pipeline.h>
 #include <ros/ros.h>
+#include <online_learning/gc_broadcaster.h>
 
 using namespace std;
 using namespace Eigen;
@@ -74,6 +75,7 @@ int main(int argc, char** argv)
     ("fake-supervisor-config", bpo::value(&fake_supervisor_config_path), "Path to config used by fake supervisor")
     ("fake-supervisor-annotation-limit", bpo::value(&fake_supervisor_annotation_limit)->default_value(-1), "FakeSupervisor will only provide corrections while OnlineLearner has fewer than this many annotations")
     ("active-learning", "Use active learning rather than group induction")
+    ("broadcast", "Broadcast updated GridClassifiers on the ROS network.")
     ;
 
   bpo::variables_map opts;
@@ -241,6 +243,10 @@ int main(int argc, char** argv)
   // -- Go.
   ThreadPtr learning_thread = inductor.launch();
 
+  GCBroadcaster broadcaster(&inductor);
+  if(opts.count("broadcast"))
+    broadcaster.launch();
+  
   if(opts.count("no-vis"))
     learning_thread->join();
   else {

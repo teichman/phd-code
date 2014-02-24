@@ -2,11 +2,11 @@
 #include <gtest/gtest.h>
 #include <timer/timer.h>
 #include <serializable/serializable.h>
-#include <binary_blob_message/compression.h>
-#include <binary_blob_message/binary_blob_message.h>
+#include <blob/compression.h>
+#include <blob/blob.h>
 
 using namespace std;
-using namespace binary_blob_message;
+using namespace blob;
 
 class Example : public Serializable
 {
@@ -45,7 +45,7 @@ public:
   }
 };
 
-TEST(BinaryBlobMessage, Compression)
+TEST(BinaryBlob, Compression)
 {
   Example ex(1e5);
 
@@ -69,7 +69,7 @@ TEST(BinaryBlobMessage, Compression)
     EXPECT_EQ(ex.data_[i], inflated[i]);
 }
 
-TEST(BinaryBlobMessage, Serialization)
+TEST(BinaryBlob, Serialization)
 {
   Example ex(1e5);
 
@@ -84,9 +84,9 @@ TEST(BinaryBlobMessage, Serialization)
 
   // Check serialization to and from BinaryBlob message.
   BinaryBlob msg;
-  toBinaryBlobMessage(ex, &msg);
+  toBinaryBlob(ex, &msg);
   Example ex3;
-  fromBinaryBlobMessage(msg, &ex3);
+  fromBinaryBlob(msg, &ex3);
 
   EXPECT_EQ(ex.data_.size(), ex3.data_.size());
   for(size_t i = 0; i < ex.data_.size(); ++i)

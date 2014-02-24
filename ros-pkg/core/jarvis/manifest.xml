@@ -17,6 +17,7 @@
   <depend package="roslib"/>
   <depend package="image_labeler"/>
   <depend package="stream_sequence"/>
+  <depend package="blob"/>
 
 
 </package>

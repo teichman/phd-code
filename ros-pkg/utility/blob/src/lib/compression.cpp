@@ -26,7 +26,7 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //=================================================================================================
 
-#include <binary_blob_message/compression.h>
+#include <blob/compression.h>
 #include <bzlib.h>
 
 namespace blob

@@ -1,17 +1,21 @@
 <package>
-  <description brief="binary_blob_message">
+  <description brief="blob">
 
-     binary_blob_message
+     blob
 
   </description>
   <author>teichman</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/binary_blob_message</url>
+  <url>http://ros.org/wiki/blob</url>
 
   <depend package="serializable"/>
   <depend package="timer"/>
 
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -lblob"/>
+  </export>
+  
 </package>
 
 

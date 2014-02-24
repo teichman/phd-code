@@ -5,7 +5,6 @@
   <!-- td-dir must be an absolute path! -->
   <arg name="td-dir" default="$(env PWD)/tds" />
   <!-- bagfile-dir must be an absolute path! -->
-  <!-- Also, the trailing slash is essential. -->
   <arg name="bagfile-dir" default="$(env PWD)/bags" />
 
   <!-- Track & classify objects.  Also save tracks to TD files.  -->
