@@ -1,0 +1,17 @@
+<package>
+  <description brief="binary_blob_message">
+
+     binary_blob_message
+
+  </description>
+  <author>teichman</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/binary_blob_message</url>
+
+  <depend package="serializable"/>
+  <depend package="timer"/>
+
+</package>
+
+
