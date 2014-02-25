@@ -48,36 +48,36 @@ int main(int argc, char** argv)
   Jarvis jarvis(vis_level, rotation, output_directory, opts.count("video"));
   if(output_directory != "")
     cout << "Saving TD files to \"" << output_directory << "\"" << endl;  
+
+  // Load the DescriptorPipeline.
+  jarvis.dp_ = DescriptorPipeline::Ptr(new DescriptorPipeline);
+  if(config_path == "") {
+    cout << "Using default descriptor pipeline." << endl;
+    jarvis.dp_->initializeWithDefault();
+  }
+  else {
+    cout << "Loading descriptor pipeline specification at \"" << config_path << "\"." << endl;
+    YAML::Node config = YAML::LoadFile(config_path);
+    ROS_ASSERT(config["Pipeline"]);
+    jarvis.dp_->initialize(config["Pipeline"]);
+  }
+  // Set the up vector.  If using less_gravity.yml, you need to put something here, but
+  // it won't have any effect.  TODO: Add accelerometer, get rid of the annoying
+  // cruft involving manually setting the up vector.
+  VectorXf up = VectorXf::Ones(3);
+  up(1) = -1;
+  if(opts.count("up")) {
+    cout << "Setting up vector to that found at " << up_path << endl;
+    eigen_extensions::loadASCII(up_path, &up);
+  }
+  jarvis.dp_->setUpVector(up);
   
-  // -- If we're going to classify things...
+  // Load the classifier.
   if(gc_path != "") {
-    // Load the DescriptorPipeline.
-    jarvis.dp_ = DescriptorPipeline::Ptr(new DescriptorPipeline);
-    if(config_path == "") {
-      cout << "Using default descriptor pipeline." << endl;
-      jarvis.dp_->initializeWithDefault();
-    }
-    else {
-      cout << "Loading descriptor pipeline specification at \"" << config_path << "\"." << endl;
-      YAML::Node config = YAML::LoadFile(config_path);
-      ROS_ASSERT(config["Pipeline"]);
-      jarvis.dp_->initialize(config["Pipeline"]);
-    }
-    // Load the classifier.
+    ROS_ASSERT(config_path != "");
     cout << "Loading classifier at \"" << gc_path << "\"." << endl;
     jarvis.gc_ = GridClassifier::Ptr(new GridClassifier);
     jarvis.gc_->load(gc_path);
-
-    // Set the up vector.  If using less_gravity.yml, you need to put something here, but
-    // it won't have any effect.  TODO: Add accelerometer, get rid of the annoying
-    // cruft involving manually setting the up vector.
-    VectorXf up = VectorXf::Ones(3);
-    up(1) = -1;
-    if(opts.count("up")) {
-      cout << "Setting up vector to that found at " << up_path << endl;
-      eigen_extensions::loadASCII(up_path, &up);
-    }
-    jarvis.dp_->setUpVector(up);
   }
   
   // -- Run.

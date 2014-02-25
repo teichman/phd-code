@@ -59,6 +59,7 @@ Jarvis::Jarvis(int vis_level, int rotation, string output_directory, bool write_
   
   fg_sub_ = nh_.subscribe("foreground", 3, &Jarvis::foregroundCallback, this);
   bg_sub_ = nh_.subscribe("background", 3, &Jarvis::backgroundCallback, this);
+  gc_sub_ = nh_.subscribe("grid_classifier", 3, &Jarvis::gridClassifierCallback, this);
   det_pub_ = nh_.advertise<jarvis::Detection>("detections", 0);
   
   if(vis_level_ > 1)
@@ -79,6 +80,7 @@ void Jarvis::backgroundCallback(sentinel::BackgroundConstPtr msg)
 void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
 {
   ROS_ASSERT(gc_ && dp_);
+  scopeLockRead;
 
   // -- Classify all blobs, add to cumulative predictions, and send messages for each.
   map<size_t, Blob::Ptr>::const_iterator it;
@@ -213,3 +215,15 @@ void Jarvis::foregroundCallback(sentinel::ForegroundConstPtr msg)
     cv::waitKey(2);
 }
 
+void Jarvis::gridClassifierCallback(blob::BinaryBlobConstPtr msg)
+{
+  GridClassifier::Ptr gc(new GridClassifier);
+  blob::fromBinaryBlob(*msg, gc.get());
+  ROS_DEBUG_STREAM("[Jarvis] Classifier received.");
+  ROS_DEBUG_STREAM(endl << gc->status("    ", true));
+  if(!gc_ || *gc != *gc_) {
+    ROS_DEBUG_STREAM("[Jarvis] Updating classifier.");
+    scopeLockWrite;
+    gc_ = gc;
+  }
+}

@@ -11,6 +11,7 @@
 #include <jarvis/Detection.h>
 #include <jarvis/track_dataset_assembler.h>
 #include <jarvis/descriptor_pipeline.h>
+#include <blob/blob.h>
 
 class DiscreteBayesFilter
 {
@@ -33,7 +34,8 @@ protected:
   double prev_sensor_timestamp_;
 };
 
-class Jarvis
+//! SharedLockable's mutex is used to protect gc_.
+class Jarvis : public SharedLockable
 {
 public:
   bool record_;
@@ -57,6 +59,7 @@ protected:
   ros::NodeHandle nh_;
   ros::Subscriber fg_sub_;
   ros::Subscriber bg_sub_;
+  ros::Subscriber gc_sub_;
   ros::Publisher det_pub_;
   cv::Mat3b color_vis_;
   cv::Mat3b depth_vis_;
@@ -72,6 +75,7 @@ protected:
   
   void foregroundCallback(sentinel::ForegroundConstPtr msg);
   void backgroundCallback(sentinel::BackgroundConstPtr msg);
+  void gridClassifierCallback(blob::BinaryBlobConstPtr msg);
   void detect(sentinel::ForegroundConstPtr msg);
 };
 
