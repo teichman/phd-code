@@ -35,6 +35,7 @@ TEST(nextPath, nextPath)
   }
 
   EXPECT_TRUE(bfs::exists(dir + "/" + prefix + "0046" + suffix));
+  bfs::remove_all(dir);
 }
 
 // TODO: This should move to a different test file, or test_next_path.cpp should
