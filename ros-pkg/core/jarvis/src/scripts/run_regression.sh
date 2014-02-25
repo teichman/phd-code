@@ -47,7 +47,6 @@ rosrun jarvis induct \
     --saved-annotations-dir $TEST_DIR/saved_annotations \
     --class-names $CLASS_NAMES \
     --config $CONFIG \
-    -u $TEST_DIR/up.eig.txt \
     --emax 0 \
     --buffer-size 1000 \
     --max-track-length 30 \
@@ -85,7 +84,6 @@ rosrun jarvis induct \
     --saved-annotations-dir $TEST_DIR/saved_annotations \
     --class-names $CLASS_NAMES \
     --config $CONFIG \
-    -u $TEST_DIR/up.eig.txt \
     --emax 0 \
     --buffer-size 1000 \
     --max-track-length 30 \
@@ -117,7 +115,6 @@ echo
 mkdir -p $RUN_DIR/naive_supervised_baseline
 rosrun jarvis naive_supervised_baseline \
     --config $CONFIG \
-    -u $TEST_DIR/up.eig.txt \
     --class-names $CLASS_NAMES \
     --train $TEST_DIR/nsb_training/*.td \
     --test $TEST_DIR/test/*.td \
@@ -137,7 +134,6 @@ rosrun jarvis baseline_unfair \
     --randomize \
     --class-names $CLASS_NAMES \
     --config $CONFIG \
-    -u $TEST_DIR/up.eig.txt \
     --root $RUN_DIR/induction \
     --test $TEST_DIR/test/*.td \
     --num-iters 10 \

@@ -114,11 +114,13 @@ int main(int argc, char** argv)
   gc->applyNameMapping("cmap", cmap);
 
   // -- Get the up vector.
-  VectorXf up;
+  // If using less_gravity.yml, you need to put something here, but
+  // it won't have any effect.  TODO: Add accelerometer, get rid of the annoying
+  // cruft involving manually setting the up vector.
+  VectorXf up = VectorXf::Ones(3);
   if(opts.count("up")) {
     cout << "Setting up vector to that found at " << up_path << endl;
     eigen_extensions::loadASCII(up_path, &up);
-    cout << "Up: " << up.transpose() << endl;
   }
   
   // -- Load annotations data.

@@ -50,11 +50,15 @@ int main(int argc, char** argv)
   cout << "Using " << num_threads << " threads to update descriptors." << endl;
   cout << "Using pipeline defined at " << config_path << "." << endl;
 
-  VectorXf up;
+
+  // -- Get the up vector.
+  // If using less_gravity.yml, you need to put something here, but
+  // it won't have any effect.  TODO: Add accelerometer, get rid of the annoying
+  // cruft involving manually setting the up vector.
+  VectorXf up = VectorXf::Ones(3);
   if(opts.count("up")) {
     cout << "Setting up vector to that found at " << up_path << endl;
     eigen_extensions::loadASCII(up_path, &up);
-    cout << "Up: " << up.transpose() << endl;
   }
   
   for(size_t i = 0; i < td_paths.size(); ++i) {

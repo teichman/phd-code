@@ -429,6 +429,13 @@ REGRESSION_RUNS_DIR := regression_runs
 #REGRESSION_NAMES := $(shell ls $(REGRESSION_TESTS_DIR))
 REGRESSION_NAMES := kitchen00 leo00 mailman00 open_door00 person00
 
+update-all-regression-test-descriptors-no-up-vector:
+	$(ROSRUN) jarvis update_descriptors \
+	--force \
+	--config $(CONFIG) \
+	--tds `find -L $(REGRESSION_TESTS_DIR) -name '*.td' | sort` \
+	-j 24
+
 update-all-test-descriptors:   kitchen-set0-update-test-descriptors-cat \
                                front_door-set0-update-test-descriptors-cat \
                                front_door-set0-update-test-descriptors-mailman \
