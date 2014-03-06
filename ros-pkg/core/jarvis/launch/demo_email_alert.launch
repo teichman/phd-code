@@ -25,5 +25,9 @@
               --config $(find jarvis)/config/less_gravity.yml
               "/>
 
+  <node name="email_on_detection" pkg="jarvis" type="email_on_detection"
+        required="true"
+        output="screen"
+        args="teichman@cs.stanford.edu $(arg cname)"/>
   
 </launch>
