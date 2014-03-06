@@ -4,6 +4,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <jarvis/Detection.h>
+#include <online_learning/dataset.h>
 #include <name_mapping/name_mapping.h>
 #include <opencv2/highgui/highgui.hpp>
 
@@ -15,12 +16,12 @@ public:
   EmailReactor(std::string address, std::string cname, double min_period);
 
 protected:
-  std::string address_;
   ros::NodeHandle nh_;
   ros::Subscriber det_sub_;
   image_transport::ImageTransport it_;
   image_transport::Subscriber img_sub_;
   cv_bridge::CvImage cv_img_;
+  std::string address_;
   std::string cname_;
   double min_period_;
   int count_;
@@ -34,8 +35,8 @@ protected:
 };
 
 EmailReactor::EmailReactor(std::string address, std::string cname, double min_period) :
-  address_(address),
   it_(nh_),
+  address_(address),
   cname_(cname),
   min_period_(min_period),
   count_(0),
@@ -49,13 +50,19 @@ EmailReactor::EmailReactor(std::string address, std::string cname, double min_pe
 
 void EmailReactor::detectionCallback(const jarvis::Detection& msg)
 {
+  cout << "Got detection." << endl;
+  
   NameMapping cmap(msg.cmap);
   if(!cmap.hasName(cname_)) {
-    ROS_WARN_STREAM("[EmailReactor]  Class to trigger on does not exist in Detection cmap.");
+    cout << "[EmailReactor]  Class to trigger on does not exist in Detection cmap." << endl;
     return;
   }
 
-  processDetection(msg.header.stamp.toSec());
+  Label tpred(msg.track_prediction);
+  if(tpred(cmap.toId(cname_)) > 0) {
+    cout << "[EmailReactor]  Track " << msg.track_id << ", " << msg.num_frames << " frames.  Track prediction: " << tpred.transpose() << std::endl;
+    processDetection(msg.header.stamp.toSec());
+  }
 }
 
 void EmailReactor::processDetection(double ts)
@@ -81,9 +88,9 @@ void EmailReactor::processDetection(double ts)
 
 void EmailReactor::imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
-  // cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg);
-  // cv::imshow("Image", cv_ptr->image);
-  // cv::waitKey(3);
+  cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg);
+  cv::imshow("Image", cv_ptr->image);
+  cv::waitKey(3);
   // cout << "New image: " << setprecision(16) << msg->header.stamp.toSec() << endl;
   // processDetection(msg->header.stamp.toSec());
   
@@ -92,10 +99,19 @@ void EmailReactor::imageCallback(const sensor_msgs::ImageConstPtr& msg)
     cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg);
     string filename = ".emailreactor.tmp.png";
     cv::imwrite(filename, cv_ptr->image);
-    string cmd = "python " + ros::package::getPath("jarvis") + "/src/python/send_photo.py " + filename + " anon.aoeu@gmail.com " + address_ + " Detection of " + cname_;
+    ostringstream oss;
+    oss << "python " << ros::package::getPath("jarvis") << "/src/python/send_photo.py "
+        << filename << " anon.aoeu@gmail.com " << address_ << " Detection of " << cname_
+        << " --body This is the body."; 
+    string cmd = oss.str();
     cout << "Running command: " << endl << cmd << endl;
-    int rv = system(cmd.c_str());
-    ROS_ASSERT(rv == 0);
+    int rv = -1;
+    while(rv != 0) {
+      rv = system(cmd.c_str());
+      if(rv != 0)
+        ROS_WARN("Failed to send email.");
+      usleep(5e-6);
+    }
     
     send_ = false;
   }
@@ -134,6 +150,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  cout << "Starting up EmailReactor" << endl;
   EmailReactor er(address, cname, min_period);
   ros::spin();
   
