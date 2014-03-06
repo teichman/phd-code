@@ -331,7 +331,7 @@ void ROSStreamingSentinel::handleNonDetection(openni::VideoFrameRef color,
   // -- Send the video stream.
   cv_img_.encoding = "bgr8";
   cv_img_.image = oniToCV(color);
-  //cv_img_.header = ?;
+  cv_img_.header.stamp.fromSec(wall_timestamp);
   img_pub_.publish(cv_img_.toImageMsg());
 }
 

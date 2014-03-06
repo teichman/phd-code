@@ -46,7 +46,7 @@ img = MIMEImage(fp.read())
 fp.close()
 msg.attach(img)
 
-emails = string.split(sys.argv[2], ', ')
+emails = string.split(sys.argv[3], ', ')
 print 'Sending to: '
 for em in emails:
     print em

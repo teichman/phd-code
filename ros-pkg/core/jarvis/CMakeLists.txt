@@ -134,3 +134,7 @@ target_link_libraries(h264_encode_video jarvis_core avcodec avformat avutil)
 rosbuild_add_executable(stream_video_detections src/prog/stream_video_detections.cpp)
 rosbuild_link_boost(stream_video_detections program_options filesystem)
 target_link_libraries(stream_video_detections jarvis_core avcodec avformat avutil)
+
+rosbuild_add_executable(email_on_detection src/prog/email_on_detection.cpp)
+rosbuild_link_boost(email_on_detection program_options filesystem)
+target_link_libraries(email_on_detection jarvis_core avcodec avformat avutil)
