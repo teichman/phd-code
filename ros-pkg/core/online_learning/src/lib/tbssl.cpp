@@ -673,10 +673,10 @@ void OnlineLearner::_run()
      ************************************************************/
 
     // -- Save things and evaluate if it's time.
+    classifier_->save(iter_dir_ + "/classifier.gc");      
     if(evaluate_every_ > 0 && iter_ % evaluate_every_ == 0) {
       evaluate();
       //saveInductionExamples();
-      classifier_->save(iter_dir_ + "/classifier.gc");      
     }
     saveInductionAccuracy("induction");
     
