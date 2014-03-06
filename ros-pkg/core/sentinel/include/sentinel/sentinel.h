@@ -15,6 +15,10 @@
 #include <sentinel/RecordingRequest.h>
 #include <serializable/serializable.h>
 
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+
 class Sentinel : public OpenNI2Handler
 {
 public:
@@ -121,6 +125,9 @@ protected:
   sentinel::Background bgmsg_;
   int bg_index_x_;
   int bg_index_y_;
+  image_transport::ImageTransport it_;
+  image_transport::Publisher img_pub_;
+  cv_bridge::CvImage cv_img_;
 
   void initializeBackgroundMessage();
   void initializeForegroundMessage();

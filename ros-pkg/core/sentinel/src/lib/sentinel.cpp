@@ -5,6 +5,7 @@
 
 using namespace std;
 namespace bfs = boost::filesystem;
+namespace it = image_transport;
 
 void onMouse(int event, int x, int y, int, void* sentinel)
 {
@@ -170,8 +171,11 @@ ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
   sensor_id_(sensor_id),
   recording_dir_(recording_dir),
   bg_index_x_(0),
-  bg_index_y_(0)
+  bg_index_y_(0),
+  it_(nh_)
 {
+  img_pub_ = it_.advertise("image", 1);
+  
   fg_pub_ = nh_.advertise<sentinel::Foreground>("foreground", 0);
   bg_pub_ = nh_.advertise<sentinel::Background>("background", 0);
   rr_sub_ = nh_.subscribe("recording_requests", 0, &ROSStreamingSentinel::recordingRequestCallback, this);
@@ -323,6 +327,12 @@ void ROSStreamingSentinel::handleNonDetection(openni::VideoFrameRef color,
   }
 
   bg_pub_.publish(bgmsg_);
+
+  // -- Send the video stream.
+  cv_img_.encoding = "bgr8";
+  cv_img_.image = oniToCV(color);
+  //cv_img_.header = ?;
+  img_pub_.publish(cv_img_.toImageMsg());
 }
 
 void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,

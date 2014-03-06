@@ -17,6 +17,8 @@
   <depend package="timer"/>
   <depend package="roscpp"/>
   <depend package="rosbag"/>
+  <depend package="image_transport"/>
+  <depend package="cv_bridge"/>
   <!-- depend package="google-perftools" /-->
 
   <export>
