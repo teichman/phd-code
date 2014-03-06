@@ -1,0 +1,36 @@
+<launch>
+  <arg name="occupancy-threshold" default="1200" />
+  <arg name="td-dir" default="$(env PWD)/tds" />
+  <arg name="gi-dir" default="$(env PWD)/group_induction" />
+  <arg name="cname" default="interesting" />
+
+  <!-- Launch demo_record_tds, passing through arguments. -->
+  <include file="$(find jarvis)/launch/demo_record_tds.launch">
+    <arg name="td-dir" value="$(arg td-dir)" />
+  </include>
+  <include file="$(find jarvis)/launch/demo_sentinel.launch">
+    <arg name="occupancy-threshold" value="$(arg occupancy-threshold)" />
+  </include>
+
+  <!-- Run group induction on the unlabeled data that is getting saved to disk
+       For initialization of the descriptor space bounds there need to be at least
+       a few .td files in $(arg td-dir) already. -->
+  <node name="induct" pkg="jarvis" type="induct"
+        required="true"
+        args="--class-names $(arg cname)
+              --config $(find jarvis)/config/less_gravity.yml
+              --emax 0
+              --buffer-size 1000
+              --max-track-length 30
+              --snapshot-every 0
+              --evaluate-every 0
+              --unlabeled-td-dir $(arg td-dir)
+              --output-dir $(arg gi-dir)
+              --broadcast
+              "/>
+
+  <node name="email_on_detection" pkg="jarvis" type="email_on_detection"
+        required="true"
+        args="teichman@cs.stanford.edu $(arg cname)"/>
+  
+</launch>
