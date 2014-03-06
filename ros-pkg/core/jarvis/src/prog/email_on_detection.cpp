@@ -50,17 +50,24 @@ EmailReactor::EmailReactor(std::string address, std::string cname, double min_pe
 
 void EmailReactor::detectionCallback(const jarvis::Detection& msg)
 {
-  cout << "Got detection." << endl;
-  
   NameMapping cmap(msg.cmap);
   if(!cmap.hasName(cname_)) {
     cout << "[EmailReactor]  Class to trigger on does not exist in Detection cmap." << endl;
     return;
   }
 
-  Label tpred(msg.track_prediction);
-  if(tpred(cmap.toId(cname_)) > 0) {
-    cout << "[EmailReactor]  Track " << msg.track_id << ", " << msg.num_frames << " frames.  Track prediction: " << tpred.transpose() << std::endl;
+  // Mysteriously, this causes the program to duplicate itself, at least according to ps aux.
+  // Unsurprisingly, when this happens, nothing works.
+  // I am not making this up.  WTGDF.
+  // Label tpred(msg.track_prediction);
+  // cout << "Label: " << tpred.transpose() << endl;
+
+  // Fortunately, we can use the vector<float> directly instead as a workaround for now.
+  if(msg.track_prediction[cmap.toId(cname_)] > 0) {
+    cout << "Track prediction: ";
+    copy(msg.track_prediction.begin(), msg.track_prediction.end(), ostream_iterator<float>(cout, " "));
+    cout << endl;
+
     processDetection(msg.header.stamp.toSec());
   }
 }
@@ -88,9 +95,9 @@ void EmailReactor::processDetection(double ts)
 
 void EmailReactor::imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
-  cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg);
-  cv::imshow("Image", cv_ptr->image);
-  cv::waitKey(3);
+  // cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(msg);
+  // cv::imshow("Image", cv_ptr->image);
+  // cv::waitKey(3);
   // cout << "New image: " << setprecision(16) << msg->header.stamp.toSec() << endl;
   // processDetection(msg->header.stamp.toSec());
   
