@@ -6,19 +6,12 @@
   <arg name="occupancy-threshold" default="1200" />
   <arg name="recording-directory" default=" $(env PWD)/videos" />
   
-  <node name="sentinel" pkg="sentinel" type="stream"
-        required="true"
-        args="--color-res QVGA
-              --depth-res QVGA
-              --sensor-id default_sensor_id
-              --occupancy-threshold $(arg occupancy-threshold)
-              --recording-dir $(arg recording-directory)
-              "/>
-
   <!-- Track & classify objects.  Also save tracks to TD files.  -->
   <!-- Right now this program only works with a single sentinel.  -->
   <node name="jarvis" pkg="jarvis" type="jarvis"
+        launch-prefix="xterm -e"
         required="true"
+        output="screen"
         args="-v1
               -r$(arg rotation)
               -c $(arg classifier)
@@ -35,3 +28,4 @@
               "/>
   
 </launch>
+
