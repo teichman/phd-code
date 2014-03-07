@@ -37,6 +37,7 @@ rosbuild_add_library(jarvis_core
   src/lib/induction_supervisor.cpp
   src/lib/compression_helpers.cpp
   src/lib/video_streaming_sentinel.cpp
+  src/lib/cluster_view_controller.cpp
   )
 rosbuild_add_compile_flags(jarvis_core -std=c++0x)
 target_link_libraries(jarvis_core tcmalloc)

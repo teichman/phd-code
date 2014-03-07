@@ -15,8 +15,9 @@ public:
   Agent() : SharedLockable(), quitting_(false), running_(false) {}
   virtual ~Agent() {}
 
-  //! TODO: should probably be 'stop'.
+  //! TODO: Get rid of this function?
   void quit() { scopeLockWrite; quitting_ = true; }
+  void stop() { lockWrite(); quitting_ = true; unlockWrite(); thread_->join(); }
   bool running() { scopeLockRead; return running_; }
   void run() { running_ = true; _run(); running_ = false; }
   virtual void _run() = 0;
