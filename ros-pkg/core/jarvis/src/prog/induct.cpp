@@ -5,6 +5,7 @@
 #include <jarvis/induction_supervisor.h>
 #include <jarvis/blob_view.h>
 #include <jarvis/descriptor_pipeline.h>
+#include <jarvis/cluster_view_controller.h>
 #include <ros/ros.h>
 #include <online_learning/gc_broadcaster.h>
 
@@ -255,8 +256,8 @@ int main(int argc, char** argv)
   }
   
   // -- Go.
-  ThreadPtr learning_thread = inductor->launch();
-  inductor->setPaused(true);
+  inductor.setPaused(true);
+  inductor.launch();
 
   GCBroadcaster broadcaster(inductor.get());
   if(opts.count("broadcast"))
@@ -265,36 +266,41 @@ int main(int argc, char** argv)
   // Note that if there is no roscore running, GCBroadcaster will generate
   // an error, and then inductor will sit paused forever.
   if(opts.count("no-vis")) {
-    inductor->setPaused(false);
+    inductor.setPaused(false);
     cout << "Paused: " << inductor->paused() << endl;
-    learning_thread->join();
+    inductor.thread()->join();
   }
   else {
+    // Set up original user interface.
     BlobView view;
     VCMultiplexor multiplexor(&view);
     ActiveLearningViewController alvc(&multiplexor, inductor.get(), unlabeled_td_dir);
     InductionViewController ivc(inductor.get(), &multiplexor);
     multiplexor.addVC(&alvc);
     multiplexor.addVC(&ivc);
-    
-    ThreadPtr view_thread = view.launch();
-    ThreadPtr alvc_thread = alvc.launch();
-    ThreadPtr ivc_thread = ivc.launch();
+    view.launch();
+    alvc.launch();
+    ivc.launch();
 
-    learning_thread->join();
-    
-    view.quit();
-    alvc.quit();
-    ivc.quit();
-    view_thread->join();
-    alvc_thread->join();
-    ivc_thread->join();
+    // Set up clustering user interface.
+    ClusterViewController cvc(&inductor);
+    ClusterBlobView cbv(&cvc);
+    cvc.setView(&cbv);
+    cbv.launch();
+    cvc.launch();
+
+    // Run group induction.
+    inductor.thread()->join();
+
+    view.stop();
+    alvc.stop();
+    ivc.stop();
+    cbv.stop();
+    cvc.stop();
   }
 
-  if(isup) {
-    isup->quit();
-    isup->thread()->join();
-  }
+  if(isup)
+    isup->stop();
 
   return 0;
 }
