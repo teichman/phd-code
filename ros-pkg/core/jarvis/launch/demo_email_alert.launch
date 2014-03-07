@@ -28,6 +28,10 @@
   <node name="email_on_detection" pkg="jarvis" type="email_on_detection"
         required="true"
         output="screen"
-        args="teichman@cs.stanford.edu $(arg cname)"/>
+        args="teichman@cs.stanford.edu $(arg cname)
+              --also-gtalk alex.teichman@gmail.com
+              --min-period 600
+              --message 'Detected open door at Gates'
+              "/>
   
 </launch>

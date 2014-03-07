@@ -9,23 +9,22 @@ from email.mime.multipart import MIMEMultipart
 
 # -- Parse args.
 if len(sys.argv) == 1:
-    print "Usage: send_photo.py PNG FROM TO SUBJ... --body BODY..."
+    print "Usage: send_photo.py PNG TO SUBJ... --body BODY..."
     exit(0)
 
 pngfile = sys.argv[1]
-fr = sys.argv[2]
-to = sys.argv[3]
+fr = 'jarvis.courier@gmail.com'
+to = sys.argv[2]
 subj = ""
 body = ""
 
-args = sys.argv[4:]
+args = sys.argv[3:]
 if "--body" not in args:
     subj = " ".join(args)
 else:
     subj = " ".join(args[:args.index("--body")])
     body = " ".join(args[args.index("--body")+1:])
 
-print "From:\t" + fr
 print "To:\t" + to
 print "Subj:\t" + subj
 print "Body:\t" + body
@@ -46,7 +45,7 @@ img = MIMEImage(fp.read())
 fp.close()
 msg.attach(img)
 
-emails = string.split(sys.argv[3], ', ')
+emails = string.split(sys.argv[2], ', ')
 print 'Sending to: '
 for em in emails:
     print em
@@ -61,8 +60,8 @@ if campus:
     server = smtplib.SMTP('smtp-unencrypted.stanford.edu')
 else:
     # hard coded gmail fallback.
-    username = 'anon.aoeu@gmail.com'
-    password = 'iavtfd13'
+    username = 'jarvis.courier@gmail.com'
+    password = 'robotsareawesome'
     server = smtplib.SMTP('smtp.gmail.com:587')
     server.starttls()
     server.login(username,password)

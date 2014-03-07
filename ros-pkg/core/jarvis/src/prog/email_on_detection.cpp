@@ -13,7 +13,11 @@ using namespace std;
 class EmailReactor
 {
 public:
+  std::string gtalk_address_;
+  std::string message_;
+  
   EmailReactor(std::string address, std::string cname, double min_period);
+  void sendTestEmail() { send_ = true; }
 
 protected:
   ros::NodeHandle nh_;
@@ -46,6 +50,8 @@ EmailReactor::EmailReactor(std::string address, std::string cname, double min_pe
 {
   det_sub_ = nh_.subscribe("detections", 0, &EmailReactor::detectionCallback, this);
   img_sub_ = it_.subscribe("image", 0, &EmailReactor::imageCallback, this);
+
+  message_ = "Detected \\\"" + cname + "\\\"";
 }
 
 void EmailReactor::detectionCallback(const jarvis::Detection& msg)
@@ -108,8 +114,7 @@ void EmailReactor::imageCallback(const sensor_msgs::ImageConstPtr& msg)
     cv::imwrite(filename, cv_ptr->image);
     ostringstream oss;
     oss << "python " << ros::package::getPath("jarvis") << "/src/python/send_photo.py "
-        << filename << " anon.aoeu@gmail.com " << address_ << " Detection of " << cname_
-        << " --body This is the body."; 
+        << filename << " " << address_ << " " << message_;
     string cmd = oss.str();
     cout << "Running command: " << endl << cmd << endl;
     int rv = -1;
@@ -118,6 +123,16 @@ void EmailReactor::imageCallback(const sensor_msgs::ImageConstPtr& msg)
       if(rv != 0)
         ROS_WARN("Failed to send email.");
       usleep(5e-6);
+    }
+
+    if(gtalk_address_ != "") {
+      ostringstream oss;
+      oss << "echo [Jarvis] " << message_ << " | 2>/dev/null sendxmpp -t " << gtalk_address_;
+      string cmd = oss.str();
+      cout << "Running command: " << endl << cmd << endl;
+      int rv = system(cmd.c_str());
+      if(rv != 0)
+        ROS_WARN_STREAM("Got return value of " << rv << " from sendxmpp.");
     }
     
     send_ = false;
@@ -135,11 +150,16 @@ int main(int argc, char** argv)
   string address;
   double min_period;
   string cname;
+  string message;
+  string gtalk_address;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("address", bpo::value(&address), "Who to send email to")
     ("min-period,t", bpo::value(&min_period)->default_value(30), "This program will email you no more than once every X seconds")
     ("class", bpo::value(&cname)->required(), "What object to respond to")
+    ("message", bpo::value(&message), "Custom message to use.  Default is \"Detected CLASS\"")
+    ("test-alert", "")
+    ("also-gtalk", bpo::value(&gtalk_address), "Email address to gtalk.  (You'll need to configure your system for sendxmpp to use this.)")
     ;
 
   p.add("address", 1);
@@ -157,8 +177,16 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  cout << "Starting up EmailReactor" << endl;
   EmailReactor er(address, cname, min_period);
+  if(opts.count("also-gtalk")) {
+    er.gtalk_address_ = gtalk_address;
+    cout << "Using gtalk address: " << gtalk_address << endl;
+  }
+  if(opts.count("test-alert"))
+    er.sendTestEmail();
+  if(opts.count("message"))
+    er.message_ = message;
+  
   ros::spin();
   
   return 0;
