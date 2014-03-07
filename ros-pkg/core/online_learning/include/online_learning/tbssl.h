@@ -89,6 +89,29 @@ public:
                 std::string unlabeled_dir,
                 std::string saved_annotations_dir = "");
 
+  
+  /************************************************************
+   * Functions often used for interactive labeling
+   ************************************************************/
+
+  //! This is the primary method of providing new labeled data to the system.
+  void pushHandLabeledDataset(TrackDataset::Ptr dataset);
+  //! Copies and returns at most num inducted tracks from viewable_unsupervised_.
+  //! Classification logodds for all will be as near to prediction as possible.
+  //! e.g. setting prediction = 0 will return unconfident examples, whereas
+  //! setting it to 10 will give you things that are likely to be examples of cname.
+  TrackDataset requestInductedSample(const std::string& cname,
+                                     float prediction, size_t num) const;
+  //! Makes a copy of viewable_unsupervised_ and viewable_unsupervised_hashes
+  //! for a view controller.  The hashes aren't used much anymore.
+  void viewableUnsupervised(TrackDataset* viewable_unsupervised, std::vector<double>* hashes) const;
+  TrackDataset::ConstPtr unsupervised() const { return unsupervised_; }
+  TrackDataset::ConstPtr annotated() const { return annotated_; }
+
+  
+  /************************************************************
+   * Other things
+   ************************************************************/
 
   //! TODO: Make this only callable if OL has not started running.
   void setUnlabeledDir(std::string dir) { unlabeled_dir_ = dir; }
@@ -97,49 +120,40 @@ public:
   void setPaused(bool val) { boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); paused_ = val; }
   void togglePaused() { boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); paused_ = !paused_; }
   bool paused() const { boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); return paused_; }
-  void pushHandLabeledDataset(TrackDataset::Ptr dataset) { entryHook(dataset.get()); boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); incoming_annotated_.push_back(dataset); }
-  //! This is separate from pushHandLabeledDataset just so we know how many hand-labeled tracks have
-  //! been provided.  We don't need to run this through the usual steps of retrospection, etc,
-  //! so we can just add the data directly to the dataset.
-  void pushAutoLabeledDataset(TrackDataset::Ptr dataset) { entryHook(dataset.get()); boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); *autobg_ += *dataset; }
   void copyClassifier(GridClassifier* classifier);
   void _run();
   std::string status(const std::string& prefix = "") const;
-  //! Copies and returns at most num inducted tracks from viewable_unsupervised_.
-  //! Classification logodds for all will be as near to prediction as possible.
-  //! e.g. setting prediction = 0 will return unconfident examples, whereas
-  //! setting it to 10 will give you things that are likely to be examples of cname.
-  TrackDataset requestInductedSample(const std::string& cname,
-                                             float prediction, size_t num) const;
   //! Derived classes can optionally do something to the requested sample that
   //! is to be returned.  Common example: filter out near-duplicate tracks.
   virtual void requestInductedSampleHook(TrackDataset* td, int cidx) const {}
-
-  //! Makes a copy of viewable_unsupervised_ and viewable_unsupervised_hashes
-  //! for a view controller.
-  void viewableUnsupervised(TrackDataset* viewable_unsupervised, std::vector<double>* hashes) const;
-  //! Puts hash and label in a place where the OL thread will find them eventually.
-  //! Then annotateUnsupervised will be called.
-  void pushAnnotationForInducted(double hash, const Label& label);
-
-  TrackDataset::ConstPtr autobg() const { return autobg_; }
-  TrackDataset::ConstPtr unsupervised() const { return unsupervised_; }
-  TrackDataset::ConstPtr annotated() const { return annotated_; }
-
   //! This function calls entryHook and is used everywhere a new TD is loaded from disk.
   //! Public so that classes like the ActiveLearningViewController can make use of the
   //! same entryHook that OnlineLearner uses.
   TrackDataset::Ptr loadTrackDataset(const std::string& path) const;
-
   //! This function is called any time a new TD enters the OnlineLearner from any source.
   //! This includes the disk and things like pushHandLabeledDataset and pushAutoLabeledDataset.
   //! Subclasses can use this to do things like update descriptors whenever a new TD arrives.
   //! Path is "" if this TD did not come from disk.
   virtual void entryHook(TrackDataset* td, const std::string& path = "") const;
-
   int iter() const { return iter_; }
 
   
+  /************************************************************
+   * Probably cruft
+   ************************************************************/
+  
+  TrackDataset::ConstPtr autobg() const { return autobg_; }
+  //! This is separate from pushHandLabeledDataset just so we know how many hand-labeled tracks have
+  //! been provided.  We don't need to run this through the usual steps of retrospection, etc,
+  //! so we can just add the data directly to the dataset.
+  void pushAutoLabeledDataset(TrackDataset::Ptr dataset) { entryHook(dataset.get()); boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); *autobg_ += *dataset; }
+  //! Puts hash and label in a place where the OL thread will find them eventually.
+  //! Then annotateUnsupervised will be called.
+  //! This tends to be bad because inducted_ (i.e. the working set) changes so frequently.
+  //! Use pushHandLabeledDataset instead.
+  void pushAnnotationForInducted(double hash, const Label& label);
+
+
 protected:
   typedef std::vector< std::pair<double, size_t> > ObjectiveIndex;
   

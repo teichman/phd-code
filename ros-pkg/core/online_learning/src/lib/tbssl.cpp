@@ -43,6 +43,60 @@ OnlineLearner::OnlineLearner(double emax,
   applyNameMappings(*classifier);
 }
 
+void OnlineLearner::pushHandLabeledDataset(TrackDataset::Ptr dataset)
+{
+  entryHook(dataset.get());
+  boost::unique_lock<boost::shared_mutex> ulock(hand_mutex_);
+  incoming_annotated_.push_back(dataset);
+}
+
+TrackDataset OnlineLearner::requestInductedSample(const std::string& cname,
+                                                  float prediction, size_t num) const
+{
+  boost::unique_lock<boost::shared_mutex> ulock(viewable_unsupervised_mutex_);
+
+  if(!nameMapping("cmap").hasName(cname)) {
+    ROS_WARN_STREAM("OnlineLearner got a request for inducted tracks of class \""
+                    << cname << "\", but that name does not exist in the cmap.");
+    TrackDataset td;
+    return td;
+  }
+  size_t cidx = nameMapping("cmap").toId(cname);
+  
+  // -- Sort tracks by how close they are to the prediction we want.
+  const TrackDataset& vuns = *viewable_unsupervised_;
+  vector< pair<double, size_t> > index;
+  index.reserve(vuns.size());
+  for(size_t i = 0; i < vuns.size(); ++i) {
+    Label pred = vuns.label(i);
+    // Tracks with a label of exactly zero are those that were de-inducted by
+    // the system for a reason.  They should be ignored.
+    if(pred(cidx) == 0)
+      continue;
+    index.push_back(pair<double, size_t>(fabs(pred(cidx) - prediction), i));
+  }
+  sort(index.begin(), index.end());  // ascending
+
+  // -- Set up the new TD.
+  TrackDataset td;
+  td.tracks_.resize(min(index.size(), num));
+  for(size_t i = 0; i < td.tracks_.size(); ++i)
+    td.tracks_[i] = Dataset::Ptr(new Dataset);
+  td.applyNameMappings(vuns);
+
+  // -- Copy over the tracks.
+  for(size_t i = 0; i < td.size(); ++i)
+    td[i] = vuns[index[i].second];
+
+  // Clear the dmap for the outgoing tracks since they do not include descriptors.
+  // TODO: This should happen for vuns, too, ... but we'll be getting rid of that.
+  td.applyNameMapping("dmap", NameMapping());
+
+  requestInductedSampleHook(&td, cidx);
+  
+  return td;
+}
+
 void OnlineLearner::copyClassifier(GridClassifier* classifier)
 {
   scopeLockRead;
@@ -1246,53 +1300,6 @@ void OnlineLearner::deserialize(std::istream& in)
   ++iter_;
   getline(in, td_path_);
   paused_ = false;
-}
-
-TrackDataset OnlineLearner::requestInductedSample(const std::string& cname,
-                                                  float prediction, size_t num) const
-{
-  boost::unique_lock<boost::shared_mutex> ulock(viewable_unsupervised_mutex_);
-
-  if(!nameMapping("cmap").hasName(cname)) {
-    ROS_WARN_STREAM("OnlineLearner got a request for inducted tracks of class \""
-                    << cname << "\", but that name does not exist in the cmap.");
-    TrackDataset td;
-    return td;
-  }
-  size_t cidx = nameMapping("cmap").toId(cname);
-  
-  // -- Sort tracks by how close they are to the prediction we want.
-  const TrackDataset& vuns = *viewable_unsupervised_;
-  vector< pair<double, size_t> > index;
-  index.reserve(vuns.size());
-  for(size_t i = 0; i < vuns.size(); ++i) {
-    Label pred = vuns.label(i);
-    // Tracks with a label of exactly zero are those that were de-inducted by
-    // the system for a reason.  They should be ignored.
-    if(pred(cidx) == 0)
-      continue;
-    index.push_back(pair<double, size_t>(fabs(pred(cidx) - prediction), i));
-  }
-  sort(index.begin(), index.end());  // ascending
-
-  // -- Set up the new TD.
-  TrackDataset td;
-  td.tracks_.resize(min(index.size(), num));
-  for(size_t i = 0; i < td.tracks_.size(); ++i)
-    td.tracks_[i] = Dataset::Ptr(new Dataset);
-  td.applyNameMappings(vuns);
-
-  // -- Copy over the tracks.
-  for(size_t i = 0; i < td.size(); ++i)
-    td[i] = vuns[index[i].second];
-
-  // Clear the dmap for the outgoing tracks since they do not include descriptors.
-  // TODO: This should happen for vuns, too, ... but we'll be getting rid of that.
-  td.applyNameMapping("dmap", NameMapping());
-
-  requestInductedSampleHook(&td, cidx);
-  
-  return td;
 }
 
 void OnlineLearner::entryHook(TrackDataset* td, const std::string& path) const
