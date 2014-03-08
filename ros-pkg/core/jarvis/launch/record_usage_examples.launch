@@ -1,0 +1,23 @@
+<launch>
+  <arg name="occupancy-threshold" default="1200" />
+  <arg name="recording-directory" default=" $(env PWD)/videos" />
+  <arg name="bagfile-dir" default="$(env PWD)/bags" />
+  
+  <node name="sentinel" pkg="sentinel" type="stream"
+        required="true"
+        output="screen"
+        args="--color-res QVGA
+              --depth-res QVGA
+              --sensor-id default_sensor_id
+              --occupancy-threshold $(arg occupancy-threshold)
+              --recording-dir $(arg recording-directory)
+              --record-all-motion
+              --visualize
+              "/>
+
+  <node name="record_bags" pkg="sentinel" type="record_bags.sh"
+        required="true"
+        args="$(arg bagfile-dir)"
+        />
+  
+</launch>
