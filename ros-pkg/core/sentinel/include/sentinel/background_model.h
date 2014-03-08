@@ -10,7 +10,7 @@
 #include <Eigen/Core>
 #include <ros/assert.h>
 
-#define MAX_DEPTH 5
+#define MAX_DEPTH 6
 #define MIN_DEPTH 0.5
 
 class DepthHistogram;
@@ -67,6 +67,8 @@ protected:
   cv::Mat1b dilated_block_img_;
   Eigen::VectorXd weights_;
   cv::Mat3b vis_;
+  
+  void initializeWeights();
 };
 
 class DepthHistogram

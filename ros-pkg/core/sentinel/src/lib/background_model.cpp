@@ -295,7 +295,6 @@ void OccupancyLine::clear()
   bins_.clear();
 }
 
-
 BackgroundModel::BackgroundModel(int width, int height,
                                  int width_step, int height_step,
                                  double min_depth, double max_depth,
@@ -313,25 +312,7 @@ BackgroundModel::BackgroundModel(int width, int height,
   raytracing_threshold_(raytracing_threshold),
   num_updates_(0)
 {
-  // -- Set up the space transform.
-  // f(x) = ax^2 + bx + c
-  // f'(x) = 2ax + b
-  // Constraints:
-  // f(0.5) = 0.5
-  // f(5) = 5
-  // mult * f'(5) = f'(0.5)
-  double mult = 5;
-  MatrixXd A(3, 3);
-  A << 0.25, 0.5, 1,
-    25, 5, 1,
-    mult * 10 - 1, mult - 1, 0;
-  VectorXd b(3);
-  b << 0.5, 5, 0;
-  weights_ = A.colPivHouseholderQr().solve(b);
-
-  ROS_ASSERT(fabs(0.5 - transform(0.5)) < 1e-6);
-  ROS_ASSERT(fabs(5 - transform(5)) < 1e-6);
-  ROS_ASSERT(fabs(mult*transformDerivative(5) - transformDerivative(0.5)) < 1e-6);
+  initializeWeights();
 
   //ROS_ASSERT(height_step_ == 1 || height_step_ % 2 == 0);
   //ROS_ASSERT(width_step_ == 1 || width_step_ % 2 == 0);
@@ -357,6 +338,30 @@ BackgroundModel::BackgroundModel(int width, int height,
   const OccupancyLine& hist = histograms_[0];
   for(size_t i = 0; i < hist.lower_limits_.size(); ++i)
     cout << "Bin " << i << ": " << inverseTransform(hist.lower_limits_[i]) << endl;
+}
+
+void BackgroundModel::initializeWeights()
+{
+  // -- Set up the space transform.
+  // f(x) = ax^2 + bx + c
+  // f'(x) = 2ax + b
+  // Constraints:
+  // f(MIN_DEPTH) = MIN_DEPTH
+  // f(MAX_DEPTH) = MAX_DEPTH
+  // mult * f'(MAX_DEPTH) = f'(MIN_DEPTH)
+  double mult = 5;
+  MatrixXd A(3, 3);
+  A << MIN_DEPTH * MIN_DEPTH, MIN_DEPTH, 1,
+    MAX_DEPTH * MAX_DEPTH, MAX_DEPTH, 1,
+    2 * (mult * MAX_DEPTH - MIN_DEPTH), mult - 1, 0;
+  VectorXd b(3);
+  b << MIN_DEPTH, MAX_DEPTH, 0;
+  weights_ = A.colPivHouseholderQr().solve(b);
+  cout << "Weights: " << weights_.transpose() << endl;
+
+  ROS_ASSERT(fabs(MIN_DEPTH - transform(MIN_DEPTH)) < 1e-6);
+  ROS_ASSERT(fabs(MAX_DEPTH - transform(MAX_DEPTH)) < 1e-6);
+  ROS_ASSERT(fabs(mult * transformDerivative(MAX_DEPTH) - transformDerivative(MIN_DEPTH)) < 1e-6);
 }
 
 void BackgroundModel::increment(openni::VideoFrameRef depth, int num)
