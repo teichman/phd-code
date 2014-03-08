@@ -1,0 +1,29 @@
+<launch>
+  
+  <arg name="rotation" default="0" />
+  <arg name="classifier" default="$(env PWD)/classifier.gc" />
+  <arg name="bagfile" />
+
+  <node name="rosbag" pkg="rosbag" type="play"
+        required="true"
+        args="$(arg bagfile)
+              --topics /foreground
+              --skip-empty 0.1
+              " />
+  
+  <node name="jarvis" pkg="jarvis" type="jarvis"
+        required="true"
+        args="-v1
+              -r $(arg rotation)
+              -c $(arg classifier)
+              --config $(find jarvis)/config/less_gravity.yml
+              " />
+
+  <!-- There is no sentinel to respond to these requests. We're just using this to get the metadata. -->
+  <node name="request_detection_recording" pkg="jarvis" type="request_detection_recording"
+        required="true"
+        output="screen"
+        args="interesting 2
+              $(env PWD)/detection_metadata 2
+              "/>
+</launch>

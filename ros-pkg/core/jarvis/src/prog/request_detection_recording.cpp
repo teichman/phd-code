@@ -3,6 +3,7 @@
 #include <sentinel/RecordingRequest.h>
 #include <jarvis/Detection.h>
 #include <name_mapping/name_mapping.h>
+#include <bag_of_tricks/next_path.h>
 #include <online_learning/dataset.h>
 #include <ros/ros.h>
  
@@ -117,9 +118,9 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  ostringstream oss;
-  oss << metadata_dir << "/detections_metadata-" << fixed << setprecision(16) << setw(16) << setfill('0') << ros::Time::now().toSec() << ".txt";
-  RecordingRequester rr(class_name, threshold, oss.str(), seconds);
+  string metadata_path = nextPath(metadata_dir, "detections_metadata-", ".txt", 3);
+  RecordingRequester rr(class_name, threshold, metadata_path, seconds);
+  
   ros::spin();
 
   return 0;

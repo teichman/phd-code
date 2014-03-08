@@ -84,7 +84,7 @@ int main(int argc, char** argv)
     ("sigma", bpo::value(&sigma)->default_value(5), "in the logistic function for coloring")
     ("fps", bpo::value(&fps)->default_value(30), "")
     ("rotation", bpo::value(&rotation)->default_value("rotate=1,rotate=1"), "mencoder rotation option")
-    ("only-pos", "Show only positive detections rather than everything")
+    ("show-neg", "Show negative detections in addition to the positive ones")
     ("frame", "Show frame predictions rather than track predictions")
     ("reticle", bpo::value(&reticle_path), "Image to use instead of a box.  Must be white on black.")
     ("alpha", bpo::value(&alpha)->default_value(0.1), "How fast the reticle should follow the cat around")
@@ -230,10 +230,15 @@ int main(int argc, char** argv)
           img(drawpt) = ((float)reticle(y, x)) / 255.0 * color + (1 - (float)reticle(y, x) / 255.0) * img(drawpt);
         }
       }
+      
+      cv::imshow("img", img);
+      cv::waitKey(2);
+      cv::imwrite(tmpdir + "/" + filename, img);
     }
 
     // -- Box mode
     else {
+      bool detection = false;
       for(size_t j = 0; j < dets.size(); ++j) {
         const Det& det = dets[j];
         
@@ -246,27 +251,28 @@ int main(int argc, char** argv)
         
         // cout << det.track_id_ << " " << tpred(cmap.toId(show)) << " " << fpred(cmap.toId(show)) << " "
         //      << setprecision(16) << setw(16) << setfill('0') << timestamp << endl;
-        
+
+        cv::Point ul(max(0, det.ulx_ - pad), max(0, det.uly_ - pad));
+        cv::Point lr(min(det.lrx_ + pad, img.cols), min(det.lry_ + pad, img.rows));
+
         cv::Vec3b color(127, 127, 127);
         if(logodds > 0) {
-          float val = 255 * logistic(logodds, sigma);
-          color = cv::Vec3b(127 - val, 127 + 127 * val, 127 - val);  // green
+          //float val = 255 * logistic(logodds, sigma);
+          //color = cv::Vec3b(127 - val, 127 + 127 * val, 127 - val);  // green
+          color = cv::Vec3b(0, 83, 207);
+          cv::rectangle(img, ul, lr, cv::Scalar(color[0], color[1], color[2]), 2);
+          detection = true;
         }
-      
-
-        else {
-          cv::Point ul(max(0, det.ulx_ - pad), max(0, det.uly_ - pad));
-          cv::Point lr(min(det.lrx_ + pad, img.cols), min(det.lry_ + pad, img.rows));
-          if(!opts.count("only-pos") || (opts.count("only-pos") && logodds > 0))
-            cv::rectangle(img, ul, lr, cv::Scalar(color[0], color[1], color[2]), 2);
+        else if(opts.count("show-neg")) {
+          cv::rectangle(img, ul, lr, cv::Scalar(color[0], color[1], color[2]), 2);
         }
       }
+      if(detection) {
+        cv::imshow("img", img);
+        cv::waitKey(2);
+        cv::imwrite(tmpdir + "/" + filename, img);
+      }
     }
-    
-    // Save to the tmp dir.
-    cv::imshow("img", img);
-    cv::waitKey(2);
-    cv::imwrite(tmpdir + "/" + filename, img);
   }
 
   // -- Generate the video.
