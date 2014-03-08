@@ -4,7 +4,7 @@
   <!-- bagfile must be an absolute path! -->
   <arg name="bagfile" />
   <!-- output-directory must be an absolute path! -->
-  <arg name="output-directory" default=" $(env PWD)/jarvis_tds" />
+  <arg name="output-directory" default=" $(env PWD)/tds" />
   
   <node name="jarvis" pkg="jarvis" type="jarvis" args="-v0 -r$(arg rotation) --record $(arg output-directory) --timeout 60" required="true" />
   <node name="rosbag" pkg="rosbag" type="play" args="$(arg bagfile) --topics /foreground --skip-empty 0.1" />
