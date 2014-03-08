@@ -37,6 +37,7 @@ int main(int argc, char** argv)
     ("color-res", bpo::value(&color_resolution), "QVGA or VGA")
     ("depth-res", bpo::value(&depth_resolution), "QVGA or VGA")
     ("visualize", "Show extra visualization")
+    ("record-all-motion", "")
     ("recording-dir", bpo::value(&recording_dir)->required(), "Directory to save recordings to")
     ;
 
@@ -80,6 +81,7 @@ int main(int argc, char** argv)
   ROSStreamingSentinel sen(sensor_id, recording_dir, update_interval,
                            occupancy_threshold, raytracing_threshold,
                            detection_threshold, opts.count("visualize"),
+                           opts.count("record-all-motion"),
                            color_res, depth_res);
 
   #if JARVIS_PROFILE

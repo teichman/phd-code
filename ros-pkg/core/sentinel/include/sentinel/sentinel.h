@@ -101,6 +101,7 @@ public:
                        int raytracing_threshold,
                        double detection_threshold,
                        bool visualize,
+                       bool record_all_motion,
                        OpenNI2Interface::Resolution color_res,
                        OpenNI2Interface::Resolution depth_res);
 
@@ -128,6 +129,7 @@ protected:
   image_transport::ImageTransport it_;
   image_transport::Publisher img_pub_;
   cv_bridge::CvImage cv_img_;
+  bool record_all_motion_;
 
   void initializeBackgroundMessage();
   void initializeForegroundMessage();

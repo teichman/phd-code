@@ -164,6 +164,7 @@ ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
                                            int raytracing_threshold,
                                            double detection_threshold,
                                            bool visualize,
+                                           bool record_all_motion,
                                            OpenNI2Interface::Resolution color_res,
                                            OpenNI2Interface::Resolution depth_res) :
   Sentinel(update_interval, occupancy_threshold, raytracing_threshold,
@@ -172,7 +173,8 @@ ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
   recording_dir_(recording_dir),
   bg_index_x_(0),
   bg_index_y_(0),
-  it_(nh_)
+  it_(nh_),
+  record_all_motion_(record_all_motion)
 {
   img_pub_ = it_.advertise("image", 1);
   
@@ -182,6 +184,9 @@ ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
   initializeForegroundMessage();
   initializeBackgroundMessage();
 
+  if(record_all_motion_)
+    ROS_ASSERT(recording_dir_ != "");
+  
   // -- Create directory structure for recordings.
   if(recording_dir_ != "") {
     if(!bfs::exists(recording_dir_))
@@ -379,6 +384,16 @@ void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
   }
 
   fg_pub_.publish(fgmsg_);
+
+  if(record_all_motion_) {
+    ROS_ASSERT(recording_dir_ != "");
+    cv::Mat3b img = visualize(color, depth);
+    ostringstream oss;
+    oss << "image" << fixed << setprecision(16) << setw(16) << setfill('0') << wall_timestamp << ".jpg";
+    string filename = oss.str();
+    cout << "Recording " << filename << endl;
+    serializer_.push(img, frames_dir_ + "/" + filename);
+  }
 }
 
 void ROSStreamingSentinel::recordingRequestCallback(const sentinel::RecordingRequest& rr)
@@ -391,6 +406,10 @@ void ROSStreamingSentinel::processHook(openni::VideoFrameRef color,
                                        openni::VideoFrameRef depth,
                                        double wall_timestamp)
 {
+  // -- If we're recording all motion, don't use the fancy per-class recording facilities.
+  if(record_all_motion_)
+    return;
+  
   // -- Handle any RecordingRequest messages we have waiting in the queue.
   ros::spinOnce();
   
