@@ -242,13 +242,16 @@ int main(int argc, char** argv)
   
   // -- Go.
   ThreadPtr learning_thread = inductor.launch();
+  inductor.setPaused(true);
 
   GCBroadcaster broadcaster(&inductor);
   if(opts.count("broadcast"))
     broadcaster.launch();
   
-  if(opts.count("no-vis"))
+  if(opts.count("no-vis")) {
     learning_thread->join();
+    inductor.setPaused(false);
+  }
   else {
     BlobView view;
     VCMultiplexor multiplexor(&view);
