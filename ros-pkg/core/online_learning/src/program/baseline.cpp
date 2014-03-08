@@ -3,6 +3,7 @@
 #include <boost/foreach.hpp>
 #include <online_learning/tbssl.h>
 #include <performance_statistics/performance_statistics.h>
+#include <boost/filesystem.hpp>
 
 using namespace std;
 using namespace Eigen;

@@ -1,48 +1,37 @@
 #ifndef CLUSTER_VIEW_CONTROLLER_H
 #define CLUSTER_VIEW_CONTROLLER_H
 
-#include <online_learning/tbssl.h>
+#include <online_learning/track_dataset_visualizer.h>
+#include <jarvis/view_controller.h>
 
-class ClusterViewController;
+using boost::shared_ptr;
 
-// Interface for any class that is used for viewing clusters of tracks.
-class ClusterView
+class Dataset;
+class GridClassifier;
+class OnlineLearner;
+class Texture;
+class TrackDataset;
+
+// View that displays Blob clusters.
+class ClusterBlobView : public ViewController, public ClusterView
 {
 public:
-  virtual ~ClusterView() {}
-  // TD contains shared_ptrs.
-  virtual void displayCluster(TrackDataset td) = 0;
-  virtual void displayMessage(const std::string& message) = 0;
-};
+  typedef shared_ptr<ClusterBlobView> Ptr;
+  ClusterBlobView();
 
+  virtual void displayCluster(shared_ptr<TrackDataset> td);
+  virtual void displayMessage(const std::string& message);
 
-// View that specifically displays Blob clusters.
-class ClusterBlobView : public Agent, public ClusterView
-{
-public:
-  ClusterBlobView(ClusterViewController* cvc);
-  void displayCluster(TrackDataset td);
-  void displayMessage(const std::string& message);
+  virtual void display();
+
+//  virtual void mouse(int button, int state, int x, int y) {}
+//  virtual void motion(int x, int y) {}
+  virtual void key(unsigned char k, int x, int y);
 
 protected:
-  // Used for sending back keypresses.
-  ClusterViewController* cvc_;
-  
-  void _run();
+  shared_ptr<TrackDataset> td_;
+  size_t instance_displayed_;
 };
 
-class ClusterViewController : public Agent
-{
-public:
-  ClusterViewController(OnlineLearner* ol);
-  void handleKeypress(char key);
-  void setView(ClusterView* view) { view_ = view; }
-  
-protected:
-  OnlineLearner* ol_;
-  ClusterView* view_;
-  
-  void _run();
-};
 
 #endif // CLUSTER_VIEW_CONTROLLER_H

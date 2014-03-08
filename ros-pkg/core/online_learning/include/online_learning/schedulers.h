@@ -1,12 +1,7 @@
 #ifndef LEARNING_RATE_SCHEDULERS_H
 #define LEARNING_RATE_SCHEDULERS_H
 
-#include <math.h>
-#include <stddef.h>
-#include <ros/console.h>
-#include <ros/assert.h>
 #include <serializable/serializable.h>
-#include <eigen_extensions/eigen_extensions.h>
 
 class LearningRateScheduler : public Serializable
 {

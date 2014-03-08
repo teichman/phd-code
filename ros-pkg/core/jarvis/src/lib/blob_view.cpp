@@ -1,5 +1,7 @@
 #include <jarvis/blob_view.h>
 #include <jarvis/tracker.h>
+#define VTK_EXCLUDE_STRSTREAM_HEADERS
+#include <pcl/visualization/pcl_visualizer.h>
 
 BlobView::BlobView() :
   visualizer_(NULL),
@@ -63,9 +65,9 @@ void BlobView::keyboardCallback(const pcl::visualization::KeyboardEvent& event, 
   events_.push_back(event);
 }
 
-void BlobView::displayInstance(const Instance& instance, __attribute__((unused)) void* caller)
+void BlobView::displayInstance(Instance& instance, __attribute__((unused)) void* caller)
 {
-  Blob::Ptr blob = boost::any_cast<Blob::Ptr>(instance.raw_);
+  Blob::Ptr blob = boost::any_cast<Blob::Ptr>(instance.raw());
   if(!blob->cloud_)
     blob->project();
   

@@ -2,10 +2,10 @@
 #define GRID_CLASSIFIER_H
 
 #include <agent/lockable.h>
-#include <eigen_extensions/random.h>
 #include <online_learning/classifier.h>
 
 class Grid;
+class SqrtScheduler;
 
 class GridClassifier : public Classifier, public SharedLockable
 {

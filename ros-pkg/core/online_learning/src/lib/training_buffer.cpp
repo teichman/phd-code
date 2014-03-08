@@ -1,4 +1,5 @@
 #include <online_learning/training_buffer.h>
+#include <eigen_extensions/eigen_extensions.h>
 
 using namespace std;
 using namespace Eigen;

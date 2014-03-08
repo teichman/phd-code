@@ -1,4 +1,5 @@
 #include <online_learning/evaluator.h>
+#include <boost/filesystem.hpp>
 
 #define NUM_THREADS (getenv("NUM_THREADS") ? atoi(getenv("NUM_THREADS")) : 1)
 

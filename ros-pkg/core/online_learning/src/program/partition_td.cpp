@@ -5,18 +5,18 @@
 using namespace std;
 namespace bpo = boost::program_options;
 
-size_t numBytesIncludingRaw(const Dataset& track) {
+size_t numBytesIncludingRaw(Dataset& track) {
   size_t num = track.numBytes();
   for(size_t i = 0; i < track.size(); ++i) {
     PassthroughCustomSerializer::Data::Ptr data;
-    data = boost::any_cast<PassthroughCustomSerializer::Data::Ptr>(track[i].raw_);
+    data = boost::any_cast<PassthroughCustomSerializer::Data::Ptr>(track[i].raw());
     num += data->data_.size();
   }
 
   return num;
 }
 
-size_t numBytesIncludingRaw(const TrackDataset& td) {
+size_t numBytesIncludingRaw(TrackDataset& td) {
   size_t num = 0;
   for(size_t i = 0; i < td.size(); ++i)
     num += numBytesIncludingRaw(td[i]);

@@ -5,7 +5,6 @@
 using namespace std;
 using namespace Eigen;
 namespace bpo = boost::program_options;
-namespace bfs = boost::filesystem;
 
 // A k-window is a sequential subset of size k.
 // Returns a label where each prediction is the maximum prediction across all k-windows.

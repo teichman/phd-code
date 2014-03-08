@@ -1,6 +1,7 @@
 #include <matplotlib_interface/matplotlib_interface.h>  // Must come first because of Python.
 #include <boost/program_options.hpp>
 #include <online_learning/tbssl.h>
+#include <boost/filesystem.hpp>
 
 using namespace std;
 using namespace Eigen;

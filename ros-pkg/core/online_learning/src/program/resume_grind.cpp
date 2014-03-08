@@ -54,7 +54,7 @@ int main(int argc, char** argv)
 
   DGCTrackView view;
   VCMultiplexor multiplexor(&view);
-  ActiveLearningViewController alvc(&multiplexor, &learner, unlabeled_td_dir);
+  ActiveLearningViewController alvc(&multiplexor, NULL, &learner, unlabeled_td_dir);
   InductionViewController ivc(&learner, &multiplexor);
   multiplexor.addVC(&alvc);
   multiplexor.addVC(&ivc);

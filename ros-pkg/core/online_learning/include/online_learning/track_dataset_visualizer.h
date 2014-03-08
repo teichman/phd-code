@@ -5,20 +5,35 @@
 
 #include <ros/assert.h>
 #include <ros/console.h>
+#define VTK_EXCLUDE_STRSTREAM_HEADERS
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/common/centroid.h>
+
+class ClusterViewController;
+class TrackDataset;
 
 class TrackView
 {
 public:
   virtual ~TrackView() {}
   
-  virtual void displayInstance(const Instance& instance, void* caller) = 0;
+  virtual void displayInstance(Instance& instance, void* caller) = 0;
   virtual void clearInstance(void* caller) = 0;
   virtual void displayMessage(const std::string& message, void* caller) = 0;
   //! Returns true if there is a new keypress to act on.
   virtual bool keypress(pcl::visualization::KeyboardEvent* event, void* caller) = 0;
 };
+
+// Interface for any class that is used for viewing c   lusters of tracks.
+class ClusterView
+{
+public:
+  virtual ~ClusterView() {}
+  // TD contains shared_ptrs.
+  virtual void displayCluster(boost::shared_ptr<TrackDataset> td) = 0;
+  virtual void displayMessage(const std::string& message) = 0;
+};
+
 
 class TrackViewControllerBase : public Agent
 {
@@ -28,13 +43,15 @@ public:
 
   //! delay is in ms.
   TrackViewControllerBase(TrackView* view, int delay = 30);
+  TrackViewControllerBase(TrackView* view, ClusterView *cview, int delay = 30);
   virtual ~TrackViewControllerBase() {}
   //! TODO: Make this only usable when not running.
-  virtual void setTrackDataset(TrackDataset::Ptr td) { td_ = td; updateIndex(); }
+  virtual void setTrackDataset(TrackDataset::Ptr td);
     
 protected:
   OnlineLearner* learner_;
   TrackView* view_;
+  ClusterView *cview_;
   TrackDataset::Ptr td_;
   //! Indexes into index_.
   int tidx_;
@@ -71,7 +88,9 @@ protected:
 class ActiveLearningViewController : public TrackViewControllerBase
 {
 public:
-  ActiveLearningViewController(TrackView* view, OnlineLearner* learner, std::string unlabeled_td_dir);
+  ActiveLearningViewController(TrackView* view, ClusterView *cview,
+                               OnlineLearner* learner,
+                               std::string unlabeled_td_dir);
   virtual ~ActiveLearningViewController() {}
 
 protected:
@@ -89,6 +108,8 @@ protected:
   void applyLabel();
   void getNextUnlabeledDatasetPath();
   void loadNextUnlabeledDataset();
+  void ClusterSimilarTracks(TrackDataset *new_td,
+                            const Dataset &ref);
 };
 
 class InductionViewController : public TrackViewControllerBase
@@ -113,7 +134,7 @@ class DGCTrackView : public TrackView, public Agent
 public:
   DGCTrackView();
   virtual ~DGCTrackView();
-  void displayInstance(const Instance& instance, void* caller);
+  void displayInstance(Instance& instance, void* caller);
   void clearInstance(void* caller);
   void displayMessage(const std::string& message, void* caller);
   bool keypress(pcl::visualization::KeyboardEvent* event, void* caller);
@@ -137,7 +158,7 @@ public:
   VCMultiplexor(TrackView* view);
   virtual ~VCMultiplexor() {}
   void addVC(void* address);
-  virtual void displayInstance(const Instance& instance, void* caller);
+  virtual void displayInstance(Instance& instance, void* caller);
   virtual void clearInstance(void* caller);
   virtual void displayMessage(const std::string& message, void* caller);
   virtual bool keypress(pcl::visualization::KeyboardEvent* event, void* caller);

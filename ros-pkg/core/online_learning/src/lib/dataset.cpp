@@ -1,6 +1,10 @@
+#include <stdio.h>
+
+#include <ros/assert.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <online_learning/dataset.h>
+#include <eigen_extensions/eigen_extensions.h>
 
 using namespace Eigen;
 using namespace std;
@@ -117,7 +121,6 @@ void PassthroughCustomSerializer::deserialize(std::string original_name,
 
   *raw = data;
 }
-
 
 /************************************************************
  * Label
@@ -311,8 +314,7 @@ void Instance::serialize(std::ostream& out) const
   if(custom_serializer_->name() == "PassthroughCustomSerializer") {
     // Writes the original name, num bytes, and the binary blob.
     custom_serializer_->serialize(raw_, out);
-  }
-  else {
+  } else {
     out << Instance::custom_serializer_->name() << endl;
 
     // -- Write the number of bytes followed by the serialized raw data.
@@ -321,7 +323,12 @@ void Instance::serialize(std::ostream& out) const
     eigen_extensions::serializeScalar((size_t)0, out);  // placeholder
     long start = out.tellp();
     ROS_ASSERT(start != -1);
-    Instance::custom_serializer_->serialize(raw_, out);
+    if (custom_serializer_->name() == "ReferenceSavingCustomSerializer") {
+      out << raw_ref_.td_filename_ << endl;
+      eigen_extensions::serializeScalar<uint64_t>(raw_ref_.file_offset_, out);
+    } else {
+      Instance::custom_serializer_->serialize(raw_, out);
+    }
     long end = out.tellp();
     ROS_ASSERT(end != -1);
     long num_bytes = end - start;
@@ -332,7 +339,7 @@ void Instance::serialize(std::ostream& out) const
   }
 }
 
-void Instance::deserialize(std::istream& in)
+void Instance::deserialize(std::istream& in, const std::string &filename)
 {
   in >> label_;
   int buf;
@@ -367,9 +374,15 @@ void Instance::deserialize(std::istream& in)
     ROS_ASSERT(pcs);
     pcs->deserialize(custom_serializer_name, num_bytes, in, &raw_);
   }
-  else {
+  else if (custom_serializer_name == "ReferenceSavingCustomSerializer") {
+      getline(in, raw_ref_.td_filename_);
+      eigen_extensions::deserializeScalar<uint64_t>(in, &raw_ref_.file_offset_);
+      raw_ref_.data_loadable_ = true;
+  } else {
     // Otherwise the names should match up.
     ROS_ASSERT(custom_serializer_name == Instance::custom_serializer_->name());
+    raw_ref_.td_filename_ = filename;
+    raw_ref_.file_offset_ = in.tellg();
     Instance::custom_serializer_->deserialize(in, &raw_);
   }
 }
@@ -428,6 +441,26 @@ size_t Instance::numBytes() const
 
   num += label_.rows() * sizeof(float);
   return num;
+}
+
+boost::any& Instance::raw() {
+  if (raw_ref_.data_loadable_) {
+    ifstream f;
+    f.open(raw_ref_.td_filename_.c_str());
+    ROS_ASSERT(f.is_open());
+    f.seekg(raw_ref_.file_offset_);
+    custom_serializer_->deserialize(f, &raw_);
+    f.close();
+    raw_ref_.data_loadable_ = false;
+  }
+  return raw_;
+}
+
+void Instance::clearRaw()
+{
+  boost::any empty;
+  raw_.swap(empty);
+  raw_ref_.data_loadable_ = true;
 }
 
 std::string Instance::status(const std::string& prefix) const 
@@ -522,7 +555,7 @@ void Dataset::serialize(std::ostream& out) const
     out << instances_[i];
 }
 
-void Dataset::deserialize(std::istream& in)
+void Dataset::deserialize(std::istream& in, const std::string &filename)
 {
   deserializeNameMappings(in);
   
@@ -530,7 +563,7 @@ void Dataset::deserialize(std::istream& in)
   in.read((char*)&buf, sizeof(buf));
   instances_.resize(buf);
   for(size_t i = 0; i < instances_.size(); ++i)
-    in >> instances_[i];
+    instances_[i].deserialize(in, filename);
 }
 
 Dataset& Dataset::operator+=(const Dataset& other)
@@ -603,6 +636,13 @@ void Dataset::setImportance(float importance)
 {
   for(size_t i = 0; i < instances_.size(); ++i)
     instances_[i].label_ = instances_[i].label_.sign() * importance;
+}
+
+void Dataset::clearRaw()
+{
+  for(size_t i = 0; i < instances_.size(); ++i) {
+    instances_[i].clearRaw();
+  }
 }
 
 void Dataset::setLabel(const Label& label)
@@ -685,6 +725,13 @@ double TrackDataset::labelRatio(const std::string& class_name) const
   return num_pos / num_neg;
 }
 
+void TrackDataset::clearRaw()
+{
+  for (size_t i = 0; i < tracks_.size(); i++) {
+    tracks_[i]->clearRaw();
+  }
+}
+
 void TrackDataset::serialize(std::ostream& out) const
 {
   if(boost::dynamic_pointer_cast<ReadOnlyEmptyCustomSerializer>(Instance::custom_serializer_)) {
@@ -700,7 +747,7 @@ void TrackDataset::serialize(std::ostream& out) const
     out << *tracks_[i];
 }
 
-void TrackDataset::deserialize(std::istream& in)
+void TrackDataset::deserialize(std::istream& in, const std::string& filename)
 {
   string version;
   getline(in, version);
@@ -709,10 +756,10 @@ void TrackDataset::deserialize(std::istream& in)
   deserializeNameMappings(in);
   int buf;
   in.read((char*)&buf, sizeof(buf));
-  tracks_.resize(buf);
-  for(size_t i = 0; i < tracks_.size(); ++i) {
-    tracks_[i] = Dataset::Ptr(new Dataset);
-    in >> *tracks_[i];
+  for(int i = 0; i < buf; ++i) {
+    Dataset::Ptr ds(new Dataset);
+    ds->deserialize(in, filename);
+    tracks_.push_back(ds);
   }
 }
 
@@ -751,19 +798,20 @@ bool TrackDataset::operator==(const TrackDataset& other) const
 
 TrackDataset& TrackDataset::operator+=(const TrackDataset& other) 
 {
-  // -- Check that the custom data is all the same.
-  if(!tracks_.empty()) {
-    
-    const type_info& ti = (*tracks_[0])[0].raw_.type();
-    for(size_t i = 0; i < tracks_.size(); ++i)
-      for(size_t j = 0; j < tracks_[i]->size(); ++j)
-        ROS_ASSERT((*tracks_[i])[j].raw_.type() == ti);
-    
-    if(!other.tracks_.empty())
-      for(size_t i = 0; i < other.size(); ++i)
-        for(size_t j = 0; j < other[i].size(); ++j)
-          ROS_ASSERT(other[i][j].raw_.type() == ti);
-  }
+//   -- Check that the custom data is all the same.
+//  NO! Avoice checking raw type, so we don't trigger on-demand loading
+//  if(!tracks_.empty()) {
+//
+//    const type_info& ti = (*tracks_[0])[0].raw().type();
+//    for(size_t i = 0; i < tracks_.size(); ++i)
+//      for(size_t j = 0; j < tracks_[i]->size(); ++j)
+//        ROS_ASSERT((*tracks_[i])[j].raw().type() == ti);
+//
+//    if(!other.tracks_.empty())
+//      for(size_t i = 0; i < other.size(); ++i)
+//        for(size_t j = 0; j < other[i].size(); ++j)
+//          ROS_ASSERT(other[i][j].raw().type() == ti);
+//  }
 
   // -- For now, don't deal with changing name mappings.
   //    Just make sure they're the same.
@@ -910,7 +958,8 @@ void TrackDataset::load(const std::string& filename)
     cerr << "Failed to open " << filename << endl;
     assert(f.is_open());
   }
-  deserialize(f);
+  string canonical(canonicalize_file_name(filename.c_str()));
+  deserialize(f, canonical);
   f.close();
 }
 

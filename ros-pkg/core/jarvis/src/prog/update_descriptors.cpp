@@ -1,5 +1,6 @@
 #include <boost/program_options.hpp>
 #include <jarvis/descriptor_pipeline.h>
+#include <online_learning/dataset.h>
 
 using namespace std;
 using namespace Eigen;
@@ -14,6 +15,7 @@ int main(int argc, char** argv)
 
   string config_path;
   vector<string> td_paths;
+  string out_descriptoronly_td;
   int num_threads;
   string up_path;
   opts_desc.add_options()
@@ -21,6 +23,8 @@ int main(int argc, char** argv)
     ("config", bpo::value<string>(&config_path)->default_value(DescriptorPipeline::defaultSpecificationPath()), "")
     ("tds", bpo::value< vector<string> >(&td_paths)->required()->multitoken(), "")
     ("debug", "")
+    ("out-descriptoronly-td",
+     bpo::value<string>(&out_descriptoronly_td)->default_value(""))
     ("num-threads,j", bpo::value(&num_threads)->default_value(1))
     ("up,u", bpo::value(&up_path), "")
     ("force,f", "")
@@ -77,26 +81,53 @@ int main(int argc, char** argv)
     cout << "Setting up vector to that found at " << up_path << endl;
     eigen_extensions::loadASCII(up_path, &up);
   }
-  
-  for(size_t i = 0; i < td_paths.size(); ++i) {
-    cout << "Working on " << td_paths[i] << endl;
-    TrackDataset td;
-    td.load(td_paths[i]);
 
+  if (!out_descriptoronly_td.empty()) {
+    CustomSerializer::Ptr original_serializer = Instance::custom_serializer_;
+    CustomSerializer::Ptr reference_serializer = CustomSerializer::Ptr(
+        new ReferenceSavingCustomSerializer());
+
+    TrackDataset td;
+    for(size_t i = 0; i < td_paths.size(); ++i) {
+      cout << "Adding " << td_paths[i] << endl;
+      Instance::custom_serializer_ = original_serializer;
+      td.load(td_paths[i]);
+      td.clearRaw();
+    }
     // To force descriptor re-computation, apply an empty dmap,
     // which will drop all descriptors.
     if(opts.count("force")) {
       cout << "Forcing descriptor re-computation." << endl;
       td.applyNameMapping("dmap", NameMapping());
     }
-    
-    double ms_per_obj = updateDescriptors(config["Pipeline"], num_threads, &td, up, opts.count("debug"));
-    // Only save if something changed.
-    if(ms_per_obj != 0) {
-      // Serializable writes to a temporary file and then does a move,
-      // so if you control-c you are guaranteed that at least one of
-      // the files will still exist and be correct.
-      td.save(td_paths[i]);
+
+    updateDescriptors(config["Pipeline"], num_threads, &td, up,
+                      opts.count("debug"));
+    Instance::custom_serializer_ = reference_serializer;
+    td.save(out_descriptoronly_td);
+  }
+  else
+  {
+    for(size_t i = 0; i < td_paths.size(); ++i) {
+      cout << "Working on " << td_paths[i] << endl;
+      TrackDataset td;
+      td.load(td_paths[i]);
+
+      // To force descriptor re-computation, apply an empty dmap,
+      // which will drop all descriptors.
+      if(opts.count("force")) {
+        cout << "Forcing descriptor re-computation." << endl;
+        td.applyNameMapping("dmap", NameMapping());
+      }
+
+      double ms_per_obj = updateDescriptors(config["Pipeline"], num_threads, &td, up, opts.count("debug"));
+      // Only save if something changed.
+      if(ms_per_obj != 0) {
+        // Serializable writes to a temporary file and then does a move,
+        // so if you control-c you are guaranteed that at least one of
+        // the files will still exist and be correct.
+        td.save(td_paths[i]);
+      }
     }
   }
 

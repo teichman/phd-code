@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <online_learning/track_dataset_visualizer.h>
 #include <boost/program_options.hpp>
 #include <bag_of_tricks/bag_of_tricks.h>
@@ -6,6 +7,7 @@
 #include <jarvis/blob_view.h>
 #include <jarvis/descriptor_pipeline.h>
 #include <jarvis/cluster_view_controller.h>
+#include <jarvis/glut_window.h>
 #include <ros/ros.h>
 #include <online_learning/gc_broadcaster.h>
 
@@ -152,15 +154,15 @@ int main(int argc, char** argv)
       if(!opts.count("init")) {
         while(true) {
           init_paths = recursiveFind(unlabeled_td_dir, "*.td");
-          if(init_paths.size() >= 3)
+          if(init_paths.size() >= 1)
             break;
           else {
-            ROS_WARN_STREAM("Group induction requires at least 3 .td files in " << unlabeled_td_dir << " for initialization of GridClassifier.  Waiting...");
+            ROS_WARN_STREAM("Group induction requires at least 1 .td files in " << unlabeled_td_dir << " for initialization of GridClassifier.  Waiting...");
             usleep(10e6);
           }
         }
         random_shuffle(init_paths.begin(), init_paths.end());
-        init_paths.resize(3);
+        init_paths.resize(min((size_t)3, init_paths.size()));
       }
       cout << "Loading initialization datasets..." << endl;
       TrackDataset::Ptr init = loadDatasets(init_paths, config, cmap, up, true);
@@ -193,9 +195,9 @@ int main(int argc, char** argv)
     if(!seed_paths.empty()) {
       TrackDataset::Ptr seed = loadDatasets(seed_paths, config, cmap, up, true);
       for(size_t i = 0; i < seed->size(); ++i) {
-        const Dataset& track = *seed->tracks_[i];
+        Dataset& track = *seed->tracks_[i];
         for(size_t j = 0; j < track.size(); ++j) {
-          ROS_ASSERT(!track[j].raw_.empty());
+          ROS_ASSERT(!track[j].raw().empty());
         }
       }
       cout << "Using seed dataset: " << endl;
@@ -206,9 +208,9 @@ int main(int argc, char** argv)
     if(!autobg_paths.empty()) {
       TrackDataset::Ptr autobg = loadDatasets(autobg_paths, config, cmap, up, true);
       for(size_t i = 0; i < autobg->size(); ++i) {
-        const Dataset& track = *autobg->tracks_[i];
+        Dataset& track = *autobg->tracks_[i];
         for(size_t j = 0; j < track.size(); ++j) {
-          ROS_ASSERT(!track[j].raw_.empty());
+          ROS_ASSERT(!track[j].raw().empty());
         }
       }
       cout << "Using autobg dataset: " << endl;
@@ -256,8 +258,8 @@ int main(int argc, char** argv)
   }
   
   // -- Go.
-  inductor.setPaused(true);
-  inductor.launch();
+  inductor->setPaused(true);
+  inductor->launch();
 
   GCBroadcaster broadcaster(inductor.get());
   if(opts.count("broadcast"))
@@ -266,15 +268,28 @@ int main(int argc, char** argv)
   // Note that if there is no roscore running, GCBroadcaster will generate
   // an error, and then inductor will sit paused forever.
   if(opts.count("no-vis")) {
-    inductor.setPaused(false);
+    inductor->setPaused(false);
     cout << "Paused: " << inductor->paused() << endl;
-    inductor.thread()->join();
+    inductor->thread()->join();
   }
   else {
+    // Set up clustering user interface.
+//    ClusterViewController cvc(&inductor);
+    ClusterBlobView::Ptr cbv(new ClusterBlobView());
+//    cvc.setView(cbv.get());
+//    cvc.setReferenceTrack(init->tracks_.back());
+//    cvc.addTrackDataset(init.get(), *classifier.get());
+
+    GlutWindow glut_window(argc, argv);
+    glut_window.setViewController(cbv.get());
+    glut_window.launch();
+//    cvc.launch();
+
     // Set up original user interface.
     BlobView view;
     VCMultiplexor multiplexor(&view);
-    ActiveLearningViewController alvc(&multiplexor, inductor.get(), unlabeled_td_dir);
+    ActiveLearningViewController alvc(&multiplexor, cbv.get(), inductor.get(),
+                                      unlabeled_td_dir);
     InductionViewController ivc(inductor.get(), &multiplexor);
     multiplexor.addVC(&alvc);
     multiplexor.addVC(&ivc);
@@ -282,21 +297,14 @@ int main(int argc, char** argv)
     alvc.launch();
     ivc.launch();
 
-    // Set up clustering user interface.
-    ClusterViewController cvc(&inductor);
-    ClusterBlobView cbv(&cvc);
-    cvc.setView(&cbv);
-    cbv.launch();
-    cvc.launch();
 
     // Run group induction.
-    inductor.thread()->join();
+    inductor->thread()->join();
 
     view.stop();
     alvc.stop();
     ivc.stop();
-    cbv.stop();
-    cvc.stop();
+//    cvc.stop();
   }
 
   if(isup)

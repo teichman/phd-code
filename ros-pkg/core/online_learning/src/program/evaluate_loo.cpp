@@ -1,6 +1,7 @@
 #include <online_learning/cross_evaluator.h>
 #include <boost/program_options.hpp>
 #include <boost/foreach.hpp>
+#include <boost/filesystem.hpp>
 
 using namespace std;
 using namespace Eigen;

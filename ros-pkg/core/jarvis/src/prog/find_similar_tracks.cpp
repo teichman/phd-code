@@ -1,4 +1,5 @@
 #include <jarvis/inductor.h>
+#include <online_learning/clusterer.h>
 #include <boost/program_options.hpp>
 
 using namespace std;

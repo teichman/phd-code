@@ -1,6 +1,8 @@
 #ifndef TBSSL_H
 #define TBSSL_H
 
+// Tracking-based semi-supervised learning
+
 // must come first because of python.
 #include <online_learning/evaluator.h>  
 

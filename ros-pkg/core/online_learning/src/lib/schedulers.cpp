@@ -1,4 +1,10 @@
+//#include <math.h>
+//#include <stddef.h>
+//#include <ros/console.h>
+//#include <ros/assert.h>
+#include <eigen_extensions/eigen_extensions.h>
 #include <online_learning/schedulers.h>
+#include <ros/assert.h>
 
 using namespace std;
 

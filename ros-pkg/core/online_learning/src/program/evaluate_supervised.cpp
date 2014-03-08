@@ -1,5 +1,6 @@
 #include <online_learning/tbssl.h>
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 
 #define INCREMENTAL_EVAL (getenv("INCREMENTAL_EVAL") ? atoi(getenv("INCREMENTAL_EVAL")) : 0)
 #define NUM_PASSES (getenv("NUM_PASSES") ? atoi(getenv("NUM_PASSES")) : 1)

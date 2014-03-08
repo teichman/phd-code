@@ -38,7 +38,7 @@ TEST(CustomSerializer, CustomSerializer)
   // -- Add some custom data.
   int idx = 0;
   for(size_t i = 0; i < dataset->size(); ++i, ++idx)
-    (*dataset)[i].raw_ = idx;
+    (*dataset)[i].set_raw(idx);
 
   // -- Serialize using custom serializer set above.
   dataset->save("augmented_dataset");
@@ -49,9 +49,9 @@ TEST(CustomSerializer, CustomSerializer)
   idx = 0;
   cout << endl;
   for(size_t i = 0; i < dataset->size(); ++i, ++idx) {
-    EXPECT_EQ(boost::any_cast<int>((*dataset)[i].raw_), boost::any_cast<int>(dataset2[i].raw_));
-    EXPECT_EQ(boost::any_cast<int>(dataset2[i].raw_), idx);
-    cout << boost::any_cast<int>(dataset2[i].raw_) << " ";
+    EXPECT_EQ(boost::any_cast<int>((*dataset)[i].raw()), boost::any_cast<int>(dataset2[i].raw()));
+    EXPECT_EQ(boost::any_cast<int>(dataset2[i].raw()), idx);
+    cout << boost::any_cast<int>(dataset2[i].raw()) << " ";
   }
   cout << endl;
 
@@ -92,7 +92,7 @@ TEST(CustomSerializer, ReadOnlyEmptyCustomSerializerDeathTest)
   // -- Add some custom data.
   int idx = 0;
   for(size_t i = 0; i < dataset->size(); ++i, ++idx)
-    (*dataset)[i].raw_ = idx;
+    (*dataset)[i].set_raw(idx);
 
   // -- Serialize using custom serializer set above.
   dataset->save("augmented_dataset");

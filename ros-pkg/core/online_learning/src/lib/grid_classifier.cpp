@@ -1,5 +1,9 @@
+#include <float.h>
+#include <eigen_extensions/eigen_extensions.h>
+#include <eigen_extensions/random.h>
 #include <online_learning/grid_classifier.h>
 #include <gperftools/profiler.h>
+#include <online_learning/schedulers.h>
 
 using namespace std;
 using namespace Eigen;

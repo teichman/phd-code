@@ -91,9 +91,9 @@ int main(int argc, char** argv)
   if(!seed_paths.empty()) {
     TrackDataset::Ptr seed = loadDatasets(seed_paths);
     for(size_t i = 0; i < seed->size(); ++i) {
-      const Dataset& track = *seed->tracks_[i];
+      Dataset& track = *seed->tracks_[i];
       for(size_t j = 0; j < track.size(); ++j) {
-        ROS_ASSERT(!track[j].raw_.empty());
+        ROS_ASSERT(!track[j].raw().empty());
       }
     }
     cout << "Using seed dataset: " << endl;
@@ -103,9 +103,9 @@ int main(int argc, char** argv)
   if(!autobg_paths.empty()) {
     TrackDataset::Ptr autobg = loadDatasets(autobg_paths);
     for(size_t i = 0; i < autobg->size(); ++i) {
-      const Dataset& track = *autobg->tracks_[i];
+      Dataset& track = *autobg->tracks_[i];
       for(size_t j = 0; j < track.size(); ++j) {
-        ROS_ASSERT(!track[j].raw_.empty());
+        ROS_ASSERT(!track[j].raw().empty());
       }
     }
     cout << "Using autobg dataset: " << endl;
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 
   DGCTrackView view;
   VCMultiplexor multiplexor(&view);
-  ActiveLearningViewController alvc(&multiplexor, &learner, unlabeled_td_dir);
+  ActiveLearningViewController alvc(&multiplexor, NULL, &learner, unlabeled_td_dir);
   InductionViewController ivc(&learner, &multiplexor);
   multiplexor.addVC(&alvc);
   multiplexor.addVC(&ivc);

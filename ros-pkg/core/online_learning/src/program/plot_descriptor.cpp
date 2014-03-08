@@ -5,7 +5,6 @@
 using namespace std;
 using namespace Eigen;
 namespace bpo = boost::program_options;
-namespace bfs = boost::filesystem;
 
 void process(const TrackDataset& td, size_t did, size_t eid, size_t cid,
              vector<double>* pos, vector<double>* neg)

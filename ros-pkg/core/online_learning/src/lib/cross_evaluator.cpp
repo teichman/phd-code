@@ -1,4 +1,5 @@
 #include <online_learning/cross_evaluator.h>
+#include <boost/filesystem.hpp>
 
 using namespace std;
 namespace bfs = boost::filesystem;

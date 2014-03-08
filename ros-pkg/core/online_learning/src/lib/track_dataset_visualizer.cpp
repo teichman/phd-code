@@ -1,4 +1,5 @@
 #include <online_learning/track_dataset_visualizer.h>
+#include <online_learning/clusterer.h>
 
 using namespace std;
 using namespace Eigen;
@@ -9,7 +10,9 @@ namespace bfs = boost::filesystem;
  ************************************************************/
 
 TrackViewControllerBase::TrackViewControllerBase(TrackView* view, int delay) :
+  learner_(NULL),
   view_(view),
+  cview_(NULL),
   td_(new TrackDataset),
   tidx_(0),
   fidx_(0),
@@ -18,6 +21,30 @@ TrackViewControllerBase::TrackViewControllerBase(TrackView* view, int delay) :
 {
   ROS_ASSERT(view_);
 }
+
+TrackViewControllerBase::TrackViewControllerBase(TrackView* view,
+                                                 ClusterView *cview, int delay) :
+  learner_(NULL),
+  view_(view),
+  cview_(cview),
+  td_(new TrackDataset),
+  tidx_(0),
+  fidx_(0),
+  sort_class_(0),
+  delay_(delay)
+{
+  ROS_ASSERT(view_);
+}
+
+void TrackViewControllerBase::setTrackDataset(TrackDataset::Ptr td)
+{
+  td_ = td;
+  updateIndex();
+//  if (cview_ != NULL) {
+//    cview_->displayCluster(td_);
+//  }
+}
+
 
 void TrackViewControllerBase::handleClassKeypress(int c, bool alt)
 {
@@ -238,7 +265,7 @@ void TrackViewControllerBase::updateDisplay()
 
   ROS_ASSERT(tidx_ < (int)index_.size());
   ROS_ASSERT(index_[tidx_] < (int)td_->size());
-  const Dataset& track = (*td_)[index_[tidx_]];
+  Dataset& track = (*td_)[index_[tidx_]];
   
   if(track.empty()) {
     view_->clearInstance(this);
@@ -432,10 +459,11 @@ std::string datasetPathToName(std::string path)
   return p.filename().string();
 }
 
-ActiveLearningViewController::ActiveLearningViewController(TrackView* view, OnlineLearner* learner, std::string unlabeled_td_dir) :
-  TrackViewControllerBase(view),
-  learner_(learner),
-  unlabeled_td_dir_(unlabeled_td_dir)
+ActiveLearningViewController::ActiveLearningViewController(
+    TrackView* view, ClusterView *cview, OnlineLearner* learner,
+    std::string unlabeled_td_dir) :
+    TrackViewControllerBase(view, cview), learner_(learner), unlabeled_td_dir_(
+        unlabeled_td_dir)
 {
 }
 
@@ -509,6 +537,27 @@ void ActiveLearningViewController::loadNextUnlabeledDataset()
   getNextUnlabeledDatasetPath();
 }
 
+void ActiveLearningViewController::ClusterSimilarTracks(TrackDataset *new_td,
+                                                        const Dataset &ref) {
+  TrackDataset::Ptr clustered_(new TrackDataset());
+  cout << "classifying " << new_td->tracks_.size() << " tracks..." << endl;
+
+  int num_added = 0;
+  for (size_t i = 0; i < new_td->tracks_.size(); i++)
+  {
+    ROS_ASSERT(new_td->tracks_[i].get() != NULL);
+    if (similar(ref, *new_td->tracks_[i].get(), gc_, 0.7, 3))
+    {
+      cout << "adding track of size " << new_td->tracks_[i]->size() << endl;
+      clustered_->tracks_.push_back(new_td->tracks_[i]);
+      num_added++;
+    }
+  }
+  cout << "added " << num_added << " tracks";
+  cview_->displayCluster(clustered_);
+}
+
+
 bool ActiveLearningViewController::handleKeypress(const pcl::visualization::KeyboardEvent& event)
 {
   if(TrackViewControllerBase::handleKeypress(event))
@@ -522,6 +571,9 @@ bool ActiveLearningViewController::handleKeypress(const pcl::visualization::Keyb
     break;
   case 'N':
     loadNextUnlabeledDataset();
+    break;
+  case 'c':
+    ClusterSimilarTracks(td_.get(), *td_->tracks_[index_[tidx_]].get());
     break;
   case ' ':
     learner_->togglePaused();
@@ -657,9 +709,9 @@ void colorize(int val, Point* pt)
   pt->b = val;
 }
 
-void DGCTrackView::displayInstance(const Instance& instance, __attribute__((unused)) void* caller)
+void DGCTrackView::displayInstance(Instance& instance, __attribute__((unused)) void* caller)
 {
-  Cloud::Ptr pcd = boost::any_cast<Cloud::Ptr>(instance.raw_);
+  Cloud::Ptr pcd = boost::any_cast<Cloud::Ptr>(instance.raw());
   Cloud::Ptr vis(new Cloud);
   Vector4f centroid;
   pcl::compute3DCentroid(*pcd, centroid);
@@ -703,7 +755,7 @@ void VCMultiplexor::addVC(void* address)
   vcs_.push_back(address);
 }
 
-void VCMultiplexor::displayInstance(const Instance& instance, void* caller)
+void VCMultiplexor::displayInstance(Instance& instance, void* caller)
 {
   scopeLockWrite;
   

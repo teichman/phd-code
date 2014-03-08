@@ -13,13 +13,13 @@ TEST(AugmentedInstance, AugmentedInstance)
 
   Instance<ExtraCustomData> aug;
   aug.val_ = 42;
-  aug.raw_.val_ = 13;
+  aug.raw().val_ = 13;
   aug.save("augmented_instance");
 
   Instance<ExtraCustomData> aug2;
   aug2.load("augmented_instance");
   EXPECT_TRUE(aug2.val_ == aug.val_);
-  EXPECT_TRUE(aug2.raw_.val_ == aug.raw_.val_);
+  EXPECT_TRUE(aug2.raw().val_ == aug.raw().val_);
 }
 
 int main(int argc, char** argv) {

@@ -57,7 +57,7 @@ size_t CompressionType::numBytes(const TrackDataset& td) const
   size_t num_bytes = 0;
   for(size_t i = 0; i < td.size(); ++i) {
     for(size_t j = 0; j < td[i].size(); ++j) {
-      const Blob& blob = *boost::any_cast<Blob::Ptr>(td[i][j].raw_);
+      const Blob& blob = *boost::any_cast<Blob::Ptr>(td[i][j].raw());
       num_bytes += numBytes(blob);
     }
   }
@@ -91,8 +91,8 @@ void CompressionType::assertEqual(const TrackDataset& td0, const TrackDataset& t
   for(size_t i = 0; i < td0.size(); ++i) {
     ROS_ASSERT(td0[i].size() == td1[i].size());
     for(size_t j = 0; j < td0[i].size(); ++j) {
-      const Blob& blob0 = *boost::any_cast<Blob::Ptr>(td0[i][j].raw_);
-      const Blob& blob1 = *boost::any_cast<Blob::Ptr>(td1[i][j].raw_);
+      const Blob& blob0 = *boost::any_cast<Blob::Ptr>(td0[i][j].raw());
+      const Blob& blob1 = *boost::any_cast<Blob::Ptr>(td1[i][j].raw());
       assertEqual(blob0, blob1);
     }
   }
@@ -253,7 +253,7 @@ void SingleFrameCompression::compressTrack(const Dataset& track, std::vector<uin
   writeToVec(track.size(), data);
 
   for(size_t i = 0; i < track.size(); ++i) {
-    const Blob& blob = *boost::any_cast<Blob::Ptr>(track[i].raw_);
+    const Blob& blob = *boost::any_cast<Blob::Ptr>(track[i].raw());
     compress(blob, data);
   }
 }
@@ -268,7 +268,7 @@ size_t SingleFrameCompression::decompressTrack(const std::vector<uint8_t>& data,
   for(size_t i = 0; i < track->size(); ++i) {
     Blob::Ptr blob(new Blob);
     idx = decompress(data, idx, blob.get());
-    track->instances_[i].raw_ = blob;
+    track->instances_[i].set_raw(blob);
   }
 
   return idx;

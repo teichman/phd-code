@@ -1,14 +1,14 @@
 #ifndef DATASET_H
 #define DATASET_H
 
-#include <float.h>
+//#include <float.h>
 #include <boost/shared_ptr.hpp>
 #include <vector>
 #include <Eigen/Eigen>
-#include <ros/console.h>
-#include <ros/assert.h>
-#include <iomanip>
-#include <eigen_extensions/eigen_extensions.h>
+//#include <ros/console.h>
+//#include <ros/assert.h>
+//#include <iomanip>
+//#include <eigen_extensions/eigen_extensions.h>
 #include <serializable/serializable.h>
 #include <name_mapping/name_mapping.h>
 #include <boost/any.hpp>
@@ -23,6 +23,7 @@ public:
   virtual void deserialize(std::istream& in, boost::any* raw) const = 0;
 };
 
+// PCD is PointCloud data.
 class PCDSerializer : public CustomSerializer
 {
 public:
@@ -83,8 +84,31 @@ public:
   void deserialize(std::istream& in, boost::any* raw) const { ROS_ASSERT(0); }
   void deserialize(std::string original_name, size_t num_bytes,
                    std::istream& in, boost::any* raw) const;
-                   
+};
 
+// Represents a reference to where additional boost::any data is available
+// in external storage. To be used for on-demand loading.
+struct StorageReference {
+  StorageReference() :
+      data_loadable_(false), td_filename_(""), file_offset_(0) {}
+
+  bool data_loadable_;  // true when there is additional data still loadable
+  std::string td_filename_;
+  uint64_t file_offset_;
+};
+
+class ReferenceSavingCustomSerializer : public CustomSerializer
+{
+public:
+  typedef boost::shared_ptr<ReferenceSavingCustomSerializer> Ptr;
+
+  std::string name() const { return "ReferenceSavingCustomSerializer"; }
+  void serialize(const boost::any& raw, std::ostream& out) const {
+    ROS_FATAL("ReferenceSavingCustomSerializer not to be called directly");
+  }
+  void deserialize(std::istream& in, boost::any* raw) const {
+    ROS_FATAL("ReferenceSavingCustomSerializer not to be called directly");
+  }
 };
 
 
@@ -165,7 +189,6 @@ public:
   //! Otherwise the various clone() functions will not work
   //! as expected.  This could lead to immense pain.
   //! Instances are meant to be deep copied anyway...
-  boost::any raw_;
   static CustomSerializer::Ptr custom_serializer_;
 
   Instance() {}
@@ -191,12 +214,22 @@ public:
   double hash() const;
   
   void serialize(std::ostream& out) const;
-  void deserialize(std::istream& in);
+  void deserialize(std::istream& in) { deserialize(in, ""); }
+  void deserialize(std::istream& in, const std::string &filename);
   std::string status(const std::string& prefix = "") const;
   //! This does not include the size of the raw_ data.
   size_t numBytes() const;
   
+  // Load raw on demand from disk when necessary
+  boost::any& raw();
+  template<typename ValueType>
+  void set_raw(const ValueType &data) { raw_ = data; }
+  void clearRaw();
+
+
 protected:
+  StorageReference raw_ref_;
+  boost::any raw_;
   //! Can apply "dmap" or "cmap".
   void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
 };
@@ -235,7 +268,8 @@ public:
   std::vector<Instance> instances_;
 
   void serialize(std::ostream& out) const;
-  void deserialize(std::istream& in);
+  void deserialize(std::istream& in) { deserialize(in, ""); }
+  void deserialize(std::istream& in, const std::string &filename);
   std::string status(const std::string& prefix = "", bool show_name_mappings = true) const;
   void deleteDescriptors();
   //! This does not include the size of the raw_ data.
@@ -259,6 +293,8 @@ public:
   Instance& operator[](size_t i) { return instances_[i]; }
   //! Sets the magnitude of the label values, interpreted as importance by all Trainer objects.
   void setImportance(float importance);
+
+  void clearRaw();
       
 protected:
   //! Can apply "dmap" or "cmap".
@@ -286,7 +322,8 @@ public:
   TrackDataset(std::istream& in) { deserialize(in); }
   ~TrackDataset();
   void serialize(std::ostream& out) const;
-  void deserialize(std::istream& in);
+  void deserialize(std::istream& in) { return deserialize(in, ""); }
+  void deserialize(std::istream& in, const std::string& filename);
   //! Makes a deep copy of all the data.
   //! Watch out!  This does NOT necessarily clone the raw_ data.
   //! raw_ will be copied, whatever it is... and it's probably a shared_ptr.
@@ -322,6 +359,8 @@ public:
   //! Returns num_pos / num_neg for class_name.
   double labelRatio(const std::string& class_name) const;
   
+  void clearRaw();
+
 protected:
   //! Can apply "dmap" or "cmap".
   void _applyNameTranslator(const std::string& id, const NameTranslator& translator);

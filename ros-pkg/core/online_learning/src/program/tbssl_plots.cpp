@@ -2,6 +2,8 @@
 #include <boost/program_options.hpp>
 #include <boost/foreach.hpp>
 #include <online_learning/dataset.h>
+#include <boost/filesystem.hpp>
+#include <eigen_extensions/eigen_extensions.h>
 
 using namespace std;
 using namespace Eigen;

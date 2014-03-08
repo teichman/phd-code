@@ -64,7 +64,7 @@ protected:
   bool incrementIter();
   void loadAnnotations(const std::vector<std::string>& paths);
   void initializeIter();
-  Cloud::Ptr generateGridContent(const TrackDataset& td,
+  Cloud::Ptr generateGridContent(TrackDataset& td,
                                  const std::vector<size_t>& indices,
                                  size_t frame_id) const;
   Cloud::Ptr generateGridLines() const;
@@ -438,7 +438,7 @@ void GroupInductionVisualizer::trackIndexToGridElement(int idx, size_t* row, siz
   *col = c;
 }
 
-Cloud::Ptr GroupInductionVisualizer::generateGridContent(const TrackDataset& td,
+Cloud::Ptr GroupInductionVisualizer::generateGridContent(TrackDataset& td,
                                                          const std::vector<size_t>& indices,
                                                          size_t frame_id) const
 {
@@ -452,8 +452,8 @@ Cloud::Ptr GroupInductionVisualizer::generateGridContent(const TrackDataset& td,
     size_t row, col;
     trackIndexToGridElement(i, &row, &col);
 
-    const Dataset& track = td[idx];
-    Cloud::Ptr pcd = boost::any_cast<Cloud::Ptr>(track[frame_id % track.size()].raw_);
+    Dataset& track = td[idx];
+    Cloud::Ptr pcd = boost::any_cast<Cloud::Ptr>(track[frame_id % track.size()].raw());
     Vector4f centroid;
     pcl::compute3DCentroid(*pcd, centroid);
     Vector4f offset = Vector4f::Zero();

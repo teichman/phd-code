@@ -1,4 +1,5 @@
 #include <online_learning/collage_generator.h>
+#include <boost/filesystem.hpp>
 
 using namespace std;
 namespace bfs = boost::filesystem;

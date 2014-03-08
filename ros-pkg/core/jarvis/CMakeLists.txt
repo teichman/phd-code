@@ -37,11 +37,14 @@ rosbuild_add_library(jarvis_core
   src/lib/induction_supervisor.cpp
   src/lib/compression_helpers.cpp
   src/lib/video_streaming_sentinel.cpp
+  src/lib/glut_window.cpp
+  src/lib/texture.cpp
+  src/lib/trackball.cpp
   src/lib/cluster_view_controller.cpp
   src/lib/discrete_bayes_filter.cpp
   )
 rosbuild_add_compile_flags(jarvis_core -std=c++0x)
-target_link_libraries(jarvis_core tcmalloc)
+target_link_libraries(jarvis_core tcmalloc glut)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)

@@ -5,7 +5,6 @@
 using namespace std;
 using namespace Eigen;
 namespace bpo = boost::program_options;
-namespace bfs = boost::filesystem;
 
 int main(int argc, char** argv)
 {

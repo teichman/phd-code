@@ -11,6 +11,7 @@
   <node name="induct" pkg="jarvis" type="induct"
         required="true"
         output="screen"
+    	   launch-prefix="gdb -ex run --args"
         args="--class-names interesting
               --config $(find jarvis)/config/less_gravity.yml
               --emax 0
