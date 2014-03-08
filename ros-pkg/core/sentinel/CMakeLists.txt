@@ -27,7 +27,7 @@ rosbuild_add_library(${PROJECT_NAME}
   src/lib/background_model.cpp
   src/lib/reconstructor.cpp
   )
-rosbuild_add_compile_flags(sentinel -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas -DJARVIS_DEBUG)  # 
+rosbuild_add_compile_flags(sentinel -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)  # -DJARVIS_DEBUG
 #target_link_libraries(${PROJECT_NAME} another_library)
 rosbuild_add_boost_directories()
 rosbuild_link_boost(${PROJECT_NAME} filesystem program_options)
@@ -38,7 +38,7 @@ rosbuild_link_boost(${PROJECT_NAME} filesystem program_options)
 
 rosbuild_add_executable(stream src/prog/stream.cpp)
 target_link_libraries(stream ${PROJECT_NAME})
-rosbuild_add_compile_flags(stream -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas -DJARVIS_DEBUG)  # -DJARVIS_PROFILE 
+rosbuild_add_compile_flags(stream -Wno-deprecated -Wno-unused-but-set-variable -Wno-unknown-pragmas)  # -DJARVIS_PROFILE  -DJARVIS_DEBUG
 
 rosbuild_add_executable(request_recording src/prog/request_recording.cpp)
 target_link_libraries(request_recording ${PROJECT_NAME})
