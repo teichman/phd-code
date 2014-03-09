@@ -91,7 +91,7 @@ define SET0_CONTEXT_RULE_GENERATOR
 extract-tds-$(1)-set0: $$(addsuffix /extracted, $$(TD_DIRS_$(1)_0))
 $(1)-set0/tds/%/extracted: $$(LOG_DIR_$(1)_0)/$$*.bag
 	mkdir -p $$(@D)
-	ROS_MASTER_URI=http://localhost:$$$$(( $$$$(ls $$(LOG_DIR_$(1)_0) | awk '{if($$$$0 == "$$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$$< output-directory:=$$$$(pwd)/$$(@D)
+	ROS_MASTER_URI=http://localhost:$$$$(( $$$$(ls $$(LOG_DIR_$(1)_0) | awk '{if($$$$0 == "$$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch timeout:=60 bagfile:=$$< output-directory:=$$$$(pwd)/$$(@D)
 	touch $$@
 
 update-unlabeled-descriptors-$(1)-set0: $$(addprefix $(1)-set0/tds/, $$(addsuffix /updated, $$(NAMES_$(1)_0)))
@@ -184,7 +184,7 @@ define SET1_CONTEXT_RULE_GENERATOR
 extract-tds-$(1)-set1: $$(addsuffix /extracted, $$(TD_DIRS_$(1)_1))
 $(1)-set1/tds/%/extracted: $$(LOG_DIR_$(1)_1)/$$*.bag
 	mkdir -p $$(@D)
-	ROS_MASTER_URI=http://localhost:$$$$(( $$$$(ls $$(LOG_DIR_$(1)_1) | awk '{if($$$$0 == "$$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch bagfile:=$$< output-directory:=$$$$(pwd)/$$(@D)
+	ROS_MASTER_URI=http://localhost:$$$$(( $$$$(ls $$(LOG_DIR_$(1)_1) | awk '{if($$$$0 == "$$*.bag") print NR}') + 11311)) roslaunch jarvis extract_tds.launch timeout:=60 bagfile:=$$< output-directory:=$$$$(pwd)/$$(@D)
 	touch $$@
 
 update-unlabeled-descriptors-$(1)-set1: $$(addprefix $(1)-set1/tds/, $$(addsuffix /updated, $$(NAMES_$(1)_1)))

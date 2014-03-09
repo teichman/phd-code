@@ -5,7 +5,8 @@
   <arg name="bagfile" />
   <!-- output-directory must be an absolute path! -->
   <arg name="output-directory" default=" $(env PWD)/tds" />
+  <arg name="timeout" default="10" />
   
-  <node name="jarvis" pkg="jarvis" type="jarvis" args="-v0 -r$(arg rotation) --record $(arg output-directory) --timeout 60" required="true" />
+  <node name="jarvis" pkg="jarvis" type="jarvis" args="-v0 -r$(arg rotation) --record $(arg output-directory) --timeout $(arg timeout)" required="true" />
   <node name="rosbag" pkg="rosbag" type="play" args="$(arg bagfile) --topics /foreground --skip-empty 0.1" />
 </launch>
