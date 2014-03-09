@@ -22,7 +22,7 @@ public:
   BackgroundModel(int width, int height,
                   int width_step, int height_step,
                   double max_depth, double min_depth,
-                  double bin_width,
+                  double min_bin_width,
                   double occupancy_threshold,
                   int raytracing_threshold);
   ~BackgroundModel() {
@@ -59,7 +59,7 @@ protected:
   double min_depth_;
   double max_depth_;
   //! Bin width in z.
-  double bin_width_;
+  double min_bin_width_;
   double occupancy_threshold_;
   int raytracing_threshold_;
   size_t num_updates_;
@@ -69,6 +69,7 @@ protected:
   cv::Mat3b vis_;
   
   void initializeWeights();
+  void initializeCubicWeights();
 };
 
 class DepthHistogram

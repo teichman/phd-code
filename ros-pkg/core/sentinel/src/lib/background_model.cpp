@@ -298,7 +298,7 @@ void OccupancyLine::clear()
 BackgroundModel::BackgroundModel(int width, int height,
                                  int width_step, int height_step,
                                  double min_depth, double max_depth,
-                                 double bin_width,
+                                 double min_bin_width,
                                  double occupancy_threshold,
                                  int raytracing_threshold) :
   width_(width),
@@ -307,12 +307,13 @@ BackgroundModel::BackgroundModel(int width, int height,
   height_step_(height_step),
   min_depth_(min_depth),
   max_depth_(max_depth),
-  bin_width_(bin_width),
+  min_bin_width_(min_bin_width),
   occupancy_threshold_(occupancy_threshold),
   raytracing_threshold_(raytracing_threshold),
   num_updates_(0)
 {
-  initializeWeights();
+  //initializeWeights();
+  initializeCubicWeights();
 
   //ROS_ASSERT(height_step_ == 1 || height_step_ % 2 == 0);
   //ROS_ASSERT(width_step_ == 1 || width_step_ % 2 == 0);
@@ -330,14 +331,14 @@ BackgroundModel::BackgroundModel(int width, int height,
   histograms_.reserve(num);
   for(int y = height_step_ / 2; y < height; y += height_step_)
     for(int x = width_step_ / 2; x < width; x += width_step_)
-      histograms_.push_back(OccupancyLine(min_depth_, max_depth_, bin_width_, x, y, raytracing_threshold_));
+      histograms_.push_back(OccupancyLine(min_depth_, max_depth_, min_bin_width_, x, y, raytracing_threshold_));
 
   cout << "Initialized " << histograms_.size() << " histograms." << endl;
 
   // -- Print out bin widths.
-  const OccupancyLine& hist = histograms_[0];
-  for(size_t i = 0; i < hist.lower_limits_.size(); ++i)
-    cout << "Bin " << i << ": " << inverseTransform(hist.lower_limits_[i]) << endl;
+  // const OccupancyLine& hist = histograms_[0];
+  // for(size_t i = 0; i < hist.lower_limits_.size(); ++i)
+  //   cout << "Bin " << i << ": " << inverseTransform(hist.lower_limits_[i]) << endl;
 }
 
 void BackgroundModel::initializeWeights()
@@ -362,6 +363,33 @@ void BackgroundModel::initializeWeights()
   ROS_ASSERT(fabs(MIN_DEPTH - transform(MIN_DEPTH)) < 1e-6);
   ROS_ASSERT(fabs(MAX_DEPTH - transform(MAX_DEPTH)) < 1e-6);
   ROS_ASSERT(fabs(mult * transformDerivative(MAX_DEPTH) - transformDerivative(MIN_DEPTH)) < 1e-6);
+}
+
+void BackgroundModel::initializeCubicWeights()
+{
+  // -- Set up the space transform.
+  // f(x) = ax^3 + bx^2 + cx + d
+  // f'(x) = 3ax^2 + 2bx + c
+  // Constraints:
+  // f(MIN_DEPTH) = MIN_DEPTH
+  // f(MAX_DEPTH) = MAX_DEPTH
+  // f'(MIN_DEPTH) = 1    // Use the min_bin_width at MIN_DEPTH
+  // f'(MAX_DEPTH) = 1/m  // Use m times the min_bin_width at MAX_DEPTH
+  double m = 7;
+  MatrixXd A(4, 4);
+  A << pow(MIN_DEPTH, 3), pow(MIN_DEPTH, 2), MIN_DEPTH, 1,
+    pow(MAX_DEPTH, 3), pow(MAX_DEPTH, 2), MAX_DEPTH, 1,
+    3 * pow(MIN_DEPTH, 2), 2 * MIN_DEPTH, 1, 0,
+    3 * pow(MAX_DEPTH, 2), 2 * MAX_DEPTH, 1, 0;
+  VectorXd b(4);
+  b << MIN_DEPTH, MAX_DEPTH, 1, 1/m;
+  weights_ = A.colPivHouseholderQr().solve(b);
+  cout << "Weights: " << weights_.transpose() << endl;
+
+  ROS_ASSERT(fabs(MIN_DEPTH - transform(MIN_DEPTH)) < 1e-6);
+  ROS_ASSERT(fabs(MAX_DEPTH - transform(MAX_DEPTH)) < 1e-6);
+  ROS_ASSERT(fabs(transformDerivative(MIN_DEPTH) - 1) < 1e-6);
+  ROS_ASSERT(fabs(transformDerivative(MAX_DEPTH) - 1/m) < 1e-6);
 }
 
 void BackgroundModel::increment(openni::VideoFrameRef depth, int num)
@@ -482,35 +510,37 @@ void BackgroundModel::predict(openni::VideoFrameRef depth,
 
 double BackgroundModel::transform(double x) const
 {
-  return weights_.coeffRef(0) * x * x + weights_.coeffRef(1) * x + weights_.coeffRef(2);
+  //return weights_.coeffRef(0) * x * x + weights_.coeffRef(1) * x + weights_.coeffRef(2);
+  return weights_.coeffRef(0) * x * x * x + weights_.coeffRef(1) * x * x + weights_.coeffRef(2) * x + weights_.coeffRef(3);
 }
 
 double BackgroundModel::transformDerivative(double x) const
 {
-  return 2 * weights_.coeffRef(0) * x + weights_.coeffRef(1);
+  //return 2 * weights_.coeffRef(0) * x + weights_.coeffRef(1);
+  return 3 * weights_.coeffRef(0) * x * x + 2 * weights_.coeffRef(1) * x + weights_.coeffRef(2);
 }
 
-double BackgroundModel::inverseTransform(double x) const
-{
-  double a = weights_(0);
-  double b = weights_(1);
-  double c = weights_(2) - x;
+// double BackgroundModel::inverseTransform(double x) const
+// {
+//   double a = weights_(0);
+//   double b = weights_(1);
+//   double c = weights_(2) - x;
 
-  ROS_ASSERT(b*b - 4*a*c >= 0);
-  double val = sqrt(b*b - 4*a*c);
-  double result0 = (-b + val) / (2*a);
-  double result1 = (-b - val) / (2*a);
+//   ROS_ASSERT(b*b - 4*a*c >= 0);
+//   double val = sqrt(b*b - 4*a*c);
+//   double result0 = (-b + val) / (2*a);
+//   double result1 = (-b - val) / (2*a);
 
-  if(min_depth_ - 1e-6 < result0 && result0 < max_depth_ + 1e-6) {
-    ROS_ASSERT(!(min_depth_ - 1e-6 < result1 && result1 < max_depth_ + 1e-6));
-    return result0;
-  }
-  else {
-    ROS_ASSERT(min_depth_ - 1e-6 < result1 && result1 < max_depth_ + 1e-6);
-    ROS_ASSERT(!(min_depth_ - 1e-6 < result0 && result0 < max_depth_ + 1e-6));
-    return result1;
-  }
-}
+//   if(min_depth_ - 1e-6 < result0 && result0 < max_depth_ + 1e-6) {
+//     ROS_ASSERT(!(min_depth_ - 1e-6 < result1 && result1 < max_depth_ + 1e-6));
+//     return result0;
+//   }
+//   else {
+//     ROS_ASSERT(min_depth_ - 1e-6 < result1 && result1 < max_depth_ + 1e-6);
+//     ROS_ASSERT(!(min_depth_ - 1e-6 < result0 && result0 < max_depth_ + 1e-6));
+//     return result1;
+//   }
+// }
 
 void BackgroundModel::debug(int x, int y)
 {

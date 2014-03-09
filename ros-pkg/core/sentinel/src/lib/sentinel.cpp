@@ -41,10 +41,10 @@ Sentinel::Sentinel(double update_interval,
 {
   oni_.setHandler(this);
   if(depth_res == OpenNI2Interface::VGA) {
-    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(640, 480, 1, 1, MIN_DEPTH, MAX_DEPTH, 0.03, occupancy_threshold, raytracing_threshold));
+    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(640, 480, 1, 1, MIN_DEPTH, MAX_DEPTH, 0.02, occupancy_threshold, raytracing_threshold));
   }
   else if(depth_res == OpenNI2Interface::QVGA)
-    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(320, 240, 4, 3, MIN_DEPTH, MAX_DEPTH, 0.03, occupancy_threshold, raytracing_threshold));
+    model_ = boost::shared_ptr<BackgroundModel>(new BackgroundModel(320, 240, 4, 3, MIN_DEPTH, MAX_DEPTH, 0.02, occupancy_threshold, raytracing_threshold));
   else {
     ROS_ASSERT(0);
   }
@@ -113,12 +113,10 @@ void Sentinel::processBackgroundSubtraction(openni::VideoFrameRef color,
   }
   
   // -- If the model has been trained suffificiently, make predictions.
-  //    occupancy_threshold_ * 3 is used because of flickering depth pixels.
+  //    occupancy_threshold_ * 6 is used because of flickering depth pixels.
   //    They accumulate confidence slower than other points.
-  //    If it weren't for these pixels, we could set this to exactly
-  //    occupancy_threshold_ and things would work as expected.
   ROS_DEBUG_ONCE("Learning background model...");
-  if(model_->numUpdates() < occupancy_threshold_ * 3)
+  if(model_->numUpdates() < occupancy_threshold_ * 6)
     return;
   ROS_DEBUG_ONCE("Burn-in complete.");
   
