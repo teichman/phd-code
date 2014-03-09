@@ -1,5 +1,5 @@
 <launch>
-  <arg name="occupancy-threshold" default="1200" />
+  <arg name="occupancy-threshold" default="800" />
   <arg name="recording-directory" default=" $(env PWD)/videos" />
   <arg name="bagfile-dir" default="$(env PWD)/bags" />
   

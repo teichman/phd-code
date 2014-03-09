@@ -1,6 +1,6 @@
 <launch>
   
-  <arg name="occupancy-threshold" default="1200" />
+  <arg name="occupancy-threshold" default="800" />
   <arg name="bagfile-directory" default=" $(env PWD)/sentinel_bags" />
   
   <node name="sentinel" pkg="sentinel" type="stream"

@@ -3,7 +3,7 @@
   <arg name="classifier"/>
   <arg name="cname"/>
   <arg name="rotation" default="0" />
-  <arg name="occupancy-threshold" default="1200" />
+  <arg name="occupancy-threshold" default="800" />
   <arg name="recording-directory" default=" $(env PWD)/videos" />
   
   <!-- Track & classify objects.  Also save tracks to TD files.  -->

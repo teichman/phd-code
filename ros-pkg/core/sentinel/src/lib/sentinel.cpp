@@ -116,7 +116,7 @@ void Sentinel::processBackgroundSubtraction(openni::VideoFrameRef color,
   //    occupancy_threshold_ * 6 is used because of flickering depth pixels.
   //    They accumulate confidence slower than other points.
   ROS_DEBUG_ONCE("Learning background model...");
-  if(model_->numUpdates() < occupancy_threshold_ * 6)
+  if(model_->numUpdates() < occupancy_threshold_ * 4)
     return;
   ROS_DEBUG_ONCE("Burn-in complete.");
   
