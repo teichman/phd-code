@@ -1,6 +1,6 @@
 <launch>
   <arg name="td-dir" default="$(env PWD)/tds" />
-
+  <arg name="classifier" default="none" />
   
   <!-- gi-dir must be an absolute path! -->
   <arg name="gi-dir" default="$(env PWD)/group_induction" />
@@ -21,6 +21,7 @@
               --unlabeled-td-dir $(arg td-dir)
               --output-dir $(arg gi-dir)
               --broadcast
+              --classifier $(arg classifier)
               "/>
   
 </launch>

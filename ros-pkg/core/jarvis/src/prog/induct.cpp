@@ -76,6 +76,7 @@ int main(int argc, char** argv)
     ("fake-supervisor-annotation-limit", bpo::value(&fake_supervisor_annotation_limit)->default_value(-1), "FakeSupervisor will only provide corrections while OnlineLearner has fewer than this many annotations")
     ("active-learning", "Use active learning rather than group induction")
     ("broadcast", "Broadcast updated GridClassifiers on the ROS network.")
+    ("classifier", bpo::value<string>(), "Start with this classifier rather than an empty one.")
     ;
 
   bpo::variables_map opts;
@@ -136,25 +137,31 @@ int main(int argc, char** argv)
   // -- Initialize classifier and trainer.
   // If we weren't told specifically which tds to use for initialization,
   // choose some at random.
-  if(!opts.count("init")) {
-    init_paths = recursiveFind(unlabeled_td_dir, "*.td");
-    cout << "Possible initialization paths: " << endl;
-    copy(init_paths.begin(), init_paths.end(), ostream_iterator<string>(cout, "\n"));
-    random_shuffle(init_paths.begin(), init_paths.end());
-    if(init_paths.size() < 3) {
-      ROS_FATAL_STREAM("Group induction requires at least 3 .td files in " << unlabeled_td_dir << " for initialization of GridClassifier.");
-      return 1;
-    }
-    init_paths.resize(3);
-  }
-  cout << "Loading initialization datasets..." << endl;
-  TrackDataset::Ptr init = loadDatasets(init_paths, config, cmap, up, true);
-  cout << "Initializing classifier..." << endl;
   GridClassifier::Ptr classifier(new GridClassifier);
-  classifier->initialize(*init, nc);
-  ROS_ASSERT(classifier->nameMappingsAreEqual(*init));
-  cout << "dmap: " << classifier->nameMapping("dmap") << endl;
-  init.reset();
+  if(opts.count("classifier") && opts["classifier"].as<string>() != "none") {
+    ROS_ASSERT(!opts.count("init"));
+    cout << "Loading classifier at " << opts["classifier"].as<string>() << endl;
+    classifier->load(opts["classifier"].as<string>());
+  }
+  else {
+    if(!opts.count("init")) {
+      init_paths = recursiveFind(unlabeled_td_dir, "*.td");
+      cout << "Possible initialization paths: " << endl;
+      copy(init_paths.begin(), init_paths.end(), ostream_iterator<string>(cout, "\n"));
+      random_shuffle(init_paths.begin(), init_paths.end());
+      if(init_paths.size() < 3) {
+        ROS_FATAL_STREAM("Group induction requires at least 3 .td files in " << unlabeled_td_dir << " for initialization of GridClassifier.");
+        return 1;
+      }
+      init_paths.resize(3);
+    }
+    cout << "Loading initialization datasets..." << endl;
+    TrackDataset::Ptr init = loadDatasets(init_paths, config, cmap, up, true);
+    cout << "Initializing classifier..." << endl;
+    classifier->initialize(*init, nc);
+    ROS_ASSERT(classifier->nameMappingsAreEqual(*init));
+    cout << "dmap: " << classifier->nameMapping("dmap") << endl;
+  }
   
   GridClassifier::BoostingTrainer::Ptr trainer(new GridClassifier::BoostingTrainer(classifier));
   trainer->verbose_ = true;
