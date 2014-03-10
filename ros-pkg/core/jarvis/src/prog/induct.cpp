@@ -145,14 +145,16 @@ int main(int argc, char** argv)
   }
   else {
     if(!opts.count("init")) {
-      init_paths = recursiveFind(unlabeled_td_dir, "*.td");
-      cout << "Possible initialization paths: " << endl;
-      copy(init_paths.begin(), init_paths.end(), ostream_iterator<string>(cout, "\n"));
-      random_shuffle(init_paths.begin(), init_paths.end());
-      if(init_paths.size() < 3) {
-        ROS_FATAL_STREAM("Group induction requires at least 3 .td files in " << unlabeled_td_dir << " for initialization of GridClassifier.");
-        return 1;
+      while(true) {
+        init_paths = recursiveFind(unlabeled_td_dir, "*.td");
+        if(init_paths.size() >= 3)
+          break;
+        else {
+          ROS_WARN_STREAM("Group induction requires at least 3 .td files in " << unlabeled_td_dir << " for initialization of GridClassifier.  Waiting...");
+          usleep(10e6);
+        }
       }
+      random_shuffle(init_paths.begin(), init_paths.end());
       init_paths.resize(3);
     }
     cout << "Loading initialization datasets..." << endl;
