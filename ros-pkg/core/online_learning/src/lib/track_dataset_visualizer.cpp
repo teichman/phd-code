@@ -388,6 +388,10 @@ bool InductionViewController::handleKeypress(const pcl::visualization::KeyboardE
   case ' ':
     learner_->togglePaused();
     break;
+  case 'S':
+    cout << "Requesting snapshot..." << endl;
+    learner_->request_snapshot_ = true;
+    break;
   default:
     used = false;
     break;

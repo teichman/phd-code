@@ -7,6 +7,9 @@
 class Inductor : public OnlineLearner
 {
 public:
+  typedef boost::shared_ptr<Inductor> Ptr;
+  typedef boost::shared_ptr<const Inductor> ConstPtr;
+  
   //! This needs to be set if you are using a config with a GravitationalCloudOrienter.
   Eigen::VectorXf up_;
   
@@ -26,6 +29,8 @@ public:
            std::string unlabeled_dir,
            std::string saved_annotations_dir = "");
 
+  Inductor(std::istream& in);
+
 protected:
   YAML::Node config_;
   
@@ -36,8 +41,9 @@ protected:
   void retrospection(const TrackDataset& new_annotations, const std::vector<Label>& predictions);
   void requestInductedSampleHook(TrackDataset* td, int cidx) const;
   
-  void serialize(std::ostream& out) const { ROS_ASSERT(0); }
-  void deserialize(std::istream& in) { ROS_ASSERT(0); }
+  void serialize(std::ostream& out) const;
+  void deserialize(std::istream& in);
+  void snapshot();
 };
 
 // For retrospection, intersection_threshold = 0.7 and max_different_dspaces = 1 seemed

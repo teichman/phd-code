@@ -92,3 +92,21 @@ void saveYAML(const YAML::Node& doc, const std::string& path)
   f << YAML::Dump(doc) << endl;
   f.close();
 }
+
+void serializeYAML(const YAML::Node& doc, std::ostream& out)
+{
+  string ystr = YAML::Dump(doc);
+  serializeScalar(ystr.size(), out);
+  out.write(ystr.c_str(), ystr.size());
+}
+
+void deserializeYAML(std::istream& in, YAML::Node* doc)
+{
+  size_t num_chars;
+  deserializeScalar(in, &num_chars);
+  vector<char> vchar(num_chars);
+  in.read(vchar.data(), num_chars);
+  string ystr(vchar.begin(), vchar.end());
+  *doc = YAML::Load(ystr);
+}
+

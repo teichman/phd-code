@@ -3,6 +3,7 @@
 
 using namespace std;
 using namespace Eigen;
+namespace bfs = boost::filesystem;
 
 Inductor::Inductor(YAML::Node config,
                    double emax,
@@ -19,6 +20,13 @@ Inductor::Inductor(YAML::Node config,
   OnlineLearner(emax, buffer_size, max_track_length, classifier, trainer, max_iters, snapshot_every, evaluate_every, output_dir, unlabeled_dir, saved_annotations_dir),
   config_(config)
 {
+}
+
+Inductor::Inductor(std::istream& in) :
+  OnlineLearner(in)
+{
+  cout << "Deserialized.  unsupervised_: " << unsupervised_->size() << endl;
+  deserialize(in);
 }
 
 void Inductor::entryHook(TrackDataset* td, const std::string& path) const
@@ -289,3 +297,50 @@ void Inductor::requestInductedSampleHook(TrackDataset* td, int cidx) const
   *td = filtered;
 }
 
+void Inductor::serialize(std::ostream& out) const
+{
+  OnlineLearner::serialize(out);
+  eigen_extensions::serialize(up_, out);
+  serializeYAML(config_, out);
+}
+
+void Inductor::deserialize(std::istream& in)
+{
+  //OnlineLearner::deserialize(in);  // This is done by the deserialization ctor.
+  // I'm not sure I like this architecture.
+  // It might be better to allow default ctors and uninitialized state, then
+  // have init() and resume() functions.
+  
+  eigen_extensions::deserialize(in, &up_);
+  deserializeYAML(in, &config_);
+}
+
+void Inductor::snapshot()
+{
+  scopeLockRead;
+  
+  // -- Serialize Inductor.
+  ScopedTimer st("Serializing Inductor");
+  ROS_DEBUG_STREAM("Serializing Inductor.");
+  
+  // -- Delete the old one from two snapshots ago, if it exists.
+  ostringstream oss_old_learner_path;
+  oss_old_learner_path << output_dir_ << "/learner.ol." << setw(5) << setfill('0') << (iter_ - 2 * snapshot_every_);
+  string old_learner_path = oss_old_learner_path.str();
+  if(bfs::exists(old_learner_path))
+    bfs::remove(old_learner_path);
+  
+  // -- Save the current snapshot.
+  ostringstream oss_learner_filename;
+  oss_learner_filename << "learner.ol." << setw(5) << setfill('0') << iter_;
+  string learner_filename = oss_learner_filename.str();
+  string learner_path = output_dir_ + "/" + learner_filename;
+  save(learner_path);
+  
+  // -- Update the symlink for the most recent learner.
+  if(bfs::exists(output_dir_ + "/learner.ol"))
+    bfs::remove(output_dir_ + "/learner.ol");
+  bfs::create_symlink(learner_filename, output_dir_ + "/learner.ol");
+
+  request_snapshot_ = false;
+}

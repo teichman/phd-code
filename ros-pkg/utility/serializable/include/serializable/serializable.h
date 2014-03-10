@@ -109,4 +109,25 @@ protected:
   std::queue< std::pair<T, std::string> > queue_;
 };
 
+template<class T>
+void serializeScalar(T val, std::ostream& strm)
+{
+  strm.write((char*)&val, sizeof(T));
+}
+  
+template<class T>
+void deserializeScalar(std::istream& strm, T* val)
+{
+  strm.read((char*)val, sizeof(T));
+}
+
+// These functions include serialization length.  This is
+// for serializing YAML with other data into the same ostream.
+// You definitely do NOT want to be editing the YAML that
+// is produced from this because this will invalidate the
+// serialization length.
+void serializeYAML(const YAML::Node& doc, std::ostream& out);
+void deserializeYAML(std::istream& in, YAML::Node* doc);
+
+
 #endif // SERIALIZABLE_H

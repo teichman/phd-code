@@ -31,7 +31,9 @@
 class OnlineLearner : public NameMappable, public Serializable, public Agent
 {
 public:
-
+  typedef boost::shared_ptr<OnlineLearner> Ptr;
+  typedef boost::shared_ptr<const OnlineLearner> ConstPtr;
+  
   class Stats : public Serializable, public NameMappable
   {
   public:
@@ -66,6 +68,9 @@ public:
   //! Analogous to max_iters_.  Terminate if you receive this many annotations.
   //! This is mainly for testing vs active learning.
   int max_annotations_;
+  //! Set to true if you would like OnlineLearner to serialize itself to disk
+  //! on the next iteration.  OnlineLearner will set this to false when done.
+  bool request_snapshot_;
   
   virtual ~OnlineLearner() {}
   //! This is problematic.  If I make serialize and deserialize virtual functions,
@@ -242,7 +247,7 @@ protected:
   /************************************************************
    * Member functions
    ************************************************************/
-  void snapshot();
+  virtual void snapshot();
   void evaluate();
   void saveInductionAccuracy(const std::string& basename) const;
   void saveInductionExamples() const;

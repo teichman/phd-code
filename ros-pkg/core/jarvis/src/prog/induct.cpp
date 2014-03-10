@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     ("max-iters", bpo::value<int>(&max_iters)->default_value(0))
     ("snapshot-every", bpo::value<int>(&snapshot_every)->required())
     ("evaluate-every", bpo::value<int>(&evaluate_every)->required())
-    ("output-dir", bpo::value<string>(&output_dir)->required(), "Directory to put output.")
+    ("output-dir", bpo::value<string>(&output_dir)->required(), "Directory to put output. If this exists, it will try to resume.")
     ("unlabeled-td-dir", bpo::value<string>(&unlabeled_td_dir)->required(), "Directory of .td files to use as unlabeled data.")
     ("saved-annotations-dir", bpo::value<string>(&saved_annotations_dir), "Output directory of previous runs whose annotated data sequence you want to replicate.")
     
@@ -96,176 +96,179 @@ int main(int argc, char** argv)
     srand(time(NULL));
   }
 
-  // -- Make sure the output dir has not been used before.
-  if(bfs::exists(output_dir + "/input_hand_annotations")) {
-    ROS_FATAL_STREAM("It appears that the group induction directory \"" << output_dir << "\" has been used before.  Aborting.");
-    return 1;
-  }
-  
-  // -- Load the config.
-  YAML::Node config = YAML::LoadFile(config_path);
-  ROS_ASSERT(config["Pipeline"]);
-  ROS_ASSERT(config["GlobalParams"]);
-  string ncstr = config["GlobalParams"]["NumCells"].as<string>();
-  istringstream iss(ncstr);
-  vector<size_t> nc;
-  cout << "Num cells: ";
-  while(!iss.eof()) {
-    size_t buf;
-    iss >> buf;
-    nc.push_back(buf);
-    cout << buf << " ";
-  }
-  cout << endl;
-
-  // -- Set up the class map to use. 
-  NameMapping cmap;
-  cmap.addNames(class_names);
-  cout << "Using cmap: " << endl;
-  cout << cmap.status("  ") << endl;
-
-  // -- Get the up vector.
-  // If using less_gravity.yml, you need to put something here, but
-  // it won't have any effect.  TODO: Add accelerometer, get rid of the annoying
-  // cruft involving manually setting the up vector.
-  VectorXf up = VectorXf::Ones(3);
-  if(opts.count("up")) {
-    cout << "Setting up vector to that found at " << up_path << endl;
-    eigen_extensions::loadASCII(up_path, &up);
-  }
-  
-  // -- Initialize classifier and trainer.
-  // If we weren't told specifically which tds to use for initialization,
-  // choose some at random.
-  GridClassifier::Ptr classifier(new GridClassifier);
-  if(opts.count("classifier") && opts["classifier"].as<string>() != "none") {
-    ROS_ASSERT(!opts.count("init"));
-    cout << "Loading classifier at " << opts["classifier"].as<string>() << endl;
-    classifier->load(opts["classifier"].as<string>());
+  Inductor::Ptr inductor;
+  InductionSupervisor::Ptr isup;
+  // -- Deserialize if we can.  Otherwise, go through the long and
+  //    gross initialization.
+  if(bfs::exists(output_dir) && bfs::exists(output_dir + "/learner.ol")) {
+    cout << "Found existing group induction snapshot at " << output_dir << "/learner.ol.  Resuming..." << endl;
+    inductor = Inductor::Ptr(new Inductor((IfstreamWrapper(output_dir + "/learner.ol"))));
   }
   else {
-    if(!opts.count("init")) {
-      while(true) {
-        init_paths = recursiveFind(unlabeled_td_dir, "*.td");
-        if(init_paths.size() >= 3)
-          break;
-        else {
-          ROS_WARN_STREAM("Group induction requires at least 3 .td files in " << unlabeled_td_dir << " for initialization of GridClassifier.  Waiting...");
-          usleep(10e6);
+    // -- Load the config.
+    YAML::Node config = YAML::LoadFile(config_path);
+    ROS_ASSERT(config["Pipeline"]);
+    ROS_ASSERT(config["GlobalParams"]);
+    string ncstr = config["GlobalParams"]["NumCells"].as<string>();
+    istringstream iss(ncstr);
+    vector<size_t> nc;
+    cout << "Num cells: ";
+    while(!iss.eof()) {
+      size_t buf;
+      iss >> buf;
+      nc.push_back(buf);
+      cout << buf << " ";
+    }
+    cout << endl;
+
+    // -- Set up the class map to use. 
+    NameMapping cmap;
+    cmap.addNames(class_names);
+    cout << "Using cmap: " << endl;
+    cout << cmap.status("  ") << endl;
+
+    // -- Get the up vector.
+    // If using less_gravity.yml, you need to put something here, but
+    // it won't have any effect.  TODO: Add accelerometer, get rid of the annoying
+    // cruft involving manually setting the up vector.
+    VectorXf up = VectorXf::Ones(3);
+    if(opts.count("up")) {
+      cout << "Setting up vector to that found at " << up_path << endl;
+      eigen_extensions::loadASCII(up_path, &up);
+    }
+  
+    // -- Initialize classifier and trainer.
+    // If we weren't told specifically which tds to use for initialization,
+    // choose some at random.
+    GridClassifier::Ptr classifier(new GridClassifier);
+    if(opts.count("classifier") && opts["classifier"].as<string>() != "none") {
+      ROS_ASSERT(!opts.count("init"));
+      cout << "Loading classifier at " << opts["classifier"].as<string>() << endl;
+      classifier->load(opts["classifier"].as<string>());
+    }
+    else {
+      if(!opts.count("init")) {
+        while(true) {
+          init_paths = recursiveFind(unlabeled_td_dir, "*.td");
+          if(init_paths.size() >= 3)
+            break;
+          else {
+            ROS_WARN_STREAM("Group induction requires at least 3 .td files in " << unlabeled_td_dir << " for initialization of GridClassifier.  Waiting...");
+            usleep(10e6);
+          }
+        }
+        random_shuffle(init_paths.begin(), init_paths.end());
+        init_paths.resize(3);
+      }
+      cout << "Loading initialization datasets..." << endl;
+      TrackDataset::Ptr init = loadDatasets(init_paths, config, cmap, up, true);
+      cout << "Initializing classifier..." << endl;
+      classifier->initialize(*init, nc);
+      ROS_ASSERT(classifier->nameMappingsAreEqual(*init));
+      cout << "dmap: " << classifier->nameMapping("dmap") << endl;
+    }
+  
+    GridClassifier::BoostingTrainer::Ptr trainer(new GridClassifier::BoostingTrainer(classifier));
+    trainer->verbose_ = true;
+    trainer->gamma_ = 0;
+    trainer->obj_thresh_ = config["GlobalParams"]["ObjThresh"].as<double>();
+    trainer->applyNameMappings(*classifier);
+    cout << "trainer->obj_thresh_: " << trainer->obj_thresh_ << endl;
+    
+    // -- Initialize Inductor.
+    cout << "Initializing Inductor..." << endl;
+    inductor = Inductor::Ptr(new Inductor(config, emax, buffer_size, max_track_length,
+                                          classifier, trainer, max_iters, snapshot_every,
+                                          evaluate_every, output_dir, unlabeled_td_dir,
+                                          saved_annotations_dir));
+    inductor->up_ = up;
+
+    if(opts.count("active-learning")) {
+      ROS_WARN("Using active learning rather than group induction.");
+      inductor->active_learning_ = true;
+    }
+    
+    if(!seed_paths.empty()) {
+      TrackDataset::Ptr seed = loadDatasets(seed_paths, config, cmap, up, true);
+      for(size_t i = 0; i < seed->size(); ++i) {
+        const Dataset& track = *seed->tracks_[i];
+        for(size_t j = 0; j < track.size(); ++j) {
+          ROS_ASSERT(!track[j].raw_.empty());
         }
       }
-      random_shuffle(init_paths.begin(), init_paths.end());
-      init_paths.resize(3);
+      cout << "Using seed dataset: " << endl;
+      cout << seed->status("  ");
+      inductor->pushHandLabeledDataset(seed);
     }
-    cout << "Loading initialization datasets..." << endl;
-    TrackDataset::Ptr init = loadDatasets(init_paths, config, cmap, up, true);
-    cout << "Initializing classifier..." << endl;
-    classifier->initialize(*init, nc);
-    ROS_ASSERT(classifier->nameMappingsAreEqual(*init));
-    cout << "dmap: " << classifier->nameMapping("dmap") << endl;
-  }
-  
-  GridClassifier::BoostingTrainer::Ptr trainer(new GridClassifier::BoostingTrainer(classifier));
-  trainer->verbose_ = true;
-  trainer->gamma_ = 0;
-  trainer->obj_thresh_ = config["GlobalParams"]["ObjThresh"].as<double>();
-  trainer->applyNameMappings(*classifier);
-  cout << "trainer->obj_thresh_: " << trainer->obj_thresh_ << endl;
     
-  // -- Initialize Inductor.
-  cout << "Initializing Inductor..." << endl;
-  Inductor inductor(config, emax, buffer_size, max_track_length,
-                    classifier, trainer, max_iters, snapshot_every,
-                    evaluate_every, output_dir, unlabeled_td_dir,
-                    saved_annotations_dir);
-  inductor.up_ = up;
-
-  if(opts.count("active-learning")) {
-    ROS_WARN("Using active learning rather than group induction.");
-    inductor.active_learning_ = true;
-  }
-
-  if(!seed_paths.empty()) {
-    TrackDataset::Ptr seed = loadDatasets(seed_paths, config, cmap, up, true);
-    for(size_t i = 0; i < seed->size(); ++i) {
-      const Dataset& track = *seed->tracks_[i];
-      for(size_t j = 0; j < track.size(); ++j) {
-        ROS_ASSERT(!track[j].raw_.empty());
+    if(!autobg_paths.empty()) {
+      TrackDataset::Ptr autobg = loadDatasets(autobg_paths, config, cmap, up, true);
+      for(size_t i = 0; i < autobg->size(); ++i) {
+        const Dataset& track = *autobg->tracks_[i];
+        for(size_t j = 0; j < track.size(); ++j) {
+          ROS_ASSERT(!track[j].raw_.empty());
+        }
       }
+      cout << "Using autobg dataset: " << endl;
+      cout << autobg->status("  ");
+      inductor->pushAutoLabeledDataset(autobg);
     }
-    cout << "Using seed dataset: " << endl;
-    cout << seed->status("  ");
-    inductor.pushHandLabeledDataset(seed);
-  }
-
-  if(!autobg_paths.empty()) {
-    TrackDataset::Ptr autobg = loadDatasets(autobg_paths, config, cmap, up, true);
-    for(size_t i = 0; i < autobg->size(); ++i) {
-      const Dataset& track = *autobg->tracks_[i];
-      for(size_t j = 0; j < track.size(); ++j) {
-        ROS_ASSERT(!track[j].raw_.empty());
+    
+    if(!test_paths.empty()) {
+      TrackDataset::Ptr test = loadDatasets(test_paths, config, cmap, up, true);
+      inductor->setTestData(test);
+      cout << "Using test dataset: " << endl;
+      cout << test->status("  ");
+    }
+    
+    // -- Set up induction supervisor.
+    if(opts.count("fake-supervisor")) {
+      ROS_ASSERT(opts.count("fake-supervisor-config"));
+      cout << "Using fake supervisor at " << fake_supervisor_path << endl;
+      cout << "  Config: " << fake_supervisor_config_path << endl;
+      cout << "  Annotation limit: " << fake_supervisor_annotation_limit << endl;
+    
+      GridClassifier gc;
+      gc.load(fake_supervisor_path);
+      YAML::Node fs_config = YAML::LoadFile(fake_supervisor_config_path);
+      ROS_ASSERT(fs_config["Pipeline"]);
+      isup = InductionSupervisor::Ptr(new InductionSupervisor(gc, fs_config, up, inductor.get(), 0.5, output_dir));
+      isup->max_iter_to_supervise_ = max<int>(0, max_iters - 7);  // Normally, stop providing annotations a few iterations before we stop OnlineLearner.
+    
+      // If we're using a fake supervisor annotation limit,
+      // ignore the max iters option.  Use the annotation limit to decide when
+      // to stop instead.  Also, let the InductionSupervisor keep providing
+      // annotations as long as it takes.
+      if(fake_supervisor_annotation_limit != -1) {
+        inductor->max_annotations_ = fake_supervisor_annotation_limit;
+        // Ok, I lied.  Sometimes the system does so well that it never finds enough corrections
+        // to send.  Because of this, make it terminate after a while no matter what.
+        inductor->setMaxIters(max_iters * 1.5);  
+        isup->annotation_limit_ = fake_supervisor_annotation_limit;
+        isup->max_iter_to_supervise_ = -1;
       }
+    
+      isup->launch();
     }
-    cout << "Using autobg dataset: " << endl;
-    cout << autobg->status("  ");
-    inductor.pushAutoLabeledDataset(autobg);
-  }
-
-  if(!test_paths.empty()) {
-    TrackDataset::Ptr test = loadDatasets(test_paths, config, cmap, up, true);
-    inductor.setTestData(test);
-    cout << "Using test dataset: " << endl;
-    cout << test->status("  ");
-  }
-
-  // -- Set up induction supervisor.
-  InductionSupervisor::Ptr isup;
-  if(opts.count("fake-supervisor")) {
-    ROS_ASSERT(opts.count("fake-supervisor-config"));
-    cout << "Using fake supervisor at " << fake_supervisor_path << endl;
-    cout << "  Config: " << fake_supervisor_config_path << endl;
-    cout << "  Annotation limit: " << fake_supervisor_annotation_limit << endl;
-    
-    GridClassifier gc;
-    gc.load(fake_supervisor_path);
-    YAML::Node fs_config = YAML::LoadFile(fake_supervisor_config_path);
-    ROS_ASSERT(fs_config["Pipeline"]);
-    isup = InductionSupervisor::Ptr(new InductionSupervisor(gc, fs_config, up, &inductor, 0.5, output_dir));
-    isup->max_iter_to_supervise_ = max<int>(0, max_iters - 7);  // Normally, stop providing annotations a few iterations before we stop OnlineLearner.
-    
-    // If we're using a fake supervisor annotation limit,
-    // ignore the max iters option.  Use the annotation limit to decide when
-    // to stop instead.  Also, let the InductionSupervisor keep providing
-    // annotations as long as it takes.
-    if(fake_supervisor_annotation_limit != -1) {
-      inductor.max_annotations_ = fake_supervisor_annotation_limit;
-      // Ok, I lied.  Sometimes the system does so well that it never finds enough corrections
-      // to send.  Because of this, make it terminate after a while no matter what.
-      inductor.setMaxIters(max_iters * 1.5);  
-      isup->annotation_limit_ = fake_supervisor_annotation_limit;
-      isup->max_iter_to_supervise_ = -1;
-    }
-    
-    isup->launch();
   }
   
   // -- Go.
-  ThreadPtr learning_thread = inductor.launch();
-  inductor.setPaused(true);
+  ThreadPtr learning_thread = inductor->launch();
+  inductor->setPaused(true);
 
-  GCBroadcaster broadcaster(&inductor);
+  GCBroadcaster broadcaster(inductor.get());
   if(opts.count("broadcast"))
     broadcaster.launch();
   
   if(opts.count("no-vis")) {
     learning_thread->join();
-    inductor.setPaused(false);
+    inductor->setPaused(false);
   }
   else {
     BlobView view;
     VCMultiplexor multiplexor(&view);
-    ActiveLearningViewController alvc(&multiplexor, &inductor, unlabeled_td_dir);
-    InductionViewController ivc(&inductor, &multiplexor);
+    ActiveLearningViewController alvc(&multiplexor, inductor.get(), unlabeled_td_dir);
+    InductionViewController ivc(inductor.get(), &multiplexor);
     multiplexor.addVC(&alvc);
     multiplexor.addVC(&ivc);
     

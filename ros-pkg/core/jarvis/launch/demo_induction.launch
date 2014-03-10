@@ -16,7 +16,7 @@
               --emax 0
               --buffer-size 1000
               --max-track-length 30
-              --snapshot-every 0
+              --snapshot-every 10
               --evaluate-every 0
               --unlabeled-td-dir $(arg td-dir)
               --output-dir $(arg gi-dir)

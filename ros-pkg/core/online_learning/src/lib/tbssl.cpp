@@ -743,7 +743,7 @@ void OnlineLearner::_run()
 
     if(snapshot_every_ == 1)
       snapshot();
-    else if(snapshot_every_ > 0 && iter_ % snapshot_every_ == 0 && iter_ != 0)
+    else if(request_snapshot_ || (snapshot_every_ > 0 && iter_ % snapshot_every_ == 0 && iter_ != 0))
       snapshot();
 
     ++iter_;
@@ -985,6 +985,8 @@ void OnlineLearner::snapshot()
   if(bfs::exists(output_dir_ + "/learner.ol"))
     bfs::remove(output_dir_ + "/learner.ol");
   bfs::create_symlink(learner_filename, output_dir_ + "/learner.ol");
+
+  request_snapshot_ = false;
 }
 
 void OnlineLearner::inductDataset(const Eigen::VectorXf& emin, const Eigen::VectorXf& emax,
