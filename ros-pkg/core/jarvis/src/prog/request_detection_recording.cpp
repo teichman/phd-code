@@ -97,7 +97,7 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("class-name,c", bpo::value(&class_name)->required(), "")
     ("threshold,t", bpo::value(&threshold)->required(), "")
-    ("metadata-dir,d", bpo::value(&metadata_dir)->required(), "Where to store the detections file.  Should be a directory that exists.  The file will be added to it.")
+    ("metadata-dir,d", bpo::value(&metadata_dir)->required(), "Directory to store the detections file.")
     ("seconds,s", bpo::value(&seconds)->default_value(3), "Number of seconds to record after no more detections are seen.")
     ;
 
@@ -118,6 +118,9 @@ int main(int argc, char** argv)
     return 1;
   }
 
+  if(!bfs::exists(metadata_dir))
+    bfs::create_directory(metadata_dir);
+    
   string metadata_path = nextPath(metadata_dir, "detections_metadata-", ".txt", 3);
   RecordingRequester rr(class_name, threshold, metadata_path, seconds);
   
