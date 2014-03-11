@@ -23,9 +23,9 @@ TrackDatasetAssembler::TrackDatasetAssembler(std::string output_directory, size_
 
 void TrackDatasetAssembler::update(const std::map<size_t, Blob::Ptr>& tracked_blobs)
 {
-  ScopedTimer st(__PRETTY_FUNCTION__);
-  cout << "Got " << tracked_blobs.size() << " new blobs.  Have " << tracks_.size() << " in TDA." << endl;
-  cout << "Total instances in td_: " << td_.totalInstances() << endl;
+  //ScopedTimer st(__PRETTY_FUNCTION__);
+  // cout << "Got " << tracked_blobs.size() << " new blobs.  Have " << tracks_.size() << " in TDA." << endl;
+  // cout << "Total instances in td_: " << td_.totalInstances() << endl;
   set<size_t> updated;
 
   // -- Update tracks_ with tracked_blobs contents.
