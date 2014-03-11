@@ -70,7 +70,7 @@ void extractClips(const bpo::variables_map& opts,
         clipnum = orig_num_clips + i / 2;
 
     if(clipnum != -1 && num % step == 0) {
-      cout << time << endl;
+      //cout << time << endl;
       (*clips)[clipnum].push_back(orig.clone());
     }
   }
@@ -83,7 +83,7 @@ void mergeClips(const bpo::variables_map& opts,
   vector<cv::Mat3b> imgs;
   size_t overlap = opts["overlap"].as<size_t>();
   for(size_t i = 0; i < clips.size(); ++i) {
-    cout << clips[i].size() << endl;
+    //cout << clips[i].size() << endl;
     ROS_ASSERT(clips[i].size() > overlap);
   }
 
@@ -105,7 +105,7 @@ void mergeClips(const bpo::variables_map& opts,
     else {
       for(size_t j = clips[i].size() - overlap; j < clips[i].size(); ++j) {
         double weight = 1.0 - ((double)j - clips[i].size() + overlap) / (double)overlap;
-        cout << "weight: " << weight << endl;
+        //cout << "weight: " << weight << endl;
         cv::Mat3b img = blend(clips[i][j], clips[i+1][j - clips[i].size() + overlap], weight);
         imgs.push_back(img);
       }
@@ -177,18 +177,13 @@ int main(int argc, char** argv)
         int minutes = atoi(args[i].substr(0, args[i].find_first_of(':')).c_str());
         int seconds = atoi(args[i].substr(args[i].find_first_of(':') + 1).c_str());
         crop_times.back().push_back(minutes * 60 + seconds);
-        cout << "Cropping at " << crop_times.back().back() << endl;
       }
     }
   }
 
   ROS_ASSERT(video_paths.size() == crop_times.size());
-  for(size_t i = 0; i < video_paths.size(); ++i) {
-    cout << "Video: " << video_paths[i] << endl;
-    for(size_t j = 0; j < crop_times[i].size(); ++j) {
-      cout << "  " << crop_times[i][j] << endl;
-    }
-  }
+  for(size_t i = 0; i < video_paths.size(); ++i)
+    ROS_ASSERT(bfs::exists(video_paths[i]));
 
   // -- Dump the frames.
   vector< vector<cv::Mat3b> > clips;

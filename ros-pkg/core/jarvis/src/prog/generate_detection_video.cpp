@@ -88,6 +88,8 @@ int main(int argc, char** argv)
     ("frame", "Show frame predictions rather than track predictions")
     ("reticle", bpo::value(&reticle_path), "Image to use instead of a box.  Must be white on black.")
     ("alpha", bpo::value(&alpha)->default_value(0.1), "How fast the reticle should follow the cat around")
+    ("skip-non-detections", "")
+    ("offline-classification", "")
     ;
 
   p.add("images-dir", 1);
@@ -119,8 +121,30 @@ int main(int argc, char** argv)
   // -- Load all detection metadata.
   map<double, vector<Det> > detections;
   for(size_t i = 0; i < detection_metadata_paths.size(); ++i) {
+    ROS_ASSERT(bfs::exists(detection_metadata_paths[i]));
     cout << "Loading " << detection_metadata_paths[i] << endl;
     load(detection_metadata_paths[i], &detections);
+  }
+
+  // -- Use offline track classification if requested.
+  if(opts.count("offline-classification")) {
+    map< size_t, vector<Det*> > tracks;
+    for(auto it = detections.begin(); it != detections.end(); ++it) {
+      vector<Det>& dets = it->second;
+      for(size_t i = 0; i < dets.size(); ++i)
+        tracks[dets[i].track_id_].push_back(&dets[i]);
+    }
+
+    for(auto it = tracks.begin(); it != tracks.end(); ++it) {
+      const vector<Det*>& track = it->second;
+      Label tpred = VectorXf::Zero(track[0]->frame_predictions_.size());
+      for(size_t i = 0; i < track.size(); ++i)
+        tpred += Label(track[i]->frame_predictions_);
+      tpred /= track.size();
+      vector<float> tpredvec = tpred.vector();
+      for(size_t i = 0; i < track.size(); ++i)
+        track[i]->frame_predictions_ = tpredvec;
+    }
   }
   
   string tmpdir = ".generate_detection_video-tmpdir";
@@ -157,6 +181,7 @@ int main(int argc, char** argv)
     if(!bfs::exists(path))
       continue;
 
+    cout << "Reading " << path << endl;
     cv::Mat3b img = cv::imread(path);
 
     // -- Reticle mode.
@@ -267,7 +292,8 @@ int main(int argc, char** argv)
           cv::rectangle(img, ul, lr, cv::Scalar(color[0], color[1], color[2]), 2);
         }
       }
-      if(detection) {
+      
+      if(detection || !opts.count("skip-non-detections")) {
         cv::imshow("img", img);
         cv::waitKey(2);
         cv::imwrite(tmpdir + "/" + filename, img);
@@ -278,8 +304,11 @@ int main(int argc, char** argv)
   // -- Generate the video.
   ostringstream oss;
   oss << "mencoder mf://" << tmpdir << "/*.jpg -mf fps="
-      << fps << " -ovc x264 -x264encopts crf=13 -vf "
-      << rotation << " -o detections.avi";
+      << fps << " -ovc x264 -x264encopts crf=13";
+  if(rotation != "")
+    oss << " -vf " << rotation;
+  oss << " -o detections.avi";
+  cout << "Running command: " << endl << oss.str() << endl;
   int retval = system(oss.str().c_str());
   ROS_ASSERT(retval == 0);
 
