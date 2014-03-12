@@ -895,8 +895,11 @@ void GCBT::train(const std::vector<TrackDataset::ConstPtr>& datasets,
     // labels should be exactly -1, 0, and +1.  Otherwise we could get bad behavior
     // where, e.g., a label of -1e-13 gets set to -1 by the above.
     for(int j = 0; j < inst.label_.rows(); ++j) {
-      float val = inst.label_.coeffRef(j); 
-      ROS_ASSERT(val == -1 || val == 0 || val == +1);
+      float val = inst.label_.coeffRef(j);
+      if(!(val == -1 || val == 0 || val == +1)) {
+        cout << "label value is " << val << " but should be either 0 or +/-1." << endl;
+        ROS_ASSERT(0);
+      }
     }
 
     // Log weights includes the importance weight embedded in the label.
