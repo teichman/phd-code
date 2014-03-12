@@ -81,13 +81,13 @@ void EmailReactor::detectionCallback(const jarvis::Detection& msg)
 void EmailReactor::processDetection(double ts)
 {
   // Reset the count if we haven't seen anything in a long time.
-  if(ts - det_ts_ > 10)
+  if(ts - det_ts_ > 2)
     count_ = 0;
   det_ts_ = ts;
   
   // If we've haven't yet seen enough of the object in question, don't do anything.
   ++count_;
-  if(count_ < 30)
+  if(count_ < 10)
     return;
 
   // If we've sent an email too recently, don't do anything.
