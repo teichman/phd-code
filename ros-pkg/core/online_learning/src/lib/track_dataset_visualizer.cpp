@@ -337,7 +337,14 @@ void InductionViewController::applyLabel()
     return;
   }
 
-  learner_->pushAnnotationForInducted(hashes_[index_[tidx_]], to_apply_);
+  //learner_->pushAnnotationForInducted(hashes_[index_[tidx_]], to_apply_);
+
+  TrackDataset::Ptr td(new TrackDataset);
+  td->applyNameMappings(*td_);
+  Dataset::Ptr track(new Dataset((*td_)[index_[tidx_]]));
+  td->tracks_.push_back(track);
+  learner_->pushHandLabeledDataset(td);
+  
   // Don't show this track anymore.
   (*td_)[index_[tidx_]].instances_.clear();
   updateIndex();
