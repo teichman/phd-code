@@ -18,6 +18,7 @@ OnlineLearner::OnlineLearner(double emax,
                              std::string saved_annotations_dir) :
   active_learning_(false),
   max_annotations_(-1),
+  request_snapshot_(false),
   emax_(emax),
   buffer_size_(buffer_size),
   max_track_length_(max_track_length),
