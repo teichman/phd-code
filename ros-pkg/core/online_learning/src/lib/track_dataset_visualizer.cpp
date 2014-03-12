@@ -337,18 +337,26 @@ void InductionViewController::applyLabel()
     return;
   }
 
-  //learner_->pushAnnotationForInducted(hashes_[index_[tidx_]], to_apply_);
-
   TrackDataset::Ptr td(new TrackDataset);
+  ROS_ASSERT(learner_->nameMappingsAreEqual(*td_));
   td->applyNameMappings(*td_);
-  Dataset::Ptr track(new Dataset((*td_)[index_[tidx_]]));
+  Dataset::Ptr track = td_->copy(index_[tidx_]);
+
+  // Ensure computation of descriptors by Inductor::entryHook.
+  // TODO: td_, which comes from viewableUnsupervised in OnlineLearner,
+  //   should probably have an empty dmap.  Is there some reason this
+  //   isn't the case?
+  td->applyNameMapping("dmap", NameMapping());
+  track->applyNameMapping("dmap", NameMapping());
+
+  track->setLabel(to_apply_);
   td->tracks_.push_back(track);
+  ROS_ASSERT(td->nameMappingsAreEqual(*td->tracks_[0]));
   learner_->pushHandLabeledDataset(td);
   
   // Don't show this track anymore.
   (*td_)[index_[tidx_]].instances_.clear();
   updateIndex();
-  //incrementTrack(-1);
   
   cout << "[InductionViewController]  Sent track to learner with annotation " << to_apply_.transpose() << endl;
 }
