@@ -123,6 +123,7 @@ public:
   void setMaxIters(int max_iters) { scopeLockWrite; max_iters_ = max_iters; }
   void setTestData(TrackDataset::Ptr test) { scopeLockWrite; entryHook(test.get()); test_ = test; test_->applyNameMappings(*this); }
   void setPaused(bool val) { boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); paused_ = val; }
+  void setSnapshotInterval(int val) { snapshot_every_ = val; }
   void togglePaused() { boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); paused_ = !paused_; }
   bool paused() const { boost::unique_lock<boost::shared_mutex> ul(hand_mutex_); return paused_; }
   void copyClassifier(GridClassifier* classifier);

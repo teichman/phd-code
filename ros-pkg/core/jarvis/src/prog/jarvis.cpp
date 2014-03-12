@@ -73,7 +73,7 @@ int main(int argc, char** argv)
   jarvis.dp_->setUpVector(up);
   
   // Load the classifier.
-  if(gc_path != "") {
+  if(gc_path != "" && gc_path != "none") {
     ROS_ASSERT(config_path != "");
     cout << "Loading classifier at \"" << gc_path << "\"." << endl;
     jarvis.gc_ = GridClassifier::Ptr(new GridClassifier);

@@ -103,6 +103,7 @@ int main(int argc, char** argv)
   if(bfs::exists(output_dir) && bfs::exists(output_dir + "/learner.ol")) {
     cout << "Found existing group induction snapshot at " << output_dir << "/learner.ol.  Resuming..." << endl;
     inductor = Inductor::Ptr(new Inductor((IfstreamWrapper(output_dir + "/learner.ol"))));
+    inductor->setSnapshotInterval(snapshot_every);
   }
   else {
     // -- Load the config.
