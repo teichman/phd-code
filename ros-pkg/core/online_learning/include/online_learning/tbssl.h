@@ -80,7 +80,7 @@ public:
   //! don't provide them yourself in your subclasses, you'll get the base class one
   //! automatically and this is not necessarily what you want.  This is the least bad
   //! option I can think of at the moment, though.
-  OnlineLearner(std::istream& in) { deserialize(in); }
+  OnlineLearner(std::istream& in);
   //! Classifier must be pre-initialized.
   OnlineLearner(double emax,
                 size_t buffer_size,

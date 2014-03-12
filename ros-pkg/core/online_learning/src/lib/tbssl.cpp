@@ -44,6 +44,22 @@ OnlineLearner::OnlineLearner(double emax,
   applyNameMappings(*classifier);
 }
 
+OnlineLearner::OnlineLearner(std::istream& in) :
+  active_learning_(false),
+  max_annotations_(-1),
+  request_snapshot_(false),
+  annotated_(new TrackDataset),
+  autobg_(new TrackDataset),
+  unsupervised_(new TrackDataset),
+  validation_(new TrackDataset),
+  ann_counter_(0),
+  viewable_unsupervised_(new TrackDataset),
+  iter_(0),
+  paused_(false)
+{
+  deserialize(in);
+}
+
 void OnlineLearner::pushHandLabeledDataset(TrackDataset::Ptr dataset)
 {
   entryHook(dataset.get());
@@ -963,17 +979,22 @@ void OnlineLearner::evaluate()
 void OnlineLearner::snapshot()
 {
   scopeLockRead;
-  
-  // -- Serialize OnlineLearner.
   ScopedTimer st("Serializing OnlineLearner");
   ROS_DEBUG_STREAM("Serializing OnlineLearner.");
-  
-  // -- Delete the old one from two snapshots ago, if it exists.
-  ostringstream oss_old_learner_path;
-  oss_old_learner_path << output_dir_ << "/learner.ol." << setw(5) << setfill('0') << (iter_ - 2 * snapshot_every_);
-  string old_learner_path = oss_old_learner_path.str();
-  if(bfs::exists(old_learner_path))
-    bfs::remove(old_learner_path);
+
+  // -- Delete any snapshots older than the current one.
+  vector<string> snapshot_paths = glob(output_dir_ + "/learner.ol.*");
+  sort(snapshot_paths.begin(), snapshot_paths.end());  // Make sure they are sorted, oldest first.
+  ROS_DEBUG_STREAM("Found " << snapshot_paths.size() << " old snapshots.");
+  size_t keep = 2;
+  if(snapshot_paths.size() > keep) {
+    // Chop off the most recent and delete the rest.
+    snapshot_paths.resize(snapshot_paths.size() - keep);
+    for(size_t i = 0; i < snapshot_paths.size(); ++i) {
+      ROS_DEBUG_STREAM("Deleting old snapshot at " << snapshot_paths[i]);
+      bfs::remove(snapshot_paths[i]);
+    }
+  }
   
   // -- Save the current snapshot.
   ostringstream oss_learner_filename;

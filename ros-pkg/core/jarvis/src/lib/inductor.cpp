@@ -315,32 +315,3 @@ void Inductor::deserialize(std::istream& in)
   deserializeYAML(in, &config_);
 }
 
-void Inductor::snapshot()
-{
-  scopeLockRead;
-  
-  // -- Serialize Inductor.
-  ScopedTimer st("Serializing Inductor");
-  ROS_DEBUG_STREAM("Serializing Inductor.");
-  
-  // -- Delete the old one from two snapshots ago, if it exists.
-  ostringstream oss_old_learner_path;
-  oss_old_learner_path << output_dir_ << "/learner.ol." << setw(5) << setfill('0') << (iter_ - 2 * snapshot_every_);
-  string old_learner_path = oss_old_learner_path.str();
-  if(bfs::exists(old_learner_path))
-    bfs::remove(old_learner_path);
-  
-  // -- Save the current snapshot.
-  ostringstream oss_learner_filename;
-  oss_learner_filename << "learner.ol." << setw(5) << setfill('0') << iter_;
-  string learner_filename = oss_learner_filename.str();
-  string learner_path = output_dir_ + "/" + learner_filename;
-  save(learner_path);
-  
-  // -- Update the symlink for the most recent learner.
-  if(bfs::exists(output_dir_ + "/learner.ol"))
-    bfs::remove(output_dir_ + "/learner.ol");
-  bfs::create_symlink(learner_filename, output_dir_ + "/learner.ol");
-
-  request_snapshot_ = false;
-}
