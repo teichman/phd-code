@@ -1,0 +1,58 @@
+<launch>
+
+  <arg name="debug" default="false" />
+  <arg name="run-sentinel" default="true" />
+  <arg name="cname" default="interesting" />
+  <arg name="rotation" default="0" />
+  <arg name="occupancy-threshold" default="800" />
+  <arg name="recording-directory" default=" $(env PWD)/videos" />
+  <arg name="td-dir" default="$(env PWD)/tds" />
+  <arg name="gi-dir" default="$(env PWD)/group_induction" />
+  <arg name="bagfile-dir" default=" $(env PWD)/bags" />
+  <arg name="classifier" default="none" />
+    
+  <include if="$(arg run-sentinel)" file="$(find jarvis)/launch/demo_sentinel.launch">
+    <arg name="occupancy-threshold" value="$(arg occupancy-threshold)" />
+    <arg name="recording-directory" value="$(arg recording-directory)" />
+  </include>
+
+  <node name="record_bags" pkg="sentinel" type="record_bags.sh"
+        required="true"
+        args="$(arg bagfile-dir)"
+        />
+ 
+  <node name="jarvis" pkg="jarvis" type="jarvis"
+        required="true"
+        args="-v1
+              -r$(arg rotation)
+              -c $(arg classifier)
+              --config $(find jarvis)/config/less_gravity.yml
+              --record $(arg td-dir)
+              "/>
+
+  <node name="email_on_detection" pkg="jarvis" type="email_on_detection"
+        required="true"
+        args="teichman@cs.stanford.edu $(arg cname)
+              --also-gtalk alex.teichman@gmail.com
+              --min-period 600
+              --message 'Detected something interesting at Gates'
+              "/>
+
+  <node name="induct" pkg="jarvis" type="induct"
+        required="true"
+        output="screen"
+        args="--class-names interesting
+              --config $(find jarvis)/config/less_gravity.yml
+              --emax 0
+              --buffer-size 1000
+              --max-track-length 30
+              --snapshot-every 20
+              --evaluate-every 0
+              --unlabeled-td-dir $(arg td-dir)
+              --output-dir $(arg gi-dir)
+              --broadcast
+              --classifier $(arg classifier)
+              "/>
+
+
+</launch>
