@@ -3,10 +3,21 @@
 import sys
 import argparse
 import itertools
+import numpy as np
+import matplotlib.pyplot as plt
 
 import roslib
 roslib.load_manifest('jarvis')
+import common_plotting as cp
 from regression_testing import * 
+
+
+def sanitizeTestName(name):
+    name = name.replace("_", " ")
+    name = name.replace("0", "")
+    return name
+
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("dir", help="regression test dir")
@@ -59,3 +70,40 @@ if args.print_vals:
         for i in range(len(test_names)):
             print test_names[i] + "\t" + str(vals[i]) + "\t" + str(np.mean(vals[i]))
 
+# -- Set up for plotting.
+cp.setup()
+ind = np.arange(len(test_names))  # the x locations for the groups
+width = 1.0 / (len(test_types) + 1)       # the width of the bars
+
+fig = plt.figure(figsize=(15, 5))
+ax = fig.add_axes([0.07, 0.07, 0.75, 0.8])
+all_rects = []
+
+colors = {'Naive supervised': 'black', 'Matched supervised': 'green', 'Active learning': 'blue', 'Group induction': 'red'}
+
+for idx, test_type in enumerate(test_types):
+    means = [np.mean(vals) for vals in vals_dict[test_type]]
+    stdevs = [np.std(vals) for vals in vals_dict[test_type]]
+    print test_type
+    print test_names
+    print means
+    print stdevs
+    rects = ax.bar(ind + width * idx, means, width, color=colors[test_type], yerr=stdevs, label=test_type)
+    all_rects.append(rects)
+
+ax.set_ylabel('Accuracy (\%)')
+ax.set_title('')
+ax.set_xticks(ind + 2 * width)
+sanitized_test_names = [sanitizeTestName(test_name) for test_name in test_names]
+print sanitized_test_names
+ax.set_xticklabels(sanitized_test_names)
+
+ax.set_ylim([70, 100])
+
+from matplotlib.font_manager import FontProperties
+font_prop = FontProperties()
+font_prop.set_size('small')
+ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop = font_prop)
+
+plt.show()
+                                        
