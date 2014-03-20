@@ -219,7 +219,7 @@ void OnlineLearner::loadSavedAnnotations()
     return;
 
   ostringstream oss;
-  oss << saved_annotations_dir_ << "/iter" << setw(5) << setfill('0') << iter_ << "/*.td";
+  oss << saved_annotations_dir_ << "/iter" << setw(6) << setfill('0') << iter_ << "/*.td";
   vector<string> paths = glob(oss.str());
   if(!paths.empty()) {
     cout << "Found saved annotations: " << endl;
