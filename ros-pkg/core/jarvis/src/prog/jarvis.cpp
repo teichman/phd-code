@@ -2,6 +2,7 @@
 #include <boost/program_options.hpp>
 
 using namespace std;
+namespace bfs = boost::filesystem;
 using namespace Eigen;
 
 int main(int argc, char** argv)
@@ -47,7 +48,9 @@ int main(int argc, char** argv)
  
   Jarvis jarvis(vis_level, rotation, output_directory, opts.count("video"));
   if(output_directory != "")
-    cout << "Saving TD files to \"" << output_directory << "\"" << endl;  
+    cout << "Saving TD files to \"" << output_directory << "\"" << endl;
+  if(!bfs::exists(output_directory))
+    bfs::create_directory(output_directory);
 
   // Load the DescriptorPipeline.
   jarvis.dp_ = DescriptorPipeline::Ptr(new DescriptorPipeline);
