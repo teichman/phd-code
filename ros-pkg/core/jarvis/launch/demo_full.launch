@@ -1,6 +1,7 @@
 <launch>
 
   <arg name="debug" default="false" />
+  <arg name="enable-alerts" default="false" />
   <arg name="run-sentinel" default="true" />
   <arg name="cname" default="interesting" />
   <arg name="rotation" default="0" />
@@ -31,6 +32,7 @@
               "/>
 
   <node name="email_on_detection" pkg="jarvis" type="email_on_detection"
+        if="$(arg enable-alerts)"
         required="true"
         args="teichman@cs.stanford.edu $(arg cname)
               --also-gtalk alex.teichman@gmail.com
