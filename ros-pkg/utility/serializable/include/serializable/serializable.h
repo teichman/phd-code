@@ -72,6 +72,9 @@ struct SerializableSaveFunction
 //! This could be more generic.  There's no need for it to serialize.
 //! It could instead be ThreadedBuffer which you insert things into
 //! and it calls some operation on the next element at its leisure.
+//! ... though it is nice that it automatically works with Serializables.
+//! Probably there should be a ThreadedBuffer, and ThreadedSerializer
+//! is a typedef using SerializableSaveFunction.  Or something like this.
 template<typename T, typename S = SerializableSaveFunction>
 class ThreadedSerializer : public Agent
 {

@@ -19,6 +19,8 @@ TrackDatasetAssembler::TrackDatasetAssembler(std::string output_directory, size_
   td_.applyNameMapping("dmap", NameMapping());
   if(!bfs::exists(output_directory_))
     bfs::create_directory(output_directory_);
+
+  serializer_.launch();
 }
 
 void TrackDatasetAssembler::update(const std::map<size_t, Blob::Ptr>& tracked_blobs)
@@ -71,7 +73,7 @@ void TrackDatasetAssembler::update(const std::map<size_t, Blob::Ptr>& tracked_bl
   // -- If td_ is too big, save it and start a new one.
   if(td_.totalInstances() >= max_num_instances_) {
     string path = nextPath(output_directory_, "jarvis-", ".td", 4);
-    td_.save(path);
+    serializer_.push(td_, path);
     td_.tracks_.clear();
   }
 }

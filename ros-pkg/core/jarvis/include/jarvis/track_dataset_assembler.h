@@ -27,6 +27,7 @@ protected:
   size_t min_track_length_;
   size_t max_track_length_;
   size_t max_num_instances_;
+  ThreadedSerializer<TrackDataset> serializer_;
 
   void append(const std::vector<Blob::Ptr>& track);
 };
