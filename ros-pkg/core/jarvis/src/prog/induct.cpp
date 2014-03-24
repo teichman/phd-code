@@ -241,6 +241,7 @@ int main(int argc, char** argv)
       // to stop instead.  Also, let the InductionSupervisor keep providing
       // annotations as long as it takes.
       if(fake_supervisor_annotation_limit != -1) {
+        ROS_ASSERT(fake_supervisor_annotation_limit > 0);
         inductor->max_annotations_ = fake_supervisor_annotation_limit;
         // Ok, I lied.  Sometimes the system does so well that it never finds enough corrections
         // to send.  Because of this, make it terminate after a while no matter what.

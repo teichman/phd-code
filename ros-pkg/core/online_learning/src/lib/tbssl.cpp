@@ -218,9 +218,30 @@ void OnlineLearner::loadSavedAnnotations()
   if(saved_annotations_dir_ == "")
     return;
 
-  ostringstream oss;
-  oss << saved_annotations_dir_ << "/iter" << setw(6) << setfill('0') << iter_ << "/*.td";
-  vector<string> paths = glob(oss.str());
+  // Find an iteration directory that matches the iter number we are currently on.
+  // Be invariant to padding.
+  vector<string> iter_dirs = glob(saved_annotations_dir_ + "/iter*");
+  string iter_dir = "";
+  for(size_t i = 0; i < iter_dirs.size(); ++i) {
+    string dir = iter_dirs[i];
+    bfs::path p = dir;
+    string leaf = p.leaf().string();
+    ROS_ASSERT(leaf.substr(0, 4) == "iter");
+    string numstr = leaf.substr(4);
+    size_t num = atoi(numstr.c_str());
+    if(num == iter_) {
+      iter_dir = iter_dirs[i];
+      break;
+    }
+  }
+  
+  // If no iteration directory has the correct number, we're done.
+  if(iter_dir == "")
+    return;
+
+  // Otherwise, get all TDs in that directory.
+  cout << "[OnlineLearner] Loading all TDs in saved annotations directory: \"" << iter_dir << "\"" << endl;
+  vector<string> paths = glob(iter_dir + "/*.td");
   if(!paths.empty()) {
     cout << "Found saved annotations: " << endl;
     for(size_t i = 0; i < paths.size(); ++i) {
@@ -663,7 +684,7 @@ void OnlineLearner::_run()
     hrt.start();
     ROS_DEBUG_STREAM("OnlineLearner starting iter " << iter_ << flush);
     ostringstream oss;
-    oss << output_dir_ << "/iter" << setw(5) << setfill('0') << iter_;
+    oss << output_dir_ << "/iter" << setw(6) << setfill('0') << iter_;
     iter_dir_ = oss.str();
     bfs::create_directory(iter_dir_);
     ofstream file;
@@ -673,6 +694,7 @@ void OnlineLearner::_run()
 
     // Check max_annotations_ here, after learner status has been updated to
     // reflect the new annotations.
+    ROS_ASSERT(max_annotations_ != 0);  // This would make no sense.
     if(max_annotations_ != -1 && (int)annotated_->size() >= max_annotations_)
       break;
 
@@ -998,7 +1020,7 @@ void OnlineLearner::snapshot()
   
   // -- Save the current snapshot.
   ostringstream oss_learner_filename;
-  oss_learner_filename << "learner.ol." << setw(5) << setfill('0') << iter_;
+  oss_learner_filename << "learner.ol." << setw(6) << setfill('0') << iter_;
   string learner_filename = oss_learner_filename.str();
   string learner_path = output_dir_ + "/" + learner_filename;
   save(learner_path);
