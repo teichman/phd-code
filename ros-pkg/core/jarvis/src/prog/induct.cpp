@@ -260,9 +260,12 @@ int main(int argc, char** argv)
   GCBroadcaster broadcaster(inductor.get());
   if(opts.count("broadcast"))
     broadcaster.launch();
-  
+
+  // Note that if there is no roscore running, GCBroadcaster will generate
+  // an error, and then inductor will sit paused forever.
   if(opts.count("no-vis")) {
     inductor->setPaused(false);
+    cout << "Paused: " << inductor->paused() << endl;
     learning_thread->join();
   }
   else {
