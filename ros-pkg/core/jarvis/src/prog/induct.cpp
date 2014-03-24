@@ -262,8 +262,8 @@ int main(int argc, char** argv)
     broadcaster.launch();
   
   if(opts.count("no-vis")) {
-    learning_thread->join();
     inductor->setPaused(false);
+    learning_thread->join();
   }
   else {
     BlobView view;
