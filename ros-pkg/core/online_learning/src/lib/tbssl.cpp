@@ -588,7 +588,7 @@ void OnlineLearner::inductionStep(TrackDataset* unlabeled_chunk)
   inductDataset(emin, emax, unsupervised_.get(), &index, &unsupervised_logodds_, &frame_logodds);
 
   sort(index.begin(), index.end(), greater< pair<double, size_t> >());  // descending
-  //balance(index);
+  balance(index);
   prune(index);
 }
 
