@@ -122,7 +122,7 @@ $(1)-set0/$(2)/induction:
 	$(ROSRUN) jarvis induct \
 	--class-names $(2) \
 	--config $(CONFIG) \
-	-u $$($(1)_UP_VECTOR) \
+	-u $$(UP_VECTOR_$(1)) \
 	--emax 0 \
 	--buffer-size 1000 \
 	--max-track-length 30 \
