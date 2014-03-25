@@ -566,7 +566,13 @@ void ActiveLearningViewController::applyLabel()
   td->tracks_.push_back(td_->copy(index_[tidx_]));
   td->tracks_[0]->setLabel(to_apply_);
   ROS_ASSERT(td->nameMappingsAreEqual(*td->tracks_[0]));
-  learner_->pushHandLabeledDataset(td);
+
+  //learner_->pushHandLabeledDataset(td);
+  // The boost::thread will destruct at the end of this function.
+  // This detaches the thread - it continues to run until pushHandLabeledDataset is complete,
+  // even though the boost::thread object is gone.
+  // http://www.boost.org/doc/libs/1_55_0/doc/html/thread/thread_management.html#thread.thread_management.tutorial.attributes
+  boost::thread pusher(&OnlineLearner::pushHandLabeledDataset, learner_, td);
   
   // Don't show this track anymore.
   (*td_)[index_[tidx_]].instances_.clear();
