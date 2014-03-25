@@ -59,6 +59,7 @@ namespace pl
     //! Returns a hash of getUniqueString(output_name).
     uint64_t getUniqueHash(const std::string& output_name) const;
     //! Returns InstanceName.OutputName:Hash.
+    //! Unfortunately this is very slow at the moment.  Use wisely.
     std::string uniqueReadableId(const std::string& output_name) const;
     Params getParams() const { return params_; }
     //! Returns computation time in ms of the last run.

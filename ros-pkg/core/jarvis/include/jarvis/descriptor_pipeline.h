@@ -19,6 +19,7 @@ public:
   static void registerPodTypes();
   const std::vector<const Eigen::VectorXf*>* computeDescriptors(Blob::Ptr blob);
   std::string reportTiming() const { return pl_.reportTiming(); }
+  // It turns out this is really slow.  Use wisely.
   NameMapping dmap() const { return pl_.pod<DescriptorAggregator>()->dmap(); }
   void setDebug(bool debug) { pl_.setDebug(debug); }
   void setUpVector(const Eigen::VectorXf up);
