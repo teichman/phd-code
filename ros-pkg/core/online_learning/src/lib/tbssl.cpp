@@ -532,7 +532,9 @@ void OnlineLearner::balance(const ObjectiveIndex& index)
     }
 
     double mult = (ind_counts / ann_counts).minCoeff();
-    ROS_ASSERT(!isnan(mult));
+    if(isnan(mult) || isinf(mult))
+      continue;
+
     ArrayXi desired = (mult * ann_counts).cast<int>();
     ROS_ASSERT((desired <= ind_counts.cast<int>()).all());
 
