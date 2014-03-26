@@ -130,7 +130,7 @@ void Jarvis::foregroundCallback(sentinel::ForegroundConstPtr msg)
     depth_vis_ = cv::Vec3b(0, 0, 0);
     
     // -- Draw tracks.
-    tracker_.draw(color_vis_, filters_);
+    tracker_.draw(color_vis_, true, filters_);
     cv::Mat3b color_vis_scaled;
     cv::resize(color_vis_, color_vis_scaled, color_vis_.size() * 2, cv::INTER_NEAREST);
     orient(rotation_, &color_vis_scaled);

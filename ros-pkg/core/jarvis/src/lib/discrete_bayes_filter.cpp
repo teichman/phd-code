@@ -40,3 +40,12 @@ Label DiscreteBayesFilter::trackPrediction() const
   track_prediction += prior_;
   return track_prediction;
 }
+
+
+Label DiscreteBayesFilter::mostRecentFramePrediction() const
+{
+  if(frame_predictions_.empty())
+    return prior_;
+
+  return frame_predictions_.back();
+}

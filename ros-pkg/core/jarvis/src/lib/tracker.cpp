@@ -429,7 +429,34 @@ cv::Mat3b Tracker::draw() const
   return img;
 }
 
-void Tracker::draw(cv::Mat3b img, const std::map<size_t, DiscreteBayesFilter>& filters) const
+void drawHalo(cv::Mat3b img, const Blob& blob, cv::Vec3b color)
+{
+  cv::Mat1b mask(img.size(), 0);
+  cv::Mat1b mask_small(cv::Size(img.cols / 4, img.rows / 4), 0);
+  cv::Mat1b dilated_mask(mask.size(), 0);
+  cv::Mat1b dilated_mask_small(mask_small.size(), 0); 
+    
+  // Make mask for this object.
+  for(size_t i = 0; i < blob.indices_.size(); ++i)
+    mask(blob.indices_[i]) = 255;
+  cv::resize(mask, mask_small, mask_small.size(), cv::INTER_NEAREST);
+
+  // Get a dilated mask.
+  //cv::dilate(mask, dilated_mask, cv::Mat(), cv::Point(-1, -1), 2);
+  cv::GaussianBlur(mask_small, dilated_mask_small, cv::Size(9, 9), 5);
+  cv::resize(dilated_mask_small, dilated_mask, mask.size(), cv::INTER_NEAREST);
+
+  // Draw the halo.
+  for(int i = 0; i < mask.rows * mask.cols; ++i) {
+    if(mask(i) == 0 && dilated_mask(i) != 0) {
+      double coef = min(1.0, 2.0 * dilated_mask(i) / 255.0);
+      img(i) = (1.0 - coef) * img(i) + coef * color;
+    }
+  }
+}
+
+void Tracker::draw(cv::Mat3b img, bool track_classification_colors,
+                   const std::map<size_t, DiscreteBayesFilter>& filters) const
 {
   // -- Draw the points.
   map<size_t, Blob::Ptr>::const_iterator it;
@@ -458,10 +485,6 @@ void Tracker::draw(cv::Mat3b img, const std::map<size_t, DiscreteBayesFilter>& f
   
   // -- Draw the halos.
   ROS_ASSERT(img.rows % 4 == 0 && img.cols % 4 == 0);
-  cv::Mat1b mask(img.size(), 0);
-  cv::Mat1b mask_small(cv::Size(img.cols / 4, img.rows / 4), 0);
-  cv::Mat1b dilated_mask(mask.size(), 0);
-  cv::Mat1b dilated_mask_small(mask_small.size(), 0); 
   for(it = tracks_.begin(); it != tracks_.end(); ++it) {
     size_t track_id = it->first;
     const Blob& blob = *it->second;
@@ -470,39 +493,27 @@ void Tracker::draw(cv::Mat3b img, const std::map<size_t, DiscreteBayesFilter>& f
     if(blob.frame_id_ != frame_id_)
       continue;
     
-    // Make mask for this object.
-    mask = 0;
-    for(size_t i = 0; i < blob.indices_.size(); ++i)
-      mask(blob.indices_[i]) = 255;
-    cv::resize(mask, mask_small, mask_small.size(), cv::INTER_NEAREST);
-
-    // Get a dilated mask.
-    //cv::dilate(mask, dilated_mask, cv::Mat(), cv::Point(-1, -1), 2);
-    cv::GaussianBlur(mask_small, dilated_mask_small, cv::Size(9, 9), 5);
-    cv::resize(dilated_mask_small, dilated_mask, mask.size(), cv::INTER_NEAREST);
-
     // Color all points that are in the dilated mask but not the actual mask.
-    // If filters is empty, color by classification of the 0th class.
-    // Otherwise use the track id.
+    // Choose between track classification colors and track id colors.
     // TODO: add support for more than one class.
     cv::Vec3b color(127, 127, 127);
-    if(filters.empty()) {
+    if(track_classification_colors) {
+      // If a classifier doesn't exist (yet), we won't have a filter yet.
+      if(filters.count(track_id)) {
+        Label pred = filters.find(track_id)->second.trackPrediction();
+        //Label pred = filters.find(track_id)->second.mostRecentFramePrediction();
+        if(pred.rows() > 0 && pred(0) > 0) {
+          color = color0;
+          drawHalo(img, blob, color);
+        }
+      }
+    }
+    else {
       if(colormap.find(track_id) == colormap.end()) {
         colormap[track_id] = mix(color0, color1, color2, 0.2);
         color = colormap[track_id];
       }
-    }
-    else {
-      ROS_ASSERT(filters.count(track_id));
-      Label tpred = filters.find(track_id)->second.trackPrediction();
-      if(tpred.rows() > 0 && tpred(0) > 0)
-        color = color0;
-    }
-    for(int i = 0; i < mask.rows * mask.cols; ++i) {
-      if(mask(i) == 0 && dilated_mask(i) != 0) {
-        double coef = min(1.0, 2.0 * dilated_mask(i) / 255.0);
-        img(i) = (1.0 - coef) * img(i) + coef * color;
-      }
+      drawHalo(img, blob, color);
     }
   }
 }

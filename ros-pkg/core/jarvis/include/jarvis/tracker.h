@@ -78,8 +78,9 @@ public:
   //! Fills img with a representation of the current state of the tracks.
   //void draw(cv::Mat3b img) const;
   //! Fills img with a representation of the current state of the tracks.
-  //! If filters is provided, then you'll get track classification colors.
-  void draw(cv::Mat3b img, const std::map<size_t, DiscreteBayesFilter>& filters = std::map<size_t, DiscreteBayesFilter>()) const;
+  //! Track id colors or track classification colors.
+  void draw(cv::Mat3b img, bool track_classification_colors = false,
+            const std::map<size_t, DiscreteBayesFilter>& filters = std::map<size_t, DiscreteBayesFilter>()) const;
   cv::Mat3b draw() const;
   
 protected:

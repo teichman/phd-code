@@ -9,6 +9,7 @@ public:
   DiscreteBayesFilter(float cap = 30, double weight = 0.1, Label prior = Label());
   void addObservation(Label frame_prediction, const Eigen::VectorXf& centroid, double timestamp);
   Label trackPrediction() const;
+  Label mostRecentFramePrediction() const;
   double timestamp() const { return prev_sensor_timestamp_; }
   size_t numObservations() const { return frame_predictions_.size(); }
 
