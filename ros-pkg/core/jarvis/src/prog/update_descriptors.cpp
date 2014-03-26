@@ -24,6 +24,7 @@ int main(int argc, char** argv)
     ("num-threads,j", bpo::value(&num_threads)->default_value(1))
     ("up,u", bpo::value(&up_path), "")
     ("force,f", "")
+    ("strip", "Removes descriptors from TDs.")
     ("randomize", "")
     ;
 
@@ -45,11 +46,27 @@ int main(int argc, char** argv)
     cout << "Setting random seed to something random." << endl;
     srand(time(NULL));
   }
-  
+
+  // -- If stripping descriptors, just do this and return.
+  if(opts.count("strip")) {
+    cout << "Stripping descriptors..." << endl;
+    for(size_t i = 0; i < td_paths.size(); ++i) {
+      cout << "Working on " << td_paths[i] << endl;
+      TrackDataset td;
+      td.load(td_paths[i]);
+      
+      // Apply an empty dmap to drop all descriptors.
+      td.applyNameMapping("dmap", NameMapping());
+      td.save(td_paths[i]);
+    }
+    return 0;
+  }
+
+
+  // -- Otherwise proceed with update.
   YAML::Node config = YAML::LoadFile(config_path);
   cout << "Using " << num_threads << " threads to update descriptors." << endl;
   cout << "Using pipeline defined at " << config_path << "." << endl;
-
 
   // -- Get the up vector.
   // If using less_gravity.yml, you need to put something here, but
