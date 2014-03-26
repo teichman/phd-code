@@ -429,7 +429,7 @@ cv::Mat3b Tracker::draw() const
   return img;
 }
 
-void Tracker::draw(cv::Mat3b img) const
+void Tracker::draw(cv::Mat3b img, const std::map<size_t, DiscreteBayesFilter>& filters) const
 {
   // -- Draw the points.
   map<size_t, Blob::Ptr>::const_iterator it;
@@ -482,9 +482,22 @@ void Tracker::draw(cv::Mat3b img) const
     cv::resize(dilated_mask_small, dilated_mask, mask.size(), cv::INTER_NEAREST);
 
     // Color all points that are in the dilated mask but not the actual mask.
-    if(colormap.find(track_id) == colormap.end())
-      colormap[track_id] = mix(color0, color1, color2, 0.2);
-    cv::Vec3b color = colormap[track_id];
+    // If filters is empty, color by classification of the 0th class.
+    // Otherwise use the track id.
+    // TODO: add support for more than one class.
+    cv::Vec3b color(127, 127, 127);
+    if(filters.empty()) {
+      if(colormap.find(track_id) == colormap.end()) {
+        colormap[track_id] = mix(color0, color1, color2, 0.2);
+        color = colormap[track_id];
+      }
+    }
+    else {
+      ROS_ASSERT(filters.count(track_id));
+      Label tpred = filters.find(track_id)->second.trackPrediction();
+      if(tpred.rows() > 0 && tpred(0) > 0)
+        color = color0;
+    }
     for(int i = 0; i < mask.rows * mask.cols; ++i) {
       if(mask(i) == 0 && dilated_mask(i) != 0) {
         double coef = min(1.0, 2.0 * dilated_mask(i) / 255.0);

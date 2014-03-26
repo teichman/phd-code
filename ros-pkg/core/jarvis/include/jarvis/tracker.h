@@ -14,6 +14,7 @@
 #include <eigen_extensions/eigen_extensions.h>
 #include <sentinel/Foreground.h>
 #include <sentinel/Background.h>
+#include <jarvis/discrete_bayes_filter.h>
 
 typedef pcl::PointXYZRGB Point;
 typedef pcl::PointCloud<Point> Cloud;
@@ -75,7 +76,10 @@ public:
   Tracker(size_t max_track_length);
   void update(sentinel::ForegroundConstPtr msg);
   //! Fills img with a representation of the current state of the tracks.
-  void draw(cv::Mat3b img) const;
+  //void draw(cv::Mat3b img) const;
+  //! Fills img with a representation of the current state of the tracks.
+  //! If filters is provided, then you'll get track classification colors.
+  void draw(cv::Mat3b img, const std::map<size_t, DiscreteBayesFilter>& filters = std::map<size_t, DiscreteBayesFilter>()) const;
   cv::Mat3b draw() const;
   
 protected:
