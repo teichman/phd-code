@@ -55,8 +55,6 @@ void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
       continue;
 
     // Make frame prediction and add to the DBF.
-    if(!blob->cloud_)
-      blob->project(false);
     Label fpred = gc_->classify(*dp_->computeDescriptors(blob));
     filters_[id].addObservation(fpred, blob->centroid_, blob->sensor_timestamp_);
 

@@ -84,8 +84,12 @@ void TrackDatasetAssembler::append(const std::vector<Blob::Ptr>& track)
   Dataset::Ptr dataset(new Dataset);
   
   dataset->instances_.resize(track.size());
-  for(size_t i = 0; i < track.size(); ++i)
+  for(size_t i = 0; i < track.size(); ++i) {
     dataset->instances_[i].raw_ = track[i];
+    // Clear the projected data because we do not need that anymore.
+    Blob& blob = *boost::any_cast<Blob::Ptr>(dataset->instances_[i].raw_);
+    blob.clearProjected();
+  }
 
   NameMapping cmap;
   cmap.addName("kitten");

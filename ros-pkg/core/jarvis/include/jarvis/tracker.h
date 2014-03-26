@@ -45,7 +45,8 @@ public:
   //! Fills cloud_, centroid_, and kdtree_ from the indices_, color_, and depth_ data.
   //! You'll have to redo this if you save and then load.
   void project(bool compute_kdtree = true);
-
+  void clearProjected();
+  
   Cloud::Ptr cloud_;
   KdTree::Ptr kdtree_;
   Eigen::Vector3f centroid_;
@@ -90,7 +91,8 @@ protected:
 
   void reconstructForeground(sentinel::Foreground::ConstPtr msg,
                              cv::Mat1f depth, cv::Mat1b foreground) const;
-  double distance(const Blob& prev, const Blob& curr) const;
+  // Projects the blobs if necessary.
+  double distance(Blob& prev, Blob& curr) const;
 };
 
 void displayBlobs(const std::vector<Blob::ConstPtr>& blobs, cv::Mat3b img);

@@ -72,6 +72,8 @@ void BlobView::displayInstance(const Instance& instance, __attribute__((unused))
   scopeLockWrite;
   vis_ = blob->cloud_;
   needs_update_ = true;
+
+  blob->clearProjected();
 }
 
 void BlobView::clearInstance(__attribute__((unused)) void* caller)

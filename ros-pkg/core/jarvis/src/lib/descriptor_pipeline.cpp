@@ -132,6 +132,10 @@ double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, E
         ROS_ASSERT(inst.descriptors_.size() == descriptors->size());
         inst.copy(*descriptors);
         ROS_ASSERT(inst.descriptors_.size() == descriptors->size());
+
+        // -- De-project the blobs. ....  but we need the PCD for visualization.  That's annoying.
+        blob->cloud_.reset();
+        blob->kdtree_.reset();
       }
       // Clear any data that accumulated over the course of the track.
       // This includes, for example, TrajectoryAccumulator.
@@ -142,6 +146,7 @@ double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, E
   hrt.stop();
   double ms_per_obj = hrt.getMilliseconds() / td->totalInstances();
   cout << "updateDescriptors: " << ms_per_obj << " ms / obj." << endl;
+  
   return ms_per_obj;
 }
 

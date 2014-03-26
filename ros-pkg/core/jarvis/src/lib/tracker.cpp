@@ -50,6 +50,12 @@ void Blob::project(bool compute_kdtree)
   }
 }
 
+void Blob::clearProjected()
+{
+  cloud_.reset();
+  kdtree_.reset();
+}
+
 void Blob::serialize(std::ostream& out) const
 {
   eigen_extensions::serializeScalar(frame_id_, out);
@@ -385,10 +391,12 @@ void Tracker::reconstructForeground(sentinel::Foreground::ConstPtr msg,
         foreground(y, x) = 255;
 }
 
-double Tracker::distance(const Blob& prev, const Blob& curr) const
+double Tracker::distance(Blob& prev, Blob& curr) const
 {
-  ROS_ASSERT(prev.cloud_ && curr.cloud_);
-  ROS_ASSERT(prev.kdtree_ && curr.kdtree_);
+  if(!prev.cloud_ || !prev.kdtree_)
+    prev.project();
+  if(!curr.cloud_ || !curr.kdtree_)
+    curr.project();
 
   // -- If the timestamps are too far apart, this isn't a match.
   if(curr.wall_timestamp_.toSec() - prev.wall_timestamp_.toSec() > 1.0)
