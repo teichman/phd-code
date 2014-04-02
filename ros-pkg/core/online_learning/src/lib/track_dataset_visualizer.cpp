@@ -469,9 +469,9 @@ std::string datasetPathToName(std::string path)
 
 ActiveLearningViewController::ActiveLearningViewController(
     TrackView* view, ClusterView *cview, OnlineLearner* learner,
-    std::string unlabeled_td_dir) :
-    TrackViewControllerBase(view, cview), learner_(learner), unlabeled_td_dir_(
-        unlabeled_td_dir)
+    std::string unlabeled_td_dir)
+    : TrackViewControllerBase(view, cview), learner_(learner),
+        unlabeled_td_dir_(unlabeled_td_dir), gc_(new GridClassifier())
 {
 }
 
