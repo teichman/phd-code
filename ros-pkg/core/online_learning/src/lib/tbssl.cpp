@@ -1,5 +1,7 @@
+#include <set>
 #include <boost/filesystem.hpp>
 #include <eigen_extensions/eigen_extensions.h>
+#include <online_learning/evaluator.h>
 #include <online_learning/tbssl.h>
 #include <glob.h>
 

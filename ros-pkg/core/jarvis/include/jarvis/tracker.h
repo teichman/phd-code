@@ -2,25 +2,11 @@
 #define TRACKER_H
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/video/tracking.hpp>
-#include <opencv2/nonfree/features2d.hpp>
-#include <pcl/search/kdtree.h>
-#include <pcl/kdtree/kdtree_flann.h>
+#include <online_learning/common.h>
 #include <serializable/serializable.h>
-#include <timer/timer.h>
-#include <eigen_extensions/eigen_extensions.h>
 #include <sentinel/Foreground.h>
-#include <sentinel/Background.h>
 #include <jarvis/discrete_bayes_filter.h>
-
-typedef pcl::PointXYZRGB Point;
-typedef pcl::PointCloud<Point> Cloud;
-typedef pcl::PointCloud<pcl::Normal> NormalsCloud;
-typedef pcl::search::KdTree<pcl::PointXYZRGB> KdTree;
-//typedef pcl::KdTreeFLANN<pcl::PointXYZRGB> KdTree;
 
 class Blob : public Serializable
 {
@@ -47,8 +33,8 @@ public:
   void project(bool compute_kdtree = true);
   void clearProjected();
   
-  Cloud::Ptr cloud_;
-  KdTree::Ptr kdtree_;
+  boost::shared_ptr<Cloud> cloud_;
+  boost::shared_ptr<KdTree> kdtree_;
   Eigen::Vector3f centroid_;
 
   void serialize(std::ostream& out) const;
@@ -89,7 +75,7 @@ protected:
   size_t next_track_id_;
   boost::posix_time::ptime ptime_;
 
-  void reconstructForeground(sentinel::Foreground::ConstPtr msg,
+  void reconstructForeground(sentinel::ForegroundConstPtr msg,
                              cv::Mat1f depth, cv::Mat1b foreground) const;
   // Projects the blobs if necessary.
   double distance(Blob& prev, Blob& curr) const;

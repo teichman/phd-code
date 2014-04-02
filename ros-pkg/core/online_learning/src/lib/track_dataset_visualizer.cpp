@@ -1,5 +1,13 @@
-#include <online_learning/track_dataset_visualizer.h>
+#include <set>
+#include <online_learning/common.h>
 #include <online_learning/clusterer.h>
+#include <online_learning/grid_classifier.h>
+#include <online_learning/tbssl.h>
+#include <online_learning/track_dataset_visualizer.h>
+
+#define VTK_EXCLUDE_STRSTREAM_HEADERS
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/common/centroid.h>
 
 using namespace std;
 using namespace Eigen;
@@ -506,7 +514,7 @@ void ActiveLearningViewController::loadNextUnlabeledDataset()
   ROS_ASSERT(!td->tracks_.empty());
 
   // -- Get the most recent classifier.
-  learner_->copyClassifier(&gc_);
+  learner_->copyClassifier(gc_.get());
   hrt_classifier_.stop();
   hrt_classifier_.reset();
   hrt_classifier_.start();
@@ -521,10 +529,10 @@ void ActiveLearningViewController::loadNextUnlabeledDataset()
     size_t incr = (double)track.size() / 100.;
     incr = max(incr, (size_t)1);
     
-    Label track_prediction = VectorXf::Zero(gc_.nameMapping("cmap").size());
+    Label track_prediction = VectorXf::Zero(gc_->nameMapping("cmap").size());
     double num = 0;
     for(size_t j = 0; j < track.size(); j += incr) {
-      track_prediction += gc_.classify(track[j]);
+      track_prediction += gc_->classify(track[j]);
       ++num;
     }
 
@@ -546,9 +554,9 @@ void ActiveLearningViewController::ClusterSimilarTracks(TrackDataset *new_td,
   for (size_t i = 0; i < new_td->tracks_.size(); i++)
   {
     ROS_ASSERT(new_td->tracks_[i].get() != NULL);
-    if (similar(ref, *new_td->tracks_[i].get(), gc_, 0.7, 3))
+    if (similar(ref, *new_td->tracks_[i].get(), *gc_, 0.7, 3))
     {
-      cout << "adding track of size " << new_td->tracks_[i]->size() << endl;
+//      cout << "adding track of size " << new_td->tracks_[i]->size() << endl;
       clustered_->tracks_.push_back(new_td->tracks_[i]);
       num_added++;
     }
@@ -614,7 +622,7 @@ void ActiveLearningViewController::applyLabel()
   }
 
   TrackDataset::Ptr td(new TrackDataset);
-  td->applyNameMappings(gc_);
+  td->applyNameMappings(*gc_);
   td->tracks_.push_back(td_->copy(index_[tidx_]));
   td->tracks_[0]->setLabel(to_apply_);
   ROS_ASSERT(td->nameMappingsAreEqual(*td->tracks_[0]));
@@ -686,7 +694,7 @@ bool DGCTrackView::keypress(pcl::visualization::KeyboardEvent* event, __attribut
   if(events_.empty())
     return false;
 
-  *event = events_.back();
+  *event = *events_.back();
   events_.pop_back();
   return true;
 }
@@ -698,7 +706,9 @@ void DGCTrackView::keyboardCallback(const pcl::visualization::KeyboardEvent& eve
 
   scopeLockWrite;
   events_.clear();  // Turns out having a buffer is really annoying.
-  events_.push_back(event);
+  events_.push_back(
+      boost::shared_ptr<pcl::visualization::KeyboardEvent>(
+          new pcl::visualization::KeyboardEvent(event)));
 }
 
 void colorize(int val, Point* pt)
@@ -709,7 +719,7 @@ void colorize(int val, Point* pt)
   pt->b = val;
 }
 
-void DGCTrackView::displayInstance(Instance& instance, __attribute__((unused)) void* caller)
+void DGCTrackView::displayInstance(const Instance& instance, __attribute__((unused)) void* caller)
 {
   Cloud::Ptr pcd = boost::any_cast<Cloud::Ptr>(instance.raw());
   Cloud::Ptr vis(new Cloud);
@@ -755,7 +765,7 @@ void VCMultiplexor::addVC(void* address)
   vcs_.push_back(address);
 }
 
-void VCMultiplexor::displayInstance(Instance& instance, void* caller)
+void VCMultiplexor::displayInstance(const Instance& instance, void* caller)
 {
   scopeLockWrite;
   

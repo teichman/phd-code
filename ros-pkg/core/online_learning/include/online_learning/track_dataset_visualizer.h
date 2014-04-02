@@ -1,23 +1,28 @@
 #ifndef TRACK_DATASET_VISUALIZER_H
 #define TRACK_DATASET_VISUALIZER_H
 
-#include <online_learning/tbssl.h>
-
-#include <ros/assert.h>
-#include <ros/console.h>
-#define VTK_EXCLUDE_STRSTREAM_HEADERS
-#include <pcl/visualization/pcl_visualizer.h>
-#include <pcl/common/centroid.h>
+#include <online_learning/dataset.h>
+#include <timer/timer.h>
 
 class ClusterViewController;
+class GridClassifier;
+class OnlineLearner;
 class TrackDataset;
+namespace pcl {
+class PointXYZRGB;
+template<class T> class PointCloud;
+namespace visualization {
+class PCLVisualizer;
+class KeyboardEvent;
+}
+}
 
 class TrackView
 {
 public:
   virtual ~TrackView() {}
   
-  virtual void displayInstance(Instance& instance, void* caller) = 0;
+  virtual void displayInstance(const Instance& instance, void* caller) = 0;
   virtual void clearInstance(void* caller) = 0;
   virtual void displayMessage(const std::string& message, void* caller) = 0;
   //! Returns true if there is a new keypress to act on.
@@ -99,7 +104,7 @@ protected:
   std::string next_path_;
   std::string current_path_;
   
-  GridClassifier gc_;
+  boost::shared_ptr<GridClassifier> gc_;
   //! How long it's been since the classifier has been updated.
   HighResTimer hrt_classifier_;
   
@@ -134,7 +139,7 @@ class DGCTrackView : public TrackView, public Agent
 public:
   DGCTrackView();
   virtual ~DGCTrackView();
-  void displayInstance(Instance& instance, void* caller);
+  void displayInstance(const Instance& instance, void* caller);
   void clearInstance(void* caller);
   void displayMessage(const std::string& message, void* caller);
   bool keypress(pcl::visualization::KeyboardEvent* event, void* caller);
@@ -145,9 +150,9 @@ protected:
   typedef pcl::visualization::PCLVisualizer PCLVisualizer;
   PCLVisualizer* visualizer_;
   bool needs_update_;
-  Cloud::Ptr vis_;
+  boost::shared_ptr<pcl::PointCloud<pcl::PointXYZRGB> > vis_;
   std::string message_;
-  std::vector<pcl::visualization::KeyboardEvent> events_;
+  std::vector<boost::shared_ptr<pcl::visualization::KeyboardEvent> > events_;
 
   void keyboardCallback(const pcl::visualization::KeyboardEvent& event, void* cookie);
 };
@@ -158,7 +163,7 @@ public:
   VCMultiplexor(TrackView* view);
   virtual ~VCMultiplexor() {}
   void addVC(void* address);
-  virtual void displayInstance(Instance& instance, void* caller);
+  virtual void displayInstance(const Instance& instance, void* caller);
   virtual void clearInstance(void* caller);
   virtual void displayMessage(const std::string& message, void* caller);
   virtual bool keypress(pcl::visualization::KeyboardEvent* event, void* caller);

@@ -1,4 +1,6 @@
 #include <online_learning/cross_evaluator.h>
+#include <online_learning/evaluator.h>
+#include <online_learning/grid_classifier.h>
 #include <boost/filesystem.hpp>
 
 using namespace std;

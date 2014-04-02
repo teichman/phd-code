@@ -2,20 +2,15 @@
 #define NAME_MAPPING2_H
 
 #include <assert.h>
-#include <stdarg.h>
 #include <iostream>
 #include <vector>
 #include <string>
 #include <map>
-#include <set>
-#include <sstream>
 #include <limits.h>
 
-#include <ros/console.h>
 #include <ros/assert.h>
 #include <Eigen/Eigen>
 #include <serializable/serializable.h>
-#include <name_mapping/name_mapping.h>
 
 // ROS console and assert seem good, but they pollute the valgrind output.
 // Maybe this will be resolved with a newer version of log4cxx:

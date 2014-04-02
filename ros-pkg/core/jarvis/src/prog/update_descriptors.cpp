@@ -1,6 +1,8 @@
 #include <boost/program_options.hpp>
+#include <eigen_extensions/eigen_extensions.h>
 #include <jarvis/descriptor_pipeline.h>
 #include <online_learning/dataset.h>
+#include <online_learning/instance_serializer.h>
 
 using namespace std;
 using namespace Eigen;

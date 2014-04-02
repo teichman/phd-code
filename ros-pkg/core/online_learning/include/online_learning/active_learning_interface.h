@@ -2,8 +2,10 @@
 #define ONLINE_INTERFACE2_H
 
 //#include <track_tools/track_manager.h>
-#include <pcl/common/centroid.h>
+//#include <pcl/common/centroid.h>
 #include <online_learning/track_dataset_visualizer.h>
+
+class GridClassifier;
 
 //! The ViewController.
 class ActiveLearningInterface : public TrackViewControllerBase
@@ -27,7 +29,7 @@ protected:
   std::string td_path_;
   std::string next_td_path_;
   TrackDataset td_;
-  GridClassifier gc_;
+  boost::shared_ptr<GridClassifier> gc_;
   //! How long it's been since the classifier has been updated.
   HighResTimer classifier_hrt_;
   

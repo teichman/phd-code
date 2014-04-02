@@ -1,5 +1,6 @@
 #include <online_learning/track_dataset_visualizer.h>
 
+#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <bag_of_tricks/bag_of_tricks.h>
 #include <online_learning/tbssl.h>
@@ -91,7 +92,7 @@ int main(int argc, char** argv)
   if(!seed_paths.empty()) {
     TrackDataset::Ptr seed = loadDatasets(seed_paths);
     for(size_t i = 0; i < seed->size(); ++i) {
-      Dataset& track = *seed->tracks_[i];
+      const Dataset& track = *seed->tracks_[i];
       for(size_t j = 0; j < track.size(); ++j) {
         ROS_ASSERT(!track[j].raw().empty());
       }
@@ -103,7 +104,7 @@ int main(int argc, char** argv)
   if(!autobg_paths.empty()) {
     TrackDataset::Ptr autobg = loadDatasets(autobg_paths);
     for(size_t i = 0; i < autobg->size(); ++i) {
-      Dataset& track = *autobg->tracks_[i];
+      const Dataset& track = *autobg->tracks_[i];
       for(size_t j = 0; j < track.size(); ++j) {
         ROS_ASSERT(!track[j].raw().empty());
       }

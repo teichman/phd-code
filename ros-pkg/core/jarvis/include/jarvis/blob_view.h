@@ -5,7 +5,7 @@ class BlobView : public TrackView, public Agent
 public:
   BlobView();
   virtual ~BlobView();
-  void displayInstance(Instance& instance, void* caller);
+  void displayInstance(const Instance& instance, void* caller);
   void clearInstance(void* caller);
   void displayMessage(const std::string& message, void* caller);
   bool keypress(pcl::visualization::KeyboardEvent* event, void* caller);

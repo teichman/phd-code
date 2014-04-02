@@ -1,7 +1,8 @@
-#include <online_learning/cross_evaluator.h>
 #include <boost/program_options.hpp>
 #include <boost/foreach.hpp>
+#include <eigen_extensions/eigen_extensions.h>
 #include <jarvis/descriptor_pipeline.h>
+#include <online_learning/cross_evaluator.h>
 
 using namespace std;
 using namespace Eigen;

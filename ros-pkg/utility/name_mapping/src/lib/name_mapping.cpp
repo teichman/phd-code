@@ -1,3 +1,5 @@
+#include <set>
+
 #include <name_mapping/name_mapping.h>
 
 using namespace std;

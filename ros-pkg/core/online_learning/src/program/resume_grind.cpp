@@ -1,4 +1,5 @@
 #include <matplotlib_interface/matplotlib_interface.h>
+#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <bag_of_tricks/bag_of_tricks.h>
 #include <online_learning/active_learning_interface.h>

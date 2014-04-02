@@ -1,11 +1,12 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 #include <online_learning/grid_classifier.h>
+#include <online_learning/instance_serializer.h>
 
 using namespace std;
 namespace bpo = boost::program_options;
 
-size_t numBytesIncludingRaw(Dataset& track) {
+size_t numBytesIncludingRaw(const Dataset& track) {
   size_t num = track.numBytes();
   for(size_t i = 0; i < track.size(); ++i) {
     PassthroughCustomSerializer::Data::Ptr data;
@@ -16,7 +17,7 @@ size_t numBytesIncludingRaw(Dataset& track) {
   return num;
 }
 
-size_t numBytesIncludingRaw(TrackDataset& td) {
+size_t numBytesIncludingRaw(const TrackDataset& td) {
   size_t num = 0;
   for(size_t i = 0; i < td.size(); ++i)
     num += numBytesIncludingRaw(td[i]);

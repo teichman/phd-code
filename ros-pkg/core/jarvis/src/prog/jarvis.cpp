@@ -1,5 +1,6 @@
-#include <jarvis/jarvis.h>
 #include <boost/program_options.hpp>
+#include <eigen_extensions/eigen_extensions.h>
+#include <jarvis/jarvis.h>
 
 using namespace std;
 namespace bfs = boost::filesystem;

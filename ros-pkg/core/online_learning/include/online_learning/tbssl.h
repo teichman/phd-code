@@ -3,16 +3,8 @@
 
 // Tracking-based semi-supervised learning
 
-// must come first because of python.
-#include <online_learning/evaluator.h>  
-
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
-#include <boost/thread.hpp>
 #include <agent/agent.h>
 #include <online_learning/grid_classifier.h>
-#include <online_learning/training_buffer.h>
-#include <online_learning/common.h>
 
 //! ====
 //! == Locking strategy:
@@ -87,8 +79,8 @@ public:
   OnlineLearner(double emax,
                 size_t buffer_size,
                 size_t max_track_length,
-                GridClassifier::Ptr classifier,
-                GridClassifier::BoostingTrainer::Ptr trainer,
+                boost::shared_ptr<GridClassifier> classifier,
+                boost::shared_ptr<GridClassifier::BoostingTrainer> trainer,
                 int max_iters,
                 int snapshot_every,
                 int evaluate_every,
@@ -178,8 +170,8 @@ protected:
   /************************************************************
    * Algorithm data
    ************************************************************/
-  GridClassifier::Ptr classifier_;
-  GridClassifier::BoostingTrainer::Ptr trainer_;
+  boost::shared_ptr<GridClassifier> classifier_;
+  boost::shared_ptr<GridClassifier::BoostingTrainer> trainer_;
   std::vector<TrackDataset::Ptr> incoming_annotated_;
   TrackDataset::Ptr annotated_;  // The first part of Da
   TrackDataset::Ptr autobg_;  // The second part of Da

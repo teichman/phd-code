@@ -1,3 +1,5 @@
+#include <string>
+#include <vector>
 #include <glob.h>
 
 inline std::vector<std::string> glob(const std::string& pattern)

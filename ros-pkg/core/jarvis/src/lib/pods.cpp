@@ -1,6 +1,8 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <pcl/common/common.h>
 #include <pcl/common/pca.h>
 #include <pcl/io/pcd_io.h>

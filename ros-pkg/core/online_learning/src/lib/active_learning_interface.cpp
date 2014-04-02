@@ -1,4 +1,5 @@
 #include <online_learning/active_learning_interface.h>
+#include <online_learning/grid_classifier.h>
 
 using namespace std;
 namespace bfs = boost::filesystem;
@@ -122,7 +123,7 @@ void ActiveLearningInterface::loadNextDataset()
   ROS_ASSERT(!td_.tracks_.empty());
 
   // -- Get the most recent classifier.
-  learner_->copyClassifier(&gc_);
+  learner_->copyClassifier(gc_.get());
   classifier_hrt_.stop();
   classifier_hrt_.reset();
   classifier_hrt_.start();
@@ -148,10 +149,10 @@ void ActiveLearningInterface::loadNextDataset()
     size_t incr = (double)track.size() / 100.;
     incr = max(incr, (size_t)1);
     
-    Label track_prediction = VectorXf::Zero(gc_.nameMapping("cmap").size());
+    Label track_prediction = VectorXf::Zero(gc_->nameMapping("cmap").size());
     double num = 0;
     for(size_t j = 0; j < track.size(); j += incr) {
-      track_prediction += gc_.classify(track[j]);
+      track_prediction += gc_->classify(track[j]);
       ++num;
     }
 
@@ -276,7 +277,7 @@ void ActiveLearningInterface::visualizationThreadFunction()
 
     oss << "Current annotation (shift-enter to send): " << endl;
     for(int c = 0; c < current_annotation_.rows(); ++c)
-      oss << "  (" << classIdxToKey(c) << ") " << gc_.nameMapping("cmap").toName(c) << ": " << current_annotation_(c) << endl;
+      oss << "  (" << classIdxToKey(c) << ") " << gc_->nameMapping("cmap").toName(c) << ": " << current_annotation_(c) << endl;
     
     if(track_id_ == -1) {
       oss << "No tracks yet." << endl;
@@ -288,7 +289,7 @@ void ActiveLearningInterface::visualizationThreadFunction()
       oss << "Track Classification" << endl;
       Label pred = td_.label(tidx);
       for(int c = 0; c < pred.rows(); ++c)
-        oss << "  (" << classIdxToKey(c) << ") " << gc_.nameMapping("cmap").toName(c) << ": " << pred(c) << endl;
+        oss << "  (" << classIdxToKey(c) << ") " << gc_->nameMapping("cmap").toName(c) << ": " << pred(c) << endl;
       
       oss << "Confidence: " << confidences_[track_id_].first << endl;
       oss << "Minutes since last classifier update: " << (int)classifier_hrt_.getMinutes() << endl;
@@ -384,17 +385,17 @@ void ActiveLearningInterface::keyboardCallback(const pcl::visualization::Keyboar
 
   // -- Class keypresses.
   int idx = classKeyToIdx(key);
-  if(idx >= 0 && idx < (int)gc_.nameMapping("cmap").size()) {
+  if(idx >= 0 && idx < (int)gc_->nameMapping("cmap").size()) {
     // -- Negative labeling.
     if(event.isAltPressed()) {
       scopeLockWrite;
-      current_annotation_ = VectorXf::Zero(gc_.nameMapping("cmap").size());
+      current_annotation_ = VectorXf::Zero(gc_->nameMapping("cmap").size());
       current_annotation_(idx) = -1;
     }
     // -- Positive labeling.
     else {
       scopeLockWrite;
-      current_annotation_ = VectorXf::Zero(gc_.nameMapping("cmap").size());
+      current_annotation_ = VectorXf::Zero(gc_->nameMapping("cmap").size());
       current_annotation_(idx) = 1;
     }
   }
@@ -404,7 +405,7 @@ void ActiveLearningInterface::keyboardCallback(const pcl::visualization::Keyboar
     switch(key) {
     case 13:
       if(event.isShiftPressed()) {
-        if(current_annotation_.rows() != (int)gc_.nameMapping("cmap").size())
+        if(current_annotation_.rows() != (int)gc_->nameMapping("cmap").size())
           cout << "[ActiveLearningInterface]  Must set current_annotation_ first." << endl;
         else
           labelAs(current_annotation_);
@@ -459,10 +460,10 @@ void ActiveLearningInterface::rotateSortClass(int val)
   lockWrite();
   sorting_class_ += val;
   sorting_class_ = max(sorting_class_, 0);
-  sorting_class_ = min(sorting_class_, (int)gc_.nameMapping("cmap").size() - 1);
+  sorting_class_ = min(sorting_class_, (int)gc_->nameMapping("cmap").size() - 1);
   unlockWrite();
 
-  cout << "[ActiveLearningInterface]  Sorting by class " << gc_.nameMapping("cmap").toName(sorting_class_) << "." << endl;
+  cout << "[ActiveLearningInterface]  Sorting by class " << gc_->nameMapping("cmap").toName(sorting_class_) << "." << endl;
   
   reSort();
 }

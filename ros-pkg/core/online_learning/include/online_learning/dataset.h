@@ -1,90 +1,14 @@
 #ifndef DATASET_H
 #define DATASET_H
 
-//#include <float.h>
-#include <boost/shared_ptr.hpp>
 #include <vector>
-#include <Eigen/Eigen>
-//#include <ros/console.h>
-//#include <ros/assert.h>
-//#include <iomanip>
-//#include <eigen_extensions/eigen_extensions.h>
-#include <serializable/serializable.h>
-#include <name_mapping/name_mapping.h>
 #include <boost/any.hpp>
+#include <boost/shared_ptr.hpp>
+#include <Eigen/Eigen>
+#include <name_mapping/name_mapping.h>
+#include <serializable/serializable.h>
 
-class CustomSerializer
-{
-public:
-  typedef boost::shared_ptr<CustomSerializer> Ptr;
-  
-  virtual std::string name() const = 0;
-  virtual void serialize(const boost::any& raw, std::ostream& out) const = 0;
-  virtual void deserialize(std::istream& in, boost::any* raw) const = 0;
-};
-
-// PCD is PointCloud data.
-class PCDSerializer : public CustomSerializer
-{
-public:
-  typedef boost::shared_ptr<PCDSerializer> Ptr;
-  
-  std::string name() const { return "PCDSerializer"; }
-  void serialize(const boost::any& raw, std::ostream& out) const;
-  void deserialize(std::istream& in, boost::any* raw) const;
-};
-
-//! Special custom serializer that will skip deserializing any custom data
-//! that is present.
-class EmptyCustomSerializer : public CustomSerializer
-{
-public:
-  typedef boost::shared_ptr<EmptyCustomSerializer> Ptr;
-  
-  std::string name() const { return "EmptyCustomSerializer"; }
-  void serialize(const boost::any& raw, std::ostream& out) const {}
-  void deserialize(std::istream& in, boost::any* raw) const {}
-};
-
-//! Special custom serializer that will skip deserializing any custom data
-//! that is present.  Writes are not allowed.  This is useful when you
-//! want to read in a track dataset, don't need the raw_ data, and
-//! want to be sure that you don't clobber the raw_ data with a write.
-class ReadOnlyEmptyCustomSerializer : public CustomSerializer
-{
-public:
-  typedef boost::shared_ptr<EmptyCustomSerializer> Ptr;
-  
-  std::string name() const { return "EmptyCustomSerializer"; }
-  void serialize(const boost::any& raw, std::ostream& out) const
-  {
-    std::cerr << "ReadOnlyEmptyCustomSerializer cannot serialize." << std::endl;
-    ROS_ASSERT(0);
-  }
-  void deserialize(std::istream& in, boost::any* raw) const {}
-};
-
-//! Special custom serializer that will deserialize custom data as
-//! a binary blob and serialize it under its original name.
-class PassthroughCustomSerializer : public CustomSerializer
-{
-public:
-  typedef boost::shared_ptr<PassthroughCustomSerializer> Ptr;
-
-  struct Data
-  {
-    typedef boost::shared_ptr<Data> Ptr;
-    std::string name_;
-    std::vector<uint8_t> data_;
-  };
-  
-  std::string name() const { return "PassthroughCustomSerializer"; }
-  //! Writes the original name, num bytes, and the binary blob.
-  void serialize(const boost::any& raw, std::ostream& out) const;
-  void deserialize(std::istream& in, boost::any* raw) const { ROS_ASSERT(0); }
-  void deserialize(std::string original_name, size_t num_bytes,
-                   std::istream& in, boost::any* raw) const;
-};
+class CustomSerializer;
 
 // Represents a reference to where additional boost::any data is available
 // in external storage. To be used for on-demand loading.
@@ -95,20 +19,6 @@ struct StorageReference {
   bool data_loadable_;  // true when there is additional data still loadable
   std::string td_filename_;
   uint64_t file_offset_;
-};
-
-class ReferenceSavingCustomSerializer : public CustomSerializer
-{
-public:
-  typedef boost::shared_ptr<ReferenceSavingCustomSerializer> Ptr;
-
-  std::string name() const { return "ReferenceSavingCustomSerializer"; }
-  void serialize(const boost::any& raw, std::ostream& out) const {
-    ROS_FATAL("ReferenceSavingCustomSerializer not to be called directly");
-  }
-  void deserialize(std::istream& in, boost::any* raw) const {
-    ROS_FATAL("ReferenceSavingCustomSerializer not to be called directly");
-  }
 };
 
 
@@ -189,7 +99,7 @@ public:
   //! Otherwise the various clone() functions will not work
   //! as expected.  This could lead to immense pain.
   //! Instances are meant to be deep copied anyway...
-  static CustomSerializer::Ptr custom_serializer_;
+  static boost::shared_ptr<CustomSerializer> custom_serializer_;
 
   Instance() {}
   //! Deep-copies the descriptors.
@@ -221,15 +131,15 @@ public:
   size_t numBytes() const;
   
   // Load raw on demand from disk when necessary
-  boost::any& raw();
+  boost::any& raw() const;
   template<typename ValueType>
   void set_raw(const ValueType &data) { raw_ = data; }
   void clearRaw();
 
 
 protected:
-  StorageReference raw_ref_;
-  boost::any raw_;
+  mutable StorageReference raw_ref_;
+  mutable boost::any raw_;
   //! Can apply "dmap" or "cmap".
   void _applyNameTranslator(const std::string& id, const NameTranslator& translator);
 };

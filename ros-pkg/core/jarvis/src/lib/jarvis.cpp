@@ -1,4 +1,5 @@
 #include <jarvis/jarvis.h>
+#include <eigen_extensions/eigen_extensions.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <openni2_interface/openni_helpers.h>
 #include <bag_of_tricks/connected_components.h>

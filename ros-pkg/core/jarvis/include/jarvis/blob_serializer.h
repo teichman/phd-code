@@ -2,6 +2,7 @@
 #define BLOB_SERIALIZER_H
 
 #include <online_learning/dataset.h>
+#include <online_learning/instance_serializer.h>
 #include <jarvis/tracker.h>
 
 class BlobSerializer : public CustomSerializer

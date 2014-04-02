@@ -1,8 +1,9 @@
-#include <jarvis/jarvis_twiddler.h>
-#include <boost/program_options.hpp>
-#include <jarvis/descriptor_pipeline.h>
-#include <ros/package.h>
 #include <bag_of_tricks/glob.h>
+#include <boost/program_options.hpp>
+#include <eigen_extensions/eigen_extensions.h>
+#include <jarvis/descriptor_pipeline.h>
+#include <jarvis/jarvis_twiddler.h>
+#include <ros/package.h>
 
 using namespace std;
 using namespace Eigen;

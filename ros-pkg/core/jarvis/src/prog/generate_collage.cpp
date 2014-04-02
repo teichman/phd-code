@@ -1,5 +1,6 @@
 #include <online_learning/collage_generator.h>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <jarvis/tracker.h>
 

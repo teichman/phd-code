@@ -1,7 +1,8 @@
+#include <jarvis/descriptor_pipeline.h>
+#include <online_learning/instance_serializer.h>
 #include <pipeline/outlet.h>
 #include <pipeline/common_pods.h>
 #include <ros/package.h>
-#include <jarvis/descriptor_pipeline.h>
 
 using namespace std;
 using namespace Eigen;

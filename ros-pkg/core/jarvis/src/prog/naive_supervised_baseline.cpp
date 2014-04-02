@@ -1,3 +1,4 @@
+#include <eigen_extensions/eigen_extensions.h>
 #include <jarvis/jarvis_twiddler.h>
 #include <boost/program_options.hpp>
 #include <ros/package.h>

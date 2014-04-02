@@ -1,9 +1,14 @@
-#include <boost/date_time.hpp>
-#include <jarvis/tracker.h>
 #include <bag_of_tricks/connected_components.h>
-#include <sentinel/background_model.h>
+#include <boost/date_time.hpp>
+#include <eigen_extensions/eigen_extensions.h>
+#include <jarvis/tracker.h>
 #include <pcl/common/centroid.h>
+#include <pcl/search/kdtree.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <opencv2/highgui/highgui.hpp>
 #include <openni2_interface/openni_helpers.h>
+#include <sentinel/background_model.h>
+#include <timer/timer.h>
 
 using namespace std;
 namespace bpt = boost::posix_time;

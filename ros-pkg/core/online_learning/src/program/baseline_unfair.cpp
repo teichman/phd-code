@@ -1,3 +1,4 @@
+#include <online_learning/evaluator.h>
 #include <online_learning/tbssl.h>
 #include <boost/program_options.hpp>
 #include <boost/foreach.hpp>

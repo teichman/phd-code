@@ -1,5 +1,6 @@
 #include <timer/timer.h>
 #include <jarvis/tracker.h>
+#include <opencv2/highgui/highgui.hpp>
 #include <online_learning/dataset.h>
 #include <boost/program_options.hpp>
 #include <pcl/io/lzf.h>

@@ -1,6 +1,7 @@
 #include <matplotlib_interface/matplotlib_interface.h>  // Must come first because of Python.
 #include <boost/program_options.hpp>
 #include <boost/foreach.hpp>
+#include <online_learning/evaluator.h>
 #include <online_learning/tbssl.h>
 #include <performance_statistics/performance_statistics.h>
 #include <jarvis/descriptor_pipeline.h>

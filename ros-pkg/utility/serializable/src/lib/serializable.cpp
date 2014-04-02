@@ -1,5 +1,7 @@
 #include <serializable/serializable.h>
 #include <boost/filesystem.hpp>
+#include <yaml-cpp/yaml.h>
+#include <yaml-cpp/node/node.h>
 
 using namespace std;
 namespace bfs = boost::filesystem;

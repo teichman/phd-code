@@ -6,6 +6,8 @@
 #include <name_mapping/name_mapping.h>
 #include <jarvis/tracker.h>
 #include <eigen_extensions/random.h>
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
 
 struct Trajectory
 {
@@ -36,7 +38,7 @@ public:
     traj_.reserve(1000);
 
     // Note that this cloud needs to NOT be de-meaned.
-    declareInput<Cloud::ConstPtr>("UppedCloud");
+    declareInput<CloudConstPtr>("UppedCloud");
     declareOutput<const Trajectory*>("Trajectory");
   }
 
@@ -128,7 +130,7 @@ public:
   {
     declareInput<Blob::Ptr>("Blob");
     declareOutput<Blob::ConstPtr>("ProjectedBlob");
-    declareOutput<Cloud::ConstPtr>("Cloud");
+    declareOutput<CloudConstPtr>("Cloud");
     declareOutput<cv::Mat1b>("BinaryImage");  // 255 for filled, 0 for unfilled.
   }
 
@@ -147,7 +149,7 @@ public:
     Pod(name),
     size_(Eigen::VectorXf::Zero(3))
   {
-    declareInput<Cloud::ConstPtr>("Cloud");
+    declareInput<CloudConstPtr>("Cloud");
     declareOutput<const Eigen::VectorXf*>("BoundingBoxSize");
   }
 
@@ -256,7 +258,7 @@ public:
   {
     declareInput<Blob::ConstPtr>("ProjectedBlob");
     declareParam<bool>("OrientCloud", true);  // If you're only using the descriptors, you can set this to false.
-    declareOutput<Cloud::ConstPtr>("OrientedCloud");
+    declareOutput<CloudConstPtr>("OrientedCloud");
     declareOutput<const Eigen::VectorXf*>("Eigenvalues");
     declareOutput<const Eigen::VectorXf*>("RelativeCurvature");
   }
@@ -265,7 +267,7 @@ public:
   void debug() const;
 
 protected:
-  Cloud::Ptr oriented_;
+  CloudPtr oriented_;
   Eigen::VectorXf eigenvalues_;
   Eigen::VectorXf relative_curvature_;
   Eigen::Matrix3f eigenvectors_;
@@ -285,8 +287,8 @@ public:
     highest_point_(1)
   {
     declareInput<Blob::ConstPtr>("ProjectedBlob");
-    declareOutput<Cloud::ConstPtr>("OrientedCloud");
-    declareOutput<Cloud::ConstPtr>("UppedCloud");  // Not de-meaned.
+    declareOutput<CloudConstPtr>("OrientedCloud");
+    declareOutput<CloudConstPtr>("UppedCloud");  // Not de-meaned.
     declareOutput<const Eigen::VectorXf*>("Height");
     declareOutput<const Eigen::VectorXf*>("HighestPoint");
   }
@@ -300,10 +302,10 @@ protected:
   Eigen::VectorXf up_;
   Eigen::Affine3f raw_to_up_;
   //! Just rotated so that z is up.  Not de-meaned.
-  Cloud::Ptr upped_;
-  Cloud::Ptr demeaned_;
-  Cloud::Ptr projected_;
-  Cloud::Ptr oriented_;
+  CloudPtr upped_;
+  CloudPtr demeaned_;
+  CloudPtr projected_;
+  CloudPtr oriented_;
   Eigen::VectorXf height_;
   Eigen::VectorXf highest_point_;
 };
@@ -316,11 +318,11 @@ public:
     Pod(name)
   {
     declareInput<Blob::ConstPtr>("ProjectedBlob");
-    declareOutput<Cloud::ConstPtr>("Cloud");
+    declareOutput<CloudConstPtr>("Cloud");
   }
 
   void compute() {
-    Cloud::ConstPtr cloud = pull<Blob::ConstPtr>("ProjectedBlob")->cloud_;
+    CloudConstPtr cloud = pull<Blob::ConstPtr>("ProjectedBlob")->cloud_;
     push("Cloud", cloud);
   }
 };
@@ -332,7 +334,7 @@ public:
   CentroidFinder(std::string name) :
     Pod(name)
   {
-    declareInput<Cloud::ConstPtr>("Cloud");
+    declareInput<CloudConstPtr>("Cloud");
     declareOutput<const Eigen::VectorXf*>("Centroid");
   }
 
@@ -357,7 +359,7 @@ public:
     names_.push_back("Y");
     names_.push_back("Z");
 
-    declareInput<Cloud::ConstPtr>("Cloud");
+    declareInput<CloudConstPtr>("Cloud");
     declareParam<double>("NumBins", 10);
     declareOutput<const Eigen::VectorXf*>("X");
     declareOutput<const Eigen::VectorXf*>("Y");
@@ -380,7 +382,7 @@ public:
   NormalsPod(std::string name) :
     Pod(name)
   {
-    declareInput<Cloud::ConstPtr>("Cloud");
+    declareInput<CloudConstPtr>("Cloud");
     declareParam<double>("Radius", 0.05);
     declareOutput<NormalsCloud>("Normals");
   }
@@ -399,7 +401,7 @@ public:
   {
     // Assumed to be zero-mean and oriented.
     // Assumes intensity channel can be found in pt.r.
-    declareInput<Cloud::ConstPtr>("Cloud");
+    declareInput<CloudConstPtr>("Cloud");
     // "XZ" : u <- x, v <- z.
     // "YZ" : u <- y, v <- z.
     // "XY" : u <- y, v <- x.

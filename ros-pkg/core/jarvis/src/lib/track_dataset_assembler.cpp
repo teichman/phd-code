@@ -1,3 +1,4 @@
+#include <set>
 #include <jarvis/track_dataset_assembler.h>
 #include <bag_of_tricks/next_path.h>
 #include <boost/filesystem.hpp>

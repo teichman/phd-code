@@ -3,14 +3,13 @@
 
 #include <iostream>
 #include <fstream>
-#include <assert.h>
 #include <vector>
 #include <queue>
-#include <map>
-#include <yaml-cpp/yaml.h>
-#include <yaml-cpp/node/node.h>
 #include <agent/agent.h>
 
+namespace YAML {
+class Node;
+}
 
 /** \brief @b Serializable is an abstract base class which represents
  * objects that can be serialized and deserialized.

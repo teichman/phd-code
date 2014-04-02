@@ -1,9 +1,10 @@
-#include <matplotlib_interface/matplotlib_interface.h>  // Must come first because of Python.
-#include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
+#include <boost/program_options.hpp>
+#include <matplotlib_interface/matplotlib_interface.h>  // Must come first because of Python.
+#include <online_learning/evaluator.h>
 #include <online_learning/tbssl.h>
 #include <performance_statistics/performance_statistics.h>
-#include <boost/filesystem.hpp>
 
 using namespace std;
 using namespace Eigen;

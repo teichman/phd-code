@@ -1,5 +1,6 @@
 #include <jarvis/inductor.h>
 #include <jarvis/descriptor_pipeline.h>
+#include <eigen_extensions/eigen_extensions.h>
 #include <online_learning/clusterer.h>
 
 using namespace std;
