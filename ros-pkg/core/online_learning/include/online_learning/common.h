@@ -14,7 +14,7 @@ template<class T> class KdTree;
 typedef pcl::PointXYZRGB Point;
 typedef pcl::PointCloud<Point> Cloud;
 typedef boost::shared_ptr<Cloud> CloudPtr;
-typedef const boost::shared_ptr<Cloud> CloudConstPtr;
+typedef boost::shared_ptr<const Cloud> CloudConstPtr;
 typedef pcl::PointCloud<pcl::Normal> NormalsCloud;
 typedef pcl::search::KdTree<pcl::PointXYZRGB> KdTree;
 
