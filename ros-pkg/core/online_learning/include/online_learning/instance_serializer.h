@@ -77,20 +77,5 @@ public:
                    std::istream& in, boost::any* raw) const;
 };
 
-class ReferenceSavingCustomSerializer : public CustomSerializer
-{
-public:
-  typedef boost::shared_ptr<ReferenceSavingCustomSerializer> Ptr;
-
-  std::string name() const { return "ReferenceSavingCustomSerializer"; }
-  void serialize(const boost::any& raw, std::ostream& out) const {
-    ROS_FATAL("ReferenceSavingCustomSerializer not to be called directly");
-  }
-  void deserialize(std::istream& in, boost::any* raw) const {
-    ROS_FATAL("ReferenceSavingCustomSerializer not to be called directly");
-  }
-};
-
-
 
 #endif /* INSTANCE_SERIALIZER_H_ */

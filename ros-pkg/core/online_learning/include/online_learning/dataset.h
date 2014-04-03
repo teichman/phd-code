@@ -19,6 +19,8 @@ struct StorageReference {
   bool data_loadable_;  // true when there is additional data still loadable
   std::string td_filename_;
   uint64_t file_offset_;
+
+  bool valid() const { return (td_filename_ != ""); }
 };
 
 
@@ -135,7 +137,7 @@ public:
   template<typename ValueType>
   void set_raw(const ValueType &data) { raw_ = data; }
   void clearRaw();
-
+  void makeLightweight(const std::string& td_path);
 
 protected:
   mutable StorageReference raw_ref_;
@@ -205,6 +207,7 @@ public:
   void setImportance(float importance);
 
   void clearRaw();
+  void makeLightweight(const std::string& td_path);
       
 protected:
   //! Can apply "dmap" or "cmap".
@@ -270,6 +273,7 @@ public:
   double labelRatio(const std::string& class_name) const;
   
   void clearRaw();
+  void makeLightweight(const std::string& td_path);
 
 protected:
   //! Can apply "dmap" or "cmap".

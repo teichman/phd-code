@@ -17,16 +17,15 @@ int main(int argc, char** argv)
 
   string config_path;
   vector<string> td_paths;
-  string out_descriptoronly_td;
+  string lightweight_td_path;
   int num_threads;
   string up_path;
   opts_desc.add_options()
     ("help,h", "produce help message")
-    ("config", bpo::value<string>(&config_path)->default_value(DescriptorPipeline::defaultSpecificationPath()), "")
-    ("tds", bpo::value< vector<string> >(&td_paths)->required()->multitoken(), "")
+    ("config", bpo::value(&config_path)->default_value(DescriptorPipeline::defaultSpecificationPath()), "")
+    ("tds", bpo::value(&td_paths)->required()->multitoken(), "")
     ("debug", "")
-    ("out-descriptoronly-td",
-     bpo::value<string>(&out_descriptoronly_td)->default_value(""))
+    ("generate-lightweight-td", bpo::value(&lightweight_td_path), "Save lightweight TD to this path.")
     ("num-threads,j", bpo::value(&num_threads)->default_value(1))
     ("up,u", bpo::value(&up_path), "")
     ("force,f", "")
@@ -84,29 +83,24 @@ int main(int argc, char** argv)
     eigen_extensions::loadASCII(up_path, &up);
   }
 
-  if (!out_descriptoronly_td.empty()) {
-    CustomSerializer::Ptr original_serializer = Instance::custom_serializer_;
-    CustomSerializer::Ptr reference_serializer = CustomSerializer::Ptr(
-        new ReferenceSavingCustomSerializer());
-
-    TrackDataset td;
+  if(opts.count("generate-lightweight-td")) {
+    TrackDataset lwtd;
     for(size_t i = 0; i < td_paths.size(); ++i) {
       cout << "Adding " << td_paths[i] << endl;
-      Instance::custom_serializer_ = original_serializer;
+      TrackDataset td;
       td.load(td_paths[i]);
-      td.clearRaw();
-    }
-    // To force descriptor re-computation, apply an empty dmap,
-    // which will drop all descriptors.
-    if(opts.count("force")) {
-      cout << "Forcing descriptor re-computation." << endl;
-      td.applyNameMapping("dmap", NameMapping());
-    }
 
-    updateDescriptors(config["Pipeline"], num_threads, &td, up,
-                      opts.count("debug"));
-    Instance::custom_serializer_ = reference_serializer;
-    td.save(out_descriptoronly_td);
+      if(opts.count("force")) {
+        cout << "Forcing descriptor re-computation." << endl;
+        td.applyNameMapping("dmap", NameMapping());
+      }
+      updateDescriptors(config["Pipeline"], num_threads, &td, up, opts.count("debug"));
+      
+      td.makeLightweight(td_paths[i]);
+      lwtd += td;
+    }
+    
+    lwtd.save(lightweight_td_path);
   }
   else
   {
