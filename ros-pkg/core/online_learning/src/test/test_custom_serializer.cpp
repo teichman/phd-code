@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <online_learning/synthetic_data_generator.h>
+#include <online_learning/instance_serializer.h>
 
 using namespace std;
 using namespace Eigen;

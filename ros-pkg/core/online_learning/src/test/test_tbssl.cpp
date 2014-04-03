@@ -2,6 +2,9 @@
 #include <gtest/gtest.h>
 #include <gperftools/profiler.h>
 #include <online_learning/synthetic_data_generator.h>
+#include <online_learning/evaluator.h>
+#include <boost/filesystem.hpp>
+
 
 using namespace std;
 using namespace Eigen;
