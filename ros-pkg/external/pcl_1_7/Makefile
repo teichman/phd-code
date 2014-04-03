@@ -4,7 +4,11 @@ release/built: git
 	cd ${@D} && cmake \
 	-DCMAKE_BUILD_TYPE=Release \
 	../git
-	cd ${@D} && make -j`cat /proc/cpuinfo  | grep processor | wc -l`  # Use as many cores as you have.
+	if [ `arch` = "armv7l" ]; then \
+	cd ${@D} && make -j2; \
+	else \
+	cd ${@D} && make -j`cat /proc/cpuinfo  | grep processor | wc -l`; \
+	fi
 	touch $@
 
 # Aggravatingly, if you don't enable octree, io will just not build.
