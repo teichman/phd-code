@@ -61,24 +61,27 @@ bool similar(const Dataset& track0, const Dataset& track1, const GridClassifier&
   const NameMapping& dmap = track0.nameMapping("dmap");
 
   vector<string> dspaces;
-  // -- less-gravity
-  dspaces.push_back("OrientedBoundingBoxSize.BoundingBoxSize:14462707047095316535");
-  dspaces.push_back("CloudOrienter.Eigenvalues:12988381052486413110");
-  dspaces.push_back("CloudOrienter.RelativeCurvature:1286978089874286107");
-  dspaces.push_back("HSVHistogram.Hue:14694502210542588030");
-  dspaces.push_back("HSVHistogram.Saturation:10273388249095023270");
-  dspaces.push_back("HSVHistogram.Value:8985795375221662105");
-//  dspaces.push_back("SimpleTrajectoryStatistics05.Speed:6152030001663489947");
-  dspaces.push_back("SimpleTrajectoryStatistics10.Speed:9221731694321102499");
-  dspaces.push_back("EdginessEstimator.Edginess:6941314615084190538");
-
-  // -- old
-  // dspaces.push_back("OrientedBoundingBoxSize.BoundingBoxSize:9048624352072648104");  // BoundingBoxSize from GravitationalCloudOrienter.
-  // dspaces.push_back("CloudOrienter.Eigenvalues:12466250795116632929");
-  // dspaces.push_back("CloudOrienter.RelativeCurvature:11309880616745749126");
+  // -- less-gravity with Blob::Ptr
+  // dspaces.push_back("OrientedBoundingBoxSize.BoundingBoxSize:14462707047095316535");
+  // dspaces.push_back("CloudOrienter.Eigenvalues:12988381052486413110");
+  // dspaces.push_back("CloudOrienter.RelativeCurvature:1286978089874286107");
   // dspaces.push_back("HSVHistogram.Hue:14694502210542588030");
   // dspaces.push_back("HSVHistogram.Saturation:10273388249095023270");
   // dspaces.push_back("HSVHistogram.Value:8985795375221662105");
+  // dspaces.push_back("SimpleTrajectoryStatistics10.Speed:9221731694321102499");
+  // dspaces.push_back("EdginessEstimator.Edginess:6941314615084190538");
+
+  // -- less-gravity with Blob::ConstPtr
+  //    TODO: online_learning should have a SimilarityTester class which applies the logic
+  //    below with whatever descriptor spaces a user specifies.
+  dspaces.push_back("OrientedBoundingBoxSize.BoundingBoxSize:12128581193421816702");
+  dspaces.push_back("CloudOrienter.Eigenvalues:6198792747096408541");
+  dspaces.push_back("CloudOrienter.RelativeCurvature:15496457168725876226");
+  dspaces.push_back("HSVHistogram.Hue:14225771044352461861");
+  dspaces.push_back("HSVHistogram.Saturation:7223821915271586925");
+  dspaces.push_back("HSVHistogram.Value:15046389458041709312");
+  dspaces.push_back("SimpleTrajectoryStatistics10.Speed:10496021830416604330");
+  dspaces.push_back("EdginessEstimator.Edginess:12335766797991983889");
 
   int num_different_dspaces = 0;
   for(size_t i = 0; i < dspaces.size(); ++i) {

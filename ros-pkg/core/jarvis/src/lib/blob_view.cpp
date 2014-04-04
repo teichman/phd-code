@@ -67,7 +67,7 @@ void BlobView::keyboardCallback(const pcl::visualization::KeyboardEvent& event, 
 
 void BlobView::displayInstance(const Instance& instance, __attribute__((unused)) void* caller)
 {
-  Blob::Ptr blob = boost::any_cast<Blob::Ptr>(instance.raw());
+  Blob::ConstPtr blob = boost::any_cast<Blob::ConstPtr>(instance.raw());
   if(!blob->cloud_)
     blob->project();
   

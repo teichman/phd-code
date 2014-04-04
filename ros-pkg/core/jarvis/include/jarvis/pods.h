@@ -128,7 +128,7 @@ public:
   BlobProjector(std::string name) :
     Pod(name)
   {
-    declareInput<Blob::Ptr>("Blob");
+    declareInput<Blob::ConstPtr>("Blob");
     declareOutput<Blob::ConstPtr>("ProjectedBlob");
     declareOutput<CloudConstPtr>("Cloud");
     declareOutput<cv::Mat1b>("BinaryImage");  // 255 for filled, 0 for unfilled.

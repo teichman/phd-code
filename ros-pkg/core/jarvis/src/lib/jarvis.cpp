@@ -46,10 +46,10 @@ void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
   scopeLockRead;
 
   // -- Classify all blobs, add to cumulative predictions, and send messages for each.
-  map<size_t, Blob::Ptr>::const_iterator it;
+  map<size_t, Blob::ConstPtr>::const_iterator it;
   for(it = tracker_.tracks_.begin(); it != tracker_.tracks_.end(); ++it) {
     size_t id = it->first;
-    Blob::Ptr blob = it->second;
+    Blob::ConstPtr blob = it->second;
     ROS_ASSERT(blob);
     // Ignore tracks that don't have an update for this frame.
     if(blob->sensor_timestamp_ != fgmsg->sensor_timestamp)

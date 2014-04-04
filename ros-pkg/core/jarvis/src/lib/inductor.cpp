@@ -61,8 +61,8 @@ void Inductor::chunkHook(TrackDataset* td) const
     Dataset::Ptr track = td->tracks_[i];
     if(track->empty())
       continue;
-    Blob::Ptr first_blob = boost::any_cast<Blob::Ptr>((*track)[0].raw());
-    Blob::Ptr last_blob = boost::any_cast<Blob::Ptr>((*track)[track->size() - 1].raw());
+    Blob::ConstPtr first_blob = boost::any_cast<Blob::ConstPtr>((*track)[0].raw());
+    Blob::ConstPtr last_blob = boost::any_cast<Blob::ConstPtr>((*track)[track->size() - 1].raw());
     if(!first_blob->cloud_)
       first_blob->project(false);
     if(!last_blob->cloud_)

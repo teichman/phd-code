@@ -61,7 +61,7 @@ public:
   std::vector< std::vector<int> > indices_;
   uint64_t frame_id_;
   //! track ID, most recent Blob.
-  std::map<size_t, Blob::Ptr> tracks_;
+  std::map<size_t, Blob::ConstPtr> tracks_;
 
   Tracker(size_t max_track_length);
   void update(sentinel::ForegroundConstPtr msg);
@@ -81,7 +81,7 @@ protected:
   void reconstructForeground(sentinel::ForegroundConstPtr msg,
                              cv::Mat1f depth, cv::Mat1b foreground) const;
   // Projects the blobs if necessary.
-  double distance(Blob& prev, Blob& curr) const;
+  double distance(const Blob& prev, const Blob& curr) const;
 };
 
 void displayBlobs(const std::vector<Blob::ConstPtr>& blobs, cv::Mat3b img);

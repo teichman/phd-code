@@ -16,7 +16,7 @@ DescriptorPipeline::DescriptorPipeline() :
 
 void DescriptorPipeline::registerPodTypes()
 {
-  REGISTER_POD_TEMPLATE(EntryPoint, Blob::Ptr);
+  REGISTER_POD_TEMPLATE(EntryPoint, Blob::ConstPtr);
   REGISTER_POD(TrajectoryAccumulator);
   REGISTER_POD(TrajectoryStatistics);
   REGISTER_POD(SimpleTrajectoryStatistics);
@@ -59,7 +59,7 @@ void DescriptorPipeline::initialize(YAML::Node spec)
   pl_.deYAMLize(spec);
 }
 
-const vector<const VectorXf*>* DescriptorPipeline::computeDescriptors(Blob::Ptr blob)
+const vector<const VectorXf*>* DescriptorPipeline::computeDescriptors(Blob::ConstPtr blob)
 {
   pl_.push("BlobEntryPoint", blob);
   pl_.compute();
@@ -122,7 +122,7 @@ double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, E
       Dataset& track = (*td)[i];
       for(size_t j = 0; j < track.size(); ++j) {
         Instance& inst = track[j];
-        Blob::Ptr blob = boost::any_cast<Blob::Ptr>(inst.raw());
+        Blob::ConstPtr blob = boost::any_cast<Blob::ConstPtr>(inst.raw());
 
         // -- Run the pipeline.
         const vector<const VectorXf*>* descriptors = dp.computeDescriptors(blob);

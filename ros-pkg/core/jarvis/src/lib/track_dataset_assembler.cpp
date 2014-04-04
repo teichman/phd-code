@@ -24,7 +24,7 @@ TrackDatasetAssembler::TrackDatasetAssembler(std::string output_directory, size_
   serializer_.launch();
 }
 
-void TrackDatasetAssembler::update(const std::map<size_t, Blob::Ptr>& tracked_blobs)
+void TrackDatasetAssembler::update(const std::map<size_t, Blob::ConstPtr>& tracked_blobs)
 {
   //ScopedTimer st(__PRETTY_FUNCTION__);
   // cout << "Got " << tracked_blobs.size() << " new blobs.  Have " << tracks_.size() << " in TDA." << endl;
@@ -32,22 +32,22 @@ void TrackDatasetAssembler::update(const std::map<size_t, Blob::Ptr>& tracked_bl
   set<size_t> updated;
 
   // -- Update tracks_ with tracked_blobs contents.
-  map<size_t, Blob::Ptr>::const_iterator bit;
+  map<size_t, Blob::ConstPtr>::const_iterator bit;
   for(bit = tracked_blobs.begin(); bit != tracked_blobs.end(); ++bit) {
     // If we have a track with this id, add the blob to that track.
     // Otherwise create a new track with this id and initialize it with just this blob.
     size_t id = bit->first;
-    Blob::Ptr blob = bit->second;
+    Blob::ConstPtr blob = bit->second;
     tracks_[id].push_back(blob);
     updated.insert(id);
   }
 
   // -- Check tracks_ for tracks that should be moved to td_.
-  map<size_t, vector<Blob::Ptr> >::iterator it;
+  map<size_t, vector<Blob::ConstPtr> >::iterator it;
   vector<size_t> to_delete;
   for(it = tracks_.begin(); it != tracks_.end(); ++it) {
     size_t id = it->first;
-    const vector<Blob::Ptr>& track = it->second;
+    const vector<Blob::ConstPtr>& track = it->second;
     ROS_ASSERT(track.size() <= max_track_length_);
     
     // Tracks that didn't get updated should either be added to td_ or forgotten.
@@ -80,7 +80,7 @@ void TrackDatasetAssembler::update(const std::map<size_t, Blob::Ptr>& tracked_bl
 }
 
 
-void TrackDatasetAssembler::append(const std::vector<Blob::Ptr>& track)
+void TrackDatasetAssembler::append(const std::vector<Blob::ConstPtr>& track)
 {
   Dataset::Ptr dataset(new Dataset);
   
@@ -88,7 +88,7 @@ void TrackDatasetAssembler::append(const std::vector<Blob::Ptr>& track)
   for(size_t i = 0; i < track.size(); ++i) {
     dataset->instances_[i].set_raw(*track[i].get());
     // Clear the projected data because we do not need that anymore.
-    Blob& blob = *boost::any_cast<Blob::Ptr>(dataset->instances_[i].raw());
+    const Blob& blob = *boost::any_cast<Blob::ConstPtr>(dataset->instances_[i].raw());
     blob.clearProjected();
   }
 
@@ -103,9 +103,9 @@ void TrackDatasetAssembler::append(const std::vector<Blob::Ptr>& track)
 void TrackDatasetAssembler::flush()
 {
   // -- Move any valid tracks to td_, then clear tracks_.
-  map<size_t, vector<Blob::Ptr> >::iterator it;
+  map<size_t, vector<Blob::ConstPtr> >::iterator it;
   for(it = tracks_.begin(); it != tracks_.end(); ++it) {
-    const vector<Blob::Ptr>& track = it->second;
+    const vector<Blob::ConstPtr>& track = it->second;
     ROS_ASSERT(track.size() <= max_track_length_);
     if(track.size() > min_track_length_)
       append(track);

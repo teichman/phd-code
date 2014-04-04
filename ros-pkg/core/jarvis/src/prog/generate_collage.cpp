@@ -21,7 +21,7 @@ public:
 
   cv::Mat3b visualize(const Instance& inst)
   {
-    const Blob& blob = *boost::any_cast<Blob::Ptr>(inst.raw());
+    const Blob& blob = *boost::any_cast<Blob::ConstPtr>(inst.raw());
     cv::Mat3b img = blob.image();
     // TODO:  Don't hardcode this.
     cv::flip(img, img, -1);  // Flip both x and y.

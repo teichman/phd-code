@@ -56,7 +56,7 @@ JarvisTwiddler::JarvisTwiddler(vector<TrackDataset> datasets,
 bool JarvisTwiddler::isRequired(Pod* pod)
 {
   return (
-    dynamic_cast< EntryPoint<Blob::Ptr>* >(pod) ||
+    dynamic_cast< EntryPoint<Blob::ConstPtr>* >(pod) ||
     dynamic_cast<DescriptorAggregator*>(pod)
     );
 }

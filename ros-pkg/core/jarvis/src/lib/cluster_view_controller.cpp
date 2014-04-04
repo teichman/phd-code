@@ -50,9 +50,11 @@ void ClusterBlobView::display() {
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   for(Dataset::Ptr t : td_->tracks_) {
+    ROS_ASSERT(t);
+    ROS_ASSERT(t->instances_.size() > 0);
     size_t frame = min(instance_displayed_, t->instances_.size()-1);
-    Blob::Ptr blob = boost::any_cast<Blob::Ptr>(
-        t->instances_[frame].raw());
+    Blob::ConstPtr blob = boost::any_cast<Blob::ConstPtr>(
+      t->instances_[frame].raw());
     ROS_ASSERT(blob.get() != NULL);
     img.resize(blob->width_ * blob->height_ * 4);
     tex.Resize(GL_RGBA, blob->width_, blob->height_);

@@ -17,7 +17,7 @@ public:
   static std::string defaultSpecificationPath();
   static YAML::Node defaultSpecification();
   static void registerPodTypes();
-  const std::vector<const Eigen::VectorXf*>* computeDescriptors(Blob::Ptr blob);
+  const std::vector<const Eigen::VectorXf*>* computeDescriptors(Blob::ConstPtr blob);
   std::string reportTiming() const { return pl_.reportTiming(); }
   // It turns out this is really slow.  Use wisely.
   NameMapping dmap() const { return pl_.pod<DescriptorAggregator>()->dmap(); }

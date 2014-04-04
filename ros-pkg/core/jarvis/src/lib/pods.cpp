@@ -244,7 +244,7 @@ void TrajectoryStatistics::debug() const
 
 void BlobProjector::compute()
 {
-  Blob::Ptr blob = pull<Blob::Ptr>("Blob");
+  Blob::ConstPtr blob = pull<Blob::ConstPtr>("Blob");
   if(!blob->cloud_)
     blob->project();
 

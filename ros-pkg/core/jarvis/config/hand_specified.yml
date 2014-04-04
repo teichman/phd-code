@@ -4,7 +4,7 @@ GlobalParams:
 Pipeline:
   Pods:
     - Name: BlobEntryPoint
-      Type: EntryPoint<Blob::Ptr>
+      Type: EntryPoint<Blob::ConstPtr>
       Params: ~
       Inputs: ~
     - Name: BlobProjector

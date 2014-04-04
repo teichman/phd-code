@@ -4,7 +4,7 @@ CustomSerializer::Ptr Instance::custom_serializer_ = CustomSerializer::Ptr(new B
 
 void BlobSerializer::serialize(const boost::any& raw, std::ostream& out) const
 {
-  Blob::Ptr blob = boost::any_cast<Blob::Ptr>(raw);
+  Blob::ConstPtr blob = boost::any_cast<Blob::ConstPtr>(raw);
   blob->serialize(out);
 }
 
@@ -12,6 +12,7 @@ void BlobSerializer::deserialize(std::istream& in, boost::any* raw) const
 {
   Blob::Ptr blob(new Blob);
   blob->deserialize(in);
-  *raw = blob;
+  Blob::ConstPtr cp = blob;
+  *raw = cp;
 }
 

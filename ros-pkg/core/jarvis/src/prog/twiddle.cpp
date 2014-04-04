@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     Pipeline dp(1);
     dp.deYAMLize(config["Pipeline"]);
     cout << dp.pod<DescriptorAggregator>()->dmap() << endl;
-    ROS_ASSERT(JarvisTwiddler::isRequired(dp.pod< EntryPoint<Blob::Ptr> >()));
+    ROS_ASSERT(JarvisTwiddler::isRequired(dp.pod< EntryPoint<Blob::ConstPtr> >()));
   }
 
   // We don't want decimate to get a different split every time.

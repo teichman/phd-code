@@ -237,7 +237,7 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
 
   // -- Construct blobs.
   hrt.reset("Blob construction"); hrt.start();
-  vector<Blob::Ptr> current_blobs;
+  vector<Blob::ConstPtr> current_blobs;
   for(size_t i = 0; i < indices_.size(); ++i) {
     Blob::Ptr blob(new Blob);
     blob->frame_id_ = msg->frame_id;
@@ -276,7 +276,7 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
   if(!tracks_.empty() && !current_blobs.empty()) {
     // Compute pairwise distances.
     MatrixXd distances = MatrixXd::Zero(tracks_.size(), current_blobs.size());
-    map<size_t, Blob::Ptr>::iterator it;
+    map<size_t, Blob::ConstPtr>::iterator it;
     size_t r = 0;
     for(it = tracks_.begin(); it != tracks_.end(); ++it, ++r) {
       track_indices[r] = it->first;
@@ -311,7 +311,7 @@ void Tracker::update(sentinel::ForegroundConstPtr msg)
   // -- Delete old and unmatched tracks.
   // vector<size_t> to_erase;
   // to_erase.reserve(tracks_.size());
-  // map<size_t, Blob::Ptr>::iterator it;
+  // map<size_t, Blob::ConstPtr>::iterator it;
   // for(it = tracks_.begin(); it != tracks_.end(); ++it)
   //   if(msg->header.stamp.toSec() - it->second->wall_timestamp_.toSec() > 1.0)
   //     to_erase.push_back(it->first);
@@ -396,7 +396,7 @@ void Tracker::reconstructForeground(sentinel::Foreground::ConstPtr msg,
         foreground(y, x) = 255;
 }
 
-double Tracker::distance(Blob& prev, Blob& curr) const
+double Tracker::distance(const Blob& prev, const Blob& curr) const
 {
   if(!prev.cloud_ || !prev.kdtree_)
     prev.project();
@@ -472,7 +472,7 @@ void Tracker::draw(cv::Mat3b img, bool track_classification_colors,
                    const std::map<size_t, DiscreteBayesFilter>& filters) const
 {
   // -- Draw the points.
-  map<size_t, Blob::Ptr>::const_iterator it;
+  map<size_t, Blob::ConstPtr>::const_iterator it;
   for(it = tracks_.begin(); it != tracks_.end(); ++it) {
     size_t track_id = it->first;
     const Blob& blob = *it->second;
