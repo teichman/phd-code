@@ -20,7 +20,7 @@ void Blob::coords(size_t idx, int* u, int* v) const
   *u = indices_[idx] - *v * width_;
 }
 
-void Blob::project(bool compute_kdtree)
+void Blob::project(bool compute_kdtree) const
 {
   cloud_ = Cloud::Ptr(new Cloud);
   cloud_->reserve(indices_.size());
@@ -55,7 +55,7 @@ void Blob::project(bool compute_kdtree)
   }
 }
 
-void Blob::clearProjected()
+void Blob::clearProjected() const
 {
   cloud_.reset();
   kdtree_.reset();

@@ -25,24 +25,27 @@ public:
   std::vector<uint8_t> color_;
   std::vector<float> depth_;
 
-  //! idx indexes into indices_.
-  void coords(size_t idx, int* u, int* v) const;
-  
   //! Fills cloud_, centroid_, and kdtree_ from the indices_, color_, and depth_ data.
   //! You'll have to redo this if you save and then load.
-  void project(bool compute_kdtree = true);
-  void clearProjected();
+  //! mutable because these are for caching.  Kind of gross, and led to some confusion
+  //! about memory usage in the past.  Might be better to just use a function that
+  //! computes these whenever necessary, without caching.
+  void project(bool compute_kdtree = true) const;
+  //! These functions being const really makes me uncomfortable.
+  void clearProjected() const;
+  mutable boost::shared_ptr<Cloud> cloud_;
+  mutable boost::shared_ptr<KdTree> kdtree_;
+  mutable Eigen::Vector3f centroid_;
   
-  boost::shared_ptr<Cloud> cloud_;
-  boost::shared_ptr<KdTree> kdtree_;
-  Eigen::Vector3f centroid_;
-
-  void serialize(std::ostream& out) const;
-  void deserialize(std::istream& in);
+  //! idx indexes into indices_.
+  void coords(size_t idx, int* u, int* v) const;
   //! Reconstructs an image showing the object.  Variable size.
   cv::Mat3b image() const;
   //! Reconstructs an image showing the object.  Variable size.
   cv::Mat3b depthImage() const;
+
+  void serialize(std::ostream& out) const;
+  void deserialize(std::istream& in);
 };
 
 //! Takes FG messages, outputs Blobs with track ids.
