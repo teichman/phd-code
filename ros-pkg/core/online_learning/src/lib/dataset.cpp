@@ -256,7 +256,6 @@ void Instance::deserialize(std::istream& in, const std::string &filename)
   if(custom_serializer_name == "ReferenceSavingCustomSerializer") {
     getline(in, raw_ref_.td_filename_);
     eigen_extensions::deserializeScalar<uint64_t>(in, &raw_ref_.file_offset_);
-    raw_ref_.data_loadable_ = true;
     ROS_ASSERT(raw_ref_.valid());
   }
   else if(custom_serializer_->name() == "EmptyCustomSerializer" ||
@@ -357,7 +356,6 @@ void Instance::clearRaw()
 {
   boost::any empty;
   raw_.swap(empty);
-  raw_ref_.data_loadable_ = true;
 }
 
 void Instance::makeLightweight(const std::string& td_path)

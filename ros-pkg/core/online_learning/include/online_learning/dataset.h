@@ -14,12 +14,13 @@ class CustomSerializer;
 // in external storage. To be used for on-demand loading.
 struct StorageReference {
   StorageReference() :
-      data_loadable_(false), td_filename_(""), file_offset_(0) {}
+    td_filename_(""), file_offset_(0) {}
 
-  bool data_loadable_;  // true when there is additional data still loadable
   std::string td_filename_;
   uint64_t file_offset_;
 
+  // Whether StorageReference can be used to load data from disk or not.
+  // raw_.empty() is used to determine if the raw data *has* been loaded from disk.
   bool valid() const { return (td_filename_ != ""); }
 };
 
