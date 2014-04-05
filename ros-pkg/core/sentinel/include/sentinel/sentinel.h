@@ -94,6 +94,9 @@ struct ImageSerializer
 class ROSStreamingSentinel : public Sentinel
 {
 public:
+  //! Puts ROSStreamingSentinel into a barebones mode for speed.
+  bool arm_;
+  
   ROSStreamingSentinel(std::string sensor_id,
                        std::string recording_dir,
                        double update_interval,

@@ -39,6 +39,7 @@ int main(int argc, char** argv)
     ("visualize", "Show extra visualization")
     ("record-all-motion", "")
     ("recording-dir", bpo::value(&recording_dir)->required(), "Directory to save recordings to")
+    ("arm", "Barebones version for ARM devices.")
     ;
 
   p.add("sensor-id", 1);
@@ -83,6 +84,8 @@ int main(int argc, char** argv)
                            detection_threshold, opts.count("visualize"),
                            opts.count("record-all-motion"),
                            color_res, depth_res);
+
+  sen.arm_ = opts.count("arm");
 
   #if JARVIS_PROFILE
   ProfilerStart("sentinel.prof");

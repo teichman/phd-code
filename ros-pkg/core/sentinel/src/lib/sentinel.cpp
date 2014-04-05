@@ -167,6 +167,7 @@ ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
                                            OpenNI2Interface::Resolution depth_res) :
   Sentinel(update_interval, occupancy_threshold, raytracing_threshold,
            detection_threshold, visualize, color_res, depth_res),
+  arm_(false),
   sensor_id_(sensor_id),
   recording_dir_(recording_dir),
   bg_index_x_(0),
@@ -174,7 +175,8 @@ ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
   it_(nh_),
   record_all_motion_(record_all_motion)
 {
-  img_pub_ = it_.advertise("image", 1);
+  if(!arm_) 
+    img_pub_ = it_.advertise("image", 1);
   
   fg_pub_ = nh_.advertise<sentinel::Foreground>("foreground", 0);
   bg_pub_ = nh_.advertise<sentinel::Background>("background", 0);
@@ -332,10 +334,12 @@ void ROSStreamingSentinel::handleNonDetection(openni::VideoFrameRef color,
   bg_pub_.publish(bgmsg_);
 
   // -- Send the video stream.
-  cv_img_.encoding = "bgr8";
-  cv_img_.image = oniToCV(color);
-  cv_img_.header.stamp.fromSec(wall_timestamp);
-  img_pub_.publish(cv_img_.toImageMsg());
+  if(!arm_) { 
+    cv_img_.encoding = "bgr8";
+    cv_img_.image = oniToCV(color);
+    cv_img_.header.stamp.fromSec(wall_timestamp);
+    img_pub_.publish(cv_img_.toImageMsg());
+  }
 }
 
 void ROSStreamingSentinel::handleDetection(openni::VideoFrameRef color,
@@ -404,6 +408,9 @@ void ROSStreamingSentinel::processHook(openni::VideoFrameRef color,
                                        openni::VideoFrameRef depth,
                                        double wall_timestamp)
 {
+  if(arm_)
+    return;
+  
   // -- If we're recording all motion, don't use the fancy per-class recording facilities.
   if(record_all_motion_)
     return;
