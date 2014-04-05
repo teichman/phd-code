@@ -12,6 +12,7 @@
               --sensor-id default_sensor_id
               --occupancy-threshold $(arg occupancy-threshold)
               --recording-dir $(arg recording-directory)
+              --arm $(arg arm)
               "/>
   
 </launch>

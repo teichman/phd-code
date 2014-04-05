@@ -27,6 +27,7 @@ int main(int argc, char** argv)
   string color_resolution;
   string depth_resolution;
   string recording_dir;
+  bool arm;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("sensor-id", bpo::value(&sensor_id), "e.g. xpl07")
@@ -39,7 +40,7 @@ int main(int argc, char** argv)
     ("visualize", "Show extra visualization")
     ("record-all-motion", "")
     ("recording-dir", bpo::value(&recording_dir)->required(), "Directory to save recordings to")
-    ("arm", "Barebones version for ARM devices.")
+    ("arm", bpo::value(&arm)->default_value(false), "Barebones version for ARM devices.")
     ;
 
   p.add("sensor-id", 1);
@@ -85,7 +86,9 @@ int main(int argc, char** argv)
                            opts.count("record-all-motion"),
                            color_res, depth_res);
 
-  sen.arm_ = opts.count("arm");
+  sen.arm_ = arm;
+  if(sen.arm_)
+    cout << "Using barebones ARM version." << endl;
 
   #if JARVIS_PROFILE
   ProfilerStart("sentinel.prof");
