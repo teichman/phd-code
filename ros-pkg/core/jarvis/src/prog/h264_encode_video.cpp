@@ -1,9 +1,10 @@
+#include <iostream>
+#include <fstream>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <bag_of_tricks/glob.h>
 #include <jarvis/compression_helpers.h>
-#include <fstream>
 
 using namespace std;
 namespace bfs = boost::filesystem;
