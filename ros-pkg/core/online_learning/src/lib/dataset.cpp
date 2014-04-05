@@ -341,7 +341,6 @@ size_t Instance::numBytes() const
 boost::any& Instance::raw() const
 {
   if(raw_.empty() && raw_ref_.valid()) {
-    //cout << "loading instance from " << raw_ref_.td_filename_ << " at offset " << raw_ref_.file_offset_ << endl;
     ifstream f;
     f.open(raw_ref_.td_filename_.c_str());
     ROS_ASSERT(f.is_open());

@@ -122,6 +122,7 @@ double updateDescriptors(YAML::Node plspec, int num_threads, TrackDataset* td, E
       Dataset& track = (*td)[i];
       for(size_t j = 0; j < track.size(); ++j) {
         Instance& inst = track[j];
+        ROS_ASSERT(!inst.raw().empty());
         Blob::ConstPtr blob = boost::any_cast<Blob::ConstPtr>(inst.raw());
 
         // -- Run the pipeline.

@@ -28,6 +28,16 @@ void ClusterBlobView::displayCluster(TrackDataset::Ptr td)
   cout << "  Displaying cluster with " << td->size() << " tracks." << endl;
   scopeLockWrite;
   td_ = td;
+
+  // Check for empty tracks.  This shouldn't be happening but appears to be anyway.
+  int num_empty = 0;
+  for(Dataset::Ptr track : td_->tracks_) {
+    ROS_ASSERT(track);
+    if(track->empty())
+      ++num_empty;
+  }
+  if(num_empty > 0)
+    ROS_WARN_STREAM("ClusterBlobView received a cluster that contains " << num_empty << " empty tracks.");
 }
 
 void ClusterBlobView::displayMessage(const std::string& message)
@@ -51,7 +61,9 @@ void ClusterBlobView::display() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
   for(Dataset::Ptr t : td_->tracks_) {
     ROS_ASSERT(t);
-    ROS_ASSERT(t->instances_.size() > 0);
+    if(t->instances_.empty())
+      continue;
+
     size_t frame = min(instance_displayed_, t->instances_.size()-1);
     Blob::ConstPtr blob = boost::any_cast<Blob::ConstPtr>(
       t->instances_[frame].raw());
