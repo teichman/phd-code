@@ -11,6 +11,7 @@ source:
 	mkdir -p $@
 	cd $@ && wget http://downloads.sourceforge.net/project/opencvlibrary/opencv-unix/2.4.0/OpenCV-2.4.0.tar.bz2
 	cd $@ && tar xvjf OpenCV-2.4.0.tar.bz2
+	cd $@ && patch -p0 <../opencv-jarvis.patch
 
 clean:
 	-cd source/OpenCV-2.4.0/release && make clean

@@ -1,0 +1,50 @@
+--- OpenCV-2.4.0/modules/highgui/src/cap_ffmpeg_impl.hpp	2012-04-30 12:40:29.000000000 -0700
++++ OpenCV-2.4.0-patched/modules/highgui/src/cap_ffmpeg_impl.hpp	2014-04-04 22:16:50.590652959 -0700
+@@ -838,7 +838,11 @@
+ 
+ /* function internal to FFMPEG (libavformat/riff.c) to lookup codec id by fourcc tag*/
+ extern "C" {
++#ifdef CodecID
+     enum CodecID codec_get_bmp_id(unsigned int tag);
++#else
++    enum AVCodecID codec_get_bmp_id(unsigned int tag);
++#endif
+ }
+ 
+ void CvVideoWriter_FFMPEG::init()
+@@ -890,7 +894,11 @@
+ 
+ /* add a video output stream to the container */
+ static AVStream *icv_add_video_stream_FFMPEG(AVFormatContext *oc,
++#ifdef CodecID
+                                              CodecID codec_id,
++#else
++                                             AVCodecID codec_id,
++#endif
+                                              int w, int h, int bitrate,
+                                              double fps, int pixel_format)
+ {
+@@ -922,7 +930,11 @@
+     c->codec_id = oc->oformat->video_codec;
+ #endif
+ 
++#ifdef CODEC_ID_NONE
+     if(codec_id != CODEC_ID_NONE){
++#else
++    if(codec_id != AV_CODEC_ID_NONE){
++#endif
+         c->codec_id = codec_id;
+     }
+ 
+@@ -1269,7 +1281,11 @@
+ {
+     icvInitFFMPEG_internal();
+     
++#ifdef CodecID
+     CodecID codec_id = CODEC_ID_NONE;
++#else
++    AVCodecID codec_id = AV_CODEC_ID_NONE;
++#endif
+     int err, codec_pix_fmt;
+     double bitrate_scale = 1;
+ 
