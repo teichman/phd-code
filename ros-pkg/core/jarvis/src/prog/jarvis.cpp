@@ -48,10 +48,11 @@ int main(int argc, char** argv)
   cout << "Using vis_level " << vis_level << " and rotation " << rotation << endl;
  
   Jarvis jarvis(vis_level, rotation, output_directory, opts.count("video"));
-  if(output_directory != "")
+  if(output_directory != "") {
     cout << "Saving TD files to \"" << output_directory << "\"" << endl;
-  if(!bfs::exists(output_directory))
-    bfs::create_directory(output_directory);
+    if(!bfs::exists(output_directory))
+      bfs::create_directory(output_directory);
+  }
 
   // Load the DescriptorPipeline.
   jarvis.dp_ = DescriptorPipeline::Ptr(new DescriptorPipeline);
