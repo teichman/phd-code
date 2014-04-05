@@ -11,7 +11,7 @@ all: installed
 include $(shell rospack find mk)/download_unpack_build.mk
 
 installed: $(SOURCE_DIR)/unpacked
-	cd $(SOURCE_DIR) && ./configure --enable-frame-pointers && make -j$(cat /proc/cpuinfo  | grep processor | wc -l)
+	cd $(SOURCE_DIR) && ./configure --enable-frame-pointers && make -j`cat /proc/cpuinfo  | grep processor | wc -l`
 	mkdir -p bin
 	cp $(SOURCE_DIR)/src/pprof bin/ #Can't symlink or rosrun won't accept it.
 	touch $@
