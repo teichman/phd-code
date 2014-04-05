@@ -113,8 +113,7 @@ protected:
   void applyLabel();
   void getNextUnlabeledDatasetPath();
   void loadNextUnlabeledDataset();
-  void clusterSimilarTracks(TrackDataset *new_td,
-                            const Dataset &ref);
+  void clusterSimilarTracks(const TrackDataset& td, const Dataset& track) const;
 };
 
 class InductionViewController : public TrackViewControllerBase

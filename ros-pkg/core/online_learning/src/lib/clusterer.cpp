@@ -60,6 +60,9 @@ bool similar(const Dataset& track0, const Dataset& track1, const GridClassifier&
   ROS_ASSERT(track0.nameMappingsAreEqual(track1));
   const NameMapping& dmap = track0.nameMapping("dmap");
 
+  if(track0.empty() || track1.empty())
+    return false;
+
   vector<string> dspaces;
   // -- less-gravity with Blob::Ptr
   // dspaces.push_back("OrientedBoundingBoxSize.BoundingBoxSize:14462707047095316535");
