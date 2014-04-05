@@ -337,8 +337,8 @@ void H264CompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
   ctx->i_quant_factor = 0.71;
   ctx->qcompress = 0.6;
   ctx->max_qdiff = 4;
-  ctx->directpred = 1;
 #if LIBAVCODEC_VERSION_MAJOR<=53
+  ctx->directpred = 1;
   ctx->flags2 |= CODEC_FLAG2_FASTPSKIP;
 #endif
 
@@ -457,9 +457,9 @@ size_t H264CompressionTest::decompressChunk(const std::vector<uint8_t>& data,
   // See video_decode_example().
   //AVCodec* codec = avcodec_find_decoder(CODEC_ID_MPEG1VIDEO);
 #if LIBAVCODEC_VERSION_MAJOR<=53
-  AVCodec *codec_ = avcodec_find_decoder(CODEC_ID_H264);
+  AVCodec *codec = avcodec_find_decoder(CODEC_ID_H264);
 #else  
-  AVCodec *codec_ = avcodec_find_decoder(AV_CODEC_ID_H264);
+  AVCodec *codec = avcodec_find_decoder(AV_CODEC_ID_H264);
 #endif
   ROS_ASSERT(codec);
   AVCodecContext* ctx = avcodec_alloc_context3(codec);

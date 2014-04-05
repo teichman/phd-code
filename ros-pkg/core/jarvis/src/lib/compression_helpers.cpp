@@ -37,10 +37,10 @@ void H264Encoder::initialize(int width, int height)
   ctx_ = avcodec_alloc_context3(codec_);
   ROS_ASSERT(ctx_);
 
-#ifndef CODEC_ID_264
-  ctx_->codec_id = (AVCodecID)AV_CODEC_ID_H264;
-#else
+#if LIBAVCODEC_VERSION_MAJOR<=53
   ctx_->codec_id = (CodecID)CODEC_ID_H264;
+#else
+  ctx_->codec_id = (AVCodecID)AV_CODEC_ID_H264;
 #endif
   ctx_->width = width;
   ctx_->height = height;
