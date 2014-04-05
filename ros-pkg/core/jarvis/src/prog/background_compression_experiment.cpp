@@ -292,14 +292,20 @@ size_t JPGCompressionTest::decompressImage(const std::vector<uint8_t>& data,
 void H264CompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
                                          std::vector<uint8_t>* data)
 {
+#if LIBAVCODEC_VERSION_MAJOR<=53
   avcodec_init(); 
+#endif
   avcodec_register_all();
   av_log_set_level(-1);
   
   // -- Set up AVCodec.
   //    See video_encode_example in libav.
   //AVCodec* codec = avcodec_find_encoder(CODEC_ID_FFV1);
-  AVCodec* codec = avcodec_find_encoder(CODEC_ID_H264);
+#if LIBAVCODEC_VERSION_MAJOR<=53
+  AVCodec *codec = avcodec_find_encoder(CODEC_ID_H264);
+#else  
+  AVCodec *codec = avcodec_find_encoder(AV_CODEC_ID_H264);
+#endif
   //AVCodec* codec = avcodec_find_encoder(CODEC_ID_MPEG1VIDEO);
   ROS_ASSERT(codec);
 
@@ -332,7 +338,9 @@ void H264CompressionTest::compressChunk(const std::vector<cv::Mat3b>& color,
   ctx->qcompress = 0.6;
   ctx->max_qdiff = 4;
   ctx->directpred = 1;
+#if LIBAVCODEC_VERSION_MAJOR<=53
   ctx->flags2 |= CODEC_FLAG2_FASTPSKIP;
+#endif
 
   int err = avcodec_open2(ctx, codec, NULL);
   if(err < 0) {
@@ -448,7 +456,11 @@ size_t H264CompressionTest::decompressChunk(const std::vector<uint8_t>& data,
 {
   // See video_decode_example().
   //AVCodec* codec = avcodec_find_decoder(CODEC_ID_MPEG1VIDEO);
-  AVCodec* codec = avcodec_find_decoder(CODEC_ID_H264);
+#if LIBAVCODEC_VERSION_MAJOR<=53
+  AVCodec *codec_ = avcodec_find_decoder(CODEC_ID_H264);
+#else  
+  AVCodec *codec_ = avcodec_find_decoder(AV_CODEC_ID_H264);
+#endif
   ROS_ASSERT(codec);
   AVCodecContext* ctx = avcodec_alloc_context3(codec);
   AVFrame* frame = avcodec_alloc_frame();

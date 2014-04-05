@@ -21,17 +21,27 @@ H264Encoder::H264Encoder(int fps, int bitrate) :
 
 void H264Encoder::initialize(int width, int height)
 {
+#if LIBAVCODEC_VERSION_MAJOR<=53
   avcodec_init(); 
+#endif
   avcodec_register_all();
   av_log_set_level(-1);
 
+#if LIBAVCODEC_VERSION_MAJOR<=53
   codec_ = avcodec_find_encoder(CODEC_ID_H264);
+#else  
+  codec_ = avcodec_find_encoder(AV_CODEC_ID_H264);
+#endif
   ROS_ASSERT(codec_);
 
   ctx_ = avcodec_alloc_context3(codec_);
   ROS_ASSERT(ctx_);
 
+#ifndef CODEC_ID_264
+  ctx_->codec_id = (AVCodecID)AV_CODEC_ID_H264;
+#else
   ctx_->codec_id = (CodecID)CODEC_ID_H264;
+#endif
   ctx_->width = width;
   ctx_->height = height;
   ctx_->time_base = (AVRational){1, fps_};
@@ -84,8 +94,10 @@ void H264Encoder::initialize(int width, int height)
   ctx_->i_quant_factor = 0.71;
   ctx_->qcompress = 0.6;
   ctx_->max_qdiff = 4;
+#if LIBAVCODEC_VERSION_MAJOR<=53
   ctx_->directpred = 1;
   ctx_->flags2 |= CODEC_FLAG2_FASTPSKIP;
+#endif
 
   int err = avcodec_open2(ctx_, codec_, NULL);
   if(err < 0) {
