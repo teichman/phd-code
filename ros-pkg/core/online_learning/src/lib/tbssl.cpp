@@ -233,7 +233,7 @@ void OnlineLearner::loadSavedAnnotations()
     ROS_ASSERT(leaf.substr(0, 4) == "iter");
     string numstr = leaf.substr(4);
     size_t num = atoi(numstr.c_str());
-    if(num == iter_) {
+    if((int)num == iter_) {
       iter_dir = iter_dirs[i];
       break;
     }

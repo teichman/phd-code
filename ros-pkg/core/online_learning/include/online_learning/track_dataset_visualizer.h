@@ -113,7 +113,7 @@ protected:
   void applyLabel();
   void getNextUnlabeledDatasetPath();
   void loadNextUnlabeledDataset();
-  void ClusterSimilarTracks(TrackDataset *new_td,
+  void clusterSimilarTracks(TrackDataset *new_td,
                             const Dataset &ref);
 };
 

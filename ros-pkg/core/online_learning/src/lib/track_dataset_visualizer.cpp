@@ -545,7 +545,7 @@ void ActiveLearningViewController::loadNextUnlabeledDataset()
   getNextUnlabeledDatasetPath();
 }
 
-void ActiveLearningViewController::ClusterSimilarTracks(TrackDataset *new_td,
+void ActiveLearningViewController::clusterSimilarTracks(TrackDataset *new_td,
                                                         const Dataset &ref) {
   TrackDataset::Ptr clustered_(new TrackDataset());
   cout << "classifying " << new_td->tracks_.size() << " tracks..." << endl;
@@ -581,7 +581,7 @@ bool ActiveLearningViewController::handleKeypress(const pcl::visualization::Keyb
     loadNextUnlabeledDataset();
     break;
   case 'c':
-    ClusterSimilarTracks(td_.get(), *td_->tracks_[index_[tidx_]].get());
+    clusterSimilarTracks(td_.get(), *td_->tracks_[index_[tidx_]].get());
     break;
   case ' ':
     learner_->togglePaused();
