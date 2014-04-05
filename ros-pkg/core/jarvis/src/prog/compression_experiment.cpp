@@ -269,7 +269,7 @@ size_t SingleFrameCompression::decompressTrack(const std::vector<uint8_t>& data,
   for(size_t i = 0; i < track->size(); ++i) {
     Blob::Ptr blob(new Blob);
     idx = decompress(data, idx, blob.get());
-    track->instances_[i].set_raw(blob);
+    track->instances_[i].setRaw(blob);
   }
 
   return idx;

@@ -164,7 +164,7 @@ void OnlineLearner::updateViewableUnsupervised()
     for(size_t j = 0; j < vtrack.size(); ++j) {
       // This should be a shared_ptr of some sort and
       // thus free to copy.
-      vtrack[j].set_raw(utrack[j].raw());
+      vtrack[j].setRaw(utrack[j].raw());
       // If not inducted, set the label to zero.
       // Otherwise use the classifier track prediction.
       if((utrack[j].label_.array() == 0).all())

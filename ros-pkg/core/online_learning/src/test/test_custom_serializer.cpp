@@ -39,7 +39,7 @@ TEST(CustomSerializer, CustomSerializer)
   // -- Add some custom data.
   int idx = 0;
   for(size_t i = 0; i < dataset->size(); ++i, ++idx)
-    (*dataset)[i].set_raw(idx);
+    (*dataset)[i].setRaw(idx);
 
   // -- Serialize using custom serializer set above.
   dataset->save("augmented_dataset");
@@ -93,7 +93,7 @@ TEST(CustomSerializer, ReadOnlyEmptyCustomSerializerDeathTest)
   // -- Add some custom data.
   int idx = 0;
   for(size_t i = 0; i < dataset->size(); ++i, ++idx)
-    (*dataset)[i].set_raw(idx);
+    (*dataset)[i].setRaw(idx);
 
   // -- Serialize using custom serializer set above.
   dataset->save("augmented_dataset");

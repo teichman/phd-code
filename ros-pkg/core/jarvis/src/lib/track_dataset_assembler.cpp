@@ -86,7 +86,7 @@ void TrackDatasetAssembler::append(const std::vector<Blob::ConstPtr>& track)
   
   dataset->instances_.resize(track.size());
   for(size_t i = 0; i < track.size(); ++i) {
-    dataset->instances_[i].set_raw(*track[i].get());
+    dataset->instances_[i].setRaw(*track[i].get());
     // Clear the projected data because we do not need that anymore.
     const Blob& blob = *boost::any_cast<Blob::ConstPtr>(dataset->instances_[i].raw());
     blob.clearProjected();

@@ -136,7 +136,7 @@ public:
   // Load raw on demand from disk when necessary
   boost::any& raw() const;
   template<typename ValueType>
-  void set_raw(const ValueType &data) { raw_ = data; }
+  void setRaw(const ValueType &data) { raw_ = data; }
   void clearRaw();
   void makeLightweight(const std::string& td_path);
 
