@@ -10,6 +10,7 @@
   <!-- Track & classify objects.  Also save tracks to TD files.  -->
   <!-- Right now this program only works with a single sentinel.  -->
   <node name="jarvis" pkg="jarvis" type="jarvis"
+        launch-prefix="gdb -ex run --args"
         required="true"
         args="-v1
               -r$(arg rotation)

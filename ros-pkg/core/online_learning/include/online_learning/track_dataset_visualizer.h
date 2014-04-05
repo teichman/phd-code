@@ -39,6 +39,42 @@ public:
   virtual void displayMessage(const std::string& message) = 0;
 };
 
+class ClusterViewController : public Agent
+{
+public:
+  ClusterViewController();
+  void setOnlineLearner(OnlineLearner* learner) { learner_ = learner; }
+  void setClusterView(ClusterView* view) { view_ = view; }
+  
+  /************************************************************
+   * Functions meant to be called by ClusterView as a result
+   * of keypresses, button presses, etc.
+   ************************************************************/
+  
+  //! Step forward by a single cluster.
+  void stepCluster(int num);
+  //! Step by a percent of the total dataset size.
+  //! Calling jumpCluster(-0.1) ten times in a row should bring 
+  //! you from the extreme positive end of the data to the extreme 
+  //! negative end.
+  void jumpCluster(float fraction);
+  //! Sets the annotation in CVC.  Does not send to OnlineLearner.
+  void annotateCluster(const Label& ann);
+  //! Sends the current cluster with its current label to OnlineLearner
+  //! as new annotated data.
+  void sendAnnotation();
+
+protected:
+  OnlineLearner* learner_;
+  ClusterView* view_;
+  //! Labels in cluster_ correspond to track predictions made by OnlineLearner.
+  TrackDataset::Ptr cluster_;
+  //! Annotation being displayed and which will be provided if sendAnnotation() is called.
+  Label annotation_;
+
+  void _run();
+};
+
 
 class TrackViewControllerBase : public Agent
 {

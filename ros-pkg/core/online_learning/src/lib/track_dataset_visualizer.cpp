@@ -806,3 +806,55 @@ bool VCMultiplexor::keypress(pcl::visualization::KeyboardEvent* event, void* cal
     return false;
 }
 
+
+/************************************************************
+ * ClusterViewController
+ ************************************************************/
+
+ClusterViewController::ClusterViewController() :
+  cluster_(new TrackDataset)
+{
+}
+
+void ClusterViewController::stepCluster(int num)
+{
+  scopeLockWrite;
+}
+
+void ClusterViewController::jumpCluster(float fraction)
+{
+  scopeLockWrite;
+}
+
+void ClusterViewController::annotateCluster(const Label& ann)
+{
+  scopeLockWrite;
+  annotation_ = ann;
+}
+
+void ClusterViewController::sendAnnotation()
+{
+  scopeLockRead;
+
+  if(annotation_.rows() == 0) {
+    ROS_WARN("You must provide an annotation before trying to send annotated data to OnlineLearner.");
+    return;
+  }
+
+  for(size_t i = 0; i < cluster_->size(); ++i)
+    cluster_->tracks_[i]->setLabel(annotation_);
+
+  learner_->pushHandLabeledDataset(cluster_);
+}
+
+void ClusterViewController::_run()
+{
+  ROS_ASSERT(view_);
+  ROS_ASSERT(learner_);
+  
+  while(!quitting_) {
+    view_->displayCluster(cluster_);
+    usleep(3e4);
+  }
+}
+
