@@ -40,7 +40,7 @@ rosbuild_add_library(online_learning
   src/lib/instance_serializer.cpp
   )
 rosbuild_add_compile_flags(online_learning -Wno-deprecated-declarations)
-target_link_libraries(online_learning tcmalloc)
+target_link_libraries(online_learning tcmalloc pcl_visualization)
 rosbuild_link_boost(online_learning program_options system)
 
 # This library just initializes Instance::custom_serializer_

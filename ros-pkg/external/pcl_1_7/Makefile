@@ -3,6 +3,7 @@ release/built: git
 	mkdir -p ${@D}
 	cd ${@D} && cmake \
 	-DCMAKE_BUILD_TYPE=Release \
+	-DBUILD_visualization=ON \
 	../git
 	if [ `arch` = "armv7l" ]; then \
 	cd ${@D} && make -j2; \
