@@ -1,13 +1,13 @@
 --- OpenCV-2.4.0/modules/highgui/src/cap_ffmpeg_impl.hpp	2012-04-30 12:40:29.000000000 -0700
-+++ OpenCV-2.4.0-patched/modules/highgui/src/cap_ffmpeg_impl.hpp	2014-04-04 22:16:50.590652959 -0700
++++ OpenCV-2.4.0-patched/modules/highgui/src/cap_ffmpeg_impl.hpp	2014-04-04 22:43:17.823143826 -0700
 @@ -838,7 +838,11 @@
  
  /* function internal to FFMPEG (libavformat/riff.c) to lookup codec id by fourcc tag*/
  extern "C" {
-+#ifdef CodecID
-     enum CodecID codec_get_bmp_id(unsigned int tag);
-+#else
++#if LIBAVCODEC_VERSION_MAJOR>53
 +    enum AVCodecID codec_get_bmp_id(unsigned int tag);
++#else
+     enum CodecID codec_get_bmp_id(unsigned int tag);
 +#endif
  }
  
@@ -16,10 +16,10 @@
  
  /* add a video output stream to the container */
  static AVStream *icv_add_video_stream_FFMPEG(AVFormatContext *oc,
-+#ifdef CodecID
-                                              CodecID codec_id,
-+#else
++#if LIBAVCODEC_VERSION_MAJOR>53
 +                                             AVCodecID codec_id,
++#else
+                                              CodecID codec_id,
 +#endif
                                               int w, int h, int bitrate,
                                               double fps, int pixel_format)
@@ -28,10 +28,10 @@
      c->codec_id = oc->oformat->video_codec;
  #endif
  
-+#ifdef CODEC_ID_NONE
-     if(codec_id != CODEC_ID_NONE){
-+#else
++#if LIBAVCODEC_VERSION_MAJOR>53
 +    if(codec_id != AV_CODEC_ID_NONE){
++#else
+     if(codec_id != CODEC_ID_NONE){
 +#endif
          c->codec_id = codec_id;
      }
@@ -40,10 +40,10 @@
  {
      icvInitFFMPEG_internal();
      
-+#ifdef CodecID
-     CodecID codec_id = CODEC_ID_NONE;
-+#else
++#if LIBAVCODEC_VERSION_MAJOR>53
 +    AVCodecID codec_id = AV_CODEC_ID_NONE;
++#else
+     CodecID codec_id = CODEC_ID_NONE;
 +#endif
      int err, codec_pix_fmt;
      double bitrate_scale = 1;
