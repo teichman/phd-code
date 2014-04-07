@@ -88,7 +88,7 @@ int main(int argc, char** argv)
   // -- Run.
   while(ros::ok()) { 
     ros::spinOnce();
-    //usleep(1e3);
+    usleep(1e3);
     if(timeout > 0 && jarvis.secondsSinceLastMessage() > timeout) {
       cout << "Jarvis saw no messages for the last " << timeout << " seconds.  Terminating..." << endl;
       break;

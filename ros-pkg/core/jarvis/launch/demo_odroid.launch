@@ -1,0 +1,29 @@
+<launch>
+
+  <arg name="occupancy-threshold" default="600" />
+  <!-- In degrees. -->
+  <arg name="rotation" default="0" />
+  <!-- td-dir must be an absolute path! -->
+  <arg name="td-dir" default="$(env PWD)/tds" />
+
+  <node name="sentinel" pkg="sentinel" type="stream"
+        required="true"
+        args="--color-res QVGA
+              --depth-res QVGA
+              --sensor-id default_sensor_id
+              --occupancy-threshold $(arg occupancy-threshold)
+              --recording-dir $(arg td-dir)
+              --arm true
+              "/>
+
+  <!-- Track & classify objects.  Also save tracks to TD files.  -->
+  <!-- Right now this program only works with a single sentinel.  -->
+  <node name="jarvis" pkg="jarvis" type="jarvis"
+        required="true"
+        args="-v0
+              -r$(arg rotation)
+              --record $(arg td-dir)
+              --config $(find jarvis)/config/less_gravity.yml
+              "/>
+  
+</launch>

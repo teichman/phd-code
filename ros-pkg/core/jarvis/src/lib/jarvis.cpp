@@ -99,6 +99,7 @@ void Jarvis::detect(sentinel::ForegroundConstPtr fgmsg)
 
 void Jarvis::foregroundCallback(sentinel::ForegroundConstPtr msg)
 {
+  cerr << ".";
   //reconstructor_.update(msg);
 
   // -- Update the message timer.
