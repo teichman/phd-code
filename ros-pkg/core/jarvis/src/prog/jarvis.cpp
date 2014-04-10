@@ -31,6 +31,7 @@ int main(int argc, char** argv)
     ("up,u", bpo::value(&up_path), "")
     ("video", "")
     ("timeout", bpo::value(&timeout)->default_value(0), "Stop this process if no messages are received for this number of seconds.  Generally only useful for automatically extracting TDs.")
+    ("debug-tda", "")
     ;
 
   bpo::variables_map opts;
@@ -53,6 +54,9 @@ int main(int argc, char** argv)
     if(!bfs::exists(output_directory))
       bfs::create_directory(output_directory);
   }
+
+  if(opts.count("debug-tda"))
+    jarvis.debugTDA();
 
   // Load the DescriptorPipeline.
   jarvis.dp_ = DescriptorPipeline::Ptr(new DescriptorPipeline);
