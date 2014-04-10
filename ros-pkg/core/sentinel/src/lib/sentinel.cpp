@@ -184,8 +184,9 @@ ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
   initializeForegroundMessage();
   initializeBackgroundMessage();
 
-  if(record_all_motion_)
+  if(record_all_motion_) {
     ROS_ASSERT(recording_dir_ != "");
+  }
   
   // -- Create directory structure for recordings.
   if(recording_dir_ != "") {
@@ -413,6 +414,10 @@ void ROSStreamingSentinel::processHook(openni::VideoFrameRef color,
   
   // -- If we're recording all motion, don't use the fancy per-class recording facilities.
   if(record_all_motion_)
+    return;
+
+  // -- If the user did not provide a recording dir, don't record anything.
+  if(recording_dir_ == "")
     return;
   
   // -- Handle any RecordingRequest messages we have waiting in the queue.

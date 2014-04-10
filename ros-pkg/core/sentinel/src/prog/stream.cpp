@@ -39,7 +39,7 @@ int main(int argc, char** argv)
     ("depth-res", bpo::value(&depth_resolution), "QVGA or VGA")
     ("visualize", "Show extra visualization")
     ("record-all-motion", "")
-    ("recording-dir", bpo::value(&recording_dir)->required(), "Directory to save recordings to")
+    ("recording-dir", bpo::value(&recording_dir), "Directory to save recordings to.  If not provided, no recording will occur.")
     ("arm", bpo::value(&arm)->default_value(false), "Barebones version for ARM devices.")
     ;
 
