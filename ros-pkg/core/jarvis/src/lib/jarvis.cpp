@@ -25,10 +25,10 @@ Jarvis::Jarvis(int vis_level, int rotation, string output_directory, bool write_
   gc_sub_ = nh_.subscribe("grid_classifier", 3, &Jarvis::gridClassifierCallback, this);
   det_pub_ = nh_.advertise<jarvis::Detection>("detections", 0);
   
+  if(vis_level_ > 0)
+    cv::namedWindow("tracks", cv::WINDOW_NORMAL);
   if(vis_level_ > 1)
     tracker_.visualize_ = true;
-
-  cv::namedWindow("tracks", cv::WINDOW_NORMAL);
 }
 
 void Jarvis::backgroundCallback(sentinel::BackgroundConstPtr msg)
