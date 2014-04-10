@@ -1,0 +1,13 @@
+#!/bin/bash
+# Place in /etc/init.d
+
+if [ -n "`lsusb | grep ASUS`" ]; then
+    echo ASUS found - starting autorecord
+    . ~/.bashrc
+    mkdir -p ~/autorecord
+    cd ~/autorecord
+    nohup roslaunch jarvis demo_odroid.launch > /dev/null 2>&1 &
+else
+    echo No ASUS found - not starting autorecord
+fi
+    
