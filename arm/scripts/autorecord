@@ -1,4 +1,6 @@
 #!/bin/bash
+# To use, add this to /etc/rc.local:
+# su -c "/home/odroid/jarvis/arm/scripts/autorecord" -s /bin/bash odroid | tee -a /home/odroid/.autorecord.log
 
 mkdir -p /home/odroid/autorecord
 
