@@ -727,8 +727,9 @@ void CloudProjector::compute()
       increment(v, u, intensity);
     }
   }
-  else
+  else {
     ROS_ASSERT(0);
+  }
     
   // -- Normalize, smooth, and vectorize.
   for(int v = 0; v < img1f_.rows; ++v)
@@ -830,8 +831,9 @@ void DynamicImageWindow::compute()
     roi.y = src.rows / 2 - roi.height / 2;
   else if(va == "Bottom")
     roi.y = max(max_v - roi.height, 0);
-  else
+  else {
     ROS_ASSERT(0);
+  }
   
   string ha = param<string>("HorizontalAlignment");
   if(ha == "Left")
@@ -840,8 +842,9 @@ void DynamicImageWindow::compute()
     roi.x = src.cols / 2 - roi.width / 2;
   else if(ha == "Right")
     roi.x = max(max_u - roi.width, 0);
-  else
+  else {
     ROS_ASSERT(0);
+  }
 
   // -- Copy and resize.
   cv::Mat window = src(roi);
