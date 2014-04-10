@@ -1,13 +1,14 @@
 #!/bin/bash
-# Place in /etc/init.d
+
+mkdir -p /home/odroid/autorecord
 
 if [ -n "`lsusb | grep ASUS`" ]; then
-    echo ASUS found - starting autorecord
-    . ~/.bashrc
-    mkdir -p ~/autorecord
-    cd ~/autorecord
-    nohup roslaunch jarvis demo_odroid.launch > /dev/null 2>&1 &
+    echo `date`   ASUS found - starting autorecord 
+    cd /home/odroid/autorecord
+    source /opt/ros/fuerte/setup.bash
+    export ROS_PACKAGE_PATH=/home/odroid/jarvis/ros-pkg/core:/home/odroid/jarvis/ros-pkg:/opt/ros/fuerte/share:/opt/ros/fuerte/stacks # core pkgs take priority over others.
+    roslaunch sentinel record_bags.launch >> /home/odroid/autorecord/roslog.txt 2>&1 &
 else
-    echo No ASUS found - not starting autorecord
+    echo `date`   No ASUS found - not starting autorecord 
 fi
     
