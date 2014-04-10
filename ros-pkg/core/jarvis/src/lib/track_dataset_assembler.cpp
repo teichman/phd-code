@@ -24,6 +24,11 @@ TrackDatasetAssembler::TrackDatasetAssembler(std::string output_directory, size_
   serializer_.launch();
 }
 
+TrackDatasetAssembler::~TrackDatasetAssembler()
+{
+  serializer_.stop();
+}
+
 void TrackDatasetAssembler::update(const std::map<size_t, Blob::ConstPtr>& tracked_blobs)
 {
   //ScopedTimer st(__PRETTY_FUNCTION__);

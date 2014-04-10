@@ -212,8 +212,7 @@ ROSStreamingSentinel::ROSStreamingSentinel(string sensor_id,
 ROSStreamingSentinel::~ROSStreamingSentinel()
 {
   // Wait for the serializer to finish.
-  serializer_.quit();
-  serializer_.thread()->join();
+  serializer_.stop();
 }
 
 void ROSStreamingSentinel::initializeForegroundMessage()

@@ -18,6 +18,8 @@ public:
   //! When td_.totalInstances() >= max_num_instances, td_ will be saved and cleared.
   TrackDatasetAssembler(std::string output_directory, size_t min_track_length,
                         size_t max_track_length, size_t max_num_instances);
+  //! Waits for serializer_ to finish.
+  ~TrackDatasetAssembler();
   void update(const std::map<size_t, Blob::ConstPtr>& tracked_blobs);
   //! Saves any unsaved tracks in the TrackDatasetAssembler and clears the current contents.
   void flush();
