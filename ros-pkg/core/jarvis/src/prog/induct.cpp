@@ -102,11 +102,15 @@ int main(int argc, char** argv)
 
   Inductor::Ptr inductor;
   InductionSupervisor::Ptr isup;
+  TrackDataset::Ptr init;
   // -- Deserialize if we can.  Otherwise, go through the long and
   //    gross initialization.
-  if(bfs::exists(output_dir) && bfs::exists(output_dir + "/learner.ol")) {
-    cout << "Found existing group induction snapshot at " << output_dir << "/learner.ol.  Resuming..." << endl;
-    inductor = Inductor::Ptr(new Inductor((IfstreamWrapper(output_dir + "/learner.ol"))));
+  if (bfs::exists(output_dir) && bfs::exists(output_dir + "/learner.ol"))
+  {
+    cout << "Found existing group induction snapshot at " << output_dir
+        << "/learner.ol.  Resuming..." << endl;
+    inductor = Inductor::Ptr(
+        new Inductor((IfstreamWrapper(output_dir + "/learner.ol"))));
     inductor->setSnapshotInterval(snapshot_every);
   }
   else {
@@ -166,7 +170,7 @@ int main(int argc, char** argv)
         init_paths.resize(min((size_t)3, init_paths.size()));
       }
       cout << "Loading initialization datasets..." << endl;
-      TrackDataset::Ptr init = loadDatasets(init_paths, config, cmap, up, true);
+      init = loadDatasets(init_paths, config, cmap, up, true);
       cout << "Initializing classifier..." << endl;
       classifier->initialize(*init, nc);
       ROS_ASSERT(classifier->nameMappingsAreEqual(*init));
@@ -276,20 +280,27 @@ int main(int argc, char** argv)
   else {
     // Set up clustering user interface.
 //    ClusterViewController cvc(&inductor);
-    ClusterBlobView::Ptr cbv(new ClusterBlobView());
-//    cvc.setView(cbv.get());
+    ClusterListVC::Ptr clvc(new ClusterListVC());
+    clvc->setOnlineLearner(inductor.get());
+    GridClassifier gc;
+    inductor->copyClassifier(&gc);
+    for (int i = 0; i < 10; i++) {
+      clvc->addAllSimilarTo(init->tracks_[i*init->size()/10], init, gc);
+    }
+//    clvc->displayCluster(init);
+//    cvc.setView(clvc.get());
 //    cvc.setReferenceTrack(init->tracks_.back());
 //    cvc.addTrackDataset(init.get(), *classifier.get());
 
     GlutWindow glut_window(argc, argv);
-    glut_window.setViewController(cbv.get());
+    glut_window.setViewController(clvc.get());
     glut_window.launch();
 //    cvc.launch();
 
     // Set up original user interface.
     BlobView view;
     VCMultiplexor multiplexor(&view);
-    ActiveLearningViewController alvc(&multiplexor, cbv.get(), inductor.get(),
+    ActiveLearningViewController alvc(&multiplexor, inductor.get(),
                                       unlabeled_td_dir);
     InductionViewController ivc(inductor.get(), &multiplexor);
     multiplexor.addVC(&alvc);
