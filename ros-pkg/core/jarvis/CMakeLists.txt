@@ -19,7 +19,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined messages
 rosbuild_genmsg()
 #uncomment if you have defined services
-#rosbuild_gensrv()
+#rosbuild_gensrv() 
 
 #common commands for building c++ executables and libraries
 rosbuild_add_library(jarvis_core
@@ -40,6 +40,7 @@ rosbuild_add_library(jarvis_core
   src/lib/glut_window.cpp
   src/lib/texture.cpp
   src/lib/trackball.cpp
+  src/lib/cluster_view.cpp
   src/lib/cluster_view_controller.cpp
   src/lib/discrete_bayes_filter.cpp
   )
