@@ -7,11 +7,11 @@
 
   <!-- Run group induction on the unlabeled data that is getting saved to disk
        For initialization of the descriptor space bounds there need to be at least
-        launch-prefix="gdb -ex run args"
        a few .td files in $(arg td-dir) already. -->
   <node name="induct" pkg="jarvis" type="induct"
         required="true"
         output="screen"
+        launch-prefix="gdb -ex run --args"
         args="--class-names interesting
               --config $(find jarvis)/config/less_gravity.yml
               --emax 0

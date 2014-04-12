@@ -13,6 +13,8 @@ public:
 
   virtual void mouse(int button, int state, int x, int y);
   virtual void motion(int x, int y);
+  // trigger repaint
+  static void PostRedisplay();
 
   void print();
   void clear();

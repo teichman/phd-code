@@ -20,21 +20,6 @@ namespace bfs = boost::filesystem;
 TrackViewControllerBase::TrackViewControllerBase(TrackView* view, int delay) :
   learner_(NULL),
   view_(view),
-  cview_(NULL),
-  td_(new TrackDataset),
-  tidx_(0),
-  fidx_(0),
-  sort_class_(0),
-  delay_(delay)
-{
-  ROS_ASSERT(view_);
-}
-
-TrackViewControllerBase::TrackViewControllerBase(TrackView* view,
-                                                 ClusterView *cview, int delay) :
-  learner_(NULL),
-  view_(view),
-  cview_(cview),
   td_(new TrackDataset),
   tidx_(0),
   fidx_(0),
@@ -48,9 +33,6 @@ void TrackViewControllerBase::setTrackDataset(TrackDataset::Ptr td)
 {
   td_ = td;
   updateIndex();
-//  if (cview_ != NULL) {
-//    cview_->displayCluster(td_);
-//  }
 }
 
 
@@ -468,9 +450,9 @@ std::string datasetPathToName(std::string path)
 }
 
 ActiveLearningViewController::ActiveLearningViewController(
-    TrackView* view, ClusterView *cview, OnlineLearner* learner,
+    TrackView* view, OnlineLearner* learner,
     std::string unlabeled_td_dir)
-    : TrackViewControllerBase(view, cview), learner_(learner),
+    : TrackViewControllerBase(view), learner_(learner),
         unlabeled_td_dir_(unlabeled_td_dir), gc_(new GridClassifier())
 {
 }
@@ -555,7 +537,7 @@ void ActiveLearningViewController::clusterSimilarTracks(const TrackDataset& td, 
     }
   }
   cout << "Clustered " << clustered_->size() << " tracks." << endl;
-  cview_->displayCluster(clustered_);
+//  cview_->displayCluster(clustered_);
 }
 
 
@@ -807,54 +789,54 @@ bool VCMultiplexor::keypress(pcl::visualization::KeyboardEvent* event, void* cal
 }
 
 
-/************************************************************
- * ClusterViewController
- ************************************************************/
-
-ClusterViewController::ClusterViewController() :
-  cluster_(new TrackDataset)
-{
-}
-
-void ClusterViewController::stepCluster(int num)
-{
-  scopeLockWrite;
-}
-
-void ClusterViewController::jumpCluster(float fraction)
-{
-  scopeLockWrite;
-}
-
-void ClusterViewController::annotateCluster(const Label& ann)
-{
-  scopeLockWrite;
-  annotation_ = ann;
-}
-
-void ClusterViewController::sendAnnotation()
-{
-  scopeLockRead;
-
-  if(annotation_.rows() == 0) {
-    ROS_WARN("You must provide an annotation before trying to send annotated data to OnlineLearner.");
-    return;
-  }
-
-  for(size_t i = 0; i < cluster_->size(); ++i)
-    cluster_->tracks_[i]->setLabel(annotation_);
-
-  learner_->pushHandLabeledDataset(cluster_);
-}
-
-void ClusterViewController::_run()
-{
-  ROS_ASSERT(view_);
-  ROS_ASSERT(learner_);
-  
-  while(!quitting_) {
-    view_->displayCluster(cluster_);
-    usleep(3e4);
-  }
-}
+///************************************************************
+// * ClusterViewController
+// ************************************************************/
+//
+//ClusterViewController::ClusterViewController() :
+//  cluster_(new TrackDataset)
+//{
+//}
+//
+//void ClusterViewController::stepCluster(int num)
+//{
+//  scopeLockWrite;
+//}
+//
+//void ClusterViewController::jumpCluster(float fraction)
+//{
+//  scopeLockWrite;
+//}
+//
+//void ClusterViewController::annotateCluster(const Label& ann)
+//{
+//  scopeLockWrite;
+//  annotation_ = ann;
+//}
+//
+//void ClusterViewController::sendAnnotation()
+//{
+//  scopeLockRead;
+//
+//  if(annotation_.rows() == 0) {
+//    ROS_WARN("You must provide an annotation before trying to send annotated data to OnlineLearner.");
+//    return;
+//  }
+//
+//  for(size_t i = 0; i < cluster_->size(); ++i)
+//    cluster_->tracks_[i]->setLabel(annotation_);
+//
+//  learner_->pushHandLabeledDataset(cluster_);
+//}
+//
+//void ClusterViewController::_run()
+//{
+//  ROS_ASSERT(view_);
+//  ROS_ASSERT(learner_);
+//
+//  while(!quitting_) {
+//    view_->displayCluster(cluster_);
+//    usleep(3e4);
+//  }
+//}
 

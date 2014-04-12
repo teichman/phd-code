@@ -4,7 +4,6 @@
 #include <online_learning/dataset.h>
 #include <timer/timer.h>
 
-class ClusterViewController;
 class GridClassifier;
 class OnlineLearner;
 class TrackDataset;
@@ -29,51 +28,42 @@ public:
   virtual bool keypress(pcl::visualization::KeyboardEvent* event, void* caller) = 0;
 };
 
-// Interface for any class that is used for viewing c   lusters of tracks.
-class ClusterView
-{
-public:
-  virtual ~ClusterView() {}
-  // TD contains shared_ptrs.
-  virtual void displayCluster(boost::shared_ptr<TrackDataset> td) = 0;
-  virtual void displayMessage(const std::string& message) = 0;
-};
 
-class ClusterViewController : public Agent
-{
-public:
-  ClusterViewController();
-  void setOnlineLearner(OnlineLearner* learner) { learner_ = learner; }
-  void setClusterView(ClusterView* view) { view_ = view; }
-  
-  /************************************************************
-   * Functions meant to be called by ClusterView as a result
-   * of keypresses, button presses, etc.
-   ************************************************************/
-  
-  //! Step forward by a single cluster.
-  void stepCluster(int num);
-  //! Step by a percent of the total dataset size.
-  //! Calling jumpCluster(-0.1) ten times in a row should bring 
-  //! you from the extreme positive end of the data to the extreme 
-  //! negative end.
-  void jumpCluster(float fraction);
-  //! Sets the annotation in CVC.  Does not send to OnlineLearner.
-  void annotateCluster(const Label& ann);
-  //! Sends the current cluster with its current label to OnlineLearner
-  //! as new annotated data.
-  void sendAnnotation();
-
-protected:
-  OnlineLearner* learner_;
-  ClusterView* view_;
-  //! Labels in cluster_ correspond to track predictions made by OnlineLearner.
-  TrackDataset::Ptr cluster_;
-  //! Annotation being displayed and which will be provided if sendAnnotation() is called.
-  Label annotation_;
-
-  void _run();
-};
+//class ClusterViewController : public Agent
+//{
+//public:
+//  ClusterViewController();
+//  void setOnlineLearner(OnlineLearner* learner) { learner_ = learner; }
+//  void setClusterView(ClusterView* view) { view_ = view; }
+//
+//  /************************************************************
+//   * Functions meant to be called by ClusterView as a result
+//   * of keypresses, button presses, etc.
+//   ************************************************************/
+//
+//  //! Step forward by a single cluster.
+//  void stepCluster(int num);
+//  //! Step by a percent of the total dataset size.
+//  //! Calling jumpCluster(-0.1) ten times in a row should bring
+//  //! you from the extreme positive end of the data to the extreme
+//  //! negative end.
+//  void jumpCluster(float fraction);
+//  //! Sets the annotation in CVC.  Does not send to OnlineLearner.
+//  void annotateCluster(const Label& ann);
+//  //! Sends the current cluster with its current label to OnlineLearner
+//  //! as new annotated data.
+//  void sendAnnotation();
+//
+//protected:
+//  OnlineLearner* learner_;
+//  ClusterView* view_;
+//  //! Labels in cluster_ correspond to track predictions made by OnlineLearner.
+//  TrackDataset::Ptr cluster_;
+//  //! Annotation being displayed and which will be provided if sendAnnotation() is called.
+//  Label annotation_;
+//
+//  void _run();
+//};
 
 
 class TrackViewControllerBase : public Agent
@@ -84,7 +74,6 @@ public:
 
   //! delay is in ms.
   TrackViewControllerBase(TrackView* view, int delay = 30);
-  TrackViewControllerBase(TrackView* view, ClusterView *cview, int delay = 30);
   virtual ~TrackViewControllerBase() {}
   //! TODO: Make this only usable when not running.
   virtual void setTrackDataset(TrackDataset::Ptr td);
@@ -92,7 +81,6 @@ public:
 protected:
   OnlineLearner* learner_;
   TrackView* view_;
-  ClusterView *cview_;
   TrackDataset::Ptr td_;
   //! Indexes into index_.
   int tidx_;
@@ -129,7 +117,7 @@ protected:
 class ActiveLearningViewController : public TrackViewControllerBase
 {
 public:
-  ActiveLearningViewController(TrackView* view, ClusterView *cview,
+  ActiveLearningViewController(TrackView* view,
                                OnlineLearner* learner,
                                std::string unlabeled_td_dir);
   virtual ~ActiveLearningViewController() {}

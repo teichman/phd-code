@@ -23,8 +23,7 @@ VideoStreamingSentinel::VideoStreamingSentinel(double update_interval,
 VideoStreamingSentinel::~VideoStreamingSentinel()
 {
   // Wait for the serializer to finish.
-  serializer_.quit();
-  serializer_.thread()->join();
+  serializer_.stop();
 }
 
 void VideoStreamingSentinel::handleDetection(openni::VideoFrameRef color,

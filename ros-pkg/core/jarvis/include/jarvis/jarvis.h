@@ -30,7 +30,10 @@ public:
   Jarvis(int vis_level, int rotation,
          std::string output_directory = "",
          bool write_video_frames = false);
-         
+
+  // Save .td files almost immediately for testing purposes.
+  void debugTDA();
+  
   //! Saves any unsaved tracks in the TrackDatasetAssembler and clears the current contents.
   void flush() { if(tda_) tda_->flush(); }
   double secondsSinceLastMessage() const { return message_hrt_.getSeconds(); }
@@ -47,6 +50,7 @@ protected:
   Tracker tracker_;
   TrackDatasetAssembler::Ptr tda_;
   int vis_level_;
+  std::string output_directory_;
   bool write_video_frames_;
   int rotation_;
   //! track id, track predictions.

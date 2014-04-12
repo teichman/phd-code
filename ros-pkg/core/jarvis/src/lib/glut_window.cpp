@@ -59,10 +59,6 @@ static void idle()
 }
 #endif
 
-void GlutWindow::PostRedisplay()
-{
-  glutPostRedisplay();
-}
 
 void GlutWindow::setViewController(ViewController* v)
 {

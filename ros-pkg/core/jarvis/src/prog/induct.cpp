@@ -282,20 +282,16 @@ int main(int argc, char** argv)
 //    ClusterViewController cvc(&inductor);
     ClusterListVC::Ptr clvc(new ClusterListVC());
     clvc->setOnlineLearner(inductor.get());
-    GridClassifier gc;
-    inductor->copyClassifier(&gc);
-    for (int i = 0; i < 10; i++) {
-      clvc->addAllSimilarTo(init->tracks_[i*init->size()/10], init, gc);
-    }
-//    clvc->displayCluster(init);
-//    cvc.setView(clvc.get());
-//    cvc.setReferenceTrack(init->tracks_.back());
-//    cvc.addTrackDataset(init.get(), *classifier.get());
+    shared_ptr<GridClassifier> gc(new GridClassifier());
+    inductor->copyClassifier(gc.get());
+    clvc->addAllClustersIn(init, gc);
+//    for (int i = 0; i < 25; i++) {
+//      clvc->addAllSimilarTo(init->tracks_[i*init->size()/25], init, gc);
+//    }
 
     GlutWindow glut_window(argc, argv);
     glut_window.setViewController(clvc.get());
     glut_window.launch();
-//    cvc.launch();
 
     // Set up original user interface.
     BlobView view;
@@ -308,6 +304,7 @@ int main(int argc, char** argv)
     view.launch();
     alvc.launch();
     ivc.launch();
+    clvc->launch();
 
 
     // Run group induction.
@@ -316,6 +313,7 @@ int main(int argc, char** argv)
     view.stop();
     alvc.stop();
     ivc.stop();
+    clvc->stop();
 //    cvc.stop();
   }
 

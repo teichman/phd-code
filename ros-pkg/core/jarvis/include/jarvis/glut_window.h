@@ -12,8 +12,6 @@ public:
 
   // end display loop
   void stop();
-  // trigger repaint
-  static void PostRedisplay();
 
   // some default stuff
   virtual void key(unsigned char k, int x, int y) {}

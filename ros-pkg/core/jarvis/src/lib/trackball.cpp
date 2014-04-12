@@ -1,5 +1,6 @@
 #include <math.h>
 #include <jarvis/trackball.h>
+#include <GL/glut.h>
 
 static const float kTrackballSize = 0.8f;
 
@@ -158,6 +159,11 @@ void quaternion_add(float q1[4], float q2[4], float dest[4])
     quaternion_normalize(dest);
     call_count = 0;
   }
+}
+
+void Trackball::PostRedisplay()
+{
+  glutPostRedisplay();
 }
 
 void Trackball::motion(int x, int y)

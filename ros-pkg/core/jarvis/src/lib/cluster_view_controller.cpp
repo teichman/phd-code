@@ -10,17 +10,61 @@
 
 using namespace std;
 
+const static string kClassname = "cat";  // TODO(hendrik) fixme
+
 void ClusterListVC::mouse(int button, int state, int x, int y) {
-  if (button == 0) {
+  if (button == 0 || button == 3 || button == 4) {
     return ClusterListView::mouse(button, state, x ,y);
   } else {
-    boost::unique_lock<boost::shared_mutex> lock(ClusterListView::shared_mutex_);
+    if (state == 0) {
+      int picked = indexPicked(x, y);
+      cout << " picked element " << picked << endl;
+      boost::unique_lock<boost::shared_mutex> lock(
+          ClusterListView::shared_mutex_);
+      clusters_.erase(clusters_.begin() + picked);
+      PostRedisplay();
+    }
   }
 }
+bool myfunction (int i,int j) { return (i<j); }
+
+
 
 void ClusterListVC::_run() {
   while (true) {
-    usleep(1e6);
+    usleep(1e4);
+    if (clustersBeforeEnd() < 2) {
+      int to_load = 2 - clustersBeforeEnd();
+      cout << "to load: " << to_load << endl;
+
+      boost::shared_ptr<TrackDataset> td(new TrackDataset());
+
+      std::vector<double>* hashes;
+      learner_->viewableUnsupervised(td.get(), hashes);
+
+      sort(td->tracks_.begin(), td->tracks_.end(), Comp)
+
+//      TrackDataset::Ptr clustered(new TrackDataset());
+//      {
+//        boost::shared_lock<boost::shared_mutex> lock(
+//            ClusterListView::shared_mutex_);
+//        boost::unique_lock<boost::shared_mutex> lock2(
+//            Agent::shared_mutex_);
+//
+//        while (displayed_datasets_.find(all_data_->tracks_[all_data_pos_]->hash())
+//              != displayed_datasets_.end()) {
+//          cerr << " already displayed: " << all_data_pos_;
+//          all_data_pos_++;
+//        }
+//        clustered->tracks_.push_back(all_data_->tracks_[all_data_pos_]);
+//        for(size_t j = all_data_pos_+1; j < all_data_->size(); j++) {
+//          if(similar(*clustered->tracks_[0], *all_data_->tracks_[j], *gc_, 0.7, 3)) {
+//            clustered->tracks_.push_back(all_data_->tracks_[j]);
+//          }
+//        }
+//      }
+//      displayCluster(clustered);
+    }
   }
 }
 
@@ -36,5 +80,14 @@ void ClusterListVC::addAllSimilarTo(boost::shared_ptr<Dataset> reference,
   }
   cout << "Clustered " << clustered_->size() << " tracks." << endl;
   displayCluster(clustered_);
+}
+
+void ClusterListVC::addAllClustersIn(boost::shared_ptr<TrackDataset> td,
+                                     boost::shared_ptr<GridClassifier> gc) {
+  boost::unique_lock<boost::shared_mutex> lock(
+      Agent::shared_mutex_);
+  all_data_ = td;
+  all_data_pos_ = 0;
+  gc_ = gc;
 }
 

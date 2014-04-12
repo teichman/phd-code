@@ -13,11 +13,12 @@ Jarvis::Jarvis(int vis_level, int rotation, string output_directory, bool write_
   min_confidence_(0),
   tracker_(100),
   vis_level_(vis_level),
+  output_directory_(output_directory),
   write_video_frames_(write_video_frames),
   rotation_(rotation)
 {
-  if(output_directory != "") {
-    tda_ = TrackDatasetAssembler::Ptr(new TrackDatasetAssembler(output_directory, 30, 150, 10000));
+  if(output_directory_ != "") {
+    tda_ = TrackDatasetAssembler::Ptr(new TrackDatasetAssembler(output_directory_, 30, 150, 10000));
   }
   
   fg_sub_ = nh_.subscribe("foreground", 3, &Jarvis::foregroundCallback, this);
@@ -25,10 +26,15 @@ Jarvis::Jarvis(int vis_level, int rotation, string output_directory, bool write_
   gc_sub_ = nh_.subscribe("grid_classifier", 3, &Jarvis::gridClassifierCallback, this);
   det_pub_ = nh_.advertise<jarvis::Detection>("detections", 0);
   
+  if(vis_level_ > 0)
+    cv::namedWindow("tracks", cv::WINDOW_NORMAL);
   if(vis_level_ > 1)
     tracker_.visualize_ = true;
+}
 
-  cv::namedWindow("tracks", cv::WINDOW_NORMAL);
+void Jarvis::debugTDA()
+{
+  tda_ = TrackDatasetAssembler::Ptr(new TrackDatasetAssembler(output_directory_, 30, 150, 100));
 }
 
 void Jarvis::backgroundCallback(sentinel::BackgroundConstPtr msg)
