@@ -26,7 +26,7 @@ static void reshape(int w, int h)
 
 static void display()
 {
-//  glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
+  glClearColor(0.8f, 0.8f, 0.8f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   vc->display();
   glutSwapBuffers();
@@ -100,7 +100,7 @@ void GlutWindow::_run() {
   glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
   glutInitWindowPosition(50, 50);
   glutInit(&argc_, argv_);
-  glutInitWindowSize(640, 480);
+  glutInitWindowSize(384, 683);
 //  glutSetOption(GLUT_RENDERING_CONTEXT, GLUT_USE_CURRENT_CONTEXT);
 #ifdef WIN32
   glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);

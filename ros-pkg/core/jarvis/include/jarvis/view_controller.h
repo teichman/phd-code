@@ -16,7 +16,7 @@ struct Viewport
 };
 
 
-class ViewController : public SharedLockable
+class ViewController
 {
 public:
   virtual ~ViewController() {}
