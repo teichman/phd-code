@@ -143,3 +143,7 @@ target_link_libraries(stream_video_detections jarvis_core avcodec avformat avuti
 rosbuild_add_executable(email_on_detection src/prog/email_on_detection.cpp)
 rosbuild_link_boost(email_on_detection program_options filesystem)
 target_link_libraries(email_on_detection jarvis_core avcodec avformat avutil)
+
+rosbuild_add_executable(print_dmap src/prog/print_dmap.cpp)
+rosbuild_link_boost(print_dmap program_options)
+target_link_libraries(print_dmap jarvis_core)
