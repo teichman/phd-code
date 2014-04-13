@@ -49,24 +49,25 @@ void quantityEvaluation(const bpo::variables_map& opts, const TrackDataset& trai
     ROS_ASSERT(nmax <= ntr);
     max_num_training_examples = nmax + ptr;
   }
-  
-  size_t num_quantity_runs = opts["num-quantity-runs"].as<size_t>();
-  for(size_t i = 0; i < num_quantity_runs; ++i) {
-    // -- Create the output directory for this run.
+
+  // Main loop.
+  size_t num_subsamples = opts["num-quantity-subsamples"].as<size_t>();
+  for(size_t i = 0; i < num_subsamples; ++i) {
+    // -- Create the output directory for this subsample.
     ostringstream oss;
-    oss << quantity_dir << "/run" << setw(3) << setfill('0') << i;
-    string run_dir = oss.str();
-    bfs::create_directory(run_dir);
+    oss << quantity_dir << "/subsample" << setw(3) << setfill('0') << i;
+    string subsample_dir = oss.str();
+    bfs::create_directory(subsample_dir);
+    cout << " *** " << subsample_dir << endl;
     
-    size_t num_subsamples = opts["num-quantity-subsamples"].as<size_t>();
-    for(size_t i = 0; i < num_subsamples; ++i) {
-      // -- Create the output directory for this subsample.
+    size_t num_quantity_runs = opts["num-quantity-runs"].as<size_t>();
+    for(size_t j = 0; j < num_quantity_runs; ++j) {
+      // -- Create the output directory for this run.
       ostringstream oss;
-      oss << run_dir << "/subsample" << setw(3) << setfill('0') << i;
-      string subsample_dir = oss.str();
-      bfs::create_directory(subsample_dir);
-      cout << " *** " << subsample_dir << endl;
-      
+      oss << subsample_dir << "/run" << setw(3) << setfill('0') << j;
+      string run_dir = oss.str();
+      bfs::create_directory(run_dir);
+            
       // Generate a new training set subsample of the correct size.
       double pct = (double)(i+1) / (double)num_subsamples;
       size_t num_tracks = pct * max_num_training_examples;
@@ -77,7 +78,7 @@ void quantityEvaluation(const bpo::variables_map& opts, const TrackDataset& trai
       cout << "Training set ratio: " << training_subsample->labelRatio(cmap.toName(0)) << endl;
       cout << "Test set ratio: " << test.labelRatio(cmap.toName(0)) << endl;
 
-      ofstream f((subsample_dir + "/training_stats.txt").c_str());
+      ofstream f((run_dir + "/training_stats.txt").c_str());
       f << training_subsample->status() << endl;
       f.close();
       
@@ -93,7 +94,7 @@ void quantityEvaluation(const bpo::variables_map& opts, const TrackDataset& trai
       Evaluator ev(gc);
       ev.plot_ = false;
       ev.evaluateParallel(test);
-      ev.saveResults(subsample_dir);
+      ev.saveResults(run_dir);
       cout << ev.track_stats_.statString() << endl;
     }
   }
