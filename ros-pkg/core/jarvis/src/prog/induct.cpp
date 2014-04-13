@@ -284,7 +284,7 @@ int main(int argc, char** argv)
     clvc->setOnlineLearner(inductor.get());
     shared_ptr<GridClassifier> gc(new GridClassifier());
     inductor->copyClassifier(gc.get());
-    clvc->addAllClustersIn(init, gc);
+//    clvc->addAllClustersIn(init, gc);
 //    for (int i = 0; i < 25; i++) {
 //      clvc->addAllSimilarTo(init->tracks_[i*init->size()/25], init, gc);
 //    }

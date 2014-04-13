@@ -103,7 +103,8 @@ public:
                                      float prediction, size_t num) const;
   //! Makes a copy of viewable_unsupervised_ and viewable_unsupervised_hashes
   //! for a view controller.  The hashes aren't used much anymore.
-  void viewableUnsupervised(TrackDataset* viewable_unsupervised, std::vector<double>* hashes) const;
+  void viewableUnsupervised(TrackDataset* viewable_unsupervised,
+                            std::vector<double>* hashes) const;
   TrackDataset::ConstPtr unsupervised() const { return unsupervised_; }
   TrackDataset::ConstPtr annotated() const { return annotated_; }
 

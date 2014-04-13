@@ -27,8 +27,10 @@ public:
   // renders the cluster into unit rectangle
   virtual void display();
 
-protected:
   shared_ptr<TrackDataset> cluster_;
+protected:
+  boost::shared_ptr<Texture> tex_;
+  std::vector<uint8_t> img_;
   size_t instance_displayed_, max_instances_;
 };
 
@@ -72,9 +74,6 @@ public:
 
   void setOnlineLearner(OnlineLearner* learner) { learner_ = learner; }
 
-//  void addAllSimilarTo(shared_ptr<Dataset> reference,
-//                       shared_ptr<TrackDataset> td,
-//                       const GridClassifier &gc);
   void addAllClustersIn(shared_ptr<TrackDataset> td,
                         shared_ptr<GridClassifier> gc);
   virtual void mouse(int button, int state, int x, int y);
@@ -83,9 +82,11 @@ public:
 
 protected:
   OnlineLearner* learner_;
-  shared_ptr<TrackDataset> all_data_;
-  int all_data_pos_;
-  shared_ptr<GridClassifier> gc_;
+//  shared_ptr<TrackDataset> all_data_;
+//  size_t all_data_pos_;
+//  shared_ptr<GridClassifier> gc_;
+
+  void removeClusterAndPushToLearner(int index);
 };
 
 #endif // CLUSTER_VIEW_CONTROLLER_H

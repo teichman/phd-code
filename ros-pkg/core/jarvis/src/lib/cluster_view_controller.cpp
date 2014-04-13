@@ -10,84 +10,106 @@
 
 using namespace std;
 
-const static string kClassname = "cat";  // TODO(hendrik) fixme
+const static string kClassname = "interesting";  // TODO(hendrik) fixme
+
+void ClusterListVC::removeClusterAndPushToLearner(int index) {
+  cout << "Removing cluster #" << index << endl;
+  boost::unique_lock<boost::shared_mutex> lock(
+      ClusterListView::shared_mutex_);
+
+  TrackDataset::Ptr picked = clusters_[index]->cluster_;
+  TrackDataset::Ptr neg_example(new TrackDataset);
+  neg_example->applyNameMappings(*picked);
+
+  for (Dataset::Ptr track : picked->tracks_) {
+    Label l(track->label());
+    l[track->nameMapping("cmap").toId(kClassname)] = -1;
+    track->setLabel(l);
+    neg_example->tracks_.push_back(track);
+  }
+  boost::thread pusher(&OnlineLearner::pushHandLabeledDataset, learner_,
+                       neg_example);
+
+  clusters_.erase(clusters_.begin() + index);
+}
 
 void ClusterListVC::mouse(int button, int state, int x, int y) {
-  if (button == 0 || button == 3 || button == 4) {
+  switch (button) {
+  case 0:
+  case 3:
+  case 4:
     return ClusterListView::mouse(button, state, x ,y);
-  } else {
+  case 1:
+  case 2:
     if (state == 0) {
-      int picked = indexPicked(x, y);
-      cout << " picked element " << picked << endl;
-      boost::unique_lock<boost::shared_mutex> lock(
-          ClusterListView::shared_mutex_);
-      clusters_.erase(clusters_.begin() + picked);
+      removeClusterAndPushToLearner(indexPicked(x, y));
       PostRedisplay();
     }
   }
 }
-bool myfunction (int i,int j) { return (i<j); }
 
+namespace {
+bool score_sort(const Dataset::Ptr& A, const Dataset::Ptr& B) {
+  return A->label()[A->nameMapping("cmap").toId(kClassname)]
+       < B->label()[B->nameMapping("cmap").toId(kClassname)];
+}
 
+bool score_compare(const Dataset::Ptr& A, float val) {
+  return A->label()[A->nameMapping("cmap").toId(kClassname)] < val;
+}
+}
 
 void ClusterListVC::_run() {
   while (true) {
     usleep(1e4);
     if (clustersBeforeEnd() < 2) {
-      int to_load = 2 - clustersBeforeEnd();
-      cout << "to load: " << to_load << endl;
+      boost::unique_lock<boost::shared_mutex> lock2(
+          Agent::shared_mutex_);
 
-      boost::shared_ptr<TrackDataset> td(new TrackDataset());
+      GridClassifier gc;
+      learner_->copyClassifier(&gc);
 
-      std::vector<double>* hashes;
-      learner_->viewableUnsupervised(td.get(), hashes);
+      TrackDataset td;
+      std::vector<double> hashes;
+      learner_->viewableUnsupervised(&td, &hashes);
+      if (td.size() == 0) {
+        usleep(1e5);
+        continue;
+      }
 
-      sort(td->tracks_.begin(), td->tracks_.end(), Comp)
+      sort(td.tracks_.begin(), td.tracks_.end(), score_sort);
+      int pos = std::lower_bound(td.tracks_.begin(), td.tracks_.end(), 0.0f,
+                                 score_compare)
+          - td.tracks_.begin();
+      int dir = (pos < (int)td.size()) ? 1 : -1;
 
-//      TrackDataset::Ptr clustered(new TrackDataset());
-//      {
-//        boost::shared_lock<boost::shared_mutex> lock(
-//            ClusterListView::shared_mutex_);
-//        boost::unique_lock<boost::shared_mutex> lock2(
-//            Agent::shared_mutex_);
-//
-//        while (displayed_datasets_.find(all_data_->tracks_[all_data_pos_]->hash())
-//              != displayed_datasets_.end()) {
-//          cerr << " already displayed: " << all_data_pos_;
-//          all_data_pos_++;
-//        }
-//        clustered->tracks_.push_back(all_data_->tracks_[all_data_pos_]);
-//        for(size_t j = all_data_pos_+1; j < all_data_->size(); j++) {
-//          if(similar(*clustered->tracks_[0], *all_data_->tracks_[j], *gc_, 0.7, 3)) {
-//            clustered->tracks_.push_back(all_data_->tracks_[j]);
-//          }
-//        }
-//      }
-//      displayCluster(clustered);
+      TrackDataset::Ptr clustered(new TrackDataset());
+      clustered->applyNameMappings(td);
+      {
+        boost::shared_lock<boost::shared_mutex> lock(
+            ClusterListView::shared_mutex_);
+
+        while (displayed_datasets_.find(td.tracks_[pos]->hash())
+            != displayed_datasets_.end())
+        {
+          pos++;
+        }
+
+        clustered->tracks_.push_back(td.tracks_[pos]);
+        for (int j = pos + dir; j < (int) td.size() && j >= 0; j += dir)
+        {
+          if (similar(*clustered->tracks_[0], *td.tracks_[j], gc, 0.7, 3))
+          {
+            clustered->tracks_.push_back(td.tracks_[j]);
+          }
+        }
+      }
+      if(clustered->size() > 0) {
+        displayCluster(clustered);
+      } else {
+        cerr << "end of example list, can't display more" << endl;
+        usleep(1e6);
+      }
     }
   }
 }
-
-void ClusterListVC::addAllSimilarTo(boost::shared_ptr<Dataset> reference,
-                                    boost::shared_ptr<TrackDataset> td,
-                                    const GridClassifier &gc) {
-  TrackDataset::Ptr clustered_(new TrackDataset());
-  for(size_t i = 0; i < td->size(); i++) {
-    ROS_ASSERT(td->tracks_[i]);
-    if(similar(*reference, *td->tracks_[i], gc, 0.7, 3)) {
-      clustered_->tracks_.push_back(td->tracks_[i]);
-    }
-  }
-  cout << "Clustered " << clustered_->size() << " tracks." << endl;
-  displayCluster(clustered_);
-}
-
-void ClusterListVC::addAllClustersIn(boost::shared_ptr<TrackDataset> td,
-                                     boost::shared_ptr<GridClassifier> gc) {
-  boost::unique_lock<boost::shared_mutex> lock(
-      Agent::shared_mutex_);
-  all_data_ = td;
-  all_data_pos_ = 0;
-  gc_ = gc;
-}
-

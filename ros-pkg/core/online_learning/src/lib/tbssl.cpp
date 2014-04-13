@@ -795,7 +795,8 @@ void OnlineLearner::_run()
   }
 }
 
-void OnlineLearner::viewableUnsupervised(TrackDataset* viewable_unsupervised, vector<double>* hashes) const
+void OnlineLearner::viewableUnsupervised(TrackDataset* viewable_unsupervised,
+                                         vector<double>* hashes) const
 {
   viewable_unsupervised_mutex_.lock();
   *viewable_unsupervised = *viewable_unsupervised_;

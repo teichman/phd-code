@@ -41,8 +41,9 @@ void ClusterView::display()
   if (cluster_.get() == NULL)
     return;
 
-  Texture tex;
-  vector<uint8_t> img;
+  if (!tex_)
+    tex_.reset(new Texture());
+
 
   glColor4f(0, 0, 0, 0.5f);
   glBegin (GL_QUADS);
@@ -56,28 +57,31 @@ void ClusterView::display()
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-  for(Dataset::Ptr t : cluster_->tracks_) {
+  for (Dataset::Ptr t : cluster_->tracks_)
+  {
     ROS_ASSERT(t);
-    if(t->instances_.empty())
+    if (t->instances_.empty())
       continue;
 
-    size_t frame = min(instance_displayed_, t->instances_.size()-1);
+    size_t frame = min(instance_displayed_, t->instances_.size() - 1);
     Blob::ConstPtr blob = boost::any_cast<Blob::ConstPtr>(
-      t->instances_[frame].raw());
+        t->instances_[frame].raw());
     ROS_ASSERT(blob.get() != NULL);
-    img.resize(blob->width_ * blob->height_ * 4);
-    tex.Resize(GL_RGBA, blob->width_, blob->height_);
-    memset(img.data(), 0, img.size());
-    uint8_t alpha = min(255, (int)(500.0 / pow(cluster_->tracks_.size(), 0.7)));
-    for (size_t i = 0; i < blob->indices_.size(); i++) {
+    img_.resize(blob->width_ * blob->height_ * 4);
+    tex_->Resize(GL_RGBA, blob->width_, blob->height_);
+    memset(img_.data(), 0, img_.size());
+    uint8_t alpha = min(255,
+                        (int) (500.0 / pow(cluster_->tracks_.size(), 0.7)));
+    for (size_t i = 0; i < blob->indices_.size(); i++)
+    {
       uint32_t idx = 4 * blob->indices_[i];
-      img[idx + 0] = blob->color_[3 * i + 0];
-      img[idx + 1] = blob->color_[3 * i + 1];
-      img[idx + 2] = blob->color_[3 * i + 2];
-      img[idx + 3] = alpha;
+      img_[idx + 0] = blob->color_[3 * i + 0];
+      img_[idx + 1] = blob->color_[3 * i + 1];
+      img_[idx + 2] = blob->color_[3 * i + 2];
+      img_[idx + 3] = alpha;
     }
-    tex.CopyToGPU(GL_RGBA, img.data());
-    tex.DrawAsQuad();
+    tex_->CopyToGPU(GL_RGBA, img_.data());
+    tex_->DrawAsQuad();
   }
   glDisable(GL_BLEND);
   instance_displayed_ = (instance_displayed_ + 1) % max_instances_;
@@ -149,8 +153,6 @@ void ClusterListView::applyScrollMomentum() {
     } else {
       scroll_momentum_ = min(0.0f, scroll_momentum_ + kMomentumDecel * dt);
     }
-//    fprintf(stderr, "      dt: %8.4f motion %8.4f momentum %8.4f\n", dt,
-//            scroll_motion, scroll_momentum_);
     applyScrollMotion(scroll_motion);
   }
 }
