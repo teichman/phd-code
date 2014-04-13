@@ -279,15 +279,10 @@ int main(int argc, char** argv)
   }
   else {
     // Set up clustering user interface.
-//    ClusterViewController cvc(&inductor);
     ClusterListVC::Ptr clvc(new ClusterListVC());
     clvc->setOnlineLearner(inductor.get());
     shared_ptr<GridClassifier> gc(new GridClassifier());
     inductor->copyClassifier(gc.get());
-//    clvc->addAllClustersIn(init, gc);
-//    for (int i = 0; i < 25; i++) {
-//      clvc->addAllSimilarTo(init->tracks_[i*init->size()/25], init, gc);
-//    }
 
     GlutWindow glut_window(argc, argv);
     glut_window.setViewController(clvc.get());
@@ -314,7 +309,6 @@ int main(int argc, char** argv)
     alvc.stop();
     ivc.stop();
     clvc->stop();
-//    cvc.stop();
   }
 
   if(isup)

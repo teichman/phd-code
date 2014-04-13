@@ -4,7 +4,6 @@
 #include <vector>
 #include <set>
 
-//#include <online_learning/track_dataset_visualizer.h>
 #include <agent/agent.h>
 #include <jarvis/trackball.h>
 
@@ -82,9 +81,6 @@ public:
 
 protected:
   OnlineLearner* learner_;
-//  shared_ptr<TrackDataset> all_data_;
-//  size_t all_data_pos_;
-//  shared_ptr<GridClassifier> gc_;
 
   void removeClusterAndPushToLearner(int index);
 };
