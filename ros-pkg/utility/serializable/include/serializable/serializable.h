@@ -74,6 +74,10 @@ struct SerializableSaveFunction
 //! ... though it is nice that it automatically works with Serializables.
 //! Probably there should be a ThreadedBuffer, and ThreadedSerializer
 //! is a typedef using SerializableSaveFunction.  Or something like this.
+//!
+//! Be careful to call stop() before ThreadedSerializer is destructed.
+//! You'll get strange crashes otherwise, often referring to the lock
+//! that no longer exists.
 template<typename T, typename S = SerializableSaveFunction>
 class ThreadedSerializer : public Agent
 {

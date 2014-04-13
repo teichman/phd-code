@@ -162,15 +162,10 @@ void OnlineLearner::updateViewableUnsupervised()
     Dataset& utrack = uns[i];
     vtrack.instances_.resize(utrack.instances_.size());
     for(size_t j = 0; j < vtrack.size(); ++j) {
-      // This should be a shared_ptr of some sort and
-      // thus free to copy.
-      vtrack[j].setRaw(utrack[j].raw());
-      // If not inducted, set the label to zero.
-      // Otherwise use the classifier track prediction.
-      if((utrack[j].label_.array() == 0).all())
-        vtrack[j].label_ = VectorXf::Zero(nc);
-      else
-        vtrack[j].label_ = unsupervised_logodds_[i];
+      // Deep copy descriptors and label, shallow copy raw_.
+      vtrack[j] = utrack[j];
+      // Set the label to the classifier's prediction.
+      vtrack[j].label_ = unsupervised_logodds_[i];
     }
   }
 

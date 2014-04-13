@@ -58,7 +58,7 @@ rosrun jarvis induct \
     --test $TEST_DIR/test/*.td \
     --fake-supervisor $TEST_DIR/supervisor.gc \
     --fake-supervisor-config $TEST_DIR/supervisor_config.yml \
-    | tee $RUN_DIR/induction/log.txt
+    2>&1 | tee $RUN_DIR/induction/log.txt
 
 cd $RUN_DIR/induction
 for name in $CLASS_NAMES; do
@@ -96,7 +96,7 @@ rosrun jarvis induct \
     --fake-supervisor $TEST_DIR/supervisor.gc \
     --fake-supervisor-config $TEST_DIR/supervisor_config.yml \
     --fake-supervisor-annotation-limit `grep -A2 'Hand-annotated' $(find $RUN_DIR/induction/ -name learner_status.txt | sort | tail -n1) | grep tracks | awk '{print $1}'` \
-    | tee $RUN_DIR/active_learning/log.txt
+    2>&1 | tee $RUN_DIR/active_learning/log.txt
 
 cd $RUN_DIR/active_learning
 for name in $CLASS_NAMES; do
@@ -123,7 +123,7 @@ rosrun jarvis naive_supervised_baseline \
     -o $RUN_DIR/naive_supervised_baseline \
     -j 24 \
     --randomize \
-    | tee $RUN_DIR/naive_supervised_baseline/log.txt
+    2>&1 | tee $RUN_DIR/naive_supervised_baseline/log.txt
 
 echo
 echo -- Running matched supervised baseline --
@@ -138,7 +138,7 @@ rosrun jarvis baseline_unfair \
     --test $TEST_DIR/test/*.td \
     --num-iters 10 \
     --o $RUN_DIR/baseline_unfair \
-    | tee $RUN_DIR/baseline_unfair/log.txt
+    2>&1 | tee $RUN_DIR/baseline_unfair/log.txt
 
 # -- Delete things we don't need to save disk space.
 echo
