@@ -20,6 +20,7 @@ int main(int argc, char** argv)
   string lightweight_td_path;
   int num_threads;
   string up_path;
+  vector<string> class_names;
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("config", bpo::value(&config_path)->default_value(DescriptorPipeline::defaultSpecificationPath()), "")
@@ -31,6 +32,7 @@ int main(int argc, char** argv)
     ("force,f", "")
     ("strip", "Removes descriptors from TDs.")
     ("randomize", "")
+    ("class-names", bpo::value(&class_names)->multitoken(), "Apply a new class map while updating.  If not provided, cmap will not change.")
     ;
 
   p.add("tds", -1);
@@ -52,6 +54,10 @@ int main(int argc, char** argv)
     srand(time(NULL));
   }
 
+  NameMapping cmap;
+  if(!class_names.empty())
+    cmap.addNames(class_names);
+
   // -- If stripping descriptors, just do this and return.
   if(opts.count("strip")) {
     cout << "Stripping descriptors..." << endl;
@@ -59,6 +65,9 @@ int main(int argc, char** argv)
       cout << "Working on " << td_paths[i] << endl;
       TrackDataset td;
       td.load(td_paths[i]);
+
+      if(opts.count("class-names"))
+        td.applyNameMapping("cmap", cmap);
       
       // Apply an empty dmap to drop all descriptors.
       td.applyNameMapping("dmap", NameMapping());
@@ -95,6 +104,9 @@ int main(int argc, char** argv)
         td.applyNameMapping("dmap", NameMapping());
       }
       updateDescriptors(config["Pipeline"], num_threads, &td, up, opts.count("debug"));
+
+      if(opts.count("class-names"))
+        td.applyNameMapping("cmap", cmap);
       
       td.makeLightweight(td_paths[i]);
       lwtd += td;
@@ -116,9 +128,12 @@ int main(int argc, char** argv)
         td.applyNameMapping("dmap", NameMapping());
       }
 
+      if(opts.count("class-names"))
+        td.applyNameMapping("cmap", cmap);
+      
       double ms_per_obj = updateDescriptors(config["Pipeline"], num_threads, &td, up, opts.count("debug"));
       // Only save if something changed.
-      if(ms_per_obj != 0) {
+      if(ms_per_obj != 0 || opts.count("class-names")) {
         // Serializable writes to a temporary file and then does a move,
         // so if you control-c you are guaranteed that at least one of
         // the files will still exist and be correct.
