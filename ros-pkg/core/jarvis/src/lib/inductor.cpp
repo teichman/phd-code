@@ -48,37 +48,37 @@ void Inductor::entryHook(TrackDataset* td, const std::string& path) const
 
 void Inductor::chunkHook(TrackDataset* td) const
 {
-  cout << "Running Inductor::chunkHook." << endl;
+  // cout << "Running Inductor::chunkHook." << endl;
   
-  vector<Dataset::Ptr> tracks;
-  tracks.reserve(td->size());
+  // vector<Dataset::Ptr> tracks;
+  // tracks.reserve(td->size());
 
   // -- Tracks must be moving a bit for them to be used.
   //    This is because running group induction on stationary tracks 
   //    essentially reduces to self-learning - all the groups
   //    contain near-identical instances.
-  for(size_t i = 0; i < td->size(); ++i) {
-    Dataset::Ptr track = td->tracks_[i];
-    if(track->empty())
-      continue;
-    Blob::ConstPtr first_blob = boost::any_cast<Blob::ConstPtr>((*track)[0].raw());
-    Blob::ConstPtr last_blob = boost::any_cast<Blob::ConstPtr>((*track)[track->size() - 1].raw());
-    if(!first_blob->cloud_)
-      first_blob->project(false);
-    if(!last_blob->cloud_)
-      last_blob->project(false);
+  // for(size_t i = 0; i < td->size(); ++i) {
+  //   Dataset::Ptr track = td->tracks_[i];
+  //   if(track->empty())
+  //     continue;
+  //   Blob::ConstPtr first_blob = boost::any_cast<Blob::ConstPtr>((*track)[0].raw());
+  //   Blob::ConstPtr last_blob = boost::any_cast<Blob::ConstPtr>((*track)[track->size() - 1].raw());
+  //   if(!first_blob->cloud_)
+  //     first_blob->project(false);
+  //   if(!last_blob->cloud_)
+  //     last_blob->project(false);
 
-    double dist = (last_blob->centroid_ - first_blob->centroid_).norm();
-    double dt = last_blob->sensor_timestamp_ - first_blob->sensor_timestamp_;
-    if(dist / dt > 0.05) {
-      tracks.push_back(track);
-    }
-  }
+  //   double dist = (last_blob->centroid_ - first_blob->centroid_).norm();
+  //   double dt = last_blob->sensor_timestamp_ - first_blob->sensor_timestamp_;
+  //   if(dist / dt > 0.05) {
+  //     tracks.push_back(track);
+  //   }
+  // }
 
-  cout << "[Inductor::chunkHook]  Removing " << td->tracks_.size() - tracks.size() << " tracks because they did not move enough.  "
-       << tracks.size() << " tracks remain." << endl;
+  // cout << "[Inductor::chunkHook]  Removing " << td->tracks_.size() - tracks.size() << " tracks because they did not move enough.  "
+  //      << tracks.size() << " tracks remain." << endl;
   
-  td->tracks_ = tracks;
+  // td->tracks_ = tracks;
 }
 
 void Inductor::retrospection(const TrackDataset& new_annotations, const std::vector<Label>& predictions)
