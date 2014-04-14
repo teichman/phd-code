@@ -5,12 +5,21 @@ import tempfile
 import numpy as np
 import random
 
+# Turns the output of command into a numpy array.
 def npLoadBash(command):
     tmpfile = '.python-asotuesntahoensuthnat'  # TODO: Use tempfile library.
     os.system(command + " > " + tmpfile)
     array = np.loadtxt(tmpfile)
     os.system('rm ' + tmpfile)
     return array
+
+# Turns the output of command into a list of strings, one per line.
+def loadBash(command):
+    tmpfile = '.python-astoehusatohenuthaoe'  # TODO: Use tempfile library.
+    os.system(command + " > " + tmpfile)
+    li = [i.strip() for i in open(tmpfile).readlines()]
+    os.system('rm ' + tmpfile)
+    return li
 
 # pre and post are lists of np arrays.  Swaps can occur within matched pre / post arrays,
 # but not between unmatched arrays.
