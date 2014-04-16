@@ -312,4 +312,5 @@ void splitDataset(const TrackDataset& td, double pct0, TrackDataset* split0, Tra
 //! Does not make deep copies.
 TrackDataset sampleDatasetProportional(const TrackDataset& td, size_t num_tracks,
                                        const std::string& class_name, double ratio);
+
 #endif // DATASET_H

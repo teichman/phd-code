@@ -1,6 +1,8 @@
 #ifndef CLUSTERER_H_
 #define CLUSTERER_H_
 
+#include <Eigen/Core>
+
 class Dataset;
 class GridClassifier;
 
@@ -9,5 +11,21 @@ class GridClassifier;
 bool similar(const Dataset& track0, const Dataset& track1,
              const GridClassifier& gc, double intersection_threshold,
              int max_different_dspaces);
+
+Eigen::ArrayXi computeCellHistogram(const Dataset& track,
+                                    size_t descriptor_id,
+                                    const GridClassifier& gc);
+
+Eigen::ArrayXf computeNormalizedCellHistogram(const Dataset& track,
+                                              size_t descriptor_id,
+                                              const GridClassifier& gc);
+
+//! Returns true if all frames in the track are nearly the same in the context
+//! of the GridClassifier gc.  All descriptor spaces are used.
+//! The test value is the mean density of the grid cells that get activated by
+//! at least one frame.
+//! A totally static track will have a mean density of 1/num_grid_cells.
+bool isStatic(const Dataset& track, const GridClassifier& gc, double thresh);
+
 
 #endif /* CLUSTERER_H_ */

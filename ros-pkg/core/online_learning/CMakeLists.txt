@@ -148,6 +148,9 @@ target_link_libraries(apply_cmap online_learning online_learning_pcs)
 rosbuild_add_executable(filter_errors src/program/filter_errors.cpp)
 target_link_libraries(filter_errors online_learning online_learning_pcs)
 
+rosbuild_add_executable(filter_static src/program/filter_static.cpp)
+target_link_libraries(filter_static online_learning online_learning_pcs)
+
 rosbuild_add_executable(partition_td src/program/partition_td.cpp)
 target_link_libraries(partition_td online_learning online_learning_pcs)
 
