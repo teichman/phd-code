@@ -81,6 +81,7 @@ int main(int argc, char** argv)
     ("active-learning", "Use active learning rather than group induction")
     ("broadcast", "Broadcast updated GridClassifiers on the ROS network.")
     ("classifier", bpo::value<string>(), "Start with this classifier rather than an empty one.")
+    ("cluster-view", "Use the cluster view.")
     ;
 
   bpo::variables_map opts;
@@ -278,15 +279,18 @@ int main(int argc, char** argv)
     inductor->thread()->join();
   }
   else {
-    // Set up clustering user interface.
-    ClusterListVC::Ptr clvc(new ClusterListVC());
-    clvc->setOnlineLearner(inductor.get());
-    shared_ptr<GridClassifier> gc(new GridClassifier());
-    inductor->copyClassifier(gc.get());
-
-    GlutWindow glut_window(argc, argv);
-    glut_window.setViewController(clvc.get());
-    glut_window.launch();
+    ClusterListVC::Ptr clvc;
+    if(opts.count("cluster-view")) {
+      // Set up clustering user interface.
+      clvc = ClusterListVC::Ptr(new ClusterListVC());
+      clvc->setOnlineLearner(inductor.get());
+      shared_ptr<GridClassifier> gc(new GridClassifier());
+      inductor->copyClassifier(gc.get());
+      
+      GlutWindow glut_window(argc, argv);
+      glut_window.setViewController(clvc.get());
+      glut_window.launch();
+    }
 
     // Set up original user interface.
     BlobView view;
@@ -299,8 +303,8 @@ int main(int argc, char** argv)
     view.launch();
     alvc.launch();
     ivc.launch();
-    clvc->launch();
-
+    if(clvc)
+      clvc->launch();
 
     // Run group induction.
     inductor->thread()->join();
@@ -308,7 +312,8 @@ int main(int argc, char** argv)
     view.stop();
     alvc.stop();
     ivc.stop();
-    clvc->stop();
+    if(clvc)
+      clvc->stop();
   }
 
   if(isup)
