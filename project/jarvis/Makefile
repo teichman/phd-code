@@ -216,8 +216,8 @@ $(1)-set1/$(2)/induction:
 	--evaluate-every 1 \
 	--test $$(LABELS_DIR_$(1)_0)/$(2)/*.td \
 	--output-dir $$@ \
-	--unlabeled-td-dir $(1)-set1/tds/ \
-	--init `find $(1)-set1/tds/ -name '*.td' | sort -R | head -n4` \
+	--unlabeled-td-dir $(1)-set1/tds-lw \
+	--init $(1)-set1/tds-lw/*.td \
 	| tee $$@/log.txt
 
 baselines-$(1)-set1-$(2): $(1)-set1/$(2)/baseline_unfair $(1)-set1/$(2)/naive_supervised_baseline
