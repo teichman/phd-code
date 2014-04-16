@@ -162,7 +162,14 @@ bool isStatic(const Dataset& track, const GridClassifier& gc,
   size_t num = 0;
   for(size_t i = 0; i < dmap.size(); ++i) {
     hist = computeCellHistogram(track, i, gc);
+    //cout << hist.transpose() << endl;
     double density = (double)(hist != 0).count() / hist.rows();
+    if(density < 0 || density > 1) {
+      ROS_WARN_STREAM("Unexpected density value: " << density);
+      ROS_ASSERT(0);
+    }
+    //cout << density << endl;
+    
     if(density > density_thresh) {
       ++num;
       if(num >= slack)

@@ -74,7 +74,7 @@ void Inductor::chunkHook(TrackDataset* td) const
     //   tracks.push_back(track);
     // }
 
-    if(!isStatic(*track, *classifier_, 0.5, 7))
+    if(!isStatic(*track, *classifier_, 0.3, 3))
       tracks.push_back(track);
   }
 
