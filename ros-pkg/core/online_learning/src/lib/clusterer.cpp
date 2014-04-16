@@ -152,28 +152,22 @@ Eigen::ArrayXi computeCellHistogram(const Dataset& track,
   return hist;
 }
 
-bool isStatic(const Dataset& track, const GridClassifier& gc, double thresh)
+bool isStatic(const Dataset& track, const GridClassifier& gc,
+              double density_thresh, size_t slack)
 {
   ROS_ASSERT(track.nameMapping("dmap") == gc.nameMapping("dmap"));
   const NameMapping& dmap = track.nameMapping("dmap");
 
   ArrayXi hist;
-  double mean_density = 0;
+  size_t num = 0;
   for(size_t i = 0; i < dmap.size(); ++i) {
     hist = computeCellHistogram(track, i, gc);
     double density = (double)(hist != 0).count() / hist.rows();
-    mean_density += density;
+    if(density > density_thresh) {
+      ++num;
+      if(num >= slack)
+        return false;
+    }
   }
-  mean_density /= dmap.size();
-
-  // ArrayXi hist;
-  // double mean_density = 0;
-  // for(size_t i = 0; i < dmap.size(); ++i) {
-  //   hist = computeCellHistogram(track, i, gc);
-  //   double density = (double)(hist != 0).count() / hist.rows();
-  //   mean_density += density;
-  // }
-  // mean_density /= dmap.size();
-
-  return (mean_density < thresh);
+  return true;
 }

@@ -4,12 +4,14 @@
 #include <online_learning/clusterer.h>
 
 using namespace std;
+namespace bpo = boost::program_options;
 
-void process(const TrackDataset& td, const GridClassifier& gc, double thresh,
+void process(const TrackDataset& td, const GridClassifier& gc,
+             const bpo::variables_map& opts,
              TrackDataset* std, TrackDataset* nstd)
 {
   for(size_t i = 0; i < td.size(); ++i) {
-    if(isStatic(td[i], gc, thresh))
+    if(isStatic(td[i], gc, opts["thresh"].as<double>(), opts["slack"].as<double>()))
       std->tracks_.push_back(td.tracks_[i]);
     else
       nstd->tracks_.push_back(td.tracks_[i]);
@@ -18,7 +20,6 @@ void process(const TrackDataset& td, const GridClassifier& gc, double thresh,
 
 int main(int argc, char** argv)
 {
-  namespace bpo = boost::program_options;
   namespace bfs = boost::filesystem;
   bpo::options_description opts_desc("Allowed options");
   bpo::positional_options_description p;
@@ -26,14 +27,14 @@ int main(int argc, char** argv)
   string classifier_path;
   string output_dir;
   vector<string> dataset_paths;
-  double thresh;
   
   opts_desc.add_options()
     ("help,h", "produce help message")
     ("classifier,c", bpo::value<string>(&classifier_path), "")
     ("output,o", bpo::value<string>(&output_dir), "")
     ("datasets,d", bpo::value< vector<string> >(&dataset_paths)->required()->multitoken(), "")
-    ("thresh,t", bpo::value(&thresh), "Threshold to pass to isStatic()")
+    ("thresh,t", bpo::value<double>()->required(), "")
+    ("slack,s", bpo::value<double>()->required(), "")
     ;
 
   bpo::variables_map opts;
@@ -73,7 +74,7 @@ int main(int argc, char** argv)
       nonstatic_tracks.applyNameMappings(td);
     }
     
-    process(td, gc, thresh, &static_tracks, &nonstatic_tracks);
+    process(td, gc, opts, &static_tracks, &nonstatic_tracks);
   }
 
   // -- Save static and nonstatic tracks.

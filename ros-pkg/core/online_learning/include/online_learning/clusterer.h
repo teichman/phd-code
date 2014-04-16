@@ -25,7 +25,10 @@ Eigen::ArrayXf computeNormalizedCellHistogram(const Dataset& track,
 //! The test value is the mean density of the grid cells that get activated by
 //! at least one frame.
 //! A totally static track will have a mean density of 1/num_grid_cells.
-bool isStatic(const Dataset& track, const GridClassifier& gc, double thresh);
+//! density_thresh of 0.5 and slack of 7 was reasonable once upon a time.
+//! Probably you'll have to experiment for yourself though.
+bool isStatic(const Dataset& track, const GridClassifier& gc,
+              double density_thresh, size_t slack);
 
 
 #endif /* CLUSTERER_H_ */
