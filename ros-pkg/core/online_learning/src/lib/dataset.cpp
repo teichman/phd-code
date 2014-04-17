@@ -949,12 +949,24 @@ void splitTracks(size_t max_length, TrackDataset* dataset)
 void splitTracksFixedLength(size_t length, TrackDataset* dataset)
 {
   TrackDataset& d = *dataset;
-  vector<Dataset::Ptr> tracks;  // probably should reserve some amount.
+  vector<Dataset::Ptr> tracks;
+  tracks.reserve(dataset->size() * 10);  // TODO: Should set this more intelligently.
 
   for(size_t i = 0; i < d.size(); ++i) {
+    // If it's too small, just throw it out.
     if(d[i].size() < length)
       continue;
-    
+
+    // Chop a random amount off the end if the track is long enough.
+    // This results in a different random split each time.
+    if(d[i].size() > 2 * length) { 
+      size_t random_chop = rand() % length;
+      vector<Instance>::iterator start = d[i].instances_.end() - random_chop;
+      vector<Instance>::iterator end = d[i].instances_.end();
+      d[i].instances_.erase(start, end);
+    }
+
+    // Split into subtracks.
     while(d[i].size() >= length) {
       tracks.push_back(Dataset::Ptr(new Dataset));
       Dataset& src = d[i];
