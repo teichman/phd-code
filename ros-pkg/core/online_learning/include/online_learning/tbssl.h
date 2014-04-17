@@ -96,11 +96,8 @@ public:
   //! This is the primary method of providing new labeled data to the system.
   void pushHandLabeledDataset(TrackDataset::Ptr dataset);
   //! Copies and returns at most num inducted tracks from viewable_unsupervised_.
-  //! Classification logodds for all will be as near to prediction as possible.
-  //! e.g. setting prediction = 0 will return unconfident examples, whereas
-  //! setting it to 10 will give you things that are likely to be examples of cname.
-  TrackDataset requestInductedSample(const std::string& cname,
-                                     float prediction, size_t num) const;
+  //! Tracks are returned across the log odds spectrum.
+  TrackDataset requestInductedSample(const std::string& cname, size_t num) const;
   //! Makes a copy of viewable_unsupervised_ and viewable_unsupervised_hashes
   //! for a view controller.  The hashes aren't used much anymore.
   void viewableUnsupervised(TrackDataset* viewable_unsupervised,

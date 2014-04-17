@@ -131,6 +131,8 @@ void Inductor::retrospection(const TrackDataset& new_annotations, const std::vec
 
 void Inductor::requestInductedSampleHook(TrackDataset* td, int cidx) const
 {
+  ROS_DEBUG("Inductor::requestInductedSampleHook");
+  
   // -- Make a copy of the tracks and compute descriptors.
   TrackDataset cloned = *td->clone();
   entryHook(&cloned);
@@ -146,7 +148,7 @@ void Inductor::requestInductedSampleHook(TrackDataset* td, int cidx) const
   }
   sort(index.begin(), index.end(), greater< pair<double, size_t> >());  // descending
 
-  // -- Filter out tracks that are near-duplicates.
+  // -- Filter out tracks that would be caught by retrospection anyway.
   TrackDataset filtered;
   filtered.applyNameMappings(cloned);
   filtered.tracks_.reserve(cloned.size());
@@ -154,7 +156,7 @@ void Inductor::requestInductedSampleHook(TrackDataset* td, int cidx) const
     size_t idx = index[i].second;
     bool unique = true;
     for(size_t j = 0; unique && j < filtered.size(); ++j)
-      if(similar(cloned[idx], filtered[j], *classifier_, 0.9, 0))
+      if(similar(cloned[idx], filtered[j], *classifier_, 0.7, 3))
         unique = false;
     if(unique)
       filtered.tracks_.push_back(Dataset::Ptr(new Dataset(cloned[idx])));

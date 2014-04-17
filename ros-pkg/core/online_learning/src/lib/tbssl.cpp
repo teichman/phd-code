@@ -71,8 +71,7 @@ void OnlineLearner::pushHandLabeledDataset(TrackDataset::Ptr dataset)
   incoming_annotated_.push_back(dataset);
 }
 
-TrackDataset OnlineLearner::requestInductedSample(const std::string& cname,
-                                                  float prediction, size_t num) const
+TrackDataset OnlineLearner::requestInductedSample(const std::string& cname, size_t num) const
 {
   boost::unique_lock<boost::shared_mutex> ulock(viewable_unsupervised_mutex_);
 
@@ -84,19 +83,15 @@ TrackDataset OnlineLearner::requestInductedSample(const std::string& cname,
   }
   size_t cidx = nameMapping("cmap").toId(cname);
   
-  // -- Sort tracks by how close they are to the prediction we want.
+  // -- Sort tracks by predictions.
   const TrackDataset& vuns = *viewable_unsupervised_;
   vector< pair<double, size_t> > index;
   index.reserve(vuns.size());
   for(size_t i = 0; i < vuns.size(); ++i) {
     Label pred = vuns.label(i);
-    // Tracks with a label of exactly zero are those that were de-inducted by
-    // the system for a reason.  They should be ignored.
-    if(pred(cidx) == 0)
-      continue;
-    index.push_back(pair<double, size_t>(fabs(pred(cidx) - prediction), i));
+    index.push_back(pair<double, size_t>(pred(cidx), i));
   }
-  sort(index.begin(), index.end());  // ascending
+  sort(index.begin(), index.end(), greater< pair<double, size_t> >());  // descending
 
   // -- Set up the new TD.
   TrackDataset td;
@@ -106,8 +101,11 @@ TrackDataset OnlineLearner::requestInductedSample(const std::string& cname,
   td.applyNameMappings(vuns);
 
   // -- Copy over the tracks.
-  for(size_t i = 0; i < td.size(); ++i)
-    td[i] = vuns[index[i].second];
+  for(size_t i = 0; i < td.size(); ++i) {
+    double pct = (double)i / td.size();
+    size_t idx = min<size_t>(index.size() - 1, max<size_t>(0, index.size() * pct));
+    td[i] = vuns[index[idx].second];
+  }
 
   // Clear the dmap for the outgoing tracks since they do not include descriptors.
   // TODO: This should happen for vuns, too, ... but we'll be getting rid of that.
