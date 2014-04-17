@@ -8,4 +8,4 @@ for dir in *00; do
     cd -
 done
 
-montage -tile 1 -geometry 480x360 `find -name nsb.png | sort` nsb_montage.png
+montage -tile 1 -geometry 480x360 `find -name 'nsb*.png' | sort` nsb_montage.png

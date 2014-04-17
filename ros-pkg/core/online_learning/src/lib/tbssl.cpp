@@ -156,7 +156,6 @@ void OnlineLearner::updateViewableUnsupervised()
   for(size_t i = 0; i < vuns.tracks_.size(); ++i)
     vuns.tracks_[i] = Dataset::Ptr(new Dataset);
   vuns.applyNameMappings(uns);
-  int nc = nameMapping("cmap").size();
   for(size_t i = 0; i < vuns.size(); ++i) {
     Dataset& vtrack = vuns[i];
     Dataset& utrack = uns[i];

@@ -45,18 +45,23 @@ for idx, subsample_name in enumerate(subsample_names):
 
 # -- Read in the accuracies of group induction.
 gi_accs = 100 * npLoadBash("grep 'Total acc' `find -L -wholename '*/induction/final_track_results.txt' | sort` | awk '{print $NF}'")
-gi_ntrs = npLoadBash("for dir in `find -L -maxdepth 1 -mindepth 1 -type d`; do grep -A2 'Hand-annotated' `find $dir -wholename '*/induction/*/learner_status.txt' | sort | tail -n1`; done | grep tracks | awk '{print $1}'")
+#gi_ntrs = npLoadBash("for dir in `find -L -maxdepth 1 -mindepth 1 -type d`; do grep -A2 'Hand-annotated' `find $dir -wholename '*/induction/*/learner_status.txt' | sort | tail -n1`; done | grep tracks | awk '{print $1}'")
+gi_ntrs = npLoadBash("for dir in `find -name induction | sort`; do echo $dir; grep -A2 'Hand-annotated' `find $dir -name 'learner_status.txt' | sort | tail -n1`; done | grep tracks | awk '{print $1}'")
 
 print gi_accs
 print gi_ntrs
 
-gi_mean = np.mean(gi_accs)
-gi_stderr = np.std(gi_accs) / math.sqrt(len(gi_accs))
-gi_ntr = np.mean(gi_ntrs)
+gi_acc_mean = np.mean(gi_accs)
+gi_acc_stderr = np.std(gi_accs) / math.sqrt(len(gi_accs))
+gi_ntr_mean = np.mean(gi_ntrs)
+gi_ntr_stderr = np.std(gi_ntrs) / math.sqrt(len(gi_ntrs))
 
 # -- Make the plot.
 fig, ax = plt.subplots()
-ax.errorbar(ntrs, means, yerr=stderrs, fmt='-o', color='black', markersize=5, linewidth=1, linestyle=':', label='Supervised baseline')
+plt.errorbar(ntrs, means, yerr=stderrs, fmt='-o', color='black', markersize=5, linewidth=1, linestyle=':', label='Supervised baseline')
+# Plot group induction results as a single point with error bars in both directions.
+#ax.errorbar(gi_ntr_mean, gi_acc_mean, yerr=gi_acc_stderr, xerr=gi_ntr_stderr, fmt='', color='red', elinewidth=2, capsize=3, label='Group induction')
+# Plot all group induction results individually.
 ax.plot(gi_ntrs, gi_accs, 'x', color='red', markersize=6, markeredgewidth=2, label='Group induction')
 
 plt.xlabel('Number of supervised training examples')
@@ -65,6 +70,7 @@ plt.title(getPlotTitle())
 
 plt.legend(loc='lower right')
 
-plt.savefig(args.output_name + '.pdf')
-plt.savefig(args.output_name + '.png')
+plt.savefig(args.output_name + '-' + os.path.basename(os.getcwd()) + '.pdf')
+plt.savefig(args.output_name + '-' + os.path.basename(os.getcwd()) + '.png')
+
 
