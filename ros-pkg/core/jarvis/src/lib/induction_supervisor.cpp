@@ -35,11 +35,7 @@ void InductionSupervisor::_run()
       string cname = gc_.nameMapping("cmap").toName(i);
 
       // -- Get a sample of inducted tracks.
-      float val = 0;
-      if(iter % 2)
-        val = (5 * (double)rand() / RAND_MAX) - 2.5;
-
-      TrackDataset td = ol_->requestInductedSample(cname, val, 50);
+      TrackDataset td = ol_->requestInductedSample(cname, 50);
       cout << "[InductionSupervisor] Got " << td.size() << " tracks for class " << cname << endl;
       if(td.empty())
         continue;
