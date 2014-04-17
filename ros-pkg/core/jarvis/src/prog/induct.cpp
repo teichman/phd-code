@@ -280,6 +280,7 @@ int main(int argc, char** argv)
   }
   else {
     ClusterListVC::Ptr clvc;
+    GlutWindow glut_window(argc, argv);
     if(opts.count("cluster-view")) {
       // Set up clustering user interface.
       clvc = ClusterListVC::Ptr(new ClusterListVC());
@@ -287,7 +288,6 @@ int main(int argc, char** argv)
       shared_ptr<GridClassifier> gc(new GridClassifier());
       inductor->copyClassifier(gc.get());
       
-      GlutWindow glut_window(argc, argv);
       glut_window.setViewController(clvc.get());
       glut_window.launch();
     }
