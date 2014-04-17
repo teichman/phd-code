@@ -1,0 +1,11 @@
+#!/bin/bash
+# Run inside a regression test dir.
+
+for dir in *00; do
+    echo $dir
+    cd $dir
+    rosrun jarvis plot_naive_supervised_baseline.py
+    cd -
+done
+
+montage -tile 1 -geometry 480x360 `find -name nsb.png | sort` nsb_montage.png
