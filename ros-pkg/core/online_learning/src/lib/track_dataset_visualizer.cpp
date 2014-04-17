@@ -561,6 +561,10 @@ bool ActiveLearningViewController::handleKeypress(const pcl::visualization::Keyb
   case ' ':
     learner_->togglePaused();
     break;
+  case '!':
+    cout << "Requesting snapshot..." << endl;
+    learner_->request_snapshot_ = true;
+    break;
   default:
     used = false;
     break;
