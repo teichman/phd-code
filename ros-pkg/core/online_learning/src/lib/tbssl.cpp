@@ -527,13 +527,30 @@ void OnlineLearner::balance(const ObjectiveIndex& index)
         ++ind_counts(1);
     }
 
+    // Because this is called before prune(), ind_counts might be larger than the
+    // buffer size.  This causes balancing to be violated after pruning.
+    // So, cap the ind counts at the max we can store after pruning.
+    ind_counts(0) = min<float>(ind_counts(0), buffer_size_ / 2);
+    ind_counts(1) = min<float>(ind_counts(1), buffer_size_ / 2);
+    
     double mult = (ind_counts / ann_counts).minCoeff();
     if(isnan(mult) || isinf(mult))
       continue;
 
+    ArrayXf desf = mult * ann_counts;
+    if(fabs(desf(0) / desf(1) - ann_counts(0) / ann_counts(1)) > 1e-6) {
+      ROS_WARN_STREAM("Check balancing?  ann_counts: " << ann_counts.transpose() << " , desired: " << desf.transpose());
+      ROS_WARN_STREAM("  " << desf(0) / desf(1) << "   " << ann_counts(0) / ann_counts(1));
+      ROS_WARN_STREAM("  " << fabs(desf(0) / desf(1) - ann_counts(0) / ann_counts(1)));
+    }
+       
     ArrayXi desired = (mult * ann_counts).cast<int>();
-    ROS_ASSERT((desired <= ind_counts.cast<int>()).all());
-
+    ROS_ASSERT((desired <= buffer_size_ / 2 + 1).all());
+    desired(0) = min<int>(desired(0), buffer_size_ / 2);
+    desired(1) = min<int>(desired(1), buffer_size_ / 2);
+    cout << "Desired balance: " << desired.transpose() << endl;
+    ROS_ASSERT((desired <= buffer_size_ / 2).all());
+    
     // Make sure index is sorted in descending order.
     for(size_t i = 1; i < index.size(); ++i) 
       ROS_ASSERT(index[i].first <= index[i-1].first && index[i].first >= 0);
