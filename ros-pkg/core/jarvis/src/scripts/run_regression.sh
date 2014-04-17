@@ -49,7 +49,7 @@ rosrun jarvis induct \
     --config $CONFIG \
     --emax 0 \
     --buffer-size 1000 \
-    --max-track-length 30 \
+    --max-track-length 90 \
     --snapshot-every 0 \
     --evaluate-every 1 \
     --output-dir $RUN_DIR/induction \
@@ -86,7 +86,7 @@ rosrun jarvis induct \
     --config $CONFIG \
     --emax 0 \
     --buffer-size 1000 \
-    --max-track-length 30 \
+    --max-track-length 90 \
     --snapshot-every 0 \
     --evaluate-every 1 \
     --output-dir $RUN_DIR/active_learning \
