@@ -33,6 +33,9 @@ float histogramIntersection(const Eigen::ArrayXf& hist0, const Eigen::ArrayXf& h
 
 
 //! annotation and inducted have descriptors computed.
+// TODO: Anything that references particular descriptors does not belong in the online_learning package.
+// Perhaps there should be a class for computing similarities which can be loaded with the descriptor spaces
+// it is to care about.
 bool similar(const Dataset& track0, const Dataset& track1, const GridClassifier& gc, double intersection_threshold, int max_different_dspaces)
 {
   ROS_ASSERT(track0.nameMappingsAreEqual(track1));

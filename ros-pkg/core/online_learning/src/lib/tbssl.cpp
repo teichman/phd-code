@@ -3,6 +3,7 @@
 #include <eigen_extensions/eigen_extensions.h>
 #include <online_learning/evaluator.h>
 #include <online_learning/tbssl.h>
+#include <online_learning/clusterer.h>
 #include <glob.h>
 
 using namespace std;
@@ -74,44 +75,39 @@ void OnlineLearner::pushHandLabeledDataset(TrackDataset::Ptr dataset)
 TrackDataset OnlineLearner::requestInductedSample(const std::string& cname, size_t num) const
 {
   boost::unique_lock<boost::shared_mutex> ulock(viewable_unsupervised_mutex_);
-
-  if(!nameMapping("cmap").hasName(cname)) {
-    ROS_WARN_STREAM("OnlineLearner got a request for inducted tracks of class \""
-                    << cname << "\", but that name does not exist in the cmap.");
-    TrackDataset td;
-    return td;
-  }
-  size_t cidx = nameMapping("cmap").toId(cname);
-  
-  // -- Sort tracks by predictions.
-  const TrackDataset& vuns = *viewable_unsupervised_;
-  vector< pair<double, size_t> > index;
-  index.reserve(vuns.size());
-  for(size_t i = 0; i < vuns.size(); ++i) {
-    Label pred = vuns.label(i);
-    index.push_back(pair<double, size_t>(pred(cidx), i));
-  }
-  sort(index.begin(), index.end(), greater< pair<double, size_t> >());  // descending
-
+   
   // -- Set up the new TD.
+  const TrackDataset& vuns = *viewable_unsupervised_;
   TrackDataset td;
-  td.tracks_.resize(min(index.size(), num));
-  for(size_t i = 0; i < td.tracks_.size(); ++i)
-    td.tracks_[i] = Dataset::Ptr(new Dataset);
+  td.tracks_.reserve(min(vuns.size(), num));
   td.applyNameMappings(vuns);
 
-  // -- Copy over the tracks.
-  for(size_t i = 0; i < td.size(); ++i) {
-    double pct = (double)i / td.size();
-    size_t idx = min<size_t>(index.size() - 1, max<size_t>(0, index.size() * pct));
-    td[i] = vuns[index[idx].second];
-  }
+  // -- Search for a random set of unique tracks.
+  size_t num_failed_attempts = 0;
+  size_t max_num_failed_attempts = 100;
+  while(td.size() < num) {
+    size_t idx = rand() % vuns.size();
 
+    bool is_similar = false;
+    for(size_t i = 0; i < td.size() && !is_similar; ++i)
+      if(similar(vuns[idx], td[i], *classifier_, 0.7, 3))
+        is_similar = true;
+
+    if(is_similar) {
+      ++num_failed_attempts;
+      if(num_failed_attempts >= max_num_failed_attempts)
+        break;
+      else
+        continue;
+    }
+
+    td.tracks_.push_back(Dataset::Ptr(new Dataset(vuns[idx])));
+  }
+  
   // Clear the dmap for the outgoing tracks since they do not include descriptors.
   // TODO: This should happen for vuns, too, ... but we'll be getting rid of that.
   td.applyNameMapping("dmap", NameMapping());
-
-  requestInductedSampleHook(&td, cidx);
+  requestInductedSampleHook(&td, td.nameMapping("cmap").toId(cname));
   
   return td;
 }
