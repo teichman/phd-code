@@ -243,7 +243,7 @@ int main(int argc, char** argv)
       YAML::Node fs_config = YAML::LoadFile(fake_supervisor_config_path);
       ROS_ASSERT(fs_config["Pipeline"]);
       isup = InductionSupervisor::Ptr(new InductionSupervisor(gc, fs_config, up, inductor.get(), 0.5, output_dir));
-      isup->max_iter_to_supervise_ = max<int>(0, max_iters - 7);  // Normally, stop providing annotations a few iterations before we stop OnlineLearner.
+      isup->max_iter_to_supervise_ = max<int>(0, max_iters - 10);  // Normally, stop providing annotations a few iterations before we stop OnlineLearner.
     
       // If we're using a fake supervisor annotation limit,
       // ignore the max iters option.  Use the annotation limit to decide when
