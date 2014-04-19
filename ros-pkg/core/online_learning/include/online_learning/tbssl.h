@@ -104,6 +104,8 @@ public:
                             std::vector<double>* hashes) const;
   TrackDataset::ConstPtr unsupervised() const { return unsupervised_; }
   TrackDataset::ConstPtr annotated() const { return annotated_; }
+  //! Includes those that have been pushed but not yet processed.
+  size_t numAnnotated() const;
 
   
   /************************************************************

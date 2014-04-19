@@ -1481,6 +1481,15 @@ void OnlineLearner::Stats::_applyNameTranslator(const std::string& id, const Nam
   translator.translate(&num_tracks_annotated_neg_, 0);
 }
 
+size_t OnlineLearner::numAnnotated() const
+{
+  boost::unique_lock<boost::shared_mutex> ulock(hand_mutex_);
+  size_t num = annotated_->size();
+  for(size_t i = 0; i < incoming_annotated_.size(); ++i)
+    num += incoming_annotated_[i]->size();
+  return num;
+}
+
 /************************************************************
  * Helper functions
  ************************************************************/
