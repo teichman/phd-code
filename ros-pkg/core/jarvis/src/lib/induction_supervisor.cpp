@@ -5,7 +5,7 @@ using namespace Eigen;
 
 InductionSupervisor::InductionSupervisor(GridClassifier gc, YAML::Node config,
                                          const Eigen::VectorXf& up, OnlineLearner* ol,
-                                         float conf_thresh, std::string output_dir) :
+                                         float conf_thresh, int period, std::string output_dir) :
   annotation_limit_(-1),
   max_iter_to_supervise_(-1),
   gc_(gc),
@@ -13,6 +13,7 @@ InductionSupervisor::InductionSupervisor(GridClassifier gc, YAML::Node config,
   up_(up),
   ol_(ol),
   conf_thresh_(conf_thresh),
+  period_(period),
   output_dir_(output_dir)
 {
 }
@@ -24,7 +25,10 @@ void InductionSupervisor::_run()
   
   while(!quitting_) {
     usleep(1e6);
-    if(ol_->iter() % 3 != 2 || ol_->iter() == last_iter_provided)
+    if(ol_->iter() < period_ || (ol_->iter() % period_) != 0)
+      continue;
+    // If we've already provided supervision for this iteration, don't do it again.
+    if(ol_->iter() == last_iter_provided)
       continue;
     if(max_iter_to_supervise_ != -1 && ol_->iter() > max_iter_to_supervise_)
       continue;

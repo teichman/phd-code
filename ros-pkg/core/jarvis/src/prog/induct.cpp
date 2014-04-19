@@ -51,6 +51,7 @@ int main(int argc, char** argv)
   string fake_supervisor_path;
   string fake_supervisor_config_path;
   int fake_supervisor_annotation_limit;
+  int fake_supervisor_period;
 
   vector<string> class_names;
   opts_desc.add_options()
@@ -78,6 +79,7 @@ int main(int argc, char** argv)
     ("fake-supervisor", bpo::value(&fake_supervisor_path), "Path to GridClassifier")
     ("fake-supervisor-config", bpo::value(&fake_supervisor_config_path), "Path to config used by fake supervisor")
     ("fake-supervisor-annotation-limit", bpo::value(&fake_supervisor_annotation_limit)->default_value(-1), "FakeSupervisor will only provide corrections while OnlineLearner has fewer than this many annotations")
+    ("fake-supervisor-period", bpo::value(&fake_supervisor_period)->default_value(3), "FakeSupervisor will provide supervision with this regularity.")
     ("active-learning", "Use active learning rather than group induction")
     ("broadcast", "Broadcast updated GridClassifiers on the ROS network.")
     ("classifier", bpo::value<string>(), "Start with this classifier rather than an empty one.")
@@ -234,15 +236,17 @@ int main(int argc, char** argv)
     // -- Set up induction supervisor.
     if(opts.count("fake-supervisor")) {
       ROS_ASSERT(opts.count("fake-supervisor-config"));
+      ROS_ASSERT(opts.count("fake-supervisor-period"));
       cout << "Using fake supervisor at " << fake_supervisor_path << endl;
       cout << "  Config: " << fake_supervisor_config_path << endl;
       cout << "  Annotation limit: " << fake_supervisor_annotation_limit << endl;
+      cout << "  Period: " << fake_supervisor_period << endl;
     
       GridClassifier gc;
       gc.load(fake_supervisor_path);
       YAML::Node fs_config = YAML::LoadFile(fake_supervisor_config_path);
       ROS_ASSERT(fs_config["Pipeline"]);
-      isup = InductionSupervisor::Ptr(new InductionSupervisor(gc, fs_config, up, inductor.get(), 0.5, output_dir));
+      isup = InductionSupervisor::Ptr(new InductionSupervisor(gc, fs_config, up, inductor.get(), 0.5, fake_supervisor_period, output_dir));
       isup->max_iter_to_supervise_ = max<int>(0, max_iters - 10);  // Normally, stop providing annotations a few iterations before we stop OnlineLearner.
     
       // If we're using a fake supervisor annotation limit,

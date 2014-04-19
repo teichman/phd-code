@@ -61,6 +61,7 @@ rosrun jarvis induct \
     --test $TEST_DIR/test/*.td \
     --fake-supervisor $TEST_DIR/supervisor.gc \
     --fake-supervisor-config $TEST_DIR/supervisor_config.yml \
+    --fake-supervisor-period 3 \
     2>&1 | tee $RUN_DIR/induction/log.txt
 
 cd $RUN_DIR/induction
@@ -98,6 +99,7 @@ rosrun jarvis induct \
     --test $TEST_DIR/test/*.td \
     --fake-supervisor $TEST_DIR/supervisor.gc \
     --fake-supervisor-config $TEST_DIR/supervisor_config.yml \
+    --fake-supervisor-period 1 \
     --fake-supervisor-annotation-limit `grep -A2 'Hand-annotated' $(find $RUN_DIR/induction/ -name learner_status.txt | sort | tail -n1) | grep tracks | awk '{print $1}'` \
     2>&1 | tee $RUN_DIR/active_learning/log.txt
 

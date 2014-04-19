@@ -16,9 +16,10 @@ public:
   int annotation_limit_;
   int max_iter_to_supervise_;
   
+  
   InductionSupervisor(GridClassifier gc, YAML::Node config,
                       const Eigen::VectorXf& up, OnlineLearner* ol,
-                      float conf_thresh, std::string output_dir);
+                      float conf_thresh, int period, std::string output_dir);
   void _run();
 
 protected:
@@ -27,6 +28,7 @@ protected:
   Eigen::VectorXf up_;
   OnlineLearner* ol_;
   float conf_thresh_;
+  int period_;
   std::string output_dir_;
 };
 
