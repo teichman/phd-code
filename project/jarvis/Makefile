@@ -15,7 +15,6 @@ else
 ROSRUN			:= rosrun
 endif
 
-
 .SECONDEXPANSION:       # Allows use of automatic vars in prerequisites.
 .SECONDARY:             # Prevents deletion of intermediate targets in a chain of implicit rules.
 
@@ -453,10 +452,16 @@ $(REGRESSION_RUNS_DIR)/completed: $(addprefix regression-test-,$(addsuffix -mult
 analyze-regression-tests: $(REGRESSION_RUNS_DIR)/completed
 	$(ROSRUN) jarvis analyze_regression_tests.py $(REGRESSION_RUNS_DIR)
 
+
 MAX_ITERS := 40
+
+ifndef NUM_REGRESSION_ITERS
+NUM_REGRESSION_ITERS	:= 3
+endif
+
 define REGRESSION_RULE_GENERATOR
 regression-test-$(1)-multi:
-	for i in {1..3}; do make -f $(MAKEFILE) regression-test-$(1); done
+	for i in {1..$(NUM_REGRESSION_ITERS)}; do make -f $(MAKEFILE) regression-test-$(1); done
 regression-test-$(1):
 	$(ROSRUN) jarvis run_regression.sh $(REGRESSION_TESTS_DIR)/$(1) $(CONFIG) $(MAX_ITERS) $(REGRESSION_RUNS_DIR)/$(1)
 endef
