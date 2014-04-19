@@ -2,6 +2,9 @@
 
 . ~/.bashrc  # Set up ROS.
 
+set -o nounset
+set -o errexit
+
 # echo ============================================================
 # echo $(cd $(rospack find jarvis) && git rev-parse --short HEAD)  # This works.
 # echo $(roscd jarvis && git rev-parse --short HEAD)  # This doesn't.  Why?  roscd used to work here.
