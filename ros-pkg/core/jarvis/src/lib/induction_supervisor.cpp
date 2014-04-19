@@ -24,7 +24,7 @@ void InductionSupervisor::_run()
   
   while(!quitting_) {
     usleep(1e6);
-    if(ol_->iter() % 5 != 2 || ol_->iter() == last_iter_provided)
+    if(ol_->iter() % 3 != 2 || ol_->iter() == last_iter_provided)
       continue;
     if(max_iter_to_supervise_ != -1 && ol_->iter() > max_iter_to_supervise_)
       continue;
@@ -35,7 +35,7 @@ void InductionSupervisor::_run()
       string cname = gc_.nameMapping("cmap").toName(i);
 
       // -- Get a sample of inducted tracks.
-      TrackDataset td = ol_->requestInductedSample(cname, 75);
+      TrackDataset td = ol_->requestInductedSample(cname, 100);
       cout << "[InductionSupervisor] Got " << td.size() << " tracks for class " << cname << endl;
       if(td.empty())
         continue;
