@@ -3,12 +3,12 @@
 . ~/.bashrc  # Set up ROS.
 
 set -o nounset
-set -o errexit
 
-# echo ============================================================
-# echo $(cd $(rospack find jarvis) && git rev-parse --short HEAD)  # This works.
-# echo $(roscd jarvis && git rev-parse --short HEAD)  # This doesn't.  Why?  roscd used to work here.
-# echo ============================================================
+# This is a good idea usually, but when working remotely the plotting
+# scripts can quit with an error about not being able to connect
+# to the x server.  Normally this is ignored and run_regression
+# continues, but not with errexit.
+#set -o errexit
 
 # -- Parse args.
 if [ "$#" == "0" ]; then
