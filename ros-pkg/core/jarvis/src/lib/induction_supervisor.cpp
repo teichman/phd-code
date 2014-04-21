@@ -56,7 +56,7 @@ void InductionSupervisor::_run()
       TrackDataset::Ptr errors(new TrackDataset);
       errors->applyNameMappings(td);
       for(size_t j = 0; j < td.size(); ++j) {
-        if(annotation_limit_ != -1 && (int)(ol_->annotated()->size() + errors->size()) >= annotation_limit_) {
+        if(annotation_limit_ != -1 && ol_->numAnnotated() + errors->size() >= annotation_limit_) {
           cout << "[InductionSupervisor] Annotation limit reached." << endl;
           break;
         }

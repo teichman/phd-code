@@ -675,6 +675,8 @@ void OnlineLearner::_run()
   if(!bfs::exists(input_hand_annotations_dir_))
     bfs::create_directory(input_hand_annotations_dir_);
 
+  int max_ann_counter = 0;
+  
   while(true) {    
     // -- Check if we're done.
     if(bfs::exists(output_dir_ + "/stop"))
@@ -706,8 +708,16 @@ void OnlineLearner::_run()
     // Check max_annotations_ here, after learner status has been updated to
     // reflect the new annotations.
     ROS_ASSERT(max_annotations_ != 0);  // This would make no sense.
-    if(max_annotations_ != -1 && (int)annotated_->size() >= max_annotations_)
-      break;
+
+    // If we've received all the annotations we're allotted, then run 10 more
+    // iterations and stop.  This is to be totally sure the classifier has
+    // converged.
+    if(max_annotations_ != -1) { 
+      if((int)annotated_->size() >= max_annotations_)
+        ++max_ann_counter;
+      if(max_ann_counter >= 10)
+        break;
+    }
 
     // Update the data that is publicly viewable.
     updateViewableUnsupervised();
