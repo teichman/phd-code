@@ -1,6 +1,8 @@
 #!/bin/bash
 # Run inside a regression test dir.
 
+rm -f nsb_montage.png
+
 for dir in *00; do
     echo $dir
     cd $dir

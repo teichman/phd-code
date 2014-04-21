@@ -60,9 +60,11 @@ gi_ntr_stderr = np.std(gi_ntrs) / math.sqrt(len(gi_ntrs))
 fig, ax = plt.subplots()
 plt.errorbar(ntrs, means, yerr=stderrs, fmt='-o', color='black', markersize=5, linewidth=1, linestyle=':', label='Supervised baseline')
 # Plot group induction results as a single point with error bars in both directions.
-#ax.errorbar(gi_ntr_mean, gi_acc_mean, yerr=gi_acc_stderr, xerr=gi_ntr_stderr, fmt='', color='red', elinewidth=2, capsize=3, label='Group induction')
+ax.errorbar(gi_ntr_mean, gi_acc_mean, yerr=gi_acc_stderr, xerr=gi_ntr_stderr, fmt='', color='red', elinewidth=2, capsize=3, label='Group induction')
 # Plot all group induction results individually.
-ax.plot(gi_ntrs, gi_accs, 'x', color='red', markersize=6, markeredgewidth=2, label='Group induction')
+#ax.plot(gi_ntrs, gi_accs, 'x', color='red', markersize=6, markeredgewidth=2, label='Group induction')
+
+plt.gca().set_ylim(top=100)
 
 plt.xlabel('Number of supervised training examples')
 plt.ylabel('Accuracy (\%)')
