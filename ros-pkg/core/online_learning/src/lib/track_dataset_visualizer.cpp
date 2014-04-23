@@ -387,9 +387,11 @@ void InductionViewController::applyLabel()
 void InductionViewController::updateUnsupervisedDataset()
 {
   cout << "[InductionViewController]  Getting new snapshot of the unsupervised dataset..." << endl;
-  while(true) { 
-    learner_->viewableUnsupervised(td_.get(), &hashes_);
-    ROS_ASSERT(td_->size() == hashes_.size());
+  while(true) {
+    vector<double> ignore;
+    learner_->viewableUnsupervised(td_.get(), &ignore);
+    // string cname = learner_->nameMapping("cmap").toName(0);  // TODO: Make this selectable.
+    // *td_ = learner_->requestInductedSample(cname, 10);
     if(td_->empty()) {
       cout << "[InductionViewController]  Unsupervised dataset is empty.  Waiting..." << endl;
       usleep(5e6);
@@ -403,12 +405,6 @@ void InductionViewController::updateUnsupervisedDataset()
   hrt_.reset();
   hrt_.start();
 
-  set<double> hashset;
-  for(size_t i = 0; i < hashes_.size(); ++i)
-    hashset.insert(hashes_[i]);
-  if(hashset.size() < hashes_.size())
-    ROS_WARN_STREAM("[InductionViewController]  " << hashes_.size() - hashset.size() << " hash collisions detected." << std::flush);
-    
   cout << "[InductionViewController]  Done." << endl;
 }
 

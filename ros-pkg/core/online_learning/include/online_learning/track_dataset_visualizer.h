@@ -147,7 +147,6 @@ public:
   
 protected:
   OnlineLearner* learner_;
-  std::vector<double> hashes_;
   //! Keeps track of how long it has been since you updated.
   HighResTimer hrt_;
 

@@ -75,6 +75,7 @@ void OnlineLearner::pushHandLabeledDataset(TrackDataset::Ptr dataset)
 TrackDataset OnlineLearner::requestInductedSample(const std::string& cname, size_t num) const
 {
   boost::unique_lock<boost::shared_mutex> ulock(viewable_unsupervised_mutex_);
+  ScopedTimer st("OnlineLearner::requestInductedSample", TimeUnit::MS);
    
   // -- Set up the new TD.
   const TrackDataset& vuns = *viewable_unsupervised_;
