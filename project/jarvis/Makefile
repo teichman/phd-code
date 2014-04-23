@@ -205,12 +205,13 @@ define SET1_CONTEXT_CLASS_RULE_GENERATOR
 $(1)-set1/$(2)/induction:
 	mkdir -p $$@
 	$(ROSRUN) jarvis induct \
+	--randomize \
 	--class-names $(2) \
 	--config $(CONFIG) \
 	-u $$(UP_VECTOR_$(1)) \
 	--emax 0 \
 	--buffer-size 1000 \
-	--max-track-length 30 \
+	--max-track-length 90 \
 	--snapshot-every 0 \
 	--evaluate-every 1 \
 	--test $$(LABELS_DIR_$(1)_0)/$(2)/*.td \
