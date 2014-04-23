@@ -52,17 +52,20 @@ print gi_accs
 print gi_ntrs
 
 gi_acc_mean = np.mean(gi_accs)
-gi_acc_stderr = np.std(gi_accs) / math.sqrt(len(gi_accs))
 gi_ntr_mean = np.mean(gi_ntrs)
-gi_ntr_stderr = np.std(gi_ntrs) / math.sqrt(len(gi_ntrs))
 
 # -- Make the plot.
 fig, ax = plt.subplots()
 plt.errorbar(ntrs, means, yerr=stderrs, fmt='-o', color='black', markersize=5, linewidth=1, linestyle=':', label='Supervised baseline')
-# Plot group induction results as a single point with error bars in both directions.
-ax.errorbar(gi_ntr_mean, gi_acc_mean, yerr=gi_acc_stderr, xerr=gi_ntr_stderr, fmt='', color='red', elinewidth=2, capsize=3, label='Group induction')
-# Plot all group induction results individually.
-#ax.plot(gi_ntrs, gi_accs, 'x', color='red', markersize=6, markeredgewidth=2, label='Group induction')
+
+if True:
+    # Plot all group induction results individually.
+    ax.plot(gi_ntrs, gi_accs, 'x', color='red', markersize=6, markeredgewidth=2, label='Group induction')
+else:
+    # Plot group induction results as a single point with error bars in both directions.
+    gi_acc_stderr = np.std(gi_accs) / math.sqrt(len(gi_accs))
+    gi_ntr_stderr = np.std(gi_ntrs) / math.sqrt(len(gi_ntrs))
+    ax.errorbar(gi_ntr_mean, gi_acc_mean, yerr=gi_acc_stderr, xerr=gi_ntr_stderr, fmt='', color='red', elinewidth=2, capsize=3, label='Group induction')
 
 plt.gca().set_ylim(top=100)
 
