@@ -195,12 +195,19 @@ $(1)-set1/tds/%/updated: $(1)-set1/tds/%/extracted
 	-j 24
 	touch $$@
 
+
+$(1)-set1-all-test-set-statistics: $$(addprefix $(1)-set1-, $$(addsuffix -test-set-statistics, $$(CLASS_NAMES_$(1))))
+
 endef
 $(foreach CONTEXT,$(CONTEXTS), \
 $(eval $(call SET1_CONTEXT_RULE_GENERATOR,$(CONTEXT))))
 
 
 define SET1_CONTEXT_CLASS_RULE_GENERATOR
+
+$(1)-set1-$(2)-test-set-statistics:
+	@echo ==================== $(1) $(2) test set summary ====================
+	@. ~/.bashrc && $(ROSRUN) online_learning stat $$(LABELS_DIR_$(1)_0)/$(2)/*.td | grep 'tracks\.' | grep -v empty | stats 1
 
 $(1)-set1/$(2)/induction:
 	mkdir -p $$@
