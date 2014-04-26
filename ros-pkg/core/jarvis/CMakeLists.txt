@@ -148,3 +148,7 @@ target_link_libraries(email_on_detection jarvis_core avcodec avformat avutil)
 rosbuild_add_executable(print_dmap src/prog/print_dmap.cpp)
 rosbuild_link_boost(print_dmap program_options)
 target_link_libraries(print_dmap jarvis_core)
+
+rosbuild_add_executable(inspect_heat src/prog/inspect_heat.cpp)
+rosbuild_link_boost(inspect_heat program_options)
+target_link_libraries(inspect_heat jarvis_core)
