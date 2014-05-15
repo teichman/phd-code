@@ -152,3 +152,7 @@ target_link_libraries(print_dmap jarvis_core)
 rosbuild_add_executable(inspect_heat src/prog/inspect_heat.cpp)
 rosbuild_link_boost(inspect_heat program_options)
 target_link_libraries(inspect_heat jarvis_core)
+
+rosbuild_add_executable(track_times src/prog/track_times.cpp)
+rosbuild_link_boost(track_times program_options)
+target_link_libraries(track_times jarvis_core)
