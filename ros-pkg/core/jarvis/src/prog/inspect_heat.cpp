@@ -1,16 +1,13 @@
 #include <jarvis/tracker.h>
 #include <eigen_extensions/eigen_extensions.h>
 #include <boost/program_options.hpp>
-#include <opencv2/highgui/highgui.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
-
-#include <pcl/point_types.h>
-#include <pcl/point_cloud.h>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <pcl/common/transforms.h>
 
 using namespace std;
-using namespace Eigen;
 
 namespace bfs = boost::filesystem;
 namespace bpt = boost::posix_time;
@@ -20,11 +17,13 @@ namespace cv{
   typedef boost::shared_ptr<const Mat1f> Mat1fConstPtr;
 }
 
-typedef Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> Mat1b;
+namespace Eigen{
+  typedef Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> MatrixXb;
+}
 
-const float min_temp = 50.f, max_temp = 90.f;
+const float min_vis_temp = 50.f, max_vis_temp = 90.f;
 
-void thermalDataToTemperature(const Mat1b& in, cv::Mat1f& out)
+static void thermalDataToTemperature(const Eigen::MatrixXb& in, cv::Mat1f& out)
 {
   const float min_temp = 0.f, max_temp = 128.f;
   out = cv::Mat1f(in.rows(), in.cols());
@@ -35,8 +34,7 @@ void thermalDataToTemperature(const Mat1b& in, cv::Mat1f& out)
   }
 }
 
-
-bool filepathToTime(const std::string &filepath, uint64_t &timestamp)
+static bool filepathToTime(const std::string &filepath, uint64_t &timestamp)
 {
   // For now, we assume the file is of the form frame_[22-char POSIX timestamp]_*         
   char timestamp_str[256];
@@ -52,42 +50,63 @@ bool filepathToTime(const std::string &filepath, uint64_t &timestamp)
   return false;
 }
 
+//! \brief Grabber for thermal data. Data is assumed to be stored in nested
+//! directory (day then hour).
 class ThermalGrabber
 {
 public:
+  //! \brief Default constructor.
   ThermalGrabber(){}
-  ThermalGrabber(const std::string& input, bool in_memory=false,
+  //! \brief Constructor that takes input directory, whether or not to store
+  //! data in memory, and minimum and maximum times for grabber (in case
+  //! only care about a small slice of a day).
+  ThermalGrabber(const std::string& input_dir, bool in_memory=false,
 		 uint64_t min_time=0,
 		 uint64_t max_time=std::numeric_limits<uint64_t>::max());
+  //! \brief Size() returns the number of samples recorded (images, times).
   size_t size() const{ return times_.size(); }
+  //! \brief Returns a shared_ptr to the ith thermal image (absolute temps).
   cv::Mat1fConstPtr operator[](int i) const;
+  //! \brief Returns the recording time of the ith thermal image.
   uint64_t time(int i) const{ return times_[i]; }
-  int nearestIndexAtTime(uint64_t time) const;
+  //! \brief Returns the nearest thermal image index to the given time (in nanoseconds)
+  //! for which the time difference is <= max_diff (-1 otherwise).
+  //! max_diff=-1.0 means return no matter what.
+  int nearestIndexAtTime(uint64_t time, 
+			 double max_diff=-1.0) const;
+  //! \brief Loads the ith thermal image into memory.
   void loadIntoMemory(int i);
+  //! \brief Removes the ith thermal image from memory..
   void removeFromMemory(int i);
 protected:
+  //! \brief File names.
   std::vector<std::string> file_names_;
-  std::vector<uint64_t> times_;
-  std::vector<bool> in_memory_;
+  //! \brief Thermal images.
   std::vector<cv::Mat1fPtr> imgs_;
+  //! \brief Recording times for the thermal images.
+  std::vector<uint64_t> times_;
+  //! \brief Whether individual images are stored in memory (true) or read from disk (false).
+  std::vector<bool> in_memory_;
 };
 
-ThermalGrabber::ThermalGrabber(const std::string& input, bool in_memory,
+ThermalGrabber::ThermalGrabber(const std::string& input_dir, bool in_memory,
 			       uint64_t min_time, uint64_t max_time)
 {
   bpt::ptime epoch(boost::gregorian::date(1970,1,1));
   // Load and sort filenames / times.
-  bfs::directory_iterator date_it(input), date_eod;
-  BOOST_FOREACH(bfs::path const & date_p, make_pair(date_it, date_eod)){
+  bfs::directory_iterator date_it(input_dir), date_eod;
+  BOOST_FOREACH(bfs::path const & date_p, make_pair(date_it, date_eod)){ // day
     bfs::directory_iterator hour_it(date_p.string()), hour_eod;
-    BOOST_FOREACH(bfs::path const & hour_p, make_pair(hour_it, hour_eod)){
-      std::string yyyymodd = date_p.string().substr(date_p.string().size()-8, 8);
-      std::string hh = hour_p.string().substr(hour_p.string().size()-2, 2);
+    BOOST_FOREACH(bfs::path const & hour_p, make_pair(hour_it, hour_eod)){ // hour
+      // Get start and end time for this day & hour.
+      string yyyymodd = date_p.string().substr(date_p.string().size()-8, 8);
+      string hh = hour_p.string().substr(hour_p.string().size()-2, 2);
       ostringstream start_oss, end_oss;
       start_oss << yyyymodd << "T" << setw(2) << setfill('0') << atoi(hh.c_str())-1 << "5959";
       end_oss   << yyyymodd << "T" << setw(2) << setfill('0') << atoi(hh.c_str())+1 << "0000";
       uint64_t start_time = (bpt::from_iso_string(start_oss.str()) - epoch).total_nanoseconds();
       uint64_t end_time = (bpt::from_iso_string(end_oss.str()) - epoch).total_nanoseconds();
+      // Store file name and time if the day overlaps with [min_time, max_time].
       if(min_time <= end_time && max_time >= start_time){
 	bfs::directory_iterator it(hour_p.string()), eod;
 	BOOST_FOREACH(bfs::path const & p, make_pair(it, eod)){
@@ -102,7 +121,7 @@ ThermalGrabber::ThermalGrabber(const std::string& input, bool in_memory,
   }
   std::sort(file_names_.begin(), file_names_.end());
   std::sort(times_.begin(), times_.end());
-  // Initialize / load (if in_memory) data.
+  // Allocte and initialize data members (load if in_memory=true).
   in_memory_.resize(times_.size(), in_memory);
   imgs_.resize(times_.size());
   if(in_memory){
@@ -114,11 +133,11 @@ ThermalGrabber::ThermalGrabber(const std::string& input, bool in_memory,
 
 cv::Mat1fConstPtr ThermalGrabber::operator[](int i) const
 {
-  if(in_memory_[i]){
+  if(in_memory_[i]){ // return shared_ptr to stored image
     return imgs_[i];
   }
-  else{
-    Mat1b m;
+  else{ // load image and return shared_ptr.
+    Eigen::MatrixXb m;
     eigen_extensions::load(file_names_[i], &m);
     cv::Mat1fPtr img(new cv::Mat1f);
     thermalDataToTemperature(m, *img);
@@ -126,120 +145,119 @@ cv::Mat1fConstPtr ThermalGrabber::operator[](int i) const
   }
 }
 
-int ThermalGrabber::nearestIndexAtTime(uint64_t time) const
+int ThermalGrabber::nearestIndexAtTime(uint64_t time,
+				       double max_diff) const
 {
-  std::vector<uint64_t>::const_iterator low;
+  if(!times_.size()){ // if no times, return -1 (no overlap with region, for example)
+    return -1;
+  }
+  // Get index of last element less than time.
+  vector<uint64_t>::const_iterator low;
   low = std::lower_bound(times_.begin(), times_.end(), time);
   int idx = std::max(0, (int)(low-times_.begin())-1);
-  if(idx == (int)times_.size()-1){
-    return idx;
+  if(idx == (int)times_.size()-1){ // if last element, return if < max_diff.
+    double diff = time-times_[idx];
+    return (max_diff < 0 || diff <= max_diff) ? idx : -1;
   }
-  else{
+  else{ // otherwise return either idx or idx+1 (whichever is nearer) if < max_diff
     double diff_lw = time-times_[idx];
     double diff_up = times_[idx+1]-time;
-    return diff_lw<diff_up ? idx : idx+1;
+    if(max_diff < 0 || diff_lw <= max_diff || diff_up <= max_diff){
+      return diff_lw<diff_up ? idx : idx+1;
+    }
+    else{
+      return -1;
+    }
   }
 }
 
 void ThermalGrabber::loadIntoMemory(int i)
 {
-  imgs_[i] = cv::Mat1fPtr(new cv::Mat1f);
-  Mat1b m;
-  eigen_extensions::load(file_names_[i], &m);
-  thermalDataToTemperature(m, *imgs_[i]);
-  in_memory_[i] = true;
+  if(!in_memory_[i]){
+    imgs_[i] = cv::Mat1fPtr(new cv::Mat1f);
+    Eigen::MatrixXb m;
+    eigen_extensions::load(file_names_[i], &m);
+    thermalDataToTemperature(m, *imgs_[i]);
+    in_memory_[i] = true;
+  }
 }
 
 void ThermalGrabber::removeFromMemory(int i)
 {
-  imgs_[i].reset();
-  in_memory_[i] = false;
+  if(in_memory_[i]){
+    imgs_[i].reset();
+    in_memory_[i] = false;
+  }
 }
 
-typedef pcl::PointCloud<pcl::PointXYZRGB> CloudXYZRGB_t;
-typedef boost::shared_ptr<CloudXYZRGB_t>  CloudXYZRGBPtr_t;
-typedef boost::shared_ptr<const CloudXYZRGB_t>  CloudXYZRGBConstPtr_t;
-
+// Camera parameters
 const double THERMAL_PITCH = 25e-6; // 25 microns                                           
 const double THERMAL_FOCAL_LENGTH = 9.66e-3; // 9.66 millimeters                            
 const double THERMAL_SCALED_FOCAL_LENGTH = THERMAL_FOCAL_LENGTH / THERMAL_PITCH;
 const int THERMAL_WIDTH = 320, THERMAL_HEIGHT = 240;
 const double THERMAL_CENTER_X = THERMAL_WIDTH/2.0, THERMAL_CENTER_Y = THERMAL_HEIGHT/2.0;
 
-bool reprojectPoint(const Eigen::Vector3f &pt, int &u, int &v,
-                    int width, int height, double scaled_focal_length,
-                    double center_x, double center_y)
+static bool reprojectPointThermal(const Eigen::Vector3f &pt, int &u, int &v)
 {
-  u = scaled_focal_length * pt(0) / pt(2) + center_x;
-  v = scaled_focal_length * pt(1) / pt(2) + center_y;
-  return (pt(2) > 0 && u >= 0 && u < width && v >= 0 && v < height);
-}
-
-bool reprojectPointThermal(const Eigen::Vector3f &pt, int &u, int &v)
-{
-  return reprojectPoint(pt, u, v, THERMAL_WIDTH, THERMAL_HEIGHT,
-                        THERMAL_SCALED_FOCAL_LENGTH, THERMAL_CENTER_X, THERMAL_CENTER_Y);
-}
-
-template <typename T>
-void reprojectCloudThermal(boost::shared_ptr<const pcl::PointCloud<T> > cloud,
-                           boost::shared_ptr<pcl::PointCloud<T> > organized_cloud)
-{
-  reprojectCloud(cloud, organized_cloud, THERMAL_WIDTH, THERMAL_HEIGHT,
-                 THERMAL_SCALED_FOCAL_LENGTH, THERMAL_CENTER_X, THERMAL_CENTER_Y);
-}
-
-template <typename T>
-void reprojectCloud(boost::shared_ptr<const pcl::PointCloud<T> > cloud,
-                    boost::shared_ptr<pcl::PointCloud<T> > organized_cloud,
-                    int width, int height, double scaled_focal_length,
-                    double center_x, double center_y)
-{
-  organized_cloud->clear();
-  T nan_pt; nan_pt.x = nan_pt.y = nan_pt.z = std::numeric_limits<float>::quiet_NaN();
-  organized_cloud->resize(height*width);
-  for(size_t i = 0; i < organized_cloud->size(); i++){
-    organized_cloud->at(i) = nan_pt;
+  u = THERMAL_SCALED_FOCAL_LENGTH * pt(0) / pt(2) + THERMAL_CENTER_X;
+  v = THERMAL_SCALED_FOCAL_LENGTH * pt(1) / pt(2) + THERMAL_CENTER_Y;
+  if (pt(2) > 0 && u >= 0 && u < THERMAL_WIDTH && v >= 0 && v < THERMAL_HEIGHT){
+    return true; // reprojected into thermal image.
   }
-  organized_cloud->width  = width;
-  organized_cloud->height = height;
-  int u, v;
+  else{ // reproject outside of image, so set coord = (-1, -1) and return false.
+    u = -1; v = -1;
+    return false;
+  }
+}
+
+template <typename T>
+static void reprojectCloudThermal(boost::shared_ptr<const pcl::PointCloud<T> > cloud,
+				  const cv::Mat1f& thermal,
+				  std::vector<cv::Point>& img_pts)
+{
+  img_pts.resize(cloud->size());
   for(size_t i = 0; i < cloud->size(); i++){
-    const T& pt = cloud->at(i);
-    if(reprojectPoint(pt.getVector3fMap(), u, v, width, height, scaled_focal_length,
-                      center_x, center_y)){
-      T& opt = (*organized_cloud)(u, v);
-      if(::isnan(opt.z) || pt.z < opt.z){
-        opt = pt;
-      }
+    if(reprojectPointThermal(cloud->at(i).getVector3fMap(), img_pts[i].x, img_pts[i].y)){
+      // Scale reprojected points according to thermal image scale.
+      img_pts[i].x *= 1.f*thermal.cols/THERMAL_WIDTH;
+      img_pts[i].y *= 1.f*thermal.rows/THERMAL_HEIGHT;
     }
   }
 }
 
-void getThermalColoredFg(CloudXYZRGBConstPtr_t cloud,
-			 const std::vector<uint32_t>& indices,
-			 const cv::Mat1f& thermal,
-			 const Eigen::Affine3f& transform,
-			 cv::Mat3b& output,
-			 float alpha = 0.8)
+template <typename T>
+static void getPointTemperatures(boost::shared_ptr<const pcl::PointCloud<T> > cloud,
+				 const cv::Mat1f& thermal,
+				 std::vector<float>& point_temps)
 {
-  CloudXYZRGBPtr_t trans_cloud(new CloudXYZRGB_t), org_trans_cloud(new CloudXYZRGB_t);
-  pcl::transformPointCloud(*cloud, *trans_cloud, transform);
-  CloudXYZRGBConstPtr_t trans_const_cloud = trans_cloud;
-  reprojectCloudThermal(trans_const_cloud, org_trans_cloud);
-  for(size_t i = 0; i < trans_cloud->size(); i++){
+  vector<cv::Point> img_pts;
+  reprojectCloudThermal(cloud, thermal, img_pts);
+  point_temps.resize(cloud->size(), std::numeric_limits<float>::quiet_NaN());
+  for(size_t i = 0; i < cloud->size(); i++){
+    if(img_pts[i].x >= 0){ // if reprojected into image
+      point_temps[i] = thermal(img_pts[i]);
+    }
+  }  
+}
+
+template <typename T>
+static void thermalTrackImage(boost::shared_ptr<const pcl::PointCloud<T> > cloud,
+			      const std::vector<uint32_t>& indices,
+			      const std::vector<float>& point_temps,
+			      cv::Mat3b& output, cv::Vec3b missing_color=cv::Vec3b(0,0,255))
+{
+  for(size_t i = 0; i < cloud->size(); i++){
     int y = indices[i] / output.cols, x = indices[i]%output.cols;
-    const pcl::PointXYZRGB& pt = trans_cloud->at(i);
-    int u, v;
-    if( reprojectPointThermal(pt.getVector3fMap(), u, v)
-	&& fabs(pt.z-(*org_trans_cloud)(u, v).z < 0.1)){
-      int nv = v * 1.f * thermal.rows / THERMAL_HEIGHT,
-	nu = u * 1.f * thermal.cols / THERMAL_WIDTH;
-      float f = (thermal(nv, nu)-min_temp)/(max_temp-min_temp);
-      output(y, x) = (1-alpha)*output(y, x) + alpha*f * cv::Vec3b(255, 255, 255);
+    if(!::isnan(point_temps[i])){ // if valid, color based on temp
+      float f = std::min(1.f, std::max(0.f, (point_temps[i]-min_vis_temp)/(max_vis_temp-min_vis_temp)));
+      output(y, x) = f*cv::Vec3b(255, 255, 255);
+    }
+    else{// otherwise, colore with missing color
+      output(y, x) = 1*missing_color;
     }
   }
 }
+
 
 int main(int argc, char** argv)
 {
@@ -273,15 +291,14 @@ int main(int argc, char** argv)
   cout << "Loading TrackDataset..." << endl;
   TrackDataset td;
   td.load(td_path);
-  cout << "Done." << endl;
   
   cout << "Initializing grabber..." << endl;
   const Dataset& lt = td[td.size()-1];
   ThermalGrabber grabber(therm_path, false,
 			 boost::any_cast<Blob::ConstPtr>(td[0][0].raw())->wall_timestamp_.toNSec(),
 			 boost::any_cast<Blob::ConstPtr>(lt[lt.size()-1].raw())->wall_timestamp_.toNSec());
-  cout << "Done." << endl;
   
+  cout << "Loading transform..." << endl;
   Eigen::ArrayXd v;
   Eigen::MatrixXd m;
   eigen_extensions::loadASCII(tform_path, &m);
@@ -291,38 +308,53 @@ int main(int argc, char** argv)
   pcl::getTransformation(v(0), v(1), v(2), v(3), v(4), v(5), transform);
   
   int i = 0, j = 0;
-  float alpha = 0.f;
+  bool show_track_thermal = true;
   while(1){
     const Dataset& track = td[i];
     cout << "Track: " << i << " Frame: " << j << endl;;
     // Get RGBD data and time.
     const Blob& blob = *boost::any_cast<Blob::ConstPtr>(track[j].raw());
     cv::Mat3b img = blob.image();
+    cv::Mat3b track_thermal(img.size(), cv::Vec3b(127, 127, 127));
+    cv::Mat1f therm_img(img.size(), 0.f);
     blob.project();
-    CloudXYZRGBConstPtr_t cloud = blob.cloud_, therm_cloud(new CloudXYZRGB_t);    
+    Cloud::ConstPtr cloud = blob.cloud_;
     uint64_t time = blob.wall_timestamp_.toNSec();
     // Get thermal data and time.
-    int idx = grabber.nearestIndexAtTime(time);
-    uint64_t therm_time = grabber.time(idx);
-    cv::Mat1f therm_data = *grabber[idx];
-    cv::Mat1f therm_img = (therm_data-min_temp)/(max_temp-min_temp);
-    // Get thermal colored foreground.
-    cv::Mat3b therm_colored_fg = 1*img;
-    getThermalColoredFg(cloud, blob.indices_, therm_data, transform, therm_colored_fg, alpha);
-    // Print info and visualize.
-    cout << "   RGB time: " << fixed << setprecision(16) << setw(16) << setfill('0') << time << endl;
-    cout << " therm time: " << fixed << setprecision(16) << setw(16) << setfill('0') << therm_time << endl;
-    cout << "       diff: " << (int)(time>therm_time ? 1e-6*(time-therm_time) : -1e-6*(therm_time-time)) 
-	 << "ms" <<endl;
-    cv::imshow("RgbImage", img);
-    cv::imshow("ThermalImage", therm_img);
-    cv::imshow("ThermalFg", therm_colored_fg);
+    int idx = grabber.nearestIndexAtTime(time);// 3*1e7);
+    if(idx >= 0){ // if specify a max_diff to nearestIndexAtTime
+      // Get thermal data and create the thermal image.
+      cv::Mat1f therm_data = *grabber[idx];
+      therm_img = (therm_data-min_vis_temp)/(max_vis_temp-min_vis_temp);
+      // Get point temperatures and use to create the thermal track image.
+      Cloud::Ptr trans_cloud(new Cloud);
+      pcl::transformPointCloud(*cloud, *trans_cloud, transform);
+      Cloud::ConstPtr const_trans_cloud = trans_cloud;
+      vector<float> point_temps;
+      getPointTemperatures(const_trans_cloud, therm_data, point_temps);
+      thermalTrackImage(cloud, blob.indices_, point_temps, track_thermal);
+      // Print timing info.
+      uint64_t therm_time = grabber.time(idx);
+      cout << "   RGB time: " << fixed << setprecision(16) << setw(16) << setfill('0') << time << endl;
+      cout << " therm time: " << fixed << setprecision(16) << setw(16) << setfill('0') << therm_time << endl;
+      cout << "       diff: " << (int)(time>therm_time ? 1e-6*(time-therm_time) : -1e-6*(therm_time-time)) 
+	   << "ms" <<endl;
+    }
+    // Visualize.
+    cv::resize(therm_img, therm_img, img.size());
+    cv::imshow("Image", therm_img);
+    if(show_track_thermal){
+      cv::imshow("Track", track_thermal);
+    }
+    else{
+      cv::imshow("Track", img);
+    }
     char c = cv::waitKey(0);
     if(c == 'q'){
       return 0;
     }
-    else if(c == 'a'){
-      alpha = alpha > 0.5 ? 0.f : 1.f;
+    else if(c == 'c'){
+      show_track_thermal = !show_track_thermal;
     }
     else if(c == 'j' || c == 'J'){
       j = std::max(0, j - ((c == 'j') ? 1 : 100));
