@@ -2,6 +2,7 @@
 #include <eigen_extensions/eigen_extensions.h>
 #include <boost/foreach.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <timer/timer.h>
 
 using namespace std;
 namespace bfs = boost::filesystem;
@@ -50,6 +51,8 @@ static bool filepathToTime(const std::string &filepath, uint64_t &timestamp)
 ThermalGrabber::ThermalGrabber(const std::string& input_dir, bool in_memory,
 			       uint64_t min_time, uint64_t max_time)
 {
+  ScopedTimer st("ThermalGrabber total init time");
+  
   bpt::ptime epoch(boost::gregorian::date(1970,1,1));
   // Load and sort filenames / times.
   bfs::directory_iterator date_it(input_dir), date_eod;
@@ -79,8 +82,11 @@ ThermalGrabber::ThermalGrabber(const std::string& input_dir, bool in_memory,
       }
     }
   }
-  std::sort(file_names_.begin(), file_names_.end());
-  std::sort(times_.begin(), times_.end());
+  {
+    ScopedTimer st("Sorting");
+    std::sort(file_names_.begin(), file_names_.end());
+    std::sort(times_.begin(), times_.end());
+  }
   // Allocte and initialize data members (load if in_memory=true).
   in_memory_.resize(times_.size(), in_memory);
   imgs_.resize(times_.size());

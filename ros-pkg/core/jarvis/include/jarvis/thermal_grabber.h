@@ -104,7 +104,7 @@ static void thermalTrackImage(boost::shared_ptr<const pcl::PointCloud<T> > cloud
 {
   for(size_t i = 0; i < cloud->size(); i++){
     int y = indices[i] / output.cols, x = indices[i]%output.cols;
-    if(!::isnan(point_temps[i])){ // if valid, color based on temp
+    if(!isnan(point_temps[i])){ // if valid, color based on temp
       float f = std::min(1.f, std::max(0.f, (point_temps[i]-min_vis_temp)/(max_vis_temp-min_vis_temp)));
       output(y, x) = f*cv::Vec3b(255, 255, 255);
     }

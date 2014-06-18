@@ -1187,9 +1187,7 @@ void ProjectedSize::debug() const
 
 void ThermalGrabberPod::initializeThermalGrabber(const std::string& therm_path)
 {
-  cout << "Loading " << therm_path << endl;
   grabber_ = new ThermalGrabber(therm_path, false);
-  cout << "Done" << endl;
 
   Eigen::ArrayXd v;
   Eigen::MatrixXd m;
@@ -1234,7 +1232,6 @@ void ThermalGrabberPod::debug() const
   Cloud::ConstPtr const_cloud = blob.cloud_;  // Why is the compiler not automatically casting this for us?
   thermalTrackImage(const_cloud, blob.indices_, point_temperatures_, vis);
   cv::imwrite(debugBasePath() + "-vis.jpg", vis);
-  cv::imwrite(debugBasePath() + "-raw.jpg", thermal_img_);
 }
 
 ThermalGrabberPod::~ThermalGrabberPod()

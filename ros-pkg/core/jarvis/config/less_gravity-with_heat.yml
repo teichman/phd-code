@@ -187,7 +187,7 @@ Pipeline:
       Type: DescriptorAggregator
       Params: ~
       Inputs:
-        Descriptors: OrientedBoundingBoxSize.BoundingBoxSize OrientedNormalizedDensityHistogram.X OrientedNormalizedDensityHistogram.Y OrientedNormalizedDensityHistogram.Z HSVHistogram.Hue HSVHistogram.Saturation HSVHistogram.Value CloudOrienter.Eigenvalues CloudOrienter.RelativeCurvature SimpleTrajectoryStatistics05.Speed SimpleTrajectoryStatistics10.Speed EdginessEstimator.Edginess ProjectedSize.ProjectedSize RandomProjector00.Projected RandomProjector01.Projected RandomProjector02.Projected
+        Descriptors: OrientedBoundingBoxSize.BoundingBoxSize OrientedNormalizedDensityHistogram.X OrientedNormalizedDensityHistogram.Y OrientedNormalizedDensityHistogram.Z HSVHistogram.Hue HSVHistogram.Saturation HSVHistogram.Value CloudOrienter.Eigenvalues CloudOrienter.RelativeCurvature SimpleTrajectoryStatistics05.Speed SimpleTrajectoryStatistics10.Speed EdginessEstimator.Edginess ProjectedSize.ProjectedSize RandomProjector00.Projected RandomProjector01.Projected RandomProjector02.Projected AverageTemperature.AverageTemperature
     - Name: RandomProjector00
       Type: RandomProjector
       Params:
