@@ -1,0 +1,211 @@
+GlobalParams:
+  NumCells: 10
+  ObjThresh: 50
+Pipeline:
+  Pods:
+    - Name: BlobEntryPoint
+      Type: EntryPoint<Blob::ConstPtr>
+      Params: ~
+      Inputs: ~
+    - Name: BlobProjector
+      Type: BlobProjector
+      Params: ~
+      Inputs:
+        Blob: BlobEntryPoint.Output
+    - Name: ProjectedSize
+      Type: ProjectedSize
+      Params: ~
+      Inputs:
+        ProjectedBlob: BlobProjector.ProjectedBlob
+    - Name: CloudOrienter
+      Type: CloudOrienter
+      Params:
+        OrientCloud: True
+      Inputs:
+        ProjectedBlob: BlobProjector.ProjectedBlob
+    - Name: GravitationalCloudOrienter
+      Type: GravitationalCloudOrienter
+      Params: ~
+      Inputs:
+        ProjectedBlob: BlobProjector.ProjectedBlob
+    - Name: EdginessEstimator
+      Type: EdginessEstimator
+      Params: ~
+      Inputs:
+        BinaryImage: BlobProjector.BinaryImage
+    - Name: TrajectoryAccumulator
+      Type: TrajectoryAccumulator
+      Params: ~
+      Inputs:
+        UppedCloud: GravitationalCloudOrienter.UppedCloud
+    - Name: SimpleTrajectoryStatistics05
+      Type: SimpleTrajectoryStatistics
+      Params:
+        Lookback: 5
+        MaxValidSpeed: 2
+      Inputs:
+        Trajectory: TrajectoryAccumulator.Trajectory
+    - Name: SimpleTrajectoryStatistics10
+      Type: SimpleTrajectoryStatistics
+      Params:
+        Lookback: 10
+        MaxValidSpeed: 2
+      Inputs:
+        Trajectory: TrajectoryAccumulator.Trajectory
+    - Name: OrientedBoundingBoxSize
+      Type: BoundingBoxSize
+      Params: ~
+      Inputs:
+        Cloud: CloudOrienter.OrientedCloud
+    - Name: OrientedNormalizedDensityHistogram
+      Type: NormalizedDensityHistogram
+      Params:
+        NumBins: 10
+      Inputs:
+        Cloud: CloudOrienter.OrientedCloud
+    - Name: CloudProjectorXY
+      Type: CloudProjector
+      Params:
+        KernelSize: 1
+        MinIntensity: 1
+        NumCols: 50
+        NumRows: 50
+        PixelsPerMeter: 50
+        View: XY
+      Inputs:
+        Cloud: CloudOrienter.OrientedCloud
+    - Name: CloudProjectorYZ
+      Type: CloudProjector
+      Params:
+        KernelSize: 1
+        MinIntensity: 1
+        NumCols: 50
+        NumRows: 50
+        PixelsPerMeter: 50
+        View: YZ
+      Inputs:
+        Cloud: CloudOrienter.OrientedCloud
+    - Name: CloudProjectorXZ
+      Type: CloudProjector
+      Params:
+        KernelSize: 1
+        MinIntensity: 1
+        NumCols: 50
+        NumRows: 50
+        PixelsPerMeter: 50
+        View: XZ
+      Inputs:
+        Cloud: CloudOrienter.OrientedCloud
+    - Name: DynamicImageWindowXY
+      Type: DynamicImageWindow
+      Params:
+        HeightPercent: 1
+        HorizontalAlignment: Center
+        Scaling: 1
+        VerticalAlignment: Center
+        WidthPercent: 1
+      Inputs:
+        Image: CloudProjectorXY.Image
+    - Name: HogArrayXY
+      Type: HogArray
+      Params:
+        BlockHeight: 25
+        BlockStride: 25
+        BlockWidth: 25
+        CellSize: 5
+        NumBins: 6
+        UVPattern: Dense
+        WindowHeight: 25
+        WindowWidth: 25
+      Inputs:
+        Image: DynamicImageWindowXY.Image
+    - Name: DynamicImageWindowYZ
+      Type: DynamicImageWindow
+      Params:
+        HeightPercent: 1
+        HorizontalAlignment: Center
+        Scaling: 1
+        VerticalAlignment: Center
+        WidthPercent: 1
+      Inputs:
+        Image: CloudProjectorYZ.Image
+    - Name: HogArrayYZ
+      Type: HogArray
+      Params:
+        BlockHeight: 25
+        BlockStride: 25
+        BlockWidth: 25
+        CellSize: 5
+        NumBins: 6
+        UVPattern: Dense
+        WindowHeight: 25
+        WindowWidth: 25
+      Inputs:
+        Image: DynamicImageWindowYZ.Image
+    - Name: DynamicImageWindowXZ
+      Type: DynamicImageWindow
+      Params:
+        HeightPercent: 1
+        HorizontalAlignment: Center
+        Scaling: 1
+        VerticalAlignment: Center
+        WidthPercent: 1
+      Inputs:
+        Image: CloudProjectorXZ.Image
+    - Name: HogArrayXZ
+      Type: HogArray
+      Params:
+        BlockHeight: 25
+        BlockStride: 25
+        BlockWidth: 25
+        CellSize: 5
+        NumBins: 6
+        UVPattern: Dense
+        WindowHeight: 25
+        WindowWidth: 25
+      Inputs:
+        Image: DynamicImageWindowXZ.Image
+    - Name: HSVHistogram
+      Type: HSVHistogram
+      Params:
+        NumBins: 10
+        SaturationThreshold: 0.2
+        ValueThreshold: 0.2
+      Inputs:
+        Blob: BlobProjector.ProjectedBlob
+    - Name: ThermalGrabberPod
+      Type: ThermalGrabberPod
+      Params:
+      Inputs:
+        ProjectedBlob: BlobProjector.ProjectedBlob
+    - Name: AverageTemperature
+      Type: AverageTemperature
+      Params:
+      Inputs:
+        PointTemperatures: ThermalGrabberPod.PointTemperatures
+    - Name: DescriptorAggregator
+      Type: DescriptorAggregator
+      Params: ~
+      Inputs:
+        Descriptors: OrientedBoundingBoxSize.BoundingBoxSize OrientedNormalizedDensityHistogram.X OrientedNormalizedDensityHistogram.Y OrientedNormalizedDensityHistogram.Z HSVHistogram.Hue HSVHistogram.Saturation HSVHistogram.Value CloudOrienter.Eigenvalues CloudOrienter.RelativeCurvature SimpleTrajectoryStatistics05.Speed SimpleTrajectoryStatistics10.Speed EdginessEstimator.Edginess ProjectedSize.ProjectedSize RandomProjector00.Projected RandomProjector01.Projected RandomProjector02.Projected
+    - Name: RandomProjector00
+      Type: RandomProjector
+      Params:
+        NumProjections: 50
+        Seed: 120
+      Inputs:
+        Descriptor: HogArrayXY.ConcatenatedDescriptors
+    - Name: RandomProjector01
+      Type: RandomProjector
+      Params:
+        NumProjections: 50
+        Seed: 4551
+      Inputs:
+        Descriptor: HogArrayYZ.ConcatenatedDescriptors
+    - Name: RandomProjector02
+      Type: RandomProjector
+      Params:
+        NumProjections: 50
+        Seed: 8641
+      Inputs:
+        Descriptor: HogArrayXZ.ConcatenatedDescriptors

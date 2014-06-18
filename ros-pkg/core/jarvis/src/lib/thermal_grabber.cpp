@@ -54,6 +54,8 @@ ThermalGrabber::ThermalGrabber(const std::string& input_dir, bool in_memory,
   // Load and sort filenames / times.
   bfs::directory_iterator date_it(input_dir), date_eod;
   BOOST_FOREACH(bfs::path const & date_p, make_pair(date_it, date_eod)){ // day
+    if(date_p.leaf().string() == "transform.eig.txt")
+      continue;
     bfs::directory_iterator hour_it(date_p.string()), hour_eod;
     BOOST_FOREACH(bfs::path const & hour_p, make_pair(hour_it, hour_eod)){ // hour
       // Get start and end time for this day & hour.

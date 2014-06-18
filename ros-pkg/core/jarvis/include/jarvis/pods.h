@@ -5,6 +5,7 @@
 #include <pipeline/pipeline.h>
 #include <name_mapping/name_mapping.h>
 #include <jarvis/tracker.h>
+#include <jarvis/thermal_grabber.h>
 #include <eigen_extensions/random.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -568,5 +569,54 @@ protected:
   void compute();
   void debug() const;
 };
+
+class ThermalGrabberPod : public pl::Pod
+{
+public:
+  DECLARE_POD(ThermalGrabberPod);
+  ThermalGrabberPod(std::string name) :
+    Pod(name),
+    grabber_(NULL),
+    trans_cloud_(new Cloud)
+  {
+    declareInput<Blob::ConstPtr>("ProjectedBlob");
+    declareOutput<const std::vector<float>*>("PointTemperatures");
+  }
+
+  ~ThermalGrabberPod();
+  // This must be called before compute().
+  // The transform is assumed to be in therm_path/transform.eig.txt.
+  void initializeThermalGrabber(const std::string& therm_path);
+
+protected:
+  ThermalGrabber* grabber_;
+  Eigen::Affine3f transform_;
+  std::vector<float> point_temperatures_;
+  Cloud::Ptr trans_cloud_;
+  cv::Mat1f thermal_img_;
+
+  void compute();
+  void debug() const;
+};
+
+class AverageTemperature : public pl::Pod
+{
+public:
+  DECLARE_POD(AverageTemperature);
+  AverageTemperature(std::string name) :
+    Pod(name),
+    average_temperature_(1)
+  {
+    declareInput<const std::vector<float>*>("PointTemperatures");
+    declareOutput<const Eigen::VectorXf*>("AverageTemperature");    
+  }
+  
+protected:
+  Eigen::VectorXf average_temperature_;
+
+  void compute();
+  void debug() const;
+};
+  
 
 #endif // JARVIS_PODS_H

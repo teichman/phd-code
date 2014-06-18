@@ -8,6 +8,7 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/common/transformation_from_correspondences.h>
 #include <jarvis/pods.h>
+#include <eigen_extensions/eigen_extensions.h>
 
 using namespace std;
 using namespace Eigen;
@@ -1184,3 +1185,87 @@ void ProjectedSize::debug() const
   f.close();
 }
 
+void ThermalGrabberPod::initializeThermalGrabber(const std::string& therm_path)
+{
+  cout << "Loading " << therm_path << endl;
+  grabber_ = new ThermalGrabber(therm_path, false);
+  cout << "Done" << endl;
+
+  Eigen::ArrayXd v;
+  Eigen::MatrixXd m;
+  eigen_extensions::loadASCII(therm_path + "/transform.eig.txt", &m);
+  v = Eigen::ArrayXd(m.rows());
+  v.matrix() = m;
+  Eigen::Affine3f transform;
+  pcl::getTransformation(v(0), v(1), v(2), v(3), v(4), v(5), transform);
+
+  transform_ = transform;
+}
+
+void ThermalGrabberPod::compute()
+{
+  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
+  ROS_ASSERT(blob.cloud_);
+  ROS_ASSERT(grabber_);
+  
+  if(thermal_img_.rows == 0)
+    thermal_img_ = cv::Mat1f(cv::Size(blob.width_, blob.height_), 0);
+  
+  
+  uint64_t time = blob.wall_timestamp_.toNSec();
+  int idx = grabber_->nearestIndexAtTime(time);
+  ROS_ASSERT(idx >= 0);
+  cv::Mat1f therm_data = *(*grabber_)[idx];
+  thermal_img_ = (therm_data - min_vis_temp) / (max_vis_temp - min_vis_temp);
+  pcl::transformPointCloud(*blob.cloud_, *trans_cloud_, transform_);
+  Cloud::ConstPtr const_trans_cloud = trans_cloud_;  // Why is the compiler not automatically casting this for us?
+  getPointTemperatures(const_trans_cloud, therm_data, point_temperatures_);
+
+  push<const std::vector<float>*>("PointTemperatures", &point_temperatures_);
+}
+
+void ThermalGrabberPod::debug() const
+{
+  const Blob& blob = *pull<Blob::ConstPtr>("ProjectedBlob");
+  ROS_ASSERT(blob.cloud_);
+  ROS_ASSERT(grabber_);
+
+  cv::Mat3b vis(cv::Size(blob.width_, blob.height_), cv::Vec3b(127, 127, 127));
+  Cloud::ConstPtr const_cloud = blob.cloud_;  // Why is the compiler not automatically casting this for us?
+  thermalTrackImage(const_cloud, blob.indices_, point_temperatures_, vis);
+  cv::imwrite(debugBasePath() + "-vis.jpg", vis);
+  cv::imwrite(debugBasePath() + "-raw.jpg", thermal_img_);
+}
+
+ThermalGrabberPod::~ThermalGrabberPod()
+{
+  if(grabber_)
+    delete grabber_;
+}
+
+void AverageTemperature::compute()
+{
+  const std::vector<float>& point_temperatures = *pull<const std::vector<float>*>("PointTemperatures");
+
+  average_temperature_(0) = 0;
+  int count = 0;
+  for(size_t i = 0; i < point_temperatures.size(); ++i) {
+    if(!isnan(point_temperatures[i])) {
+      average_temperature_(0) += point_temperatures[i];
+      ++count;
+    }
+  }
+  if(count > 0) {
+    average_temperature_(0) /= count;
+    push<const VectorXf*>("AverageTemperature", &average_temperature_);
+  }
+  else
+    push<const VectorXf*>("AverageTemperature", NULL);
+}
+
+void AverageTemperature::debug() const
+{
+  ofstream f((debugBasePath() + ".txt").c_str());
+  f << "average_temperature_: " << average_temperature_.transpose() << endl;
+  f.close();
+}
