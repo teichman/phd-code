@@ -282,7 +282,7 @@ int main(int argc, char** argv)
   try { bpo::notify(opts); }
   catch(...) { badargs = true; }
   if(opts.count("help") || badargs) {
-    cout << "Usage: " << argv[0] << " [OPTS] TD" << endl;
+    cout << "Usage: " << argv[0] << " [OPTS] TD THERM TRANSFORM" << endl;
     cout << endl;
     cout << opts_desc << endl;
     return 1;
@@ -362,10 +362,10 @@ int main(int argc, char** argv)
     else if(c == 'k' || c == 'K'){
       j = std::min((int)td[i].size()-1, j + ((c == 'k') ? 1 : 100));
     }
-    else if(c == 'd'){
+    else if(c == 'd' || c == '['){
       i = std::max(0, i-1); j = 0;
     }
-    else if(c == 'f'){
+    else if(c == 'f' || c == ']'){
       i = std::min((int)td.size()-1, i+1); j = 0;
     }
   }
