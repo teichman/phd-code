@@ -15,7 +15,6 @@ else
 ROSRUN			:= rosrun
 endif
 
-
 .SECONDEXPANSION:       # Allows use of automatic vars in prerequisites.
 .SECONDARY:             # Prevents deletion of intermediate targets in a chain of implicit rules.
 
@@ -196,6 +195,9 @@ $(1)-set1/tds/%/updated: $(1)-set1/tds/%/extracted
 	-j 24
 	touch $$@
 
+
+$(1)-set1-all-test-set-statistics: $$(addprefix $(1)-set1-, $$(addsuffix -test-set-statistics, $$(CLASS_NAMES_$(1))))
+
 endef
 $(foreach CONTEXT,$(CONTEXTS), \
 $(eval $(call SET1_CONTEXT_RULE_GENERATOR,$(CONTEXT))))
@@ -203,21 +205,26 @@ $(eval $(call SET1_CONTEXT_RULE_GENERATOR,$(CONTEXT))))
 
 define SET1_CONTEXT_CLASS_RULE_GENERATOR
 
+$(1)-set1-$(2)-test-set-statistics:
+	@echo ==================== $(1) $(2) test set summary ====================
+	@. ~/.bashrc && $(ROSRUN) online_learning stat $$(LABELS_DIR_$(1)_0)/$(2)/*.td | grep 'tracks\.' | grep -v empty | stats 1
+
 $(1)-set1/$(2)/induction:
 	mkdir -p $$@
 	$(ROSRUN) jarvis induct \
+	--randomize \
 	--class-names $(2) \
 	--config $(CONFIG) \
 	-u $$(UP_VECTOR_$(1)) \
 	--emax 0 \
 	--buffer-size 1000 \
-	--max-track-length 30 \
+	--max-track-length 90 \
 	--snapshot-every 0 \
 	--evaluate-every 1 \
 	--test $$(LABELS_DIR_$(1)_0)/$(2)/*.td \
 	--output-dir $$@ \
-	--unlabeled-td-dir $(1)-set1/tds/ \
-	--init `find $(1)-set1/tds/ -name '*.td' | sort -R | head -n4` \
+	--unlabeled-td-dir $(1)-set1/tds-lw \
+	--init $(1)-set1/tds-lw/*.td \
 	| tee $$@/log.txt
 
 baselines-$(1)-set1-$(2): $(1)-set1/$(2)/baseline_unfair $(1)-set1/$(2)/naive_supervised_baseline
@@ -453,10 +460,16 @@ $(REGRESSION_RUNS_DIR)/completed: $(addprefix regression-test-,$(addsuffix -mult
 analyze-regression-tests: $(REGRESSION_RUNS_DIR)/completed
 	$(ROSRUN) jarvis analyze_regression_tests.py $(REGRESSION_RUNS_DIR)
 
-MAX_ITERS := 60
+
+MAX_ITERS := 40
+
+ifndef NUM_REGRESSION_ITERS
+NUM_REGRESSION_ITERS	:= 3
+endif
+
 define REGRESSION_RULE_GENERATOR
 regression-test-$(1)-multi:
-	for i in {1..3}; do make -f $(MAKEFILE) regression-test-$(1); done
+	for i in {1..$(NUM_REGRESSION_ITERS)}; do make -f $(MAKEFILE) regression-test-$(1); done
 regression-test-$(1):
 	$(ROSRUN) jarvis run_regression.sh $(REGRESSION_TESTS_DIR)/$(1) $(CONFIG) $(MAX_ITERS) $(REGRESSION_RUNS_DIR)/$(1)
 endef

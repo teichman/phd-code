@@ -37,6 +37,8 @@ void DescriptorPipeline::registerPodTypes()
   REGISTER_POD(DescriptorConcatenator);
   REGISTER_POD(EdginessEstimator);
   REGISTER_POD(ProjectedSize);
+  REGISTER_POD(ThermalGrabberPod);
+  REGISTER_POD(AverageTemperature);
 }
 
 std::string DescriptorPipeline::defaultSpecificationPath()
@@ -57,6 +59,13 @@ void DescriptorPipeline::initializeWithDefault()
 void DescriptorPipeline::initialize(YAML::Node spec)
 {
   pl_.deYAMLize(spec);
+
+  if(getenv("THERMAL_DATA")) {
+    string path(getenv("THERMAL_DATA"));
+    cout << "Initializing ThermalGrabberPod with data at path \"" << path << "\"" << endl;
+    pl_.pod<ThermalGrabberPod>()->initializeThermalGrabber(path);
+    cout << "Done." << endl;
+  }
 }
 
 const vector<const VectorXf*>* DescriptorPipeline::computeDescriptors(Blob::ConstPtr blob)

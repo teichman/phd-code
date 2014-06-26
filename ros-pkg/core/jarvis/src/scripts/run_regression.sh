@@ -2,10 +2,13 @@
 
 . ~/.bashrc  # Set up ROS.
 
-# echo ============================================================
-# echo $(cd $(rospack find jarvis) && git rev-parse --short HEAD)  # This works.
-# echo $(roscd jarvis && git rev-parse --short HEAD)  # This doesn't.  Why?  roscd used to work here.
-# echo ============================================================
+set -o nounset
+
+# This is a good idea usually, but when working remotely the plotting
+# scripts can quit with an error about not being able to connect
+# to the x server.  Normally this is ignored and run_regression
+# continues, but not with errexit.
+#set -o errexit
 
 # -- Parse args.
 if [ "$#" == "0" ]; then
@@ -49,7 +52,7 @@ rosrun jarvis induct \
     --config $CONFIG \
     --emax 0 \
     --buffer-size 1000 \
-    --max-track-length 30 \
+    --max-track-length 90 \
     --snapshot-every 0 \
     --evaluate-every 1 \
     --output-dir $RUN_DIR/induction \
@@ -58,6 +61,7 @@ rosrun jarvis induct \
     --test $TEST_DIR/test/*.td \
     --fake-supervisor $TEST_DIR/supervisor.gc \
     --fake-supervisor-config $TEST_DIR/supervisor_config.yml \
+    --fake-supervisor-period 3 \
     2>&1 | tee $RUN_DIR/induction/log.txt
 
 cd $RUN_DIR/induction
@@ -86,7 +90,7 @@ rosrun jarvis induct \
     --config $CONFIG \
     --emax 0 \
     --buffer-size 1000 \
-    --max-track-length 30 \
+    --max-track-length 90 \
     --snapshot-every 0 \
     --evaluate-every 1 \
     --output-dir $RUN_DIR/active_learning \
@@ -95,6 +99,7 @@ rosrun jarvis induct \
     --test $TEST_DIR/test/*.td \
     --fake-supervisor $TEST_DIR/supervisor.gc \
     --fake-supervisor-config $TEST_DIR/supervisor_config.yml \
+    --fake-supervisor-period 1 \
     --fake-supervisor-annotation-limit `grep -A2 'Hand-annotated' $(find $RUN_DIR/induction/ -name learner_status.txt | sort | tail -n1) | grep tracks | awk '{print $1}'` \
     2>&1 | tee $RUN_DIR/active_learning/log.txt
 

@@ -9,6 +9,7 @@
 
 using namespace std;
 using Eigen::ArrayXf;
+using Eigen::ArrayXi;
 using Eigen::VectorXf;
 
 
@@ -16,31 +17,8 @@ Eigen::ArrayXf computeNormalizedCellHistogram(const Dataset& track,
                                               size_t descriptor_id,
                                               const GridClassifier& gc)
 {
-  ROS_ASSERT(gc.numResolutions() == 1);  // Only deal with a single grid resolution for now.  This could be extended later.
-  vector<Grid*> grids = gc.grids_[0][descriptor_id];  // One grid per element of this descriptor space.
-  ROS_ASSERT(!grids.empty());
-  int num_cells_per_element = grids[0]->cells_.cols();  // Each element gets the same number of grid cells.
-  int num_cells = grids.size() * num_cells_per_element;
-  ArrayXf hist = ArrayXf::Zero(num_cells);
-  for(size_t i = 0; i < grids.size(); ++i) {
-    ROS_ASSERT(grids[i]);
-    const Grid& grid = *grids[i];
-    ROS_ASSERT(i == 0 || grid.cells_.cols() == grids[i-1]->cells_.cols());
-
-    for(size_t j = 0; j < track.size(); ++j) {
-      const Instance& frame = track[j];
-      if(!frame[descriptor_id])
-        continue;
-
-      const VectorXf& descriptor = *frame[descriptor_id];
-      size_t idx = grid.getCellIdx(descriptor.coeffRef(i));
-      ROS_ASSERT(i * num_cells_per_element + idx < (size_t)hist.rows());
-      ++hist(i * num_cells_per_element + idx);
-    }
-  }
-
-  hist /= hist.sum();
-  return hist;
+  ArrayXf hist = computeCellHistogram(track, descriptor_id, gc).cast<float>();
+  return hist / hist.sum();
 }
 
 float histogramIntersection(const Eigen::ArrayXf& hist0, const Eigen::ArrayXf& hist1)
@@ -55,6 +33,9 @@ float histogramIntersection(const Eigen::ArrayXf& hist0, const Eigen::ArrayXf& h
 
 
 //! annotation and inducted have descriptors computed.
+// TODO: Anything that references particular descriptors does not belong in the online_learning package.
+// Perhaps there should be a class for computing similarities which can be loaded with the descriptor spaces
+// it is to care about.
 bool similar(const Dataset& track0, const Dataset& track1, const GridClassifier& gc, double intersection_threshold, int max_different_dspaces)
 {
   ROS_ASSERT(track0.nameMappingsAreEqual(track1));
@@ -143,4 +124,60 @@ bool similar(const Dataset& annotation, const Dataset& inducted)
     }
   }
   return (min_dist < 0.2);
+}
+
+Eigen::ArrayXi computeCellHistogram(const Dataset& track,
+                                    size_t descriptor_id,
+                                    const GridClassifier& gc)
+{
+  ROS_ASSERT(gc.numResolutions() == 1);  // Only deal with a single grid resolution for now.  This could be extended later.
+  vector<Grid*> grids = gc.grids_[0][descriptor_id];  // One grid per element of this descriptor space.
+  ROS_ASSERT(!grids.empty());
+  int num_cells_per_element = grids[0]->cells_.cols();  // Each element gets the same number of grid cells.
+  int num_cells = grids.size() * num_cells_per_element;
+  ArrayXi hist = ArrayXi::Zero(num_cells);
+  for(size_t i = 0; i < grids.size(); ++i) {
+    ROS_ASSERT(grids[i]);
+    const Grid& grid = *grids[i];
+    ROS_ASSERT(i == 0 || grid.cells_.cols() == grids[i-1]->cells_.cols());
+
+    for(size_t j = 0; j < track.size(); ++j) {
+      const Instance& frame = track[j];
+      if(!frame[descriptor_id])
+        continue;
+
+      const VectorXf& descriptor = *frame[descriptor_id];
+      size_t idx = grid.getCellIdx(descriptor.coeffRef(i));
+      ROS_ASSERT(i * num_cells_per_element + idx < (size_t)hist.rows());
+      ++hist(i * num_cells_per_element + idx);
+    }
+  }
+  return hist;
+}
+
+bool isStatic(const Dataset& track, const GridClassifier& gc,
+              double density_thresh, size_t slack)
+{
+  ROS_ASSERT(track.nameMapping("dmap") == gc.nameMapping("dmap"));
+  const NameMapping& dmap = track.nameMapping("dmap");
+
+  ArrayXi hist;
+  size_t num = 0;
+  for(size_t i = 0; i < dmap.size(); ++i) {
+    hist = computeCellHistogram(track, i, gc);
+    //cout << hist.transpose() << endl;
+    double density = (double)(hist != 0).count() / hist.rows();
+    if(density < 0 || density > 1) {
+      ROS_WARN_STREAM("Unexpected density value: " << density);
+      ROS_ASSERT(0);
+    }
+    //cout << density << endl;
+    
+    if(density > density_thresh) {
+      ++num;
+      if(num >= slack)
+        return false;
+    }
+  }
+  return true;
 }

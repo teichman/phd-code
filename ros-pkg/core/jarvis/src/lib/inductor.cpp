@@ -61,18 +61,21 @@ void Inductor::chunkHook(TrackDataset* td) const
     Dataset::Ptr track = td->tracks_[i];
     if(track->empty())
       continue;
-    Blob::ConstPtr first_blob = boost::any_cast<Blob::ConstPtr>((*track)[0].raw());
-    Blob::ConstPtr last_blob = boost::any_cast<Blob::ConstPtr>((*track)[track->size() - 1].raw());
-    if(!first_blob->cloud_)
-      first_blob->project(false);
-    if(!last_blob->cloud_)
-      last_blob->project(false);
+    // Blob::ConstPtr first_blob = boost::any_cast<Blob::ConstPtr>((*track)[0].raw());
+    // Blob::ConstPtr last_blob = boost::any_cast<Blob::ConstPtr>((*track)[track->size() - 1].raw());
+    // if(!first_blob->cloud_)
+    //   first_blob->project(false);
+    // if(!last_blob->cloud_)
+    //   last_blob->project(false);
 
-    double dist = (last_blob->centroid_ - first_blob->centroid_).norm();
-    double dt = last_blob->sensor_timestamp_ - first_blob->sensor_timestamp_;
-    if(dist / dt > 0.05) {
+    // double dist = (last_blob->centroid_ - first_blob->centroid_).norm();
+    // double dt = last_blob->sensor_timestamp_ - first_blob->sensor_timestamp_;
+    // if(dist / dt > 0.05) {
+    //   tracks.push_back(track);
+    // }
+
+    if(!isStatic(*track, *classifier_, 0.3, 3))
       tracks.push_back(track);
-    }
   }
 
   cout << "[Inductor::chunkHook]  Removing " << td->tracks_.size() - tracks.size() << " tracks because they did not move enough.  "
@@ -128,6 +131,8 @@ void Inductor::retrospection(const TrackDataset& new_annotations, const std::vec
 
 void Inductor::requestInductedSampleHook(TrackDataset* td, int cidx) const
 {
+  ROS_DEBUG("Inductor::requestInductedSampleHook");
+  
   // -- Make a copy of the tracks and compute descriptors.
   TrackDataset cloned = *td->clone();
   entryHook(&cloned);
@@ -143,7 +148,7 @@ void Inductor::requestInductedSampleHook(TrackDataset* td, int cidx) const
   }
   sort(index.begin(), index.end(), greater< pair<double, size_t> >());  // descending
 
-  // -- Filter out tracks that are near-duplicates.
+  // -- Filter out tracks that would be caught by retrospection anyway.
   TrackDataset filtered;
   filtered.applyNameMappings(cloned);
   filtered.tracks_.reserve(cloned.size());
@@ -151,7 +156,7 @@ void Inductor::requestInductedSampleHook(TrackDataset* td, int cidx) const
     size_t idx = index[i].second;
     bool unique = true;
     for(size_t j = 0; unique && j < filtered.size(); ++j)
-      if(similar(cloned[idx], filtered[j], *classifier_, 0.9, 0))
+      if(similar(cloned[idx], filtered[j], *classifier_, 0.7, 3))
         unique = false;
     if(unique)
       filtered.tracks_.push_back(Dataset::Ptr(new Dataset(cloned[idx])));

@@ -290,6 +290,7 @@ TEST(SplitDataset, SplitDataset)
     cout << td->status("  ");
     {
       ScopedTimer st("splitTracksFixedLength");
+      srand(time(NULL));
       splitTracksFixedLength(100, td.get());
     }
     cout << "After splitting: " << endl;

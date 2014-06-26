@@ -3,6 +3,7 @@
 #include <eigen_extensions/eigen_extensions.h>
 #include <online_learning/evaluator.h>
 #include <online_learning/tbssl.h>
+#include <online_learning/clusterer.h>
 #include <glob.h>
 
 using namespace std;
@@ -71,49 +72,43 @@ void OnlineLearner::pushHandLabeledDataset(TrackDataset::Ptr dataset)
   incoming_annotated_.push_back(dataset);
 }
 
-TrackDataset OnlineLearner::requestInductedSample(const std::string& cname,
-                                                  float prediction, size_t num) const
+TrackDataset OnlineLearner::requestInductedSample(const std::string& cname, size_t num) const
 {
   boost::unique_lock<boost::shared_mutex> ulock(viewable_unsupervised_mutex_);
-
-  if(!nameMapping("cmap").hasName(cname)) {
-    ROS_WARN_STREAM("OnlineLearner got a request for inducted tracks of class \""
-                    << cname << "\", but that name does not exist in the cmap.");
-    TrackDataset td;
-    return td;
-  }
-  size_t cidx = nameMapping("cmap").toId(cname);
-  
-  // -- Sort tracks by how close they are to the prediction we want.
-  const TrackDataset& vuns = *viewable_unsupervised_;
-  vector< pair<double, size_t> > index;
-  index.reserve(vuns.size());
-  for(size_t i = 0; i < vuns.size(); ++i) {
-    Label pred = vuns.label(i);
-    // Tracks with a label of exactly zero are those that were de-inducted by
-    // the system for a reason.  They should be ignored.
-    if(pred(cidx) == 0)
-      continue;
-    index.push_back(pair<double, size_t>(fabs(pred(cidx) - prediction), i));
-  }
-  sort(index.begin(), index.end());  // ascending
-
+  ScopedTimer st("OnlineLearner::requestInductedSample", TimeUnit::MS);
+   
   // -- Set up the new TD.
+  const TrackDataset& vuns = *viewable_unsupervised_;
   TrackDataset td;
-  td.tracks_.resize(min(index.size(), num));
-  for(size_t i = 0; i < td.tracks_.size(); ++i)
-    td.tracks_[i] = Dataset::Ptr(new Dataset);
+  td.tracks_.reserve(min(vuns.size(), num));
   td.applyNameMappings(vuns);
 
-  // -- Copy over the tracks.
-  for(size_t i = 0; i < td.size(); ++i)
-    td[i] = vuns[index[i].second];
+  // -- Search for a random set of unique tracks.
+  size_t num_failed_attempts = 0;
+  size_t max_num_failed_attempts = 100;
+  while(td.size() < num) {
+    size_t idx = rand() % vuns.size();
 
+    bool is_similar = false;
+    for(size_t i = 0; i < td.size() && !is_similar; ++i)
+      if(similar(vuns[idx], td[i], *classifier_, 0.7, 3))
+        is_similar = true;
+
+    if(is_similar) {
+      ++num_failed_attempts;
+      if(num_failed_attempts >= max_num_failed_attempts)
+        break;
+      else
+        continue;
+    }
+
+    td.tracks_.push_back(Dataset::Ptr(new Dataset(vuns[idx])));
+  }
+  
   // Clear the dmap for the outgoing tracks since they do not include descriptors.
   // TODO: This should happen for vuns, too, ... but we'll be getting rid of that.
   td.applyNameMapping("dmap", NameMapping());
-
-  requestInductedSampleHook(&td, cidx);
+  requestInductedSampleHook(&td, td.nameMapping("cmap").toId(cname));
   
   return td;
 }
@@ -156,7 +151,6 @@ void OnlineLearner::updateViewableUnsupervised()
   for(size_t i = 0; i < vuns.tracks_.size(); ++i)
     vuns.tracks_[i] = Dataset::Ptr(new Dataset);
   vuns.applyNameMappings(uns);
-  int nc = nameMapping("cmap").size();
   for(size_t i = 0; i < vuns.size(); ++i) {
     Dataset& vtrack = vuns[i];
     Dataset& utrack = uns[i];
@@ -530,13 +524,30 @@ void OnlineLearner::balance(const ObjectiveIndex& index)
         ++ind_counts(1);
     }
 
+    // Because this is called before prune(), ind_counts might be larger than the
+    // buffer size.  This causes balancing to be violated after pruning.
+    // So, cap the ind counts at the max we can store after pruning.
+    ind_counts(0) = min<float>(ind_counts(0), buffer_size_ / 2);
+    ind_counts(1) = min<float>(ind_counts(1), buffer_size_ / 2);
+    
     double mult = (ind_counts / ann_counts).minCoeff();
     if(isnan(mult) || isinf(mult))
       continue;
 
+    ArrayXf desf = mult * ann_counts;
+    if(fabs(desf(0) / desf(1) - ann_counts(0) / ann_counts(1)) > 1e-6) {
+      ROS_WARN_STREAM("Check balancing?  ann_counts: " << ann_counts.transpose() << " , desired: " << desf.transpose());
+      ROS_WARN_STREAM("  " << desf(0) / desf(1) << "   " << ann_counts(0) / ann_counts(1));
+      ROS_WARN_STREAM("  " << fabs(desf(0) / desf(1) - ann_counts(0) / ann_counts(1)));
+    }
+       
     ArrayXi desired = (mult * ann_counts).cast<int>();
-    ROS_ASSERT((desired <= ind_counts.cast<int>()).all());
-
+    ROS_ASSERT((desired <= buffer_size_ / 2 + 1).all());
+    desired(0) = min<int>(desired(0), buffer_size_ / 2);
+    desired(1) = min<int>(desired(1), buffer_size_ / 2);
+    cout << "Desired balance: " << desired.transpose() << endl;
+    ROS_ASSERT((desired <= buffer_size_ / 2).all());
+    
     // Make sure index is sorted in descending order.
     for(size_t i = 1; i < index.size(); ++i) 
       ROS_ASSERT(index[i].first <= index[i-1].first && index[i].first >= 0);
@@ -665,6 +676,8 @@ void OnlineLearner::_run()
   if(!bfs::exists(input_hand_annotations_dir_))
     bfs::create_directory(input_hand_annotations_dir_);
 
+  int max_ann_counter = 0;
+  
   while(true) {    
     // -- Check if we're done.
     if(bfs::exists(output_dir_ + "/stop"))
@@ -696,8 +709,16 @@ void OnlineLearner::_run()
     // Check max_annotations_ here, after learner status has been updated to
     // reflect the new annotations.
     ROS_ASSERT(max_annotations_ != 0);  // This would make no sense.
-    if(max_annotations_ != -1 && (int)annotated_->size() >= max_annotations_)
-      break;
+
+    // If we've received all the annotations we're allotted, then run 10 more
+    // iterations and stop.  This is to be totally sure the classifier has
+    // converged.
+    if(max_annotations_ != -1) { 
+      if((int)annotated_->size() >= max_annotations_)
+        ++max_ann_counter;
+      if(max_ann_counter >= 10)
+        break;
+    }
 
     // Update the data that is publicly viewable.
     updateViewableUnsupervised();
@@ -1469,6 +1490,15 @@ void OnlineLearner::Stats::_applyNameTranslator(const std::string& id, const Nam
   translator.translate(&num_tracks_annotated_pos_, 0);
   translator.translate(&num_frames_annotated_neg_, 0);
   translator.translate(&num_tracks_annotated_neg_, 0);
+}
+
+size_t OnlineLearner::numAnnotated() const
+{
+  boost::unique_lock<boost::shared_mutex> ulock(hand_mutex_);
+  size_t num = annotated_->size();
+  for(size_t i = 0; i < incoming_annotated_.size(); ++i)
+    num += incoming_annotated_[i]->size();
+  return num;
 }
 
 /************************************************************

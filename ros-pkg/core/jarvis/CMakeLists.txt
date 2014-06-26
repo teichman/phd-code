@@ -22,6 +22,10 @@ rosbuild_genmsg()
 #rosbuild_gensrv() 
 
 #common commands for building c++ executables and libraries
+rosbuild_add_library(jarvis_thermal
+  src/lib/thermal_grabber.cpp
+  )
+
 rosbuild_add_library(jarvis_core
   src/lib/jarvis.cpp
   src/lib/tracker.cpp
@@ -45,8 +49,8 @@ rosbuild_add_library(jarvis_core
   src/lib/discrete_bayes_filter.cpp
   )
 rosbuild_add_compile_flags(jarvis_core -std=c++0x)
-target_link_libraries(jarvis_core tcmalloc glut)
-#target_link_libraries(${PROJECT_NAME} another_library)
+target_link_libraries(jarvis_core tcmalloc glut jarvis_thermal)
+
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 
@@ -148,3 +152,11 @@ target_link_libraries(email_on_detection jarvis_core avcodec avformat avutil)
 rosbuild_add_executable(print_dmap src/prog/print_dmap.cpp)
 rosbuild_link_boost(print_dmap program_options)
 target_link_libraries(print_dmap jarvis_core)
+
+rosbuild_add_executable(inspect_heat src/prog/inspect_heat.cpp)
+rosbuild_link_boost(inspect_heat program_options)
+target_link_libraries(inspect_heat jarvis_core)
+
+rosbuild_add_executable(track_times src/prog/track_times.cpp)
+rosbuild_link_boost(track_times program_options)
+target_link_libraries(track_times jarvis_core)
